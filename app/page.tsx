@@ -89,10 +89,6 @@ export default function Home() {
     setImportExportModalOpen(false)
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   const handlePrintAll = () => {
     setIsPrintingAll(true)
   }
@@ -255,10 +251,7 @@ export default function Home() {
           导入/导出
         </Button>
         <Button onClick={handlePrintAll} className="bg-gray-800 hover:bg-gray-700"> {/* Changed Link to Button */}
-          打印全部页面
-        </Button>
-        <Button onClick={handlePrint} className="bg-gray-800 hover:bg-gray-700">
-          打印当前页面
+          打印角色卡
         </Button>
         <button
           onClick={toggleGuide}

@@ -103,3 +103,55 @@ export function importCharacterData(file: File): Promise<boolean> {
     reader.readAsText(file)
   })
 }
+
+const SELECTED_CARDS_KEY = "selected_card_ids";
+
+export function saveSelectedCardIds(cardIds: string[]): void {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      localStorage.setItem(SELECTED_CARDS_KEY, JSON.stringify(cardIds));
+    }
+  } catch (error) {
+    console.error("保存选中卡牌ID失败:", error);
+  }
+}
+
+export function loadSelectedCardIds(): string[] {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      const savedData = localStorage.getItem(SELECTED_CARDS_KEY);
+      return savedData ? JSON.parse(savedData) : [];
+    }
+    return [];
+  } catch (error) {
+    console.error("读取选中卡牌ID失败:", error);
+    return [];
+  }
+}
+
+const FOCUSED_CARDS_KEY = "focused_card_ids";
+
+// Save focused card IDs to localStorage
+export function saveFocusedCardIds(cardIds: string[]): void {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      localStorage.setItem(FOCUSED_CARDS_KEY, JSON.stringify(cardIds));
+    }
+  } catch (error) {
+    console.error("保存聚焦卡牌ID失败:", error);
+  }
+}
+
+// Load focused card IDs from localStorage
+export function loadFocusedCardIds(): string[] {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      const savedData = localStorage.getItem(FOCUSED_CARDS_KEY);
+      return savedData ? JSON.parse(savedData) : [];
+    }
+    return [];
+  } catch (error) {
+    console.error("读取聚焦卡牌ID失败:", error);
+    return [];
+  }
+}

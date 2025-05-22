@@ -24,6 +24,8 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { StandardCard } from "@/data/card/card-types"
+import { loadFocusedCardIds } from "@/lib/storage"
+import { ALL_STANDARD_CARDS } from "@/data/card"
 
 interface CardDisplaySectionProps {
   cards: Array<StandardCard>
@@ -107,6 +109,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   const [professionCards, setProfessionCards] = useState<typeof cards>([])
   const [backgroundCards, setBackgroundCards] = useState<typeof cards>([]) // 合并血统和社区卡牌
   const [domainCards, setDomainCards] = useState<typeof cards>([]) // 添加领域卡牌列表
+  const [focusedCards, setFocusedCards] = useState<typeof cards>([]) // 添加聚焦卡牌列表
 
   // 当前选中的标签
   const [activeTab, setActiveTab] = useState("all")
@@ -120,6 +123,12 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     // 合并血统和社区卡牌为背景卡牌
     setBackgroundCards(validCards.filter((card) => card.type === "ancestry" || card.type === "community"))
     setDomainCards(validCards.filter((card) => card.type === "domain")) // 过滤领域卡牌
+
+    // 加载聚焦卡牌
+    const focusedCardIds = loadFocusedCardIds()
+    const newFocusedCards = ALL_STANDARD_CARDS.filter(card => focusedCardIds.includes(card.id || `temp-id-${Math.random().toString(36).substring(2, 9)}`));
+    setFocusedCards(newFocusedCards);
+
   }, [cards])
 
   // 切换卡片展开状态
@@ -196,6 +205,13 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
             return arrayMove(cards, oldIndex, newIndex)
           })
           break
+        case "focused": // 添加聚焦卡牌的排序处理
+          setFocusedCards((cards) => {
+            const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
+            const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
+            return arrayMove(cards, oldIndex, newIndex)
+          })
+          break
       }
     }
   }
@@ -246,6 +262,38 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     )
   }
 
+  // 更新容器高度
+  useEffect(() => {
+    const headerHeight = 80 // 假设头部和标签栏的高度
+    const cardHeight = 50 // 每张卡片的大致高度
+    const padding = 20 // 内边距
+
+    let numCards = 0
+    switch (activeTab) {
+      case "all":
+        numCards = allCards.length
+        break
+      case "profession":
+        numCards = professionCards.length
+        break
+      case "background":
+        numCards = backgroundCards.length
+        break
+      case "domain":
+        numCards = domainCards.length
+        break
+      case "focused": // 添加聚焦卡牌数量
+        numCards = focusedCards.length
+        break
+      default:
+        numCards = allCards.length
+    }
+
+    const contentHeight = numCards * cardHeight + padding
+    const newHeight = Math.min(Math.max(contentHeight + headerHeight, 200), 600) // 最小200，最大600
+    setContainerHeight(newHeight)
+  }, [activeTab, allCards, professionCards, backgroundCards, domainCards, focusedCards]) // 添加聚焦卡牌依赖
+
   return (
     <div className="border rounded-lg bg-gray-50 shadow-sm flex flex-col" style={{ height: containerHeight }}>
       <div className="p-2 flex-grow overflow-hidden">
@@ -257,6 +305,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
             <TabsTrigger value="profession">职业</TabsTrigger>
             <TabsTrigger value="background">背景</TabsTrigger>
             <TabsTrigger value="domain">领域</TabsTrigger> {/* 添加领域标签 */}
+            <TabsTrigger value="focused">聚焦</TabsTrigger> {/* 添加聚焦标签 */}
           </TabsList>
 
           <div className="flex-grow overflow-hidden">
@@ -278,6 +327,10 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
 
             <TabsContent value="domain" className="h-full m-0">
               {renderCardList(domainCards)}
+            </TabsContent>
+
+            <TabsContent value="focused" className="h-full m-0">
+              {renderCardList(focusedCards)}
             </TabsContent>
           </div>
         </Tabs>

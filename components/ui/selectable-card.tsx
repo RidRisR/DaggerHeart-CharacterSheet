@@ -2,14 +2,16 @@
 
 import type { StandardCard } from "@/data/card/card-types"
 import { getCardTypeColor } from "@/data/card/card-ui-config"
+import { saveSelectedCardIds, loadSelectedCardIds } from "@/lib/storage"
 import React, { useState, useEffect, useRef } from "react"
 
 interface SelectableCardProps {
     card: StandardCard
-    onClick: (cardId: string) => void
+    onClick: (cardId: string) => void; // Added onClick prop
+    isSelected: boolean; // Added isSelected prop
 }
 
-export function SelectableCard({ card, onClick }: SelectableCardProps) {
+export function SelectableCard({ card, onClick, isSelected }: SelectableCardProps) { // Added isSelected to props
     const [isHovered, setIsHovered] = useState(false)
     const [isAltPressed, setIsAltPressed] = useState(false)
     const cardRef = useRef<HTMLDivElement | null>(null)
@@ -72,9 +74,9 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
         <div
             ref={cardRef}
             key={cardId}
-            className="relative cursor-pointer h-full flex flex-col w-60" // Added w-72 for fixed width
+            className={`relative cursor-pointer h-full flex flex-col w-60 ${isSelected ? 'ring-2 ring-blue-500' : ''}`} // Added conditional ring for selection
             onClick={() => onClick(cardId)}
-            onMouseEnter={() => setIsHovered(true)}
+            onMouseEnter={() => setIsHovered(true)} // Corrected to setIsHovered(true)
             onMouseLeave={() => {
                 setIsHovered(false)
                 setIsAltPressed(false)

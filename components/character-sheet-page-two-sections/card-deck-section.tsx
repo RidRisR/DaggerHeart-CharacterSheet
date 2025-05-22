@@ -89,7 +89,7 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
     e.preventDefault() // 阻止默认右键菜单
 
     // 特殊卡位不允许取消选中
-    if (isSpecialSlot(index)) return
+    // if (isSpecialSlot(index)) return
 
     // 确保 selectedCards 存在
     setSelectedCards((prev) => {
@@ -289,7 +289,7 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
 
                     {/* ALT键提示 */}
                     <div className="text-[10px] text-gray-400 text-center p-1 bg-gray-50">
-                      {isAltPressed ? "松开ALT键返回正常视图" : "按住ALT键查看大图"}
+                      {isAltPressed ? "松开ALT键返回正常视图" : "按住ALT键查看大图(施工中)"}
                     </div>
                   </div>
                 )}

@@ -18,7 +18,7 @@ export function CommunitySelectionModal({ isOpen, onClose, onSelect, title }: Co
 
   useEffect(() => {
     // 过滤出社区卡牌
-    const cards = ALL_STANDARD_CARDS.filter((card) => card.type === "community" || card.cardClass === "community").map(
+    const cards = ALL_STANDARD_CARDS.filter((card) => card.type === "community").map(
       (card) => ({
         id: card.id || card.name.toLowerCase().replace(/\s+/g, "-"),
         name: card.name,

@@ -56,7 +56,7 @@ const defaultFormData = {
   characterMotivation: "",
   cards: Array(20)
     .fill(0)
-    .map(() => (createEmptyCard)),
+    .map(() => createEmptyCard()),
   checkedUpgrades: {
     tier1: {} as Record<number, boolean>,
     tier2: {} as Record<number, boolean>,
@@ -71,7 +71,7 @@ export default function Home() {
     inventory: ["", "", "", "", ""], // 确保有5个空字符串
     cards: Array(20)
       .fill(0)
-      .map(() => (createEmptyCard)),
+      .map(() => createEmptyCard()),
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isPrintingAll, setIsPrintingAll] = useState(false) // Added state for printing all pages
@@ -133,12 +133,12 @@ export default function Home() {
       if (!mergedData.cards || !Array.isArray(mergedData.cards)) {
         mergedData.cards = Array(20)
           .fill(0)
-          .map(() => (createEmptyCard))
+          .map(() => createEmptyCard())
       } else if (mergedData.cards.length < 20) {
         // 如果卡牌数组长度不足20，补充空卡牌
         const emptyCards = Array(20 - mergedData.cards.length)
           .fill(0)
-          .map(() => (createEmptyCard))
+          .map(() => createEmptyCard())
         mergedData.cards = [...mergedData.cards, ...emptyCards]
       }
 
@@ -168,6 +168,7 @@ export default function Home() {
       setFormData({
         ...defaultFormData,
         inventory: ["", "", "", "", ""], // 确保有5个空字符串
+        cards: Array(20).fill(0).map(() => createEmptyCard()), // Ensure cards is array of StandardCard objects
       })
     } finally {
       setIsLoading(false)

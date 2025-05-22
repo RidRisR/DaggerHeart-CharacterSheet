@@ -19,7 +19,7 @@ export function ProfessionSelectionModal({ isOpen, onClose, onSelect, title }: P
   useEffect(() => {
     // 过滤出职业卡牌
     const cards = ALL_STANDARD_CARDS.filter(
-      (card) => card.type === "profession" || card.cardClass === "profession",
+      (card) => card.type === "profession",
     ).map((card) => ({
       id: card.id || card.name.toLowerCase().replace(/\s+/g, "-"),
       name: card.name,

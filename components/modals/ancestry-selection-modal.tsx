@@ -19,7 +19,7 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
 
   useEffect(() => {
     // 过滤出血统卡牌
-    const cards = ALL_STANDARD_CARDS.filter((card) => card.type === "ancestry" || card.cardClass === "ancestry").map(
+    const cards = ALL_STANDARD_CARDS.filter((card) => card.type === "ancestry").map(
       (card) => ({
         id: card.id || card.name.toLowerCase().replace(/\s+/g, "-"),
         name: card.name,

@@ -23,16 +23,10 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { StandardCard } from "@/data/card/card-types"
 
 interface CardDisplaySectionProps {
-  cards: Array<{
-    name: string
-    type: string
-    rarity: string
-    level: string
-    description: string
-    imageUrl: string
-  }>
+  cards: Array<StandardCard>
 }
 
 // 可排序的卡牌组件
@@ -109,7 +103,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   const [containerHeight, setContainerHeight] = useState(400)
 
   // 存储当前显示的卡牌列表
-  const [allCards, setAllCards] = useState(cards.filter((card) => card.name))
+  const [allCards, setAllCards] = useState(cards.filter((card) => card && card.name))
   const [professionCards, setProfessionCards] = useState<typeof cards>([])
   const [backgroundCards, setBackgroundCards] = useState<typeof cards>([]) // 合并血统和社区卡牌
   const [domainCards, setDomainCards] = useState<typeof cards>([]) // 添加领域卡牌列表
@@ -119,7 +113,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
 
   // 更新卡牌分类
   useEffect(() => {
-    const validCards = cards.filter((card) => card.name)
+    const validCards = cards.filter((card) => card && card.name)
     setAllCards(validCards)
     setProfessionCards(validCards.filter((card) => card.type === "profession" || card.type === "subclass"))
 

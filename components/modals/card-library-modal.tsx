@@ -1,6 +1,6 @@
 "use client"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { CardLibrary } from "@/components/card-management/card-library"
+import CardLibrary from "@/components/card-management/card-library"
 import type { StandardCard } from "@/data/card/card-types"
 
 interface CardLibraryModalProps {
@@ -20,11 +20,10 @@ export function CardLibraryModal({ isOpen, onClose, onSelectCard, title = "Âç°Áâ
 
         <div className="flex-1 overflow-y-auto">
           <CardLibrary
-            onSelectCard={(card) => {
+            onCardSelect={(card) => {
               onSelectCard(card)
               onClose()
-            }}
-          />
+            }} cards={[]} />
         </div>
       </DialogContent>
     </Dialog>

@@ -2,19 +2,20 @@ import { v4 as uuidv4 } from "uuid"
 import type { StandardCard } from "@/data/card/card-types"
 
 // 职业卡牌类型
-export type ProfessionCardClass = "战士" | "法师" | "盗贼" | "牧师" | "游侠" | "吟游诗人" | "圣骑士" | "德鲁伊"
+export type ProfessionCardClass = "吟游诗人" | "德鲁伊" | "守护者" | "游侠" | "盗贼" | "神使" | "术士" | "战士" | "法师"
 
 // 职业卡牌数据结构
 export interface ProfessionCard {
-  ID: string
-  名称: string
-  职业: ProfessionCardClass
-  描述?: string
+  id: string
+  名称: ProfessionCardClass
+  简介: string
   imageUrl?: string
-  等级?: number
-  特技?: string
-  要求?: string
-  type?: string
+  领域1?: string
+  领域2?: string
+  起始生命: number
+  起始闪避: number
+  希望特性: string
+  职业特性: string
 }
 
 
@@ -22,14 +23,15 @@ class ProfessionCardConverter {
   toStandard(card: ProfessionCard): StandardCard {
     return {
       standarized: true,
-      id: card.ID || uuidv4(),
+      id: card.id || uuidv4(),
       name: card.名称 || "",
       type: "profession",
-      description: card.描述 || "",
+      description: card.职业特性 || "",
       imageUrl: card.imageUrl || "",
-      class: card.职业,
+      class: card.名称,
       cardSelectDisplay: {
-        "item1": card.职业 || "",
+        "item1": card.领域1 || "",
+        "item2": card.领域2 || "",
       },
     }
   }

@@ -19,9 +19,7 @@ export const SPECIAL_CARD_POSITIONS = ["profession", "ancestry", "community"]
 export const CARD_CLASS_OPTIONS = {
   profession: ["吟游诗人", "德鲁伊", "守护者", "游侠", "盗贼", "神使", "术士", "战士", "法师"],
   ancestry: ["械灵", "恶魔", "龙人", "矮人", "精灵", "仙灵", "羊蹄人", "费尔伯格", "孢菌人", "龟人", "巨人", "哥布林", "半身人", "人类", "猫人", "兽人", "蛙裔", "猿人"],
-  community: ["学者", "工匠", "商人", "贵族", "农民", "士兵", "艺术家", "医师", "探险家", "海员"],
-  attack: ["近战", "远程", "法术", "陷阱", "毒药", "爆炸", "突袭", "狙击", "连击", "群攻"],
-  defense: ["格挡", "闪避", "护甲", "法术防护", "反击", "抵抗", "治疗", "恢复", "护盾", "反射"],
+  community: ["高贵之民", "学识之民", "秩序之民", "山脊之民", "海滨之民", "狡诈之民", "地下之民", "流浪之民", "荒野之民"],
   subclass: ["吟游诗人", "德鲁伊", "守护者", "游侠", "盗贼", "神使", "术士", "战士", "法师"],
   domain: ["奥术", "利刃", "骸骨", "典籍", "优雅", "午夜", "贤者", "辉耀", "勇气"],
 }
@@ -31,8 +29,6 @@ export const CARD_CLASS_OPTIONS_BY_TYPE = {
   profession: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.profession.map(value => ({ value, label: value }))],
   ancestry: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.ancestry.map(value => ({ value, label: value }))],
   community: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.community.map(value => ({ value, label: value }))],
-  attack: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.attack.map(value => ({ value, label: value }))],
-  defense: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.defense.map(value => ({ value, label: value }))],
   subclass: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.subclass.map(value => ({ value, label: value }))],
   domain: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.domain.map(value => ({ value, label: value }))]
 }

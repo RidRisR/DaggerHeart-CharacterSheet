@@ -87,7 +87,7 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
                     <h3 className="text-base font-semibold mb-1 truncate" title={displayName}>
                         {displayName}
                     </h3>
-                    <div className="text-xs text-gray-600 overflow-y-auto flex-grow">
+                    <div className="text-xs text-gray-600 overflow-y-hide flex-grow">
                         {displayDescription}
                     </div>
                 </div>
@@ -99,20 +99,20 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
                         backgroundColor: getCardTypeColor(displayType) || "#4b5563",
                     }}
                 >
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-white">
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
                         {displayItem1 && (
                             <div className="truncate" title={displayItem1}>
-                                <span className="opacity-80">项目1:</span> {displayItem1}
+                                <span className="opacity-80"></span> {displayItem1}
                             </div>
                         )}
                         {displayItem2 && (
                             <div className="truncate" title={displayItem2}>
-                                <span className="opacity-80">项目2:</span> {displayItem2}
+                                <span className="opacity-80"></span> {displayItem2}
                             </div>
                         )}
                         {displayItem3 && (
                             <div className="col-span-2 truncate" title={displayItem3}>
-                                <span className="opacity-80">项目3:</span> {displayItem3}
+                                <span className="opacity-80"></span> {displayItem3}
                             </div>
                         )}
                     </div>

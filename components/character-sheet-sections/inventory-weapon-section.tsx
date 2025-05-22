@@ -34,7 +34,7 @@ export function InventoryWeaponSection({
           <button
             type="button"
             onClick={() => openWeaponModal(nameField)}
-            className="w-full border border-gray-400 rounded p-0.5 h-6 text-[10px] text-left px-2 bg-white"
+            className="printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-[10px] text-left px-2 bg-white"
           >
             {formData[nameField] || "选择武器"}
           </button>

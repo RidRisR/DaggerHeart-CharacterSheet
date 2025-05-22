@@ -79,11 +79,6 @@ body {
     color: transparent !important;
   }
 
-  /* 隐藏所有选择按钮的文本 */
-  .header-selection-button {
-    color: transparent !important;
-  }
-
   /* 确保下拉框在打印时保持白色背景 */
   .bg-white {
     background-color: white !important;
@@ -117,6 +112,26 @@ body {
   .bg-gray-800 .select-value {
     color: black !important;
   }
+/* .header-selection-button { */
+/* color: transparent !important; */
+/* Intentionally commented out */
+/* } */
+
+/* New general rules for printable selection buttons */
+.printable-selection-button.print-placeholder-text-hidden {
+  color: transparent !important;
+  /* Hide placeholder text */
+}
+
+.printable-selection-button.print-selected-text-visible {
+  color: black !important;
+  /* Ensure selected text is black and visible */
+}
+
+/* Remove the specific override for print-force-visible-text as it's replaced by the above */
+/* .header-selection-button.print-force-visible-text { */
+/* color: inherit !important; */
+/* } */
 }
 
 .shield-shape {

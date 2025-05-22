@@ -26,14 +26,12 @@ export function HeaderSection({
           <button
             type="button"
             onClick={openProfessionModal}
-            className="header-selection-button w-56 bg-white border-gray-400 text-gray-800 text-xl font-bold print:bg-white print:text-black rounded p-1 h-7 text-xs text-left px-2"
+            className="header-selection-button printable-selection-button w-56 bg-white border-gray-400 text-gray-800 text-xl font-bold print:bg-white print:text-black rounded p-1 h-7 text-xs text-left px-2"
           >
             {formData.profession
               ? ALL_STANDARD_CARDS.find(
                   (card) =>
-                    (card.id === formData.profession ||
-                      (card?.name && card.name.toLowerCase().replace(/\s+/g, "-") === formData.profession)) &&
-                    (card.type === "profession" || card.cardClass === "profession"),
+                  card.id === formData.profession && card.type === "profession",
                 )?.name || "选择职业"
               : "选择职业"}
           </button>
@@ -58,14 +56,12 @@ export function HeaderSection({
             <button
               type="button"
               onClick={openCommunityModal}
-              className="header-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
+              className="header-selection-button printable-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
             >
               {formData.community
                 ? ALL_STANDARD_CARDS.find(
                     (card) =>
-                      (card.id === formData.community ||
-                        (card?.name && card.name.toLowerCase().replace(/\s+/g, "-") === formData.community)) &&
-                      (card.type === "community" || card.cardClass === "community"),
+                    card.id === formData.community && card.type === "community",
                   )?.name || "选择社区"
                 : "选择社区"}
             </button>
@@ -78,14 +74,12 @@ export function HeaderSection({
               <button
                 type="button"
                 onClick={() => openAncestryModal("ancestry1")}
-                className="header-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
+                className="header-selection-button printable-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
               >
                 {formData.ancestry1
                   ? ALL_STANDARD_CARDS.find(
                       (card) =>
-                        (card.id === formData.ancestry1 ||
-                          (card?.name && card.name.toLowerCase().replace(/\s+/g, "-") === formData.ancestry1)) &&
-                        (card.type === "ancestry" || card.cardClass === "ancestry"),
+                      card.id === formData.ancestry1 && card.type === "ancestry",
                     )?.name || "选择血统"
                   : "选择血统"}
               </button>
@@ -93,14 +87,12 @@ export function HeaderSection({
               <button
                 type="button"
                 onClick={() => openAncestryModal("ancestry2")}
-                className="header-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
+                className="header-selection-button printable-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
               >
                 {formData.ancestry2
                   ? ALL_STANDARD_CARDS.find(
                       (card) =>
-                        (card.id === formData.ancestry2 ||
-                          (card?.name && card.name.toLowerCase().replace(/\s+/g, "-") === formData.ancestry2)) &&
-                        (card.type === "ancestry" || card.cardClass === "ancestry"),
+                      card.id === formData.ancestry2 && card.type === "ancestry",
                     )?.name || "选择血统"
                   : "选择血统"}
               </button>

@@ -18,7 +18,7 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
           <button
             type="button"
             onClick={openArmorModal}
-            className="header-selection-button print-hide-selection-text w-full border border-gray-400 rounded p-0.5 h-6 text-[10px] text-left px-2 bg-white"
+            className="header-selection-button print-hide-selection-text printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-[10px] text-left px-2 bg-white"
           >
             {formData.armorName || "选择护甲"}
           </button>

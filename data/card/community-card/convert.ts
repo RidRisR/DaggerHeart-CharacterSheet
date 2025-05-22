@@ -22,14 +22,11 @@ class CommunityCardConverter {
       id: card.ID || uuidv4(),
       name: card.名称 || "",
       type: "community",
-      primaryAttribute: "种族",
-      secondaryAttribute: card.特性,
       description: card.描述 || "",
       imageUrl: card.imageUrl,
       class: card.名称,
-      attributes: {
-        "简介": card.简介 || "",
-        "特性": card.特性 || "",
+      cardSelectDisplay: {
+        "item1": card.特性 || "",
       },
     }
   }

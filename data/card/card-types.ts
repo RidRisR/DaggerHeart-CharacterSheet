@@ -7,12 +7,10 @@ export interface StandardCard {
   level?: number
   description?: string
   imageUrl?: string
-  primaryAttribute?: string
-  secondaryAttribute?: string
   cardSelectDisplay: {
-    item1: string
-    item2: string
-    item3: string
+    item1?: string
+    item2?: string
+    item3?: string
   }
   // ... 其他字段
 }

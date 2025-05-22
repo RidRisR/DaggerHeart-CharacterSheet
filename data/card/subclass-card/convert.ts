@@ -12,13 +12,29 @@ export interface SubClassCard {
   imageUrl?: string
   主职: SubClassClass
   子职业: string
-  等级: number
+  等级: string
   施法?: string
 }
 
 class SubClassCardConverter {
   // 转换为标准格式
   toStandard(card: SubClassCard): StandardCard {
+    // 等级转换：基石=1，专精=2，精通=3
+    let levelNum: number
+    switch (card.等级) {
+      case "基石":
+        levelNum = 1
+        break
+      case "专精":
+        levelNum = 2
+        break
+      case "精通":
+        levelNum = 3
+        break
+      default:
+        levelNum = 0 // 未知等级
+    }
+
     return {
       standarized: true,
       id: card.id || uuidv4(),
@@ -27,9 +43,12 @@ class SubClassCardConverter {
       description: card.描述,
       imageUrl: card.imageUrl,
       class: card.主职,
-      primaryAttribute: card.子职业,
-      secondaryAttribute: card.施法,
-      level: card.等级,
+      level: levelNum,
+      cardSelectDisplay: {
+        item1: card.子职业,
+        item2: card.等级,
+        item3: card.施法 || "",
+      },
     }
   }
 }

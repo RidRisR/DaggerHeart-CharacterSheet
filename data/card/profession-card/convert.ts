@@ -28,8 +28,9 @@ class ProfessionCardConverter {
       description: card.描述 || "",
       imageUrl: card.imageUrl || "",
       class: card.职业,
-      primaryAttribute: card.特技,
-      secondaryAttribute: card.要求,
+      cardSelectDisplay: {
+        "item1": card.职业 || "",
+      },
     }
   }
 }

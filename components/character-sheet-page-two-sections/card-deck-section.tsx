@@ -214,10 +214,10 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
                 {card?.name && (
                   <div className="flex justify-between items-center text-xs text-gray-500">
                     <span className="truncate max-w-[33%]">
-                      {standardCard?.class ? standardCard.class : "——"}
+                      {standardCard?.cardSelectDisplay?.item1 || "——"}
                     </span>
-                    <span className="truncate max-w-[33%]">{standardCard?.primaryAttribute || "——"}</span>
-                    <span className="truncate max-w-[33%]">{standardCard?.secondaryAttribute || "——"}</span>
+                    <span className="truncate max-w-[33%]">{standardCard?.cardSelectDisplay?.item2 || "——"}</span>
+                    <span className="truncate max-w-[33%]">{standardCard?.cardSelectDisplay?.item3 || "——"}</span>
                   </div>
                 )}
 

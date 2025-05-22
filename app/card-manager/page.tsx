@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import CardLibrary from "@/components/card-management/card-library"
 import { CardDetailModal } from "@/components/modals/card-detail-modal"
 import type { StandardCard } from "@/data/card/card-types"
 import { ALL_STANDARD_CARDS } from "@/data/card"
@@ -179,9 +178,9 @@ export default function CardManagerPage() {
 
                     {/* 卡牌底部信息 */}
                     <div className="flex justify-between items-center text-xs text-gray-500">
-                      <span className="truncate max-w-[40%]">{card.class || "——"}</span>
-                      <span>{card.primaryAttribute}</span>
-                      <span>{card.secondaryAttribute}</span>
+                      <span className="truncate max-w-[40%]">{card.cardSelectDisplay.item1 || "——"}</span>
+                      <span>{card.cardSelectDisplay.item2 || "——"}</span>
+                      <span>{card.cardSelectDisplay.item3 || "——"}</span>
                     </div>
 
                     {/* 卡牌类型标签 */}
@@ -250,10 +249,6 @@ export default function CardManagerPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="library">
-          {/* 卡牌库 */}
-          <CardLibrary cards={library} onSelectCard={(card) => openCardDetail(card, false)} />
-        </TabsContent>
       </Tabs>
 
       {/* 卡牌详情模态框 */}

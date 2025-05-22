@@ -41,9 +41,8 @@ class AncestryCardConverter {
       description: rawCard.效果,
       imageUrl: rawCard.imageURL,
       class: rawCard.种族, // Map 种族 to class
-      primaryAttribute: "血统", // Map 效果 to primaryAttribute
-      attributes: {
-        "简介": rawCard.简介 || "",
+      cardSelectDisplay: {
+        "item1": rawCard.种族,
       },
     };
   }

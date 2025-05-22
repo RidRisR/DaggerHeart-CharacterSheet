@@ -33,11 +33,9 @@ class DomainCardConverter {
       description: card.描述 || "",
       imageUrl: card.imageUrl || "",
       class: card.领域,
-      primaryAttribute: card.属性,
-      secondaryAttribute: "RC." + card.回想,
       level: card.等级,
       cardSelectDisplay: {
-        "item1": card.属性 || "",
+        "item1": card.领域 || "",
         "item2": card.回想 ? "RC." + card.回想 : "",
         "item3": card.等级 ? "LV." + card.等级.toString() : "",
       },

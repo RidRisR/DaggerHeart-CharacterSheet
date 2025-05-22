@@ -1,10 +1,10 @@
 "use client"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ALL_STANDARD_CARDS } from "@/data/card"
-import { getCardTypeColor } from "@/data/card/card-ui-config"
 import { useState, useEffect } from "react"
+import type { StandardCard } from "@/data/card/card-types"
+import { SelectableCard } from "@/components/ui/selectable-card"
 
 interface CommunityModalProps {
   isOpen: boolean
@@ -14,31 +14,21 @@ interface CommunityModalProps {
 }
 
 export function CommunitySelectionModal({ isOpen, onClose, onSelect, title }: CommunityModalProps) {
-  const [communityCards, setCommunityCards] = useState<any[]>([])
+  const [communityCards, setCommunityCards] = useState<StandardCard[]>([])
 
   useEffect(() => {
-    // 过滤出社区卡牌
-    const cards = ALL_STANDARD_CARDS.filter((card) => card.type === "community").map(
-      (card) => ({
-        id: card.id || card.name.toLowerCase().replace(/\s+/g, "-"),
-        name: card.name,
-        description: card.description || "",
-        imageUrl: card.imageUrl || `/placeholder.svg?height=1110&width=816&query=fantasy community card ${card.name}`,
-      }),
+    const cards = ALL_STANDARD_CARDS.filter(
+      (card): card is StandardCard => card.type === "community",
     )
-
     setCommunityCards(cards)
   }, [])
 
   if (!isOpen) return null
 
-  // 计算卡牌宽度，保持816:1110的比例
-  const aspectRatio = 816 / 1110 // 约为 0.735
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl p-4">
+      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl p-4 max-h-[90vh] flex flex-col">
         <div className="mb-4 border-b border-gray-200 pb-2 flex justify-between items-center">
           <h2 className="text-xl font-bold">{title}</h2>
           <Button
@@ -49,38 +39,10 @@ export function CommunitySelectionModal({ isOpen, onClose, onSelect, title }: Co
             清除选择
           </Button>
         </div>
-        <ScrollArea className="h-[70vh] pr-4">
+        <ScrollArea className="h-[70vh] pr-4 flex-1">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {communityCards.map((community) => (
-              <div
-                key={community.id}
-                className="rounded-lg overflow-hidden shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => onSelect(community.id)}
-              >
-                <div className="bg-white h-40 flex items-center justify-center">
-                  {community.imageUrl ? (
-                    <img
-                      src={community.imageUrl || "/placeholder.svg"}
-                      alt={community.name}
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  ) : (
-                    <div className="text-gray-400">
-                      <Plus size={24} />
-                    </div>
-                  )}
-                </div>
-                <div className={`p-2 text-white ${getCardTypeColor("community")}`}>
-                  <div className="font-medium">{community.name}</div>
-                  <div className="flex justify-between items-center">
-                    <span>community</span>
-                    <div className="flex gap-2">
-                      <span>—</span>
-                      <span>—</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            {communityCards.map((card) => (
+              <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id)} />
             ))}
           </div>
         </ScrollArea>

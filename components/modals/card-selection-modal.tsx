@@ -400,13 +400,13 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                             <div className="text-sm font-medium">{card.name || "未命名卡牌"}</div>
                             <div className="flex justify-between items-center text-xs opacity-90 mt-1">
                               <span className="truncate max-w-[25%]">
-                                {card.class || card.attributes?.主职业 || "——"}
+                                {card.class || "——"}
                               </span>
                               <span className="truncate max-w-[25%]">
-                                {card.primaryAttribute || card.attributes?.子职业 || "——"}
+                                {card.primaryAttribute || "——"}
                               </span>
                               <span className="truncate max-w-[25%]">{card.secondaryAttribute || "——"}</span>
-                              <span>{card.level || card.attributes?.等级 || "——"}</span>
+                              <span>{card.level || "——"}</span>
                             </div>
                           </div>
                         </div>

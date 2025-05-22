@@ -86,14 +86,7 @@ const defaultFormData = {
   experienceValues: ["", "", "", "", ""],
   cards: Array(20)
     .fill(0)
-    .map(() => ({
-      name: "",
-      type: "",
-      rarity: "",
-      level: "",
-      description: "",
-      imageUrl: "",
-    })),
+    .map(() => (createEmptyCard)),
 }
 
 interface CharacterSheetProps {
@@ -124,14 +117,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       ? formData.cards
       : Array(20)
           .fill(0)
-          .map(() => ({
-            name: "",
-            type: "",
-            rarity: "",
-            level: "",
-            description: "",
-            imageUrl: "",
-          })),
+        .map(() => (createEmptyCard)),
     armorBoxes: Array.isArray(formData?.armorBoxes) ? formData.armorBoxes : Array(12).fill(false),
     hp: Array.isArray(formData?.hp) ? formData.hp : Array(18).fill(false),
     stress: Array.isArray(formData?.stress) ? formData.stress : Array(18).fill(false),

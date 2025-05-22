@@ -10,6 +10,7 @@ import { CharacterCreationGuide } from "@/components/guide/character-creation-gu
 import { Button } from "@/components/ui/button"
 import { ImportExportModal } from "@/components/modals/import-export-modal"
 import PrintHelper from "@/app/print-helper"
+import { createEmptyCard } from "@/data/card/card-types"
 
 // 默认表单数据
 const defaultFormData = {
@@ -55,14 +56,7 @@ const defaultFormData = {
   characterMotivation: "",
   cards: Array(20)
     .fill(0)
-    .map(() => ({
-      name: "",
-      type: "",
-      rarity: "",
-      level: "",
-      description: "",
-      imageUrl: "",
-    })),
+    .map(() => (createEmptyCard)),
   checkedUpgrades: {
     tier1: {} as Record<number, boolean>,
     tier2: {} as Record<number, boolean>,
@@ -77,14 +71,7 @@ export default function Home() {
     inventory: ["", "", "", "", ""], // 确保有5个空字符串
     cards: Array(20)
       .fill(0)
-      .map(() => ({
-        name: "",
-        type: "",
-        rarity: "",
-        level: "",
-        description: "",
-        imageUrl: "",
-      })),
+      .map(() => (createEmptyCard)),
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isPrintingAll, setIsPrintingAll] = useState(false) // Added state for printing all pages
@@ -146,26 +133,12 @@ export default function Home() {
       if (!mergedData.cards || !Array.isArray(mergedData.cards)) {
         mergedData.cards = Array(20)
           .fill(0)
-          .map(() => ({
-            name: "",
-            type: "",
-            rarity: "",
-            level: "",
-            description: "",
-            imageUrl: "",
-          }))
+          .map(() => (createEmptyCard))
       } else if (mergedData.cards.length < 20) {
         // 如果卡牌数组长度不足20，补充空卡牌
         const emptyCards = Array(20 - mergedData.cards.length)
           .fill(0)
-          .map(() => ({
-            name: "",
-            type: "",
-            rarity: "",
-            level: "",
-            description: "",
-            imageUrl: "",
-          }))
+          .map(() => (createEmptyCard))
         mergedData.cards = [...mergedData.cards, ...emptyCards]
       }
 

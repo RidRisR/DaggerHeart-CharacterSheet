@@ -24,7 +24,7 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
   // 确保 formData 和 formData.cards 存在
   const cards =
     formData?.cards ||
-    Array(20).fill()
+    Array(20).fill(createEmptyCard)
 
   // 初始化时选中前四张卡
   useEffect(() => {

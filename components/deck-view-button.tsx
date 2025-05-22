@@ -4,16 +4,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { DeckViewModal } from "@/components/modals/deck-view-modal"
 import { loadCharacterData, saveCharacterData } from "@/lib/storage"
+import { createEmptyCard } from "@/data/card/card-types"
 
 // 默认空卡牌
-const emptyCard = {
-  name: "",
-  type: "",
-  rarity: "",
-  level: "",
-  description: "",
-  imageUrl: "",
-}
+const emptyCard = createEmptyCard
 
 export function DeckViewButton() {
   const [isModalOpen, setIsModalOpen] = useState(false)

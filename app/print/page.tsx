@@ -5,6 +5,7 @@ import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import PrintHelper from "@/app/print-helper"
 import { loadCharacterData } from "@/lib/storage"
+import { createEmptyCard } from "@/data/card/card-types"
 
 // 默认表单数据，确保包含所有必要的字段
 const defaultFormData = {
@@ -65,14 +66,7 @@ const defaultFormData = {
   experienceValues: ["", "", "", "", ""],
   cards: Array(20)
     .fill(0)
-    .map(() => ({
-      name: "",
-      type: "",
-      rarity: "",
-      level: "",
-      description: "",
-      imageUrl: "",
-    })),
+    .map(() => (createEmptyCard)),
   checkedUpgrades: {
     tier1: {},
     tier2: {},

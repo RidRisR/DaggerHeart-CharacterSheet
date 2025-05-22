@@ -1,35 +1,56 @@
-import { v4 as uuidv4 } from "uuid"
-import type { StandardCard } from "@/data/card/card-types"
-
+import { v4 as uuidv4 } from "uuid";
+import type { StandardCard } from "@/data/card/card-types";
 // 血统卡牌类型
-export type AncestryCardClass = "人类" | "精灵" | "矮人" | "半身人" | "侏儒" | "半兽人" | "半精灵" | "龙裔" | "兽人"
+export type AncestryCardClass =
+  | "械灵"
+  | "恶魔"
+  | "龙人"
+  | "矮人"
+  | "精灵"
+  | "仙灵"
+  | "羊蹄人"
+  | "费尔伯格"
+  | "孢菌人"
+  | "龟人"
+  | "巨人"
+  | "哥布林"
+  | "半身人"
+  | "人类"
+  | "猫人"
+  | "兽人"
+  | "蛙裔"
+  | "猿人";
 
-// 血统卡牌数据结构
 export interface AncestryCard {
-  id: string
-  name: string
-  description?: string
-  imageUrl?: string
-  class: AncestryCardClass
-  trait?: string
-  homeland?: string
+  id: string;
+  名称: string;
+  种族: AncestryCardClass;
+  简介?: string;
+  效果?: string;
+  imageURL?: string;
 }
 
 class AncestryCardConverter {
   // 转换为标准格式
-  toStandard(card: AncestryCard): StandardCard {
+  toStandard(rawCard: AncestryCard): StandardCard {
     return {
       standarized: true,
-      id: card.id || uuidv4(),
-      name: card.name,
+      id: rawCard.id || uuidv4(),
+      name: rawCard.名称,
       type: "ancestry",
-      description: card.description,
-      imageUrl: card.imageUrl,
-      class: card.class, //must be string
-      primaryAttribute: card.trait,
-      secondaryAttribute: card.homeland,
-    }
+      description: rawCard.效果,
+      imageUrl: rawCard.imageURL,
+      class: rawCard.种族, // Map 种族 to class
+      primaryAttribute: "血统", // Map 效果 to primaryAttribute
+      attributes: {
+        "简介": rawCard.简介 || "",
+      },
+    };
   }
 }
 
-export const ancestryCardConverter = new AncestryCardConverter()
+export const ancestryCardConverter = new AncestryCardConverter();
+
+// Example of how to get all standard cards:
+// const allStandardAncestryCards = ancestryCardConverter.getAllStandardCards();
+// console.log(allStandardAncestryCards);

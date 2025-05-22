@@ -5,16 +5,16 @@ import type React from "react"
 interface InventoryWeaponSectionProps {
   formData: any
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  handleBooleanChange: (field: string) => void
-  openWeaponModal: (fieldName: string) => void
+  openWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void
+  handleBooleanChange: (fieldName: string) => void // Added this line
   index: number
 }
 
 export function InventoryWeaponSection({
   formData,
   handleInputChange,
-  handleBooleanChange,
   openWeaponModal,
+  handleBooleanChange, // Added this line
   index,
 }: InventoryWeaponSectionProps) {
   const nameField = `inventoryWeapon${index}Name`
@@ -33,7 +33,7 @@ export function InventoryWeaponSection({
           <label className="text-[8px] text-gray-600">NAME</label>
           <button
             type="button"
-            onClick={() => openWeaponModal(nameField)}
+            onClick={() => openWeaponModal(`inventoryWeapons.${index}.name`, "inventory")}
             className="printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-[10px] text-left px-2 bg-white"
           >
             {formData[nameField] || "选择武器"}
@@ -77,7 +77,7 @@ export function InventoryWeaponSection({
           <input
             type="checkbox"
             id={primaryField}
-            checked={formData[primaryField]}
+            checked={!!formData[primaryField]} // Ensure value is boolean
             onChange={() => handleBooleanChange(primaryField)}
             className="mr-1 h-3 w-3"
           />
@@ -89,7 +89,7 @@ export function InventoryWeaponSection({
           <input
             type="checkbox"
             id={secondaryField}
-            checked={formData[secondaryField]}
+            checked={!!formData[secondaryField]} // Ensure value is boolean
             onChange={() => handleBooleanChange(secondaryField)}
             className="mr-1 h-3 w-3"
           />

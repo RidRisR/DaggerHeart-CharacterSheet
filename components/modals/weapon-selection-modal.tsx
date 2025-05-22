@@ -1,16 +1,48 @@
 "use client"
-import { weaponData } from "@/data/game-data"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { primaryWeapons } from "@/data/list/primary-weapon";
+import { secondaryWeapons } from "@/data/list/secondary-weapon";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useMemo } from 'react';
 
 interface WeaponModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSelect: (weaponId: string) => void
-  title: string
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (weaponId: string, weaponType: 'primary' | 'secondary') => void;
+  title: string;
+  weaponSlotType: "primary" | "secondary" | "inventory";
 }
 
-export function WeaponSelectionModal({ isOpen, onClose, onSelect, title }: WeaponModalProps) {
-  if (!isOpen) return null
+interface Weapon {
+  名称: string;
+  等级: string;
+  检定: string;
+  属性: string;
+  范围: string;
+  伤害: string;
+  负荷: string;
+  特性名称: string;
+  描述: string;
+  id: string;
+  weaponType: "primary" | "secondary";
+}
+
+export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponSlotType }: WeaponModalProps) {
+  if (!isOpen) return null;
+
+  const availableWeapons: Weapon[] = useMemo(() => {
+    let weapons: Weapon[] = [];
+    if (weaponSlotType === "primary" || weaponSlotType === "inventory") {
+      weapons = weapons.concat(
+        primaryWeapons.map((w) => ({ ...w, id: w.名称, weaponType: "primary" }))
+      );
+    }
+    if (weaponSlotType === "secondary" || weaponSlotType === "inventory") {
+      weapons = weapons.concat(
+        secondaryWeapons.map((w) => ({ ...w, id: w.名称, weaponType: "secondary" }))
+      );
+    }
+    return weapons;
+  }, [weaponSlotType]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -25,37 +57,42 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title }: Weapo
               <thead className="bg-gray-800 text-white sticky top-0 z-10">
                 <tr>
                   <th className="p-2 text-left">名称</th>
+                  <th className="p-2 text-left">类型</th>
                   <th className="p-2 text-left">等级</th>
-                  <th className="p-2 text-left">判定</th>
+                  <th className="p-2 text-left">检定</th>
                   <th className="p-2 text-left">属性</th>
                   <th className="p-2 text-left">范围</th>
                   <th className="p-2 text-left">伤害</th>
                   <th className="p-2 text-left">负荷</th>
                   <th className="p-2 text-left">特性</th>
+                  <th className="p-2 text-left">描述</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
                   className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => onSelect("none")}
+                  onClick={() => onSelect("none", "primary")}
                 >
-                  <td className="p-2" colSpan={7}>
+                  <td className="p-2" colSpan={10}>
                     --清除选择--
                   </td>
                 </tr>
-                {weaponData.map((weapon) => (
+                {availableWeapons.map((weapon) => (
                   <tr
                     key={weapon.id}
                     className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => onSelect(weapon.id)}
+                    onClick={() => onSelect(weapon.id, weapon.weaponType)}
                   >
-                    <td className="p-2">{weapon.name}</td>
-                    <td className="p-2">{weapon.trait.split(",")[0]}</td>
-                    <td className="p-2">物理</td>
-                    <td className="p-2">{weapon.trait.includes("Ranged") ? "远距离" : "近战"}</td>
-                    <td className="p-2">{weapon.damage}</td>
-                    <td className="p-2">{weapon.trait.includes("Two-handed") ? "双手" : "单手"}</td>
-                    <td className="p-2">{weapon.feature}</td>
+                    <td className="p-2">{weapon.名称}</td>
+                    <td className="p-2">{weapon.weaponType === "primary" ? "主武器" : "副武器"}</td>
+                    <td className="p-2">{weapon.等级}</td>
+                    <td className="p-2">{weapon.检定}</td>
+                    <td className="p-2">{weapon.属性}</td>
+                    <td className="p-2">{weapon.范围}</td>
+                    <td className="p-2">{weapon.伤害}</td>
+                    <td className="p-2">{weapon.负荷}</td>
+                    <td className="p-2">{weapon.特性名称}</td>
+                    <td className="p-2">{weapon.描述}</td>
                   </tr>
                 ))}
               </tbody>
@@ -64,5 +101,5 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title }: Weapo
         </ScrollArea>
       </div>
     </div>
-  )
+  );
 }

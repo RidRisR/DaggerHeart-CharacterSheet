@@ -5,7 +5,7 @@ import type React from "react"
 interface WeaponSectionProps {
   formData: any
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  openWeaponModal: (fieldName: string) => void
+  openWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void
   isPrimary?: boolean
   fieldPrefix: string
 }
@@ -32,7 +32,7 @@ export function WeaponSection({
           <label className="text-[8px] text-gray-600">NAME</label>
           <button
             type="button"
-            onClick={() => openWeaponModal(nameField)}
+            onClick={() => openWeaponModal(nameField, isPrimary ? "primary" : "secondary")}
             className="header-selection-button print-hide-selection-text printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-[10px] text-left px-2 bg-white"
           >
             {formData[nameField] || "选择武器"}

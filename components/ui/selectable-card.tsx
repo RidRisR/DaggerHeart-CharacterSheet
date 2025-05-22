@@ -42,6 +42,17 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
     }
     const cardId = card.id || `temp-id-${Math.random().toString(36).substring(2, 9)}`
 
+    // Prepare derived values for display, handling potential undefined fields and fallbacks
+    const displayName = card.name || "未命名卡牌";
+    const displayDescription = card.description || "无描述。";
+    // Fallback to attributes if top-level properties are not present
+    const displayClass = card.class || card.attributes?.主职业 || "——";
+    const displayPrimaryAttribute = card.primaryAttribute || "——";
+    const displaySecondaryAttribute = card.secondaryAttribute || "——";
+    const displayLevel = card.level?.toString() || card.attributes?.等级?.toString() || "——";
+    const displayType = card.type?.replace(/卡$/, "") || "unknown";
+    const displayImageUrl = card.imageUrl;
+
     const getPreviewPosition = (): React.CSSProperties => {
         if (!cardRef.current) return {}
         const rect = cardRef.current.getBoundingClientRect()
@@ -61,7 +72,7 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
         <div
             ref={cardRef}
             key={cardId}
-            className="relative cursor-pointer h-full flex flex-col"
+            className="relative cursor-pointer h-full flex flex-col w-72" // Added w-72 for fixed width
             onClick={() => onClick(cardId)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => {
@@ -69,43 +80,37 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
                 setIsAltPressed(false)
             }}
         >
-            <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col flex-1">
-                <div className="bg-white p-3 h-36 flex flex-col">
-                    <h3 className="text-base font-semibold mb-1 truncate" title={card.name || undefined}>
-                        {card.name || "未命名卡牌"}
+            {/* Main card content area with fixed height */}
+            <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col flex-1 h-64">
+                {/* Name and Description section - takes remaining space */}
+                <div className="bg-white p-3 flex flex-col flex-1 overflow-hidden">
+                    <h3 className="text-base font-semibold mb-1 truncate" title={displayName}>
+                        {displayName}
                     </h3>
                     <div className="text-xs text-gray-600 overflow-y-auto flex-grow">
-                        {card.description || "无描述。"}
+                        {displayDescription}
                     </div>
                 </div>
 
+                {/* Attributes section - fixed height */}
                 <div
-                    className="p-2 text-white"
+                    className="p-2 h-24 flex flex-col justify-around" // Removed text-white, kept h-24 and flex utilities
                     style={{
-                        backgroundColor: getCardTypeColor(card.type?.replace(/卡$/, "") || "unknown") || "#4b5563",
+                        backgroundColor: getCardTypeColor(displayType) || "#4b5563",
                     }}
                 >
-                    <div className="text-sm font-medium truncate mb-1" title={card.name || undefined}>
-                        {card.name || "未命名卡牌"}
-                    </div>
                     <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-                        <div className="truncate" title={card.class || undefined}>
-                            <span className="opacity-80">职业:</span> {card.class || "——"}
+                        <div className="truncate" title={displayPrimaryAttribute}>
+                            <span className="opacity-80"></span> {displayPrimaryAttribute}
                         </div>
-                        <div className="truncate" title={card.primaryAttribute || undefined}>
-                            <span className="opacity-80">主:</span> {card.primaryAttribute || "——"}
-                        </div>
-                        <div className="truncate" title={card.secondaryAttribute || undefined}>
-                            <span className="opacity-80">副:</span> {card.secondaryAttribute || "——"}
-                        </div>
-                        <div className="truncate" title={card.level?.toString() || undefined}>
-                            <span className="opacity-80">级:</span> {card.level?.toString() || "——"}
+                        <div className="truncate" title={displaySecondaryAttribute}>
+                            <span className="opacity-80"></span> {displaySecondaryAttribute}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {isHovered && card.name && (
+            {isHovered && displayName && (
                 <div
                     className="absolute bg-white border border-gray-300 rounded-md shadow-lg"
                     style={{
@@ -117,19 +122,19 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
                         <div className="aspect-[816/1110] w-full overflow-hidden">
                             <img
                                 src={
-                                    card.imageUrl ||
-                                    `/placeholder.svg?height=1110&width=816&query=fantasy card ${card.name || "card"}`
+                                    displayImageUrl ||
+                                    `/placeholder.svg?height=1110&width=816&query=fantasy card ${displayName || "card"}`
                                 }
-                                alt={card.name || "卡牌"}
+                                alt={displayName || "卡牌"}
                                 className="w-full h-full object-cover"
                             />
                         </div>
                     </div>
 
-                    {!isAltPressed && card.description && (
+                    {!isAltPressed && displayDescription && (
                         <div className="p-2 border-t">
                             <p className="text-xs text-gray-700">
-                                {card.description || "无描述"}
+                                {displayDescription || "无描述"}
                             </p>
                         </div>
                     )}

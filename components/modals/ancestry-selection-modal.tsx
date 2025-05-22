@@ -41,7 +41,7 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
           </Button>
         </div>
         <ScrollArea className="h-[70vh] pr-4 flex-1">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {ancestryCards.map((card) => (
               <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id, field)} />
             ))}

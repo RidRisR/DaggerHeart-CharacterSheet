@@ -33,7 +33,7 @@ export function WeaponSection({
           <button
             type="button"
             onClick={() => openWeaponModal(nameField, isPrimary ? "primary" : "secondary")}
-            className="header-selection-button print-hide-selection-text printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-[10px] text-left px-2 bg-white"
+            className="header-selection-button print-hide-selection-text printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-sm text-left px-2 bg-white"
           >
             {formData[nameField] || "选择武器"}
           </button>
@@ -45,7 +45,7 @@ export function WeaponSection({
             name={traitField}
             value={formData[traitField]}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-[10px] print-empty-hide"
+            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
           />
         </div>
         <div className="col-span-1">
@@ -55,7 +55,7 @@ export function WeaponSection({
             name={damageField}
             value={formData[damageField]}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-[10px] print-empty-hide"
+            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
           />
         </div>
       </div>
@@ -66,7 +66,7 @@ export function WeaponSection({
           name={featureField}
           value={formData[featureField]}
           onChange={handleInputChange}
-          className="w-full border-b border-gray-400 focus:outline-none text-[10px] print-empty-hide"
+          className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
         />
       </div>
     </div>

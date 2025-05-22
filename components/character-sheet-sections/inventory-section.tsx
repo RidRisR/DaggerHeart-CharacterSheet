@@ -27,7 +27,7 @@ export function InventorySection({ formData, setFormData }: InventorySectionProp
               newInventory[i] = e.target.value
               setFormData((prev: any) => ({ ...prev, inventory: newInventory }))
             }}
-            className="w-full border-b border-gray-400 p-0.5 focus:outline-none text-[10px] print-empty-hide"
+            className="w-full border-b border-gray-400 p-0.5 focus:outline-none text-sm print-empty-hide"
           />
         ))}
       </div>

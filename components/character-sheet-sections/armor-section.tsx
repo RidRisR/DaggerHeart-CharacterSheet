@@ -18,7 +18,7 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
           <button
             type="button"
             onClick={openArmorModal}
-            className="header-selection-button print-hide-selection-text printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-[10px] text-left px-2 bg-white"
+            className="header-selection-button print-hide-selection-text printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-sm text-left px-2 bg-white"
           >
             {formData.armorName || "选择护甲"}
           </button>
@@ -30,7 +30,7 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
             name="armorBaseScore"
             value={formData.armorBaseScore}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-[10px] print-empty-hide"
+            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
           />
         </div>
       </div>
@@ -41,7 +41,7 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
           name="armorFeature"
           value={formData.armorFeature}
           onChange={handleInputChange}
-          className="w-full border-b border-gray-400 focus:outline-none text-[10px] print-empty-hide"
+          className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
         />
       </div>
     </div>

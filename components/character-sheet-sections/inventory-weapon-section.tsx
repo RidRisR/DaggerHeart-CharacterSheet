@@ -33,8 +33,8 @@ export function InventoryWeaponSection({
           <label className="text-[8px] text-gray-600">NAME</label>
           <button
             type="button"
-            onClick={() => openWeaponModal(`inventoryWeapons.${index}.name`, "inventory")}
-            className="printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-[10px] text-left px-2 bg-white"
+            onClick={() => openWeaponModal(nameField, "inventory")}
+            className="printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-sm text-left px-2 bg-white" // Changed text-[10px] to text-sm
           >
             {formData[nameField] || "选择武器"}
           </button>
@@ -46,7 +46,7 @@ export function InventoryWeaponSection({
             name={traitField}
             value={formData[traitField]}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-[10px] print-empty-hide"
+            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide" // Changed text-[10px] to text-sm
           />
         </div>
         <div className="col-span-1">
@@ -56,7 +56,7 @@ export function InventoryWeaponSection({
             name={damageField}
             value={formData[damageField]}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-[10px] print-empty-hide"
+            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide" // Changed text-[10px] to text-sm
           />
         </div>
       </div>
@@ -68,7 +68,7 @@ export function InventoryWeaponSection({
           name={featureField}
           value={formData[featureField]}
           onChange={handleInputChange}
-          className="w-full border-b border-gray-400 focus:outline-none text-[10px] print-empty-hide"
+          className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide" // Changed text-[10px] to text-sm
         />
       </div>
 

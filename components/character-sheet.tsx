@@ -676,7 +676,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                           max="12"
                           value={safeFormData.armorMax}
                           onChange={(e) => handleMaxChange("armorMax", e.target.value)}
-                          className="w-6 text-center border border-gray-400 rounded text-[10px] print-empty-hide print-empty-text"
+                          className="w-6 text-center border border-gray-400 rounded text-sm print-empty-hide print-empty-text"
                         />
                       </div>
                       {/* Armor Boxes - 3 per row, 4 rows */}

@@ -87,7 +87,7 @@ function SortableCard({
         </CollapsibleTrigger>
         <CollapsibleContent>
           {card.description && (
-            <div className="px-2 pb-2 pt-1 text-xs text-gray-600 border-t border-gray-100">{card.description}</div>
+            <div className="px-2 pb-2 pt-1 text-xs text-gray-600 border-t border-gray-100" style={{ whiteSpace: "pre-line" }}>{card.description}</div>
           )}
         </CollapsibleContent>
       </Collapsible>

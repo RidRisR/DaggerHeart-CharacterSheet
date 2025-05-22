@@ -23,8 +23,8 @@ interface CardSelectionModalProps {
 
 export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardIndex }: CardSelectionModalProps) {
   // 根据卡牌位置确定可用的卡牌类型
-  const allowedCardType = getAllowedCardTypeForPosition(selectedCardIndex)
-  const isSpecialPos = isSpecialCardPosition(selectedCardIndex)
+  const allowedCardType = getAllowedCardTypeForPosition(String(selectedCardIndex))
+  const isSpecialPos = isSpecialCardPosition(String(selectedCardIndex))
 
   // 无论是什么位置，都显示所有卡牌类型，除非是特殊位置
   const availableCardTypes = isSpecialPos
@@ -362,7 +362,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                     return (
                       <div
                         key={card.id}
-                        ref={(el) => cardRefs.current.set(card.id, el)}
+                        ref={(el) => { cardRefs.current.set(card.id, el) }}
                         className="relative cursor-pointer"
                         onClick={() => handleSelectCard(card)}
                         onMouseEnter={() => setHoveredCard(card.id)}
@@ -418,7 +418,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                             style={{
                               ...getPreviewPosition(card.id),
                               width: isAltPressed ? "400px" : "280px",
-                            }}
+                            } as React.CSSProperties}
                           >
                             {/* 卡牌图片 */}
                             <div className={isAltPressed ? "w-full" : "w-3/4 mx-auto"}>

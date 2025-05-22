@@ -47,7 +47,7 @@ function SortableCard({
   index: number
   isExpanded: boolean
   toggleCard: (cardId: string) => void
-  getBadgeVariant: (type: string) => string
+    getBadgeVariant: (type: string) => "default" | "secondary" | "outline" | "destructive" | null | undefined
 }) {
   const cardId = `${card.type}-${card.name}-${index}`
 
@@ -112,8 +112,6 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   const [allCards, setAllCards] = useState(cards.filter((card) => card.name))
   const [professionCards, setProfessionCards] = useState<typeof cards>([])
   const [backgroundCards, setBackgroundCards] = useState<typeof cards>([]) // 合并血统和社区卡牌
-  const [attackCards, setAttackCards] = useState<typeof cards>([])
-  const [defenseCards, setDefenseCards] = useState<typeof cards>([])
   const [domainCards, setDomainCards] = useState<typeof cards>([]) // 添加领域卡牌列表
 
   // 当前选中的标签
@@ -123,13 +121,10 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   useEffect(() => {
     const validCards = cards.filter((card) => card.name)
     setAllCards(validCards)
-    setProfessionCards(validCards.filter((card) => card.type === "profession"))
+    setProfessionCards(validCards.filter((card) => card.type === "profession" || card.type === "subclass"))
 
     // 合并血统和社区卡牌为背景卡牌
     setBackgroundCards(validCards.filter((card) => card.type === "ancestry" || card.type === "community"))
-
-    setAttackCards(validCards.filter((card) => card.type === "attack"))
-    setDefenseCards(validCards.filter((card) => card.type === "defense"))
     setDomainCards(validCards.filter((card) => card.type === "domain")) // 过滤领域卡牌
   }, [cards])
 
@@ -142,7 +137,9 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   }
 
   // 获取卡牌类型的徽章颜色
-  const getBadgeVariant = (type: string) => {
+  const getBadgeVariant = (
+    type: string,
+  ): "default" | "secondary" | "outline" | "destructive" | null | undefined => {
     switch (type.toLowerCase()) {
       case "profession":
         return "default"
@@ -150,12 +147,9 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
         return "secondary"
       case "community":
         return "outline"
-      case "attack":
+      // "domain" 没有专属颜色，选择一个已支持的类型
+      case "domain":
         return "destructive"
-      case "defense":
-        return "blue"
-      case "domain": // 添加领域卡牌的徽章颜色
-        return "pink"
       default:
         return "outline"
     }
@@ -196,20 +190,6 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
           break
         case "background": // 更新背景卡牌的排序
           setBackgroundCards((cards) => {
-            const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
-            const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
-            return arrayMove(cards, oldIndex, newIndex)
-          })
-          break
-        case "attack":
-          setAttackCards((cards) => {
-            const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
-            const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
-            return arrayMove(cards, oldIndex, newIndex)
-          })
-          break
-        case "defense":
-          setDefenseCards((cards) => {
             const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
             const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
             return arrayMove(cards, oldIndex, newIndex)
@@ -282,8 +262,6 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
             <TabsTrigger value="all">全部</TabsTrigger>
             <TabsTrigger value="profession">职业</TabsTrigger>
             <TabsTrigger value="background">背景</TabsTrigger>
-            <TabsTrigger value="attack">攻击</TabsTrigger>
-            <TabsTrigger value="defense">防御</TabsTrigger>
             <TabsTrigger value="domain">领域</TabsTrigger> {/* 添加领域标签 */}
           </TabsList>
 
@@ -302,14 +280,6 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
 
             <TabsContent value="background" className="h-full m-0">
               {renderCardList(backgroundCards)}
-            </TabsContent>
-
-            <TabsContent value="attack" className="h-full m-0">
-              {renderCardList(attackCards)}
-            </TabsContent>
-
-            <TabsContent value="defense" className="h-full m-0">
-              {renderCardList(defenseCards)}
             </TabsContent>
 
             <TabsContent value="domain" className="h-full m-0">

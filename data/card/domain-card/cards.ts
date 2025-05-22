@@ -7,7 +7,7 @@ import { DomainCard } from "@/data/card/domain-card/convert";
 // 领域卡牌数据
 export const domainCards: DomainCard[] = [
   {
-    ID: "Unleash_Chaos",
+    ID: "Unleash-Chaos",
     名称: "施放混乱",
     领域: "奥术",
     等级: 1,

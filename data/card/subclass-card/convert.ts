@@ -12,7 +12,7 @@ export interface SubClassCard {
   imageUrl?: string
   主职: SubClassClass
   子职业: string
-  等级: string
+  等级: number
   施法?: string
 }
 
@@ -27,8 +27,9 @@ class SubClassCardConverter {
       description: card.描述,
       imageUrl: card.imageUrl,
       class: card.主职,
-      primaryAttribute: card.等级,
+      primaryAttribute: card.子职业,
       secondaryAttribute: card.施法,
+      level: card.等级,
     }
   }
 }

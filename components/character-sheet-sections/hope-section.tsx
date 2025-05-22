@@ -9,7 +9,7 @@ export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps
   return (
     <div className="py-1 mb-2">
       <h3 className="text-sm font-bold text-center mb-1">HOPE</h3>
-      <div className="text-[10px] text-center mb-1">Spend a Hope to use an experience or help an ally.</div>
+      <div className="text-[12px] text-center mb-1">Spend a Hope to use an experience or help an ally.</div>
 
       <div className="flex justify-center gap-2 mb-2">
         {formData.hope.map((checked: boolean, i: number) => (
@@ -25,7 +25,7 @@ export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps
       </div>
 
       <div className="text-center px-2">
-        <p className="text-[10px] leading-tight">
+        <p className="text-[12px] leading-tight">
           Spend three Hope to reroll any number of your damage dice on an attack.
         </p>
       </div>

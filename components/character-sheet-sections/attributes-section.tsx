@@ -13,22 +13,22 @@ export function AttributesSection({
 }: AttributesSectionProps) {
   return (
     <div className="space-y-2">
-      <div className="py-1 mb-2">
+      <div className=" mb-2">
         <h3 className="text-xs font-bold text-center mb-1">ATTRIBUTES</h3>
       </div>
 
       <div className="grid grid-cols-3 gap-x-2 gap-y-2">
         {[
-          { name: "AGILITY", key: "agility", skills: ["Sprint", "Leap", "Maneuver"] },
-          { name: "STRENGTH", key: "strength", skills: ["Lift", "Smash", "Grapple"] },
-          { name: "FINESSE", key: "finesse", skills: ["Control", "Hide", "Tinker"] },
-          { name: "INSTINCT", key: "instinct", skills: ["Perceive", "Sense", "Navigate"] },
-          { name: "PRESENCE", key: "presence", skills: ["Charm", "Perform", "Deceive"] },
-          { name: "KNOWLEDGE", key: "knowledge", skills: ["Recall", "Analyze", "Comprehend"] },
+          { name: "敏捷", key: "agility", skills: ["Sprint", "Leap", "Maneuver"] },
+          { name: "力量", key: "strength", skills: ["Lift", "Smash", "Grapple"] },
+          { name: "灵巧", key: "finesse", skills: ["Control", "Hide", "Tinker"] },
+          { name: "本能", key: "instinct", skills: ["Perceive", "Sense", "Navigate"] },
+          { name: "风度", key: "presence", skills: ["Charm", "Perform", "Deceive"] },
+          { name: "知识", key: "knowledge", skills: ["Recall", "Analyze", "Comprehend"] },
         ].map((attr) => (
           <div key={attr.name} className="flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-0.5">
-              <div className="text-[8px] font-bold">{attr.name}</div>
+              <div className="text-[12px] font-bold">{attr.name}</div>
               <div
                 className={`w-3 h-3 rounded-full border border-gray-800 flex items-center justify-center cursor-pointer ${
                   formData[attr.key].checked ? "bg-gray-800" : "bg-white"

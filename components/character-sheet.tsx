@@ -643,7 +643,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 {/* Evasion Box */}
                 <div className="flex flex-col items-center justify-start">
                   <div className="w-24 h-24 border-2 border-gray-800 bg-gray-800 flex flex-col items-center justify-center text-white rounded-lg">
-                    <div className="text-[10px] font-bold">闪避</div>
+                    <div className="text-ms font-bold">闪避</div>
                     <input
                       type="text"
                       name="evasion"
@@ -658,7 +658,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 <div className="flex flex-col">
                   <div className="flex gap-2">
                     <div className="w-24 h-24 border-2 border-gray-800 bg-gray-800 flex flex-col items-center justify-center text-white rounded-lg">
-                      <div className="text-[10px] font-bold">护甲</div>
+                      <div className="text-ms font-bold">护甲</div>
                       <input
                         type="text"
                         name="armorValue"
@@ -669,15 +669,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                     </div>
                     <div className="flex flex-col">
                       <div className="flex items-center mb-1">
-                        <span className="text-[8px] mr-1">Max:</span>
-                        <input
-                          type="number"
-                          min="1"
-                          max="12"
-                          value={safeFormData.armorMax}
-                          onChange={(e) => handleMaxChange("armorMax", e.target.value)}
-                          className="w-6 text-center border border-gray-400 rounded text-sm print-empty-hide print-empty-text"
-                        />
+                        <span className="test-center text-[10px] mr-1">护甲槽</span>
                       </div>
                       {/* Armor Boxes - 3 per row, 4 rows */}
                       <div className="grid grid-cols-3 gap-1">
@@ -686,8 +678,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                           .map((_, i) => (
                             <div
                               key={`armor-box-${i}`}
-                              className={`w-3 h-3 border ${
-                                i < safeFormData.armorMax
+                              className={`w-4 h-4 border ${i < safeFormData.armorValue
                                   ? "border-gray-800 cursor-pointer"
                                   : "border-gray-400 border-dashed"
                               } ${safeFormData.armorBoxes[i] && i < safeFormData.armorMax ? "bg-gray-800" : "bg-white"}`}

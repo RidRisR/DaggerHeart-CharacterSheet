@@ -99,7 +99,7 @@ export function HeaderSection({
             </div>
           </div>
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">SUBCLASS</label>
+            <label className="text-[9px] text-gray-300">GENDER & AGE</label>
             <input
               type="text"
               name="subclass"

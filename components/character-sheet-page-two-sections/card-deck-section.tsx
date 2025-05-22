@@ -3,10 +3,11 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { getCardTypeName, convertToStandardCard } from "@/data/card"
-import { createEmptyCard, isEmptyCard, specialCardPositions } from "@/data/card/card-types"
+import { createEmptyCard, isEmptyCard, specialCardPositions, StandardCard } from "@/data/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { log } from "console"
 import { create } from "domain"
+import { saveFocusedCardIds, loadFocusedCardIds } from "@/lib/storage" // Import storage functions
 
 interface CardDeckSectionProps {
   formData: any
@@ -22,17 +23,28 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
 
   // 确保 formData 和 formData.cards 存在
-  const cards =
+  const cards: StandardCard[] =
     formData?.cards ||
-    Array(20).fill(createEmptyCard)
+    Array(20).fill(createEmptyCard())
 
-  // 初始化时选中前四张卡
+  // Initialize selected cards from localStorage or default to first four
   useEffect(() => {
-    // 确保有卡牌数据后再设置选中状态
-    if (cards && cards.length > 0) {
-      setSelectedCards([0, 1, 2, 3])
+    const loadedFocusedCardIds = loadFocusedCardIds()
+    const initialSelectedIndices = cards.map((card: StandardCard, index: number) => {
+      // Ensure card and card.id are valid before using them
+      return card && card.id && loadedFocusedCardIds.includes(card.id) ? index : -1
+    }).filter((index: number) => index !== -1)
+
+    if (initialSelectedIndices.length > 0) {
+      setSelectedCards(initialSelectedIndices)
     }
-  }, [cards])
+  }, [cards]) // Rerun when cards data changes
+
+  // Save selected card IDs to localStorage whenever selectedCards changes
+  useEffect(() => {
+    const idsToSave = selectedCards.map((index: number) => cards[index]?.id).filter(id => id != null) as string[]
+    saveFocusedCardIds(idsToSave)
+  }, [selectedCards, cards])
 
   // 监听Alt键
   useEffect(() => {

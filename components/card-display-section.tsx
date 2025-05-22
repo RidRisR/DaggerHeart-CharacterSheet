@@ -94,7 +94,7 @@ function SortableCard({
         </CollapsibleContent>
       </Collapsible>
     </div>
-  )
+  );
 }
 
 export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
@@ -114,22 +114,38 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   // 当前选中的标签
   const [activeTab, setActiveTab] = useState("all")
 
-  // 更新卡牌分类
+  // 更新卡牌分类和聚焦卡牌
   useEffect(() => {
     const validCards = cards.filter((card) => card && card.name)
     setAllCards(validCards)
     setProfessionCards(validCards.filter((card) => card.type === "profession" || card.type === "subclass"))
-
-    // 合并血统和社区卡牌为背景卡牌
     setBackgroundCards(validCards.filter((card) => card.type === "ancestry" || card.type === "community"))
-    setDomainCards(validCards.filter((card) => card.type === "domain")) // 过滤领域卡牌
+    setDomainCards(validCards.filter((card) => card.type === "domain"))
 
-    // 加载聚焦卡牌
-    const focusedCardIds = loadFocusedCardIds()
-    const newFocusedCards = ALL_STANDARD_CARDS.filter(card => focusedCardIds.includes(card.id || `temp-id-${Math.random().toString(36).substring(2, 9)}`));
-    setFocusedCards(newFocusedCards);
+    const loadAndSetFocusedCards = () => {
+      const focusedCardIds = loadFocusedCardIds()
+      // Ensure card.id is a string and provide a fallback if it's undefined
+      // Also, ensure ALL_STANDARD_CARDS is correctly filtered
+      const newFocusedCards = ALL_STANDARD_CARDS.filter(card => {
+        const cardId = card.id; // Safely access card.id
+        return cardId !== undefined && focusedCardIds.includes(cardId);
+      });
+      setFocusedCards(newFocusedCards);
+    }
 
-  }, [cards])
+    loadAndSetFocusedCards(); // Initial load
+
+    const handleFocusedCardsChange = () => {
+      loadAndSetFocusedCards();
+    };
+
+    window.addEventListener('focusedCardsChanged', handleFocusedCardsChange);
+
+    // Cleanup function to remove the event listener
+    return () => {
+      window.removeEventListener('focusedCardsChanged', handleFocusedCardsChange);
+    };
+  }, [cards]) // Dependency array includes cards
 
   // 切换卡片展开状态
   const toggleCard = (cardId: string) => {

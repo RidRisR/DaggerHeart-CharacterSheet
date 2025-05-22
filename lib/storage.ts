@@ -136,6 +136,8 @@ export function saveFocusedCardIds(cardIds: string[]): void {
   try {
     if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem(FOCUSED_CARDS_KEY, JSON.stringify(cardIds));
+      // Dispatch a custom event to notify other components of the change
+      window.dispatchEvent(new CustomEvent('focusedCardsChanged'));
     }
   } catch (error) {
     console.error("保存聚焦卡牌ID失败:", error);

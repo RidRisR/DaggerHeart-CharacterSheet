@@ -1,6 +1,6 @@
 "use client"
 import { armorItems } from "@/data/list/armor" // Changed import
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area" // Ensure ScrollBar is imported
 
 interface ArmorModalProps {
   isOpen: boolean
@@ -38,16 +38,16 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
           <h2 className="text-xl font-bold">{title}</h2>
         </div>
         <ScrollArea className="h-[calc(80vh-8rem)]">
-          <div className="p-2">
-            <table className="w-full border-collapse">
+          <div className="p-2"> {/* Removed overflow-x-auto */}
+            <table className="w-full border-collapse min-w-[max-content]"> {/* Added min-w-[max-content] */}
               <thead className="bg-gray-800 text-white sticky top-0 z-10">
                 <tr>
-                  <th className="p-2 text-left">名称</th>
-                  <th className="p-2 text-left">等级</th>
-                  <th className="p-2 text-left">伤害阈值</th>
-                  <th className="p-2 text-left">基本分</th>
-                  <th className="p-2 text-left">特性名称</th>
-                  <th className="p-2 text-left">描述</th>
+                  <th className="p-2 text-left whitespace-nowrap">名称</th> {/* Added whitespace-nowrap */}
+                  <th className="p-2 text-left whitespace-nowrap">等级</th> {/* Added whitespace-nowrap */}
+                  <th className="p-2 text-left whitespace-nowrap">伤害阈值</th> {/* Added whitespace-nowrap */}
+                  <th className="p-2 text-left whitespace-nowrap">基本分</th> {/* Added whitespace-nowrap */}
+                  <th className="p-2 text-left whitespace-nowrap">特性名称</th> {/* Added whitespace-nowrap */}
+                  <th className="p-2 text-left whitespace-nowrap">描述</th> {/* Added whitespace-nowrap */}
                 </tr>
               </thead>
               <tbody>
@@ -55,28 +55,29 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                   className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
                   onClick={() => onSelect("none")}
                 >
-                  <td className="p-2" colSpan={6}>
+                  <td className="p-2 whitespace-nowrap" colSpan={6}>{/* Added whitespace-nowrap */}
                     --清除选择--
                   </td>
                 </tr>
-                {processedArmorItems.map((armor) => ( // Changed to processedArmorItems
+                {processedArmorItems.map((armor) => (
                   <tr
                     key={armor.id} // Use the added id
                     className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
                     onClick={() => onSelect(armor.id)} // Use the added id
                   >
                     {/* Updated to use Chinese keys */}
-                    <td className="p-2">{armor.名称}</td>
-                    <td className="p-2">{armor.等级}</td>
-                    <td className="p-2">{armor.伤害阈值}</td>
-                    <td className="p-2">{armor.基本分}</td>
-                    <td className="p-2">{armor.特性名称}</td>
-                    <td className="p-2">{armor.描述}</td>
+                    <td className="p-2 whitespace-nowrap">{armor.名称}</td>{/* Added whitespace-nowrap */}
+                    <td className="p-2 whitespace-nowrap">{armor.等级}</td>{/* Added whitespace-nowrap */}
+                    <td className="p-2 whitespace-nowrap">{armor.伤害阈值}</td>{/* Added whitespace-nowrap */}
+                    <td className="p-2 whitespace-nowrap">{armor.基本分}</td>{/* Added whitespace-nowrap */}
+                    <td className="p-2 whitespace-nowrap">{armor.特性名称}</td>{/* Added whitespace-nowrap */}
+                    <td className="p-2 whitespace-nowrap">{armor.描述}</td>{/* Added whitespace-nowrap */}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <ScrollBar orientation="horizontal" /> {/* Added horizontal scrollbar */}
         </ScrollArea>
       </div>
     </div>

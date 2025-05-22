@@ -76,7 +76,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
             key={cardId}
             className={`relative cursor-pointer h-full flex flex-col w-60 ${isSelected ? 'ring-2 ring-blue-500' : ''}`} // Added conditional ring for selection
             onClick={() => onClick(cardId)}
-            onMouseEnter={() => setIsHovered(true)} // Corrected to setIsHovered(true)
+            onMouseEnter={() => setIsHovered(false)} // keep false until picture is added
             onMouseLeave={() => {
                 setIsHovered(false)
                 setIsAltPressed(false)

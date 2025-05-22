@@ -80,7 +80,7 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
             {/* Max-w-4xl (896px) for modal: 896 / 288 = ~3 cards. Gap is 1rem (16px). (288*3) + (16*2) = 864 + 32 = 896 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredCards.map((card) => (
-                <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id, field)} />
+                <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id, field)} isSelected={false} />
               ))}
             </div>
           </div>

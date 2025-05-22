@@ -227,8 +227,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                       <SelectableCard
                         key={cardData.id}
                         card={cardData}
-                        onClick={() => handleSelectCard(cardData)}
-                      />
+                        onClick={() => handleSelectCard(cardData)} isSelected={false} />
                     )
                   })
                 ) : (

@@ -40,7 +40,10 @@ export function ProfessionSelectionModal({ isOpen, onClose, onSelect, title }: P
           </Button>
         </div>
         <ScrollArea className="h-[70vh] pr-4 flex-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {/* Adjusted grid columns for wider cards to match SelectableCard's w-72 (288px) */}
+          {/* Max-w-4xl (896px) for modal: 896 / 288 = ~3 cards. Gap is 1rem (16px). (288*3) + (16*2) = 864 + 32 = 896 */}
+          {/* Max-w-6xl (1152px) for modal: 1152 / 288 = 4 cards. (288*4) + (16*3) = 1152 + 48 = 1200 (a bit over, but close) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {professionCards.map((card) => (
               <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id)} />
             ))}

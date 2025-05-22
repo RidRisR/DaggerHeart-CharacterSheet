@@ -45,13 +45,13 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
     // Prepare derived values for display, handling potential undefined fields and fallbacks
     const displayName = card.name || "未命名卡牌";
     const displayDescription = card.description || "无描述。";
-    // Fallback to attributes if top-level properties are not present
-    const displayClass = card.class || card.attributes?.主职业 || "——";
-    const displayPrimaryAttribute = card.primaryAttribute || "——";
-    const displaySecondaryAttribute = card.secondaryAttribute || "——";
-    const displayLevel = card.level?.toString() || card.attributes?.等级?.toString() || "——";
     const displayType = card.type?.replace(/卡$/, "") || "unknown";
     const displayImageUrl = card.imageUrl;
+
+    // Get display items, providing empty strings as fallbacks
+    const displayItem1 = card.cardSelectDisplay?.item1 || "";
+    const displayItem2 = card.cardSelectDisplay?.item2 || "";
+    const displayItem3 = card.cardSelectDisplay?.item3 || "";
 
     const getPreviewPosition = (): React.CSSProperties => {
         if (!cardRef.current) return {}
@@ -72,7 +72,7 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
         <div
             ref={cardRef}
             key={cardId}
-            className="relative cursor-pointer h-full flex flex-col w-72" // Added w-72 for fixed width
+            className="relative cursor-pointer h-full flex flex-col w-60" // Added w-72 for fixed width
             onClick={() => onClick(cardId)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => {
@@ -94,18 +94,27 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
 
                 {/* Attributes section - fixed height */}
                 <div
-                    className="p-2 h-24 flex flex-col justify-around" // Removed text-white, kept h-24 and flex utilities
+                    className="p-2 h-24 flex flex-col justify-around"
                     style={{
                         backgroundColor: getCardTypeColor(displayType) || "#4b5563",
                     }}
                 >
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-                        <div className="truncate" title={displayPrimaryAttribute}>
-                            <span className="opacity-80"></span> {displayPrimaryAttribute}
-                        </div>
-                        <div className="truncate" title={displaySecondaryAttribute}>
-                            <span className="opacity-80"></span> {displaySecondaryAttribute}
-                        </div>
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-white">
+                        {displayItem1 && (
+                            <div className="truncate" title={displayItem1}>
+                                <span className="opacity-80">项目1:</span> {displayItem1}
+                            </div>
+                        )}
+                        {displayItem2 && (
+                            <div className="truncate" title={displayItem2}>
+                                <span className="opacity-80">项目2:</span> {displayItem2}
+                            </div>
+                        )}
+                        {displayItem3 && (
+                            <div className="col-span-2 truncate" title={displayItem3}>
+                                <span className="opacity-80">项目3:</span> {displayItem3}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

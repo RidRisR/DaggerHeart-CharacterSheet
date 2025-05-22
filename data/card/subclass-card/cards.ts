@@ -168,7 +168,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "守护者",
     "子职业": "坚韧卫士基石",
     "等级": 1,
-    "施法": "未知施法特性"
+    "施法": "不可施法"
   },
   {
     "id": "Iron-Will",
@@ -178,7 +178,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "守护者",
     "子职业": "坚韧卫士基石",
     "等级": 1,
-    "施法": "未知施法特性"
+    "施法": "不可施法"
   },
   {
     "id": "Unrelenting",
@@ -188,7 +188,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "守护者",
     "子职业": "坚韧卫士专精",
     "等级": 2,
-    "施法": "未知施法特性"
+    "施法": "不可施法"
   },
   {
     "id": "Partners-in-Arms",
@@ -198,7 +198,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "守护者",
     "子职业": "坚韧卫士专精",
     "等级": 2,
-    "施法": "未知施法特性"
+    "施法": "不可施法"
   },
   {
     "id": "Undaunted",
@@ -208,7 +208,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "守护者",
     "子职业": "坚韧卫士精通",
     "等级": 3,
-    "施法": "未知施法特性"
+    "施法": "不可施法"
   },
   {
     "id": "Loyal-Protector",
@@ -218,7 +218,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "守护者",
     "子职业": "坚韧卫士精通",
     "等级": 3,
-    "施法": "未知施法特性"
+    "施法": "不可施法"
   },
   // GUARDIAN - VENGEANCE (守护者 - 复仇者)
   {
@@ -229,7 +229,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "守护者",
     "子职业": "复仇者基石",
     "等级": 1,
-    "施法": "未知施法特性"
+    "施法": "不可施法"
   },
   {
     "id": "Revenge",
@@ -239,7 +239,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "守护者",
     "子职业": "复仇者基石",
     "等级": 1,
-    "施法": "未知施法特性"
+    "施法": "不可施法"
   },
   {
     "id": "Act-of-Reprisal",
@@ -249,7 +249,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "守护者",
     "子职业": "复仇者专精",
     "等级": 2,
-    "施法": "未知施法特性"
+    "施法": "不可施法"
   },
   {
     "id": "Nemesis",
@@ -259,7 +259,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "守护者",
     "子职业": "复仇者精通",
     "等级": 3,
-    "施法": "未知施法特性"
+    "施法": "不可施法"
   },
   // RANGER - BEASTBOUND (游侠 - 兽伴)
   {

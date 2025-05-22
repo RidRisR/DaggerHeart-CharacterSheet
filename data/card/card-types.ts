@@ -7,9 +7,13 @@ export interface StandardCard {
   level?: number
   description?: string
   imageUrl?: string
-  primaryAttribute?: string,
-  secondaryAttribute?: string,
-  attributes?: Record<string, string>,
+  primaryAttribute?: string
+  secondaryAttribute?: string
+  cardSelectDisplay: {
+    item1: string
+    item2: string
+    item3: string
+  }
   // ... 其他字段
 }
 
@@ -22,6 +26,11 @@ export function createEmptyCard(type = "unknown"): StandardCard {
     description: "",
     imageUrl: "",
     type: type, // 确保设置了 type 字段
+    cardSelectDisplay: {
+      item1: "",
+      item2: "",
+      item3: "",
+    }
     // ... 其他必要字段的默认值
   }
 }

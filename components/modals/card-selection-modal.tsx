@@ -77,29 +77,22 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
           (card) =>
             (card.name && card.name.toLowerCase().includes(term)) ||
             (card.description && card.description.toLowerCase().includes(term)) ||
-            (card.primaryAttribute && card.primaryAttribute.toLowerCase().includes(term)),
+            (card.cardSelectDisplay?.item1 && card.cardSelectDisplay.item1.toLowerCase().includes(term)) ||
+            (card.cardSelectDisplay?.item2 && card.cardSelectDisplay.item2.toLowerCase().includes(term)) ||
+            (card.cardSelectDisplay?.item3 && card.cardSelectDisplay.item3.toLowerCase().includes(term))
         )
       }
 
       if (classFilter !== "all") {
         filtered = filtered.filter((card) => {
           if (card.class === classFilter) return true
-          if (card.attributes && card.attributes.主职业 === classFilter) return true
           return false
         })
       }
 
       if (levelFilter !== "all") {
         filtered = filtered.filter((card) => {
-          if (card.level !== undefined) {
-            return card.level.toString() === levelFilter
-          }
-
-          if (card.attributes && card.attributes.等级 !== undefined) {
-            return card.attributes.等级.toString() === levelFilter
-          }
-
-          return false
+          return card.level?.toString() === levelFilter
         })
       }
 
@@ -219,7 +212,11 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {/* Adjusted grid columns for wider cards to match SelectableCard's w-72 (288px) */}
+              {/* Max-w-6xl (1152px) for modal content area. 1152 / 288 = 4 cards. (288*4) + (16*3) = 1152 + 48 = 1200 (a bit over, but close) */}
+              {/* Consider the sidebar width (w-48, 192px). Total modal width is max-w-6xl. Content area is roughly 1152-192 = 960px */}
+              {/* 960px / 288px = ~3.33 cards. So 3 cards is a good fit. */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
                 {filteredCards.length > 0 ? (
                   filteredCards.map((cardData, index) => {
                     if (!cardData.id) {

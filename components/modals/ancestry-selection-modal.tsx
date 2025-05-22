@@ -41,7 +41,9 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
           </Button>
         </div>
         <ScrollArea className="h-[70vh] pr-4 flex-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {/* Adjusted grid columns for wider cards to match SelectableCard's w-72 (288px) */}
+          {/* Max-w-4xl (896px) for modal: 896 / 288 = ~3 cards. Gap is 1rem (16px). (288*3) + (16*2) = 864 + 32 = 896 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {ancestryCards.map((card) => (
               <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id, field)} />
             ))}

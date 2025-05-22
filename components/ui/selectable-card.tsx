@@ -61,7 +61,7 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
         <div
             ref={cardRef}
             key={cardId}
-            className="relative cursor-pointer"
+            className="relative cursor-pointer h-full flex flex-col"
             onClick={() => onClick(cardId)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => {
@@ -69,21 +69,13 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
                 setIsAltPressed(false)
             }}
         >
-            <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="bg-white p-2 h-48 flex flex-col">
-                    <div className="flex items-center mb-2">
-                        <img
-                            src={
-                                card.imageUrl ||
-                                `/placeholder.svg?height=40&width=40&query=icon for ${card.name || "card"}`
-                            }
-                            alt={card.name || "card icon"}
-                            className="w-6 h-6 mr-1 object-contain"
-                        />
-                        <span className="text-sm font-medium truncate">{card.name || "未命名卡牌"}</span>
-                    </div>
-                    <div className="text-xs text-gray-600 overflow-hidden line-clamp-5 flex-grow">
-                        {card.description || "无描述"}
+            <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col flex-1">
+                <div className="bg-white p-3 h-36 flex flex-col">
+                    <h3 className="text-base font-semibold mb-1 truncate" title={card.name || undefined}>
+                        {card.name || "未命名卡牌"}
+                    </h3>
+                    <div className="text-xs text-gray-600 overflow-y-auto flex-grow">
+                        {card.description || "无描述。"}
                     </div>
                 </div>
 
@@ -93,18 +85,22 @@ export function SelectableCard({ card, onClick }: SelectableCardProps) {
                         backgroundColor: getCardTypeColor(card.type?.replace(/卡$/, "") || "unknown") || "#4b5563",
                     }}
                 >
-                    <div className="text-sm font-medium truncate">{card.name || "未命名卡牌"}</div>
-                    <div className="flex justify-between items-center text-xs opacity-90 mt-1">
-                        <span className="truncate max-w-[25%]">
-                            {card.class || "——"}
-                        </span>
-                        <span className="truncate max-w-[25%]">
-                            {card.primaryAttribute || "——"}
-                        </span>
-                        <span className="truncate max-w-[25%]">
-                            {card.secondaryAttribute || "——"}
-                        </span>
-                        <span>{card.level?.toString() || "——"}</span>
+                    <div className="text-sm font-medium truncate mb-1" title={card.name || undefined}>
+                        {card.name || "未命名卡牌"}
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                        <div className="truncate" title={card.class || undefined}>
+                            <span className="opacity-80">职业:</span> {card.class || "——"}
+                        </div>
+                        <div className="truncate" title={card.primaryAttribute || undefined}>
+                            <span className="opacity-80">主:</span> {card.primaryAttribute || "——"}
+                        </div>
+                        <div className="truncate" title={card.secondaryAttribute || undefined}>
+                            <span className="opacity-80">副:</span> {card.secondaryAttribute || "——"}
+                        </div>
+                        <div className="truncate" title={card.level?.toString() || undefined}>
+                            <span className="opacity-80">级:</span> {card.level?.toString() || "——"}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,4 @@
 "use client"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { ALL_STANDARD_CARDS } from "@/data/card"
 import { useState, useEffect } from "react"
@@ -44,15 +43,17 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl p-4 max-h-[90vh] flex flex-col">
-        <div className="mb-4 border-b border-gray-200 pb-2 flex justify-between items-center">
+      {/* Removed p-4 from this div */}
+      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Changed className for padding and consistency */}
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Select
               value={selectedClass}
               onValueChange={setSelectedClass}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="筛选职业类别" />
+                <SelectValue placeholder="筛选血脉类别" />
               </SelectTrigger>
               <SelectContent>
                 {availableClasses.map((cls) => (
@@ -72,13 +73,18 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
           </div>
           <h2 className="text-xl font-bold">{title}</h2>
         </div>
-        <ScrollArea className="h-[70vh] pr-4 flex-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredCards.map((card) => (
-              <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id, field)} />
-            ))}
+        {/* New structure for content area */}
+        <div className="flex-1 flex flex-col overflow-hidden"> {/* Outer content wrapper */}
+          <div className="flex-1 overflow-y-auto p-4"> {/* Inner scrollable grid area, changed pr-4 to p-4 */}
+            {/* Adjusted grid columns for wider cards to match SelectableCard's w-72 (288px) */}
+            {/* Max-w-4xl (896px) for modal: 896 / 288 = ~3 cards. Gap is 1rem (16px). (288*3) + (16*2) = 864 + 32 = 896 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredCards.map((card) => (
+                <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id, field)} />
+              ))}
+            </div>
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   )

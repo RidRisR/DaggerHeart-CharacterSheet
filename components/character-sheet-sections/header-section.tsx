@@ -30,14 +30,14 @@ export function HeaderSection({
           >
             {formData.profession
               ? ALL_STANDARD_CARDS.find(
-                  (card) =>
+                (card) =>
                   card.id === formData.profession && card.type === "profession",
-                )?.name || "选择职业"
+              )?.name || "选择职业"
               : "选择职业"}
           </button>
         </div>
         {/* 删除了subtitle显示 */}
-        <div className="text-[9px] mt-1">DAGGERHEART OPEN BETA V1.5</div>
+        <div className="text-[9px] mt-1">DAGGERHEART V20250520</div>
       </div>
       <div className="flex flex-col items-center gap-1">
         <div className="flex gap-2">
@@ -60,9 +60,9 @@ export function HeaderSection({
             >
               {formData.community
                 ? ALL_STANDARD_CARDS.find(
-                    (card) =>
+                  (card) =>
                     card.id === formData.community && card.type === "community",
-                  )?.name || "选择社区"
+                )?.name || "选择社区"
                 : "选择社区"}
             </button>
           </div>
@@ -78,9 +78,9 @@ export function HeaderSection({
               >
                 {formData.ancestry1
                   ? ALL_STANDARD_CARDS.find(
-                      (card) =>
+                    (card) =>
                       card.id === formData.ancestry1 && card.type === "ancestry",
-                    )?.name || "选择血统"
+                  )?.name || "选择血统"
                   : "选择血统"}
               </button>
               <span className="flex items-center text-white text-xs">+</span>
@@ -91,9 +91,9 @@ export function HeaderSection({
               >
                 {formData.ancestry2
                   ? ALL_STANDARD_CARDS.find(
-                      (card) =>
+                    (card) =>
                       card.id === formData.ancestry2 && card.type === "ancestry",
-                    )?.name || "选择血统"
+                  )?.name || "选择血统"
                   : "选择血统"}
               </button>
             </div>

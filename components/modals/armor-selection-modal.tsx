@@ -25,6 +25,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
               <thead className="bg-gray-800 text-white sticky top-0 z-10">
                 <tr>
                   <th className="p-2 text-left">名称</th>
+                  <th className="p-2 text-left">等级</th>
                   <th className="p-2 text-left">基础值</th>
                   <th className="p-2 text-left">特性</th>
                 </tr>

@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef } from "react"
-import { professionData, upgradeOptionsData } from "@/data/game-data"
+import { upgradeOptionsData } from "@/data/game-data"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -88,47 +88,12 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
     // 获取基础升级选项
     const baseUpgrades = [...upgradeOptionsData.baseUpgrades]
 
-    // 添加职业特定升级选项
-    const tierKey =
-      `tier${tier}` as keyof (typeof upgradeOptionsData.professionUpgrades)[keyof typeof upgradeOptionsData.professionUpgrades]
-    const professionTierUpgrades =
-      upgradeOptionsData.professionUpgrades[profession as keyof typeof upgradeOptionsData.professionUpgrades]?.[
-        tierKey
-      ] || []
-
     // 添加特定等级升级选项
     const tierSpecificKey = `tier${tier}` as keyof typeof upgradeOptionsData.tierSpecificUpgrades
     const tierSpecificUpgrades = upgradeOptionsData.tierSpecificUpgrades[tierSpecificKey] || []
 
-    return [...baseUpgrades, ...professionTierUpgrades, ...tierSpecificUpgrades]
+    return [...baseUpgrades, ...tierSpecificUpgrades]
   }
-
-  // Print function
-  const handlePrint = () => {
-    window.print()
-  }
-
-  const openImportExportModal = () => {
-    setImportExportModalOpen(true)
-  }
-
-  const closeImportExportModal = () => {
-    setImportExportModalOpen(false)
-  }
-
-  // 获取当前职业名称
-  const getCurrentProfessionName = () => {
-    const profession = professionData.find((p) => p.id === safeFormData.profession)
-    return profession ? profession.name : "未选择职业"
-  }
-
-  // 确保formData.checkedUpgrades存在
-  const safeCheckedUpgrades = safeFormData.checkedUpgrades || {
-    tier1: {},
-    tier2: {},
-    tier3: {},
-  }
-
   return (
     <>
       {/* 固定位置的按钮 - 移除建卡指引按钮，因为已经移到父组件 */}
@@ -143,7 +108,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
           {/* Header - 调整职业名称显示框的大小 */}
           <div className="bg-gray-800 text-white p-5 flex items-center rounded-t-md">
             <div className="flex flex-col">
-              <div className="text-[9px]">DAGGERHEART OPEN BETA V1.5</div>
+              <div className="text-[9px]">DAGGERHEART V20250520</div>
             </div>
           </div>
 

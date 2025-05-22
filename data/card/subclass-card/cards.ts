@@ -362,7 +362,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "盗贼",
     "子职业": "暗夜行者",
     "等级": "基石", // 修改点：等级变为字符串"基石"
-    "施法": "敏锐"
+    "施法": "灵巧"
   },
   {
     "id": "Dark-Cloud",
@@ -372,7 +372,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "盗贼",
     "子职业": "暗夜行者",
     "等级": "专精", // 修改点：等级变为字符串"专精"
-    "施法": "敏锐"
+    "施法": "灵巧"
   },
   {
     "id": "Adrenaline",
@@ -382,7 +382,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "盗贼",
     "子职业": "暗夜行者",
     "等级": "专精", // 修改点：等级变为字符串"专精"
-    "施法": "敏锐"
+    "施法": "灵巧"
   },
   {
     "id": "Fleeting-Shadow",
@@ -392,7 +392,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "盗贼",
     "子职业": "暗夜行者",
     "等级": "精通", // 修改点：等级变为字符串"精通"
-    "施法": "敏锐"
+    "施法": "灵巧"
   },
   {
     "id": "Vanishing-Act",
@@ -402,7 +402,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "盗贼",
     "子职业": "暗夜行者",
     "等级": "精通", // 修改点：等级变为字符串"精通"
-    "施法": "敏锐"
+    "施法": "灵巧"
   },
   // ROGUE - SYNDICATE (盗贼 - 辛迪加)
   {
@@ -413,7 +413,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "盗贼",
     "子职业": "辛迪加",
     "等级": "基石", // 修改点：等级变为字符串"基石"
-    "施法": "敏锐"
+    "施法": "灵巧"
   },
   {
     "id": "Contacts-Everywhere",
@@ -423,7 +423,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "盗贼",
     "子职业": "辛迪加",
     "等级": "专精", // 修改点：等级变为字符串"专精"
-    "施法": "敏锐"
+    "施法": "灵巧"
   },
   {
     "id": "Reliable-Backup",
@@ -433,7 +433,7 @@ export const subclassCards: SubClassCard[] = [
     "主职": "盗贼",
     "子职业": "辛迪加",
     "等级": "精通", // 修改点：等级变为字符串"精通"
-    "施法": "敏锐"
+    "施法": "灵巧"
   },
   // SERAPH - DIVINE WIELDER (神使 - 神圣持武者)
   {

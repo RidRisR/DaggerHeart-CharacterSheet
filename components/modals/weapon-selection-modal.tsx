@@ -25,7 +25,8 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title }: Weapo
               <thead className="bg-gray-800 text-white sticky top-0 z-10">
                 <tr>
                   <th className="p-2 text-left">名称</th>
-                  <th className="p-2 text-left">特征</th>
+                  <th className="p-2 text-left">等级</th>
+                  <th className="p-2 text-left">判定</th>
                   <th className="p-2 text-left">属性</th>
                   <th className="p-2 text-left">范围</th>
                   <th className="p-2 text-left">伤害</th>

@@ -34,7 +34,7 @@ export const CARD_CLASS_OPTIONS_BY_TYPE = {
 }
 
 // 等级选项
-export const LEVEL_OPTIONS = ["all", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+export const LEVEL_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 
 // 获取卡牌类型名称
 export function getCardTypeName(typeId: string): string {

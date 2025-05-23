@@ -25,6 +25,24 @@ export function ProfessionSelectionModal({ isOpen, onClose, onSelect, title }: P
   const [availableClasses, setAvailableClasses] = useState<string[]>(["All"])
 
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    } else {
+      document.removeEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
     const cards = ALL_STANDARD_CARDS.filter(
       (card): card is StandardCard => card.type === "profession",
     )
@@ -79,7 +97,7 @@ export function ProfessionSelectionModal({ isOpen, onClose, onSelect, title }: P
             {/* Max-w-4xl (896px) for modal: 896 / 288 = ~3 cards. Gap is 1rem (16px). (288*3) + (16*2) = 864 + 32 = 896 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredCards.map((card) => (
-                <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id)} />
+                <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id)} isSelected={false} />
               ))}
             </div>
           </div>

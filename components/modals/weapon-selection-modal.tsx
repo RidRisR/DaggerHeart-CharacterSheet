@@ -2,7 +2,7 @@
 import { primaryWeapons } from "@/data/list/primary-weapon";
 import { secondaryWeapons } from "@/data/list/secondary-weapon";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 interface WeaponModalProps {
   isOpen: boolean;
@@ -27,6 +27,24 @@ interface Weapon {
 }
 
 export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponSlotType }: WeaponModalProps) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    } else {
+      document.removeEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const availableWeapons: Weapon[] = useMemo(() => {

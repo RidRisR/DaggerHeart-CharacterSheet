@@ -1,6 +1,7 @@
 "use client"
 import { armorItems } from "@/data/list/armor" // Changed import
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area" // Ensure ScrollBar is imported
+import { useEffect } from "react"; // Added useEffect
 
 interface ArmorModalProps {
   isOpen: boolean
@@ -22,6 +23,24 @@ interface Armor {
 }
 
 export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorModalProps) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    } else {
+      document.removeEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null
 
   // Add id to each armor item, using '名称' as id

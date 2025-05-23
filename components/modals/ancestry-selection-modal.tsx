@@ -26,6 +26,24 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
   const [availableClasses, setAvailableClasses] = useState<string[]>(["All"])
 
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    } else {
+      document.removeEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
     const cards = ALL_STANDARD_CARDS.filter(
       (card): card is StandardCard => card.type === "ancestry",
     )

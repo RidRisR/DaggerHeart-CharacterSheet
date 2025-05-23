@@ -53,6 +53,37 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   const [isLevelDropdownOpen, setIsLevelDropdownOpen] = useState(false) // Added
 
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (isClassDropdownOpen) {
+          event.preventDefault();
+          event.stopPropagation();
+          setIsClassDropdownOpen(false);
+          setAppliedSelectedClasses(stagedSelectedClasses);
+        } else if (isLevelDropdownOpen) {
+          event.preventDefault();
+          event.stopPropagation();
+          setIsLevelDropdownOpen(false);
+          setAppliedSelectedLevels(stagedSelectedLevels);
+        } else if (isOpen) {
+          // Only close modal if no dropdown was open
+          onClose();
+        }
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    } else {
+      document.removeEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, isClassDropdownOpen, isLevelDropdownOpen, stagedSelectedClasses, stagedSelectedLevels, onClose, setAppliedSelectedClasses, setAppliedSelectedLevels, setIsClassDropdownOpen, setIsLevelDropdownOpen]);
+
+  useEffect(() => {
     if (availableCardTypes.length > 0 && !activeTab) {
       setActiveTab(availableCardTypes[0].id)
     }
@@ -87,7 +118,11 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
   const classOptions = useMemo(() =>
     CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] ||
-    [{ value: "all", label: "全部" }]
+    // Ensure "all" is only added if classOptions would otherwise be empty or specifically designed to have it.
+    // For now, we assume CARD_CLASS_OPTIONS_BY_TYPE provides the full list including any "all" type options if necessary.
+    (CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE]?.length > 0
+      ? []
+      : [{ value: "all", label: "全部" }])
     , [activeTab]);
 
   useEffect(() => {
@@ -129,7 +164,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       }
 
       // Apply level filter (placeholder for similar logic)
-      if (appliedSelectedLevels.length > 0 && !appliedSelectedLevels.includes("all")) {
+      if (appliedSelectedLevels.length > 0) { // Removed !appliedSelectedLevels.includes("all")
         filtered = filtered.filter((card) => card.level && appliedSelectedLevels.includes(card.level.toString()))
       }
 

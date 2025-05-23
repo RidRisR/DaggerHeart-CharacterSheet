@@ -60,38 +60,21 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
           <div className="p-2"> {/* Removed overflow-x-auto */}
             <table className="w-full border-collapse min-w-[max-content]"> {/* Added min-w-[max-content] */}
               <thead className="bg-gray-800 text-white sticky top-0 z-10">
-                <tr>
-                  <th className="p-2 text-left whitespace-nowrap">名称</th> {/* Added whitespace-nowrap */}
-                  <th className="p-2 text-left whitespace-nowrap">等级</th> {/* Added whitespace-nowrap */}
-                  <th className="p-2 text-left whitespace-nowrap">伤害阈值</th> {/* Added whitespace-nowrap */}
-                  <th className="p-2 text-left whitespace-nowrap">基本分</th> {/* Added whitespace-nowrap */}
-                  <th className="p-2 text-left whitespace-nowrap">特性名称</th> {/* Added whitespace-nowrap */}
-                  <th className="p-2 text-left whitespace-nowrap">描述</th> {/* Added whitespace-nowrap */}
-                </tr>
+                <tr><th className="p-2 text-left whitespace-nowrap">名称</th><th className="p-2 text-left whitespace-nowrap">等级</th><th className="p-2 text-left whitespace-nowrap">伤害阈值</th><th className="p-2 text-left whitespace-nowrap">基本分</th><th className="p-2 text-left whitespace-nowrap">特性名称</th><th className="p-2 text-left whitespace-nowrap">描述</th></tr>
               </thead>
               <tbody>
                 <tr
                   className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
                   onClick={() => onSelect("none")}
-                >
-                  <td className="p-2 whitespace-nowrap" colSpan={6}>{/* Added whitespace-nowrap */}
+                ><td className="p-2 whitespace-nowrap" colSpan={6}>{/* Added whitespace-nowrap */}
                     --清除选择--
-                  </td>
-                </tr>
+                  </td></tr>
                 {processedArmorItems.map((armor) => (
                   <tr
                     key={armor.id} // Use the added id
                     className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
                     onClick={() => onSelect(armor.id)} // Use the added id
-                  >
-                    {/* Updated to use Chinese keys */}
-                    <td className="p-2 whitespace-nowrap">{armor.名称}</td>{/* Added whitespace-nowrap */}
-                    <td className="p-2 whitespace-nowrap">{armor.等级}</td>{/* Added whitespace-nowrap */}
-                    <td className="p-2 whitespace-nowrap">{armor.伤害阈值}</td>{/* Added whitespace-nowrap */}
-                    <td className="p-2 whitespace-nowrap">{armor.基本分}</td>{/* Added whitespace-nowrap */}
-                    <td className="p-2 whitespace-nowrap">{armor.特性名称}</td>{/* Added whitespace-nowrap */}
-                    <td className="p-2 whitespace-nowrap">{armor.描述}</td>{/* Added whitespace-nowrap */}
-                  </tr>
+                  ><td className="p-2 whitespace-nowrap">{armor.名称}</td>{/* Added whitespace-nowrap */}<td className="p-2 whitespace-nowrap">{armor.等级}</td>{/* Added whitespace-nowrap */}<td className="p-2 whitespace-nowrap">{armor.伤害阈值}</td>{/* Added whitespace-nowrap */}<td className="p-2 whitespace-nowrap">{armor.基本分}</td>{/* Added whitespace-nowrap */}<td className="p-2 whitespace-nowrap">{armor.特性名称}</td>{/* Added whitespace-nowrap */}<td className="p-2 whitespace-nowrap">{armor.描述}</td>{/* Added whitespace-nowrap */}</tr>
                 ))}
               </tbody>
             </table>

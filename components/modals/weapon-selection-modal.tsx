@@ -73,45 +73,21 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
           <div className="p-2">
             <table className="w-full border-collapse min-w-[max-content]">
               <thead className="bg-gray-800 text-white sticky top-0 z-10">
-                <tr>
-                  <th className="p-2 text-left whitespace-nowrap">等级</th>
-                  <th className="p-2 text-left whitespace-nowrap">名称</th>
-                  <th className="p-2 text-left whitespace-nowrap">类型</th>
-                  <th className="p-2 text-left whitespace-nowrap">属性</th>
-                  <th className="p-2 text-left whitespace-nowrap">负荷</th>
-                  <th className="p-2 text-left whitespace-nowrap">范围</th>
-                  <th className="p-2 text-left whitespace-nowrap">检定</th>
-                  <th className="p-2 text-left whitespace-nowrap">伤害</th>
-                  <th className="p-2 text-left whitespace-nowrap">特性</th>
-                  <th className="p-2 text-left whitespace-nowrap">描述</th>
-                </tr>
+                <tr><th className="p-2 text-left whitespace-nowrap">等级</th><th className="p-2 text-left whitespace-nowrap">名称</th><th className="p-2 text-left whitespace-nowrap">类型</th><th className="p-2 text-left whitespace-nowrap">属性</th><th className="p-2 text-left whitespace-nowrap">负荷</th><th className="p-2 text-left whitespace-nowrap">范围</th><th className="p-2 text-left whitespace-nowrap">检定</th><th className="p-2 text-left whitespace-nowrap">伤害</th><th className="p-2 text-left whitespace-nowrap">特性</th><th className="p-2 text-left whitespace-nowrap">描述</th></tr>
               </thead>
               <tbody>
                 <tr
                   className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
                   onClick={() => onSelect("none", "primary")}
-                >
-                  <td className="p-2 whitespace-nowrap" colSpan={10}>
+                ><td className="p-2 whitespace-nowrap" colSpan={10}>
                     --清除选择--
-                  </td>
-                </tr>
+                  </td></tr>
                 {availableWeapons.map((weapon) => (
                   <tr
                     key={weapon.id}
                     className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
                     onClick={() => onSelect(weapon.id, weapon.weaponType)}
-                  >
-                    <td className="p-2 whitespace-nowrap">{weapon.等级}</td>
-                    <td className="p-2 whitespace-nowrap">{weapon.名称}</td>
-                    <td className="p-2 whitespace-nowrap">{weapon.weaponType === "primary" ? "主武器" : "副武器"}</td>
-                    <td className="p-2 whitespace-nowrap">{weapon.属性}</td>
-                    <td className="p-2 whitespace-nowrap">{weapon.负荷}</td>
-                    <td className="p-2 whitespace-nowrap">{weapon.范围}</td>
-                    <td className="p-2 whitespace-nowrap">{weapon.检定}</td>
-                    <td className="p-2 whitespace-nowrap">{weapon.伤害}</td>
-                    <td className="p-2 whitespace-nowrap">{weapon.特性名称}</td>
-                    <td className="p-2 whitespace-nowrap">{weapon.描述}</td>
-                  </tr>
+                  ><td className="p-2 whitespace-nowrap">{weapon.等级}</td><td className="p-2 whitespace-nowrap">{weapon.名称}</td><td className="p-2 whitespace-nowrap">{weapon.weaponType === "primary" ? "主武器" : "副武器"}</td><td className="p-2 whitespace-nowrap">{weapon.属性}</td><td className="p-2 whitespace-nowrap">{weapon.负荷}</td><td className="p-2 whitespace-nowrap">{weapon.范围}</td><td className="p-2 whitespace-nowrap">{weapon.检定}</td><td className="p-2 whitespace-nowrap">{weapon.伤害}</td><td className="p-2 whitespace-nowrap">{weapon.特性名称}</td><td className="p-2 whitespace-nowrap">{weapon.描述}</td></tr>
                 ))}
               </tbody>
             </table>

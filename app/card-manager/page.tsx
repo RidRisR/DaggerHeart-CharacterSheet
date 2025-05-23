@@ -177,9 +177,9 @@ export default function CardManagerPage() {
 
                     {/* 卡牌底部信息 */}
                     <div className="flex justify-between items-center text-xs text-gray-500">
-                      <span className="truncate max-w-[40%]">{card.cardSelectDisplay.item1 || "——"}</span>
-                      <span>{card.cardSelectDisplay.item2 || "——"}</span>
-                      <span>{card.cardSelectDisplay.item3 || "——"}</span>
+                      <span className="truncate max-w-[33%]">{card.cardSelectDisplay.item1 || "——"}</span>
+                      <span className="truncate max-w-[33%]">{card.cardSelectDisplay.item2 || "——"}</span>
+                      <span className="truncate max-w-[33%]">{card.cardSelectDisplay.item3 || "——"}</span>
                     </div>
 
                     {/* 卡牌类型标签 */}

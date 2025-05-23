@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { CardDetailModal } from "@/components/modals/card-detail-modal"
 import type { StandardCard } from "@/data/card/card-types"
 import { ALL_STANDARD_CARDS } from "@/data/card"
 
@@ -250,16 +249,6 @@ export default function CardManagerPage() {
         </TabsContent>
 
       </Tabs>
-
-      {/* 卡牌详情模态框 */}
-      <CardDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        card={selectedCard}
-        onAddToDeck={addCardToDeck}
-        onRemoveFromDeck={removeCardFromDeck}
-        inDeck={isCardInDeck}
-      />
     </div>
   )
 }

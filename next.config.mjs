@@ -10,7 +10,7 @@ const nextConfig = {
     unoptimized: true,
   },
   output: 'export',
-  assetPrefix: './', // 添加这一行
+  assetPrefix: '/DaggerHeart-CharacterSheet',
 };
 
 export default nextConfig;

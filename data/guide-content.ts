@@ -17,7 +17,7 @@ export const guideSteps: GuideStep[] = [
   {
     id: "step1",
     title: "基础角色信息",
-    content: "请选择您的职业、血统和社区。这些选择将决定您的角色基础能力和特性。",
+    content: "请选择您的职业、血统和社区。这些选择将决定您的角色基础能力和特性。你可以在角色卡第一页上方找到这些选项。它们构成了您的角色的基本背景信息。\n一般情况下，您可以选择两种血统，并各自从中继承一项能力。",
     validation: (formData) => {
       const isFilled = (val: any) => val !== undefined && val !== null && String(val).trim() !== '';
       return isFilled(formData.profession) && isFilled(formData.ancestry1) && isFilled(formData.community);

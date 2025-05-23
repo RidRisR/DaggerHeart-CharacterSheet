@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react" // Added useMemo
 import {
   ALL_CARD_TYPES,
   SPECIAL_CARD_POSITIONS,
@@ -13,6 +13,15 @@ import {
 import type { StandardCard } from "@/data/card/card-types"
 import { createEmptyCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
+import { Checkbox } from "@/components/ui/checkbox" // Added
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu" // Added
+import { Button } from "@/components/ui/button" // Added
 
 interface CardSelectionModalProps {
   isOpen: boolean
@@ -31,44 +40,75 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
   const [activeTab, setActiveTab] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
-  const [classFilter, setClassFilter] = useState("all")
-  const [levelFilter, setLevelFilter] = useState("all")
+  // Filter states - these will store the "applied" filters
+  const [appliedSelectedClasses, setAppliedSelectedClasses] = useState<string[]>([])
+  const [appliedSelectedLevels, setAppliedSelectedLevels] = useState<string[]>([])
   const [filteredCards, setFilteredCards] = useState<StandardCard[]>([])
 
-  useEffect(() => {
-    if (availableCardTypes.length > 0) {
-      setActiveTab(availableCardTypes[0].id)
-    }
-  }, [availableCardTypes])
+  // Staging states for dropdowns - to hold selections before they are applied
+  const [stagedSelectedClasses, setStagedSelectedClasses] = useState<string[]>([])
+  const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false)
+  // Similar staging states will be needed for level filter
+  const [stagedSelectedLevels, setStagedSelectedLevels] = useState<string[]>([]) // Added
+  const [isLevelDropdownOpen, setIsLevelDropdownOpen] = useState(false) // Added
 
   useEffect(() => {
-    if (isOpen && isSpecialPos && allowedCardType) {
-      setActiveTab(allowedCardType)
-    } else if (isOpen && availableCardTypes.length > 0) {
+    if (availableCardTypes.length > 0 && !activeTab) {
       setActiveTab(availableCardTypes[0].id)
     }
-  }, [isOpen, isSpecialPos, allowedCardType, availableCardTypes])
+  }, [availableCardTypes, activeTab])
 
   useEffect(() => {
-    setClassFilter("all")
-    setLevelFilter("all")
+    if (isOpen) {
+      if (isSpecialPos && allowedCardType) {
+        setActiveTab(allowedCardType)
+      } else if (availableCardTypes.length > 0) {
+        // Ensure activeTab is set if not special, or if special but allowedCardType is not yet defined
+        if (!activeTab && availableCardTypes[0]) {
+          setActiveTab(availableCardTypes[0].id)
+        }
+      }
+      // When modal opens, sync staged selections with applied ones
+      setStagedSelectedClasses(appliedSelectedClasses)
+      // setStagedSelectedLevels(appliedSelectedLevels); // For level filter
+      setStagedSelectedLevels(appliedSelectedLevels) // Updated
+    }
+  }, [isOpen, isSpecialPos, allowedCardType, availableCardTypes, appliedSelectedClasses, appliedSelectedLevels, activeTab])
+
+  useEffect(() => {
+    // Reset filters when activeTab changes
+    setAppliedSelectedClasses([])
+    setStagedSelectedClasses([])
+    setAppliedSelectedLevels([])
+    // setStagedSelectedLevels([]); // For level filter
+    setStagedSelectedLevels([]) // Added
     setSearchTerm("")
   }, [activeTab])
 
+  const classOptions = useMemo(() =>
+    CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] ||
+    [{ value: "all", label: "全部" }]
+    , [activeTab]);
+
   useEffect(() => {
-    if (!activeTab) return
+    if (!activeTab || !isOpen) {
+      // setFilteredCards([]); // Clear cards if tab is not set or modal is closed
+      return
+    }
 
     try {
       let filtered = ALL_STANDARD_CARDS.filter((card) => {
         if (!card.type) {
-          card.type = "unknown"
+          card.type = "unknown" // Assign a default if type is missing
         }
+        // Ensure comparison is consistent, e.g. by removing "卡" suffix
+        const cardTypeProcessed = card.type.replace(/卡$/, "");
+        const activeTabProcessed = activeTab.replace(/卡$/, "");
 
         if (isSpecialPos) {
-          return card.type.replace(/卡$/, "") === allowedCardType
+          return cardTypeProcessed === (allowedCardType?.replace(/卡$/, "") || "")
         }
-
-        return card.type.replace(/卡$/, "") === activeTab
+        return cardTypeProcessed === activeTabProcessed
       })
 
       if (searchTerm) {
@@ -83,17 +123,14 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
         )
       }
 
-      if (classFilter !== "all") {
-        filtered = filtered.filter((card) => {
-          if (card.class === classFilter) return true
-          return false
-        })
+      // Apply class filter
+      if (appliedSelectedClasses.length > 0 && !appliedSelectedClasses.includes("all")) {
+        filtered = filtered.filter((card) => card.class && appliedSelectedClasses.includes(card.class))
       }
 
-      if (levelFilter !== "all") {
-        filtered = filtered.filter((card) => {
-          return card.level?.toString() === levelFilter
-        })
+      // Apply level filter (placeholder for similar logic)
+      if (appliedSelectedLevels.length > 0 && !appliedSelectedLevels.includes("all")) {
+        filtered = filtered.filter((card) => card.level && appliedSelectedLevels.includes(card.level.toString()))
       }
 
       setFilteredCards(filtered)
@@ -101,7 +138,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       console.error("[CardSelectionModal] 过滤卡牌时出错:", error)
       setFilteredCards([])
     }
-  }, [activeTab, searchTerm, classFilter, levelFilter, isSpecialPos, allowedCardType])
+  }, [activeTab, searchTerm, appliedSelectedClasses, appliedSelectedLevels, isSpecialPos, allowedCardType, isOpen])
 
   const handleSelectCard = (selectedCard: StandardCard) => {
     try {
@@ -124,9 +161,31 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
   if (!isOpen) return null
 
-  const classOptions =
-    CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] ||
-    [{ value: "all", label: "全部" }]
+  // const classOptions = // Moved to useMemo above
+
+  const handleClassSelectAll = () => {
+    const allClassValues = classOptions.map(opt => opt.value).filter(val => val !== "all");
+    setStagedSelectedClasses(allClassValues);
+  };
+
+  const handleClassInvertSelection = () => {
+    const allClassValues = classOptions.map(opt => opt.value).filter(val => val !== "all");
+    setStagedSelectedClasses(prev =>
+      allClassValues.filter(val => !prev.includes(val))
+    );
+  };
+
+  const handleLevelSelectAll = () => { // Added
+    const allLevelValues = LEVEL_OPTIONS.map(String);
+    setStagedSelectedLevels(allLevelValues);
+  };
+
+  const handleLevelInvertSelection = () => { // Added
+    const allLevelValues = LEVEL_OPTIONS.map(String);
+    setStagedSelectedLevels(prev =>
+      allLevelValues.filter(val => !prev.includes(val))
+    );
+  };
 
   const positionTitle = isSpecialPos
     ? `选择${SPECIAL_CARD_POSITIONS[selectedCardIndex as keyof typeof SPECIAL_CARD_POSITIONS] || "卡牌"}`
@@ -170,34 +229,106 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="p-4 border-b border-gray-200 flex items-center gap-4">
+              {/* Class Filter Dropdown */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">类别:</span>
-                <select
-                  value={classFilter}
-                  onChange={(e) => setClassFilter(e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-1"
+                <DropdownMenu
+                  open={isClassDropdownOpen}
+                  onOpenChange={(open) => {
+                    setIsClassDropdownOpen(open);
+                    if (!open) { // Dropdown closed
+                      setAppliedSelectedClasses(stagedSelectedClasses);
+                    } else { // Dropdown opened
+                      setStagedSelectedClasses(appliedSelectedClasses); // Sync staged with applied
+                    }
+                  }}
                 >
-                  {classOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-36 justify-start text-left font-normal">
+                      {stagedSelectedClasses.length === 0 || (stagedSelectedClasses.length === classOptions.filter(o => o.value !== 'all').length && classOptions.length > 1)
+                        ? "全部类别"
+                        : stagedSelectedClasses.length === 1
+                          ? classOptions.find(o => o.value === stagedSelectedClasses[0])?.label || "选择类别"
+                          : `${stagedSelectedClasses.length} 类已选`}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="start">
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                      <Button onClick={handleClassSelectAll} variant="ghost" size="sm" className="w-full justify-start">全选</Button>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                      <Button onClick={handleClassInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {classOptions.filter(option => option.value !== "all").map((option) => (
+                      <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`class-${option.value}`}
+                          checked={stagedSelectedClasses.includes(option.value)}
+                          onCheckedChange={(checked) => {
+                            setStagedSelectedClasses(prev =>
+                              checked
+                                ? [...prev, option.value]
+                                : prev.filter(item => item !== option.value)
+                            );
+                          }}
+                        />
+                        <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer flex-1">{option.label}</label>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
+              {/* Level Filter (Placeholder - to be implemented similarly) */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">等级:</span>
-                <select
-                  value={levelFilter}
-                  onChange={(e) => setLevelFilter(e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-1"
+                <DropdownMenu
+                  open={isLevelDropdownOpen}
+                  onOpenChange={(open) => {
+                    setIsLevelDropdownOpen(open);
+                    if (!open) { // Dropdown closed
+                      setAppliedSelectedLevels(stagedSelectedLevels);
+                    } else { // Dropdown opened
+                      setStagedSelectedLevels(appliedSelectedLevels); // Sync staged with applied
+                    }
+                  }}
                 >
-                  {LEVEL_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-36 justify-start text-left font-normal">
+                      {stagedSelectedLevels.length === 0 || stagedSelectedLevels.length === LEVEL_OPTIONS.length
+                        ? "全部等级"
+                        : stagedSelectedLevels.length === 1
+                          ? stagedSelectedLevels[0]
+                          : `${stagedSelectedLevels.length} 级已选`}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="start">
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                      <Button onClick={handleLevelSelectAll} variant="ghost" size="sm" className="w-full justify-start">全选</Button>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                      <Button onClick={handleLevelInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {LEVEL_OPTIONS.map((level) => (
+                      <DropdownMenuItem key={level} onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`level-${level}`}
+                          checked={stagedSelectedLevels.includes(String(level))}
+                          onCheckedChange={(checked) => {
+                            setStagedSelectedLevels(prev =>
+                              checked
+                                ? [...prev, String(level)]
+                                : prev.filter(item => item !== String(level))
+                            );
+                          }}
+                        />
+                        <label htmlFor={`level-${level}`} className="ml-2 cursor-pointer flex-1">{level}</label>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <div className="flex-1">

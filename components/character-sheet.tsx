@@ -69,6 +69,7 @@ const defaultFormData = {
   secondaryWeaponFeature: "",
   armorName: "",
   armorBaseScore: "",
+  armorThreshold: "", // Added armorThreshold
   armorFeature: "",
   inventory: ["", "", "", "", ""], // 确保有5个空字符串
   inventoryWeapon1Name: "",
@@ -459,7 +460,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       setFormData((prev: any) => ({
         ...prev,
         armorName: armor.名称,
-        armorBaseScore: `${armor.基本分} (阈值: ${armor.伤害阈值})`,
+        armorBaseScore: String(armor.基本分), // Store base score directly
+        armorThreshold: armor.伤害阈值, // Store threshold directly
         armorFeature: `${armor.特性名称}${armor.特性名称 && armor.描述 ? ": " : ""}${armor.描述}`,
       }))
     } else if (value === "none") {
@@ -467,6 +469,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         ...prev,
         armorName: "",
         armorBaseScore: "",
+        armorThreshold: "", // Clear threshold
         armorFeature: "",
       }))
     }

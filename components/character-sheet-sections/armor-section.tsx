@@ -12,7 +12,7 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
   return (
     <div className="mb-2">
       <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-md">ACTIVE ARMOR</h4>
-      <div className="grid grid-cols-2 gap-1 mt-1">
+      <div className="grid grid-cols-3 gap-1 mt-1">
         <div className="col-span-1">
           <label className="text-[8px] text-gray-600">NAME</label>
           <button
@@ -29,6 +29,16 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
             type="text"
             name="armorBaseScore"
             value={formData.armorBaseScore}
+            onChange={handleInputChange}
+            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
+          />
+        </div>
+        <div className="col-span-1">
+          <label className="text-[8px] text-gray-600">THRESHOLD</label>
+          <input
+            type="text"
+            name="armorThreshold"
+            value={formData.armorThreshold}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
           />

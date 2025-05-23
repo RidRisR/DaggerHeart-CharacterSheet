@@ -1,4 +1,5 @@
 import type { StandardCard } from "@/data/card/card-types";
+import { isEmptyCard } from "@/data/card/card-types"; // Import isEmptyCard
 
 // 引导内容数据结构
 export interface GuideStep {
@@ -118,7 +119,18 @@ export const guideSteps: GuideStep[] = [
         }
       }
 
-      return `压力反映了您承受危险情境的精神和情感压力以及身体消耗的能力。每个PC开始时有<strong>6个压力栏位</strong>,但您无需标记。\n希望是一种元货币，用于驱动特殊行动和某些能力或特性。所有PC开始时有2点希望。<strong>在角色表的希望槽中标记2点</strong>。\n另外不同职业有不同的希望特性，可以在希望槽下方查看。您的职业希望特性：\n<strong>${hopeFeature}</strong>`;
+      // 获取职业名称
+      let professionName = "未知职业";
+      if (professionId && allCards && allCards.length > 0) {
+        const professionCard = allCards.find(
+          (card) => card.id === professionId && card.type === "profession"
+        );
+        if (professionCard && professionCard.name) {
+          professionName = professionCard.name;
+        }
+      }
+
+      return `压力反映了您承受危险情境的精神和情感压力以及身体消耗的能力。每个PC开始时有<strong>6个压力栏位</strong>。\n希望是一种元货币，可以用于激活经历或者帮助队友。不同职业会有专属的希望特性,可以在希望槽下方查看。${professionName}的希望特性是：\n<strong>${hopeFeature}</strong>\n所有PC开始时有2点希望。<strong>请在在角色表的希望槽中标记2点 </strong>。`;
     },
     validation: (formData) => {
       // 检查希望栏位，确保有且只有2个slot为true
@@ -138,7 +150,7 @@ export const guideSteps: GuideStep[] = [
   {
     id: "step6",
     title: "选择初始武器",
-    content: "现在请选择您的初始武器。请从第 1 阶武器表中选择<strong>一把双手主武器，或者选择一把单手主武器和一把单手副武器</strong>。然后填写在主武器和副武器栏位上。",
+    content: "现在请选择您的初始武器。请从第 1 阶武器表中选择\n1.<strong>一把双手主武器</strong>;\n2. 或者 <strong>一把单手主武器和一把单手副武器</strong>。\n填写在主武器和副武器栏位上。",
     validation: (formData) => {
       const isFilled = (val: any) => val !== undefined && val !== null && String(val).trim() !== '';
       return isFilled(formData.primaryWeaponName);
@@ -147,10 +159,30 @@ export const guideSteps: GuideStep[] = [
   {
     id: "step7",
     title: "选择初始护甲",
-    content: "现在请选择您的初始护甲。从第 1 阶护甲表中选择并装备一套护甲，然后填写在护甲栏位上。\n护甲有两种数据。一种是是护甲值，它代表着您的护甲使用次数。你的护甲值是formData.armorValue，请将填写在左上角护甲区域\n将您的护甲阈值加上当前等级（目前为1），计算出您的伤害阈值，填写在'生命值与压力'下方的伤害阈值栏位上。",
+    content: (formData: any): string => {
+      // 处理护甲值
+      const armorValue = formData?.armorBaseScore !== undefined && formData?.armorBaseScore !== null
+        ? String(formData.armorBaseScore)
+        : "未知";
+
+      // 处理护甲伤害阈值
+      let armorThresholdDisplay = "未知";
+      if (typeof formData?.armorThreshold === "string" && formData.armorThreshold.trim() !== "") {
+        let match = formData.armorThreshold.match(/\(?\s*([0-9]+)\s*\/\s*([0-9]+)\s*\)?/);
+        if (match) {
+          const t1 = parseInt(match[1], 10) + 1;
+          const t2 = parseInt(match[2], 10) + 1;
+          armorThresholdDisplay = `(${t1}, ${t2})`;
+        } else {
+          armorThresholdDisplay = formData.armorThreshold;
+        }
+      }
+
+      return `现在请选择您的初始护甲。从第 1 阶护甲表中选择并装备一套护甲，然后填写在已装备护甲栏位上。已装备护甲为您提供护甲值和护甲伤害阈值。\n护甲值代表您的护甲可以承受多少次攻击。<strong>您的护甲值是 ${armorValue} </strong>，请填写在角色卡左上角的护甲栏位中。\n护甲伤害阈值是护甲提供的减伤等级。伤害阈值决定了需要造成多少伤害才能真正伤害到您。\n已装备护甲提供基本的护甲阈值，您的等级会提供额外的护甲阈值（初始+1，每升一级额外+1），您的护甲伤害阈值是 <strong>${armorThresholdDisplay}</strong >，填写在'生命值与压力'下方的伤害阈值栏位上。`;
+    },
     validation: (formData) => {
       const isFilled = (val: any) => val !== undefined && val !== null && String(val).trim() !== '';
-      return isFilled(formData.armorName) && isFilled(formData.armorValue) && isFilled(formData.damageThreshold);
+      return isFilled(formData.armorName) && isFilled(formData.armorBaseScore) && isFilled(formData.armorThreshold);
     }
   },
   {
@@ -171,7 +203,7 @@ export const guideSteps: GuideStep[] = [
         }
       }
 
-      return `将以下物品添加到角色表的"物品栏"字段中： \n一支火把、50 英尺长的绳索、基本补给品和一把金币。金币标记在角色卡左下方金币栏中。\n一瓶次级治疗药水（清除 1d4 点生命值）或者一瓶次级耐力药水（清除 1d4 点压力）。\n角色起始物品：<strong>${startingItems}</strong> \n其他GM批准您携带的物品。`;
+      return `将以下物品添加到角色表的"物品栏"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品和一把金币。（金币标记在角色卡左下方金币栏中）\n2.一瓶次级治疗药水（清除 1d4 点生命值）或者一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。`;
     },
     validation: () => true,
   },
@@ -186,6 +218,7 @@ export const guideSteps: GuideStep[] = [
     title: "选择能力卡牌",
     content: (formData: any, allCards: StandardCard[]): string => {
       const professionId = formData?.profession;
+      let name = "未知职业";
       let domain1 = "未知";
       let domain2 = "未知";
 
@@ -194,20 +227,52 @@ export const guideSteps: GuideStep[] = [
           (card) => card.id === professionId && card.type === "profession"
         );
         if (professionCard && professionCard.cardSelectDisplay) {
+          name = professionCard.name || "未知职业";
           domain1 = professionCard.cardSelectDisplay.item1 || "未知领域";
           domain2 = professionCard.cardSelectDisplay.item2 || "未知领域";
         }
       }
 
-      return `现在点击任意一个空白的卡组位置，为您的角色选择一张基石（1级）子职业卡，以及两张1级领域卡。您可以选择的两个领域是<strong>${domain1}</strong>和<strong>${domain2}</strong>。`;
+      return `现在点击任意一个空白的卡组位置，为您的角色选择:\n1. 一张${name}的基石（1级）子职业卡;\n2. 以及两张1级领域卡。您可以选择的两个领域是<strong>${domain1}</strong>和<strong>${domain2}</strong>。`;
     },
-    validation: () => true,
+    validation: (formData) => {
+      if (!formData || !formData.cards || !Array.isArray(formData.cards)) {
+        return false; // No cards array or formData is invalid
+      }
+      // Check cards from index 4 onwards (skipping the 4 special card slots)
+      var cnt = 0;
+      for (let i = 4; i < formData.cards.length; i++) {
+        if (formData.cards[i] && !isEmptyCard(formData.cards[i])) {
+          cnt++;
+          if (cnt === 3) {
+            return true; // Found three non-empty cards
+          }
+        }
+      }
+      return false; // No non-empty card found after the special slots
+    },
   },
   {
     id: "step11",
     title: "添加经历或特质",
-    content: "几乎就要完成了，现在将角色卡翻回正面。为您的角色添加两条独特的经历或者特质。您只需要用一个简单的短语就足够了。比如：身经百战、广交朋友或者环游世界。每条经历会为您提供+2的判定价值。",
-    validation: () => true,
+    content: "几乎就要完成了，现在将角色卡翻回正面。为您的角色添加两条独特的经历或者特质。您只需要用一个简单的短语就足够了。比如：身经百战、广交朋友或者环游世界。每条经历会为您提供+2的判定加值。",
+    validation: (formData) => {
+      if (!formData || !Array.isArray(formData.experience) || !Array.isArray(formData.experienceValues)) {
+        return false; // formData or experience arrays are invalid
+      }
+      if (formData.experience.length !== formData.experienceValues.length) {
+        return false; // Mismatched array lengths
+      }
+
+      for (let i = 0; i < formData.experience.length; i++) {
+        const experienceText = formData.experience[i];
+        const experienceValue = formData.experienceValues[i];
+        if (experienceText && String(experienceText).trim() !== "" && experienceValue) {
+          return true; // Found at least one valid experience entry
+        }
+      }
+      return false; // No valid experience entry found
+    },
   },
   {
     id: "step12",

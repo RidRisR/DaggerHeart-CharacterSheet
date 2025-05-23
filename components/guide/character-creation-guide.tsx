@@ -27,7 +27,8 @@ export function CharacterCreationGuide({ isOpen, onClose, formData }: CharacterC
   // 获取当前步骤的内容（考虑职业特定内容）
   const getStepContent = () => {
     if (!currentStep) return ""
-    return getProfessionSpecificContent(currentStep, formData.profession)
+    const allCards = formData?.cards || []
+    return getProfessionSpecificContent(currentStep, formData?.profession || "", formData || {}, allCards)
   }
 
   const goToPreviousStep = () => {
@@ -54,7 +55,10 @@ export function CharacterCreationGuide({ isOpen, onClose, formData }: CharacterC
           </button>
         </div>
 
-        <div className="mb-6 min-h-[200px] text-sm whitespace-pre-line">{getStepContent()}</div>
+        <div
+          className="mb-6 min-h-[200px] text-sm whitespace-pre-line"
+          dangerouslySetInnerHTML={{ __html: getStepContent() }}
+        ></div>
 
         <div className="flex justify-between">
           <Button

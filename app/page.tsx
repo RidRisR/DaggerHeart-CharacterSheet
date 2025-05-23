@@ -90,7 +90,21 @@ export default function Home() {
   }
 
   const handlePrintAll = () => {
-    setIsPrintingAll(true)
+    const getCardClass = (cardId: string, cardType: string, allCards: any[]): string => {
+      if (!cardId || !allCards || !Array.isArray(allCards)) return '()';
+      const card = allCards.find((c: any) => c.id === cardId && c.type === cardType);
+      return card && card.class ? String(card.class) : '()';
+    };
+
+    const characterName = formData.name || '()';
+    const ancestry1Class = getCardClass((formData as any).ancestry1, 'ancestry', formData.cards); // Changed to (formData as any).ancestry1
+    const professionClass = getCardClass(formData.profession, 'profession', formData.cards);
+    const ancestry2Class = getCardClass((formData as any).ancestry2, 'ancestry', formData.cards); // Use type assertion for ancestry2
+    const communityClass = getCardClass(formData.community, 'community', formData.cards);
+    const level = formData.level ? String(formData.level) : '()';
+
+    document.title = `${characterName}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
+    setIsPrintingAll(true);
   }
 
   // Effect for handling "Print All Pages"

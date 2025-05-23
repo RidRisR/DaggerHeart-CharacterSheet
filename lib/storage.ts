@@ -53,23 +53,35 @@ export function clearCharacterData(): void {
 }
 
 // 导出角色数据为JSON文件
-export function exportCharacterData(safeFormData: any): void {
+export function exportCharacterData(formData: any): void {
   try {
-    const data = loadCharacterData()
-    if (!data) {
-      alert("没有可导出的角色数据")
-      return
+    if (!formData) {
+      alert("没有可导出的角色数据");
+      return;
     }
 
-    const dataStr = JSON.stringify(data, null, 2)
-    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`
+    const getCardClass = (cardId: string, cardType: string, allCards: any[]): string => {
+      if (!cardId || !allCards || !Array.isArray(allCards)) return '()';
+      const card = allCards.find((c: any) => c.id === cardId && c.type === cardType);
+      return card && card.class ? String(card.class) : '()';
+    };
 
-    const exportFileDefaultName = `character-${new Date().toISOString().slice(0, 10)}.json`
+    const characterName = formData.name || '()';
+    const ancestry1Class = getCardClass(formData.ancestry1, 'ancestry', formData.cards); // formData is 'any', so direct access is fine here
+    const professionClass = getCardClass(formData.profession, 'profession', formData.cards);
+    const ancestry2Class = getCardClass(formData.ancestry2, 'ancestry', formData.cards); // formData is 'any', so direct access to ancestry2 is fine here
+    const communityClass = getCardClass(formData.community, 'community', formData.cards);
+    const level = formData.level ? String(formData.level) : '()';
 
-    const linkElement = document.createElement("a")
-    linkElement.setAttribute("href", dataUri)
-    linkElement.setAttribute("download", exportFileDefaultName)
-    linkElement.click()
+    const exportFileDefaultName = `${characterName}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}.json`;
+
+    const dataStr = JSON.stringify(formData, null, 2);
+    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+
+    const linkElement = document.createElement("a");
+    linkElement.setAttribute("href", dataUri);
+    linkElement.setAttribute("download", exportFileDefaultName);
+    linkElement.click();
   } catch (error) {
     console.error("导出角色数据失败:", error)
     alert("导出角色数据失败")

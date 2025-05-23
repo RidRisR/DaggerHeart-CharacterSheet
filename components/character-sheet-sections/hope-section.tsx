@@ -6,10 +6,25 @@ interface HopeSectionProps {
 }
 
 export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps) {
+  let hopeFeatureDescription = "";
+
+  if (formData && formData.profession && formData.cards && Array.isArray(formData.cards)) {
+    // Assuming StandardCard structure, but using 'any' to align with formData: any
+    const professionCard = formData.cards.find(
+      (card: any) => card.id === formData.profession && card.type === "profession"
+    );
+
+    if (professionCard &&
+      professionCard.professionSpecial &&
+      professionCard.professionSpecial["希望特性"]) {
+      hopeFeatureDescription = String(professionCard.professionSpecial["希望特性"]);
+    }
+  }
+
   return (
     <div className="py-1 mb-2">
       <h3 className="text-sm font-bold text-center mb-1">HOPE</h3>
-      <div className="text-[12px] text-center mb-1">Spend a Hope to use an experience or help an ally.</div>
+      <div className="text-[12px] text-center mb-1">花费一点希望使用经历或帮助队友</div>
 
       <div className="flex justify-center gap-2 mb-2">
         {formData.hope.map((checked: boolean, i: number) => (
@@ -26,9 +41,9 @@ export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps
 
       <div className="text-center px-2">
         <p className="text-[12px] leading-tight">
-          Spend three Hope to reroll any number of your damage dice on an attack.
+          {hopeFeatureDescription}
         </p>
       </div>
     </div>
-  )
+  );
 }

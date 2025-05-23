@@ -233,7 +233,7 @@ export const guideSteps: GuideStep[] = [
         }
       }
 
-      return `现在点击任意一个空白的卡组位置，为您的角色选择:\n1. 一张${name}的基石（1级）子职业卡;\n2. 以及两张1级领域卡。您可以选择的两个领域是<strong>${domain1}</strong>和<strong>${domain2}</strong>。`;
+      return `现在点击任意一个空白的卡组位置，为您的角色选择:\n1. 一张<strong>${name}</strong>的基石（1级）子职业卡;\n2. 以及两张1级领域卡。您可以选择的两个领域是<strong>${domain1}</strong>和<strong>${domain2}</strong>。`;
     },
     validation: (formData) => {
       if (!formData || !formData.cards || !Array.isArray(formData.cards)) {
@@ -277,7 +277,7 @@ export const guideSteps: GuideStep[] = [
   {
     id: "step12",
     title: "完成创建",
-    content: "恭喜您，您的角色卡已经完成创建。别忘了取一个好听的名字，然后点击\"导入/ 导出角色\"保存或导出吧。",
+    content: "恭喜您，您的角色卡已经创建完成。别忘了取一个好听的名字！点击\"导入/ 导出角色\"可以保存这个角色，点击\"打印角色卡\"可以导出为PDF。",
     validation: () => true,
   },
 ]

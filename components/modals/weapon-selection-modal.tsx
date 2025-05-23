@@ -27,6 +27,21 @@ interface Weapon {
 }
 
 export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponSlotType }: WeaponModalProps) {
+  const availableWeapons: Weapon[] = useMemo(() => {
+    let weapons: Weapon[] = [];
+    if (weaponSlotType === "primary" || weaponSlotType === "inventory") {
+      weapons = weapons.concat(
+        primaryWeapons.map((w) => ({ ...w, id: w.名称, weaponType: "primary" }))
+      );
+    }
+    if (weaponSlotType === "secondary" || weaponSlotType === "inventory") {
+      weapons = weapons.concat(
+        secondaryWeapons.map((w) => ({ ...w, id: w.名称, weaponType: "secondary" }))
+      );
+    }
+    return weapons;
+  }, [weaponSlotType]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -46,21 +61,6 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-
-  const availableWeapons: Weapon[] = useMemo(() => {
-    let weapons: Weapon[] = [];
-    if (weaponSlotType === "primary" || weaponSlotType === "inventory") {
-      weapons = weapons.concat(
-        primaryWeapons.map((w) => ({ ...w, id: w.名称, weaponType: "primary" }))
-      );
-    }
-    if (weaponSlotType === "secondary" || weaponSlotType === "inventory") {
-      weapons = weapons.concat(
-        secondaryWeapons.map((w) => ({ ...w, id: w.名称, weaponType: "secondary" }))
-      );
-    }
-    return weapons;
-  }, [weaponSlotType]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">

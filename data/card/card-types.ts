@@ -12,6 +12,13 @@ export interface StandardCard {
     item2?: string
     item3?: string
   }
+  professionSpecial?: {
+    "简介": string
+    "起始生命": number
+    "起始闪避": number
+    "起始物品": string
+    "希望特性": string
+  }
   // ... 其他字段
 }
 

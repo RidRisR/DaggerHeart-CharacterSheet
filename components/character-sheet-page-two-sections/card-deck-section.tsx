@@ -5,8 +5,6 @@ import { useState, useEffect, useRef } from "react"
 import { getCardTypeName, convertToStandardCard } from "@/data/card"
 import { createEmptyCard, isEmptyCard, specialCardPositions, StandardCard } from "@/data/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
-import { log } from "console"
-import { create } from "domain"
 import { saveFocusedCardIds, loadFocusedCardIds } from "@/lib/storage" // Import storage functions
 
 interface CardDeckSectionProps {

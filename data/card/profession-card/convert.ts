@@ -14,6 +14,7 @@ export interface ProfessionCard {
   领域2?: string
   起始生命: number
   起始闪避: number
+  起始物品: string
   希望特性: string
   职业特性: string
 }
@@ -32,6 +33,13 @@ class ProfessionCardConverter {
       cardSelectDisplay: {
         "item1": card.领域1 || "",
         "item2": card.领域2 || "",
+      },
+      professionSpecial: {
+        "简介": card.简介,
+        "起始生命": card.起始生命,
+        "起始闪避": card.起始闪避,
+        "起始物品": card.起始物品,
+        "希望特性": card.希望特性,
       },
     }
   }

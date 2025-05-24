@@ -42,6 +42,7 @@ class AncestryCardConverter {
       description: rawCard.效果,
       hint: rawCard.简介,
       imageUrl: rawCard.imageURL,
+      level: rawCard.类别,
       class: rawCard.种族, // Map 种族 to class
       cardSelectDisplay: {
         "item1": rawCard.种族,
@@ -52,6 +53,3 @@ class AncestryCardConverter {
 
 export const ancestryCardConverter = new AncestryCardConverter();
 
-// Example of how to get all standard cards:
-// const allStandardAncestryCards = ancestryCardConverter.getAllStandardCards();
-// console.log(allStandardAncestryCards);

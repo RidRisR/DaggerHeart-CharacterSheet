@@ -79,7 +79,7 @@ export function HeaderSection({
                 {formData.ancestry1
                   ? ALL_STANDARD_CARDS.find(
                     (card) =>
-                      card.id === formData.ancestry1 && card.type === "ancestry",
+                      card.id === formData.ancestry1 && card.type === "ancestry" && card.level === 1,
                   )?.name || "选择血统"
                   : "选择血统"}
               </button>
@@ -92,7 +92,7 @@ export function HeaderSection({
                 {formData.ancestry2
                   ? ALL_STANDARD_CARDS.find(
                     (card) =>
-                      card.id === formData.ancestry2 && card.type === "ancestry",
+                      card.id === formData.ancestry2 && card.type === "ancestry" && card.level === 2,
                   )?.name || "选择血统"
                   : "选择血统"}
               </button>

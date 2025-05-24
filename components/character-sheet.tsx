@@ -826,8 +826,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       <AncestrySelectionModal
         isOpen={ancestryModalOpen}
         onClose={() => setAncestryModalOpen(false)}
-        field={currentAncestryField} // Changed from currentField to field
-        title={currentAncestryField === "ancestry1" ? "选择血统一" : "选择血统二"} // Added title
+        field={currentAncestryField}
+        title={currentAncestryField === "ancestry1" ? "选择血统一" : "选择血统二"}
         onSelect={(ancestryId, field) => {
           if (ancestryId === "none") {
             handleAncestryChange(field, "")

@@ -54,9 +54,15 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
 
   if (!isOpen) return null
 
-  const filteredCards = ancestryCards.filter(card =>
-    selectedClass === "All" || (card.class && card.class.includes(selectedClass))
-  )
+  // 过滤血统一只能选level=1，血统二只能选level=2
+  const filteredCards = ancestryCards.filter(card => {
+    if (field === "ancestry1") {
+      return (selectedClass === "All" || (card.class && card.class.includes(selectedClass))) && card.level === 1
+    } else if (field === "ancestry2") {
+      return (selectedClass === "All" || (card.class && card.class.includes(selectedClass))) && card.level === 2
+    }
+    return selectedClass === "All" || (card.class && card.class.includes(selectedClass))
+  })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">

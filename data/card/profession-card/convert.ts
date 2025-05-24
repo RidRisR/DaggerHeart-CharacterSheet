@@ -10,8 +10,8 @@ export interface ProfessionCard {
   名称: ProfessionCardClass
   简介: string
   imageUrl?: string
-  领域1?: string
-  领域2?: string
+  领域1: string
+  领域2: string
   起始生命: number
   起始闪避: number
   起始物品: string
@@ -28,6 +28,7 @@ class ProfessionCardConverter {
       name: card.名称 || "",
       type: "profession",
       description: card.职业特性 || "",
+      hint: card.简介 || "",
       imageUrl: card.imageUrl || "",
       class: card.名称,
       cardSelectDisplay: {
@@ -35,7 +36,6 @@ class ProfessionCardConverter {
         "item2": card.领域2 || "",
       },
       professionSpecial: {
-        "简介": card.简介,
         "起始生命": card.起始生命,
         "起始闪避": card.起始闪避,
         "起始物品": card.起始物品,

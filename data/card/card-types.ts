@@ -6,6 +6,7 @@ export interface StandardCard {
   class: string
   level?: number
   description?: string
+  hint?: string
   imageUrl?: string
   cardSelectDisplay: {
     item1?: string
@@ -13,7 +14,6 @@ export interface StandardCard {
     item3?: string
   }
   professionSpecial?: {
-    "简介": string
     "起始生命": number
     "起始闪避": number
     "起始物品": string

@@ -8,9 +8,9 @@ export type CommunityCardClass = "高贵之民" | "学识之民" | "秩序之民
 export interface CommunityCard {
   ID: string
   名称: CommunityCardClass
-  特性?: string
-  简介?: string
-  描述?: string
+  特性: string
+  简介: string
+  描述: string
   imageUrl?: string
 }
 
@@ -23,6 +23,7 @@ class CommunityCardConverter {
       name: card.名称 || "",
       type: "community",
       description: card.描述 || "",
+      hint: card.简介 || "",
       imageUrl: card.imageUrl,
       class: card.名称,
       cardSelectDisplay: {

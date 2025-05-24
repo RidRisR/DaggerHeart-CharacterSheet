@@ -14,11 +14,11 @@ export interface DomainCard {
   ID: string
   名称: string
   领域: DomainCardClass
-  描述?: string
+  描述: string
   imageUrl?: string
-  等级?: number
-  属性?: string
-  回想?: number
+  等级: number
+  属性: string
+  回想: number
 }
 
 // 领域卡牌转换器

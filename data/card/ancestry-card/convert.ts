@@ -25,8 +25,8 @@ export interface AncestryCard {
   id: string;
   名称: string;
   种族: AncestryCardClass;
-  简介?: string;
-  效果?: string;
+  简介: string;
+  效果: string;
   imageURL?: string;
 }
 
@@ -39,6 +39,7 @@ class AncestryCardConverter {
       name: rawCard.名称,
       type: "ancestry",
       description: rawCard.效果,
+      hint: rawCard.简介,
       imageUrl: rawCard.imageURL,
       class: rawCard.种族, // Map 种族 to class
       cardSelectDisplay: {

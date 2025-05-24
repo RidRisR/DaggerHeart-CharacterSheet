@@ -48,6 +48,9 @@ body {
     page-break-before: always;
   }
 
+    .print-all-pages .page-three {
+      page-break-before: always;
+    }
   /* 在打印时隐藏所有固定位置的按钮 */
   .fixed {
     display: none !important;

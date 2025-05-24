@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
+import CharacterSheetPageThree from "@/components/character-sheet-page-three"; // Import the new page
 import { loadCharacterData, saveCharacterData, exportCharacterData } from "@/lib/storage"
 import { CardDisplaySection } from "@/components/card-display-section"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
@@ -228,6 +229,11 @@ export default function Home() {
         <div className="page-two">
           <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
         </div>
+
+        {/* 第三页 */}
+        <div className="page-three">
+          <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={(formData as any).cards} />
+        </div>
       </div>
     )
   }
@@ -245,15 +251,19 @@ export default function Home() {
         {/* 右侧角色卡区域 */}
         <div className="lg:w-3/4">
           <Tabs defaultValue="page1" className="w-full max-w-[210mm]">
-            <TabsList className="grid w-full max-w-[210mm] grid-cols-2">
+            <TabsList className="grid w-full max-w-[210mm] grid-cols-3"> {/* Changed grid-cols-2 to grid-cols-3 */}
               <TabsTrigger value="page1">角色卡 - 第一页</TabsTrigger>
               <TabsTrigger value="page2">角色卡 - 第二页</TabsTrigger>
+              <TabsTrigger value="page3">角色卡 - 第三页</TabsTrigger> {/* Added trigger for page 3 */}
             </TabsList>
             <TabsContent value="page1">
               <CharacterSheet formData={formData} setFormData={setFormData} />
             </TabsContent>
             <TabsContent value="page2">
               <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
+            </TabsContent>
+            <TabsContent value="page3"> {/* Added content for page 3 */}
+              <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={(formData as any).cards} />
             </TabsContent>
           </Tabs>
         </div>

@@ -797,6 +797,36 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         onClose={() => setWeaponModalOpen(false)}
         weaponSlotType={currentWeaponSlotType} // Ensured not null
         onSelect={(weaponId, weaponType) => {
+          if (weaponId === "none") {
+            if (currentWeaponField === "primaryWeaponName") {
+              setFormData((prev: any) => ({
+                ...prev,
+                primaryWeaponName: "",
+                primaryWeaponTrait: "",
+                primaryWeaponDamage: "",
+                primaryWeaponFeature: "",
+              }))
+            } else if (currentWeaponField === "secondaryWeaponName") {
+              setFormData((prev: any) => ({
+                ...prev,
+                secondaryWeaponName: "",
+                secondaryWeaponTrait: "",
+                secondaryWeaponDamage: "",
+                secondaryWeaponFeature: "",
+              }))
+            } else if (currentWeaponField.startsWith("inventoryWeapon")) {
+              const prefix = currentWeaponField.replace("Name", "")
+              setFormData((prev: any) => ({
+                ...prev,
+                [`${prefix}Name`]: "",
+                [`${prefix}Trait`]: "",
+                [`${prefix}Damage`]: "",
+                [`${prefix}Feature`]: "",
+              }))
+            }
+            setWeaponModalOpen(false)
+            return
+          }
           handleWeaponChange(currentWeaponField, weaponId, weaponType)
           setWeaponModalOpen(false)
         }}

@@ -66,15 +66,15 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                 <tr
                   className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
                   onClick={() => onSelect("none")}
-                ><td className="p-2 whitespace-nowrap" colSpan={6}>{/* Added whitespace-nowrap */}
+                ><td className="p-2 whitespace-nowrap" colSpan={6}>
                     --清除选择--
                   </td></tr>
                 {processedArmorItems.map((armor) => (
                   <tr
-                    key={armor.id} // Use the added id
+                    key={armor.id}
                     className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => onSelect(armor.id)} // Use the added id
-                  ><td className="p-2 whitespace-nowrap">{armor.名称}</td>{/* Added whitespace-nowrap */}<td className="p-2 whitespace-nowrap">{armor.等级}</td>{/* Added whitespace-nowrap */}<td className="p-2 whitespace-nowrap">{armor.伤害阈值}</td>{/* Added whitespace-nowrap */}<td className="p-2 whitespace-nowrap">{armor.基本分}</td>{/* Added whitespace-nowrap */}<td className="p-2 whitespace-nowrap">{armor.特性名称}</td>{/* Added whitespace-nowrap */}<td className="p-2 whitespace-nowrap">{armor.描述}</td>{/* Added whitespace-nowrap */}</tr>
+                    onClick={() => onSelect(armor.id)}
+                  ><td className="p-2 whitespace-nowrap">{armor.名称}</td><td className="p-2 whitespace-nowrap">{armor.等级}</td><td className="p-2 whitespace-nowrap">{armor.伤害阈值}</td><td className="p-2 whitespace-nowrap">{armor.基本分}</td><td className="p-2 whitespace-nowrap">{armor.特性名称}</td><td className="p-2 whitespace-nowrap">{armor.描述}</td></tr>
                 ))}
               </tbody>
             </table>

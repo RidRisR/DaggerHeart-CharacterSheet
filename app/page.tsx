@@ -18,7 +18,7 @@ const defaultFormData = {
   level: 1,
   proficiency: 0,
   ancestry: "",
-  profession: "warrior",
+  profession: "",
   community: "",
   strength: 0,
   dexterity: 0,

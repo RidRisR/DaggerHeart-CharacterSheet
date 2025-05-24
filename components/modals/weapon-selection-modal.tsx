@@ -78,7 +78,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
               <tbody>
                 <tr
                   className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => onSelect("none", "primary")}
+                  onClick={() => onSelect("none", weaponSlotType === "secondary" ? "secondary" : "primary")}
                 ><td className="p-2 whitespace-nowrap" colSpan={10}>
                     --清除选择--
                   </td></tr>

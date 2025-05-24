@@ -96,7 +96,7 @@ export const guideSteps: GuideStep[] = [
         formData.presence?.value,
         formData.knowledge?.value
       ];
-      return attributes.filter(val => val !== undefined && val !== null && String(val).trim() !== '').length >= 4;
+      return attributes.filter(val => val !== undefined && val !== null && String(val).trim() !== '').length >= 6;
     },
   },
   {
@@ -178,7 +178,7 @@ export const guideSteps: GuideStep[] = [
   {
     id: "step7",
     title: "选择初始武器",
-    content: "现在请选择您的初始武器。请从第 1 阶武器表中选择\n1.<strong>一把双手主武器</strong>;\n2. 或者 <strong>一把单手主武器和一把单手副武器</strong>。\n填写在主武器和副武器栏位上。",
+    content: "现在请选择您的初始武器。请从<strong>T1</strong>武器表中选择\n1.<strong>一把双手主武器</strong>;\n2. 或者 <strong>一把单手主武器和一把单手副武器</strong>。\n填写在主武器和副武器栏位上。",
     validation: (formData) => {
       return isFilled(formData.primaryWeaponName);
     }
@@ -189,7 +189,7 @@ export const guideSteps: GuideStep[] = [
     content: (formData: any): string => {
       const isArmorSelected = formData?.armorName && formData?.armorBaseScore !== undefined && formData?.armorThreshold !== undefined && String(formData.armorName).trim() !== '';
       if (!isArmorSelected) {
-        return "现在请选择您的初始护甲。从第 1 阶护甲表中选择并装备一套护甲，然后填写在已装备护甲栏位上。已装备护甲为您提供护甲值和护甲伤害阈值。\n<strong>护甲值</strong>代表您的护甲可以承受多少次攻击。<strong>伤害阈值</strong>是护甲提供的减伤等级,决定了需要造成多少伤害才能真正伤害到您。";
+        return "现在请选择您的初始护甲。请从<strong>T1</strong>护甲表中选择并装备一套护甲，然后填写在已装备护甲栏位上。已装备护甲为您提供护甲值和护甲伤害阈值。\n<strong>护甲值</strong>代表您的护甲可以承受多少次攻击。<strong>伤害阈值</strong>是护甲提供的减伤等级,决定了需要造成多少伤害才能真正伤害到您。";
       }
       // 处理护甲值
       const armorValue = formData?.armorBaseScore !== undefined && formData?.armorBaseScore !== null

@@ -23,7 +23,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
       tier2: {},
       tier3: {},
     },
-    profession: "warrior",
+    profession: "",
   }
 
   // 模态框状态

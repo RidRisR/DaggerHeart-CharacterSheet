@@ -27,6 +27,7 @@ export interface AncestryCard {
   种族: AncestryCardClass;
   简介: string;
   效果: string;
+  类别: number
   imageURL?: string;
 }
 

@@ -785,9 +785,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
               />
             </div>
           </div>
-
-          {/* Footer */}
-          <div className="text-[8px] text-center mt-1">© 2024 Daggerheart v1.5 Open Beta</div>
         </div>
       </div>
 

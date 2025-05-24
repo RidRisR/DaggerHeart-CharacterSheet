@@ -150,7 +150,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                 </div>
                 <div className="flex-1 min-w-0 break-words text-wrap text-left">
                     <span className="text-[11px] text-gray-800 dark:text-gray-200 font-bold">{title}</span>
-                    {desc && <span className="text-[10px] text-gray-600 dark:text-gray-300 ml-1 font-bold">{desc}</span>}
+                    {desc && <span className="text-[11px] text-gray-600 dark:text-gray-300 ml-1 font-bold">{desc}</span>}
                 </div>
             </div>
         );
@@ -305,8 +305,6 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                     </div>
                 </div>
             </div>
-            {/* Footer */}
-            <p className="text-2xs text-center text-gray-500 dark:text-gray-400 pt-3 mt-4 border-t border-gray-200 dark:border-gray-700">© Daggerheart V20250520</p>
         </div>
     );
 };

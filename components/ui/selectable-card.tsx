@@ -4,6 +4,7 @@ import type { StandardCard } from "@/data/card/card-types"
 import { getCardTypeColor } from "@/data/card/card-ui-config"
 import { saveSelectedCardIds, loadSelectedCardIds } from "@/lib/storage"
 import React, { useState, useEffect, useRef } from "react"
+import ReactMarkdown from "react-markdown"
 
 interface SelectableCardProps {
     card: StandardCard
@@ -90,7 +91,9 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                         {displayName}
                     </h3>
                     <div className="text-xs text-gray-600 overflow-y-hide flex-grow" style={{ whiteSpace: "pre-line" }}>
-                        {displayDescription}
+                        <ReactMarkdown skipHtml>
+                            {displayDescription.replace(/\n{2,}/g, '\n\n')}
+                        </ReactMarkdown>
                     </div>
                 </div>
 
@@ -144,9 +147,11 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
 
                     {!isAltPressed && displayDescription && (
                         <div className="p-2 border-t">
-                            <p className="text-xs text-gray-700" style={{ whiteSpace: "pre-line" }}>
-                                {displayDescription || "无描述"}
-                            </p>
+                            <div className="text-xs text-gray-700" style={{ whiteSpace: "pre-line" }}>
+                                <ReactMarkdown skipHtml>
+                                    {(displayDescription || "无描述").replace(/\n{2,}/g, '\n\n')}
+                                </ReactMarkdown>
+                            </div>
                         </div>
                     )}
 

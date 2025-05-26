@@ -3,7 +3,7 @@ import type { FormData } from "@/lib/form-data"
 
 interface HopeSectionProps {
   formData: FormData
-  handleCheckboxChange: (field: string, index: number) => void
+  handleCheckboxChange: (field: keyof FormData, index: number) => void
 }
 
 export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps) {

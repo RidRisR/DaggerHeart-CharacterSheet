@@ -12,7 +12,7 @@ import { UpgradeSection } from "@/components/character-sheet-page-two-sections/u
 
 interface CharacterSheetPageTwoProps {
   formData: FormData
-  setFormData: (data: FormData) => void
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>
 }
 
 export default function CharacterSheetPageTwo({ formData, setFormData }: CharacterSheetPageTwoProps) {
@@ -47,7 +47,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
 
     isUpdatingRef.current = true
 
-    setFormData((prev: any) => {
+    setFormData((prev) => {
       const newCards = [...prev.cards]
       newCards[index] = card
       return { ...prev, cards: newCards }
@@ -62,12 +62,12 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
   // Update form data when input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev: any) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   // Handle checkbox changes for upgrades
   const handleUpgradeCheck = (tier: string, index: number) => {
-    setFormData((prev: any) => {
+    setFormData((prev) => {
       const newCheckedUpgrades = { ...prev.checkedUpgrades }
       const tierUpgrades = { ...newCheckedUpgrades[tier as keyof typeof newCheckedUpgrades] }
 

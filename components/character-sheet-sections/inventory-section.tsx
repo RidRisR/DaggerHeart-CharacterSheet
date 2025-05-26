@@ -26,7 +26,7 @@ export function InventorySection({ formData, setFormData }: InventorySectionProp
             onChange={(e) => {
               const newInventory = [...safeInventory]
               newInventory[i] = e.target.value
-              setFormData((prev: any) => ({ ...prev, inventory: newInventory }))
+              setFormData((prev) => ({ ...prev, inventory: newInventory }))
             }}
             className="w-full border-b border-gray-400 p-0.5 focus:outline-none text-sm print-empty-hide"
           />

@@ -4,7 +4,7 @@ import type { FormData } from "@/lib/form-data"
 
 interface GoldSectionProps {
   formData: FormData
-  handleCheckboxChange: (field: string, index: number) => void
+  handleCheckboxChange: (field: keyof FormData, index: number) => void
 }
 
 export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps) {

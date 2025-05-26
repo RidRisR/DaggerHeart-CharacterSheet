@@ -90,12 +90,12 @@ const defaultFormData = {
   experienceValues: ["", "", "", "", ""],
   cards: Array(20)
     .fill(0)
-    .map(() => (createEmptyCard)),
+    .map(() => createEmptyCard()),
 }
 
 interface CharacterSheetProps {
   formData: FormData
-  setFormData: (data: FormData) => void
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>
 }
 
 export default function CharacterSheet({ formData, setFormData }: CharacterSheetProps) {
@@ -129,10 +129,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     companionExperienceValue: Array.isArray(formData?.companionExperienceValue) ? formData.companionExperienceValue : ["", "", "", "", ""],
     companionStress: Array.isArray(formData?.companionStress) ? formData.companionStress : Array(6).fill(false),
     cards: Array.isArray(formData?.cards)
-      ? formData.cards
-      : Array(20)
-          .fill(0)
-        .map(() => (createEmptyCard)),
+      ? formData.cards // 只允许 StandardCard[]
+      : Array(20).fill(0).map(() => createEmptyCard()),
     // 确保属性对象存在
     agility: formData?.agility || { checked: false, value: "" },
     strength: formData?.strength || { checked: false, value: "" },
@@ -236,7 +234,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       // 只有在需要更新时才调用setFormData
       if (needsUpdate) {
         console.log("Updating cards in state")
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           cards: updatedCards,
         }))
@@ -268,52 +266,42 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev: any) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleAttributeValueChange = (attribute: string, value: string) => {
-    setFormData((prev: any) => {
-      // 确保属性对象存在
-      const currentAttribute = prev[attribute] || { checked: false, value: "" }
-      return {
-        ...prev,
-        [attribute]: { ...currentAttribute, value },
+  const handleAttributeValueChange = (attribute: keyof FormData, value: string) => {
+    setFormData((prev) => {
+      const currentAttribute = prev[attribute]
+      if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
+        return {
+          ...prev,
+          [attribute]: { ...currentAttribute, value },
+        }
       }
+      return prev
     })
   }
 
-  const handleCheckboxChange = (field: string, index: number) => {
-    setFormData((prev: any) => {
-      // 确保prev[field]是一个数组，如果不是则创建一个默认数组
-      let currentArray = prev[field]
+  const handleCheckboxChange = (field: keyof FormData, index: number) => {
+    setFormData((prev) => {
+      let currentArray = prev[field] as boolean[] | undefined
       if (!Array.isArray(currentArray)) {
-        // 根据字段名创建适当大小的默认数组
         if (field === "armorBoxes") currentArray = Array(12).fill(false)
         else if (field === "hp" || field === "stress") currentArray = Array(18).fill(false)
         else if (field === "hope") currentArray = Array(6).fill(false)
         else if (field === "gold") currentArray = Array(20).fill(false)
-        else currentArray = [] // 默认空数组
+        else currentArray = []
       }
-
-      // 创建新数组并更新值
       const newArray = [...currentArray]
       newArray[index] = !newArray[index]
       return { ...prev, [field]: newArray }
     })
   }
 
-  const handleBooleanChange = (field: string) => {
-    if (
-      field.includes("agility") ||
-      field.includes("strength") ||
-      field.includes("finesse") ||
-      field.includes("instinct") ||
-      field.includes("presence") ||
-      field.includes("knowledge")
-    ) {
-      setFormData((prev: any) => {
-        // 确保属性对象存在
-        const currentAttribute = prev[field] || { checked: false, value: "" }
+  const handleBooleanChange = (field: keyof FormData) => {
+    setFormData((prev) => {
+      const currentAttribute = prev[field]
+      if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
         return {
           ...prev,
           [field]: {
@@ -321,18 +309,19 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
             checked: !currentAttribute.checked,
           },
         }
-      })
-    } else {
-      setFormData((prev: any) => ({
-        ...prev,
-        [field]: !prev[field],
-      }))
-    }
+      } else if (typeof currentAttribute === "boolean") {
+        return {
+          ...prev,
+          [field]: !currentAttribute,
+        }
+      }
+      return prev
+    })
   }
 
-  const handleMaxChange = (field: string, value: string) => {
+  const handleMaxChange = (field: keyof FormData, value: string) => {
     const numValue = Number.parseInt(value) || 0
-    setFormData((prev: any) => ({ ...prev, [field]: numValue }))
+    setFormData((prev) => ({ ...prev, [field]: numValue }))
   }
 
   const handleProfessionChange = (value: string) => {
@@ -342,7 +331,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       console.log("Clearing profession selection")
 
       // 清空职业选择
-      setFormData((prev: any) => {
+      setFormData((prev) => {
         // 创建新的表单数据，清空职业相关字段
         return {
           ...prev,
@@ -356,7 +345,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       if (profession) {
         console.log("Setting profession to:", profession.name)
 
-        setFormData((prev: any) => {
+        setFormData((prev) => {
           // 创建新的表单数据，设置职业相关字段
           return {
             ...prev,
@@ -371,7 +360,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   const handleAncestryChange = (field: string, value: string) => {
     if (value === "none" || !value) {
-      setFormData((prev: any) => {
+      setFormData((prev) => {
         return {
           ...prev,
           [field]: "",
@@ -380,7 +369,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     } else {
       const ancestry = ALL_STANDARD_CARDS.find((a) => a.id === value)
       if (ancestry) {
-        setFormData((prev: any) => {
+        setFormData((prev) => {
           return {
             ...prev,
             [field]: value,
@@ -394,7 +383,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   const handleCommunityChange = (value: string) => {
     if (value === "none" || !value) {
-      setFormData((prev: any) => {
+      setFormData((prev) => {
         return {
           ...prev,
           community: "",
@@ -403,7 +392,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     } else {
       const community = ALL_STANDARD_CARDS.find((c) => c.id === value)
       if (community) {
-        setFormData((prev: any) => {
+        setFormData((prev) => {
           return {
             ...prev,
             community: value,
@@ -427,7 +416,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         feature: weapon.描述,
       }
       if (field === "primaryWeaponName") {
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           primaryWeaponName: weaponDetails.name,
           primaryWeaponTrait: weaponDetails.trait,
@@ -435,7 +424,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           primaryWeaponFeature: weaponDetails.feature,
         }))
       } else if (field === "secondaryWeaponName") {
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           secondaryWeaponName: weaponDetails.name,
           secondaryWeaponTrait: weaponDetails.trait,
@@ -444,7 +433,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         }))
       } else if (field.startsWith("inventoryWeapon")) {
         const inventoryFieldPrefix = field.replace("Name", "")
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           [`${inventoryFieldPrefix}Name`]: weaponDetails.name,
           [`${inventoryFieldPrefix}Trait`]: weaponDetails.trait,
@@ -454,7 +443,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       }
     } else if (weaponId === "none") {
       if (field === "primaryWeaponName") {
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           primaryWeaponName: "",
           primaryWeaponTrait: "",
@@ -462,7 +451,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           primaryWeaponFeature: "",
         }))
       } else if (field === "secondaryWeaponName") {
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           secondaryWeaponName: "",
           secondaryWeaponTrait: "",
@@ -471,7 +460,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         }))
       } else if (field.startsWith("inventoryWeapon")) {
         const prefix = field.replace("Name", "")
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           [`${prefix}Name`]: "",
           [`${prefix}Trait`]: "",
@@ -481,7 +470,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       }
     } else if (weaponId) { // 处理自定义武器
       if (field === "primaryWeaponName") {
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           primaryWeaponName: weaponId,
           primaryWeaponTrait: "",
@@ -489,7 +478,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           primaryWeaponFeature: "",
         }))
       } else if (field === "secondaryWeaponName") {
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           secondaryWeaponName: weaponId,
           secondaryWeaponTrait: "",
@@ -498,7 +487,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         }))
       } else if (field.startsWith("inventoryWeapon")) {
         const prefix = field.replace("Name", "")
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           [`${prefix}Name`]: weaponId,
           [`${prefix}Trait`]: "",
@@ -512,7 +501,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   const handleArmorChange = (value: string) => {
     const armor = armorItems.find((a: ArmorItem) => a.名称 === value)
     if (armor) {
-      setFormData((prev: any) => ({
+      setFormData((prev) => ({
         ...prev,
         armorName: armor.名称,
         armorBaseScore: String(armor.护甲值),
@@ -520,7 +509,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         armorFeature: `${armor.特性名称}${armor.特性名称 && armor.描述 ? ": " : ""}${armor.描述}`,
       }))
     } else if (value === "none") {
-      setFormData((prev: any) => ({
+      setFormData((prev) => ({
         ...prev,
         armorName: "",
         armorBaseScore: "",
@@ -528,7 +517,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         armorFeature: "",
       }))
     } else if (value) { // 处理自定义护甲
-      setFormData((prev: any) => ({
+      setFormData((prev) => ({
         ...prev,
         armorName: value,
         armorBaseScore: "",
@@ -565,18 +554,16 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }, [formData])
 
   // Generate boxes based on max values
-  const renderBoxes = (field: string, max: number, total: number) => {
+  const renderBoxes = (field: keyof FormData, max: number, total: number) => {
     return (
       <div className="flex gap-1 flex-wrap">
         {Array(total)
           .fill(0)
           .map((_, i) => {
-            // 确保 safeFormData[field] 存在且是数组
-            const fieldArray = Array.isArray(safeFormData[field]) ? safeFormData[field] : Array(total).fill(false)
-
+            const fieldArray = Array.isArray(safeFormData[field]) ? (safeFormData[field] as boolean[]) : Array(total).fill(false)
             return (
               <div
-                key={`${field}-${i}`}
+                key={`${String(field)}-${i}`}
                 className={`w-4 h-4 border-2 ${
                   i < max ? "border-gray-800 cursor-pointer" : "border-gray-400 border-dashed"
                 } ${fieldArray[i] ? "bg-gray-800" : "bg-white"}`}
@@ -693,7 +680,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                           const reader = new FileReader()
                           reader.onload = (event) => {
                             if (event.target) {
-                              setFormData((prev: any) => ({
+                              setFormData((prev) => ({
                                 ...prev,
                                 characterImage: event.target?.result as string,
                               }))
@@ -744,7 +731,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                           .map((_, i) => (
                             <div
                               key={`armor-box-${i}`}
-                              className={`w-4 h-4 border ${i < safeFormData.armorValue
+                              className={`w-4 h-4 border ${i < Number(safeFormData.armorValue)
                                   ? "border-gray-800 cursor-pointer"
                                   : "border-gray-400 border-dashed"
                               } ${safeFormData.armorBoxes[i] && i < safeFormData.armorMax ? "bg-gray-800" : "bg-white"}`}
@@ -859,7 +846,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         onSelect={(weaponId, weaponType) => {
           if (weaponId === "none") {
             if (currentWeaponField === "primaryWeaponName") {
-              setFormData((prev: any) => ({
+              setFormData((prev) => ({
                 ...prev,
                 primaryWeaponName: "",
                 primaryWeaponTrait: "",
@@ -867,7 +854,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 primaryWeaponFeature: "",
               }))
             } else if (currentWeaponField === "secondaryWeaponName") {
-              setFormData((prev: any) => ({
+              setFormData((prev) => ({
                 ...prev,
                 secondaryWeaponName: "",
                 secondaryWeaponTrait: "",
@@ -876,7 +863,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
               }))
             } else if (currentWeaponField.startsWith("inventoryWeapon")) {
               const prefix = currentWeaponField.replace("Name", "")
-              setFormData((prev: any) => ({
+              setFormData((prev) => ({
                 ...prev,
                 [`${prefix}Name`]: "",
                 [`${prefix}Trait`]: "",

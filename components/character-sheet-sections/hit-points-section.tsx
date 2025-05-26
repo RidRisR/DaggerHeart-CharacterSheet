@@ -6,8 +6,8 @@ import type { FormData } from "@/lib/form-data"
 interface HitPointsSectionProps {
   formData: FormData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  handleMaxChange: (field: string, value: string) => void
-  renderBoxes: (field: string, max: number, total: number) => JSX.Element
+  handleMaxChange: (field: keyof FormData, value: string) => void
+  renderBoxes: (field: keyof FormData, max: number, total: number) => React.ReactElement
 }
 
 export function HitPointsSection({ formData, handleInputChange, handleMaxChange, renderBoxes }: HitPointsSectionProps) {
@@ -54,12 +54,12 @@ export function HitPointsSection({ formData, handleInputChange, handleMaxChange,
               min="1"
               max="18"
               value={formData.hpMax}
-              onChange={(e) => handleMaxChange("hpMax", e.target.value)}
+              onChange={(e) => handleMaxChange("hpMax" as keyof FormData, e.target.value)}
               className="w-8 text-center border border-gray-400 rounded text-xs print-empty-hide print-empty-text"
             />
           </div>
         </div>
-        {renderBoxes("hp", formData.hpMax, 18)}
+        {renderBoxes("hp" as keyof FormData, Number(formData.hpMax ?? 0), 18)}
 
         <div className="flex items-center justify-between mt-1">
           <span className="font-bold mr-2 text-xs">STRESS</span>
@@ -70,12 +70,12 @@ export function HitPointsSection({ formData, handleInputChange, handleMaxChange,
               min="1"
               max="12"
               value={formData.stressMax}
-              onChange={(e) => handleMaxChange("stressMax", e.target.value)}
+              onChange={(e) => handleMaxChange("stressMax" as keyof FormData, e.target.value)}
               className="w-8 text-center border border-gray-400 rounded text-xs print-empty-hide print-empty-text"
             />
           </div>
         </div>
-        {renderBoxes("stress", formData.stressMax, 18)}
+        {renderBoxes("stress" as keyof FormData, Number(formData.stressMax ?? 0), 18)}
       </div>
     </div>
   )

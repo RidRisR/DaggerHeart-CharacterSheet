@@ -7,7 +7,7 @@ interface InventoryWeaponSectionProps {
   formData: FormData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   openWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void
-  handleBooleanChange: (fieldName: string) => void // Added this line
+  handleBooleanChange: (field: keyof FormData) => void // 类型收敛
   index: number
 }
 
@@ -79,7 +79,7 @@ export function InventoryWeaponSection({
             type="checkbox"
             id={primaryField}
             checked={!!formData[primaryField]} // Ensure value is boolean
-            onChange={() => handleBooleanChange(primaryField)}
+            onChange={() => handleBooleanChange(primaryField as keyof FormData)}
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={primaryField} className="text-[8px]">
@@ -91,7 +91,7 @@ export function InventoryWeaponSection({
             type="checkbox"
             id={secondaryField}
             checked={!!formData[secondaryField]} // Ensure value is boolean
-            onChange={() => handleBooleanChange(secondaryField)}
+            onChange={() => handleBooleanChange(secondaryField as keyof FormData)}
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={secondaryField} className="text-[8px]">

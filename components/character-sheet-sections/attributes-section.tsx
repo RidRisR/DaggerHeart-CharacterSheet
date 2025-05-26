@@ -4,8 +4,8 @@ import type { FormData } from "@/lib/form-data"
 
 interface AttributesSectionProps {
   formData: FormData
-  handleAttributeValueChange: (attribute: string, value: string) => void
-  handleBooleanChange: (field: string) => void
+  handleAttributeValueChange: (attribute: keyof FormData, value: string) => void
+  handleBooleanChange: (field: keyof FormData) => void
 }
 
 export function AttributesSection({
@@ -35,7 +35,7 @@ export function AttributesSection({
                 className={`w-3 h-3 rounded-full border border-gray-800 flex items-center justify-center cursor-pointer ${
                   formData[attr.key].checked ? "bg-gray-800" : "bg-white"
                 }`}
-                onClick={() => handleBooleanChange(attr.key)}
+                onClick={() => handleBooleanChange(attr.key as keyof FormData)}
               >
                 {formData[attr.key].checked && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
               </div>
@@ -45,7 +45,7 @@ export function AttributesSection({
                 <input
                   type="text"
                   value={formData[attr.key].value}
-                  onChange={(e) => handleAttributeValueChange(attr.key, e.target.value)}
+                  onChange={(e) => handleAttributeValueChange(attr.key as keyof FormData, e.target.value)}
                   className="w-6 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
                   placeholder="#"
                 />

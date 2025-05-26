@@ -39,13 +39,8 @@ export interface FormData {
   ancestry2?: string
   profession: string
   community: string
-  strength: number | AttributeValue
-  dexterity?: number
-  intelligence?: number
-  wisdom?: number
-  charisma?: number
-  constitution?: number
   agility?: AttributeValue
+  strength?: AttributeValue
   finesse?: AttributeValue
   instinct?: AttributeValue
   presence?: AttributeValue

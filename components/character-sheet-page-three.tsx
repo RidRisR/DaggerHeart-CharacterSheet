@@ -57,12 +57,63 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
 
     // 伙伴经验区块（右侧为图片+描述，无经验示例）
     const renderCompanionExperienceSection = () => (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-x-5 mb-3 print:grid-cols-5 print:gap-x-5 print:mb-3">
-            <div className="md:col-span-3 print:col-span-3">
-                <h3 className="font-bold text-md mb-1 text-gray-800 dark:text-gray-200">伙伴经验</h3>
-                <div className="flex flex-col gap-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 mb-3 print:grid-cols-2 print:gap-x-8 print:mb-3">
+            {/* 伙伴描述区：左半区，带边框 */}
+            <div className="flex flex-col justify-end w-full p-3 border border-transparent dark:border-transparent rounded-t-md rounded-b-md bg-white dark:bg-gray-900">
+                <h3 className="font-bold text-md mb-2 text-gray-800 dark:text-gray-200">伙伴描述</h3>
+                <div className="flex flex-col items-center">
+                    <div className="w-36 h-36 border-2 border-gray-800 flex items-center justify-center relative overflow-hidden bg-gray-100 dark:bg-gray-800 print:w-28 print:h-28 mb-2">
+                        {safeFormData.companionImage ? (
+                            <img
+                                src={safeFormData.companionImage}
+                                alt="伙伴图片"
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <svg viewBox="0 0 48 48" fill="none" className="w-14 h-14 text-gray-300" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="48" height="48" rx="8" fill="currentColor" />
+                                <path d="M24 14a6 6 0 100 12 6 6 0 000-12zm0 16c-5.33 0-16 2.67-16 8v2h32v-2c0-5.33-10.67-8-16-8z" fill="#fff" />
+                            </svg>
+                        )}
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = ev => {
+                                        const result = ev.target?.result;
+                                        if (typeof result === 'string') {
+                                            onFormDataChange({ ...formData, companionImage: result });
+                                        }
+                                    };
+                                    reader.readAsDataURL(file);
+                                }
+                            }}
+                            className="opacity-0 absolute inset-0 cursor-pointer"
+                            tabIndex={-1}
+                        />
+                    </div>
+                    <textarea
+                        rows={6}
+                        id="companionDescription"
+                        name="companionDescription"
+                        value={safeFormData.companionDescription || ''}
+                        onChange={e => onFormDataChange({ ...formData, companionDescription: e.target.value })}
+                        className="block w-full text-xs border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 resize-none shadow-inner min-h-[7rem] max-h-[10rem] print:min-h-[5rem] print:max-h-[8rem]"
+                        placeholder="伙伴描述（如性格、外貌等）"
+                        maxLength={180}
+                        style={{ minHeight: '6rem', maxHeight: '9rem' }}
+                    />
+                </div>
+            </div>
+            {/* 伙伴经验区：右半区，带边框 */}
+            <div className="flex flex-col justify-end w-full p-3 border border-transparent dark:border-transparent rounded-t-md rounded-b-md bg-white dark:bg-gray-900">
+                <h3 className="font-bold text-md mb-2 text-gray-800 dark:text-gray-200">伙伴经验</h3>
+                <div className="flex flex-col gap-2">
                     {(safeFormData.companionExperience || ["", "", "", "", ""]).map((exp, i) => (
-                        <div key={`companion-exp-${i}`} className="flex items-center gap-1 mb-1">
+                        <div key={`companion-exp-${i}`} className="flex items-center gap-2 mb-1">
                             <input
                                 type="text"
                                 name={`companionExperience${i + 1}`}
@@ -72,8 +123,9 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                                     newArr[i] = e.target.value
                                     onFormDataChange({ ...formData, companionExperience: newArr })
                                 }}
-                                className="w-32 border border-gray-400 rounded text-sm print-empty-hide"
+                                className="w-full border-b-2 border-gray-400 rounded-none text-base print-empty-hide bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150"
                                 placeholder="经验描述"
+                                style={{ minHeight: '2.5rem' }}
                             />
                             <input
                                 type="text"
@@ -84,60 +136,12 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                                     newArr[i] = e.target.value
                                     onFormDataChange({ ...formData, companionExperienceValue: newArr })
                                 }}
-                                className="w-8 border border-gray-400 rounded ml-1 text-center text-sm print-empty-hide"
+                                className="w-12 border-b-2 border-gray-400 rounded-none ml-2 text-center text-base print-empty-hide bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150"
                                 placeholder="#"
+                                style={{ minHeight: '2.5rem' }}
                             />
                         </div>
                     ))}
-                </div>
-            </div>
-            <div className="md:col-span-2 mt-3 md:mt-0 flex flex-col items-center justify-start print:col-span-2 print:mt-0 print:items-center print:justify-start">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">伙伴图片（可选）</label>
-                <div className="w-36 h-36 border-2 border-gray-800 flex items-center justify-center relative overflow-hidden bg-gray-100 dark:bg-gray-800 print:w-32 print:h-32">
-                    {safeFormData.companionImage ? (
-                        <img
-                            src={safeFormData.companionImage}
-                            alt="伙伴图片"
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <svg viewBox="0 0 48 48" fill="none" className="w-16 h-16 text-gray-300" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="48" height="48" rx="8" fill="currentColor" />
-                            <path d="M24 14a6 6 0 100 12 6 6 0 000-12zm0 16c-5.33 0-16 2.67-16 8v2h32v-2c0-5.33-10.67-8-16-8z" fill="#fff" />
-                        </svg>
-                    )}
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={e => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                                const reader = new FileReader();
-                                reader.onload = ev => {
-                                    const result = ev.target?.result;
-                                    if (typeof result === 'string') {
-                                        onFormDataChange({ ...formData, companionImage: result });
-                                    }
-                                };
-                                reader.readAsDataURL(file);
-                            }
-                        }}
-                        className="opacity-0 absolute inset-0 cursor-pointer"
-                        tabIndex={-1}
-                    />
-                </div>
-                <div className="w-full mt-2 flex-1 flex flex-col justify-end print:mt-2">
-                    <textarea
-                        rows={5}
-                        id="companionDescription"
-                        name="companionDescription"
-                        value={safeFormData.companionDescription || ''}
-                        onChange={e => onFormDataChange({ ...formData, companionDescription: e.target.value })}
-                        className="block w-full text-xs border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 resize-none shadow-inner min-h-[4.5rem] max-h-[6.5rem] print:min-h-[3.5rem] print:max-h-[5rem]"
-                        placeholder="伙伴描述（如性格、外貌等）"
-                        maxLength={180}
-                        style={{ minHeight: '4.5rem', maxHeight: '6.5rem' }}
-                    />
                 </div>
             </div>
         </div>

@@ -15,7 +15,7 @@ export function AttributesSection({
 }: AttributesSectionProps) {
   return (
     <div className="space-y-2">
-      <div className=" mb-2">
+      <div className="mb-2">
         <h3 className="text-xs font-bold text-center mb-1">ATTRIBUTES</h3>
       </div>
 
@@ -31,16 +31,17 @@ export function AttributesSection({
           <div key={attr.name} className="flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-0.5">
               <div className="text-[12px] font-bold">{attr.name}</div>
-              {/* 类型守卫：仅 AttributeValue 类型才访问 checked/value */}
               {(() => {
                 const attrValue = formData[attr.key as keyof typeof formData];
+                console.log("attrValue", attrValue);
                 function isAttributeValue(val: unknown): val is AttributeValue {
-                  return val !== undefined && typeof val === 'object' && val !== null && 'checked' in val && 'value' in val;
+                  return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
                 }
 
                 return (
                   <div
-                    className={`w-3 h-3 rounded-full border border-gray-800 flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-gray-800" : "bg-white"}`}
+                    className={`w-3 h-3 rounded-full border border-gray-800 flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-gray-800" : "bg-white"
+                      }`}
                     onClick={() => handleBooleanChange(attr.key as keyof FormData)}
                   >
                     {isAttributeValue(attrValue) && attrValue.checked && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
@@ -55,10 +56,9 @@ export function AttributesSection({
                   value={(() => {
                     const attrValue = formData[attr.key as keyof typeof formData];
                     function isAttributeValue(val: unknown): val is AttributeValue {
-                      return val !== undefined && typeof val === 'object' && val !== null && 'checked' in val && 'value' in val;
+                      return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
                     }
-
-                    return isAttributeValue(attrValue) ? attrValue.value : '';
+                    return isAttributeValue(attrValue) ? attrValue.value : "";
                   })()}
                   onChange={(e) => handleAttributeValueChange(attr.key as keyof FormData, e.target.value)}
                   className="w-6 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
@@ -71,5 +71,5 @@ export function AttributesSection({
         ))}
       </div>
     </div>
-  )
+  );
 }

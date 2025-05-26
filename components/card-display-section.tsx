@@ -25,7 +25,7 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import { StandardCard } from "@/data/card/card-types"
 import { loadFocusedCardIds } from "@/lib/storage"
-import { ALL_STANDARD_CARDS } from "@/data/card"
+import { ALL_STANDARD_CARDS, ALL_CARD_TYPES } from "@/data/card"
 
 interface CardDisplaySectionProps {
   cards: Array<StandardCard>
@@ -46,6 +46,10 @@ function SortableCard({
     getBadgeVariant: (type: string) => "default" | "secondary" | "outline" | "destructive" | null | undefined
 }) {
   const cardId = `${card.type}-${card.name}-${index}`
+  const getTypeName = (type: string) => {
+    const found = ALL_CARD_TYPES.find(t => t.id === type)
+    return found ? found.name : type
+  }
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: cardId,
@@ -77,7 +81,7 @@ function SortableCard({
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={getBadgeVariant(card.type)} className="text-xs">
-                {card.type || "未知"}
+                {getTypeName(card.type) || "未知"}
               </Badge>
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4 text-gray-500" />

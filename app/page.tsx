@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-three"; // Import the new page
+import CharacterSheetPageFour from "@/components/character-sheet-page-four"
 import { loadCharacterData, saveCharacterData, exportCharacterData } from "@/lib/storage"
 import { CardDisplaySection } from "@/components/card-display-section"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
@@ -233,6 +234,11 @@ export default function Home() {
         {/* 第三页 */}
         <div className="page-three">
           <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={(formData as any).cards} />
+        </div>
+
+        {/* 第四页（仅打印时显示） */}
+        <div className="page-four">
+          <CharacterSheetPageFour formData={formData} />
         </div>
       </div>
     )

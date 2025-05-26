@@ -11,35 +11,59 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
   return (
     <div className="py-1 mb-2">
       <h3 className="text-xs font-bold text-center mb-1">GOLD</h3>
-
-      <div className="flex justify-between">
-        <div>
+      <div className="flex flex-row gap-6 items-end justify-center">
+        {/* HANDFULS */}
+        <div className="flex flex-col items-center">
           <div className="text-[9px] mb-1">HANDFULS</div>
-          <div className="flex gap-2">
-            {formData.gold.slice(0, 10).map((checked: boolean, i: number) => (
-              <div
-                key={`gold-bag-${i}`}
-                className={`w-4 h-4 border-2 border-gray-800 cursor-pointer ${checked ? "bg-gray-800" : "bg-white"}`}
-                onClick={() => handleCheckboxChange("gold", i)}
-              ></div>
-            ))}
+          <div className="flex flex-col gap-1">
+            <div className="flex gap-2">
+              {formData.gold.slice(0, 5).map((checked: boolean, i: number) => (
+                <div
+                  key={`gold-handful-${i}`}
+                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer rounded-full ${checked ? "bg-gray-800" : "bg-white"}`}
+                  onClick={() => handleCheckboxChange("gold", i)}
+                ></div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              {formData.gold.slice(5, 10).map((checked: boolean, i: number) => (
+                <div
+                  key={`gold-handful-${i + 5}`}
+                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer rounded-full ${checked ? "bg-gray-800" : "bg-white"}`}
+                  onClick={() => handleCheckboxChange("gold", i + 5)}
+                ></div>
+              ))}
+            </div>
           </div>
         </div>
-        <div>
+        {/* BAGS */}
+        <div className="flex flex-col items-center">
           <div className="text-[9px] mb-1">BAGS</div>
-          <div className="flex gap-2">
-            {formData.gold.slice(10, 20).map((checked: boolean, i: number) => (
-              <div
-                key={`gold-bag-${i + 10}`}
-                className={`w-4 h-4 border-2 border-gray-800 cursor-pointer ${checked ? "bg-gray-800" : "bg-white"}`}
-                onClick={() => handleCheckboxChange("gold", i + 10)}
-              ></div>
-            ))}
+          <div className="flex flex-col gap-1">
+            <div className="flex gap-2">
+              {formData.gold.slice(10, 15).map((checked: boolean, i: number) => (
+                <div
+                  key={`gold-bag-${i + 10}`}
+                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer ${checked ? "bg-gray-800" : "bg-white"}`}
+                  onClick={() => handleCheckboxChange("gold", i + 10)}
+                ></div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              {formData.gold.slice(15, 20).map((checked: boolean, i: number) => (
+                <div
+                  key={`gold-bag-${i + 15}`}
+                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer ${checked ? "bg-gray-800" : "bg-white"}`}
+                  onClick={() => handleCheckboxChange("gold", i + 15)}
+                ></div>
+              ))}
+            </div>
           </div>
         </div>
-        <div>
+        {/* CHEST */}
+        <div className="flex flex-col items-center">
           <div className="text-[9px] mb-1">CHEST</div>
-          <div className="w-6 h-6 border-2 border-gray-800"></div>
+          <div className="w-8 h-8 border-2 border-gray-800"></div>
         </div>
       </div>
     </div>

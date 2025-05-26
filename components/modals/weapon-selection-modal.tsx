@@ -2,7 +2,8 @@
 import { primaryWeapons } from "@/data/list/primary-weapon";
 import { secondaryWeapons } from "@/data/list/secondary-weapon";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { useMemo, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { useMemo, useEffect, useState } from 'react';
 
 interface WeaponModalProps {
   isOpen: boolean;
@@ -27,6 +28,8 @@ interface Weapon {
 }
 
 export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponSlotType }: WeaponModalProps) {
+  const [customName, setCustomName] = useState("");
+  const [isCustom, setIsCustom] = useState(false);
   const availableWeapons: Weapon[] = useMemo(() => {
     let weapons: Weapon[] = [];
     if (weaponSlotType === "primary" || weaponSlotType === "inventory") {
@@ -62,12 +65,22 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
 
   if (!isOpen) return null;
 
+  // 选择自定义武器类型
+  const customWeaponType: 'primary' | 'secondary' = weaponSlotType === 'secondary' ? 'secondary' : 'primary';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-hidden">
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 flex items-center gap-2">
           <h2 className="text-xl font-bold">{title}</h2>
+          <Button
+            variant="destructive"
+            onClick={() => { setIsCustom(false); setCustomName(""); onSelect("none", customWeaponType); }}
+            className="bg-red-500 hover:bg-red-600 text-white ml-2"
+          >
+            清除选择
+          </Button>
         </div>
         <ScrollArea className="h-[calc(80vh-8rem)]">
           <div className="p-2">
@@ -76,17 +89,55 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
                 <tr><th className="p-2 text-left whitespace-nowrap">等级</th><th className="p-2 text-left whitespace-nowrap">名称</th><th className="p-2 text-left whitespace-nowrap">类型</th><th className="p-2 text-left whitespace-nowrap">属性</th><th className="p-2 text-left whitespace-nowrap">负荷</th><th className="p-2 text-left whitespace-nowrap">范围</th><th className="p-2 text-left whitespace-nowrap">检定</th><th className="p-2 text-left whitespace-nowrap">伤害</th><th className="p-2 text-left whitespace-nowrap">特性</th><th className="p-2 text-left whitespace-nowrap">描述</th></tr>
               </thead>
               <tbody>
-                <tr
-                  className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => onSelect("none", weaponSlotType === "secondary" ? "secondary" : "primary")}
-                ><td className="p-2 whitespace-nowrap" colSpan={10}>
-                    --清除选择--
-                  </td></tr>
+                <tr className={`border-b border-gray-200 hover:bg-gray-100 cursor-pointer ${isCustom ? 'bg-blue-50' : ''}`}
+                  onClick={() => setIsCustom(true)}>
+                  <td className="p-2 whitespace-nowrap" colSpan={10}>
+                    {isCustom ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          className="border rounded px-2 py-1 text-sm w-32"
+                          placeholder="自定义名称"
+                          value={customName}
+                          onChange={e => setCustomName(e.target.value)}
+                          onClick={e => e.stopPropagation()}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && customName) {
+                              e.stopPropagation();
+                              onSelect(customName, customWeaponType);
+                              setIsCustom(false);
+                              setCustomName("");
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={e => { e.stopPropagation(); if (customName) { onSelect(customName, customWeaponType); setIsCustom(false); setCustomName(""); } }} disabled={!customName}>
+                          确认
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-blue-600">+ 自定义</span>
+                    )}
+                  </td>
+                </tr>
+                {isCustom && customName && (
+                  <tr className="bg-blue-50">
+                    <td className="p-2 whitespace-nowrap"></td>
+                    <td className="p-2 whitespace-nowrap">{customName}</td>
+                    <td className="p-2 whitespace-nowrap">{customWeaponType === 'primary' ? '主武器' : '副武器'}</td>
+                    <td className="p-2 whitespace-nowrap"></td>
+                    <td className="p-2 whitespace-nowrap"></td>
+                    <td className="p-2 whitespace-nowrap"></td>
+                    <td className="p-2 whitespace-nowrap"></td>
+                    <td className="p-2 whitespace-nowrap"></td>
+                    <td className="p-2 whitespace-nowrap"></td>
+                    <td className="p-2 whitespace-nowrap"></td>
+                  </tr>
+                )}
                 {availableWeapons.map((weapon) => (
                   <tr
                     key={weapon.id}
                     className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => onSelect(weapon.id, weapon.weaponType)}
+                    onClick={() => { setIsCustom(false); setCustomName(""); onSelect(weapon.id, weapon.weaponType); }}
                   ><td className="p-2 whitespace-nowrap">{weapon.等级}</td><td className="p-2 whitespace-nowrap">{weapon.名称}</td><td className="p-2 whitespace-nowrap">{weapon.weaponType === "primary" ? "主武器" : "副武器"}</td><td className="p-2 whitespace-nowrap">{weapon.属性}</td><td className="p-2 whitespace-nowrap">{weapon.负荷}</td><td className="p-2 whitespace-nowrap">{weapon.范围}</td><td className="p-2 whitespace-nowrap">{weapon.检定}</td><td className="p-2 whitespace-nowrap">{weapon.伤害}</td><td className="p-2 whitespace-nowrap">{weapon.特性名称}</td><td className="p-2 whitespace-nowrap">{weapon.描述}</td></tr>
                 ))}
               </tbody>

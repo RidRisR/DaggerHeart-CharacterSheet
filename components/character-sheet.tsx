@@ -420,11 +420,10 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     if (weapon) {
       const weaponDetails = {
         name: weapon.名称,
-        trait: `${weapon.属性 || ""}/${weapon.负荷 || ""}/${weapon.范围 || ""}`, // Updated format
-        damage: `${weapon.检定 || ""}: ${weapon.伤害 || ""}`, // Updated format
-        feature: weapon.描述, // Assuming '描述' is the feature
+        trait: `${weapon.属性 || ""}/${weapon.负荷 || ""}/${weapon.范围 || ""}`,
+        damage: `${weapon.检定 || ""}: ${weapon.伤害 || ""}`,
+        feature: weapon.描述,
       }
-
       if (field === "primaryWeaponName") {
         setFormData((prev: any) => ({
           ...prev,
@@ -451,6 +450,60 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           [`${inventoryFieldPrefix}Feature`]: weaponDetails.feature,
         }))
       }
+    } else if (weaponId === "none") {
+      if (field === "primaryWeaponName") {
+        setFormData((prev: any) => ({
+          ...prev,
+          primaryWeaponName: "",
+          primaryWeaponTrait: "",
+          primaryWeaponDamage: "",
+          primaryWeaponFeature: "",
+        }))
+      } else if (field === "secondaryWeaponName") {
+        setFormData((prev: any) => ({
+          ...prev,
+          secondaryWeaponName: "",
+          secondaryWeaponTrait: "",
+          secondaryWeaponDamage: "",
+          secondaryWeaponFeature: "",
+        }))
+      } else if (field.startsWith("inventoryWeapon")) {
+        const prefix = field.replace("Name", "")
+        setFormData((prev: any) => ({
+          ...prev,
+          [`${prefix}Name`]: "",
+          [`${prefix}Trait`]: "",
+          [`${prefix}Damage`]: "",
+          [`${prefix}Feature`]: "",
+        }))
+      }
+    } else if (weaponId) { // 处理自定义武器
+      if (field === "primaryWeaponName") {
+        setFormData((prev: any) => ({
+          ...prev,
+          primaryWeaponName: weaponId,
+          primaryWeaponTrait: "",
+          primaryWeaponDamage: "",
+          primaryWeaponFeature: "",
+        }))
+      } else if (field === "secondaryWeaponName") {
+        setFormData((prev: any) => ({
+          ...prev,
+          secondaryWeaponName: weaponId,
+          secondaryWeaponTrait: "",
+          secondaryWeaponDamage: "",
+          secondaryWeaponFeature: "",
+        }))
+      } else if (field.startsWith("inventoryWeapon")) {
+        const prefix = field.replace("Name", "")
+        setFormData((prev: any) => ({
+          ...prev,
+          [`${prefix}Name`]: weaponId,
+          [`${prefix}Trait`]: "",
+          [`${prefix}Damage`]: "",
+          [`${prefix}Feature`]: "",
+        }))
+      }
     }
   }
 
@@ -460,8 +513,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       setFormData((prev: any) => ({
         ...prev,
         armorName: armor.名称,
-        armorBaseScore: String(armor.基本分), // Store base score directly
-        armorThreshold: armor.伤害阈值, // Store threshold directly
+        armorBaseScore: String(armor.基本分),
+        armorThreshold: armor.伤害阈值,
         armorFeature: `${armor.特性名称}${armor.特性名称 && armor.描述 ? ": " : ""}${armor.描述}`,
       }))
     } else if (value === "none") {
@@ -469,7 +522,15 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         ...prev,
         armorName: "",
         armorBaseScore: "",
-        armorThreshold: "", // Clear threshold
+        armorThreshold: "",
+        armorFeature: "",
+      }))
+    } else if (value) { // 处理自定义护甲
+      setFormData((prev: any) => ({
+        ...prev,
+        armorName: value,
+        armorBaseScore: "",
+        armorThreshold: "",
         armorFeature: "",
       }))
     }

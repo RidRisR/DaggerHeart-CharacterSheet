@@ -7,7 +7,7 @@ interface InventoryWeaponSectionProps {
   formData: FormData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   openWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void
-  handleBooleanChange: (field: keyof FormData) => void // 类型收敛
+  handleBooleanChange: (field: keyof FormData) => void
   index: number
 }
 
@@ -15,7 +15,7 @@ export function InventoryWeaponSection({
   formData,
   handleInputChange,
   openWeaponModal,
-  handleBooleanChange, // Added this line
+  handleBooleanChange,
   index,
 }: InventoryWeaponSectionProps) {
   const nameField = `inventoryWeapon${index}Name`
@@ -37,7 +37,7 @@ export function InventoryWeaponSection({
             onClick={() => openWeaponModal(nameField, "inventory")}
             className="printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-sm text-left px-2 bg-white" // Changed text-[10px] to text-sm
           >
-            {formData[nameField] || "选择武器"}
+            {(formData as any)[nameField] || "选择武器"}
           </button>
         </div>
         <div className="col-span-1">
@@ -45,7 +45,7 @@ export function InventoryWeaponSection({
           <input
             type="text"
             name={traitField}
-            value={formData[traitField]}
+            value={(formData as any)[traitField]}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide" // Changed text-[10px] to text-sm
           />
@@ -55,7 +55,7 @@ export function InventoryWeaponSection({
           <input
             type="text"
             name={damageField}
-            value={formData[damageField]}
+            value={(formData as any)[damageField]}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide" // Changed text-[10px] to text-sm
           />
@@ -67,7 +67,7 @@ export function InventoryWeaponSection({
         <input
           type="text"
           name={featureField}
-          value={formData[featureField]}
+          value={(formData as any)[featureField]}
           onChange={handleInputChange}
           className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide" // Changed text-[10px] to text-sm
         />
@@ -78,7 +78,7 @@ export function InventoryWeaponSection({
           <input
             type="checkbox"
             id={primaryField}
-            checked={!!formData[primaryField]} // Ensure value is boolean
+            checked={!!(formData as any)[primaryField]} // Ensure value is boolean
             onChange={() => handleBooleanChange(primaryField as keyof FormData)}
             className="mr-1 h-3 w-3"
           />
@@ -90,7 +90,7 @@ export function InventoryWeaponSection({
           <input
             type="checkbox"
             id={secondaryField}
-            checked={!!formData[secondaryField]} // Ensure value is boolean
+            checked={!!(formData as any)[secondaryField]} // Ensure value is boolean
             onChange={() => handleBooleanChange(secondaryField as keyof FormData)}
             className="mr-1 h-3 w-3"
           />

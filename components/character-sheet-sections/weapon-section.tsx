@@ -36,7 +36,7 @@ export function WeaponSection({
             onClick={() => openWeaponModal(nameField, isPrimary ? "primary" : "secondary")}
             className="header-selection-button print-hide-selection-text printable-selection-button w-full border border-gray-400 rounded p-0.5 h-6 text-sm text-left px-2 bg-white"
           >
-            {formData[nameField] || "选择武器"}
+            {(formData as any)[nameField] || "选择武器"}
           </button>
         </div>
         <div className="col-span-1">
@@ -44,7 +44,7 @@ export function WeaponSection({
           <input
             type="text"
             name={traitField}
-            value={formData[traitField]}
+            value={(formData as any)[traitField]}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
           />
@@ -54,7 +54,7 @@ export function WeaponSection({
           <input
             type="text"
             name={damageField}
-            value={formData[damageField]}
+            value={(formData as any)[damageField]}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
           />
@@ -65,7 +65,7 @@ export function WeaponSection({
         <input
           type="text"
           name={featureField}
-          value={formData[featureField]}
+          value={(formData as any)[featureField]}
           onChange={handleInputChange}
           className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
         />

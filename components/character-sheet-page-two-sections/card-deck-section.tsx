@@ -11,7 +11,7 @@ import type { FormData } from "@/lib/form-data"
 
 interface CardDeckSectionProps {
   formData: FormData
-  onCardChange: (cards: any) => void
+  onCardChange: (index: number, card: StandardCard) => void
 }
 
 export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps) {
@@ -126,12 +126,9 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
   }
 
   // 处理卡牌选择
-  const handleCardSelect = (card: any) => {
+  const handleCardSelect = (card: StandardCard) => {
     if (selectedCardIndex !== null && onCardChange) {
-      // 调用父组件传递的onCardChange函数
       onCardChange(selectedCardIndex, card)
-
-      // 关闭模态框并重置选中的卡牌索引
       setCardSelectionModalOpen(false)
       setSelectedCardIndex(null)
     }
@@ -290,7 +287,7 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
         <CardSelectionModal
           isOpen={cardSelectionModalOpen}
           onClose={() => setCardSelectionModalOpen(false)}
-          onSelect={handleCardSelect} // 使用新的处理函数
+          onSelect={handleCardSelect}
           selectedCardIndex={selectedCardIndex}
         />
       )}

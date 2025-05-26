@@ -32,20 +32,43 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
     formData,
     onFormDataChange,
 }) => {
+    const safeFormData = {
+        ...formData,
+        companionExperience: Array.isArray(formData?.companionExperience) ? formData.companionExperience : ["", "", "", "", ""],
+        companionExperienceValue: Array.isArray(formData?.companionExperienceValue) ? formData.companionExperienceValue : ["", "", "", "", ""],
+        companionStress: Array.isArray(formData?.companionStress) ? formData.companionStress : Array(6).fill(false),
+        companionImage: formData?.companionImage || "",
+        companionDescription: formData?.companionDescription || "",
+        companionRange: formData?.companionRange || "",
+        companionEvasion: formData?.companionEvasion || "",
+        companionStressMax: formData?.companionStressMax || 3,
+        companionName: formData?.companionName || "",
+        companionWeapon: formData?.companionWeapon || "",
+        // 训练相关
+        trainingIntelligent: Array.isArray(formData?.trainingIntelligent) ? formData.trainingIntelligent : Array(3).fill(false),
+        trainingRadiantInDarkness: Array.isArray(formData?.trainingRadiantInDarkness) ? formData.trainingRadiantInDarkness : Array(1).fill(false),
+        trainingCreatureComfort: Array.isArray(formData?.trainingCreatureComfort) ? formData.trainingCreatureComfort : Array(1).fill(false),
+        trainingArmored: Array.isArray(formData?.trainingArmored) ? formData.trainingArmored : Array(1).fill(false),
+        trainingVicious: Array.isArray(formData?.trainingVicious) ? formData.trainingVicious : Array(3).fill(false),
+        trainingResilient: Array.isArray(formData?.trainingResilient) ? formData.trainingResilient : Array(3).fill(false),
+        trainingBonded: Array.isArray(formData?.trainingBonded) ? formData.trainingBonded : Array(1).fill(false),
+        trainingAware: Array.isArray(formData?.trainingAware) ? formData.trainingAware : Array(3).fill(false),
+    }
+
     // 伙伴经验区块（右侧为图片+描述，无经验示例）
     const renderCompanionExperienceSection = () => (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-x-5 mb-3 print:grid-cols-5 print:gap-x-5 print:mb-3">
             <div className="md:col-span-3 print:col-span-3">
                 <h3 className="font-bold text-md mb-1 text-gray-800 dark:text-gray-200">伙伴经验</h3>
                 <div className="flex flex-col gap-1">
-                    {(formData.companionExperience || ["", "", "", "", ""]).map((exp, i) => (
+                    {(safeFormData.companionExperience || ["", "", "", "", ""]).map((exp, i) => (
                         <div key={`companion-exp-${i}`} className="flex items-center gap-1 mb-1">
                             <input
                                 type="text"
                                 name={`companionExperience${i + 1}`}
                                 value={exp || ''}
                                 onChange={e => {
-                                    const newArr = [...(formData.companionExperience || ["", "", "", "", ""])]
+                                    const newArr = [...(safeFormData.companionExperience || ["", "", "", "", ""])]
                                     newArr[i] = e.target.value
                                     onFormDataChange({ ...formData, companionExperience: newArr })
                                 }}
@@ -55,9 +78,9 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                             <input
                                 type="text"
                                 name={`companionExperienceValue${i + 1}`}
-                                value={(formData.companionExperienceValue || ["", "", "", "", ""])[i] || ''}
+                                value={(safeFormData.companionExperienceValue || ["", "", "", "", ""])[i] || ''}
                                 onChange={e => {
-                                    const newArr = [...(formData.companionExperienceValue || ["", "", "", "", ""])]
+                                    const newArr = [...(safeFormData.companionExperienceValue || ["", "", "", "", ""])]
                                     newArr[i] = e.target.value
                                     onFormDataChange({ ...formData, companionExperienceValue: newArr })
                                 }}
@@ -71,9 +94,9 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
             <div className="md:col-span-2 mt-3 md:mt-0 flex flex-col items-center justify-start print:col-span-2 print:mt-0 print:items-center print:justify-start">
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">伙伴图片（可选）</label>
                 <div className="w-36 h-36 border-2 border-gray-800 flex items-center justify-center relative overflow-hidden bg-gray-100 dark:bg-gray-800 print:w-32 print:h-32">
-                    {formData.companionImage ? (
+                    {safeFormData.companionImage ? (
                         <img
-                            src={formData.companionImage}
+                            src={safeFormData.companionImage}
                             alt="伙伴图片"
                             className="w-full h-full object-cover"
                         />
@@ -91,7 +114,10 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                             if (file) {
                                 const reader = new FileReader();
                                 reader.onload = ev => {
-                                    onFormDataChange({ ...formData, companionImage: ev.target?.result });
+                                    const result = ev.target?.result;
+                                    if (typeof result === 'string') {
+                                        onFormDataChange({ ...formData, companionImage: result });
+                                    }
                                 };
                                 reader.readAsDataURL(file);
                             }
@@ -105,7 +131,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                         rows={5}
                         id="companionDescription"
                         name="companionDescription"
-                        value={formData.companionDescription || ''}
+                        value={safeFormData.companionDescription || ''}
                         onChange={e => onFormDataChange({ ...formData, companionDescription: e.target.value })}
                         className="block w-full text-xs border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 resize-none shadow-inner min-h-[4.5rem] max-h-[6.5rem] print:min-h-[3.5rem] print:max-h-[5rem]"
                         placeholder="伙伴描述（如性格、外貌等）"
@@ -118,7 +144,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
     );
     // 攻击骰选择 ToggleGroup（已与第一页一致）
     const renderAttackDice = () => (
-        <ToggleGroup type="single" value={formData.companionRange || ''} onValueChange={val => onFormDataChange({ ...formData, companionRange: val })} className="flex space-x-2 mt-1">
+        <ToggleGroup type="single" value={safeFormData.companionRange || ''} onValueChange={val => onFormDataChange({ ...formData, companionRange: val })} className="flex space-x-2 mt-1">
             {['D6', 'D8', 'D10', 'D12'].map(r => (
                 <ToggleGroupItem key={r} value={r} className="px-2 py-1 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">
                     {r}
@@ -133,7 +159,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
         const title = parts[0];
         const desc = parts.length > 1 ? parts.slice(1).join(':').trim() : '';
         // 兼容旧数据，确保是数组
-        const arr = Array.isArray(formData[namePrefix]) ? formData[namePrefix].slice(0, checkboxCount) : Array(checkboxCount).fill(false);
+        const arr = Array.isArray((safeFormData as any)[namePrefix]) ? (safeFormData as any)[namePrefix].slice(0, checkboxCount) : Array(checkboxCount).fill(false);
         // 只渲染实际可用格子，右对齐，预留3格宽度
         return (
             <div className="flex items-start gap-2 mb-1 text-[13px] leading-[1.6]">
@@ -177,7 +203,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
             <input
                 type="text"
                 name="companionEvasion"
-                value={formData.companionEvasion || ''}
+                value={safeFormData.companionEvasion || ''}
                 onChange={e => onFormDataChange({ ...formData, companionEvasion: e.target.value })}
                 className="w-10 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
                 placeholder="10"
@@ -189,8 +215,8 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
     const renderStressBoxes = () => {
         const max = MAX_STRESS(formData);
         // 兼容旧数据，确保是数组
-        const stressArr = Array.isArray(formData.companionStress)
-            ? formData.companionStress.slice(0, TOTAL_STRESS)
+        const stressArr = Array.isArray(safeFormData.companionStress)
+            ? safeFormData.companionStress.slice(0, TOTAL_STRESS)
             : Array(TOTAL_STRESS).fill(false);
         return (
             <div className="flex gap-1 flex-wrap">
@@ -240,7 +266,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                     type="text"
                     id="companionName"
                     name="companionName"
-                    value={formData.companionName || ''}
+                    value={safeFormData.companionName || ''}
                     onChange={e => onFormDataChange({ ...formData, companionName: e.target.value })}
                     className="w-full h-8 text-sm"
                 />
@@ -263,7 +289,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                                     type="text"
                                     id="companionWeapon"
                                     name="companionWeapon"
-                                    value={formData.companionWeapon || ''}
+                                    value={safeFormData.companionWeapon || ''}
                                     onChange={e => onFormDataChange({ ...formData, companionWeapon: e.target.value })}
                                     className="w-full h-7 text-xs"
                                     placeholder="爪击/近战"
@@ -289,8 +315,8 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                                     min={1}
                                     max={TOTAL_STRESS}
                                     name="companionStressMax"
-                                    value={formData.companionStressMax || 3}
-                                    onChange={e => onFormDataChange({ ...formData, companionStressMax: e.target.value })}
+                                    value={safeFormData.companionStressMax || 3}
+                                    onChange={e => onFormDataChange({ ...formData, companionStressMax: Number(e.target.value) })}
                                     className="w-10 text-center border-b border-gray-400 bg-transparent focus:outline-none text-xs font-bold print-empty-hide"
                                     style={{ width: '2.5rem' }}
                                 />

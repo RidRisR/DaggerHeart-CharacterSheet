@@ -1,4 +1,4 @@
-import type { FormData } from "@/lib/form-data"
+import type { FormData, AttributeValue } from "@/lib/form-data"
 
 "use client"
 
@@ -31,20 +31,35 @@ export function AttributesSection({
           <div key={attr.name} className="flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-0.5">
               <div className="text-[12px] font-bold">{attr.name}</div>
-              <div
-                className={`w-3 h-3 rounded-full border border-gray-800 flex items-center justify-center cursor-pointer ${
-                  formData[attr.key].checked ? "bg-gray-800" : "bg-white"
-                }`}
-                onClick={() => handleBooleanChange(attr.key as keyof FormData)}
-              >
-                {formData[attr.key].checked && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
-              </div>
+              {/* 类型守卫：仅 AttributeValue 类型才访问 checked/value */}
+              {(() => {
+                const attrValue = formData[attr.key as keyof typeof formData];
+                function isAttributeValue(val: unknown): val is AttributeValue {
+                  return val !== undefined && typeof val === 'object' && val !== null && 'checked' in val && 'value' in val;
+                }
+
+                return (
+                  <div
+                    className={`w-3 h-3 rounded-full border border-gray-800 flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-gray-800" : "bg-white"}`}
+                    onClick={() => handleBooleanChange(attr.key as keyof FormData)}
+                  >
+                    {isAttributeValue(attrValue) && attrValue.checked && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                  </div>
+                );
+              })()}
             </div>
             <div className="w-full h-14 relative">
               <div className="absolute inset-0 rounded-md bg-gray-800 flex flex-col items-center justify-center text-white">
                 <input
                   type="text"
-                  value={formData[attr.key].value}
+                  value={(() => {
+                    const attrValue = formData[attr.key as keyof typeof formData];
+                    function isAttributeValue(val: unknown): val is AttributeValue {
+                      return val !== undefined && typeof val === 'object' && val !== null && 'checked' in val && 'value' in val;
+                    }
+
+                    return isAttributeValue(attrValue) ? attrValue.value : '';
+                  })()}
                   onChange={(e) => handleAttributeValueChange(attr.key as keyof FormData, e.target.value)}
                   className="w-6 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
                   placeholder="#"

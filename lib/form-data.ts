@@ -61,6 +61,7 @@ export interface FormData {
   // ===== 统一为数组类型的字段 =====
   gold: boolean[]
   experience: string[]
+  experienceValues?: string[] // 经验数值，与 experience 一一对应
   hope: boolean[]
   hp?: boolean[]
   stress?: boolean[]
@@ -114,6 +115,18 @@ export interface FormData {
   characterName?: string
   evasion?: string
   subclass?: string
+  // ===== 伙伴基础信息（page-three） =====
+  companionName?: string // 伙伴名称
+  companionWeapon?: string // 伙伴武器/攻击方式
+  // ===== 伙伴训练选项（page-three） =====
+  trainingIntelligent?: boolean[] // 聪慧训练（3格）
+  trainingRadiantInDarkness?: boolean[] // 黑暗中的光芒训练（1格）
+  trainingCreatureComfort?: boolean[] // 生物慰藉训练（1格）
+  trainingArmored?: boolean[] // 装甲训练（1格）
+  trainingVicious?: boolean[] // 凶猛训练（3格）
+  trainingResilient?: boolean[] // 坚韧训练（3格）
+  trainingBonded?: boolean[] // 羁绊训练（1格）
+  trainingAware?: boolean[] // 警觉训练（3格）
   // ===== 临时索引签名，兼容动态key访问，后续逐步收敛类型安全 =====
   // [key: string]: any // 已废弃，彻底类型安全后移除
 }

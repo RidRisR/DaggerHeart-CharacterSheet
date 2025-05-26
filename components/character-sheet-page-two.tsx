@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/game-data"
 import type { FormData } from "@/lib/form-data"
+import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -17,14 +18,29 @@ interface CharacterSheetPageTwoProps {
 
 export default function CharacterSheetPageTwo({ formData, setFormData }: CharacterSheetPageTwoProps) {
   // 确保 formData 存在并有默认值
-  const safeFormData = formData || {
-    cards: [],
-    checkedUpgrades: {
-      tier1: {},
-      tier2: {},
-      tier3: {},
-    },
-    profession: "",
+  const safeFormData = {
+    ...formData,
+    cards: Array.isArray(formData?.cards)
+      ? formData.cards
+      : Array(20).fill(0).map(() => createEmptyCard()),
+    checkedUpgrades: formData?.checkedUpgrades || { tier1: {}, tier2: {}, tier3: {} },
+    profession: formData?.profession || "",
+    gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
+    experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
+    hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),
+    hp: Array.isArray(formData?.hp) ? formData.hp : Array(18).fill(false),
+    stress: Array.isArray(formData?.stress) ? formData.stress : Array(18).fill(false),
+    armorBoxes: Array.isArray(formData?.armorBoxes) ? formData.armorBoxes : Array(12).fill(false),
+    companionExperience: Array.isArray(formData?.companionExperience) ? formData.companionExperience : ["", "", "", "", ""],
+    companionExperienceValue: Array.isArray(formData?.companionExperienceValue) ? formData.companionExperienceValue : ["", "", "", "", ""],
+    companionStress: Array.isArray(formData?.companionStress) ? formData.companionStress : Array(6).fill(false),
+    agility: formData?.agility || { checked: false, value: "" },
+    strength: formData?.strength || { checked: false, value: "" },
+    finesse: formData?.finesse || { checked: false, value: "" },
+    instinct: formData?.instinct || { checked: false, value: "" },
+    presence: formData?.presence || { checked: false, value: "" },
+    knowledge: formData?.knowledge || { checked: false, value: "" },
+    proficiency: Array.isArray(formData?.proficiency) ? formData.proficiency : Array(6).fill(false),
   }
 
   // 模态框状态
@@ -34,8 +50,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
   const isUpdatingRef = useRef(false)
 
   // Handle card changes
-  const handleCardChange = (index: number, card: any) => {
-    // 防止无限循环
+  const handleCardChange = (index: number, card: StandardCard) => {
     if (isUpdatingRef.current) return
 
     // 检查是否是空卡牌，如果是则不记录日志

@@ -821,16 +821,16 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
               <InventoryWeaponSection
                 formData={safeFormData}
                 handleInputChange={handleInputChange}
-                handleBooleanChange={handleBooleanChange}
                 openWeaponModal={openWeaponModal}
+                handleBooleanChange={handleBooleanChange}
                 index={1}
               />
 
               <InventoryWeaponSection
                 formData={safeFormData}
                 handleInputChange={handleInputChange}
-                handleBooleanChange={handleBooleanChange}
                 openWeaponModal={openWeaponModal}
+                handleBooleanChange={handleBooleanChange}
                 index={2}
               />
             </div>

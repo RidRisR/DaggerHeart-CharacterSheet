@@ -12,22 +12,30 @@ import { CharacterCreationGuide } from "@/components/guide/character-creation-gu
 import { Button } from "@/components/ui/button"
 import { ImportExportModal } from "@/components/modals/import-export-modal"
 import PrintHelper from "@/app/print-helper"
+import type { FormData } from "@/lib/form-data";
 import { createEmptyCard } from "@/data/card/card-types"
 
 // 默认表单数据
-const defaultFormData = {
+const defaultFormData: FormData = {
   name: "",
   level: 1,
-  proficiency: 0,
+  proficiency: Array(6).fill(false),
   ancestry: "",
+  ancestry1: "",
+  ancestry2: "",
   profession: "",
   community: "",
-  strength: 0,
+  strength: { checked: false, value: "" },
   dexterity: 0,
   intelligence: 0,
   wisdom: 0,
   charisma: 0,
   constitution: 0,
+  agility: { checked: false, value: "" },
+  finesse: { checked: false, value: "" },
+  instinct: { checked: false, value: "" },
+  presence: { checked: false, value: "" },
+  knowledge: { checked: false, value: "" },
   maxHitPoints: 10,
   currentHitPoints: 10,
   temporaryHitPoints: 0,
@@ -47,41 +55,86 @@ const defaultFormData = {
       description: "",
     },
   ],
-  gold: 0,
-  silver: 0,
-  copper: 0,
-  inventory: ["", "", "", "", ""], // 确保有5个空字符串
-  experience: 0,
-  hope: 3,
+  gold: Array(20).fill(false),
+  experience: ["", "", "", "", ""],
+  experienceValues: ["", "", "", "", ""],
+  hope: Array(6).fill(false),
+  hp: Array(18).fill(false),
+  stress: Array(18).fill(false),
+  armorBoxes: Array(12).fill(false),
+  inventory: ["", "", "", "", ""],
   characterBackground: "",
   characterAppearance: "",
   characterMotivation: "",
-  cards: Array(20)
-    .fill(0)
-    .map(() => createEmptyCard()),
+  cards: Array(20).fill(0).map(() => createEmptyCard()),
   checkedUpgrades: {
-    tier1: {} as Record<number, boolean>,
-    tier2: {} as Record<number, boolean>,
-    tier3: {} as Record<number, boolean>,
+    tier1: {},
+    tier2: {},
+    tier3: {},
   },
+  minorThreshold: "",
+  majorThreshold: "",
+  armorValue: "",
+  armorBonus: "",
+  armorMax: 0,
+  hpMax: 0,
+  stressMax: 0,
+  primaryWeaponName: "",
+  primaryWeaponTrait: "",
+  primaryWeaponDamage: "",
+  primaryWeaponFeature: "",
+  secondaryWeaponName: "",
+  secondaryWeaponTrait: "",
+  secondaryWeaponDamage: "",
+  secondaryWeaponFeature: "",
+  armorName: "",
+  armorBaseScore: "",
+  armorThreshold: "",
+  armorFeature: "",
+  inventoryWeapon1Name: "",
+  inventoryWeapon1Trait: "",
+  inventoryWeapon1Damage: "",
+  inventoryWeapon1Feature: "",
+  inventoryWeapon1Primary: false,
+  inventoryWeapon1Secondary: false,
+  inventoryWeapon2Name: "",
+  inventoryWeapon2Trait: "",
+  inventoryWeapon2Damage: "",
+  inventoryWeapon2Feature: "",
+  inventoryWeapon2Primary: false,
+  inventoryWeapon2Secondary: false,
+  // 伙伴相关
+  companionImage: "",
+  companionDescription: "",
+  companionRange: "",
+  companionStress: Array(18).fill(false),
+  companionEvasion: "",
+  companionStressMax: 0,
+  characterName: "",
+  evasion: "",
+  subclass: "",
+  companionName: "",
+  companionWeapon: "",
+  companionExperience: ["", "", "", "", ""],
+  companionExperienceValue: ["", "", "", "", ""],
+  // 伙伴训练
+  trainingIntelligent: Array(3).fill(false),
+  trainingRadiantInDarkness: [false],
+  trainingCreatureComfort: [false],
+  trainingArmored: [false],
+  trainingVicious: Array(3).fill(false),
+  trainingResilient: Array(3).fill(false),
+  trainingBonded: [false],
+  trainingAware: Array(3).fill(false),
 }
 
 export default function Home() {
-  // 确保默认表单数据包含完整的结构
-  const [formData, setFormData] = useState({
-    ...defaultFormData,
-    inventory: ["", "", "", "", ""], // 确保有5个空字符串
-    cards: Array(20)
-      .fill(0)
-      .map(() => createEmptyCard()),
-  })
-  const [isLoading, setIsLoading] = useState(true)
-  const [isPrintingAll, setIsPrintingAll] = useState(false) // Added state for printing all pages
-
-  // 建卡指引状态 - 提升到父组件
-  const [isGuideOpen, setIsGuideOpen] = useState(false)
-
-  const [importExportModalOpen, setImportExportModalOpen] = useState(false)
+  // 类型安全 useState
+  const [formData, setFormData] = useState<FormData>(defaultFormData);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPrintingAll, setIsPrintingAll] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [importExportModalOpen, setImportExportModalOpen] = useState(false);
 
   const openImportExportModal = () => {
     setImportExportModalOpen(true)
@@ -132,58 +185,16 @@ export default function Home() {
   // 从 localStorage 加载数据
   useEffect(() => {
     try {
-      setIsLoading(true)
-      const savedData = loadCharacterData()
-
-      // 确保合并后的数据包含完整的卡牌数组
-      const mergedData = {
-        ...defaultFormData,
-        ...(savedData || {}),
-      }
-
-      // 确保卡牌数组至少有20个元素
-      if (!mergedData.cards || !Array.isArray(mergedData.cards)) {
-        mergedData.cards = Array(20)
-          .fill(0)
-          .map(() => createEmptyCard())
-      } else if (mergedData.cards.length < 20) {
-        // 如果卡牌数组长度不足20，补充空卡牌
-        const emptyCards = Array(20 - mergedData.cards.length)
-          .fill(0)
-          .map(() => createEmptyCard())
-        mergedData.cards = [...mergedData.cards, ...emptyCards]
-      }
-
-      // 确保其他数组属性也存在
-      mergedData.armorBoxes = Array.isArray(mergedData.armorBoxes) ? mergedData.armorBoxes : Array(12).fill(false)
-      mergedData.hp = Array.isArray(mergedData.hp) ? mergedData.hp : Array(18).fill(false)
-      mergedData.stress = Array.isArray(mergedData.stress) ? mergedData.stress : Array(18).fill(false)
-      mergedData.hope = Array.isArray(mergedData.hope) ? mergedData.hope : Array(6).fill(false)
-      mergedData.gold = Array.isArray(mergedData.gold) ? mergedData.gold : Array(20).fill(false)
-
-      // 确保 inventory 是一个包含5个元素的数组
-      if (!Array.isArray(mergedData.inventory) || mergedData.inventory.length < 5) {
-        mergedData.inventory = Array.isArray(mergedData.inventory)
-          ? [...mergedData.inventory, ...Array(5 - mergedData.inventory.length).fill("")]
-          : ["", "", "", "", ""]
-      }
-
-      mergedData.experience = Array.isArray(mergedData.experience) ? mergedData.experience : ["", "", "", "", ""]
-      mergedData.experienceValues = Array.isArray(mergedData.experienceValues)
-        ? mergedData.experienceValues
-        : ["", "", "", "", ""]
-
-      setFormData(mergedData)
+      setIsLoading(true);
+      const savedData = loadCharacterData();
+      // 类型安全合并，优先以 defaultFormData 结构为准
+      const mergedData: FormData = { ...defaultFormData, ...(savedData || {}) };
+      setFormData(mergedData);
     } catch (error) {
-      console.error("Error loading character data:", error)
-      // 如果加载失败，使用默认数据
-      setFormData({
-        ...defaultFormData,
-        inventory: ["", "", "", "", ""], // 确保有5个空字符串
-        cards: Array(20).fill(0).map(() => createEmptyCard()), // Ensure cards is array of StandardCard objects
-      })
+      console.error("Error loading character data:", error);
+      setFormData(defaultFormData);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }, [])
 
@@ -233,7 +244,7 @@ export default function Home() {
 
         {/* 第三页 */}
         <div className="page-three">
-          <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={(formData as any).cards} />
+          <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
         </div>
 
         {/* 第四页（仅打印时显示） */}
@@ -269,7 +280,7 @@ export default function Home() {
               <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
             </TabsContent>
             <TabsContent value="page3"> {/* Added content for page 3 */}
-              <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={(formData as any).cards} />
+              <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
             </TabsContent>
           </Tabs>
         </div>
@@ -315,7 +326,7 @@ export default function Home() {
         onClose={closeImportExportModal}
         onExport={() => exportCharacterData(formData)}
         onImport={(data) => {
-          setFormData({ ...formData, ...data })
+          setFormData({ ...defaultFormData, ...data })
           closeImportExportModal()
         }}
         onReset={() => {

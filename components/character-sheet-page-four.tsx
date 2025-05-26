@@ -11,8 +11,14 @@ interface CharacterSheetPageFourProps {
 
 // 打印专用页面，展示所有已加入卡组的卡牌信息
 const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formData }) => {
-    // 只展示有效卡牌
-    const cards: StandardCard[] = (formData?.cards || []).filter((card: StandardCard) => !isEmptyCard(card))
+    // 只展示有效且唯一的卡牌（按 id 去重）
+    const uniqueCardsMap = new Map<string, StandardCard>();
+    (formData?.cards || []).forEach((card: StandardCard) => {
+        if (!isEmptyCard(card) && card.id && !uniqueCardsMap.has(card.id)) {
+            uniqueCardsMap.set(card.id, card);
+        }
+    });
+    const cards: StandardCard[] = Array.from(uniqueCardsMap.values());
 
     const getTypeName = (type: string) => {
         const found = ALL_CARD_TYPES.find(t => t.id === type)

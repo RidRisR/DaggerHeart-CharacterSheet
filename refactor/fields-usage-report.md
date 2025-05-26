@@ -33,8 +33,6 @@
 - temporaryHitPoints
 - armor
 - armorBoxes
-- silver
-- copper
 - inventory
 - hope
 - characterBackground
@@ -85,5 +83,18 @@
 - 需进一步统计未被任何组件引用的字段，准备移除。
 
 ---
+
+# 字段引用统计（自动化巡检补充）
+
+## 4. 无引用/过时字段自动化检测结果
+
+- silver
+- copper
+
+经全局全文检索，silver、copper 字段在 components、app、lib、data、hooks、refactor 等目录下均无实际引用，属于过时字段。
+
+建议：
+- 在 /lib/form-data.ts 的 FormData 类型定义中用 // @deprecated 标记。
+- 后续移除并测试全链路无影响。
 
 后续将继续细化字段引用与定义的对应关系，生成最终字段清单。

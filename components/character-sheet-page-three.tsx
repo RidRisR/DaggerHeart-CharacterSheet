@@ -154,12 +154,23 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
     );
 
     // 训练区块复用升级区块风格，复选框风格与第一页一致
-    const renderTrainingOption = (mainText: string, namePrefix: string, checkboxCount: number) => {
+    type TrainingField =
+        | "trainingIntelligent"
+        | "trainingRadiantInDarkness"
+        | "trainingCreatureComfort"
+        | "trainingArmored"
+        | "trainingVicious"
+        | "trainingResilient"
+        | "trainingBonded"
+        | "trainingAware";
+    const renderTrainingOption = (mainText: string, namePrefix: TrainingField, checkboxCount: number) => {
         const parts = mainText.split(/：|:/);
         const title = parts[0];
         const desc = parts.length > 1 ? parts.slice(1).join(':').trim() : '';
-        // 兼容旧数据，确保是数组
-        const arr = Array.isArray((safeFormData as any)[namePrefix]) ? (safeFormData as any)[namePrefix].slice(0, checkboxCount) : Array(checkboxCount).fill(false);
+        // 类型安全访问训练/伙伴相关布尔数组
+        const arr = Array.isArray(safeFormData[namePrefix]) && safeFormData[namePrefix].every(v => typeof v === 'boolean')
+            ? (safeFormData[namePrefix] as boolean[]).slice(0, checkboxCount)
+            : Array(checkboxCount).fill(false);
         // 只渲染实际可用格子，右对齐，预留3格宽度
         return (
             <div className="flex items-start gap-2 mb-1 text-[13px] leading-[1.6]">

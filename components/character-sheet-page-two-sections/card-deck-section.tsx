@@ -6,6 +6,7 @@ import { getCardTypeName, convertToStandardCard } from "@/data/card"
 import { createEmptyCard, isEmptyCard, specialCardPositions, StandardCard } from "@/data/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { saveFocusedCardIds, loadFocusedCardIds } from "@/lib/storage" // Import storage functions
+import { SelectableCard } from "@/components/ui/selectable-card"
 
 interface CardDeckSectionProps {
   formData: any
@@ -206,12 +207,12 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
                 className={`relative cursor-pointer transition-colors rounded-md p-1 h-16 ${
                   isSelected ? "border-3" : "border"
                   } ${getBorderColor(standardCard?.type, isSpecial)}`}
-                onClick={() => handleCardClick(index)} // 修改为使用新的点击处理函数
-                onContextMenu={(e) => handleCardRightClick(index, e)} // 右键点击切换选中状态
+                onClick={() => handleCardClick(index)}
+                onContextMenu={(e) => handleCardRightClick(index, e)}
                 onMouseEnter={() => card?.name && setHoveredCard(index)}
                 onMouseLeave={() => {
                   setHoveredCard(null)
-                  setIsAltPressed(false) // 确保Alt状态也被重置
+                  setIsAltPressed(false)
                 }}
               >
                 {/* 卡牌标题 */}
@@ -265,42 +266,17 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
                   </div>
                 )}
 
-                {/* Hover preview */}
+                {/* Hover preview: 替换为 SelectableCard */}
                 {hoveredCard === index && card?.name && (
                   <div
-                    className="absolute bg-white border border-gray-300 rounded-md shadow-lg"
-                    style={{
-                      ...getPreviewPosition(index),
-                      width: isAltPressed ? "400px" : "280px",
-                    }}
+                    className="absolute z-50"
+                    style={getPreviewPosition(index)}
                   >
-                    {/* 卡牌图片 */}
-                    <div className={isAltPressed ? "w-full" : "w-3/4 mx-auto"}>
-                      <div className="aspect-[816/1110] w-full overflow-hidden">
-                        <img
-                          src={
-                            standardCard?.imageUrl ||
-                            `/placeholder.svg?height=1110&width=816&query=fantasy card ${standardCard?.name || card.name || "unknown"}`
-                          }
-                          alt={standardCard?.name || card.name || "卡牌"}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-
-                    {/* 卡牌描述 */}
-                    {!isAltPressed && (standardCard?.description || card.description) && (
-                      <div className="p-2 border-t">
-                        <p className="text-xs text-gray-700">
-                          {standardCard?.description || card.description || "无描述"}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* ALT键提示 */}
-                    <div className="text-[10px] text-gray-400 text-center p-1 bg-gray-50">
-                      {isAltPressed ? "松开ALT键返回正常视图" : "按住ALT键查看大图(施工中)"}
-                    </div>
+                    <SelectableCard
+                      card={standardCard}
+                      onClick={() => { }}
+                      isSelected={isSelected}
+                    />
                   </div>
                 )}
               </div>

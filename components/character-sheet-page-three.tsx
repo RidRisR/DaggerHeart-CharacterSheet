@@ -130,27 +130,37 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
         const desc = parts.length > 1 ? parts.slice(1).join(':').trim() : '';
         // 兼容旧数据，确保是数组
         const arr = Array.isArray(formData[namePrefix]) ? formData[namePrefix].slice(0, checkboxCount) : Array(checkboxCount).fill(false);
+        // 只渲染实际可用格子，右对齐，预留3格宽度
         return (
-            <div className="flex items-start gap-2 mb-1">
-                <div className="flex gap-1">
-                    {Array(checkboxCount).fill(0).map((_, i) => (
-                        <div
-                            key={`${namePrefix}-${i}`}
-                            className={`w-4 h-4 border-2 border-gray-800 ${arr[i] ? "bg-gray-800" : "bg-white"} cursor-pointer flex items-center justify-center`}
-                            onClick={() => {
-                                const newArr = [...arr];
-                                newArr[i] = !newArr[i];
-                                onFormDataChange({ ...formData, [namePrefix]: newArr });
-                            }}
-                            tabIndex={0}
-                            aria-checked={!!arr[i]}
-                            role="checkbox"
-                        />
+            <div className="flex items-start gap-2 mb-1 text-[13px] leading-[1.6]">
+                {/* 格子区，右对齐，预留3格宽度 */}
+                <span className="flex flex-shrink-0 items-center justify-end gap-0.5 mt-px" style={{ minWidth: '3.2em' }}>
+                    {Array(3 - checkboxCount).fill(0).map((_, i) => (
+                        <span key={`empty-${i}`} className="inline-block align-middle w-[1em] h-[1em]" />
                     ))}
-                </div>
-                <div className="flex-1 min-w-0 break-words text-wrap text-left">
-                    <span className="text-[11px] text-gray-800 dark:text-gray-200 font-bold">{title}</span>
-                    {desc && <span className="text-[11px] text-gray-600 dark:text-gray-300 ml-1 font-bold">{desc}</span>}
+                    {Array(checkboxCount).fill(0).map((_, i) => {
+                        const checked = arr[i] || false;
+                        return (
+                            <span
+                                key={`${namePrefix}-${i}`}
+                                className={`inline-block align-middle w-[1em] h-[1em] border border-gray-800 ${checked ? 'bg-gray-800' : 'bg-white'} cursor-pointer transition-colors`}
+                                style={{ borderRadius: '2px', marginLeft: i === 0 && (3 - checkboxCount) === 0 ? 0 : '0.08em' }}
+                                onClick={() => {
+                                    const newArr = [...arr];
+                                    newArr[i] = !newArr[i];
+                                    onFormDataChange({ ...formData, [namePrefix]: newArr });
+                                }}
+                                tabIndex={0}
+                                aria-checked={!!checked}
+                                role="checkbox"
+                            />
+                        );
+                    })}
+                </span>
+                {/* 标题和描述 - wrapped in a div that takes remaining space and allows its content to wrap */}
+                <div className="flex-1">
+                    <span className="font-bold text-gray-800 dark:text-gray-200 mr-1">{title}</span>
+                    {desc && <span className="text-gray-600 dark:text-gray-300">{desc}</span>}
                 </div>
             </div>
         );
@@ -235,13 +245,14 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
             {renderCompanionExperienceSection()}
             {/* Spellcast Roll Info */}
             <p className="text-xs mb-4 text-gray-600 dark:text-gray-400 leading-snug">你可以进行一次施法检定来与你的伙伴建立连接并命令他们行动。当你这样做时，你可以花费希望（Hope）将一个适用的伙伴经验加入到检定中。在花费希望并成功时，如果你的下一个动作建立在其成功之上，你的动作掷骰获得优势。</p>
-            {/* ATTACK & DAMAGE, STRESS (Left) & TRAINING (Right) */}
-            <div className="grid grid-cols-1 md:grid-cols-5 print:grid-cols-5 gap-x-5 mb-3">
-                <div className="md:col-span-3 print:col-span-3 space-y-4">
+            {/* 新的两栏布局：左-攻击与伤害/压力，右-训练 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-5 mb-3">
+                {/* 攻击与伤害/压力 - 左侧 */}
+                <div className="order-1 md:order-1 print:order-1 space-y-3">
                     {/* Attack & Damage */}
                     <div>
                         <h4 className={sectionBannerClass}>攻击与伤害</h4>
-                        <div className="p-2.5 border border-gray-300 dark:border-gray-700 border-t-0 space-y-2">
+                        <div className="p-1.5 border border-gray-300 dark:border-gray-700 border-t-0 space-y-1">
                             <div>
                                 <label htmlFor="companionWeapon" className="block text-xs font-medium text-gray-600 dark:text-gray-400">攻击方式与范围</label>
                                 <Input
@@ -264,9 +275,9 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                     {/* Stress */}
                     <div>
                         <h4 className={sectionBannerClass}>压力</h4>
-                        <div className="p-2.5 border border-gray-300 dark:border-gray-700 border-t-0">
-                            <div className="flex items-center mb-1.5 gap-2">
-                                <span className="text-xs mr-1.5 font-semibold text-gray-700 dark:text-gray-300">压力：</span>
+                        <div className="p-1.5 border border-gray-300 dark:border-gray-700 border-t-0">
+                            <div className="flex items-center mb-1 gap-2">
+                                <span className="text-xs mr-1 font-semibold text-gray-700 dark:text-gray-300">压力：</span>
                                 {renderStressBoxes()}
                                 <span className="text-xs text-gray-500 ml-2">最大</span>
                                 <input
@@ -285,11 +296,11 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                         </div>
                     </div>
                 </div>
-                <div className="md:col-span-2 print:col-span-2 mt-4 md:mt-0 print:mt-0">
-                    {/* Training */}
+                {/* Training - 右侧 */}
+                <div className="order-2 md:order-2 print:order-2 mt-4 md:mt-0 print:mt-0">
                     <div>
                         <h4 className={sectionBannerClass}>训练</h4>
-                        <div className="p-2.5 border border-gray-300 dark:border-gray-700 border-t-0">
+                        <div className="p-2 border border-gray-300 dark:border-gray-700 border-t-0">
                             <p className="text-xs mb-2 text-gray-600 dark:text-gray-400">每当你的角色升级时，也从下面的列表中为你的伙伴选择一个选项并标记它。</p>
                             <div className="space-y-1">
                                 {renderTrainingOption("聪慧：一项经验+1。", "trainingIntelligent", 3)}

@@ -27,6 +27,7 @@ import { StandardCard } from "@/data/card/card-types"
 import { loadFocusedCardIds } from "@/lib/storage"
 import { ALL_STANDARD_CARDS, ALL_CARD_TYPES } from "@/data/card"
 import ReactMarkdown from "react-markdown"
+import React, { useRef } from "react"
 
 interface CardDisplaySectionProps {
   cards: Array<StandardCard>
@@ -51,6 +52,12 @@ function SortableCard({
     const found = ALL_CARD_TYPES.find(t => t.id === type)
     return found ? found.name : type
   }
+
+  // 新增：获取item1~item4
+  const displayItem1 = card.cardSelectDisplay?.item1 || "";
+  const displayItem2 = card.cardSelectDisplay?.item2 || "";
+  const displayItem3 = card.cardSelectDisplay?.item3 || "";
+  const displayItem4 = card.cardSelectDisplay?.item4 || "";
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: cardId,
@@ -93,6 +100,15 @@ function SortableCard({
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
+          {/* item信息行：仅在展开时显示 */}
+          {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
+            <div className="flex flex-row gap-2 text-xs font-mono mb-2 px-4 pt-2 pb-1 border-b border-dashed border-gray-200">
+              {displayItem1 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem1}</div>}
+              {displayItem2 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem2}</div>}
+              {displayItem3 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem3}</div>}
+              {displayItem4 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem4}</div>}
+            </div>
+          )}
           {card.description && (
             <div className="px-2 pb-2 pt-1 text-xs text-gray-600 border-t border-gray-100">
               <ReactMarkdown
@@ -113,19 +129,20 @@ function SortableCard({
   );
 }
 
+// 状态提升：用useRef持久化containerHeight和expandedCards
 export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
-  // 跟踪每张卡片的展开状态
-  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({})
-
-  // 跟踪容器高度
-  const [containerHeight, setContainerHeight] = useState(400)
+  // 用useRef持久化高度和展开状态
+  const containerHeightRef = useRef<number>(400)
+  const expandedCardsRef = useRef<Record<string, boolean>>({})
+  // 触发rerender的state
+  const [, forceUpdate] = useState(0)
 
   // 存储当前显示的卡牌列表
   const [allCards, setAllCards] = useState(cards.filter((card) => card && card.name))
   const [professionCards, setProfessionCards] = useState<typeof cards>([])
-  const [backgroundCards, setBackgroundCards] = useState<typeof cards>([]) // 合并血统和社区卡牌
-  const [domainCards, setDomainCards] = useState<typeof cards>([]) // 添加领域卡牌列表
-  const [focusedCards, setFocusedCards] = useState<typeof cards>([]) // 添加聚焦卡牌列表
+  const [backgroundCards, setBackgroundCards] = useState<typeof cards>([])
+  const [domainCards, setDomainCards] = useState<typeof cards>([])
+  const [focusedCards, setFocusedCards] = useState<typeof cards>([])
 
   // 当前选中的标签
   const [activeTab, setActiveTab] = useState("all")
@@ -140,35 +157,29 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
 
     const loadAndSetFocusedCards = () => {
       const focusedCardIds = loadFocusedCardIds()
-      // Ensure card.id is a string and provide a fallback if it's undefined
-      // Also, ensure ALL_STANDARD_CARDS is correctly filtered
       const newFocusedCards = ALL_STANDARD_CARDS.filter(card => {
-        const cardId = card.id; // Safely access card.id
+        const cardId = card.id;
         return cardId !== undefined && focusedCardIds.includes(cardId);
       });
       setFocusedCards(newFocusedCards);
     }
 
-    loadAndSetFocusedCards(); // Initial load
+    loadAndSetFocusedCards();
 
     const handleFocusedCardsChange = () => {
       loadAndSetFocusedCards();
     };
 
     window.addEventListener('focusedCardsChanged', handleFocusedCardsChange);
-
-    // Cleanup function to remove the event listener
     return () => {
       window.removeEventListener('focusedCardsChanged', handleFocusedCardsChange);
     };
-  }, [cards]) // Dependency array includes cards
+  }, [cards])
 
   // 切换卡片展开状态
   const toggleCard = (cardId: string) => {
-    setExpandedCards((prev) => ({
-      ...prev,
-      [cardId]: !prev[cardId],
-    }))
+    expandedCardsRef.current[cardId] = !expandedCardsRef.current[cardId]
+    forceUpdate(x => x + 1)
   }
 
   // 获取卡牌类型的徽章颜色
@@ -182,7 +193,6 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
         return "secondary"
       case "community":
         return "outline"
-      // "domain" 没有专属颜色，选择一个已支持的类型
       case "domain":
         return "destructive"
       default:
@@ -205,9 +215,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   // 处理拖拽结束事件
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-
     if (over && active.id !== over.id) {
-      // 根据当前活动的标签页来更新对应的卡牌列表
       switch (activeTab) {
         case "all":
           setAllCards((cards) => {
@@ -223,21 +231,21 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
             return arrayMove(cards, oldIndex, newIndex)
           })
           break
-        case "background": // 更新背景卡牌的排序
+        case "background":
           setBackgroundCards((cards) => {
             const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
             const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
             return arrayMove(cards, oldIndex, newIndex)
           })
           break
-        case "domain": // 添加领域卡牌的排序处理
+        case "domain":
           setDomainCards((cards) => {
             const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
             const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
             return arrayMove(cards, oldIndex, newIndex)
           })
           break
-        case "focused": // 添加聚焦卡牌的排序处理
+        case "focused":
           setFocusedCards((cards) => {
             const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
             const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
@@ -250,9 +258,9 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
 
   // 处理高度变化
   const handleHeightChange = (height: number) => {
-    // 限制高度在200px到800px之间
     const constrainedHeight = Math.max(200, Math.min(800, height))
-    setContainerHeight(constrainedHeight)
+    containerHeightRef.current = constrainedHeight
+    forceUpdate(x => x + 1)
   }
 
   // 渲染卡牌列表
@@ -260,10 +268,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     if (cardList.length === 0) {
       return <p className="text-center text-gray-500 py-4">没有选择卡牌</p>
     }
-
-    // 计算滚动区域高度，留出空间给标签和边距
-    const scrollHeight = containerHeight - 80
-
+    const scrollHeight = containerHeightRef.current - 80
     return (
       <ScrollArea className={`h-[${scrollHeight}px]`} style={{ height: scrollHeight }}>
         <div className="space-y-2 p-1">
@@ -274,8 +279,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
             >
               {cardList.map((card, index) => {
                 const cardId = `${card.type}-${card.name}-${index}`
-                const isExpanded = expandedCards[cardId] || false
-
+                const isExpanded = expandedCardsRef.current[cardId] || false
                 return (
                   <SortableCard
                     key={cardId}
@@ -294,12 +298,12 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     )
   }
 
-  // 更新容器高度
+  // 更新容器高度（只在首次mount时自动调整）
   useEffect(() => {
-    const headerHeight = 80 // 假设头部和标签栏的高度
-    const cardHeight = 50 // 每张卡片的大致高度
-    const padding = 20 // 内边距
-
+    if (containerHeightRef.current !== 400) return // 只在初始时自动调整
+    const headerHeight = 80
+    const cardHeight = 50
+    const padding = 20
     let numCards = 0
     switch (activeTab) {
       case "all":
@@ -314,32 +318,29 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
       case "domain":
         numCards = domainCards.length
         break
-      case "focused": // 添加聚焦卡牌数量
+      case "focused":
         numCards = focusedCards.length
         break
       default:
         numCards = allCards.length
     }
-
     const contentHeight = numCards * cardHeight + padding
-    const newHeight = Math.min(Math.max(contentHeight + headerHeight, 200), 600) // 最小200，最大600
-    setContainerHeight(newHeight)
-  }, [activeTab, allCards, professionCards, backgroundCards, domainCards, focusedCards]) // 添加聚焦卡牌依赖
+    const newHeight = Math.min(Math.max(contentHeight + headerHeight, 200), 600)
+    containerHeightRef.current = newHeight
+    forceUpdate(x => x + 1)
+  }, [])
 
   return (
-    <div className="border rounded-lg bg-gray-50 shadow-sm flex flex-col" style={{ height: containerHeight }}>
+    <div className="border rounded-lg bg-gray-50 shadow-sm flex flex-col" style={{ height: containerHeightRef.current }}>
       <div className="p-2 flex-grow overflow-hidden">
         <Tabs defaultValue="all" className="w-full h-full flex flex-col" onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-6 mb-2">
-            {" "}
-            {/* 增加一列以容纳领域标签 */}
             <TabsTrigger value="all">全部</TabsTrigger>
             <TabsTrigger value="profession">职业</TabsTrigger>
             <TabsTrigger value="background">背景</TabsTrigger>
-            <TabsTrigger value="domain">领域</TabsTrigger> {/* 添加领域标签 */}
-            <TabsTrigger value="focused">聚焦</TabsTrigger> {/* 添加聚焦标签 */}
+            <TabsTrigger value="domain">领域</TabsTrigger>
+            <TabsTrigger value="focused">聚焦</TabsTrigger>
           </TabsList>
-
           <div className="flex-grow overflow-hidden">
             <TabsContent value="all" className="h-full m-0">
               {allCards.length > 0 ? (
@@ -348,45 +349,36 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
                 <p className="text-center text-gray-500 py-4">尚未选择任何卡牌</p>
               )}
             </TabsContent>
-
             <TabsContent value="profession" className="h-full m-0">
               {renderCardList(professionCards)}
             </TabsContent>
-
             <TabsContent value="background" className="h-full m-0">
               {renderCardList(backgroundCards)}
             </TabsContent>
-
             <TabsContent value="domain" className="h-full m-0">
               {renderCardList(domainCards)}
             </TabsContent>
-
             <TabsContent value="focused" className="h-full m-0">
               {renderCardList(focusedCards)}
             </TabsContent>
           </div>
         </Tabs>
       </div>
-
       {/* 底部调整大小的手柄 */}
       <div
         className="h-2 bg-gray-200 hover:bg-gray-300 cursor-ns-resize flex items-center justify-center border-t border-gray-300"
         onMouseDown={(e) => {
           e.preventDefault()
-
           const startY = e.clientY
-          const startHeight = containerHeight
-
+          const startHeight = containerHeightRef.current
           const handleMouseMove = (moveEvent: MouseEvent) => {
             const deltaY = moveEvent.clientY - startY
             handleHeightChange(startHeight + deltaY)
           }
-
           const handleMouseUp = () => {
             document.removeEventListener("mousemove", handleMouseMove)
             document.removeEventListener("mouseup", handleMouseUp)
           }
-
           document.addEventListener("mousemove", handleMouseMove)
           document.addEventListener("mouseup", handleMouseUp)
         }}

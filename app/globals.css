@@ -8,7 +8,8 @@ body {
 
 /* 打印所有页面的特殊样式 */
 .print-all-pages .page-one,
-.print-all-pages .page-two {
+.print-all-pages .page-two,
+.print-all-pages .page-three {
   page-break-after: always;
 }
 
@@ -39,18 +40,6 @@ body {
     font-size: 0.85em;
   }
 
-  /* 确保第一页和第二页之间正确分页 */
-  .print-all-pages .page-one {
-    page-break-after: always;
-  }
-
-  .print-all-pages .page-two {
-    page-break-before: always;
-  }
-
-    .print-all-pages .page-three {
-      page-break-before: always;
-    }
   /* 在打印时隐藏所有固定位置的按钮 */
   .fixed {
     display: none !important;

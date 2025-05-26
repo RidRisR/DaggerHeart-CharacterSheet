@@ -37,27 +37,30 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-5 gap-x-5 mb-3 print:grid-cols-5 print:gap-x-5 print:mb-3">
             <div className="md:col-span-3 print:col-span-3">
                 <h3 className="font-bold text-md mb-1 text-gray-800 dark:text-gray-200">伙伴经验</h3>
-                <p className="text-xs mb-1.5 text-gray-600 dark:text-gray-400">
-                    初始两项经验各+2。每当你获得一个经验时，也给你的伙伴一个。
-                </p>
-                <div className="space-y-1 pr-2">
-                    {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className="flex items-center">
-                            <Input
+                <div className="flex flex-col gap-1">
+                    {(formData.companionExperience || ["", "", "", "", ""]).map((exp, i) => (
+                        <div key={`companion-exp-${i}`} className="flex items-center gap-1 mb-1">
+                            <input
                                 type="text"
-                                id={`companionExperience${i}`}
-                                name={`companionExperience${i}`}
-                                value={formData[`companionExperience${i}`] || ''}
-                                onChange={e => onFormDataChange({ ...formData, [`companionExperience${i}`]: e.target.value })}
-                                className="flex-grow border-b border-gray-400 p-1 focus:outline-none text-sm print-empty-hide"
+                                name={`companionExperience${i + 1}`}
+                                value={exp || ''}
+                                onChange={e => {
+                                    const newArr = [...(formData.companionExperience || ["", "", "", "", ""])]
+                                    newArr[i] = e.target.value
+                                    onFormDataChange({ ...formData, companionExperience: newArr })
+                                }}
+                                className="w-32 border border-gray-400 rounded text-sm print-empty-hide"
                                 placeholder="经验描述"
                             />
-                            <Input
+                            <input
                                 type="text"
-                                id={`companionExperienceValue${i}`}
-                                name={`companionExperienceValue${i}`}
-                                value={formData[`companionExperienceValue${i}`] || ''}
-                                onChange={e => onFormDataChange({ ...formData, [`companionExperienceValue${i}`]: e.target.value })}
+                                name={`companionExperienceValue${i + 1}`}
+                                value={(formData.companionExperienceValue || ["", "", "", "", ""])[i] || ''}
+                                onChange={e => {
+                                    const newArr = [...(formData.companionExperienceValue || ["", "", "", "", ""])]
+                                    newArr[i] = e.target.value
+                                    onFormDataChange({ ...formData, companionExperienceValue: newArr })
+                                }}
                                 className="w-8 border border-gray-400 rounded ml-1 text-center text-sm print-empty-hide"
                                 placeholder="#"
                             />

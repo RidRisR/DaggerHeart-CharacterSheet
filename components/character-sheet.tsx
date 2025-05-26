@@ -115,23 +115,24 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   const initialRenderRef = useRef(true)
 
   // 确保 formData 和所有必要的子属性都存在
+  // 适配 gold、experience、hope、hp、stress、armorBoxes 等字段为数组类型
   const safeFormData = {
     ...defaultFormData,
     ...(formData || {}),
+    gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
+    experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
+    hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),
+    hp: Array.isArray(formData?.hp) ? formData.hp : Array(18).fill(false),
+    stress: Array.isArray(formData?.stress) ? formData.stress : Array(18).fill(false),
+    armorBoxes: Array.isArray(formData?.armorBoxes) ? formData.armorBoxes : Array(12).fill(false),
+    companionExperience: Array.isArray(formData?.companionExperience) ? formData.companionExperience : ["", "", "", "", ""],
+    companionExperienceValue: Array.isArray(formData?.companionExperienceValue) ? formData.companionExperienceValue : ["", "", "", "", ""],
+    companionStress: Array.isArray(formData?.companionStress) ? formData.companionStress : Array(6).fill(false),
     cards: Array.isArray(formData?.cards)
       ? formData.cards
       : Array(20)
           .fill(0)
         .map(() => (createEmptyCard)),
-    armorBoxes: Array.isArray(formData?.armorBoxes) ? formData.armorBoxes : Array(12).fill(false),
-    hp: Array.isArray(formData?.hp) ? formData.hp : Array(18).fill(false),
-    stress: Array.isArray(formData?.stress) ? formData.stress : Array(18).fill(false),
-    hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),
-    gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
-    inventory:
-      Array.isArray(formData?.inventory) && formData?.inventory.length >= 5 ? formData.inventory : ["", "", "", "", ""],
-    experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
-    experienceValues: Array.isArray(formData?.experienceValues) ? formData.experienceValues : ["", "", "", "", ""],
     // 确保属性对象存在
     agility: formData?.agility || { checked: false, value: "" },
     strength: formData?.strength || { checked: false, value: "" },

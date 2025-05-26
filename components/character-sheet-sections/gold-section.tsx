@@ -15,13 +15,11 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
       <div className="flex justify-between">
         <div>
           <div className="text-[9px] mb-1">HANDFULS</div>
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex gap-2">
             {formData.gold.slice(0, 10).map((checked: boolean, i: number) => (
               <div
-                key={`gold-${i}`}
-                className={`w-4 h-4 rounded-full border-2 border-gray-800 cursor-pointer ${
-                  checked ? "bg-gray-800" : "bg-white"
-                }`}
+                key={`gold-bag-${i}`}
+                className={`w-4 h-4 border-2 border-gray-800 cursor-pointer ${checked ? "bg-gray-800" : "bg-white"}`}
                 onClick={() => handleCheckboxChange("gold", i)}
               ></div>
             ))}
@@ -29,10 +27,10 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
         </div>
         <div>
           <div className="text-[9px] mb-1">BAGS</div>
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex gap-2">
             {formData.gold.slice(10, 20).map((checked: boolean, i: number) => (
               <div
-                key={`gold-bag-${i}`}
+                key={`gold-bag-${i + 10}`}
                 className={`w-4 h-4 border-2 border-gray-800 cursor-pointer ${checked ? "bg-gray-800" : "bg-white"}`}
                 onClick={() => handleCheckboxChange("gold", i + 10)}
               ></div>

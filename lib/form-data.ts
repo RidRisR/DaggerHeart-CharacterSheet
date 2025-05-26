@@ -54,22 +54,23 @@ export interface FormData {
   currentHitPoints?: number
   temporaryHitPoints?: number
   armor: ArmorData | string
-  armorBoxes?: boolean[]
   weapons: WeaponData[]
-  gold: number | boolean[]
-  silver?: number
-  copper?: number
+  // ===== 动态伙伴经验重构为数组结构 =====
+  companionExperience?: string[]
+  companionExperienceValue?: string[]
+  // ===== 统一为数组类型的字段 =====
+  gold: boolean[]
+  experience: string[]
+  hope: boolean[]
+  hp?: boolean[]
+  stress?: boolean[]
+  armorBoxes?: boolean[]
   inventory: string[]
-  experience: number | string[]
-  experienceValues?: string[]
-  hope: number | boolean[]
   characterBackground?: string
   characterAppearance?: string
   characterMotivation?: string
   cards: StandardCard[]
   checkedUpgrades: CheckedUpgrades
-  hp?: boolean[]
-  stress?: boolean[]
   minorThreshold?: string
   majorThreshold?: string
   armorValue?: string
@@ -103,16 +104,6 @@ export interface FormData {
   inventoryWeapon2Secondary?: boolean
   // ===== 新增：补充组件实际引用但未定义的字段 =====
   // 伙伴相关
-  companionExperience1?: string
-  companionExperience2?: string
-  companionExperience3?: string
-  companionExperience4?: string
-  companionExperience5?: string
-  companionExperienceValue1?: string
-  companionExperienceValue2?: string
-  companionExperienceValue3?: string
-  companionExperienceValue4?: string
-  companionExperienceValue5?: string
   companionImage?: string
   companionDescription?: string
   companionRange?: string
@@ -123,4 +114,6 @@ export interface FormData {
   characterName?: string
   evasion?: string
   subclass?: string
+  // ===== 临时索引签名，兼容动态key访问，后续逐步收敛类型安全 =====
+  [key: string]: any
 }

@@ -23,9 +23,9 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
     }
 
     return (
-        <div className="a4-page page-four print:block hidden">
+        <div className="a4-page page-four print:block hidden px-8 py-10 print:px-8 print:py-10">
             <h2 className="text-xl font-bold mb-4 text-center">卡组总览</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
                 {cards.map((card, idx) => (
                     <div key={card.id || idx} className="border rounded p-3 bg-white flex flex-col gap-1 break-inside-avoid shadow-sm">
                         <div className="flex items-center justify-between mb-1">

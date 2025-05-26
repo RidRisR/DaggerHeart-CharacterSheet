@@ -93,12 +93,12 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                 <span className="font-semibold text-base truncate max-w-[60%]" title={displayName}>{displayName}</span>
                 <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-gray-100">{getTypeName(card.type)}</span>
             </div>
-            {(displayItem1 || displayItem2 || displayItem3) && (
-                <div className="flex flex-row gap-2 text-xs text-blue-700 font-mono mb-1">
-                    {displayItem1 && <span>{displayItem1}</span>}
-                    {displayItem2 && <span>{displayItem2}</span>}
-                    {displayItem3 && <span>{displayItem3}</span>}
-                    {displayItem4 && <span>{displayItem4}</span>}
+            {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
+                <div className="flex flex-row gap-2 text-xs font-mono mb-2 pb-2 border-b border-dashed border-gray-300">
+                    {displayItem1 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem1}</div>}
+                    {displayItem2 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem2}</div>}
+                    {displayItem3 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem3}</div>}
+                    {displayItem4 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem4}</div>}
                 </div>
             )}
             <div className="text-xs text-gray-600 leading-snug mb-1">

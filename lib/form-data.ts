@@ -10,14 +10,6 @@ export interface WeaponData {
   description: string
 }
 
-export interface ArmorData {
-  name: string
-  armorClass: number
-  type: string
-  properties: string[]
-  description: string
-}
-
 export interface CheckedUpgrades {
   tier1: Record<number, boolean>
   tier2: Record<number, boolean>
@@ -32,9 +24,9 @@ export interface AttributeValue {
 export interface FormData {
   // 通用属性
   name: string
+  characterImage?: string
   level: number
   proficiency: number | boolean[]
-  ancestry: string
   ancestry1?: string
   ancestry2?: string
   profession: string
@@ -45,11 +37,6 @@ export interface FormData {
   instinct?: AttributeValue
   presence?: AttributeValue
   knowledge?: AttributeValue
-  maxHitPoints?: number
-  currentHitPoints?: number
-  temporaryHitPoints?: number
-  armor: ArmorData | string
-  weapons: WeaponData[]
   // ===== 动态伙伴经验重构为数组结构 =====
   companionExperience?: string[]
   companionExperienceValue?: string[]
@@ -66,7 +53,7 @@ export interface FormData {
   characterAppearance?: string
   characterMotivation?: string
   cards: StandardCard[]
-  checkedUpgrades: CheckedUpgrades
+  checkedUpgrades?: CheckedUpgrades
   minorThreshold?: string
   majorThreshold?: string
   armorValue?: string
@@ -107,7 +94,6 @@ export interface FormData {
   companionEvasion?: string
   companionStressMax?: number
   // 其他页面引用但未定义字段
-  characterName?: string
   evasion?: string
   subclass?: string
   // ===== 伙伴基础信息（page-three） =====

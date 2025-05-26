@@ -30,17 +30,15 @@ import { InventoryWeaponSection } from "@/components/character-sheet-sections/in
 import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
 
 // 默认表单数据
-const defaultFormData = {
+const defaultFormData: FormData = {
   characterImage: "",
-  characterName: "",
-  pronouns: "",
+  name: "",
   ancestry1: "",
   ancestry2: "",
   community: "",
   subclass: "",
-  level: "",
+  level: 1,
   profession: "",
-  professionSubtitle: "",
   agility: { checked: false, value: "" },
   strength: { checked: false, value: "" },
   finesse: { checked: false, value: "" },
@@ -50,8 +48,7 @@ const defaultFormData = {
   proficiency: Array(6).fill(false),
   evasion: "",
   armorValue: "",
-  armorBonus: "",
-  armorMax: 6, // 保留默认值
+  armorMax: 0, // 保留默认值
   armorBoxes: Array(12).fill(false),
   hpMax: 6, // 保留默认值
   stressMax: 6, // 保留默认值
@@ -125,6 +122,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     hp: Array.isArray(formData?.hp) ? formData.hp : Array(18).fill(false),
     stress: Array.isArray(formData?.stress) ? formData.stress : Array(18).fill(false),
     armorBoxes: Array.isArray(formData?.armorBoxes) ? formData.armorBoxes : Array(12).fill(false),
+    armorMax: formData?.armorMax || 0, // 保留默认值
     companionExperience: Array.isArray(formData?.companionExperience) ? formData.companionExperience : ["", "", "", "", ""],
     companionExperienceValue: Array.isArray(formData?.companionExperienceValue) ? formData.companionExperienceValue : ["", "", "", "", ""],
     companionStress: Array.isArray(formData?.companionStress) ? formData.companionStress : Array(6).fill(false),
@@ -339,7 +337,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         return {
           ...prev,
           profession: "",
-          professionSubtitle: "",
         }
       })
     } else {

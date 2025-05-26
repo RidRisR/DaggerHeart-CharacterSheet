@@ -68,14 +68,14 @@ export function exportCharacterData(formData: FormData): void {
       return card && card.class ? String(card.class) : '()';
     };
 
-    const characterName = formData.name || '()';
+    const name = formData.name || '()';
     const ancestry1Class = getCardClass(formData.ancestry1 ?? '', 'ancestry', formData.cards);
     const professionClass = getCardClass(formData.profession, 'profession', formData.cards);
     const ancestry2Class = getCardClass(formData.ancestry2 ?? '', 'ancestry', formData.cards);
     const communityClass = getCardClass(formData.community, 'community', formData.cards);
     const level = formData.level ? String(formData.level) : '()';
 
-    const exportFileDefaultName = `${characterName}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}.json`;
+    const exportFileDefaultName = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}.json`;
 
     const dataStr = JSON.stringify(formData, null, 2);
     const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;

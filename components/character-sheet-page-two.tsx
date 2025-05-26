@@ -83,13 +83,20 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
   // Handle checkbox changes for upgrades
   const handleUpgradeCheck = (tier: string, index: number) => {
     setFormData((prev) => {
-      const newCheckedUpgrades = { ...prev.checkedUpgrades }
-      const tierUpgrades = { ...newCheckedUpgrades[tier as keyof typeof newCheckedUpgrades] }
+      const checkedUpgrades = prev.checkedUpgrades ?? { tier1: {}, tier2: {}, tier3: {} }
+      const newCheckedUpgrades = {
+        ...checkedUpgrades,
+        tier1: checkedUpgrades.tier1 ?? {},
+        tier2: checkedUpgrades.tier2 ?? {},
+        tier3: checkedUpgrades.tier3 ?? {},
+      }
+      const tierKey = tier as keyof typeof newCheckedUpgrades
+      const tierUpgrades = { ...newCheckedUpgrades[tierKey] }
 
       // Toggle the checked state
       tierUpgrades[index] = !tierUpgrades[index]
 
-      newCheckedUpgrades[tier as keyof typeof newCheckedUpgrades] = tierUpgrades
+      newCheckedUpgrades[tierKey] = tierUpgrades
       return { ...prev, checkedUpgrades: newCheckedUpgrades }
     })
   }

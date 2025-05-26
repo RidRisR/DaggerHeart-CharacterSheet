@@ -46,8 +46,8 @@ export function HeaderSection({
             <label className="text-[9px] text-gray-300">NAME</label>
             <input
               type="text"
-              name="characterName"
-              value={formData.characterName}
+              name="name"
+              value={formData.name}
               onChange={handleInputChange}
               className="bg-white text-gray-800 border border-gray-400 rounded p-1 focus:outline-none w-40 text-sm print-empty-hide"
             />

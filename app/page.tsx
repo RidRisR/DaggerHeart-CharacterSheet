@@ -20,7 +20,6 @@ const defaultFormData: FormData = {
   name: "",
   level: 1,
   proficiency: Array(6).fill(false),
-  ancestry: "",
   ancestry1: "",
   ancestry2: "",
   profession: "",
@@ -31,25 +30,6 @@ const defaultFormData: FormData = {
   instinct: { checked: false, value: "" },
   presence: { checked: false, value: "" },
   knowledge: { checked: false, value: "" },
-  maxHitPoints: 10,
-  currentHitPoints: 10,
-  temporaryHitPoints: 0,
-  armor: {
-    name: "",
-    armorClass: 10,
-    type: "",
-    properties: [],
-    description: "",
-  },
-  weapons: [
-    {
-      name: "",
-      damage: "",
-      type: "",
-      properties: [],
-      description: "",
-    },
-  ],
   gold: Array(20).fill(false),
   experience: ["", "", "", "", ""],
   experienceValues: ["", "", "", "", ""],
@@ -105,7 +85,6 @@ const defaultFormData: FormData = {
   companionStress: Array(18).fill(false),
   companionEvasion: "",
   companionStressMax: 0,
-  characterName: "",
   evasion: "",
   subclass: "",
   companionName: "",
@@ -146,14 +125,14 @@ export default function Home() {
       return card && card.class ? String(card.class) : '()';
     };
 
-    const characterName = formData.name || '()';
+    const name = formData.name || '()';
     const ancestry1Class = getCardClass(formData.ancestry1, 'ancestry', formData.cards);
     const professionClass = getCardClass(formData.profession, 'profession', formData.cards);
     const ancestry2Class = getCardClass(formData.ancestry2, 'ancestry', formData.cards);
     const communityClass = getCardClass(formData.community, 'community', formData.cards);
     const level = formData.level ? String(formData.level) : '()';
 
-    document.title = `${characterName}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
+    document.title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
     setIsPrintingAll(true);
   }
 

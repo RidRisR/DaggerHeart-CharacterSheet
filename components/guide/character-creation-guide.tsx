@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
-import { guideSteps, canProceedToNextStep, getProfessionSpecificContent } from "@/data/guide-content"
+import { guideSteps, canProceedToNextStep, getProfessionSpecificContent } from "@/components/guide/guide-content"
 
 interface CharacterCreationGuideProps {
   isOpen: boolean
@@ -20,7 +20,8 @@ export function CharacterCreationGuide({ isOpen, onClose, formData }: CharacterC
   // 检查当前步骤是否可以进入下一步
   useEffect(() => {
     if (currentStep) {
-      setCanProceed(canProceedToNextStep(currentStep, formData))
+      const allCards = formData?.cards || [];
+      setCanProceed(canProceedToNextStep(currentStep, formData, allCards));
     }
   }, [currentStep, formData])
 

@@ -26,6 +26,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { StandardCard } from "@/data/card/card-types"
 import { loadFocusedCardIds } from "@/lib/storage"
 import { ALL_STANDARD_CARDS, ALL_CARD_TYPES } from "@/data/card"
+import ReactMarkdown from "react-markdown"
 
 interface CardDisplaySectionProps {
   cards: Array<StandardCard>
@@ -93,7 +94,18 @@ function SortableCard({
         </CollapsibleTrigger>
         <CollapsibleContent>
           {card.description && (
-            <div className="px-2 pb-2 pt-1 text-xs text-gray-600 border-t border-gray-100" style={{ whiteSpace: "pre-line" }}>{card.description}</div>
+            <div className="px-2 pb-2 pt-1 text-xs text-gray-600 border-t border-gray-100">
+              <ReactMarkdown
+                skipHtml
+                components={{
+                  ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
+                  li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
+                }}
+              >
+                {card.description.replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
+              </ReactMarkdown>
+            </div>
           )}
         </CollapsibleContent>
       </Collapsible>

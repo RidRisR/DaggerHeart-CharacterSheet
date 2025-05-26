@@ -90,9 +90,15 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                     <h3 className="text-base font-semibold mb-1 truncate" title={displayName}>
                         {displayName}
                     </h3>
-                    <div className="text-xs text-gray-600 overflow-y-hide flex-grow" style={{ whiteSpace: "pre-line" }}>
-                        <ReactMarkdown skipHtml>
-                            {displayDescription.replace(/\n{2,}/g, '\n\n')}
+                    <div className="text-xs text-gray-600 overflow-y-hide flex-grow">
+                        <ReactMarkdown skipHtml
+                            components={{
+                                ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
+                                ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
+                                li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
+                            }}
+                        >
+                            {displayDescription.replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
                         </ReactMarkdown>
                     </div>
                 </div>
@@ -148,8 +154,14 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                     {!isAltPressed && displayDescription && (
                         <div className="p-2 border-t">
                             <div className="text-xs text-gray-700" style={{ whiteSpace: "pre-line" }}>
-                                <ReactMarkdown skipHtml>
-                                    {(displayDescription || "无描述").replace(/\n{2,}/g, '\n\n')}
+                                <ReactMarkdown skipHtml
+                                    components={{
+                                        ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
+                                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
+                                        li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
+                                    }}
+                                >
+                                    {(displayDescription || "无描述").replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
                                 </ReactMarkdown>
                             </div>
                         </div>

@@ -1,3 +1,5 @@
+import type { FormData } from "./form-data"
+
 /**
  * 角色表数据存储和读取工具
  * 使用浏览器的 localStorage 来保存角色数据
@@ -6,7 +8,7 @@
 const STORAGE_KEY = "charactersheet_data"
 
 // 保存角色数据到 localStorage
-export function saveCharacterData(data: any): void {
+export function saveCharacterData(data: FormData): void {
   try {
     if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
@@ -17,11 +19,11 @@ export function saveCharacterData(data: any): void {
 }
 
 // 从 localStorage 读取角色数据
-export function loadCharacterData(): any {
+export function loadCharacterData(): FormData | null {
   try {
     if (typeof window !== "undefined" && window.localStorage) {
       const savedData = localStorage.getItem(STORAGE_KEY)
-      return savedData ? JSON.parse(savedData) : null
+      return savedData ? (JSON.parse(savedData) as FormData) : null
     }
     return null
   } catch (error) {
@@ -31,11 +33,11 @@ export function loadCharacterData(): any {
 }
 
 // 合并部分数据到已保存的数据中
-export function mergeAndSaveCharacterData(partialData: any): void {
+export function mergeAndSaveCharacterData(partialData: Partial<FormData>): void {
   try {
-    const existingData = loadCharacterData() || {}
+    const existingData = loadCharacterData() || {} as FormData
     const mergedData = { ...existingData, ...partialData }
-    saveCharacterData(mergedData)
+    saveCharacterData(mergedData as FormData)
   } catch (error) {
     console.error("合并角色数据失败:", error)
   }
@@ -53,23 +55,23 @@ export function clearCharacterData(): void {
 }
 
 // 导出角色数据为JSON文件
-export function exportCharacterData(formData: any): void {
+export function exportCharacterData(formData: FormData): void {
   try {
     if (!formData) {
       alert("没有可导出的角色数据");
       return;
     }
 
-    const getCardClass = (cardId: string, cardType: string, allCards: any[]): string => {
+    const getCardClass = (cardId: string, cardType: string, allCards: FormData["cards"]): string => {
       if (!cardId || !allCards || !Array.isArray(allCards)) return '()';
-      const card = allCards.find((c: any) => c.id === cardId && c.type === cardType);
+      const card = allCards.find((c) => c.id === cardId && c.type === cardType);
       return card && card.class ? String(card.class) : '()';
     };
 
     const characterName = formData.name || '()';
-    const ancestry1Class = getCardClass(formData.ancestry1, 'ancestry', formData.cards); // formData is 'any', so direct access is fine here
+    const ancestry1Class = getCardClass(formData.ancestry1 ?? '', 'ancestry', formData.cards);
     const professionClass = getCardClass(formData.profession, 'profession', formData.cards);
-    const ancestry2Class = getCardClass(formData.ancestry2, 'ancestry', formData.cards); // formData is 'any', so direct access to ancestry2 is fine here
+    const ancestry2Class = getCardClass(formData.ancestry2 ?? '', 'ancestry', formData.cards);
     const communityClass = getCardClass(formData.community, 'community', formData.cards);
     const level = formData.level ? String(formData.level) : '()';
 
@@ -89,7 +91,7 @@ export function exportCharacterData(formData: any): void {
 }
 
 // 从JSON文件导入角色数据
-export function importCharacterData(file: File): Promise<boolean> {
+export function importCharacterData(file: File): Promise<FormData> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
 
@@ -98,10 +100,9 @@ export function importCharacterData(file: File): Promise<boolean> {
         if (!event.target?.result) {
           throw new Error("读取文件失败")
         }
-
-        const data = JSON.parse(event.target.result as string)
+        const data = JSON.parse(event.target.result as string) as FormData
         saveCharacterData(data)
-        resolve(true)
+        resolve(data)
       } catch (error) {
         console.error("导入角色数据失败:", error)
         reject(error)

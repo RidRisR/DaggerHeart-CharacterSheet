@@ -14,7 +14,7 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
       <div className="flex flex-row gap-6 items-end justify-center">
         {/* HANDFULS */}
         <div className="flex flex-col items-center">
-          <div className="text-[9px] mb-1">HANDFULS</div>
+          <div className="text-[9px] mb-1">把</div>
           <div className="flex flex-col gap-1">
             <div className="flex gap-2">
               {formData.gold.slice(0, 5).map((checked: boolean, i: number) => (
@@ -38,7 +38,7 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
         </div>
         {/* BAGS */}
         <div className="flex flex-col items-center">
-          <div className="text-[9px] mb-1">BAGS</div>
+          <div className="text-[9px] mb-1">袋</div>
           <div className="flex flex-col gap-1">
             <div className="flex gap-2">
               {formData.gold.slice(10, 15).map((checked: boolean, i: number) => (
@@ -62,8 +62,13 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
         </div>
         {/* CHEST */}
         <div className="flex flex-col items-center">
-          <div className="text-[9px] mb-1">CHEST</div>
-          <div className="w-8 h-8 border-2 border-gray-800"></div>
+          <div className="text-[9px] mb-1">箱</div>
+          <div
+            className={`w-8 h-8 border-2 border-gray-800 cursor-pointer flex items-center justify-center ${formData.gold[20] ? "bg-gray-800" : "bg-white"}`}
+            onClick={() => handleCheckboxChange("gold", 20)}
+          >
+            {/* 可选：可加个小图标或文字 */}
+          </div>
         </div>
       </div>
     </div>

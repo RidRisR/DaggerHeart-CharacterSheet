@@ -3,9 +3,9 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { primaryWeapons } from "@/data/list/primary-weapon"
+import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
-import { armorItems } from "@/data/list/armor"
+import { ArmorItem, armorItems } from "@/data/list/armor"
 import { ALL_STANDARD_CARDS } from "@/data/card"
 
 // Import modals
@@ -415,7 +415,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   const handleWeaponChange = (field: string, weaponId: string, weaponType: "primary" | "secondary") => {
     const weaponList = weaponType === "primary" ? primaryWeapons : secondaryWeapons
-    const weapon = weaponList.find((w) => w.名称 === weaponId)
+    const weapon = weaponList.find((w: Weapon) => w.名称 === weaponId)
 
     if (weapon) {
       const weaponDetails = {
@@ -508,12 +508,12 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }
 
   const handleArmorChange = (value: string) => {
-    const armor = armorItems.find((a) => a.名称 === value)
+    const armor = armorItems.find((a: ArmorItem) => a.名称 === value)
     if (armor) {
       setFormData((prev: any) => ({
         ...prev,
         armorName: armor.名称,
-        armorBaseScore: String(armor.基本分),
+        armorBaseScore: String(armor.护甲值),
         armorThreshold: armor.伤害阈值,
         armorFeature: `${armor.特性名称}${armor.特性名称 && armor.描述 ? ": " : ""}${armor.描述}`,
       }))

@@ -2,6 +2,7 @@
 import React from "react"
 import { isEmptyCard, StandardCard } from "@/data/card/card-types"
 import { ALL_CARD_TYPES } from "@/data/card/card-ui-config"
+import ReactMarkdown from "react-markdown"
 
 interface CharacterSheetPageFourProps {
     formData: any
@@ -36,9 +37,23 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
                                 {card.cardSelectDisplay.item1 && <span>{card.cardSelectDisplay.item1}</span>}
                                 {card.cardSelectDisplay.item2 && <span>{card.cardSelectDisplay.item2}</span>}
                                 {card.cardSelectDisplay.item3 && <span>{card.cardSelectDisplay.item3}</span>}
+                                {card.cardSelectDisplay.item3 && <span>{card.cardSelectDisplay.item4}</span>}
                             </div>
                         )}
-                        {card.description && <div className="text-xs text-gray-800 leading-snug mb-1 whitespace-pre-line">{card.description}</div>}
+                        {card.description && (
+                            <div className="text-xs text-gray-800 leading-snug mb-1">
+                                <ReactMarkdown
+                                    skipHtml
+                                    components={{
+                                        ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
+                                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
+                                        li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
+                                    }}
+                                >
+                                    {card.description.replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
+                                </ReactMarkdown>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>

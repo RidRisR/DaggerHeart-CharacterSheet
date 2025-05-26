@@ -12,6 +12,7 @@ export interface StandardCard {
     item1?: string
     item2?: string
     item3?: string
+    item4?: string
   }
   professionSpecial?: {
     "起始生命": number

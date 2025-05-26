@@ -1,7 +1,7 @@
 "use client"
 
 import type { StandardCard } from "@/data/card/card-types"
-import { getCardTypeColor } from "@/data/card/card-ui-config"
+import { getCardTypeColor, ALL_CARD_TYPES } from "@/data/card/card-ui-config"
 import { saveSelectedCardIds, loadSelectedCardIds } from "@/lib/storage"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
@@ -55,6 +55,12 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
     const displayItem1 = card.cardSelectDisplay?.item1 || "";
     const displayItem2 = card.cardSelectDisplay?.item2 || "";
     const displayItem3 = card.cardSelectDisplay?.item3 || "";
+    const displayItem4 = card.cardSelectDisplay?.item4 || "";
+
+    const getTypeName = (type: string) => {
+        const found = ALL_CARD_TYPES.find(t => t.id === type)
+        return found ? found.name : type
+    }
 
     const getPreviewPosition = (): React.CSSProperties => {
         if (!cardRef.current) return {}
@@ -75,103 +81,37 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
         <div
             ref={cardRef}
             key={cardId}
-            className={`relative cursor-pointer h-full flex flex-col w-60 ${isSelected ? 'ring-2 ring-blue-500' : ''}`} // Added conditional ring for selection
+            className={`border rounded p-3 bg-white flex flex-col gap-1 break-inside-avoid shadow-sm relative cursor-pointer w-60 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
             onClick={() => onClick(cardId)}
-            onMouseEnter={() => setIsHovered(false)} // keep false until picture is added
+            onMouseEnter={() => setIsHovered(false)}
             onMouseLeave={() => {
                 setIsHovered(false)
                 setIsAltPressed(false)
             }}
         >
-            {/* Main card content area with fixed height */}
-            <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col flex-1 h-64">
-                {/* Name and Description section - takes remaining space */}
-                <div className="bg-white p-3 flex flex-col flex-1 overflow-hidden">
-                    <h3 className="text-base font-semibold mb-1 truncate" title={displayName}>
-                        {displayName}
-                    </h3>
-                    <div className="text-xs text-gray-600 overflow-y-hide flex-grow">
-                        <ReactMarkdown skipHtml
-                            components={{
-                                ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
-                                ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
-                                li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
-                            }}
-                        >
-                            {displayDescription.replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
-                        </ReactMarkdown>
-                    </div>
-                </div>
-
-                {/* Attributes section - fixed height */}
-                <div
-                    className="p-2 h-24 flex flex-col justify-around"
-                    style={{
-                        backgroundColor: getCardTypeColor(displayType) || "#4b5563",
-                    }}
-                >
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-                        {displayItem1 && (
-                            <div className="truncate" title={displayItem1}>
-                                <span className="opacity-80"></span> {displayItem1}
-                            </div>
-                        )}
-                        {displayItem2 && (
-                            <div className="truncate" title={displayItem2}>
-                                <span className="opacity-80"></span> {displayItem2}
-                            </div>
-                        )}
-                        {displayItem3 && (
-                            <div className="col-span-2 truncate" title={displayItem3}>
-                                <span className="opacity-80"></span> {displayItem3}
-                            </div>
-                        )}
-                    </div>
-                </div>
+            <div className="flex items-center justify-between mb-1">
+                <span className="font-semibold text-base truncate max-w-[60%]" title={displayName}>{displayName}</span>
+                <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-gray-100">{getTypeName(card.type)}</span>
             </div>
-
-            {isHovered && displayName && (
-                <div
-                    className="absolute bg-white border border-gray-300 rounded-md shadow-lg"
-                    style={{
-                        ...getPreviewPosition(),
-                        width: isAltPressed ? "400px" : "280px",
-                    } as React.CSSProperties}
-                >
-                    <div className={isAltPressed ? "w-full" : "w-3/4 mx-auto"}>
-                        <div className="aspect-[816/1110] w-full overflow-hidden">
-                            <img
-                                src={
-                                    displayImageUrl ||
-                                    `/placeholder.svg?height=1110&width=816&query=fantasy card ${displayName || "card"}`
-                                }
-                                alt={displayName || "卡牌"}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                    </div>
-
-                    {!isAltPressed && displayDescription && (
-                        <div className="p-2 border-t">
-                            <div className="text-xs text-gray-700" style={{ whiteSpace: "pre-line" }}>
-                                <ReactMarkdown skipHtml
-                                    components={{
-                                        ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
-                                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
-                                        li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
-                                    }}
-                                >
-                                    {(displayDescription || "无描述").replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
-                                </ReactMarkdown>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="text-[10px] text-gray-400 text-center p-1 bg-gray-50">
-                        {isAltPressed ? "松开ALT键返回正常视图" : "按住ALT键查看大图"}
-                    </div>
+            {(displayItem1 || displayItem2 || displayItem3) && (
+                <div className="flex flex-row gap-2 text-xs text-blue-700 font-mono mb-1">
+                    {displayItem1 && <span>{displayItem1}</span>}
+                    {displayItem2 && <span>{displayItem2}</span>}
+                    {displayItem3 && <span>{displayItem3}</span>}
+                    {displayItem4 && <span>{displayItem4}</span>}
                 </div>
             )}
+            <div className="text-xs text-gray-600 leading-snug mb-1">
+                <ReactMarkdown skipHtml
+                    components={{
+                        ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
+                        li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
+                    }}
+                >
+                    {displayDescription.replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
+                </ReactMarkdown>
+            </div>
         </div>
     )
 }

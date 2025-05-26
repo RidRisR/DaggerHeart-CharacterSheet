@@ -36,8 +36,9 @@ class DomainCardConverter {
       level: card.等级,
       cardSelectDisplay: {
         "item1": card.领域 || "",
-        "item2": card.回想 ? "RC." + card.回想 : "",
-        "item3": card.等级 ? "LV." + card.等级.toString() : "",
+        "item2": card.属性 || "",
+        "item3": card.回想 !== undefined && card.回想 !== null ? "RC." + card.回想 : "",
+        "item4": card.等级 ? "LV." + card.等级.toString() : "",
       },
     }
   }

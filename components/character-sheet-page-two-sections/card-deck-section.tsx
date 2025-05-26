@@ -7,10 +7,11 @@ import { createEmptyCard, isEmptyCard, specialCardPositions, StandardCard } from
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { saveFocusedCardIds, loadFocusedCardIds } from "@/lib/storage" // Import storage functions
 import { SelectableCard } from "@/components/ui/selectable-card"
+import type { FormData } from "@/lib/form-data"
 
 interface CardDeckSectionProps {
-  formData: any
-  onCardChange?: (index: number, card: any) => void // 添加onCardChange属性
+  formData: FormData
+  onCardChange: (cards: any) => void
 }
 
 export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps) {

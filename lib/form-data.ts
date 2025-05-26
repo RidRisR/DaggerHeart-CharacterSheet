@@ -101,4 +101,26 @@ export interface FormData {
   inventoryWeapon2Feature?: string
   inventoryWeapon2Primary?: boolean
   inventoryWeapon2Secondary?: boolean
+  // ===== 新增：补充组件实际引用但未定义的字段 =====
+  // 伙伴相关
+  companionExperience1?: string
+  companionExperience2?: string
+  companionExperience3?: string
+  companionExperience4?: string
+  companionExperience5?: string
+  companionExperienceValue1?: string
+  companionExperienceValue2?: string
+  companionExperienceValue3?: string
+  companionExperienceValue4?: string
+  companionExperienceValue5?: string
+  companionImage?: string
+  companionDescription?: string
+  companionRange?: string
+  companionStress?: boolean[]
+  companionEvasion?: string
+  companionStressMax?: number
+  // 其他页面引用但未定义字段
+  characterName?: string
+  evasion?: string
+  subclass?: string
 }

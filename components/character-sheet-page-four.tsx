@@ -3,9 +3,10 @@ import React from "react"
 import { isEmptyCard, StandardCard } from "@/data/card/card-types"
 import { ALL_CARD_TYPES } from "@/data/card/card-ui-config"
 import ReactMarkdown from "react-markdown"
+import type { FormData } from "@/lib/form-data"
 
 interface CharacterSheetPageFourProps {
-    formData: any
+    formData: FormData
 }
 
 // 打印专用页面，展示所有已加入卡组的卡牌信息

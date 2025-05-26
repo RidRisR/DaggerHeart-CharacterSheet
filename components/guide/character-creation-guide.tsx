@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { guideSteps, canProceedToNextStep, getProfessionSpecificContent } from "@/components/guide/guide-content"
+import type { FormData } from "@/lib/form-data"
 
 interface CharacterCreationGuideProps {
   isOpen: boolean
   onClose: () => void
-  formData: any
+  formData: FormData
 }
 
 export function CharacterCreationGuide({ isOpen, onClose, formData }: CharacterCreationGuideProps) {

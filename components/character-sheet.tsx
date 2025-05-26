@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import type { FormData } from "@/lib/form-data"
 
 import { useState, useEffect, useRef } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
@@ -93,8 +94,8 @@ const defaultFormData = {
 }
 
 interface CharacterSheetProps {
-  formData: any
-  setFormData: (data: any) => void
+  formData: FormData
+  setFormData: (data: FormData) => void
 }
 
 export default function CharacterSheet({ formData, setFormData }: CharacterSheetProps) {

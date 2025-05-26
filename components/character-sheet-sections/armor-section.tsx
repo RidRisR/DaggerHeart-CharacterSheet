@@ -1,9 +1,10 @@
 "use client"
 
 import type React from "react"
+import type { FormData } from "@/lib/form-data"
 
 interface ArmorSectionProps {
-  formData: any
+  formData: FormData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   openArmorModal: () => void
 }

@@ -1,7 +1,9 @@
+import type { FormData } from "@/lib/form-data"
+
 "use client"
 
 interface GoldSectionProps {
-  formData: any
+  formData: FormData
   handleCheckboxChange: (field: string, index: number) => void
 }
 

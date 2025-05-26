@@ -1,7 +1,8 @@
 "use client"
+import type { FormData } from "@/lib/form-data"
 
 interface HopeSectionProps {
-  formData: any
+  formData: FormData
   handleCheckboxChange: (field: string, index: number) => void
 }
 

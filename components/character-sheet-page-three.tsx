@@ -1,14 +1,15 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import type { FormData } from "@/lib/form-data"
 
 interface CharacterSheetPageThreeProps {
-    formData: any;
-    onFormDataChange: (data: any) => void;
+    formData: FormData
+    onFormDataChange: (data: FormData) => void
     allCards?: any[];
 }
 
-const MAX_STRESS = (formData: any) => Number(formData.companionStressMax) || 3;
+const MAX_STRESS = (formData: FormData) => Number(formData.companionStressMax) || 3;
 const TOTAL_STRESS = 6;
 
 // 通用渲染小方格（与第一页一致）

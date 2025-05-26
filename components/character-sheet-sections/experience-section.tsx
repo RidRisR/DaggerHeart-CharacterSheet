@@ -1,10 +1,11 @@
 "use client"
 
 import type React from "react"
+import type { FormData } from "@/lib/form-data"
 
 interface ExperienceSectionProps {
-  formData: any
-  setFormData: React.Dispatch<React.SetStateAction<any>>
+  formData: FormData
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>
 }
 
 export function ExperienceSection({ formData, setFormData }: ExperienceSectionProps) {

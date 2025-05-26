@@ -1,7 +1,9 @@
+import type { FormData } from "@/lib/form-data"
+
 "use client"
 
 interface AttributesSectionProps {
-  formData: any
+  formData: FormData
   handleAttributeValueChange: (attribute: string, value: string) => void
   handleBooleanChange: (field: string) => void
 }

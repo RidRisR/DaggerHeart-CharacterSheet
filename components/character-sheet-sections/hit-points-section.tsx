@@ -1,12 +1,13 @@
 "use client"
 
 import type React from "react"
+import type { FormData } from "@/lib/form-data"
 
 interface HitPointsSectionProps {
-  formData: any
+  formData: FormData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   handleMaxChange: (field: string, value: string) => void
-  renderBoxes: (field: string, max: number, total: number) => React.ReactNode
+  renderBoxes: (field: string, max: number, total: number) => JSX.Element
 }
 
 export function HitPointsSection({ formData, handleInputChange, handleMaxChange, renderBoxes }: HitPointsSectionProps) {

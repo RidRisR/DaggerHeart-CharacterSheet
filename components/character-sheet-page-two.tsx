@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/game-data"
+import type { FormData } from "@/lib/form-data"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -10,8 +11,8 @@ import { CardDeckSection } from "@/components/character-sheet-page-two-sections/
 import { UpgradeSection } from "@/components/character-sheet-page-two-sections/upgrade-section"
 
 interface CharacterSheetPageTwoProps {
-  formData: any
-  setFormData: (data: any) => void
+  formData: FormData
+  setFormData: (data: FormData) => void
 }
 
 export default function CharacterSheetPageTwo({ formData, setFormData }: CharacterSheetPageTwoProps) {

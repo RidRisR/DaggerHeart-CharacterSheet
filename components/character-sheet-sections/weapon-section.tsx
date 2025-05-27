@@ -25,12 +25,13 @@ export function WeaponSection({
 
   return (
     <div className="mb-2">
+      <h3 className="text-xs font-bold text-center mb-1">武器</h3>
       <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-md">
         {isPrimary ? "PRIMARY" : "SECONDARY"}
       </h4>
       <div className="grid grid-cols-3 gap-1 mt-1">
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">NAME</label>
+          <label className="text-[8px] text-gray-600">名称</label>
           <button
             type="button"
             onClick={() => openWeaponModal(nameField, isPrimary ? "primary" : "secondary")}
@@ -40,7 +41,7 @@ export function WeaponSection({
           </button>
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">TRAIT & RANGE</label>
+          <label className="text-[8px] text-gray-600">武器概述</label>
           <input
             type="text"
             name={traitField}
@@ -50,7 +51,7 @@ export function WeaponSection({
           />
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">DAMAGE DICE</label>
+          <label className="text-[8px] text-gray-600">伤害骰</label>
           <input
             type="text"
             name={damageField}
@@ -61,7 +62,7 @@ export function WeaponSection({
         </div>
       </div>
       <div className="mt-1">
-        <label className="text-[8px] text-gray-600">FEATURE</label>
+        <label className="text-[8px] text-gray-600">特性</label>
         <input
           type="text"
           name={featureField}

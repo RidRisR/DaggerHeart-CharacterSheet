@@ -29,8 +29,8 @@ export function UpgradeSection({
       <div className="p-1">
         <p className="text-xs mb-1">
           {tier === 1
-            ? "Choose two available options from the list below and mark them."
-            : "Choose two from the list below or any unmarked from the previous tier and mark them."}
+            ? "从下方列表中选择并标记两个升级选项。"
+            : "从下方列表或更低级的升级列表中选择并标记两个升级选项。"}
         </p>
 
         <div className="space-y-0.5">
@@ -64,22 +64,20 @@ export function UpgradeSection({
           ))}
         </div>
 
-        <div className="mt-1 text-[9px]">
+        <div className="mt-1 text-xs">
           {tier === 1 && (
             <>
-              Then increase your Severe Damage Threshold by +2 and choose a new Domain Deck card at your Level or lower.
+              更新等级，将伤害阈值+1，选择一张不高于你当前等级的领域卡加入卡组。
             </>
           )}
           {tier === 2 && (
             <>
-              Increase your Damage Thresholds: Major by +1 and Severe by +3. Then choose a new Domain Deck card at your
-              Level or lower.
+              更新等级，将伤害阈值+1，选择一张不高于你当前等级的领域卡加入卡组。
             </>
           )}
           {tier === 3 && (
             <>
-              Increase your Damage Thresholds: Major by +2 and Severe by +4. Then choose a new Domain Deck card at your
-              Level or lower.
+              更新等级，将伤害阈值+1，选择一张不高于你当前等级的领域卡加入卡组。
             </>
           )}
         </div>

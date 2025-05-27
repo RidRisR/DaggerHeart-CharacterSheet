@@ -653,9 +653,9 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           {/* Main Content - Two Column Layout */}
           <div className="grid grid-cols-2 gap-2 mt-2">
             {/* Left Column */}
-            <div className="col-span-1 space-y-2">
+            <div className="col-span-1 space-y-4">
               {/* Character Image, Evasion, and Armor */}
-              <div className="flex gap-4 mb-2">
+              <div className="flex gap-4 mb-4">
                 {/* Character Image Upload */}
                 <div className="flex flex-col items-center">
                   <div className="w-24 h-24 border-2 border-gray-800 flex flex-col items-center justify-center relative overflow-hidden">
@@ -773,10 +773,10 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
             <div className="col-span-1 space-y-2">
               {/* Active Weapons */}
               <div className="py-1 mb-2">
-                <h3 className="text-xs font-bold text-center mb-1">ACTIVE WEAPONS</h3>
+                <h3 className="text-xs font-bold text-center mb-1">装备</h3>
 
                 <div className="flex items-center gap-0.5 mb-1">
-                  <span className="text-[10px]">PROFICIENCY</span>
+                  <span className="text-[10px]">熟练度</span>
                   {Array(6)
                     .fill(0)
                     .map((_, i) => (

@@ -12,10 +12,10 @@ interface ArmorSectionProps {
 export function ArmorSection({ formData, handleInputChange, openArmorModal }: ArmorSectionProps) {
   return (
     <div className="mb-2">
-      <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-md">ACTIVE ARMOR</h4>
+      <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-md">已装备护甲</h4>
       <div className="grid grid-cols-3 gap-1 mt-1">
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">NAME</label>
+          <label className="text-[8px] text-gray-600">名称</label>
           <button
             type="button"
             onClick={openArmorModal}
@@ -25,7 +25,7 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
           </button>
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">BASE SCORE</label>
+          <label className="text-[8px] text-gray-600">护甲值</label>
           <input
             type="text"
             name="armorBaseScore"
@@ -35,7 +35,7 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
           />
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">THRESHOLD</label>
+          <label className="text-[8px] text-gray-600">阈值</label>
           <input
             type="text"
             name="armorThreshold"
@@ -46,7 +46,7 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
         </div>
       </div>
       <div className="mt-1">
-        <label className="text-[8px] text-gray-600">FEATURE</label>
+        <label className="text-[8px] text-gray-600">特性</label>
         <input
           type="text"
           name="armorFeature"

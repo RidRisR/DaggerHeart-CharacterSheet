@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef } from "react"
-import { upgradeOptionsData } from "@/data/game-data"
+import { upgradeOptionsData } from "@/data/list/upgrade"
 import type { FormData } from "@/lib/form-data"
 import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
 
@@ -130,7 +130,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
           {/* Header - 调整职业名称显示框的大小 */}
           <div className="bg-gray-800 text-white p-5 flex items-center rounded-t-md">
             <div className="flex flex-col">
-              <div className="text-[9px]">DAGGERHEART V20250520</div>
+            <div className="text-[9px]">DAGGERHEART V20250520</div>
             </div>
           </div>
 
@@ -145,8 +145,8 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
             {/* Tier 1: Levels 2-4 */}
             <UpgradeSection
               tier={1}
-              title="LEVELS 2-4"
-              description="At Level 2, take an additional Experience and increase your Proficiency by +1."
+            title="T2 等级 2-4"
+            description="当你到达 2 级时，获得一项额外+2经2经历，然后你的熟练值+1。"
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
@@ -156,8 +156,8 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
             {/* Tier 2: Levels 5-7 */}
             <UpgradeSection
               tier={2}
-              title="LEVELS 5-7"
-              description="At Level 5, take an additional Experience and clear all marks on Character Traits. Then increase your Proficiency by +1."
+            title="T3 等级 5-7"
+            description="当你到达 5 级时，获得一项额外+2经历，清除你角色属性上的升级标记，然后你的熟练值+1。"
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
@@ -167,8 +167,8 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
             {/* Tier 3: Levels 8-10 */}
             <UpgradeSection
               tier={3}
-              title="LEVELS 8-10"
-              description="At Level 8, take an additional Experience and clear all marks on Character Traits. Then increase your Proficiency by +1."
+            title="T4 等级 8-10"
+            description="当你到达 8 级时，获得一项额外+2经历，清除你角色属性上的升级标记，然后你的熟练值+1。"
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}

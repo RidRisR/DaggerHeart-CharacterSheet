@@ -27,11 +27,11 @@ export function InventoryWeaponSection({
 
   return (
     <div className="py-1 mb-2">
-      <h3 className="text-xs font-bold text-center mb-1">INVENTORY WEAPON {index}</h3>
+      <h3 className="text-xs font-bold text-center mb-1">库存武器</h3>
 
       <div className="grid grid-cols-3 gap-1">
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">NAME</label>
+          <label className="text-[8px] text-gray-600">名称</label>
           <button
             type="button"
             onClick={() => openWeaponModal(nameField, "inventory")}
@@ -41,7 +41,7 @@ export function InventoryWeaponSection({
           </button>
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">TRAIT & RANGE</label>
+          <label className="text-[8px] text-gray-600">特性 & 范围</label>
           <input
             type="text"
             name={traitField}
@@ -51,7 +51,7 @@ export function InventoryWeaponSection({
           />
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">DAMAGE DICE</label>
+          <label className="text-[8px] text-gray-600">伤害骰</label>
           <input
             type="text"
             name={damageField}
@@ -63,7 +63,7 @@ export function InventoryWeaponSection({
       </div>
 
       <div className="mt-1">
-        <label className="text-[8px] text-gray-600">FEATURE</label>
+        <label className="text-[8px] text-gray-600">特征</label>
         <input
           type="text"
           name={featureField}
@@ -83,7 +83,7 @@ export function InventoryWeaponSection({
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={primaryField} className="text-[8px]">
-            Set as Primary
+            设为主手
           </label>
         </div>
         <div className="flex items-center">
@@ -95,7 +95,7 @@ export function InventoryWeaponSection({
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={secondaryField} className="text-[8px]">
-            Set as Secondary
+            设为副手
           </label>
         </div>
       </div>

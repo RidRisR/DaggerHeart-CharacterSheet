@@ -11,7 +11,7 @@ interface ExperienceSectionProps {
 export function ExperienceSection({ formData, setFormData }: ExperienceSectionProps) {
   return (
     <div className="py-1 mb-2">
-      <h3 className="text-xs font-bold text-center mb-1">EXPERIENCE</h3>
+      <h3 className="text-xs font-bold text-center mb-1">经历</h3>
 
       <div className="space-y-1">
         {(formData.experience || ["", "", "", "", ""]).map((exp: string, i: number) => (

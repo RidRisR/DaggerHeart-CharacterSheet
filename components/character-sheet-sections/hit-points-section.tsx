@@ -13,7 +13,7 @@ interface HitPointsSectionProps {
 export function HitPointsSection({ formData, handleInputChange, handleMaxChange, renderBoxes }: HitPointsSectionProps) {
   return (
     <div className="py-1 mb-2">
-      <h3 className="text-xs font-bold text-center mb-1">HIT POINTS & STRESS</h3>
+      <h3 className="text-xs font-bold text-center mb-1">生命值与压力</h3>
 
       <div className="flex justify-between items-center mb-1 gap-1">
         <div className="bg-gray-800 text-white text-[9px] p-1 text-center rounded-md flex-1">
@@ -48,7 +48,7 @@ export function HitPointsSection({ formData, handleInputChange, handleMaxChange,
         <div className="flex items-center justify-between">
           <span className="font-bold mr-2 text-xs">HP</span>
           <div className="flex items-center">
-            <span className="text-[9px] mr-1">Max:</span>
+            <span className="text-[9px] mr-1">最大值:</span>
             <input
               type="number"
               min="1"
@@ -62,9 +62,9 @@ export function HitPointsSection({ formData, handleInputChange, handleMaxChange,
         {renderBoxes("hp" as keyof FormData, Number(formData.hpMax ?? 0), 18)}
 
         <div className="flex items-center justify-between mt-1">
-          <span className="font-bold mr-2 text-xs">STRESS</span>
+          <span className="font-bold mr-2 text-xs">压力</span>
           <div className="flex items-center">
-            <span className="text-[9px] mr-1">Max:</span>
+            <span className="text-[9px] mr-1">最大值:</span>
             <input
               type="number"
               min="1"

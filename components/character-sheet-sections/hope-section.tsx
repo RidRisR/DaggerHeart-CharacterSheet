@@ -24,7 +24,7 @@ export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps
 
   return (
     <div className="py-1 mb-2">
-      <h3 className="text-sm font-bold text-center mb-1">HOPE</h3>
+      <h3 className="text-xs font-bold text-center mb-1">希望</h3>
       <div className="text-[12px] text-center mb-1">花费一点希望使用经历或帮助队友</div>
 
       <div className="flex justify-center gap-2 mb-2">

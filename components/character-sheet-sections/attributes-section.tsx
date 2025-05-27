@@ -16,17 +16,17 @@ export function AttributesSection({
   return (
     <div className="space-y-2">
       <div className="mb-2">
-        <h3 className="text-xs font-bold text-center mb-1">ATTRIBUTES</h3>
+        <h3 className="text-xs font-bold text-center mb-1">属性</h3>
       </div>
 
       <div className="grid grid-cols-3 gap-x-2 gap-y-2">
         {[
-          { name: "敏捷", key: "agility", skills: ["Sprint", "Leap", "Maneuver"] },
-          { name: "力量", key: "strength", skills: ["Lift", "Smash", "Grapple"] },
-          { name: "灵巧", key: "finesse", skills: ["Control", "Hide", "Tinker"] },
-          { name: "本能", key: "instinct", skills: ["Perceive", "Sense", "Navigate"] },
-          { name: "风度", key: "presence", skills: ["Charm", "Perform", "Deceive"] },
-          { name: "知识", key: "knowledge", skills: ["Recall", "Analyze", "Comprehend"] },
+          { name: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },
+          { name: "力量", key: "strength", skills: ["举起", "猛击", "摔跤"] },
+          { name: "灵巧", key: "finesse", skills: ["控制", "隐藏", "修补"] },
+          { name: "本能", key: "instinct", skills: ["感知", "察觉", "导航"] },
+          { name: "风度", key: "presence", skills: ["魅力", "表演", "欺骗"] },
+          { name: "知识", key: "knowledge", skills: ["回忆", "分析", "理解"] },
         ].map((attr) => (
           <div key={attr.name} className="flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-0.5">
@@ -64,7 +64,7 @@ export function AttributesSection({
                   className="w-6 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
                   placeholder="#"
                 />
-                <div className="text-[6px] text-center mt-0.5">{attr.skills.join(", ")}</div>
+                <div className="text-[10px] text-center mt-0.5">{attr.skills.join(", ")}</div>
               </div>
             </div>
           </div>

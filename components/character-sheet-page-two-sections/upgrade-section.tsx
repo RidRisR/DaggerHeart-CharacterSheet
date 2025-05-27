@@ -27,44 +27,46 @@ export function UpgradeSection({
       <div className="bg-gray-800 text-white p-1 text-center font-bold text-sm rounded-t-md">{title}</div>
       <div className="bg-gray-600 text-white p-1 text-xs">{description}</div>
       <div className="p-1">
-        <p className="text-xs mb-1">
+        <p className="text-xs mb-2">
           {tier === 1
             ? "从下方列表中选择并标记两个升级选项。"
             : "从下方列表或更低级的升级列表中选择并标记两个升级选项。"}
         </p>
 
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {getUpgradeOptions(formData.profession, tier).map((option, index) => (
-            <div key={`${tierKey}-${index}`} className="flex items-start">
-              {option.doubleBox ? (
-                <div className="flex mr-1">
+            <div key={`${tierKey}-${index}`} className="flex items-start text-[10px] leading-[1.6]">
+              <span className="flex flex-shrink-0 items-center justify-end mt-px" style={{ minWidth: '3.2em' }}>
+                {Array(option.boxCount).fill(null).map((_, i) => (
                   <div
-                    className={`w-3 h-3 border border-gray-800 mr-0.5 cursor-pointer ${
-                      isUpgradeChecked(tierKey, index) ? "bg-gray-800" : "bg-white"
-                    }`}
-                    onClick={() => handleUpgradeCheck(tierKey, index)}
-                  ></div>
-                  <div
+                    key={i}
                     className={`w-3 h-3 border border-gray-800 cursor-pointer ${
-                      isUpgradeChecked(tierKey, index) ? "bg-gray-800" : "bg-white"
+                      option.doubleBox
+                        ? isUpgradeChecked(`${tierKey}-${index}`, index)
+                          ? "bg-gray-800"
+                          : "bg-white"
+                        : isUpgradeChecked(`${tierKey}-${index}-${i}`, index)
+                          ? "bg-gray-800"
+                          : "bg-white"
                     }`}
-                    onClick={() => handleUpgradeCheck(tierKey, index)}
+                    onClick={() => {
+                      if (option.doubleBox) {
+                        handleUpgradeCheck(`${tierKey}-${index}`, index);
+                      } else {
+                        handleUpgradeCheck(`${tierKey}-${index}-${i}`, index);
+                      }
+                    }}
                   ></div>
-                </div>
-              ) : (
-                <div
-                  className={`w-3 h-3 border border-gray-800 mr-1 cursor-pointer ${
-                    isUpgradeChecked(tierKey, index) ? "bg-gray-800" : "bg-white"
-                  }`}
-                  onClick={() => handleUpgradeCheck(tierKey, index)}
-                ></div>
-              )}
-              <span className="text-[9px]">{option.label}</span>
+                ))}
+              </span>
+              <div className="flex-1 ml-2">
+                <span className="text-gray-800 dark:text-gray-200 mr-1">{option.label}</span>
+              </div>
             </div>
           ))}
         </div>
 
-        <div className="mt-1 text-xs">
+        <div className="mt-3 text-xs">
           {tier === 1 && (
             <>
               更新等级，将伤害阈值+1，选择一张不高于你当前等级的领域卡加入卡组。

@@ -92,14 +92,16 @@ const defaultFormData: FormData = {
   companionExperience: ["", "", "", "", ""],
   companionExperienceValue: ["", "", "", "", ""],
   // 伙伴训练
-  trainingIntelligent: Array(3).fill(false),
-  trainingRadiantInDarkness: [false],
-  trainingCreatureComfort: [false],
-  trainingArmored: [false],
-  trainingVicious: Array(3).fill(false),
-  trainingResilient: Array(3).fill(false),
-  trainingBonded: [false],
-  trainingAware: Array(3).fill(false),
+  trainingOptions: {
+    intelligent: Array(3).fill(false),
+    radiantInDarkness: [false],
+    creatureComfort: [false],
+    armored: [false],
+    vicious: Array(3).fill(false),
+    resilient: Array(3).fill(false),
+    bonded: [false],
+    aware: Array(3).fill(false),
+  },
 }
 
 export default function Home() {
@@ -140,19 +142,13 @@ export default function Home() {
   useEffect(() => {
     if (isPrintingAll) {
       const printTimeout = setTimeout(() => {
-        window.print()
-      }, 500) // Delay to allow rendering of print content
-
-      const handleAfterPrint = () => {
-        setIsPrintingAll(false)
-        window.removeEventListener("afterprint", handleAfterPrint)
-      }
-      window.addEventListener("afterprint", handleAfterPrint)
+        window.print();
+        setIsPrintingAll(false); // Automatically exit print mode after printing
+      }, 500); // Delay to allow rendering of print content
 
       return () => {
-        clearTimeout(printTimeout)
-        window.removeEventListener("afterprint", handleAfterPrint)
-      }
+        clearTimeout(printTimeout);
+      };
     }
   }, [isPrintingAll])
 
@@ -263,10 +259,10 @@ export default function Home() {
       {/* 固定位置的按钮 - 移到父组件 */}
       <div className="print:hidden fixed bottom-4 right-4 z-50 flex flex-col gap-2">
         <Button onClick={openImportExportModal} className="bg-gray-800 hover:bg-gray-700">
-          导入/导出
+          保存/读取
         </Button>
         <Button onClick={handlePrintAll} className="bg-gray-800 hover:bg-gray-700"> {/* Changed Link to Button */}
-          打印角色卡
+          导出PDF
         </Button>
         <button
           onClick={toggleGuide}

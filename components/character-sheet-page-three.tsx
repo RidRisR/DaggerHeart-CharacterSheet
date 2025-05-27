@@ -45,14 +45,16 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
         companionName: formData?.companionName || "",
         companionWeapon: formData?.companionWeapon || "",
         // 训练相关
-        trainingIntelligent: Array.isArray(formData?.trainingIntelligent) ? formData.trainingIntelligent : Array(3).fill(false),
-        trainingRadiantInDarkness: Array.isArray(formData?.trainingRadiantInDarkness) ? formData.trainingRadiantInDarkness : Array(1).fill(false),
-        trainingCreatureComfort: Array.isArray(formData?.trainingCreatureComfort) ? formData.trainingCreatureComfort : Array(1).fill(false),
-        trainingArmored: Array.isArray(formData?.trainingArmored) ? formData.trainingArmored : Array(1).fill(false),
-        trainingVicious: Array.isArray(formData?.trainingVicious) ? formData.trainingVicious : Array(3).fill(false),
-        trainingResilient: Array.isArray(formData?.trainingResilient) ? formData.trainingResilient : Array(3).fill(false),
-        trainingBonded: Array.isArray(formData?.trainingBonded) ? formData.trainingBonded : Array(1).fill(false),
-        trainingAware: Array.isArray(formData?.trainingAware) ? formData.trainingAware : Array(3).fill(false),
+        trainingOptions: {
+            intelligent: Array.isArray(formData?.trainingOptions?.intelligent) ? formData.trainingOptions.intelligent : Array(3).fill(false),
+            radiantInDarkness: Array.isArray(formData?.trainingOptions?.radiantInDarkness) ? formData.trainingOptions.radiantInDarkness : Array(1).fill(false),
+            creatureComfort: Array.isArray(formData?.trainingOptions?.creatureComfort) ? formData.trainingOptions.creatureComfort : Array(1).fill(false),
+            armored: Array.isArray(formData?.trainingOptions?.armored) ? formData.trainingOptions.armored : Array(1).fill(false),
+            vicious: Array.isArray(formData?.trainingOptions?.vicious) ? formData.trainingOptions.vicious : Array(3).fill(false),
+            resilient: Array.isArray(formData?.trainingOptions?.resilient) ? formData.trainingOptions.resilient : Array(3).fill(false),
+            bonded: Array.isArray(formData?.trainingOptions?.bonded) ? formData.trainingOptions.bonded : Array(1).fill(false),
+            aware: Array.isArray(formData?.trainingOptions?.aware) ? formData.trainingOptions.aware : Array(3).fill(false),
+        },
     }
 
     // 伙伴经验区块（右侧为图片+描述，无经验示例）
@@ -167,15 +169,12 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
         | "trainingResilient"
         | "trainingBonded"
         | "trainingAware";
-    const renderTrainingOption = (mainText: string, namePrefix: TrainingField, checkboxCount: number) => {
+    const renderTrainingOption = (mainText: string, namePrefix: keyof typeof safeFormData.trainingOptions, checkboxCount: number) => {
         const parts = mainText.split(/：|:/);
         const title = parts[0];
         const desc = parts.length > 1 ? parts.slice(1).join(':').trim() : '';
-        // 类型安全访问训练/伙伴相关布尔数组
-        const arr = Array.isArray(safeFormData[namePrefix]) && safeFormData[namePrefix].every(v => typeof v === 'boolean')
-            ? (safeFormData[namePrefix] as boolean[]).slice(0, checkboxCount)
-            : Array(checkboxCount).fill(false);
-        // 只渲染实际可用格子，右对齐，预留3格宽度
+        const arr = safeFormData.trainingOptions[namePrefix];
+
         return (
             <div className="flex items-start gap-2 mb-1 text-[13px] leading-[1.6]">
                 {/* 格子区，右对齐，预留3格宽度 */}
@@ -193,7 +192,13 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                                 onClick={() => {
                                     const newArr = [...arr];
                                     newArr[i] = !newArr[i];
-                                    onFormDataChange({ ...formData, [namePrefix]: newArr });
+                                    onFormDataChange({
+                                        ...formData,
+                                        trainingOptions: {
+                                            ...safeFormData.trainingOptions,
+                                            [namePrefix]: newArr,
+                                        },
+                                    });
                                 }}
                                 tabIndex={0}
                                 aria-checked={!!checked}
@@ -348,14 +353,14 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                         <div className="p-2 border border-gray-300 dark:border-gray-700 border-t-0">
                             <p className="text-xs mb-2 text-gray-600 dark:text-gray-400">每当你的角色升级时，也从下面的列表中为你的伙伴选择一个选项并标记它。</p>
                             <div className="space-y-1">
-                                {renderTrainingOption("聪慧：一项经验+1。", "trainingIntelligent", 3)}
-                                {renderTrainingOption("黑暗中的光芒：你的角色获得额外一个希望槽。", "trainingRadiantInDarkness", 1)}
-                                {renderTrainingOption("生物慰藉：每次短休一次，当你花时间在一个安静的时刻给予你的伙伴爱和关注时，你们都可以清除一点压力或获得一点希望。", "trainingCreatureComfort", 1)}
-                                {renderTrainingOption("装甲：当你的伙伴受到伤害时，你可以标记1护甲槽以代替其标记1压力点。", "trainingArmored", 1)}
-                                {renderTrainingOption("凶猛：增加你伙伴的伤害骰（d6到d8等）或范围（近战到极近等）。", "trainingVicious", 3)}
-                                {renderTrainingOption("坚韧：增加一个额外的压力槽。", "trainingResilient", 3)}
-                                {renderTrainingOption("羁绊：当你标记最后一个生命点时，你的伙伴会冲到你身边安慰你。掷出等同于他们可用压力槽数量的d6，并标记这些压力。如果掷出6，他们会让你振作起来。清除你的最后一个生命点并返回场景。", "trainingBonded", 1)}
-                                {renderTrainingOption("警觉：伙伴的闪避+2。", "trainingAware", 3)}
+                                {renderTrainingOption("聪慧：一项经验+1。", "intelligent", 3)}
+                                {renderTrainingOption("黑暗中的光芒：你的角色获得额外一个希望槽。", "radiantInDarkness", 1)}
+                                {renderTrainingOption("生物慰藉：每次短休一次，当你花时间在一个安静的时刻给予你的伙伴爱和关注时，你们都可以清除一点压力或获得一点希望。", "creatureComfort", 1)}
+                                {renderTrainingOption("装甲：当你的伙伴受到伤害时，你可以标记1护甲槽以代替其标记1压力点。", "armored", 1)}
+                                {renderTrainingOption("凶猛：增加你伙伴的伤害骰（d6到d8等）或范围（近战到极近等）。", "vicious", 3)}
+                                {renderTrainingOption("坚韧：增加一个额外的压力槽。", "resilient", 3)}
+                                {renderTrainingOption("羁绊：当你标记最后一个生命点时，你的伙伴会冲到你身边安慰你。掷出等同于他们可用压力槽数量的d6，并标记这些压力。如果掷出6，他们会让你振作起来。清除你的最后一个生命点并返回场景。", "bonded", 1)}
+                                {renderTrainingOption("警觉：伙伴的闪避+2。", "aware", 3)}
                             </div>
                         </div>
                     </div>

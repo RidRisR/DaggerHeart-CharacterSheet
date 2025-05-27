@@ -64,16 +64,16 @@ export function ImportExportModal({ isOpen, onClose, onExport, onImport, onReset
 
         <div className="space-y-4">
           <div>
-            <h3 className="font-medium mb-2">导出角色数据</h3>
-            <p className="text-sm text-gray-600 mb-2">将当前角色数据导出为JSON文件，以便备份或分享。</p>
+            <h3 className="font-medium mb-2">保存角色数据</h3>
+            <p className="text-sm text-gray-600 mb-2">将当前角色数据保存为JSON文件，以便备份或分享。</p>
             <Button onClick={onExport} className="w-full">
-              导出为JSON文件
+              保存为JSON文件
             </Button>
           </div>
 
           <div>
-            <h3 className="font-medium mb-2">导入角色数据</h3>
-            <p className="text-sm text-gray-600 mb-2">从JSON文件导入角色数据，将覆盖当前数据。</p>
+            <h3 className="font-medium mb-2">读取角色数据</h3>
+            <p className="text-sm text-gray-600 mb-2">从JSON文件读取角色数据，将覆盖当前数据。</p>
             <input type="file" accept=".json" ref={fileInputRef} onChange={handleImport} className="hidden" />
             <Button onClick={() => fileInputRef.current?.click()} className="w-full" variant="outline">
               选择JSON文件

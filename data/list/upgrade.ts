@@ -2,46 +2,27 @@
 export const upgradeOptionsData = {
   // 基础升级选项（所有职业通用）
   baseUpgrades: [
-    { label: "Increase two unmarked Character Traits by +1 and mark them.", doubleBox: false },
-    { label: "Permanently add one Hit Point Slot.", doubleBox: false },
-    { label: "Permanently add one Stress Slot.", doubleBox: false },
-    { label: "Increase two Experiences by +1.", doubleBox: false },
-    { label: "Permanently add one Armor Slot.", doubleBox: false },
-    { label: "Add +1 to your Evasion.", doubleBox: false },
-    { label: "Choose an additional domain card at your level or lower.", doubleBox: false },
-    { label: "Increase your Major Damage Threshold by +1.", doubleBox: true },
-    { label: "Increase your Severe Damage Threshold by +2.", doubleBox: true },
+    { label: "两项未标记的角色属性+1，然后标记属性升级选项。", doubleBox: false, boxCount: 3 },
+    { label: "永久增加一个生命值槽。", doubleBox: false, boxCount: 1 },
+    { label: "永久增加一个压力槽。", doubleBox: false, boxCount: 1 },
+    { label: "选择两项经历获得额外+1。", doubleBox: false, boxCount: 1 },
+    { label: "选择一张不高于你当前等级的领域卡加入卡组。", doubleBox: false, boxCount: 1 },
+    { label: "闪避值获得+1。", doubleBox: false, boxCount: 1 },
   ],
-
-  // 职业特定升级选项
-  professionUpgrades: {
-  },
 
   // 特定等级升级选项
   tierSpecificUpgrades: {
+    tier1: [
+    ],
     tier2: [
-      {
-        label: "Take an upgraded subclass card. Then cross out the multiclass option for this tier.",
-        doubleBox: false,
-      },
-      { label: "Increase your Proficiency by +1.", doubleBox: true },
-      {
-        label:
-          'Multiclass: Choose an additional class for your character, then cross out an unused "Take an upgraded subclass card" and the other multiclass option on this sheet.',
-        doubleBox: true,
-      },
+      { label: "升级你的子职业，你不可再使用T3级别升级选项中的“兼职”选项。", doubleBox: false, boxCount: 1 },
+      { label: "熟练度获得+1。", doubleBox: true, boxCount: 2 },
+      { label: "获得一个额外的子职业，你不可再使用T3级别升级选项中的“升级子职业”选项。也不可再使用T3或更高级别的“兼职”选项。", doubleBox: true, boxCount: 2 },
     ],
     tier3: [
-      {
-        label: "Take an upgraded subclass card. Then cross out the multiclass option for this tier.",
-        doubleBox: false,
-      },
-      { label: "Increase your Proficiency by +1.", doubleBox: true },
-      {
-        label:
-          'Multiclass: Choose an additional class for your character, then cross out an unused "Take an upgraded subclass card" and the other multiclass option on this sheet.',
-        doubleBox: true,
-      },
+      { label: "升级你的子职业，你不可再使用T4级别升级选项中的“兼职”选项。", doubleBox: false, boxCount: 1 },
+      { label: "熟练度获得+1。", doubleBox: true, boxCount: 2 },
+      { label: "获得一个额外的子职业，你不可再使用T4级别升级选项中的“升级子职业”选项。也不可再使用T4或更高级别的“兼职”选项。", doubleBox: true, boxCount: 2 },
     ],
   },
-}
+};

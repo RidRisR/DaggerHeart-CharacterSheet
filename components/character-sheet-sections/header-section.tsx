@@ -53,7 +53,7 @@ export function HeaderSection({
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">COMMUNITY</label>
+            <label className="text-[9px] text-gray-300">社区</label>
             <button
               type="button"
               onClick={openCommunityModal}
@@ -70,7 +70,7 @@ export function HeaderSection({
         </div>
         <div className="flex gap-2">
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">ANCESTRY</label>
+            <label className="text-[9px] text-gray-300">血统</label>
             <div className="flex gap-1">
               <button
                 type="button"
@@ -100,7 +100,7 @@ export function HeaderSection({
             </div>
           </div>
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">GENDER & AGE</label>
+            <label className="text-[9px] text-gray-300">性别&年龄&身高</label>
             <input
               type="text"
               name="subclass"

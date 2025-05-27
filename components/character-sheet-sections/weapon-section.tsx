@@ -25,9 +25,8 @@ export function WeaponSection({
 
   return (
     <div className="mb-2">
-      <h3 className="text-xs font-bold text-center mb-1">武器</h3>
       <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-md">
-        {isPrimary ? "PRIMARY" : "SECONDARY"}
+        {isPrimary ? "主武器" : "副武器"}
       </h4>
       <div className="grid grid-cols-3 gap-1 mt-1">
         <div className="col-span-1">
@@ -41,7 +40,7 @@ export function WeaponSection({
           </button>
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">武器概述</label>
+          <label className="text-[8px] text-gray-600">基本信息</label>
           <input
             type="text"
             name={traitField}

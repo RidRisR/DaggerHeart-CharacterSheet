@@ -41,7 +41,7 @@ export function InventoryWeaponSection({
           </button>
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] text-gray-600">特性 & 范围</label>
+          <label className="text-[8px] text-gray-600">基本信息</label>
           <input
             type="text"
             name={traitField}

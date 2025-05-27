@@ -48,34 +48,34 @@ export function HitPointsSection({ formData, handleInputChange, handleMaxChange,
         <div className="flex items-center justify-between">
           <span className="font-bold mr-2 text-xs">HP</span>
           <div className="flex items-center">
-            <span className="text-[9px] mr-1">最大值:</span>
+            <span className="text-[9px] mr-1 print:hidden">最大值:</span> {/* 打印时隐藏 */}
             <input
               type="number"
               min="1"
               max="18"
-              value={formData.hpMax}
+              value={formData.hpMax || 6} // 默认值为6
               onChange={(e) => handleMaxChange("hpMax" as keyof FormData, e.target.value)}
-              className="w-8 text-center border border-gray-400 rounded text-xs print-empty-hide print-empty-text"
+              className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>
         </div>
-        {renderBoxes("hp" as keyof FormData, Number(formData.hpMax ?? 0), 18)}
+        {renderBoxes("hp" as keyof FormData, Number(formData.hpMax || 6), 18)}
 
         <div className="flex items-center justify-between mt-1">
           <span className="font-bold mr-2 text-xs">压力</span>
           <div className="flex items-center">
-            <span className="text-[9px] mr-1">最大值:</span>
+            <span className="text-[9px] mr-1 print:hidden">最大值:</span> {/* 打印时隐藏 */}
             <input
               type="number"
               min="1"
               max="12"
-              value={formData.stressMax}
+              value={formData.stressMax || 6} // 默认值为6
               onChange={(e) => handleMaxChange("stressMax" as keyof FormData, e.target.value)}
-              className="w-8 text-center border border-gray-400 rounded text-xs print-empty-hide print-empty-text"
+              className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>
         </div>
-        {renderBoxes("stress" as keyof FormData, Number(formData.stressMax ?? 0), 18)}
+        {renderBoxes("stress" as keyof FormData, Number(formData.stressMax || 6), 18)}
       </div>
     </div>
   )

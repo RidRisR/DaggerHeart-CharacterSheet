@@ -29,7 +29,7 @@ class ProfessionCardConverter {
       type: "profession",
       description: card.职业特性 || "",
       hint: card.简介 || "",
-      imageUrl: card.imageUrl || "",
+      imageUrl: "",
       class: card.名称,
       cardSelectDisplay: {
         "item1": card.领域1 || "",

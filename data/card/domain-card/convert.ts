@@ -31,7 +31,7 @@ class DomainCardConverter {
       name: card.名称 || "",
       type: "domain",
       description: card.描述 || "",
-      imageUrl: card.imageUrl || "",
+      imageUrl: "",
       class: card.领域,
       level: card.等级,
       cardSelectDisplay: {

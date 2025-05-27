@@ -41,7 +41,7 @@ class SubClassCardConverter {
       name: card.名称,
       type: "subclass",
       description: card.描述,
-      imageUrl: card.imageUrl,
+      imageUrl: "",
       class: card.主职,
       level: levelNum,
       cardSelectDisplay: {

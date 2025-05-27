@@ -24,7 +24,7 @@ class CommunityCardConverter {
       type: "community",
       description: card.描述 || "",
       hint: card.简介 || "",
-      imageUrl: card.imageUrl,
+      imageUrl: "",
       class: card.名称,
       cardSelectDisplay: {
         "item1": card.特性 || "",

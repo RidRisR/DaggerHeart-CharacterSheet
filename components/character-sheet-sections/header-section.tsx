@@ -43,7 +43,7 @@ export function HeaderSection({
       <div className="flex flex-col items-center gap-1">
         <div className="flex gap-2">
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">NAME</label>
+            <label className="text-[9px] text-gray-300">名称</label>
             <input
               type="text"
               name="name"
@@ -100,7 +100,7 @@ export function HeaderSection({
             </div>
           </div>
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">性别&年龄&身高</label>
+            <label className="text-[9px] text-gray-300">性别/年龄/体型</label>
             <input
               type="text"
               name="subclass"

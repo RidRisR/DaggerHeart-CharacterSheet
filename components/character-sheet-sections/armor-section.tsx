@@ -12,7 +12,7 @@ interface ArmorSectionProps {
 export function ArmorSection({ formData, handleInputChange, openArmorModal }: ArmorSectionProps) {
   return (
     <div className="mb-2">
-      <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-md">已装备护甲</h4>
+      <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-md">护甲</h4>
       <div className="grid grid-cols-3 gap-1 mt-1">
         <div className="col-span-1">
           <label className="text-[8px] text-gray-600">名称</label>

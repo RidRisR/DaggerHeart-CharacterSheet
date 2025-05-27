@@ -119,7 +119,9 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
     experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
     hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),
+    hpMax: formData?.hpMax || 6,
     hp: Array.isArray(formData?.hp) ? formData.hp : Array(18).fill(false),
+    stressMax: formData?.stressMax || 6,
     stress: Array.isArray(formData?.stress) ? formData.stress : Array(18).fill(false),
     armorBoxes: Array.isArray(formData?.armorBoxes) ? formData.armorBoxes : Array(12).fill(false),
     armorMax: formData?.armorMax || 0, // 保留默认值
@@ -263,8 +265,19 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+
+    setFormData((prev) => {
+      const updatedFormData = { ...prev, [name]: value };
+
+      // 如果修改的是 armorValue，则更新 armorMax
+      if (name === "armorValue") {
+        const parsedValue = parseInt(value, 10);
+        updatedFormData.armorMax = isNaN(parsedValue) ? 0 : parsedValue;
+      }
+
+      return updatedFormData;
+    });
   }
 
   const handleAttributeValueChange = (attribute: keyof FormData, value: string) => {

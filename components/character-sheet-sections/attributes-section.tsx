@@ -33,7 +33,6 @@ export function AttributesSection({
               <div className="text-[12px] font-bold">{attr.name}</div>
               {(() => {
                 const attrValue = formData[attr.key as keyof typeof formData];
-                console.log("attrValue", attrValue);
                 function isAttributeValue(val: unknown): val is AttributeValue {
                   return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
                 }

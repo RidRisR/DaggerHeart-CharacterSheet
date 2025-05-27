@@ -138,7 +138,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     knowledge: formData?.knowledge || { checked: false, value: "" },
     proficiency: Array.isArray(formData?.proficiency) ? formData.proficiency : Array(6).fill(false),
   }
-  console.log("SafeFormData:", safeFormData);
 
   // 同步特殊卡牌与角色选择 - 不直接修改状态，而是返回新的卡牌数组
   const getUpdatedSpecialCards = () => {

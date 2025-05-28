@@ -31,12 +31,8 @@ interface CardSelectionModalProps {
 }
 
 export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardIndex }: CardSelectionModalProps) {
-  const allowedCardType = getAllowedCardTypeForPosition(String(selectedCardIndex))
-  const isSpecialPos = isSpecialCardPosition(String(selectedCardIndex))
 
-  const availableCardTypes = isSpecialPos
-    ? ALL_CARD_TYPES.filter((type) => type.id === allowedCardType)
-    : ALL_CARD_TYPES
+  const availableCardTypes = ALL_CARD_TYPES
 
   const [activeTab, setActiveTab] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
@@ -91,9 +87,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
   useEffect(() => {
     if (isOpen) {
-      if (isSpecialPos && allowedCardType) {
-        setActiveTab(allowedCardType)
-      } else if (availableCardTypes.length > 0) {
+      if (availableCardTypes.length > 0) {
         // Ensure activeTab is set if not special, or if special but allowedCardType is not yet defined
         if (!activeTab && availableCardTypes[0]) {
           setActiveTab(availableCardTypes[0].id)
@@ -104,7 +98,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       // setStagedSelectedLevels(appliedSelectedLevels); // For level filter
       setStagedSelectedLevels(appliedSelectedLevels) // Updated
     }
-  }, [isOpen, isSpecialPos, allowedCardType, availableCardTypes, appliedSelectedClasses, appliedSelectedLevels, activeTab])
+  }, [isOpen, availableCardTypes, appliedSelectedClasses, appliedSelectedLevels, activeTab])
 
   useEffect(() => {
     // Reset filters when activeTab changes
@@ -143,9 +137,6 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
         const cardTypeProcessed = card.type.replace(/卡$/, "");
         const activeTabProcessed = activeTab.replace(/卡$/, "");
 
-        if (isSpecialPos) {
-          return cardTypeProcessed === (allowedCardType?.replace(/卡$/, "") || "")
-        }
         return cardTypeProcessed === activeTabProcessed
       })
 
@@ -176,12 +167,12 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       console.error("[CardSelectionModal] 过滤卡牌时出错:", error)
       setFilteredCards([])
     }
-  }, [activeTab, searchTerm, appliedSelectedClasses, appliedSelectedLevels, isSpecialPos, allowedCardType, isOpen])
+  }, [activeTab, searchTerm, appliedSelectedClasses, appliedSelectedLevels, isOpen])
 
   const handleSelectCard = (selectedCard: StandardCard) => {
     try {
       if (!selectedCard.type) {
-        selectedCard.type = isSpecialPos ? allowedCardType : activeTab
+        selectedCard.type = activeTab
       }
 
       onSelect(selectedCard)
@@ -192,7 +183,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   }
 
   const handleClearSelection = () => {
-    const emptyCard = createEmptyCard(isSpecialPos ? allowedCardType : "unknown")
+    const emptyCard = createEmptyCard
     onSelect(emptyCard)
     onClose()
   }
@@ -225,9 +216,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
     );
   };
 
-  const positionTitle = isSpecialPos
-    ? `选择${SPECIAL_CARD_POSITIONS[selectedCardIndex as keyof typeof SPECIAL_CARD_POSITIONS] || "卡牌"}`
-    : `选择卡牌 #${selectedCardIndex + 1}`
+  const positionTitle = `选择卡牌 #${selectedCardIndex + 1}`
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">

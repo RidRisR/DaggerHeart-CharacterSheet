@@ -46,7 +46,7 @@ class SubClassCardConverter {
       level: levelNum,
       headerDisplay: card.子职业,
       cardSelectDisplay: {
-        item1: card.子职业,
+        item1: card.主职,
         item2: card.等级,
         item3: card.施法,
       },

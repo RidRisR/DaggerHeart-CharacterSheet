@@ -2,7 +2,6 @@
 
 import type { StandardCard } from "@/data/card/card-types"
 import { getCardTypeColor, ALL_CARD_TYPES } from "@/data/card/card-ui-config"
-import { saveSelectedCardIds, loadSelectedCardIds } from "@/lib/storage"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 
@@ -48,8 +47,6 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
     // Prepare derived values for display, handling potential undefined fields and fallbacks
     const displayName = card.name || "未命名卡牌";
     const displayDescription = card.description || "无描述。";
-    const displayType = card.type?.replace(/卡$/, "") || "unknown";
-    const displayImageUrl = card.imageUrl;
 
     // Get display items, providing empty strings as fallbacks
     const displayItem1 = card.cardSelectDisplay?.item1 || "";
@@ -60,21 +57,6 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
     const getTypeName = (type: string) => {
         const found = ALL_CARD_TYPES.find(t => t.id === type)
         return found ? found.name : type
-    }
-
-    const getPreviewPosition = (): React.CSSProperties => {
-        if (!cardRef.current) return {}
-        const rect = cardRef.current.getBoundingClientRect()
-        const isRightSide = rect.left > window.innerWidth / 2
-        return {
-            position: "fixed",
-            top: `${rect.top}px`,
-            left: isRightSide ? "auto" : `${rect.right + 10}px`,
-            right: isRightSide ? `${window.innerWidth - rect.left + 10}px` : "auto",
-            maxHeight: "80vh",
-            overflowY: "auto",
-            zIndex: 1000,
-        }
     }
 
     return (
@@ -109,7 +91,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                         li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
                     }}
                 >
-                    {displayDescription.replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
+                    {displayDescription.replace(/\n/g, '\n\n').replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
                 </ReactMarkdown>
             </div>
         </div>

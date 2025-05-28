@@ -935,9 +935,29 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           onClose={closeGenericModal}
           onSelect={(cardId, field) => {
             if (cardId === "none") {
-              setFormData((prev) => ({ ...prev, [field || "community"]: "" }))
+              switch (currentModal.type) {
+                case "profession":
+                  handleProfessionChange("none")
+                  break
+                case "ancestry":
+                  handleAncestryChange(field || "ancestry1", "none")
+                  break
+                case "community":
+                  handleCommunityChange("none")
+                  break
+              }
             } else {
-              setFormData((prev) => ({ ...prev, [field || "community"]: cardId }))
+              switch (currentModal.type) {
+                case "profession":
+                  handleProfessionChange(cardId)
+                  break
+                case "ancestry":
+                  handleAncestryChange(field || "ancestry1", cardId)
+                  break
+                case "community":
+                  handleCommunityChange(cardId)
+                  break
+              }
             }
             needsSyncRef.current = true
             closeGenericModal()

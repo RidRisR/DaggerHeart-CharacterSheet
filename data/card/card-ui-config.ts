@@ -33,8 +33,23 @@ export const CARD_CLASS_OPTIONS_BY_TYPE = {
   domain: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.domain.map(value => ({ value, label: value }))]
 }
 
-// 等级选项
-export const LEVEL_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+// 定义不同卡牌类型对应的等级选项
+export const CARD_LEVEL_OPTIONS = {
+  profession: [],
+  community: [],
+  ancestry: ["特性一", "特性二"],
+  subclass: ["基石", "专精", "大师"],
+  domain: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+};
+
+// Define a dictionary for level options by type with display names
+export const CARD_LEVEL_OPTIONS_BY_TYPE = {
+  profession: [{ value: "all", label: "全部" }],
+  community: [{ value: "all", label: "全部" }],
+  ancestry: [{ value: "all", label: "全部" }, ...CARD_LEVEL_OPTIONS.ancestry.map((label, index) => ({ value: (index + 1).toString(), label }))],
+  subclass: [{ value: "all", label: "全部" }, ...CARD_LEVEL_OPTIONS.subclass.map((label, index) => ({ value: (index + 1).toString(), label }))],
+  domain: [{ value: "all", label: "全部" }, ...CARD_LEVEL_OPTIONS.domain.map((label, index) => ({ value: (index + 1).toString(), label }))],
+};
 
 // 获取卡牌类型名称
 export function getCardTypeName(typeId: string): string {
@@ -53,8 +68,8 @@ export function getCardClassOptions(typeId: string): string[] {
 }
 
 // 获取等级选项
-export function getLevelOptions(): string[] {
-  return LEVEL_OPTIONS
+export function getLevelOptions(typeId: string): { value: string; label: string }[] {
+  return CARD_LEVEL_OPTIONS_BY_TYPE[typeId as keyof typeof CARD_LEVEL_OPTIONS_BY_TYPE] || [];
 }
 
 // 获取等级名称

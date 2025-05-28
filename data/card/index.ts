@@ -23,7 +23,7 @@ import {
   SPECIAL_CARD_POSITIONS,
   CARD_CLASS_OPTIONS,
   CARD_CLASS_OPTIONS_BY_TYPE,
-  LEVEL_OPTIONS,
+  CARD_LEVEL_OPTIONS, // Updated import
   getCardTypeName,
   getCardTypeColor,
   getCardClassOptions,
@@ -142,7 +142,7 @@ export {
   SPECIAL_CARD_POSITIONS,
   CARD_CLASS_OPTIONS,
   CARD_CLASS_OPTIONS_BY_TYPE,
-  LEVEL_OPTIONS,
+  CARD_LEVEL_OPTIONS, // Updated export
   // UI辅助函数
   getCardTypeName,
   getCardTypeColor,

@@ -33,7 +33,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "吟游诗人",
     "子职业": "游吟歌手",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "风度"
   },
   // BARD - WORDSMITH (吟游诗人 - 妙语连珠者)
@@ -74,7 +74,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "吟游诗人",
     "子职业": "妙语连珠者",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "风度"
   },
   // DRUID - WARDEN OF THE ELEMENTS (德鲁伊 - 元素守护者)
@@ -105,7 +105,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "德鲁伊",
     "子职业": "元素守护者",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "本能"
   },
   // DRUID - WARDEN OF RENEWAL (德鲁伊 - 复苏守护者)
@@ -156,7 +156,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "德鲁伊",
     "子职业": "复苏守护者",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "本能"
   },
   // GUARDIAN - STALWART (守护者 - 坚韧卫士)
@@ -207,7 +207,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "守护者",
     "子职业": "坚韧卫士",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "不可施法"
   },
   {
@@ -217,7 +217,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "守护者",
     "子职业": "坚韧卫士",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "不可施法"
   },
   // GUARDIAN - VENGEANCE (守护者 - 复仇者)
@@ -258,7 +258,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "守护者",
     "子职业": "复仇者",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "不可施法"
   },
   // RANGER - BEASTBOUND (游侠 - 兽伴)
@@ -299,7 +299,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "游侠",
     "子职业": "兽伴",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "敏捷"
   },
   {
@@ -309,7 +309,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "游侠",
     "子职业": "兽伴",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "敏捷"
   },
   // RANGER - WAYFINDER (游侠 - 寻路者)
@@ -350,7 +350,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "游侠",
     "子职业": "寻路者",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "敏捷"
   },
   // ROGUE - NIGHTWALKER (盗贼 - 暗夜行者)
@@ -391,7 +391,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "盗贼",
     "子职业": "暗夜行者",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "灵巧"
   },
   {
@@ -401,7 +401,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "盗贼",
     "子职业": "暗夜行者",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "灵巧"
   },
   // ROGUE - SYNDICATE (盗贼 - 辛迪加)
@@ -432,7 +432,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "盗贼",
     "子职业": "辛迪加",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "灵巧"
   },
   // SERAPH - DIVINE WIELDER (神使 - 神圣持武者)
@@ -473,7 +473,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "神使",
     "子职业": "神圣持武者",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "力量"
   },
   // SERAPH - WINGED SENTINEL (神使 - 飞翼哨兵)
@@ -504,7 +504,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "神使",
     "子职业": "飞翼哨兵",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "力量"
   },
   {
@@ -514,7 +514,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "神使",
     "子职业": "飞翼哨兵",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "力量"
   },
   // SORCERER - ELEMENTAL ORIGIN (术士 - 元素起源)
@@ -545,7 +545,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "术士",
     "子职业": "元素起源",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "本能"
   },
   // SORCERER - PRIMAL ORIGIN (术士 - 原始起源)
@@ -576,7 +576,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "术士",
     "子职业": "原始起源",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "本能"
   },
   // WARRIOR - CALL OF THE BRAVE (战士 - 勇者召唤)
@@ -617,7 +617,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "战士",
     "子职业": "勇者召唤",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "不可施法"
   },
   // WARRIOR - CALL OF THE SLAYER (战士 - 杀手召唤)
@@ -648,7 +648,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "战士",
     "子职业": "杀手召唤",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "不可施法"
   },
   // WIZARD - SCHOOL OF KNOWLEDGE (法师 - 知识学院)
@@ -699,7 +699,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "法师",
     "子职业": "知识学院",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "知识"
   },
   {
@@ -709,7 +709,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "法师",
     "子职业": "知识学院",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "知识"
   },
   // WIZARD - SCHOOL OF WAR (法师 - 战争学院)
@@ -760,7 +760,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "法师",
     "子职业": "战争学院",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "知识"
   },
   {
@@ -770,7 +770,7 @@ export const subclassCards: SubClassCard[] = [
     "imageUrl": "",
     "主职": "法师",
     "子职业": "战争学院",
-    "等级": "精通", // 修改点：等级变为字符串"精通"
+    "等级": "大师", // 修改点：等级变为字符串"大师"
     "施法": "知识"
   }
 ]

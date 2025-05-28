@@ -6,9 +6,9 @@ import {
   SPECIAL_CARD_POSITIONS,
   ALL_STANDARD_CARDS,
   CARD_CLASS_OPTIONS_BY_TYPE,
-  LEVEL_OPTIONS,
   isSpecialCardPosition,
   getAllowedCardTypeForPosition,
+  getLevelOptions, // Added
 } from "@/data/card"
 import type { StandardCard } from "@/data/card/card-types"
 import { createEmptyCard } from "@/data/card/card-types"
@@ -125,6 +125,9 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       : [{ value: "all", label: "全部" }])
     , [activeTab]);
 
+  // Use CARD_LEVEL_OPTIONS_BY_TYPE for level dropdown rendering
+  const levelOptions = useMemo(() => getLevelOptions(activeTab), [activeTab]);
+
   useEffect(() => {
     if (!activeTab || !isOpen) {
       // setFilteredCards([]); // Clear cards if tab is not set or modal is closed
@@ -164,7 +167,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       }
 
       // Apply level filter (placeholder for similar logic)
-      if (appliedSelectedLevels.length > 0) { // Removed !appliedSelectedLevels.includes("all")
+      if (appliedSelectedLevels.length > 0 && !appliedSelectedLevels.includes("all")) { // Removed !appliedSelectedLevels.includes("all")
         filtered = filtered.filter((card) => card.level && appliedSelectedLevels.includes(card.level.toString()))
       }
 
@@ -211,12 +214,12 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   };
 
   const handleLevelSelectAll = () => { // Added
-    const allLevelValues = LEVEL_OPTIONS.map(String);
+    const allLevelValues = levelOptions.map(opt => opt.value).filter(val => val !== "all");
     setStagedSelectedLevels(allLevelValues);
   };
 
   const handleLevelInvertSelection = () => { // Added
-    const allLevelValues = LEVEL_OPTIONS.map(String);
+    const allLevelValues = levelOptions.map(opt => opt.value).filter(val => val !== "all");
     setStagedSelectedLevels(prev =>
       allLevelValues.filter(val => !prev.includes(val))
     );
@@ -331,7 +334,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 >
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-36 justify-start text-left font-normal">
-                      {stagedSelectedLevels.length === 0 || stagedSelectedLevels.length === LEVEL_OPTIONS.length
+                      {stagedSelectedLevels.length === 0 || stagedSelectedLevels.length === levelOptions.length
                         ? "全部等级"
                         : stagedSelectedLevels.length === 1
                           ? stagedSelectedLevels[0]
@@ -346,20 +349,20 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                       <Button onClick={handleLevelInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    {LEVEL_OPTIONS.map((level) => (
-                      <DropdownMenuItem key={level} onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                    {levelOptions.map((option) => (
+                      <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
                         <Checkbox
-                          id={`level-${level}`}
-                          checked={stagedSelectedLevels.includes(String(level))}
+                          id={`level-${option.value}`}
+                          checked={stagedSelectedLevels.includes(option.value)}
                           onCheckedChange={(checked) => {
                             setStagedSelectedLevels(prev =>
                               checked
-                                ? [...prev, String(level)]
-                                : prev.filter(item => item !== String(level))
+                                ? [...prev, option.value]
+                                : prev.filter(item => item !== option.value)
                             );
                           }}
                         />
-                        <label htmlFor={`level-${level}`} className="ml-2 cursor-pointer flex-1">{level}</label>
+                        <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer flex-1">{option.label}</label>
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>

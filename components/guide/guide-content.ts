@@ -241,7 +241,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
 
-            return `将以下物品添加到角色表的"物品栏"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品和一把金币。（金币标记在角色卡左下方金币栏中）\n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。`;
+            return `将以下物品添加到角色表的"物品栏"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡左下角金币栏中，添加一把金币。`;
         },
         validation: () => true,
     },
@@ -293,7 +293,7 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step12",
         title: "添加经历或特质",
-        content: "几乎就要完成了，现在将角色卡翻回正面。为您的角色添加两条独特的经历或者特质。您只需要用一个简单的短语就足够了。比如：身经百战、广交朋友或者环游世界。每条经历会为您提供+2的判定加值。",
+        content: "几乎就要完成了，现在将角色卡翻回正面。为您的角色添加<strong>两条</strong>独特的经历或者特质。您只需要用一个简单的短语就足够了。比如：身经百战、广交朋友或者环游世界。\n\n每条经历会为您提供+2的判定加值。",
         validation: (formData) => {
             if (!formData || !Array.isArray(formData.experience) || !Array.isArray(formData.experienceValues)) {
                 return false; // formData or experience arrays are invalid
@@ -302,14 +302,15 @@ export const guideSteps: GuideStep[] = [
                 return false; // Mismatched array lengths
             }
 
+            let validCount = 0;
             for (let i = 0; i < formData.experience.length; i++) {
                 const experienceText = formData.experience[i];
                 const experienceValue = formData.experienceValues[i];
                 if (experienceText && String(experienceText).trim() !== "" && experienceValue) {
-                    return true; // Found at least one valid experience entry
+                    validCount++;
                 }
             }
-            return false; // No valid experience entry found
+            return validCount >= 2; // 至少两条有效经历
         },
     },
     {

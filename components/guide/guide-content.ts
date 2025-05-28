@@ -36,6 +36,24 @@ export const guideSteps: GuideStep[] = [
     },
     {
         id: "step2",
+        title: "选择子职业",
+        content: (formData: any, allCards: StandardCard[]): string => {
+            if (!isFilled(formData.subclass)) {
+                return "请点开角色卡右上方<strong>'选择子职业'</strong>选项框查看并选择自己的子职业。子职业为您的角色提供额外的能力和风格。";
+            }
+            const subclassCard = allCards.find(
+                (card) => card.id === formData.subclass && card.type === "subclass"
+            );
+            const subclassName = subclassCard?.headerDisplay || "未知子职业";
+            const subclassHint = subclassCard?.hint || "";
+            return `您选择的子职业是：<strong>${subclassName}</strong> \n${subclassHint}\n请问您确定吗,您可以尝试切换其他子职业，点击下一步按钮继续。`;
+        },
+        validation: (formData, allCards) => {
+            return isFilled(formData.subclass);
+        },
+    },
+    {
+        id: "step3",
         title: "选择血统",
         content: (formData: any, allCards: StandardCard[] = []): string => {
             const ancestry1 = formData?.ancestry1;
@@ -62,24 +80,6 @@ export const guideSteps: GuideStep[] = [
         },
         validation: (formData, allCards = []) => {
             return isFilled(formData.ancestry1) && isFilled(formData.ancestry2);
-        },
-    },
-    {
-        id: "step3",
-        title: "选择社群",
-        content: (formData: any, allCards: StandardCard[]): string => {
-            if (!isFilled(formData.community)) {
-                return "现在请选择您的社群，社群代表角色的文化或起源环境。";
-            }
-            const communityCard = allCards.find(
-                (card) => card.id === formData.community && card.type === "community"
-            );
-            const communityName = communityCard?.name || "未知社群";
-            const communityHint = communityCard?.hint || "";
-            return `您选择的社群是：${communityName}。\n${communityHint}\n请问您确定吗,您可以尝试切换社群，点击下一步按钮继续。`;
-        },
-        validation: (formData, allCards) => {
-            return isFilled(formData.community);
         },
     },
     {
@@ -214,7 +214,7 @@ export const guideSteps: GuideStep[] = [
                     armorThresholdDisplay = formData.armorThreshold;
                 }
             }
-            return `<strong>您的护甲值是 ${armorValue} </strong>，意味着您的护甲在维修前可以承受 ${armorValue} 次攻击，请填写在角色卡左上角的护甲栏位中。\n已装备护甲提供基本的护甲阈值，您的等级会提供额外的等级加成，加成和当前等级相同（如一级+1）。<strong>您的护甲伤害阈值是 ${armorThresholdDisplay}</strong >，填写在'生命值与压力'下方的伤害阈值栏位上。`;
+            return `<strong>您的护甲值是 ${armorValue} </strong>，意味着您的护甲在维修前可以承受 ${armorValue} 次攻击，请填写在角色卡左上角的护甲栏位中。\n已装备护甲提供基本的护甲阈值，您的等级会提供额外的等级加成，加成和当前等级相同（如一级+1）。<strong>您的护甲伤害阈值是 ${armorThresholdDisplay}</strong >。 \n<strong>请填写</strong>在'生命值与压力'下方的<strong>伤害阈值</strong>栏位上。`;
         },
         validation: (formData) => {
             return isFilled(formData.armorName)

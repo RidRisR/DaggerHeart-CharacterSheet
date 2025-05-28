@@ -71,7 +71,7 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
 
   // 检查是否是特殊卡位（前四个位置）
   const isSpecialSlot = (index: number): boolean => {
-    return index < 4
+    return index < 5; // 更新逻辑支持前五个位置
   }
 
   // 获取特殊卡位的标签
@@ -85,8 +85,10 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
         return "血统卡 2"
       case 3:
         return "社群卡"
+      case 4:
+        return "子职业卡" // 添加子职业卡标签
       default:
-        return ""
+        return "普通卡"
     }
   }
 
@@ -172,7 +174,7 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
               card = createEmptyCard()
             }
 
-            const isSpecial = index < 4 // 确保前四张卡都被识别为特殊卡
+            const isSpecial = index < 5 // 确保前四张卡都被识别为特殊卡
             const isSelected = selectedCards.includes(index)
 
             // 安全地转换为标准格式

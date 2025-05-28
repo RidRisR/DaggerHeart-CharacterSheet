@@ -146,11 +146,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   // 同步特殊卡牌与角色选择 - 不直接修改状态，而是返回新的卡牌数组
   const getUpdatedSpecialCards = () => {
-    console.log("Computing updated special cards")
-    console.log("Profession:", safeFormData.profession)
-    console.log("Ancestry1:", safeFormData.ancestry1)
-    console.log("Ancestry2:", safeFormData.ancestry2)
-    console.log("Community:", safeFormData.community)
 
     // 创建卡牌数组的副本
     const newCards = [...safeFormData.cards]
@@ -208,7 +203,19 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       newCards[3] = createEmptyCard()
     }
 
-    console.log("Computed updated cards:", newCards.slice(0, 4))
+    // 同步子职业卡（位置4）
+    if (safeFormData.subclass) {
+      const subclass = getSubclassById(safeFormData.subclass)
+      console.log("Subclass selected:", subclass)
+
+      // 创建子职业卡
+      newCards[4] = subclass
+    } else {
+      // 如果没有选择子职业，清空子职业卡
+      newCards[4] = createEmptyCard()
+    }
+
+    console.log("Computed updated cards:", newCards.slice(0, 5))
     return newCards
   }
 
@@ -221,8 +228,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       // 检查是否需要更新
       let needsUpdate = false
 
-      // 只检查前4张特殊卡牌
-      for (let i = 0; i < 4; i++) {
+      // 只检查前5张特殊卡牌
+      for (let i = 0; i < 5; i++) {
         if (
           !safeFormData.cards[i] ||
           !updatedCards[i] ||
@@ -265,6 +272,12 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   const getCommunityById = (id: string): StandardCard => {
     const community = ALL_STANDARD_CARDS.find((card) => card.type === "community" && card.id === id)
     return community ? community : createEmptyCard()
+  }
+
+  // 根据ID获取子职业名称
+  const getSubclassById = (id: string): StandardCard => {
+    const subclass = ALL_STANDARD_CARDS.find((card) => card.type === "subclass" && card.id === id)
+    return subclass ? subclass : createEmptyCard()
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -579,9 +592,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
             return (
               <div
                 key={`${String(field)}-${i}`}
-                className={`w-4 h-4 border-2 ${
-                  i < max ? "border-gray-800 cursor-pointer" : "border-gray-400 border-dashed"
-                } ${fieldArray[i] ? "bg-gray-800" : "bg-white"}`}
+                className={`w-4 h-4 border-2 ${i < max ? "border-gray-800 cursor-pointer" : "border-gray-400 border-dashed"
+                  } ${fieldArray[i] ? "bg-gray-800" : "bg-white"}`}
                 onClick={() => i < max && handleCheckboxChange(field, i)}
               ></div>
             )
@@ -756,9 +768,9 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                             <div
                               key={`armor-box-${i}`}
                               className={`w-4 h-4 border ${i < Number(safeFormData.armorValue)
-                                  ? "border-gray-800 cursor-pointer"
-                                  : "border-gray-400 border-dashed"
-                              } ${safeFormData.armorBoxes[i] && i < safeFormData.armorMax ? "bg-gray-800" : "bg-white"}`}
+                                ? "border-gray-800 cursor-pointer"
+                                : "border-gray-400 border-dashed"
+                                } ${safeFormData.armorBoxes[i] && i < safeFormData.armorMax ? "bg-gray-800" : "bg-white"}`}
                               onClick={() => i < safeFormData.armorMax && handleCheckboxChange("armorBoxes", i)}
                             ></div>
                           ))}
@@ -806,9 +818,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                     .map((_, i) => (
                       <div
                         key={`prof-${i}`}
-                        className={`w-3 h-3 rounded-full border-2 border-gray-800 cursor-pointer ${
-                          safeFormData.proficiency[i] ? "bg-gray-800" : "bg-white"
-                        }`}
+                        className={`w-3 h-3 rounded-full border-2 border-gray-800 cursor-pointer ${safeFormData.proficiency[i] ? "bg-gray-800" : "bg-white"
+                          }`}
                         onClick={() => handleCheckboxChange("proficiency", i)}
                       ></div>
                     ))}

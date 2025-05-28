@@ -56,16 +56,5 @@ export const specialCardPositions = {
   1: { name: "血统卡 1", type: "ancestry" },
   2: { name: "血统卡 2", type: "ancestry" },
   3: { name: "社群卡", type: "community" },
-}
-
-// 确保 isSpecialCardPosition 函数只将前4个位置视为特殊卡位
-export function isSpecialCardPosition(index: number): boolean {
-  return index >= 0 && index <= 3
-}
-
-export function getAllowedCardTypeForPosition(index: number): string {
-  if (isSpecialCardPosition(index)) {
-    return specialCardPositions[index as keyof typeof specialCardPositions].type
-  }
-  return ""
+  4: { name: "子职业卡", type: "subclass" }, // 添加子职业卡
 }

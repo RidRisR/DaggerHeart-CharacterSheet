@@ -1,4 +1,5 @@
 "use client"
+import { StandardCard } from "@/data/card/card-types";
 import type { FormData } from "@/lib/form-data"
 
 interface HopeSectionProps {
@@ -10,14 +11,14 @@ export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps
   let hopeFeatureDescription = "";
 
   if (formData && formData.profession && formData.cards && Array.isArray(formData.cards)) {
-    // Assuming StandardCard structure, but using 'any' to align with formData: any
     const professionCard = formData.cards.find(
-      (card: any) => card.id === formData.profession && card.type === "profession"
+      (card: StandardCard | null) => card && card.id === formData.profession && card.type === "profession"
     );
 
     if (professionCard &&
       professionCard.professionSpecial &&
-      professionCard.professionSpecial["希望特性"]) {
+      professionCard.professionSpecial["希望特性"]
+    ) {
       hopeFeatureDescription = String(professionCard.professionSpecial["希望特性"]);
     }
   }

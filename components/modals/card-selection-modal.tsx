@@ -180,9 +180,9 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   }
 
   const handleClearSelection = () => {
-    const emptyCard = createEmptyCard
-    onSelect(emptyCard)
-    onClose()
+    const emptyCard = createEmptyCard(); // Correctly invoke createEmptyCard
+    onSelect(emptyCard);
+    onClose();
   }
 
   if (!isOpen) return null

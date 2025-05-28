@@ -216,7 +216,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
       // 只有在需要更新时才调用setFormData
       if (needsUpdate) {
-        console.log("Updating cards in state")
         setFormData((prev) => ({
           ...prev,
           cards: updatedCards,
@@ -540,7 +539,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
     // 检查是否需要同步
     if (needsSyncRef.current && formData) {
-      console.log("Syncing cards due to special field change")
       // 重置标记
       needsSyncRef.current = false
       // 执行同步

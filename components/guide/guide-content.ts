@@ -271,7 +271,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
 
-            return `现在点击任意一个空白的卡组位置，为您的角色选择:\n1. 一张<strong>${name}</strong>的基石（1级）<strong>子职业卡</strong>;\n2. 以及两张1级<strong>领域卡</strong>。您可以选择的两个领域是<strong>${domain1}</strong>和<strong>${domain2}</strong>。`;
+            return `现在点击任意一个空白的卡组位置，为您的角色选择:\n两张1级<strong>领域卡</strong>。您可以选择的两个领域是<strong>${domain1}</strong>和<strong>${domain2}</strong>。`;
         },
         validation: (formData) => {
             if (!formData || !formData.cards || !Array.isArray(formData.cards)) {
@@ -279,10 +279,10 @@ export const guideSteps: GuideStep[] = [
             }
             // Check cards from index 4 onwards (skipping the 4 special card slots)
             var cnt = 0;
-            for (let i = 4; i < formData.cards.length; i++) {
+            for (let i = 5; i < formData.cards.length; i++) {
                 if (formData.cards[i] && !isEmptyCard(formData.cards[i])) {
                     cnt++;
-                    if (cnt === 3) {
+                    if (cnt === 2) {
                         return true; // Found three non-empty cards
                     }
                 }

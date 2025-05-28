@@ -141,7 +141,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
             console.log("Expected HP:", expectedHp, "Form HP Max:", formData.hpMax);
-            if (expectedHp !== undefined && String(formData.hpMax) !== String(expectedHp)) {
+            if (expectedHp !== undefined && String(formData.hpMax || 6) !== String(expectedHp)) {
                 return false;
             }
             return true;

@@ -27,7 +27,7 @@ export default function RootLayout({
             <br />
             作者：RidRisR
             <br />
-            项目地址：
+            项目地址&本地运行下载地址：
             <a
               href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
               target="_blank"

@@ -3,11 +3,8 @@
 import { useState, useEffect, useMemo } from "react" // Added useMemo
 import {
   ALL_CARD_TYPES,
-  SPECIAL_CARD_POSITIONS,
   ALL_STANDARD_CARDS,
   CARD_CLASS_OPTIONS_BY_TYPE,
-  isSpecialCardPosition,
-  getAllowedCardTypeForPosition,
   getLevelOptions, // Added
 } from "@/data/card"
 import type { StandardCard } from "@/data/card/card-types"

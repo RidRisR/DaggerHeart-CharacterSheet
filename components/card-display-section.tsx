@@ -192,7 +192,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
       case "ancestry":
         return "secondary"
       case "community":
-        return "outline"
+        return "secondary"
       case "domain":
         return "destructive"
       default:

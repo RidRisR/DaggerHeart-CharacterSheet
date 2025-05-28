@@ -12,9 +12,6 @@ export const ALL_CARD_TYPES = [
   { id: "domain", name: "领域" }, // 添加领域卡牌类型
 ]
 
-// 特殊卡牌位置
-export const SPECIAL_CARD_POSITIONS = ["profession", "ancestry", "community"]
-
 // 卡牌类别选项
 export const CARD_CLASS_OPTIONS = {
   profession: ["吟游诗人", "德鲁伊", "守护者", "游侠", "盗贼", "神使", "术士", "战士", "法师"],
@@ -75,17 +72,4 @@ export function getLevelOptions(typeId: string): { value: string; label: string 
 // 获取等级名称
 export function getLevelName(level: number): string {
   return `LV.${level}`
-}
-
-// 检查是否是特殊卡牌位置
-export function isSpecialCardPosition(position: string): boolean {
-  return SPECIAL_CARD_POSITIONS.includes(position)
-}
-
-// 获取允许的卡牌类型
-export function getAllowedCardTypeForPosition(position: string): string {
-  if (isSpecialCardPosition(position)) {
-    return position
-  }
-  return "any"
 }

@@ -20,7 +20,6 @@ import { domainCards } from "@/data/card/domain-card/cards" // 导入领域卡�
 // 导入UI配置
 import {
   ALL_CARD_TYPES,
-  SPECIAL_CARD_POSITIONS,
   CARD_CLASS_OPTIONS,
   CARD_CLASS_OPTIONS_BY_TYPE,
   CARD_LEVEL_OPTIONS, // Updated import
@@ -29,8 +28,6 @@ import {
   getCardClassOptions,
   getLevelOptions,
   getLevelName,
-  isSpecialCardPosition,
-  getAllowedCardTypeForPosition,
 } from "@/data/card/card-ui-config"
 
 // 导入类型定义
@@ -139,7 +136,6 @@ export const getCardsByType = getStandardCardsByType
 export {
   // UI配置
   ALL_CARD_TYPES,
-  SPECIAL_CARD_POSITIONS,
   CARD_CLASS_OPTIONS,
   CARD_CLASS_OPTIONS_BY_TYPE,
   CARD_LEVEL_OPTIONS, // Updated export
@@ -149,8 +145,6 @@ export {
   getCardClassOptions,
   getLevelOptions,
   getLevelName,
-  isSpecialCardPosition,
-  getAllowedCardTypeForPosition,
   // 卡牌转换
   convertToStandardCard,
   // 卡牌注册

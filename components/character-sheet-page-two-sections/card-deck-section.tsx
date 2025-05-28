@@ -223,10 +223,10 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
                 {card?.name && (
                   <div className="flex justify-between items-center text-xs text-gray-500">
                     <span className="truncate max-w-[33%]">
-                      {standardCard?.cardSelectDisplay?.item1 || "——"}
+                      {standardCard?.cardSelectDisplay?.item1 || ""}
                     </span>
-                    <span className="truncate max-w-[33%]">{standardCard?.cardSelectDisplay?.item2 || "——"}</span>
-                    <span className="truncate max-w-[33%]">{standardCard?.cardSelectDisplay?.item3 || "——"}</span>
+                    <span className="truncate max-w-[33%]">{standardCard?.cardSelectDisplay?.item2 || ""}</span>
+                    <span className="truncate max-w-[33%]">{standardCard?.cardSelectDisplay?.item3 || ""}</span>
                   </div>
                 )}
 
@@ -245,18 +245,14 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
                     <span
                       className={`text-[10px] font-medium px-1 py-0 rounded-t-sm border border-b-0 ${
                         standardCard.type.includes("ancestry")
-                          ? "bg-green-100 border-green-300"
-                        : standardCard.type.includes("attack")
-                            ? "bg-red-100 border-red-300"
-                          : standardCard.type.includes("defense")
-                              ? "bg-blue-100 border-blue-300"
-                            : standardCard.type.includes("community")
-                                ? "bg-teal-100 border-teal-300"
-                              : standardCard.type.includes("profession")
-                                  ? "bg-yellow-100 border-yellow-300"
-                                : standardCard.type.includes("subclass")
-                                    ? "bg-purple-100 border-purple-300"
-                                    : "bg-gray-100 border-gray-300"
+                        ? "bg-gray-100 border-gray-300"
+                        : standardCard.type.includes("community")
+                          ? "bg-teal-100 border-teal-300"
+                          : standardCard.type.includes("profession")
+                            ? "bg-blue-100 border-blue-300"
+                            : standardCard.type.includes("subclass")
+                              ? "bg-purple-100 border-purple-300"
+                              : "bg-red-100 border-red-300"
                       }`}
                     >
                       {getCardTypeName(standardCard.type)}

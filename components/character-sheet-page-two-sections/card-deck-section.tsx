@@ -80,13 +80,13 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
       case 0:
         return "职业卡"
       case 1:
-        return "血统卡 1"
+        return "子职业卡"
       case 2:
-        return "血统卡 2"
+        return "血统卡一"
       case 3:
-        return "社群卡"
+        return "血统卡二"
       case 4:
-        return "子职业卡" // 添加子职业卡标签
+        return "社群卡" // 添加子职业卡标签
       default:
         return "普通卡"
     }

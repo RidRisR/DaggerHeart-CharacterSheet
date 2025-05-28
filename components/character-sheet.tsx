@@ -146,77 +146,50 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   // 同步特殊卡牌与角色选择 - 不直接修改状态，而是返回新的卡牌数组
   const getUpdatedSpecialCards = () => {
+    const newCards = [...safeFormData.cards];
 
-    // 创建卡牌数组的副本
-    const newCards = [...safeFormData.cards]
-
-    // 确保 newCards 至少有4个元素
-    while (newCards.length < 4) {
-      newCards.push(createEmptyCard("unknown"))
+    while (newCards.length < 5) {
+      newCards.push(createEmptyCard("unknown"));
     }
 
     // 同步职业卡（位置0）
     if (safeFormData.profession) {
-      const profession = getProfessionById(safeFormData.profession)
-      console.log("Profession selected:", profession)
-
-      // 创建职业卡
-      newCards[0] = profession
+      newCards[0] = getProfessionById(safeFormData.profession);
     } else {
-      // 如果没有选择职业，清空职业卡
-      newCards[0] = createEmptyCard()
+      newCards[0] = createEmptyCard();
     }
 
-    // 同步血统卡1（位置1）
-    if (safeFormData.ancestry1) {
-      const ancestry = getAncestryById(safeFormData.ancestry1)
-      console.log("Ancestry1 selected:", ancestry)
-
-      // 创建血统卡1
-      newCards[1] = ancestry
-    } else {
-      // 如果没有选择血统1，清空血统卡1
-      newCards[1] = createEmptyCard()
-    }
-
-    // 同步血统卡2（位置2）
-    if (safeFormData.ancestry2) {
-      const ancestry = getAncestryById(safeFormData.ancestry2)
-      console.log("Ancestry2 name:", ancestry)
-
-      // 创建血统卡2
-      newCards[2] = ancestry
-    } else {
-      // 如果没有选择血统2，清空血统卡2
-      newCards[2] = createEmptyCard()
-    }
-
-    // 同步社群卡（位置3）
-    if (safeFormData.community) {
-      const community = getCommunityById(safeFormData.community)
-      console.log("Community selected:", community)
-
-      // 创建社群卡
-      newCards[3] = community
-    } else {
-      // 如果没有选择社群，清空社群卡
-      newCards[3] = createEmptyCard()
-    }
-
-    // 同步子职业卡（位置4）
+    // 同步子职业卡（位置1）
     if (safeFormData.subclass) {
-      const subclass = getSubclassById(safeFormData.subclass)
-      console.log("Subclass selected:", subclass)
-
-      // 创建子职业卡
-      newCards[4] = subclass
+      newCards[1] = getSubclassById(safeFormData.subclass);
     } else {
-      // 如果没有选择子职业，清空子职业卡
-      newCards[4] = createEmptyCard()
+      newCards[1] = createEmptyCard();
     }
 
-    console.log("Computed updated cards:", newCards.slice(0, 5))
-    return newCards
+    // 同步血统卡1（位置2）
+    if (safeFormData.ancestry1) {
+      const ancestry1 = getAncestryById(safeFormData.ancestry1);
+      newCards[2] = ancestry1;
+    } else {
+      newCards[2] = createEmptyCard();
+    }
+
+    // 同步血统卡2（位置3）
+    if (safeFormData.ancestry2) {
+      const ancestry2 = getAncestryById(safeFormData.ancestry2);
+      newCards[3] = ancestry2;
+    } else {
+      newCards[3] = createEmptyCard();
+    }
+
+    // 同步社群卡（位置4）
+    if (safeFormData.community) {
+      newCards[4] = getCommunityById(safeFormData.community);
+    } else {
+      newCards[4] = createEmptyCard();
+    }
+
+    return newCards;
   }
 
   // 同步特殊卡牌 - 仅在需要时更新状态

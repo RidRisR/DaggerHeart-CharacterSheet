@@ -53,8 +53,8 @@ export function isEmptyCard(card: any): boolean {
 // 添加 isSpecialCardPosition 和 specialCardPositions 的定义
 export const specialCardPositions = {
   0: { name: "职业卡", type: "profession" },
-  1: { name: "血统卡 1", type: "ancestry" },
-  2: { name: "血统卡 2", type: "ancestry" },
-  3: { name: "社群卡", type: "community" },
-  4: { name: "子职业卡", type: "subclass" }, // 添加子职业卡
+  1: { name: "子职业卡", type: "subclass" },
+  2: { name: "血统卡 1", type: "ancestry" },
+  3: { name: "血统卡 2", type: "ancestry" },
+  4: { name: "社群卡", type: "community" },
 }

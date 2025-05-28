@@ -45,6 +45,13 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   const [stagedSelectedLevels, setStagedSelectedLevels] = useState<string[]>([]) // Added
   const [isLevelDropdownOpen, setIsLevelDropdownOpen] = useState(false) // Added
 
+  // Add state to store previous selections
+  const [previousSelections, setPreviousSelections] = useState({
+    classes: [],
+    levels: [],
+    searchTerm: "",
+  });
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -241,9 +248,8 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 <button
                   key={type.id}
                   onClick={() => setActiveTab(type.id)}
-                  className={`text-left px-4 py-2 rounded ${
-                    activeTab === type.id ? "bg-gray-200" : "hover:bg-gray-100"
-                  }`}
+                  className={`text-left px-4 py-2 rounded ${activeTab === type.id ? "bg-gray-200" : "hover:bg-gray-100"
+                    }`}
                 >
                   {type.name}
                 </button>
@@ -255,15 +261,27 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
             <div className="p-4 border-b border-gray-200 flex items-center gap-4">
               {/* Class Filter Dropdown */}
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStagedSelectedClasses([]);
+                    setStagedSelectedLevels([]);
+                    setAppliedSelectedClasses([]);
+                    setAppliedSelectedLevels([]);
+                  }}
+                  className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-400 whitespace-nowrap"
+                >
+                  重置筛选
+                </button>
                 <span className="text-sm font-medium">类别:</span>
                 <DropdownMenu
                   open={isClassDropdownOpen}
                   onOpenChange={(open) => {
                     setIsClassDropdownOpen(open);
-                    if (!open) { // Dropdown closed
+                    if (!open) {
                       setAppliedSelectedClasses(stagedSelectedClasses);
-                    } else { // Dropdown opened
-                      setStagedSelectedClasses(appliedSelectedClasses); // Sync staged with applied
+                    } else {
+                      setStagedSelectedClasses(appliedSelectedClasses);
                     }
                   }}
                 >
@@ -302,19 +320,15 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
-
-              {/* Level Filter (Placeholder - to be implemented similarly) */}
-              <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">等级:</span>
                 <DropdownMenu
                   open={isLevelDropdownOpen}
                   onOpenChange={(open) => {
                     setIsLevelDropdownOpen(open);
-                    if (!open) { // Dropdown closed
+                    if (!open) {
                       setAppliedSelectedLevels(stagedSelectedLevels);
-                    } else { // Dropdown opened
-                      setStagedSelectedLevels(appliedSelectedLevels); // Sync staged with applied
+                    } else {
+                      setStagedSelectedLevels(appliedSelectedLevels);
                     }
                   }}
                 >
@@ -353,15 +367,12 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
-
-              <div className="flex-1">
                 <input
                   type="text"
                   placeholder="搜索卡牌..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-1"
+                  className="w-flex border border-gray-300 rounded px-3 py-1"
                 />
               </div>
             </div>

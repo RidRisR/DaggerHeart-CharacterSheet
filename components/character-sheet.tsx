@@ -327,36 +327,38 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }
 
   const handleProfessionChange = (value: string) => {
-    console.log("handleProfessionChange called with value:", value)
+    console.log("handleProfessionChange called with value:", value);
 
     if (value === "none") {
-      console.log("Clearing profession selection")
+      console.log("Clearing profession selection");
 
-      // 清空职业选择
+      // Clear profession and subclass selections
       setFormData((prev) => {
-        // 创建新的表单数据，清空职业相关字段
-        return {
-          ...prev,
-          profession: "",
-        }
-      })
-    } else {
-      // 选择新职业
-      const profession = ALL_STANDARD_CARDS.find((p) => p.id === value)
-      if (profession) {
-        console.log("Setting profession to:", profession.name)
-
-        setFormData((prev) => {
-          // 创建新的表单数据，设置职业相关字段
-          return {
+          const updatedFormData = {
             ...prev,
-            profession: value,
-          }
-        })
-      }
+            profession: "",
+            subclass: "", // Clear subclass
+            cards: prev.cards.map((card, index) => (index === 1 ? createEmptyCard() : card)), // Clear subclass card on second page
+          };
+          return updatedFormData;
+        });
+    } else {
+      // Select new profession
+      const profession = ALL_STANDARD_CARDS.find((p) => p.id === value);
+      if (profession) {
+          setFormData((prev) => {
+              const updatedFormData = {
+                ...prev,
+                profession: value,
+                subclass: "", // Clear subclass
+                cards: prev.cards.map((card, index) => (index === 1 ? createEmptyCard() : card)), // Clear subclass card on second page
+              };
+              return updatedFormData;
+            });
+        }
     }
-    // 标记需要同步卡牌
-    needsSyncRef.current = true
+    // Mark cards for synchronization
+    needsSyncRef.current = true;
   }
 
   const handleAncestryChange = (field: string, value: string) => {

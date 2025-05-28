@@ -10,6 +10,7 @@ interface HeaderSectionProps {
   openProfessionModal: () => void
   openAncestryModal: (field: string) => void
   openCommunityModal: () => void
+  openSubclassModal: () => void // 添加openSubclassModal
 }
 
 export function HeaderSection({
@@ -18,6 +19,7 @@ export function HeaderSection({
   openProfessionModal,
   openAncestryModal,
   openCommunityModal,
+  openSubclassModal, // 添加openSubclassModal
 }: HeaderSectionProps) {
   return (
     <div className="bg-gray-800 text-white p-2 flex justify-between items-center rounded-t-md">
@@ -37,7 +39,6 @@ export function HeaderSection({
               : "选择职业"}
           </button>
         </div>
-        {/* 删除了subtitle显示 */}
         <div className="text-[9px] mt-1">DAGGERHEART V20250520</div>
       </div>
       <div className="flex flex-col items-center gap-1">
@@ -100,14 +101,18 @@ export function HeaderSection({
             </div>
           </div>
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">性别/年龄/体型</label>
-            <input
-              type="text"
-              name="subclass"
-              value={formData.subclass}
-              onChange={handleInputChange}
-              className="bg-white text-gray-800 border border-gray-400 rounded p-1 focus:outline-none w-40 text-sm print-empty-hide"
-            />
+            <label className="text-[9px] text-gray-300">子职业</label>
+            <button
+              type="button"
+              onClick={openSubclassModal}
+              className="header-selection-button printable-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
+            >
+              {formData.subclass
+                ? ALL_STANDARD_CARDS.find(
+                  (card) => card.id === formData.subclass && card.type === "subclass",
+                )?.headerDisplay || "选择子职业"
+                : "选择子职业"}
+            </button>
           </div>
         </div>
       </div>

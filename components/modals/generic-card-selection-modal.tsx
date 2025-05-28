@@ -12,14 +12,37 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
+// Extend SafeFormData to include missing properties
+interface SafeFormData {
+    gold: any[]
+    experience: string[]
+    hope: any[]
+    hpMax: number
+    hp: any[]
+    stressMax: number
+    stress: any[]
+    armorBoxes: any[]
+    armorMax: number
+    companionExperience: string[]
+    companionExperienceValue: string[]
+    companionStress: any[]
+    cards: StandardCard[]
+    agility: { checked: boolean; value: string }
+    strength: { checked: boolean; value: string }
+    finesse: { checked: boolean; value: string }
+    profession?: string // Add profession property
+    // Add other properties as needed
+}
+
 interface GenericCardSelectionModalProps {
     isOpen: boolean
     onClose: () => void
     onSelect: (cardId: string, field?: string) => void
     title: string
-    cardType: "profession" | "ancestry" | "community"
+    cardType: "profession" | "ancestry" | "community" | "subclass"
     field?: string // Optional field for ancestry
     levelFilter?: number // Optional level filter for ancestry
+    formData: SafeFormData // Use the defined type for safeFormData
 }
 
 export function GenericCardSelectionModal({
@@ -30,6 +53,7 @@ export function GenericCardSelectionModal({
     cardType,
     field,
     levelFilter,
+    formData,
 }: GenericCardSelectionModalProps) {
     const [cards, setCards] = useState<StandardCard[]>([])
     const [selectedClass, setSelectedClass] = useState<string>("All")
@@ -55,12 +79,30 @@ export function GenericCardSelectionModal({
 
     useEffect(() => {
         const filteredCards = ALL_STANDARD_CARDS.filter(
-            (card): card is StandardCard => card.type === cardType && (!levelFilter || card.level === levelFilter),
+            (card): card is StandardCard => {
+                if (cardType === "subclass") {
+                    const professionName = ALL_STANDARD_CARDS.find(
+                        (professionCard) => professionCard.id === formData.profession && professionCard.type === "profession",
+                    )?.name
+
+                    return (
+                        card.type === "subclass" &&
+                        card.level === 1 &&
+                        card.class === professionName
+                    )
+                }
+
+                return card.type === cardType && (!levelFilter || card.level === levelFilter)
+            },
         )
+
         setCards(filteredCards)
-        const uniqueClasses = Array.from(new Set(filteredCards.flatMap((card) => card.class || []).filter((cls) => cls)))
+
+        const uniqueClasses = Array.from(
+            new Set(filteredCards.flatMap((card) => card.class || []).filter((cls) => cls)),
+        )
         setAvailableClasses(["All", ...uniqueClasses])
-    }, [cardType, levelFilter])
+    }, [cardType, levelFilter, formData.profession])
 
     if (!isOpen) return null
 

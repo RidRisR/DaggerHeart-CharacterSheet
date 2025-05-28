@@ -33,7 +33,7 @@ export function HeaderSection({
               ? ALL_STANDARD_CARDS.find(
                 (card) =>
                   card.id === formData.profession && card.type === "profession",
-              )?.name || "选择职业"
+              )?.headerDisplay || "选择职业"
               : "选择职业"}
           </button>
         </div>
@@ -53,7 +53,7 @@ export function HeaderSection({
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">社区</label>
+            <label className="text-[9px] text-gray-300">社群</label>
             <button
               type="button"
               onClick={openCommunityModal}
@@ -63,8 +63,8 @@ export function HeaderSection({
                 ? ALL_STANDARD_CARDS.find(
                   (card) =>
                     card.id === formData.community && card.type === "community",
-                )?.name || "选择社区"
-                : "选择社区"}
+                )?.headerDisplay || "选择社群"
+                : "选择社群"}
             </button>
           </div>
         </div>
@@ -81,7 +81,7 @@ export function HeaderSection({
                   ? ALL_STANDARD_CARDS.find(
                     (card) =>
                       card.id === formData.ancestry1 && card.type === "ancestry" && card.level === 1,
-                  )?.name || "选择血统"
+                  )?.headerDisplay || "选择血统"
                   : "选择血统"}
               </button>
               <span className="flex items-center text-white text-xs">+</span>
@@ -94,7 +94,7 @@ export function HeaderSection({
                   ? ALL_STANDARD_CARDS.find(
                     (card) =>
                       card.id === formData.ancestry2 && card.type === "ancestry" && card.level === 2,
-                  )?.name || "选择血统"
+                  )?.headerDisplay || "选择血统"
                   : "选择血统"}
               </button>
             </div>

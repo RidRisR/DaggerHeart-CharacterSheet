@@ -8,6 +8,7 @@ export interface StandardCard {
   description?: string
   hint?: string
   imageUrl?: string
+  headerDisplay?: string
   cardSelectDisplay: {
     item1?: string
     item2?: string
@@ -54,7 +55,7 @@ export const specialCardPositions = {
   0: { name: "职业卡", type: "profession" },
   1: { name: "血统卡 1", type: "ancestry" },
   2: { name: "血统卡 2", type: "ancestry" },
-  3: { name: "社区卡", type: "community" },
+  3: { name: "社群卡", type: "community" },
 }
 
 // 确保 isSpecialCardPosition 函数只将前4个位置视为特殊卡位

@@ -84,7 +84,7 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
       case 2:
         return "血统卡 2"
       case 3:
-        return "社区卡"
+        return "社群卡"
       default:
         return ""
     }

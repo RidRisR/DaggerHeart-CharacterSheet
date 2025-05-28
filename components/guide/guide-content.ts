@@ -66,17 +66,17 @@ export const guideSteps: GuideStep[] = [
     },
     {
         id: "step3",
-        title: "选择社区",
+        title: "选择社群",
         content: (formData: any, allCards: StandardCard[]): string => {
             if (!isFilled(formData.community)) {
-                return "现在请选择您的社区，社区代表角色的文化或起源环境。";
+                return "现在请选择您的社群，社群代表角色的文化或起源环境。";
             }
             const communityCard = allCards.find(
                 (card) => card.id === formData.community && card.type === "community"
             );
-            const communityName = communityCard?.name || "未知社区";
+            const communityName = communityCard?.name || "未知社群";
             const communityHint = communityCard?.hint || "";
-            return `您选择的社区是：${communityName}。\n${communityHint}\n请问您确定吗,您可以尝试切换社区，点击下一步按钮继续。`;
+            return `您选择的社群是：${communityName}。\n${communityHint}\n请问您确定吗,您可以尝试切换社群，点击下一步按钮继续。`;
         },
         validation: (formData, allCards) => {
             return isFilled(formData.community);

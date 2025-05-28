@@ -15,6 +15,7 @@ import { ArmorSelectionModal } from "@/components/modals/armor-selection-modal"
 import { ProfessionSelectionModal } from "@/components/modals/profession-selection-modal"
 import { AncestrySelectionModal } from "@/components/modals/ancestry-selection-modal"
 import { CommunitySelectionModal } from "@/components/modals/community-selection-modal"
+import { GenericCardSelectionModal } from "@/components/modals/generic-card-selection-modal"
 
 // Import sections
 import { HeaderSection } from "@/components/character-sheet-sections/header-section"
@@ -106,6 +107,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   const [currentAncestryField, setCurrentAncestryField] = useState("")
   const [communityModalOpen, setCommunityModalOpen] = useState(false)
   const [importExportModalOpen, setImportExportModalOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [currentModal, setCurrentModal] = useState<{ type: "profession" | "ancestry" | "community"; field?: string; levelFilter?: number }>({ type: "profession" })
 
   // 使用ref来跟踪是否需要同步卡牌
   const needsSyncRef = useRef(false)
@@ -193,15 +196,15 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       newCards[2] = createEmptyCard()
     }
 
-    // 同步社区卡（位置3）
+    // 同步社群卡（位置3）
     if (safeFormData.community) {
       const community = getCommunityById(safeFormData.community)
       console.log("Community selected:", community)
 
-      // 创建社区卡
+      // 创建社群卡
       newCards[3] = community
     } else {
-      // 如果没有选择社区，清空社区卡
+      // 如果没有选择社群，清空社群卡
       newCards[3] = createEmptyCard()
     }
 
@@ -258,7 +261,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     return ancestry ? ancestry : createEmptyCard()
   }
 
-  // 根据ID获取社区名称
+  // 根据ID获取社群名称
   const getCommunityById = (id: string): StandardCard => {
     const community = ALL_STANDARD_CARDS.find((card) => card.type === "community" && card.id === id)
     return community ? community : createEmptyCard()
@@ -606,38 +609,23 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     setArmorModalOpen(false)
   }
 
-  const openProfessionModal = () => {
-    setProfessionModalOpen(true)
+  const openGenericModal = (type: "profession" | "ancestry" | "community", field?: string, levelFilter?: number) => {
+    setCurrentModal({ type, field, levelFilter })
+    setModalOpen(true)
   }
 
-  const closeProfessionModal = () => {
-    setProfessionModalOpen(false)
+  const closeGenericModal = () => {
+    setModalOpen(false)
   }
 
-  const openAncestryModal = (field: string) => {
-    setCurrentAncestryField(field)
-    setAncestryModalOpen(true)
-  }
+  // Replace outdated close functions
+  const closeProfessionModal = closeGenericModal
+  const closeCommunityModal = closeGenericModal
+  const closeAncestryModal = closeGenericModal
 
-  const closeAncestryModal = () => {
-    setAncestryModalOpen(false)
-  }
-
-  const openCommunityModal = () => {
-    setCommunityModalOpen(true)
-  }
-
-  const closeCommunityModal = () => {
-    setCommunityModalOpen(false)
-  }
-
-  const openImportExportModal = () => {
-    setImportExportModalOpen(true)
-  }
-
-  const closeImportExportModal = () => {
-    setImportExportModalOpen(false)
-  }
+  const openProfessionModal = () => openGenericModal("profession")
+  const openAncestryModal = (field: string) => openGenericModal("ancestry", field, field === "ancestry1" ? 1 : 2)
+  const openCommunityModal = () => openGenericModal("community")
 
   const handlePrint = () => {
     window.print()
@@ -938,8 +926,28 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           }
           closeCommunityModal()
         }}
-        title="选择社区"
+        title="选择社群"
       />
+
+      {modalOpen && (
+        <GenericCardSelectionModal
+          isOpen={modalOpen}
+          onClose={closeGenericModal}
+          onSelect={(cardId, field) => {
+            if (cardId === "none") {
+              setFormData((prev) => ({ ...prev, [field || "community"]: "" }))
+            } else {
+              setFormData((prev) => ({ ...prev, [field || "community"]: cardId }))
+            }
+            needsSyncRef.current = true
+            closeGenericModal()
+          }}
+          title={currentModal.type === "profession" ? "选择职业" : currentModal.type === "ancestry" ? "选择血统" : "选择社群"}
+          cardType={currentModal.type}
+          field={currentModal.field}
+          levelFilter={currentModal.levelFilter}
+        />
+      )}
     </>
   )
 }

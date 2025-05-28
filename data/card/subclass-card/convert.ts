@@ -13,7 +13,7 @@ export interface SubClassCard {
   主职: SubClassClass
   子职业: string
   等级: string
-  施法?: string
+  施法: string
 }
 
 class SubClassCardConverter {
@@ -44,10 +44,11 @@ class SubClassCardConverter {
       imageUrl: "",
       class: card.主职,
       level: levelNum,
+      headerDisplay: card.子职业,
       cardSelectDisplay: {
         item1: card.子职业,
         item2: card.等级,
-        item3: card.施法 || "",
+        item3: card.施法,
       },
     }
   }

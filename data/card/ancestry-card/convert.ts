@@ -44,6 +44,7 @@ class AncestryCardConverter {
       imageUrl: "",
       level: rawCard.类别,
       class: rawCard.种族, // Map 种族 to class
+      headerDisplay: rawCard.名称,
       cardSelectDisplay: {
         "item1": rawCard.种族,
       },

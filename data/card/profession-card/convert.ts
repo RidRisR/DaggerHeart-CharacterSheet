@@ -25,15 +25,16 @@ class ProfessionCardConverter {
     return {
       standarized: true,
       id: card.id || uuidv4(),
-      name: card.名称 || "",
+      name: card.名称,
       type: "profession",
-      description: card.职业特性 || "",
-      hint: card.简介 || "",
+      description: card.职业特性,
+      hint: card.简介,
       imageUrl: "",
       class: card.名称,
+      headerDisplay: card.名称,
       cardSelectDisplay: {
-        "item1": card.领域1 || "",
-        "item2": card.领域2 || "",
+        "item1": card.领域1,
+        "item2": card.领域2,
       },
       professionSpecial: {
         "起始生命": card.起始生命,

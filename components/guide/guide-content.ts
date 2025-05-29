@@ -45,8 +45,8 @@ export const guideSteps: GuideStep[] = [
                 (card) => card.id === formData.subclass && card.type === "subclass"
             );
             const subclassName = subclassCard?.headerDisplay || "未知子职业";
-            const subclassHint = subclassCard?.hint || "";
-            return `您选择的子职业是：<strong>${subclassName}</strong> \n${subclassHint}\n请问您确定吗,您可以尝试切换其他子职业，点击下一步按钮继续。`;
+            const subclassSpell = subclassCard?.cardSelectDisplay?.item3 || "未知施法属性";
+            return `您选择的子职业是：<strong>${subclassName}</strong> \n选定子职业的同时，您也决定了角色的施法属性，${subclassName}的施法属性是:<strong>${subclassSpell}</strong>\n\n请问您确定吗,您可以尝试切换其他子职业，点击下一步按钮继续。`;
         },
         validation: (formData, allCards) => {
             return isFilled(formData.subclass);
@@ -241,7 +241,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
 
-            return `将以下物品添加到角色表的"物品栏"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡左下角金币栏中，添加一把金币。`;
+            return `将以下物品添加到角色表的"物品栏"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡左下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
         },
         validation: () => true,
     },

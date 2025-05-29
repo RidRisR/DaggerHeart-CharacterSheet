@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react" // Added useRef
-import InfiniteScroll from 'react-infinite-scroll-component'; // Import InfiniteScroll
+import { useState, useEffect, useMemo, useRef } from "react"
+import InfiniteScroll from 'react-infinite-scroll-component';
 import {
   ALL_CARD_TYPES,
   ALL_STANDARD_CARDS,
@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce";
 
-const ITEMS_PER_PAGE = 30; // Define batch size
+const ITEMS_PER_PAGE = 30;
 
 interface CardSelectionModalProps {
   isOpen: boolean
@@ -39,11 +39,15 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   const [searchTerm, setSearchTerm] = useState("")
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const [selectedClasses, setSelectedClasses] = useState<{ values: string[], staged: boolean }>({ values: [], staged: false });
-  const [selectedLevels, setSelectedLevels] = useState<{ values: string[], staged: boolean }>({ values: [], staged: false });
-  const [filteredCards, setFilteredCards] = useState<StandardCard[]>([])
+  // Filter values state - separated from dropdown visibility
+  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
 
-  // State for infinite scroll
+  // Dropdown visibility state
+  const [classDropdownOpen, setClassDropdownOpen] = useState(false);
+  const [levelDropdownOpen, setLevelDropdownOpen] = useState(false);
+
+  const [filteredCards, setFilteredCards] = useState<StandardCard[]>([]) // Still used for the end message of InfiniteScroll
   const [displayedCards, setDisplayedCards] = useState<StandardCard[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
@@ -51,16 +55,15 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (selectedClasses.staged) {
+        if (classDropdownOpen) {
           event.preventDefault();
           event.stopPropagation();
-          setSelectedClasses((prev) => ({ ...prev, staged: false }));
-        } else if (selectedLevels.staged) {
+          setClassDropdownOpen(false);
+        } else if (levelDropdownOpen) {
           event.preventDefault();
           event.stopPropagation();
-          setSelectedLevels((prev) => ({ ...prev, staged: false }));
+          setLevelDropdownOpen(false);
         } else if (isOpen) {
-          // Only close modal if no dropdown was open
           onClose();
         }
       }
@@ -75,45 +78,23 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, selectedClasses.staged, selectedLevels.staged, onClose]);
+  }, [isOpen, classDropdownOpen, levelDropdownOpen, onClose]);
 
-  // Effect to set initial activeTab when modal opens
   useEffect(() => {
     if (isOpen) {
       if (availableCardTypes.length > 0 && !activeTab) {
         const initialTab = availableCardTypes[0].id;
         setActiveTab(initialTab);
       }
-      // Reset scroll and displayed cards when modal opens
-      if (scrollableContainerRef.current) {
-        scrollableContainerRef.current.scrollTop = 0;
-      }
-      setDisplayedCards(filteredCards.slice(0, ITEMS_PER_PAGE));
-      setHasMore(filteredCards.length > ITEMS_PER_PAGE);
     }
-  }, [isOpen, availableCardTypes]); // Keep filteredCards out to avoid loop, handle reset in filteredCards effect
+  }, [isOpen, availableCardTypes, activeTab]);
 
-  // Effect to set default filters when activeTab changes or is initialized
   useEffect(() => {
-    if (activeTab) {
-      setSelectedClasses({
-        values: [], 
-        staged: false
-      });
-      setSelectedLevels({
-        values: [], 
-        staged: false
-      });
-      // setSearchTerm(""); // Clearing search term here might be too aggressive if user just switches tabs
-    } else {
-      setSelectedClasses({ values: [], staged: false });
-      setSelectedLevels({ values: [], staged: false });
-    }
-    // When activeTab changes, reset displayed cards and scroll
-    if (scrollableContainerRef.current) {
-      scrollableContainerRef.current.scrollTop = 0;
-    }
-    // setDisplayedCards will be reset by the main filtering useEffect's dependency on activeTab
+    setSelectedClasses([]);
+    setSelectedLevels([]);
+    // Reset dropdown open states as well when tab changes
+    setClassDropdownOpen(false);
+    setLevelDropdownOpen(false);
   }, [activeTab]);
 
   const classOptions = useMemo(() => {
@@ -137,9 +118,6 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
     if (!activeTab || !isOpen) {
       return [];
     }
-    // No try-catch here, errors in pure calculation logic should ideally be prevented
-    // or handled by how dependencies are structured. If an error is truly exceptional,
-    // it might propagate and be caught by an Error Boundary if one exists higher up.
     let filtered = cardsForActiveTab;
 
     if (debouncedSearchTerm) {
@@ -155,72 +133,54 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
     }
 
     if (classOptions.length > 0) {
-      if (selectedClasses.values.length > 0) {
-        filtered = filtered.filter((card) => card.class && selectedClasses.values.includes(card.class));
+      if (selectedClasses.length > 0) {
+        filtered = filtered.filter((card) => card.class && selectedClasses.includes(card.class));
       }
     }
 
     if (levelOptions.length > 0) {
-      if (selectedLevels.values.length > 0) {
-        filtered = filtered.filter((card) => card.level && selectedLevels.values.includes(card.level.toString()));
+      if (selectedLevels.length > 0) {
+        filtered = filtered.filter((card) => card.level && selectedLevels.includes(card.level.toString()));
       }
     }
     return filtered;
-  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses.values, selectedLevels.values, isOpen, activeTab, classOptions.length, levelOptions.length]);
+  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses, selectedLevels, isOpen, activeTab, classOptions.length, levelOptions.length]);
 
-  // Effect to update component state based on the memoized fullyFilteredCards
   useEffect(() => {
-    // Set the state for filteredCards (might be used by other parts of the UI, e.g., end message)
     setFilteredCards(fullyFilteredCards);
-
-    // Reset scroll for the new set of filtered cards
     if (scrollableContainerRef.current) {
       scrollableContainerRef.current.scrollTop = 0;
     }
-
-    // Set the initially displayed cards (first page)
     setDisplayedCards(fullyFilteredCards.slice(0, ITEMS_PER_PAGE));
-
-    // Update hasMore for infinite scroll
     setHasMore(fullyFilteredCards.length > ITEMS_PER_PAGE);
-
-  }, [fullyFilteredCards]); // This effect now only runs when fullyFilteredCards changes
+  }, [fullyFilteredCards]);
 
   const fetchMoreData = () => {
-    if (displayedCards.length >= filteredCards.length) {
+    if (displayedCards.length >= fullyFilteredCards.length) {
       setHasMore(false);
       return;
     }
-    // Simulate a delay for loading more items if needed, or directly update
-    // setTimeout(() => {
-    setDisplayedCards(prevDisplayedCards =>
-      prevDisplayedCards.concat(
-        filteredCards.slice(prevDisplayedCards.length, prevDisplayedCards.length + ITEMS_PER_PAGE)
-      )
+    const newDisplayedCards = displayedCards.concat(
+      fullyFilteredCards.slice(displayedCards.length, displayedCards.length + ITEMS_PER_PAGE)
     );
-    // }, 500); // Example delay
+    setDisplayedCards(newDisplayedCards);
+    setHasMore(newDisplayedCards.length < fullyFilteredCards.length);
   };
-
-  useEffect(() => {
-    setHasMore(displayedCards.length < filteredCards.length);
-  }, [displayedCards, filteredCards]);
-
 
   const handleSelectCard = (selectedCard: StandardCard) => {
     try {
       if (!selectedCard.type) {
         selectedCard.type = activeTab
       }
-
       onSelect(selectedCard)
       onClose()
     } catch (error) {
-      console.error("[CardSelectionModal] Error selecting card:", error); // Keep error logs
+      console.error("[CardSelectionModal] Error selecting card:", error);
     }
   }
 
   const handleClearSelection = () => {
-    const emptyCard = createEmptyCard(); // Correctly invoke createEmptyCard
+    const emptyCard = createEmptyCard();
     onSelect(emptyCard);
     onClose();
   }
@@ -229,44 +189,30 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
   const handleClassSelectAll = () => {
     const allClassValues = classOptions.map(opt => opt.value);
-    setSelectedClasses((prev) => ({ ...prev, values: allClassValues }));
+    setSelectedClasses(allClassValues);
   };
 
   const handleClassInvertSelection = () => {
     const allClassValues = classOptions.map(opt => opt.value);
-    setSelectedClasses(prev =>
-      ({ ...prev, values: allClassValues.filter(val => !prev.values.includes(val)) })
-    );
+    setSelectedClasses(prev => allClassValues.filter(val => !prev.includes(val)));
   };
 
   const handleLevelSelectAll = () => {
     const allLevelValues = levelOptions.map(opt => opt.value);
-    setSelectedLevels((prev) => ({ ...prev, values: allLevelValues }));
+    setSelectedLevels(allLevelValues);
   };
 
   const handleLevelInvertSelection = () => {
     const allLevelValues = levelOptions.map(opt => opt.value);
-    setSelectedLevels(prev =>
-      ({ ...prev, values: allLevelValues.filter(val => !prev.values.includes(val)) })
-    );
+    setSelectedLevels(prev => allLevelValues.filter(val => !prev.includes(val)));
   };
 
   const positionTitle = `选择卡牌 #${selectedCardIndex + 1}`
-
-  // Define the dropdown open change handlers at the top level of the component
-  const handleClassDropdownOpenChange = (open: boolean) => {
-    setSelectedClasses((prev) => ({ ...prev, staged: open }));
-  };
-
-  const handleLevelDropdownOpenChange = (open: boolean) => {
-    setSelectedLevels((prev) => ({ ...prev, staged: open }));
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-bold">{positionTitle}</h2>
@@ -283,15 +229,13 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar */}
           <div className="w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto">
             <div className="flex flex-col p-2">
               {availableCardTypes.map((type) => (
                 <button
                   key={type.id}
                   onClick={() => setActiveTab(type.id)}
-                  className={`text-left px-4 py-2 rounded ${activeTab === type.id ? "bg-gray-200" : "hover:bg-gray-100"
-                    }`}
+                  className={`text-left px-4 py-2 rounded ${activeTab === type.id ? "bg-gray-200" : "hover:bg-gray-100"}`}
                 >
                   {type.name}
                 </button>
@@ -299,18 +243,16 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
             </div>
           </div>
 
-          {/* Main Content Area */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Filters */}
             <div className="p-4 border-b border-gray-200 flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
                     setSearchTerm("");
-                    // Reset filters to "unselected" (empty arrays)
-                    setSelectedClasses({ values: [], staged: false });
-                    setSelectedLevels({ values: [], staged: false });
-                    // The main filtering useEffect will handle resetting displayedCards and scroll
+                    setSelectedClasses([]);
+                    setSelectedLevels([]);
+                    setClassDropdownOpen(false); // Reset dropdown state
+                    setLevelDropdownOpen(false); // Reset dropdown state
                   }}
                   className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-400 whitespace-nowrap"
                 >
@@ -318,21 +260,21 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 </button>
                 <span className="text-sm font-medium">类别:</span>
                 <DropdownMenu
-                  open={selectedClasses.staged}
-                  onOpenChange={handleClassDropdownOpenChange} // Use the defined handler
+                  open={classDropdownOpen}
+                  onOpenChange={setClassDropdownOpen}
                 >
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-36 justify-start text-left font-normal">
                       {
                         classOptions.length === 0
                           ? "无类别"
-                          : selectedClasses.values.length === classOptions.length
+                          : selectedClasses.length === classOptions.length
                             ? "全部类别"
-                            : selectedClasses.values.length === 0
+                            : selectedClasses.length === 0
                               ? "未选类别"
-                              : selectedClasses.values.length === 1
-                                ? classOptions.find(o => o.value === selectedClasses.values[0])?.label || "选择类别"
-                                : `${selectedClasses.values.length} 类已选`
+                              : selectedClasses.length === 1
+                                ? classOptions.find(o => o.value === selectedClasses[0])?.label || "选择类别"
+                                : `${selectedClasses.length} 类已选`
                       }
                     </Button>
                   </DropdownMenuTrigger>
@@ -348,13 +290,12 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                       <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()}>
                         <Checkbox
                           id={`class-${option.value}`}
-                          checked={selectedClasses.values.includes(option.value)}
+                          checked={selectedClasses.includes(option.value)}
                           onCheckedChange={(checked) => {
                             setSelectedClasses(prev => {
-                              const newValues = checked
-                                ? [...prev.values, option.value]
-                                : prev.values.filter(v => v !== option.value);
-                              return { ...prev, values: newValues };
+                              return checked
+                                ? [...prev, option.value]
+                                : prev.filter(v => v !== option.value);
                             });
                           }}
                         />
@@ -367,21 +308,21 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 </DropdownMenu>
                 <span className="text-sm font-medium">等级:</span>
                 <DropdownMenu
-                  open={selectedLevels.staged}
-                  onOpenChange={handleLevelDropdownOpenChange} // Use the defined handler
+                  open={levelDropdownOpen}
+                  onOpenChange={setLevelDropdownOpen}
                 >
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-36 justify-start text-left font-normal">
                       {
                         levelOptions.length === 0
                           ? "无等级"
-                          : selectedLevels.values.length === levelOptions.length
+                          : selectedLevels.length === levelOptions.length
                             ? "全部等级"
-                            : selectedLevels.values.length === 0
+                            : selectedLevels.length === 0
                               ? "未选等级"
-                              : selectedLevels.values.length === 1
-                                ? levelOptions.find(o => o.value === selectedLevels.values[0])?.label || "选择等级"
-                                : `${selectedLevels.values.length} 级已选`
+                              : selectedLevels.length === 1
+                                ? levelOptions.find(o => o.value === selectedLevels[0])?.label || "选择等级"
+                                : `${selectedLevels.length} 级已选`
                       }
                     </Button>
                   </DropdownMenuTrigger>
@@ -397,13 +338,12 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                       <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()}>
                         <Checkbox
                           id={`level-${option.value}`}
-                          checked={selectedLevels.values.includes(option.value)}
+                          checked={selectedLevels.includes(option.value)}
                           onCheckedChange={(checked) => {
                             setSelectedLevels(prev => {
-                              const newValues = checked
-                                ? [...prev.values, option.value]
-                                : prev.values.filter(v => v !== option.value);
-                              return { ...prev, values: newValues };
+                              return checked
+                                ? [...prev, option.value]
+                                : prev.filter(v => v !== option.value);
                             });
                           }}
                         />
@@ -414,56 +354,39 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <input
-                  type="text"
-                  placeholder="搜索卡牌..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-flex border border-gray-300 rounded px-3 py-1"
-                />
               </div>
+              <input
+                type="text"
+                placeholder="搜索卡牌名称或描述..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="p-2 border border-gray-300 rounded-md w-full"
+              />
             </div>
 
-            {/* Card List - Scrollable Area */}
-            <div
-              id="scrollableCardList" // ID for InfiniteScroll target
-              ref={scrollableContainerRef} // Ref for manual scroll reset
-              className="flex-1 overflow-y-auto p-4"
-            >
+            <div id="scrollableDiv" ref={scrollableContainerRef} className="flex-1 overflow-y-auto p-4">
               <InfiniteScroll
                 dataLength={displayedCards.length}
                 next={fetchMoreData}
                 hasMore={hasMore}
-                loader={<div className="col-span-full text-center p-4"><h4>加载中...</h4></div>}
-                scrollThreshold="800px" // 增加缓冲，提前加载新项目
+                loader={<div className="text-center py-4">加载中...</div>}
                 endMessage={
-                  <div className="col-span-full text-center p-4">
-                    <p>{filteredCards.length > 0 ? "已加载全部卡牌" : ""}</p> {/* Avoid showing message if no cards initially */}
-                  </div>
+                  <p style={{ textAlign: 'center' }} className="py-4">
+                    <b>{fullyFilteredCards.length > 0 ? "已加载全部卡牌" : "未找到符合条件的卡牌"}</b>
+                  </p>
                 }
-                scrollableTarget="scrollableCardList"
-              // className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4" // Apply grid to the direct child
+                scrollableTarget="scrollableDiv"
+                scrollThreshold="800px"
               >
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-                  {displayedCards.length > 0 ? (
-                    displayedCards.map((cardData, index) => {
-                      if (!cardData.id) {
-                        // Ensure unique key if id is missing, though ideally all cards should have stable IDs
-                        cardData.id = `temp-${activeTab}-${index}-${Math.random().toString(36).substring(2, 11)}`
-                      }
-                      return (
-                        <SelectableCard
-                          key={cardData.id} // Use a truly unique and stable key
-                          card={cardData}
-                          onClick={() => handleSelectCard(cardData)} isSelected={false} />
-                      )
-                    })
-                  ) : (
-                      !hasMore && filteredCards.length === 0 && // Only show "no cards" if not loading and filtered is empty
-                    <div className="col-span-full flex justify-center items-center h-40">
-                      <p className="text-gray-500">没有找到符合条件的卡牌</p>
-                    </div>
-                  )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {displayedCards.map((card, index) => (
+                    <SelectableCard
+                      key={`${card.id}-${index}`}
+                      card={card}
+                      onClick={() => handleSelectCard(card)} // Changed onSelect to onClick
+                      isSelected={false} // Assuming a default or placeholder for isSelected
+                    />
+                  ))}
                 </div>
               </InfiniteScroll>
             </div>

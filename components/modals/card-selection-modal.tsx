@@ -434,6 +434,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 next={fetchMoreData}
                 hasMore={hasMore}
                 loader={<div className="col-span-full text-center p-4"><h4>加载中...</h4></div>}
+                scrollThreshold="800px" // 增加缓冲，提前加载新项目
                 endMessage={
                   <div className="col-span-full text-center p-4">
                     <p>{filteredCards.length > 0 ? "已加载全部卡牌" : ""}</p> {/* Avoid showing message if no cards initially */}

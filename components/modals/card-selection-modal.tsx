@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react" // Added useMemo
+import { useState, useEffect, useMemo } from "react" // Added
 import {
   ALL_CARD_TYPES,
   ALL_STANDARD_CARDS,
@@ -34,37 +34,21 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   const [activeTab, setActiveTab] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   // Filter states - these will store the "applied" filters
-  const [appliedSelectedClasses, setAppliedSelectedClasses] = useState<string[]>([])
-  const [appliedSelectedLevels, setAppliedSelectedLevels] = useState<string[]>([])
+  const [selectedClasses, setSelectedClasses] = useState<{ values: string[], staged: boolean }>({ values: [], staged: false });
+  const [selectedLevels, setSelectedLevels] = useState<{ values: string[], staged: boolean }>({ values: [], staged: false });
   const [filteredCards, setFilteredCards] = useState<StandardCard[]>([])
-
-  // Staging states for dropdowns - to hold selections before they are applied
-  const [stagedSelectedClasses, setStagedSelectedClasses] = useState<string[]>([])
-  const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false)
-  // Similar staging states will be needed for level filter
-  const [stagedSelectedLevels, setStagedSelectedLevels] = useState<string[]>([]) // Added
-  const [isLevelDropdownOpen, setIsLevelDropdownOpen] = useState(false) // Added
-
-  // Add state to store previous selections
-  const [previousSelections, setPreviousSelections] = useState({
-    classes: [],
-    levels: [],
-    searchTerm: "",
-  });
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (isClassDropdownOpen) {
+        if (selectedClasses.staged) {
           event.preventDefault();
           event.stopPropagation();
-          setIsClassDropdownOpen(false);
-          setAppliedSelectedClasses(stagedSelectedClasses);
-        } else if (isLevelDropdownOpen) {
+          setSelectedClasses((prev) => ({ ...prev, staged: false }));
+        } else if (selectedLevels.staged) {
           event.preventDefault();
           event.stopPropagation();
-          setIsLevelDropdownOpen(false);
-          setAppliedSelectedLevels(stagedSelectedLevels);
+          setSelectedLevels((prev) => ({ ...prev, staged: false }));
         } else if (isOpen) {
           // Only close modal if no dropdown was open
           onClose();
@@ -81,7 +65,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, isClassDropdownOpen, isLevelDropdownOpen, stagedSelectedClasses, stagedSelectedLevels, onClose, setAppliedSelectedClasses, setAppliedSelectedLevels, setIsClassDropdownOpen, setIsLevelDropdownOpen]);
+  }, [isOpen, selectedClasses.staged, selectedLevels.staged, onClose]);
 
   useEffect(() => {
     if (availableCardTypes.length > 0 && !activeTab) {
@@ -98,19 +82,15 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
         }
       }
       // When modal opens, sync staged selections with applied ones
-      setStagedSelectedClasses(appliedSelectedClasses)
-      // setStagedSelectedLevels(appliedSelectedLevels); // For level filter
-      setStagedSelectedLevels(appliedSelectedLevels) // Updated
+      setSelectedClasses((prev) => ({ ...prev, values: prev.values }));
+      setSelectedLevels((prev) => ({ ...prev, values: prev.values }));
     }
-  }, [isOpen, availableCardTypes, appliedSelectedClasses, appliedSelectedLevels, activeTab])
+  }, [isOpen, availableCardTypes, activeTab])
 
   useEffect(() => {
     // Reset filters when activeTab changes
-    setAppliedSelectedClasses([])
-    setStagedSelectedClasses([])
-    setAppliedSelectedLevels([])
-    // setStagedSelectedLevels([]); // For level filter
-    setStagedSelectedLevels([]) // Added
+    setSelectedClasses({ values: [], staged: false });
+    setSelectedLevels({ values: [], staged: false });
     setSearchTerm("")
   }, [activeTab])
 
@@ -157,13 +137,13 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       }
 
       // Apply class filter
-      if (appliedSelectedClasses.length > 0 && !appliedSelectedClasses.includes("all")) {
-        filtered = filtered.filter((card) => card.class && appliedSelectedClasses.includes(card.class))
+      if (selectedClasses.values.length > 0 && !selectedClasses.values.includes("all")) {
+        filtered = filtered.filter((card) => card.class && selectedClasses.values.includes(card.class))
       }
 
       // Apply level filter (placeholder for similar logic)
-      if (appliedSelectedLevels.length > 0 && !appliedSelectedLevels.includes("all")) { // Removed !appliedSelectedLevels.includes("all")
-        filtered = filtered.filter((card) => card.level && appliedSelectedLevels.includes(card.level.toString()))
+      if (selectedLevels.values.length > 0 && !selectedLevels.values.includes("all")) { // Removed !appliedSelectedLevels.includes("all")
+        filtered = filtered.filter((card) => card.level && selectedLevels.values.includes(card.level.toString()))
       }
 
       setFilteredCards(filtered)
@@ -171,7 +151,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       console.error("[CardSelectionModal] 过滤卡牌时出错:", error)
       setFilteredCards([])
     }
-  }, [activeTab, searchTerm, appliedSelectedClasses, appliedSelectedLevels, isOpen])
+  }, [activeTab, searchTerm, selectedClasses, selectedLevels, isOpen])
 
   const handleSelectCard = (selectedCard: StandardCard) => {
     try {
@@ -194,33 +174,40 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
   if (!isOpen) return null
 
-  // const classOptions = // Moved to useMemo above
-
   const handleClassSelectAll = () => {
     const allClassValues = classOptions.map(opt => opt.value).filter(val => val !== "all");
-    setStagedSelectedClasses(allClassValues);
+    setSelectedClasses((prev) => ({ ...prev, values: allClassValues }));
   };
 
   const handleClassInvertSelection = () => {
     const allClassValues = classOptions.map(opt => opt.value).filter(val => val !== "all");
-    setStagedSelectedClasses(prev =>
-      allClassValues.filter(val => !prev.includes(val))
+    setSelectedClasses(prev =>
+      ({ ...prev, values: allClassValues.filter(val => !prev.values.includes(val)) })
     );
   };
 
   const handleLevelSelectAll = () => { // Added
     const allLevelValues = levelOptions.map(opt => opt.value).filter(val => val !== "all");
-    setStagedSelectedLevels(allLevelValues);
+    setSelectedLevels((prev) => ({ ...prev, values: allLevelValues }));
   };
 
   const handleLevelInvertSelection = () => { // Added
     const allLevelValues = levelOptions.map(opt => opt.value).filter(val => val !== "all");
-    setStagedSelectedLevels(prev =>
-      allLevelValues.filter(val => !prev.includes(val))
+    setSelectedLevels(prev =>
+      ({ ...prev, values: allLevelValues.filter(val => !prev.values.includes(val)) })
     );
   };
 
   const positionTitle = `选择卡牌 #${selectedCardIndex + 1}`
+
+  // Define the dropdown open change handlers at the top level of the component
+  const handleClassDropdownOpenChange = (open: boolean) => {
+    setSelectedClasses((prev) => ({ ...prev, staged: open }));
+  };
+
+  const handleLevelDropdownOpenChange = (open: boolean) => {
+    setSelectedLevels((prev) => ({ ...prev, staged: open }));
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -264,10 +251,8 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 <button
                   onClick={() => {
                     setSearchTerm("");
-                    setStagedSelectedClasses([]);
-                    setStagedSelectedLevels([]);
-                    setAppliedSelectedClasses([]);
-                    setAppliedSelectedLevels([]);
+                    setSelectedClasses({ values: [], staged: false });
+                    setSelectedLevels({ values: [], staged: false });
                   }}
                   className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-400 whitespace-nowrap"
                 >
@@ -275,23 +260,16 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 </button>
                 <span className="text-sm font-medium">类别:</span>
                 <DropdownMenu
-                  open={isClassDropdownOpen}
-                  onOpenChange={(open) => {
-                    setIsClassDropdownOpen(open);
-                    if (!open) {
-                      setAppliedSelectedClasses(stagedSelectedClasses);
-                    } else {
-                      setStagedSelectedClasses(appliedSelectedClasses);
-                    }
-                  }}
+                  open={selectedClasses.staged}
+                  onOpenChange={handleClassDropdownOpenChange}
                 >
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-36 justify-start text-left font-normal">
-                      {stagedSelectedClasses.length === 0 || (stagedSelectedClasses.length === classOptions.filter(o => o.value !== 'all').length && classOptions.length > 1)
+                      {selectedClasses.values.length === 0 || (selectedClasses.values.length === classOptions.filter(o => o.value !== 'all').length && classOptions.length > 1)
                         ? "全部类别"
-                        : stagedSelectedClasses.length === 1
-                          ? classOptions.find(o => o.value === stagedSelectedClasses[0])?.label || "选择类别"
-                          : `${stagedSelectedClasses.length} 类已选`}
+                        : selectedClasses.values.length === 1
+                          ? classOptions.find(o => o.value === selectedClasses.values[0])?.label || "选择类别"
+                          : `${selectedClasses.values.length} 类已选`}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="start">
@@ -306,12 +284,12 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                       <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
                         <Checkbox
                           id={`class-${option.value}`}
-                          checked={stagedSelectedClasses.includes(option.value)}
+                          checked={selectedClasses.values.includes(option.value)}
                           onCheckedChange={(checked) => {
-                            setStagedSelectedClasses(prev =>
+                            setSelectedClasses(prev =>
                               checked
-                                ? [...prev, option.value]
-                                : prev.filter(item => item !== option.value)
+                                ? { ...prev, values: [...prev.values, option.value] }
+                                : { ...prev, values: prev.values.filter(item => item !== option.value) }
                             );
                           }}
                         />
@@ -322,23 +300,16 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 </DropdownMenu>
                 <span className="text-sm font-medium">等级:</span>
                 <DropdownMenu
-                  open={isLevelDropdownOpen}
-                  onOpenChange={(open) => {
-                    setIsLevelDropdownOpen(open);
-                    if (!open) {
-                      setAppliedSelectedLevels(stagedSelectedLevels);
-                    } else {
-                      setStagedSelectedLevels(appliedSelectedLevels);
-                    }
-                  }}
+                  open={selectedLevels.staged}
+                  onOpenChange={handleLevelDropdownOpenChange}
                 >
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-36 justify-start text-left font-normal">
-                      {stagedSelectedLevels.length === 0 || stagedSelectedLevels.length === levelOptions.length
+                      {selectedLevels.values.length === 0 || selectedLevels.values.length === levelOptions.length
                         ? "全部等级"
-                        : stagedSelectedLevels.length === 1
-                          ? stagedSelectedLevels[0]
-                          : `${stagedSelectedLevels.length} 级已选`}
+                        : selectedLevels.values.length === 1
+                          ? selectedLevels.values[0]
+                          : `${selectedLevels.values.length} 级已选`}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="start">
@@ -353,12 +324,12 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                       <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
                         <Checkbox
                           id={`level-${option.value}`}
-                          checked={stagedSelectedLevels.includes(option.value)}
+                          checked={selectedLevels.values.includes(option.value)}
                           onCheckedChange={(checked) => {
-                            setStagedSelectedLevels(prev =>
+                            setSelectedLevels(prev =>
                               checked
-                                ? [...prev, option.value]
-                                : prev.filter(item => item !== option.value)
+                                ? { ...prev, values: [...prev.values, option.value] }
+                                : { ...prev, values: prev.values.filter(item => item !== option.value) }
                             );
                           }}
                         />

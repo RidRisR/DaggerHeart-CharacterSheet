@@ -133,57 +133,58 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
     });
   }, [activeTab]);
 
-  // Main filtering logic
-  useEffect(() => {
+  const fullyFilteredCards = useMemo(() => {
     if (!activeTab || !isOpen) {
-      setFilteredCards([]);
-      setDisplayedCards([]);
-      setHasMore(false);
-      return;
+      return [];
+    }
+    // No try-catch here, errors in pure calculation logic should ideally be prevented
+    // or handled by how dependencies are structured. If an error is truly exceptional,
+    // it might propagate and be caught by an Error Boundary if one exists higher up.
+    let filtered = cardsForActiveTab;
+
+    if (debouncedSearchTerm) {
+      const term = debouncedSearchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (card) =>
+          (card.name && card.name.toLowerCase().includes(term)) ||
+          (card.description && card.description.toLowerCase().includes(term)) ||
+          (card.cardSelectDisplay?.item1 && card.cardSelectDisplay.item1.toLowerCase().includes(term)) ||
+          (card.cardSelectDisplay?.item2 && card.cardSelectDisplay.item2.toLowerCase().includes(term)) ||
+          (card.cardSelectDisplay?.item3 && card.cardSelectDisplay.item3.toLowerCase().includes(term))
+      );
     }
 
-    try {
-      let filtered = cardsForActiveTab;
-
-      if (debouncedSearchTerm) {
-        const term = debouncedSearchTerm.toLowerCase();
-        filtered = filtered.filter(
-          (card) =>
-            (card.name && card.name.toLowerCase().includes(term)) ||
-            (card.description && card.description.toLowerCase().includes(term)) ||
-            (card.cardSelectDisplay?.item1 && card.cardSelectDisplay.item1.toLowerCase().includes(term)) ||
-            (card.cardSelectDisplay?.item2 && card.cardSelectDisplay.item2.toLowerCase().includes(term)) ||
-            (card.cardSelectDisplay?.item3 && card.cardSelectDisplay.item3.toLowerCase().includes(term))
-        );
+    if (classOptions.length > 0) {
+      if (selectedClasses.values.length > 0) {
+        filtered = filtered.filter((card) => card.class && selectedClasses.values.includes(card.class));
       }
-
-      if (classOptions.length > 0) {
-        if (selectedClasses.values.length > 0) {
-          filtered = filtered.filter((card) => card.class && selectedClasses.values.includes(card.class));
-        }
-      }
-
-      if (levelOptions.length > 0) {
-        if (selectedLevels.values.length > 0) {
-          filtered = filtered.filter((card) => card.level && selectedLevels.values.includes(card.level.toString()));
-        }
-      }
-
-      setFilteredCards(filtered);
-      // Reset for infinite scroll
-      if (scrollableContainerRef.current) {
-        scrollableContainerRef.current.scrollTop = 0;
-      }
-      setDisplayedCards(filtered.slice(0, ITEMS_PER_PAGE));
-      setHasMore(filtered.length > ITEMS_PER_PAGE);
-
-    } catch (error) {
-      console.error("[CardSelectionModal] Error filtering cards:", error);
-      setFilteredCards([]);
-      setDisplayedCards([]);
-      setHasMore(false);
     }
-  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses.values, selectedLevels.values, isOpen, activeTab, classOptions.length, levelOptions.length]); // Added classOptions.length, levelOptions.length for robustness
+
+    if (levelOptions.length > 0) {
+      if (selectedLevels.values.length > 0) {
+        filtered = filtered.filter((card) => card.level && selectedLevels.values.includes(card.level.toString()));
+      }
+    }
+    return filtered;
+  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses.values, selectedLevels.values, isOpen, activeTab, classOptions.length, levelOptions.length]);
+
+  // Effect to update component state based on the memoized fullyFilteredCards
+  useEffect(() => {
+    // Set the state for filteredCards (might be used by other parts of the UI, e.g., end message)
+    setFilteredCards(fullyFilteredCards);
+
+    // Reset scroll for the new set of filtered cards
+    if (scrollableContainerRef.current) {
+      scrollableContainerRef.current.scrollTop = 0;
+    }
+
+    // Set the initially displayed cards (first page)
+    setDisplayedCards(fullyFilteredCards.slice(0, ITEMS_PER_PAGE));
+
+    // Update hasMore for infinite scroll
+    setHasMore(fullyFilteredCards.length > ITEMS_PER_PAGE);
+
+  }, [fullyFilteredCards]); // This effect now only runs when fullyFilteredCards changes
 
   const fetchMoreData = () => {
     if (displayedCards.length >= filteredCards.length) {

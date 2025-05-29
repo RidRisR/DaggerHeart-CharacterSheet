@@ -1,69 +1,100 @@
-# Card Selection Modal Code Analysis and Refactoring Plan
+# Refactoring Plan for `card-selection-modal.tsx` Performance Improvement
 
-## Identified Issues
+**Goal:** Significantly improve the modal's responsiveness, especially when filtering and displaying cards.
 
-1. **State Management Complexity**:
-   - Multiple states (`stagedSelectedClasses`, `appliedSelectedClasses`, `stagedSelectedLevels`, `appliedSelectedLevels`, etc.) are used for managing dropdowns and filters, leading to potential synchronization issues and increased complexity.
-   - The `previousSelections` state is defined but not utilized effectively.
-
-2. **Repetitive Logic**:
-   - Similar logic is repeated for class and level filters (e.g., `handleClassSelectAll` and `handleLevelSelectAll`, `handleClassInvertSelection` and `handleLevelInvertSelection`).
-   - Filtering logic for `appliedSelectedClasses` and `appliedSelectedLevels` is duplicated.
-
-3. **Error Handling**:
-   - Error handling in `handleSelectCard` and `useEffect` for filtering cards is minimal and does not provide user feedback.
-
-4. **Hardcoded Values**:
-   - Strings like "all" and "unknown" are hardcoded, which can lead to inconsistencies and make future changes harder.
-
-5. **Unnecessary Computations**:
-   - `classOptions` and `levelOptions` are recalculated on every render due to `useMemo`, even when their dependencies rarely change.
-
-6. **UI Responsiveness**:
-   - The modal layout and grid system for displaying cards could be optimized for better responsiveness and scalability.
-
-7. **Code Readability**:
-   - The file is lengthy and contains inline comments that make it harder to read and maintain.
-
-## Refactoring Plan
-
-### 1. Simplify State Management
-- Consolidate `stagedSelectedClasses` and `appliedSelectedClasses` into a single state with a `staged` flag.
-- Similarly, consolidate `stagedSelectedLevels` and `appliedSelectedLevels`.
-- Remove unused `previousSelections` state or implement it effectively for undo functionality.
-
-### 2. Abstract Repetitive Logic
-- Create utility functions for common operations like `selectAll`, `invertSelection`, and `applyFilters`.
-- Use these utilities for both class and level filters to reduce duplication.
-
-### 3. Improve Error Handling
-- Add user-friendly error messages or notifications using a toast system for errors in `handleSelectCard` and filtering logic.
-- Log errors with more context for easier debugging.
-
-### 4. Replace Hardcoded Values
-- Define constants for strings like "all" and "unknown" in a separate configuration file or at the top of the file.
-
-### 5. Optimize Computations
-- Move `classOptions` and `levelOptions` calculations to `useEffect` and store them in state if their dependencies change infrequently.
-
-### 6. Enhance UI Responsiveness
-- Use CSS grid or flexbox more effectively to ensure the modal layout adapts well to different screen sizes.
-- Test the modal on various devices to ensure usability.
-
-### 7. Improve Code Readability
-- Split the file into smaller components:
-  - `CardFilterDropdown` for dropdowns.
-  - `CardGrid` for displaying cards.
-  - `CardSelectionHeader` for the modal header.
-- Remove inline comments and document the code using JSDoc or TypeScript annotations.
-
-### 8. Add Unit Tests
-- Write unit tests for utility functions and critical components like `CardFilterDropdown` and `CardGrid`.
-- Test edge cases for filtering logic and error handling.
-
-### 9. Use Context or Reducer (Optional)
-- If state management remains complex, consider using React Context or a reducer to manage the modal's state more effectively.
+**General Principles:**
+*   **Measure First:** Before and after each significant change, ideally use the React DevTools Profiler to quantify the impact.
+*   **Incremental Changes:** Apply one optimization at a time to isolate its effect and simplify debugging.
+*   **Test Thoroughly:** Ensure functionality remains correct after each step.
 
 ---
 
-By implementing these changes, the `CardSelectionModal` component will become more maintainable, scalable, and user-friendly.
+**Phase 1: Reducing Computational Load & Re-renders**
+
+*   **Step 1.1: Optimize Card Filtering Logic (`useEffect` for `filteredCards`)**
+    *   **Analysis:** The current `useEffect` filters `ALL_STANDARD_CARDS` on every change to `activeTab`, `searchTerm`, `selectedClasses.values`, `selectedLevels.values`, or `isOpen`. If `ALL_STANDARD_CARDS` is large, this is a major bottleneck.
+    *   **Action:**
+        1.  **Pre-filter by `activeTab`:** Create a memoized list of cards that only belong to the `activeTab`. This initial filtering should happen only when `activeTab` changes. Subsequent filters (search, class, level) will operate on this smaller, pre-filtered list.
+            ```typescript
+            // Example:
+            const cardsForActiveTab = useMemo(() => {
+              if (!activeTab) return [];
+              return ALL_STANDARD_CARDS.filter(card => {
+                const cardTypeProcessed = (card.type || "unknown").replace(/卡$/, "");
+                const activeTabProcessed = activeTab.replace(/卡$/, "");
+                return cardTypeProcessed === activeTabProcessed;
+              });
+            }, [activeTab]);
+
+            // Then, in the main filtering useEffect:
+            // let filtered = cardsForActiveTab;
+            // ... apply searchTerm, selectedClasses, selectedLevels filters to 'filtered'
+            ```
+    *   **Potential Side Effects:**
+        *   Incorrect `useMemo` dependencies for `cardsForActiveTab` could lead to stale data. Ensure `activeTab` is the sole dependency if `ALL_STANDARD_CARDS` is constant.
+
+*   **Step 1.2: Debounce Search Term Input**
+    *   **Analysis:** Rapid typing in the search input can trigger many re-filters.
+    *   **Action:** Implement debouncing for the `searchTerm` state. The filtering `useEffect` should then depend on the debounced search term instead of the direct `searchTerm`.
+        *   Create a custom hook like `useDebounce` or use a library utility.
+    *   **Potential Side Effects:**
+        *   A slight delay (e.g., 300-500ms) between typing and the filter updating. This is usually acceptable and often improves perceived performance.
+
+*   **Step 1.3: Review and Optimize `useMemo` Dependencies**
+    *   **Analysis:** Ensure all `useMemo` hooks (`classOptions`, `levelOptions`, and the new `cardsForActiveTab`) have the minimal correct dependencies.
+    *   **Action:** Verify that dependencies accurately reflect when the memoized value needs to be recalculated.
+    *   **Potential Side Effects:**
+        *   Overly aggressive memoization (missing dependencies) can lead to stale UI. Too loose (unnecessary dependencies) reduces memoization benefits.
+
+---
+
+**Phase 2: Optimizing Rendering**
+
+*   **Step 2.1: Virtualize the Card List**
+    *   **Analysis:** If a large number of `filteredCards` are rendered directly into the DOM, it can be very slow.
+    *   **Action:** If, after Step 1, rendering many cards is still an issue, implement list virtualization for the `filteredCards` display. Libraries like `react-window` or `react-virtualized` can be used to render only the visible items.
+    *   **Potential Side Effects:**
+        *   Adds complexity to the component.
+        *   May require fixed item heights or more complex dynamic height calculations.
+        *   Accessibility considerations need to be managed carefully with virtualized lists.
+
+*   **Step 2.2: Memoize Individual Card Items (`SelectableCard`)**
+    *   **Analysis:** The `SelectableCard` component is already wrapped in `React.memo` in `card-deck-section.tsx`. Ensure it's also effectively memoized if used directly within `card-selection-modal.tsx`'s loop, and that its props are stable or primitive where possible.
+    *   **Action:** Confirm that props passed to `SelectableCard` (or any repeating child component in the list) are not causing unnecessary re-renders. For example, pass primitive values if possible, and ensure callback functions are memoized with `useCallback` if they are props.
+    *   **Potential Side Effects:**
+        *   Incorrect `useCallback` dependencies can lead to stale closures in event handlers.
+
+---
+
+**Phase 3: Advanced State Management & Structure (If Needed)**
+
+*   **Step 3.1: Profile with React DevTools**
+    *   **Analysis:** If performance issues persist, a deep dive with the React DevTools Profiler is essential.
+    *   **Action:** Use the profiler to identify:
+        *   Which components are re-rendering most often.
+        *   What caused those re-renders (props changed, state changed, context changed).
+        *   How much time is spent in the render phase of each component.
+    *   **Potential Side Effects:** None directly, but the findings will guide further, more targeted optimizations.
+
+*   **Step 3.2: Consider `useReducer` for Complex State Logic**
+    *   **Analysis:** If state update logic for filters becomes very complex and leads to many `useState` calls or intricate `useEffect` interactions, `useReducer` might simplify this and make updates more predictable.
+    *   **Action:** Evaluate if the filter state management (`selectedClasses`, `selectedLevels`, `searchTerm`, `activeTab`) could benefit from being managed by a single reducer.
+    *   **Potential Side Effects:**
+        *   Requires refactoring state update logic. Can be a significant change but often leads to cleaner code for complex state.
+
+*   **Step 3.3: Further Componentization**
+    *   **Analysis:** The `CardSelectionModal` is a large component. Breaking it into smaller, focused child components can help isolate re-renders, especially if combined with `React.memo`.
+    *   **Action:** Identify sections of the modal (e.g., filter controls, card list display) that could be extracted into their own components.
+    *   **Potential Side Effects:**
+        *   Increases the number of files/components.
+        *   Requires careful prop drilling or consideration of a state management solution if prop drilling becomes too deep.
+
+---
+
+**Implementation Strategy:**
+
+1.  Start with **Phase 1**, as these changes are likely to yield the most significant improvements with relatively moderate effort.
+2.  Focus on **Step 1.1 (Pre-filter by `activeTab`)** first, then **Step 1.2 (Debounce Search Term)**.
+3.  After each step in Phase 1, test thoroughly and, if possible, profile.
+4.  If performance is still not satisfactory, proceed to **Phase 2**, likely starting with **Step 2.1 (Virtualization)** if many cards are displayed.
+5.  **Phase 3** should be considered if the previous steps don't resolve the issues or if the code complexity around state and rendering remains high.

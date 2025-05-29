@@ -1,24 +1,25 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react" // Added useRef
+import { useState, useEffect, useMemo } from "react" // Removed useRef as it's no longer used directly here after previous changes
 import {
   ALL_CARD_TYPES,
   ALL_STANDARD_CARDS,
   CARD_CLASS_OPTIONS_BY_TYPE,
-  getLevelOptions, // Added
+  getLevelOptions,
 } from "@/data/card"
 import type { StandardCard } from "@/data/card/card-types"
 import { createEmptyCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
-import { Checkbox } from "@/components/ui/checkbox" // Added
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu" // Added
-import { Button } from "@/components/ui/button" // Added
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { useDebounce } from "@/hooks/use-debounce"; // Import useDebounce
 
 interface CardSelectionModalProps {
   isOpen: boolean
@@ -33,6 +34,8 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
   const [activeTab, setActiveTab] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
+  const debouncedSearchTerm = useDebounce(searchTerm, 300); // Debounce search term
+
   // Filter states - initialize as empty, effects will populate them.
   const [selectedClasses, setSelectedClasses] = useState<{ values: string[], staged: boolean }>({ values: [], staged: false });
   const [selectedLevels, setSelectedLevels] = useState<{ values: string[], staged: boolean }>({ values: [], staged: false });
@@ -85,54 +88,60 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       console.log("[Effect activeTab] ActiveTab is now:", activeTab, ". Setting default filters.");
       const defaultClasses = (CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || [])
         .map(opt => opt.value);
-      console.log("[Effect activeTab] Default class options for new tab:", defaultClasses);
+      // console.log("[Effect activeTab] Default class options for new tab:", defaultClasses);
       setSelectedClasses({
         values: defaultClasses,
         staged: false
       });
 
       const defaultLevels = getLevelOptions(activeTab).map(opt => opt.value);
-      console.log("[Effect activeTab] Default level options for new tab:", defaultLevels);
+      // console.log("[Effect activeTab] Default level options for new tab:", defaultLevels);
       setSelectedLevels({
         values: defaultLevels,
         staged: false
       });
-      setSearchTerm(""); // Reset search term when tab changes
+      // setSearchTerm(""); // Reset search term when tab changes - Handled by debouncedSearchTerm effect or direct clearing
     } else {
       // activeTab is not set (e.g. initial state before isOpen effect runs, or no available types)
       console.log("[Effect activeTab] ActiveTab is not set. Clearing filters.");
       setSelectedClasses({ values: [], staged: false });
       setSelectedLevels({ values: [], staged: false });
-      setSearchTerm("");
+      // setSearchTerm("");
     }
   }, [activeTab]); // Runs when activeTab changes
 
-  const classOptions = useMemo(() =>
-    CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
-    , [activeTab]);
+  const classOptions = useMemo(() => {
+    // console.log("[Memo classOptions] Recalculating for activeTab:", activeTab);
+    return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
+  }, [activeTab]);
 
-  // Use CARD_LEVEL_OPTIONS_BY_TYPE for level dropdown rendering
-  const levelOptions = useMemo(() => getLevelOptions(activeTab), [activeTab]);
+  const levelOptions = useMemo(() => {
+    // console.log("[Memo levelOptions] Recalculating for activeTab:", activeTab);
+    return getLevelOptions(activeTab)
+  }, [activeTab]);
+
+  const cardsForActiveTab = useMemo(() => {
+    if (!activeTab) return [];
+    // console.log("[Memo cardsForActiveTab] Recalculating for activeTab:", activeTab);
+    return ALL_STANDARD_CARDS.filter(card => {
+      const cardTypeProcessed = (card.type || "unknown").replace(/卡$/, "");
+      const activeTabProcessed = activeTab.replace(/卡$/, "");
+      return cardTypeProcessed === activeTabProcessed;
+    });
+  }, [activeTab]);
 
   useEffect(() => {
     if (!activeTab || !isOpen) {
-      setFilteredCards([]); // Clear cards if tab is not set or modal is closed
+      setFilteredCards([]);
       return;
     }
+    // console.log("[Effect filterCards] Filtering for activeTab:", activeTab, "Search:", debouncedSearchTerm, "Classes:", selectedClasses.values, "Levels:", selectedLevels.values);
 
     try {
-      let filtered = ALL_STANDARD_CARDS.filter((card) => {
-        if (!card.type) {
-          card.type = "unknown"; // Assign a default if type is missing
-        }
-        const cardTypeProcessed = card.type.replace(/卡$/, "");
-        const activeTabProcessed = activeTab.replace(/卡$/, "");
+      let filtered = cardsForActiveTab;
 
-        return cardTypeProcessed === activeTabProcessed;
-      });
-
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
+      if (debouncedSearchTerm) {
+        const term = debouncedSearchTerm.toLowerCase();
         filtered = filtered.filter(
           (card) =>
             (card.name && card.name.toLowerCase().includes(term)) ||
@@ -191,7 +200,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       console.error("[CardSelectionModal] 过滤卡牌时出错:", error);
       setFilteredCards([]);
     }
-  }, [activeTab, searchTerm, selectedClasses.values, selectedLevels.values, isOpen])
+  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses.values, selectedLevels.values, isOpen, activeTab]); // Use debouncedSearchTerm
 
   const handleSelectCard = (selectedCard: StandardCard) => {
     try {
@@ -290,9 +299,27 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    setSearchTerm("");
-                    setSelectedClasses({ values: [], staged: false });
-                    setSelectedLevels({ values: [], staged: false });
+                    setSearchTerm(""); // Clear search term immediately
+                    // Default filters will be set by the activeTab useEffect if activeTab is already set,
+                    // or when activeTab changes. If activeTab is stable, we might need to re-trigger filter reset here.
+                    // For now, relying on activeTab effect to set defaults.
+                    // To ensure filters reset if activeTab doesn't change, explicitly set them:
+                    if (activeTab) {
+                      const defaultClasses = (CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || [])
+                        .map(opt => opt.value);
+                      setSelectedClasses({
+                        values: defaultClasses,
+                        staged: false
+                      });
+                      const defaultLevels = getLevelOptions(activeTab).map(opt => opt.value);
+                      setSelectedLevels({
+                        values: defaultLevels,
+                        staged: false
+                      });
+                    } else {
+                      setSelectedClasses({ values: [], staged: false });
+                      setSelectedLevels({ values: [], staged: false });
+                    }
                   }}
                   className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-400 whitespace-nowrap"
                 >

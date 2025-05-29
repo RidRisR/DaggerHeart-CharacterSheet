@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react" // Removed useRef as it's no longer used directly here after previous changes
+import { useState, useEffect, useMemo, useRef } from "react" // Added useRef
+import InfiniteScroll from 'react-infinite-scroll-component'; // Import InfiniteScroll
 import {
   ALL_CARD_TYPES,
   ALL_STANDARD_CARDS,
@@ -19,7 +20,9 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { useDebounce } from "@/hooks/use-debounce"; // Import useDebounce
+import { useDebounce } from "@/hooks/use-debounce";
+
+const ITEMS_PER_PAGE = 30; // Define batch size
 
 interface CardSelectionModalProps {
   isOpen: boolean
@@ -34,12 +37,16 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
   const [activeTab, setActiveTab] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
-  const debouncedSearchTerm = useDebounce(searchTerm, 300); // Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Filter states - initialize as empty, effects will populate them.
   const [selectedClasses, setSelectedClasses] = useState<{ values: string[], staged: boolean }>({ values: [], staged: false });
   const [selectedLevels, setSelectedLevels] = useState<{ values: string[], staged: boolean }>({ values: [], staged: false });
   const [filteredCards, setFilteredCards] = useState<StandardCard[]>([])
+
+  // State for infinite scroll
+  const [displayedCards, setDisplayedCards] = useState<StandardCard[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const scrollableContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -77,27 +84,37 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
         const initialTab = availableCardTypes[0].id;
         setActiveTab(initialTab);
       }
+      // Reset scroll and displayed cards when modal opens
+      if (scrollableContainerRef.current) {
+        scrollableContainerRef.current.scrollTop = 0;
+      }
+      setDisplayedCards(filteredCards.slice(0, ITEMS_PER_PAGE));
+      setHasMore(filteredCards.length > ITEMS_PER_PAGE);
     }
-  }, [isOpen, availableCardTypes]); // Removed activeTab dependency
+  }, [isOpen, availableCardTypes]); // Keep filteredCards out to avoid loop, handle reset in filteredCards effect
 
   // Effect to set default filters when activeTab changes or is initialized
   useEffect(() => {
     if (activeTab) {
-      // Initialize filters as "unselected"
       setSelectedClasses({
-        values: [], // Empty array means no specific class is selected, so all should show initially
+        values: [], 
         staged: false
       });
       setSelectedLevels({
-        values: [], // Empty array means no specific level is selected, so all should show initially
+        values: [], 
         staged: false
       });
+      // setSearchTerm(""); // Clearing search term here might be too aggressive if user just switches tabs
     } else {
-      // activeTab is not set (e.g. initial state before isOpen effect runs, or no available types)
       setSelectedClasses({ values: [], staged: false });
       setSelectedLevels({ values: [], staged: false });
     }
-  }, [activeTab]); // Runs when activeTab changes
+    // When activeTab changes, reset displayed cards and scroll
+    if (scrollableContainerRef.current) {
+      scrollableContainerRef.current.scrollTop = 0;
+    }
+    // setDisplayedCards will be reset by the main filtering useEffect's dependency on activeTab
+  }, [activeTab]);
 
   const classOptions = useMemo(() => {
     return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
@@ -116,9 +133,12 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
     });
   }, [activeTab]);
 
+  // Main filtering logic
   useEffect(() => {
     if (!activeTab || !isOpen) {
       setFilteredCards([]);
+      setDisplayedCards([]);
+      setHasMore(false);
       return;
     }
 
@@ -137,55 +157,53 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
         );
       }
 
-      // Apply class filter
       if (classOptions.length > 0) {
-        // If specific classes are selected (i.e., values array is not empty)
         if (selectedClasses.values.length > 0) {
-          // Filter to include only cards whose class is in the selectedClasses.values
           filtered = filtered.filter((card) => card.class && selectedClasses.values.includes(card.class));
         }
-        // If selectedClasses.values is empty, no class filter is applied, so all classes for the tab are shown.
       }
 
-
-      // Apply level filter
       if (levelOptions.length > 0) {
-        // If specific levels are selected (i.e., values array is not empty)
         if (selectedLevels.values.length > 0) {
-          // Filter to include only cards whose level is in the selectedLevels.values
           filtered = filtered.filter((card) => card.level && selectedLevels.values.includes(card.level.toString()));
         }
-        // If selectedLevels.values is empty, no level filter is applied, so all levels for the tab are shown.
       }
 
-      // If no filters are applied (meaning, no specific selections made that would narrow down the list,
-      // and no search term), and the default is to show all for the tab,
-      // this part might need adjustment based on desired behavior when filters are "all selected".
-      // The current logic above handles "all selected" by not applying a restrictive filter.
-      // This specific block for clearing might be redundant or counterproductive if defaults are "all selected".
-      // Let's re-evaluate the "no filters applied" condition.
-      // If activeTab is set, cards are already filtered by tab.
-      // If selectedClasses and selectedLevels are at their "all selected" state (full length),
-      // and searchTerm is empty, then 'filtered' should remain as is (all cards for the tab).
-      // This block seems to be for the case where filters are *cleared* to an empty state, not "all selected".
-      // Given that the default is "all selected", this might lead to showing 0 cards if not careful.
-      // For now, let's assume the above filtering logic is sufficient.
-      // The original condition was:
-      // if (
-      //   selectedClasses.values.length === 0 && // This implies NO classes selected
-      //   selectedLevels.values.length === 0 && // This implies NO levels selected
-      //   !searchTerm
-      // ) {
-      //   filtered = [];
-      // }
-      // This should be fine: if the user deselects all classes AND all levels, show no cards.
-
       setFilteredCards(filtered);
+      // Reset for infinite scroll
+      if (scrollableContainerRef.current) {
+        scrollableContainerRef.current.scrollTop = 0;
+      }
+      setDisplayedCards(filtered.slice(0, ITEMS_PER_PAGE));
+      setHasMore(filtered.length > ITEMS_PER_PAGE);
+
     } catch (error) {
-      console.error("[CardSelectionModal] Error filtering cards:", error); // Keep error logs
+      console.error("[CardSelectionModal] Error filtering cards:", error);
       setFilteredCards([]);
+      setDisplayedCards([]);
+      setHasMore(false);
     }
-  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses.values, selectedLevels.values, isOpen, activeTab]); // Use debouncedSearchTerm
+  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses.values, selectedLevels.values, isOpen, activeTab, classOptions.length, levelOptions.length]); // Added classOptions.length, levelOptions.length for robustness
+
+  const fetchMoreData = () => {
+    if (displayedCards.length >= filteredCards.length) {
+      setHasMore(false);
+      return;
+    }
+    // Simulate a delay for loading more items if needed, or directly update
+    // setTimeout(() => {
+    setDisplayedCards(prevDisplayedCards =>
+      prevDisplayedCards.concat(
+        filteredCards.slice(prevDisplayedCards.length, prevDisplayedCards.length + ITEMS_PER_PAGE)
+      )
+    );
+    // }, 500); // Example delay
+  };
+
+  useEffect(() => {
+    setHasMore(displayedCards.length < filteredCards.length);
+  }, [displayedCards, filteredCards]);
+
 
   const handleSelectCard = (selectedCard: StandardCard) => {
     try {
@@ -247,6 +265,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-bold">{positionTitle}</h2>
@@ -263,6 +282,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
         </div>
 
         <div className="flex-1 flex overflow-hidden">
+          {/* Sidebar */}
           <div className="w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto">
             <div className="flex flex-col p-2">
               {availableCardTypes.map((type) => (
@@ -278,33 +298,18 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
             </div>
           </div>
 
+          {/* Main Content Area */}
           <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Filters */}
             <div className="p-4 border-b border-gray-200 flex items-center gap-4">
-              {/* Class Filter Dropdown */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    setSearchTerm(""); // Clear search term immediately
-                    // Default filters will be set by the activeTab useEffect if activeTab is already set,
-                    // or when activeTab changes. If activeTab is stable, we might need to re-trigger filter reset here.
-                    // For now, relying on activeTab effect to set defaults.
-                    // To ensure filters reset if activeTab doesn't change, explicitly set them:
-                    if (activeTab) {
-                      const defaultClasses = (CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || [])
-                        .map(opt => opt.value);
-                      setSelectedClasses({
-                        values: defaultClasses,
-                        staged: false
-                      });
-                      const defaultLevels = getLevelOptions(activeTab).map(opt => opt.value);
-                      setSelectedLevels({
-                        values: defaultLevels,
-                        staged: false
-                      });
-                    } else {
-                      setSelectedClasses({ values: [], staged: false });
-                      setSelectedLevels({ values: [], staged: false });
-                    }
+                    setSearchTerm("");
+                    // Reset filters to "unselected" (empty arrays)
+                    setSelectedClasses({ values: [], staged: false });
+                    setSelectedLevels({ values: [], staged: false });
+                    // The main filtering useEffect will handle resetting displayedCards and scroll
                   }}
                   className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-400 whitespace-nowrap"
                 >
@@ -418,31 +423,47 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4">
-              {/* Adjusted grid columns for wider cards to match SelectableCard's w-72 (288px) */}
-              {/* Max-w-6xl (1152px) for modal content area. 1152 / 288 = 4 cards. (288*4) + (16*3) = 1152 + 48 = 1200 (a bit over, but close) */}
-              {/* Consider the sidebar width (w-48, 192px). Total modal width is max-w-6xl. Content area is roughly 1152-192 = 960px */}
-              {/* 960px / 288px = ~3.33 cards. So 3 cards is a good fit. */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-                {filteredCards.length > 0 ? (
-                  filteredCards.map((cardData, index) => {
-                    if (!cardData.id) {
-                      cardData.id = `temp-${index}-${Math.random().toString(36).substring(2, 11)}`
-                    }
-
-                    return (
-                      <SelectableCard
-                        key={cardData.id}
-                        card={cardData}
-                        onClick={() => handleSelectCard(cardData)} isSelected={false} />
-                    )
-                  })
-                ) : (
-                  <div className="col-span-full flex justify-center items-center h-40">
-                    <p className="text-gray-500">没有找到符合条件的卡牌</p>
+            {/* Card List - Scrollable Area */}
+            <div
+              id="scrollableCardList" // ID for InfiniteScroll target
+              ref={scrollableContainerRef} // Ref for manual scroll reset
+              className="flex-1 overflow-y-auto p-4"
+            >
+              <InfiniteScroll
+                dataLength={displayedCards.length}
+                next={fetchMoreData}
+                hasMore={hasMore}
+                loader={<div className="col-span-full text-center p-4"><h4>加载中...</h4></div>}
+                endMessage={
+                  <div className="col-span-full text-center p-4">
+                    <p>{filteredCards.length > 0 ? "已加载全部卡牌" : ""}</p> {/* Avoid showing message if no cards initially */}
                   </div>
-                )}
-              </div>
+                }
+                scrollableTarget="scrollableCardList"
+              // className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4" // Apply grid to the direct child
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+                  {displayedCards.length > 0 ? (
+                    displayedCards.map((cardData, index) => {
+                      if (!cardData.id) {
+                        // Ensure unique key if id is missing, though ideally all cards should have stable IDs
+                        cardData.id = `temp-${activeTab}-${index}-${Math.random().toString(36).substring(2, 11)}`
+                      }
+                      return (
+                        <SelectableCard
+                          key={cardData.id} // Use a truly unique and stable key
+                          card={cardData}
+                          onClick={() => handleSelectCard(cardData)} isSelected={false} />
+                      )
+                    })
+                  ) : (
+                      !hasMore && filteredCards.length === 0 && // Only show "no cards" if not loading and filtered is empty
+                    <div className="col-span-full flex justify-center items-center h-40">
+                      <p className="text-gray-500">没有找到符合条件的卡牌</p>
+                    </div>
+                  )}
+                </div>
+              </InfiniteScroll>
             </div>
           </div>
         </div>

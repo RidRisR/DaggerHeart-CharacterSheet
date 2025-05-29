@@ -50,13 +50,27 @@
 
 **Phase 2: Optimizing Rendering**
 
-*   **Step 2.1: Virtualize the Card List**
-    *   **Analysis:** If a large number of `filteredCards` are rendered directly into the DOM, it can be very slow.
-    *   **Action:** If, after Step 1, rendering many cards is still an issue, implement list virtualization for the `filteredCards` display. Libraries like `react-window` or `react-virtualized` can be used to render only the visible items.
+*   **Step 2.1: Implement Infinite Scroll for the Card List using `react-infinite-scroll-component`**
+    *   **Analysis:** Even with Phase 1 optimizations, rendering up to ~300 cards at once can impact performance. An infinite scroll approach, loading cards as the user scrolls, will significantly improve perceived performance and reduce initial DOM load.
+    *   **Chosen Library:** `react-infinite-scroll-component`. This library simplifies the implementation of infinite scrolling.
+    *   **Action:**
+        1.  **Install Library:** Add `react-infinite-scroll-component` to the project dependencies (e.g., `pnpm add react-infinite-scroll-component` and `pnpm add -D @types/react-infinite-scroll-component` if using TypeScript).
+        2.  **State for Displayed Cards:** Maintain a state variable for the currently displayed subset of `filteredCards` (e.g., `displayedCards`). Initialize it with the first batch (e.g., 30 cards).
+        3.  **Integrate `InfiniteScroll` Component:** Wrap the card mapping logic with the `<InfiniteScroll>` component from the library.
+            *   `dataLength`: Set to `displayedCards.length`.
+            *   `next`: A function to load more cards. This function will append the next batch of cards from `filteredCards` to `displayedCards`.
+            *   `hasMore`: A boolean indicating if there are more cards to load (`displayedCards.length < filteredCards.length`).
+            *   `loader`: A JSX element to display while loading more items (e.g., a spinner or "Loading..." text).
+            *   `scrollableTarget` (if needed): If the scrollable container is not the window, provide the ID of the scrollable DOM element.
+        4.  **Batch Size:** Define a batch size for loading more cards (e.g., 30).
+        5.  **Reset on Filter Change:** When `filteredCards` changes (due to `activeTab`, `debouncedSearchTerm`, `selectedClasses`, or `selectedLevels` changing):
+            *   Reset `displayedCards` to the first batch of the new `filteredCards`.
+            *   The `InfiniteScroll` component might need a `key` prop that changes with `filteredCards` (or a specific identifier of the filter state) to force a re-initialization and scroll to top, or ensure its internal state correctly resets. Alternatively, manually reset scroll position of its container if the library doesn't handle it automatically on data reset.
+    *   **Rationale for `react-infinite-scroll-component`:** It handles the complexities of scroll event listening, threshold detection, and provides a declarative API, reducing boilerplate code compared to a manual implementation.
     *   **Potential Side Effects:**
-        *   Adds complexity to the component.
-        *   May require fixed item heights or more complex dynamic height calculations.
-        *   Accessibility considerations need to be managed carefully with virtualized lists.
+        *   Ensuring the `scrollableTarget` prop is correctly identified if the scroll isn't on the main window.
+        *   Properly handling the reset behavior when `filteredCards` changes is crucial to avoid showing stale data or incorrect scroll positions.
+        *   The look and feel of the `loader` element.
 
 *   **Step 2.2: Memoize Individual Card Items (`SelectableCard`)**
     *   **Analysis:** The `SelectableCard` component is already wrapped in `React.memo` in `card-deck-section.tsx`. Ensure it's also effectively memoized if used directly within `card-selection-modal.tsx`'s loop, and that its props are stable or primitive where possible.

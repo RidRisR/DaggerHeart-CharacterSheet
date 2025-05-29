@@ -23,11 +23,11 @@ export const CARD_CLASS_OPTIONS = {
 
 // 按类型分组的卡牌类别选项
 export const CARD_CLASS_OPTIONS_BY_TYPE = {
-  profession: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.profession.map(value => ({ value, label: value }))],
-  ancestry: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.ancestry.map(value => ({ value, label: value }))],
-  community: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.community.map(value => ({ value, label: value }))],
-  subclass: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.subclass.map(value => ({ value, label: value }))],
-  domain: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.domain.map(value => ({ value, label: value }))]
+  profession: [...CARD_CLASS_OPTIONS.profession.map(value => ({ value, label: value }))],
+  ancestry: [...CARD_CLASS_OPTIONS.ancestry.map(value => ({ value, label: value }))],
+  community: [...CARD_CLASS_OPTIONS.community.map(value => ({ value, label: value }))],
+  subclass: [...CARD_CLASS_OPTIONS.subclass.map(value => ({ value, label: value }))],
+  domain: [...CARD_CLASS_OPTIONS.domain.map(value => ({ value, label: value }))]
 }
 
 // 定义不同卡牌类型对应的等级选项
@@ -41,11 +41,11 @@ export const CARD_LEVEL_OPTIONS = {
 
 // Define a dictionary for level options by type with display names
 export const CARD_LEVEL_OPTIONS_BY_TYPE = {
-  profession: [{ value: "all", label: "全部" }],
-  community: [{ value: "all", label: "全部" }],
-  ancestry: [{ value: "all", label: "全部" }, ...CARD_LEVEL_OPTIONS.ancestry.map((label, index) => ({ value: (index + 1).toString(), label }))],
-  subclass: [{ value: "all", label: "全部" }, ...CARD_LEVEL_OPTIONS.subclass.map((label, index) => ({ value: (index + 1).toString(), label }))],
-  domain: [{ value: "all", label: "全部" }, ...CARD_LEVEL_OPTIONS.domain.map((label, index) => ({ value: (index + 1).toString(), label }))],
+  profession: [],
+  community: [],
+  ancestry: [...CARD_LEVEL_OPTIONS.ancestry.map((label, index) => ({ value: (index + 1).toString(), label }))],
+  subclass: [...CARD_LEVEL_OPTIONS.subclass.map((label, index) => ({ value: (index + 1).toString(), label }))],
+  domain: [...CARD_LEVEL_OPTIONS.domain.map((label, index) => ({ value: (index + 1).toString(), label }))],
 };
 
 // 获取卡牌类型名称

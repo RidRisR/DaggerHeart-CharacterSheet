@@ -108,12 +108,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   }, [activeTab]); // Runs when activeTab changes
 
   const classOptions = useMemo(() =>
-    CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] ||
-    // Ensure "all" is only added if classOptions would otherwise be empty or specifically designed to have it.
-    // For now, we assume CARD_CLASS_OPTIONS_BY_TYPE provides the full list including any "all" type options if necessary.
-    (CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE]?.length > 0
-      ? []
-      : [{ value: "all", label: "全部" }])
+    CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
     , [activeTab]);
 
   // Use CARD_LEVEL_OPTIONS_BY_TYPE for level dropdown rendering
@@ -149,23 +144,47 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       }
 
       // Apply class filter
-      if (selectedClasses.values.length > 0 && !selectedClasses.values.includes("all")) {
-        filtered = filtered.filter((card) => card.class && selectedClasses.values.includes(card.class));
+      if (classOptions.length > 0) {
+        if (selectedClasses.values.length < classOptions.length) {
+          // If not all classes are selected (either a subset or none)
+          // Filter to include only cards whose class is in the selectedClasses.values
+          filtered = filtered.filter((card) => card.class && selectedClasses.values.includes(card.class));
+        }
+        // If selectedClasses.values.length === classOptions.length, all are selected, so no additional filtering by class is done.
       }
+
 
       // Apply level filter
-      if (selectedLevels.values.length > 0 && !selectedLevels.values.includes("all")) {
-        filtered = filtered.filter((card) => card.level && selectedLevels.values.includes(card.level.toString()));
+      if (levelOptions.length > 0) {
+        if (selectedLevels.values.length < levelOptions.length) {
+          // If not all levels are selected (either a subset or none)
+          // Filter to include only cards whose level is in the selectedLevels.values
+          filtered = filtered.filter((card) => card.level && selectedLevels.values.includes(card.level.toString()));
+        }
+        // If selectedLevels.values.length === levelOptions.length, all are selected, so no additional filtering by level is done.
       }
 
-      // If no filters are applied, clear the filtered cards
-      if (
-        selectedClasses.values.length === 0 &&
-        selectedLevels.values.length === 0 &&
-        !searchTerm
-      ) {
-        filtered = [];
-      }
+      // If no filters are applied (meaning, no specific selections made that would narrow down the list,
+      // and no search term), and the default is to show all for the tab,
+      // this part might need adjustment based on desired behavior when filters are "all selected".
+      // The current logic above handles "all selected" by not applying a restrictive filter.
+      // This specific block for clearing might be redundant or counterproductive if defaults are "all selected".
+      // Let's re-evaluate the "no filters applied" condition.
+      // If activeTab is set, cards are already filtered by tab.
+      // If selectedClasses and selectedLevels are at their "all selected" state (full length),
+      // and searchTerm is empty, then 'filtered' should remain as is (all cards for the tab).
+      // This block seems to be for the case where filters are *cleared* to an empty state, not "all selected".
+      // Given that the default is "all selected", this might lead to showing 0 cards if not careful.
+      // For now, let's assume the above filtering logic is sufficient.
+      // The original condition was:
+      // if (
+      //   selectedClasses.values.length === 0 && // This implies NO classes selected
+      //   selectedLevels.values.length === 0 && // This implies NO levels selected
+      //   !searchTerm
+      // ) {
+      //   filtered = [];
+      // }
+      // This should be fine: if the user deselects all classes AND all levels, show no cards.
 
       setFilteredCards(filtered);
     } catch (error) {
@@ -196,24 +215,24 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   if (!isOpen) return null
 
   const handleClassSelectAll = () => {
-    const allClassValues = classOptions.map(opt => opt.value).filter(val => val !== "all");
+    const allClassValues = classOptions.map(opt => opt.value);
     setSelectedClasses((prev) => ({ ...prev, values: allClassValues }));
   };
 
   const handleClassInvertSelection = () => {
-    const allClassValues = classOptions.map(opt => opt.value).filter(val => val !== "all");
+    const allClassValues = classOptions.map(opt => opt.value);
     setSelectedClasses(prev =>
       ({ ...prev, values: allClassValues.filter(val => !prev.values.includes(val)) })
     );
   };
 
-  const handleLevelSelectAll = () => { // Added
-    const allLevelValues = levelOptions.map(opt => opt.value).filter(val => val !== "all");
+  const handleLevelSelectAll = () => {
+    const allLevelValues = levelOptions.map(opt => opt.value);
     setSelectedLevels((prev) => ({ ...prev, values: allLevelValues }));
   };
 
-  const handleLevelInvertSelection = () => { // Added
-    const allLevelValues = levelOptions.map(opt => opt.value).filter(val => val !== "all");
+  const handleLevelInvertSelection = () => {
+    const allLevelValues = levelOptions.map(opt => opt.value);
     setSelectedLevels(prev =>
       ({ ...prev, values: allLevelValues.filter(val => !prev.values.includes(val)) })
     );
@@ -282,17 +301,21 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 <span className="text-sm font-medium">类别:</span>
                 <DropdownMenu
                   open={selectedClasses.staged}
-                  onOpenChange={(open) => {
-                    setSelectedClasses((prev) => ({ ...prev, staged: open }));
-                  }}
+                  onOpenChange={handleClassDropdownOpenChange} // Use the defined handler
                 >
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-36 justify-start text-left font-normal">
-                      {selectedClasses.values.length === 0 || (selectedClasses.values.length === classOptions.filter(o => o.value !== 'all').length && classOptions.length > 1)
-                        ? "全部类别"
-                        : selectedClasses.values.length === 1
-                          ? classOptions.find(o => o.value === selectedClasses.values[0])?.label || "选择类别"
-                          : `${selectedClasses.values.length} 类已选`}
+                      {
+                        classOptions.length === 0
+                          ? "无类别"
+                          : selectedClasses.values.length === classOptions.length
+                            ? "全部类别"
+                            : selectedClasses.values.length === 0
+                              ? "未选类别"
+                              : selectedClasses.values.length === 1
+                                ? classOptions.find(o => o.value === selectedClasses.values[0])?.label || "选择类别"
+                                : `${selectedClasses.values.length} 类已选`
+                      }
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="start">
@@ -304,20 +327,22 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {classOptions.map((option) => (
-                      <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                      <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()}>
                         <Checkbox
                           id={`class-${option.value}`}
                           checked={selectedClasses.values.includes(option.value)}
                           onCheckedChange={(checked) => {
-                            setSelectedClasses((prev) => ({
-                              ...prev,
-                              values: checked
+                            setSelectedClasses(prev => {
+                              const newValues = checked
                                 ? [...prev.values, option.value]
-                                : prev.values.filter((item) => item !== option.value),
-                            }));
+                                : prev.values.filter(v => v !== option.value);
+                              return { ...prev, values: newValues };
+                            });
                           }}
                         />
-                        <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer flex-1">{option.label}</label>
+                        <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer select-none">
+                          {option.label}
+                        </label>
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -325,17 +350,21 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 <span className="text-sm font-medium">等级:</span>
                 <DropdownMenu
                   open={selectedLevels.staged}
-                  onOpenChange={(open) => {
-                    setSelectedLevels((prev) => ({ ...prev, staged: open }));
-                  }}
+                  onOpenChange={handleLevelDropdownOpenChange} // Use the defined handler
                 >
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-36 justify-start text-left font-normal">
-                      {selectedLevels.values.length === 0 || (levelOptions.length > 0 && selectedLevels.values.length === levelOptions.length)
-                        ? "全部等级"
-                        : selectedLevels.values.length === 1
-                          ? levelOptions.find(o => o.value === selectedLevels.values[0])?.label || "选择等级"
-                          : `${selectedLevels.values.length} 级已选`}
+                      {
+                        levelOptions.length === 0
+                          ? "无等级"
+                          : selectedLevels.values.length === levelOptions.length
+                            ? "全部等级"
+                            : selectedLevels.values.length === 0
+                              ? "未选等级"
+                              : selectedLevels.values.length === 1
+                                ? levelOptions.find(o => o.value === selectedLevels.values[0])?.label || "选择等级"
+                                : `${selectedLevels.values.length} 级已选`
+                      }
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="start">
@@ -347,20 +376,22 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {levelOptions.map((option) => (
-                      <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                      <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()}>
                         <Checkbox
                           id={`level-${option.value}`}
                           checked={selectedLevels.values.includes(option.value)}
                           onCheckedChange={(checked) => {
-                            setSelectedLevels((prev) => ({
-                              ...prev,
-                              values: checked
+                            setSelectedLevels(prev => {
+                              const newValues = checked
                                 ? [...prev.values, option.value]
-                                : prev.values.filter((item) => item !== option.value),
-                            }));
+                                : prev.values.filter(v => v !== option.value);
+                              return { ...prev, values: newValues };
+                            });
                           }}
                         />
-                        <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer flex-1">{option.label}</label>
+                        <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer select-none">
+                          {option.label}
+                        </label>
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>

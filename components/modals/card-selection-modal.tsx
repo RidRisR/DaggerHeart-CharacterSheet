@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react" // Added
+import { useState, useEffect, useMemo, useRef } from "react" // Added useRef
 import {
   ALL_CARD_TYPES,
   ALL_STANDARD_CARDS,
@@ -33,7 +33,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
   const [activeTab, setActiveTab] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
-  // Filter states - these will store the "applied" filters
+  // Filter states - initialize as empty, effects will populate them.
   const [selectedClasses, setSelectedClasses] = useState<{ values: string[], staged: boolean }>({ values: [], staged: false });
   const [selectedLevels, setSelectedLevels] = useState<{ values: string[], staged: boolean }>({ values: [], staged: false });
   const [filteredCards, setFilteredCards] = useState<StandardCard[]>([])
@@ -67,32 +67,45 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
     };
   }, [isOpen, selectedClasses.staged, selectedLevels.staged, onClose]);
 
-  useEffect(() => {
-    if (availableCardTypes.length > 0 && !activeTab) {
-      setActiveTab(availableCardTypes[0].id)
-    }
-  }, [availableCardTypes, activeTab])
-
+  // Effect to set initial activeTab when modal opens
   useEffect(() => {
     if (isOpen) {
-      if (availableCardTypes.length > 0) {
-        // Ensure activeTab is set if not special, or if special but allowedCardType is not yet defined
-        if (!activeTab && availableCardTypes[0]) {
-          setActiveTab(availableCardTypes[0].id)
-        }
+      console.log("[Effect isOpen] Modal is open.");
+      if (availableCardTypes.length > 0 && !activeTab) {
+        const initialTab = availableCardTypes[0].id;
+        console.log("[Effect isOpen] Setting initial activeTab to:", initialTab);
+        setActiveTab(initialTab);
       }
-      // When modal opens, sync staged selections with applied ones
-      setSelectedClasses((prev) => ({ ...prev, values: prev.values }));
-      setSelectedLevels((prev) => ({ ...prev, values: prev.values }));
     }
-  }, [isOpen, availableCardTypes, activeTab])
+  }, [isOpen, availableCardTypes]); // Removed activeTab dependency
 
+  // Effect to set default filters when activeTab changes or is initialized
   useEffect(() => {
-    // Reset filters when activeTab changes
-    setSelectedClasses({ values: [], staged: false });
-    setSelectedLevels({ values: [], staged: false });
-    setSearchTerm("")
-  }, [activeTab])
+    if (activeTab) {
+      console.log("[Effect activeTab] ActiveTab is now:", activeTab, ". Setting default filters.");
+      const defaultClasses = (CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || [])
+        .map(opt => opt.value);
+      console.log("[Effect activeTab] Default class options for new tab:", defaultClasses);
+      setSelectedClasses({
+        values: defaultClasses,
+        staged: false
+      });
+
+      const defaultLevels = getLevelOptions(activeTab).map(opt => opt.value);
+      console.log("[Effect activeTab] Default level options for new tab:", defaultLevels);
+      setSelectedLevels({
+        values: defaultLevels,
+        staged: false
+      });
+      setSearchTerm(""); // Reset search term when tab changes
+    } else {
+      // activeTab is not set (e.g. initial state before isOpen effect runs, or no available types)
+      console.log("[Effect activeTab] ActiveTab is not set. Clearing filters.");
+      setSelectedClasses({ values: [], staged: false });
+      setSelectedLevels({ values: [], staged: false });
+      setSearchTerm("");
+    }
+  }, [activeTab]); // Runs when activeTab changes
 
   const classOptions = useMemo(() =>
     CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] ||
@@ -108,24 +121,23 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
   useEffect(() => {
     if (!activeTab || !isOpen) {
-      // setFilteredCards([]); // Clear cards if tab is not set or modal is closed
-      return
+      setFilteredCards([]); // Clear cards if tab is not set or modal is closed
+      return;
     }
 
     try {
       let filtered = ALL_STANDARD_CARDS.filter((card) => {
         if (!card.type) {
-          card.type = "unknown" // Assign a default if type is missing
+          card.type = "unknown"; // Assign a default if type is missing
         }
-        // Ensure comparison is consistent, e.g. by removing "卡" suffix
         const cardTypeProcessed = card.type.replace(/卡$/, "");
         const activeTabProcessed = activeTab.replace(/卡$/, "");
 
-        return cardTypeProcessed === activeTabProcessed
-      })
+        return cardTypeProcessed === activeTabProcessed;
+      });
 
       if (searchTerm) {
-        const term = searchTerm.toLowerCase()
+        const term = searchTerm.toLowerCase();
         filtered = filtered.filter(
           (card) =>
             (card.name && card.name.toLowerCase().includes(term)) ||
@@ -133,25 +145,34 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
             (card.cardSelectDisplay?.item1 && card.cardSelectDisplay.item1.toLowerCase().includes(term)) ||
             (card.cardSelectDisplay?.item2 && card.cardSelectDisplay.item2.toLowerCase().includes(term)) ||
             (card.cardSelectDisplay?.item3 && card.cardSelectDisplay.item3.toLowerCase().includes(term))
-        )
+        );
       }
 
       // Apply class filter
       if (selectedClasses.values.length > 0 && !selectedClasses.values.includes("all")) {
-        filtered = filtered.filter((card) => card.class && selectedClasses.values.includes(card.class))
+        filtered = filtered.filter((card) => card.class && selectedClasses.values.includes(card.class));
       }
 
-      // Apply level filter (placeholder for similar logic)
-      if (selectedLevels.values.length > 0 && !selectedLevels.values.includes("all")) { // Removed !appliedSelectedLevels.includes("all")
-        filtered = filtered.filter((card) => card.level && selectedLevels.values.includes(card.level.toString()))
+      // Apply level filter
+      if (selectedLevels.values.length > 0 && !selectedLevels.values.includes("all")) {
+        filtered = filtered.filter((card) => card.level && selectedLevels.values.includes(card.level.toString()));
       }
 
-      setFilteredCards(filtered)
+      // If no filters are applied, clear the filtered cards
+      if (
+        selectedClasses.values.length === 0 &&
+        selectedLevels.values.length === 0 &&
+        !searchTerm
+      ) {
+        filtered = [];
+      }
+
+      setFilteredCards(filtered);
     } catch (error) {
-      console.error("[CardSelectionModal] 过滤卡牌时出错:", error)
-      setFilteredCards([])
+      console.error("[CardSelectionModal] 过滤卡牌时出错:", error);
+      setFilteredCards([]);
     }
-  }, [activeTab, searchTerm, selectedClasses, selectedLevels, isOpen])
+  }, [activeTab, searchTerm, selectedClasses.values, selectedLevels.values, isOpen])
 
   const handleSelectCard = (selectedCard: StandardCard) => {
     try {
@@ -261,7 +282,9 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 <span className="text-sm font-medium">类别:</span>
                 <DropdownMenu
                   open={selectedClasses.staged}
-                  onOpenChange={handleClassDropdownOpenChange}
+                  onOpenChange={(open) => {
+                    setSelectedClasses((prev) => ({ ...prev, staged: open }));
+                  }}
                 >
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-36 justify-start text-left font-normal">
@@ -280,17 +303,18 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                       <Button onClick={handleClassInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    {classOptions.filter(option => option.value !== "all").map((option) => (
+                    {classOptions.map((option) => (
                       <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
                         <Checkbox
                           id={`class-${option.value}`}
                           checked={selectedClasses.values.includes(option.value)}
                           onCheckedChange={(checked) => {
-                            setSelectedClasses(prev =>
-                              checked
-                                ? { ...prev, values: [...prev.values, option.value] }
-                                : { ...prev, values: prev.values.filter(item => item !== option.value) }
-                            );
+                            setSelectedClasses((prev) => ({
+                              ...prev,
+                              values: checked
+                                ? [...prev.values, option.value]
+                                : prev.values.filter((item) => item !== option.value),
+                            }));
                           }}
                         />
                         <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer flex-1">{option.label}</label>
@@ -301,14 +325,16 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 <span className="text-sm font-medium">等级:</span>
                 <DropdownMenu
                   open={selectedLevels.staged}
-                  onOpenChange={handleLevelDropdownOpenChange}
+                  onOpenChange={(open) => {
+                    setSelectedLevels((prev) => ({ ...prev, staged: open }));
+                  }}
                 >
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-36 justify-start text-left font-normal">
-                      {selectedLevels.values.length === 0 || selectedLevels.values.length === levelOptions.length
+                      {selectedLevels.values.length === 0 || (levelOptions.length > 0 && selectedLevels.values.length === levelOptions.length)
                         ? "全部等级"
                         : selectedLevels.values.length === 1
-                          ? selectedLevels.values[0]
+                          ? levelOptions.find(o => o.value === selectedLevels.values[0])?.label || "选择等级"
                           : `${selectedLevels.values.length} 级已选`}
                     </Button>
                   </DropdownMenuTrigger>
@@ -326,11 +352,12 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                           id={`level-${option.value}`}
                           checked={selectedLevels.values.includes(option.value)}
                           onCheckedChange={(checked) => {
-                            setSelectedLevels(prev =>
-                              checked
-                                ? { ...prev, values: [...prev.values, option.value] }
-                                : { ...prev, values: prev.values.filter(item => item !== option.value) }
-                            );
+                            setSelectedLevels((prev) => ({
+                              ...prev,
+                              values: checked
+                                ? [...prev.values, option.value]
+                                : prev.values.filter((item) => item !== option.value),
+                            }));
                           }}
                         />
                         <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer flex-1">{option.label}</label>

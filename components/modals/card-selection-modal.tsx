@@ -73,10 +73,8 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   // Effect to set initial activeTab when modal opens
   useEffect(() => {
     if (isOpen) {
-      console.log("[Effect isOpen] Modal is open.");
       if (availableCardTypes.length > 0 && !activeTab) {
         const initialTab = availableCardTypes[0].id;
-        console.log("[Effect isOpen] Setting initial activeTab to:", initialTab);
         setActiveTab(initialTab);
       }
     }
@@ -85,44 +83,32 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
   // Effect to set default filters when activeTab changes or is initialized
   useEffect(() => {
     if (activeTab) {
-      console.log("[Effect activeTab] ActiveTab is now:", activeTab, ". Setting default filters.");
-      const defaultClasses = (CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || [])
-        .map(opt => opt.value);
-      // console.log("[Effect activeTab] Default class options for new tab:", defaultClasses);
+      // Initialize filters as "unselected"
       setSelectedClasses({
-        values: defaultClasses,
+        values: [], // Empty array means no specific class is selected, so all should show initially
         staged: false
       });
-
-      const defaultLevels = getLevelOptions(activeTab).map(opt => opt.value);
-      // console.log("[Effect activeTab] Default level options for new tab:", defaultLevels);
       setSelectedLevels({
-        values: defaultLevels,
+        values: [], // Empty array means no specific level is selected, so all should show initially
         staged: false
       });
-      // setSearchTerm(""); // Reset search term when tab changes - Handled by debouncedSearchTerm effect or direct clearing
     } else {
       // activeTab is not set (e.g. initial state before isOpen effect runs, or no available types)
-      console.log("[Effect activeTab] ActiveTab is not set. Clearing filters.");
       setSelectedClasses({ values: [], staged: false });
       setSelectedLevels({ values: [], staged: false });
-      // setSearchTerm("");
     }
   }, [activeTab]); // Runs when activeTab changes
 
   const classOptions = useMemo(() => {
-    // console.log("[Memo classOptions] Recalculating for activeTab:", activeTab);
     return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
   }, [activeTab]);
 
   const levelOptions = useMemo(() => {
-    // console.log("[Memo levelOptions] Recalculating for activeTab:", activeTab);
     return getLevelOptions(activeTab)
   }, [activeTab]);
 
   const cardsForActiveTab = useMemo(() => {
     if (!activeTab) return [];
-    // console.log("[Memo cardsForActiveTab] Recalculating for activeTab:", activeTab);
     return ALL_STANDARD_CARDS.filter(card => {
       const cardTypeProcessed = (card.type || "unknown").replace(/卡$/, "");
       const activeTabProcessed = activeTab.replace(/卡$/, "");
@@ -135,7 +121,6 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       setFilteredCards([]);
       return;
     }
-    // console.log("[Effect filterCards] Filtering for activeTab:", activeTab, "Search:", debouncedSearchTerm, "Classes:", selectedClasses.values, "Levels:", selectedLevels.values);
 
     try {
       let filtered = cardsForActiveTab;
@@ -154,23 +139,23 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
       // Apply class filter
       if (classOptions.length > 0) {
-        if (selectedClasses.values.length < classOptions.length) {
-          // If not all classes are selected (either a subset or none)
+        // If specific classes are selected (i.e., values array is not empty)
+        if (selectedClasses.values.length > 0) {
           // Filter to include only cards whose class is in the selectedClasses.values
           filtered = filtered.filter((card) => card.class && selectedClasses.values.includes(card.class));
         }
-        // If selectedClasses.values.length === classOptions.length, all are selected, so no additional filtering by class is done.
+        // If selectedClasses.values is empty, no class filter is applied, so all classes for the tab are shown.
       }
 
 
       // Apply level filter
       if (levelOptions.length > 0) {
-        if (selectedLevels.values.length < levelOptions.length) {
-          // If not all levels are selected (either a subset or none)
+        // If specific levels are selected (i.e., values array is not empty)
+        if (selectedLevels.values.length > 0) {
           // Filter to include only cards whose level is in the selectedLevels.values
           filtered = filtered.filter((card) => card.level && selectedLevels.values.includes(card.level.toString()));
         }
-        // If selectedLevels.values.length === levelOptions.length, all are selected, so no additional filtering by level is done.
+        // If selectedLevels.values is empty, no level filter is applied, so all levels for the tab are shown.
       }
 
       // If no filters are applied (meaning, no specific selections made that would narrow down the list,
@@ -197,7 +182,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
 
       setFilteredCards(filtered);
     } catch (error) {
-      console.error("[CardSelectionModal] 过滤卡牌时出错:", error);
+      console.error("[CardSelectionModal] Error filtering cards:", error); // Keep error logs
       setFilteredCards([]);
     }
   }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses.values, selectedLevels.values, isOpen, activeTab]); // Use debouncedSearchTerm
@@ -211,7 +196,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
       onSelect(selectedCard)
       onClose()
     } catch (error) {
-      console.error("[CardSelectionModal] 选择卡牌时出错:", error)
+      console.error("[CardSelectionModal] Error selecting card:", error); // Keep error logs
     }
   }
 

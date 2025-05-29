@@ -57,7 +57,7 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
                                         li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
                                     }}
                                 >
-                                    {card.description.replace(/\n/g, '\n\n').replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
+                                    {card.description}
                                 </ReactMarkdown>
                             </div>
                         )}

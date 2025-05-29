@@ -46,6 +46,12 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
   // 模态框状态
   const [importExportModalOpen, setImportExportModalOpen] = useState(false)
 
+  // State for CardSelectionModal filters, lifted to this component
+  const [cardModalActiveTab, setCardModalActiveTab] = useState<string>("");
+  const [cardModalSearchTerm, setCardModalSearchTerm] = useState<string>("");
+  const [cardModalSelectedClasses, setCardModalSelectedClasses] = useState<string[]>([]);
+  const [cardModalSelectedLevels, setCardModalSelectedLevels] = useState<string[]>([]);
+
   // 使用ref来避免无限循环
   const isUpdatingRef = useRef(false)
 
@@ -138,7 +144,18 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
           <CharacterDescriptionSection formData={safeFormData} handleInputChange={handleInputChange} />
 
           {/* Card Deck Section */}
-          <CardDeckSection formData={safeFormData} onCardChange={handleCardChange} />
+        <CardDeckSection
+          formData={safeFormData}
+          onCardChange={handleCardChange}
+          cardModalActiveTab={cardModalActiveTab}
+          setCardModalActiveTab={setCardModalActiveTab}
+          cardModalSearchTerm={cardModalSearchTerm}
+          setCardModalSearchTerm={setCardModalSearchTerm}
+          cardModalSelectedClasses={cardModalSelectedClasses}
+          setCardModalSelectedClasses={setCardModalSelectedClasses}
+          cardModalSelectedLevels={cardModalSelectedLevels}
+          setCardModalSelectedLevels={setCardModalSelectedLevels}
+        />
 
           {/* Upgrade Section */}
         <div className="mt-3 grid grid-cols-3 gap-3 text-m">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react" // Added useState
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {
   ALL_CARD_TYPES,
@@ -29,19 +29,43 @@ interface CardSelectionModalProps {
   onClose: () => void
   onSelect: (card: any) => void
   selectedCardIndex: number
+  // Add the lifted state and setters as props
+  activeTab: string;
+  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  searchTerm: string;
+  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+  selectedClasses: string[];
+  setSelectedClasses: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedLevels: string[];
+  setSelectedLevels: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardIndex }: CardSelectionModalProps) {
+export function CardSelectionModal({
+  isOpen,
+  onClose,
+  onSelect,
+  selectedCardIndex,
+  // Destructure the new props
+  activeTab,
+  setActiveTab,
+  searchTerm,
+  setSearchTerm,
+  selectedClasses,
+  setSelectedClasses,
+  selectedLevels,
+  setSelectedLevels,
+}: CardSelectionModalProps) {
 
   const availableCardTypes = ALL_CARD_TYPES
 
-  const [activeTab, setActiveTab] = useState("")
-  const [searchTerm, setSearchTerm] = useState("")
+  // Remove local state for these as they are now props
+  // const [activeTab, setActiveTab] = useState("")
+  // const [searchTerm, setSearchTerm] = useState("")
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Filter values state - separated from dropdown visibility
-  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
-  const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
+  // Remove local state for these as they are now props
+  // const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  // const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
 
   // Dropdown visibility state
   const [classDropdownOpen, setClassDropdownOpen] = useState(false);
@@ -84,18 +108,21 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
     if (isOpen) {
       if (availableCardTypes.length > 0 && !activeTab) {
         const initialTab = availableCardTypes[0].id;
-        setActiveTab(initialTab);
+        setActiveTab(initialTab); // Use the prop setter
       }
     }
-  }, [isOpen, availableCardTypes, activeTab]);
+  }, [isOpen, availableCardTypes, activeTab, setActiveTab]); // Add setActiveTab to dependencies
 
-  useEffect(() => {
-    setSelectedClasses([]);
-    setSelectedLevels([]);
-    // Reset dropdown open states as well when tab changes
-    setClassDropdownOpen(false);
-    setLevelDropdownOpen(false);
-  }, [activeTab]);
+  const handleTabChange = (newTabId: string) => {
+    if (newTabId !== activeTab) { // Only reset if the tab is actually changing
+      setSelectedClasses([]); // Call the prop setter from CharacterSheetPageTwo
+      setSelectedLevels([]);  // Call the prop setter from CharacterSheetPageTwo
+      // Reset local dropdown visibility states as well
+      setClassDropdownOpen(false);
+      setLevelDropdownOpen(false);
+      setActiveTab(newTabId);   // Call the prop setter from CharacterSheetPageTwo
+    }
+  };
 
   const classOptions = useMemo(() => {
     return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
@@ -234,7 +261,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
               {availableCardTypes.map((type) => (
                 <button
                   key={type.id}
-                  onClick={() => setActiveTab(type.id)}
+                  onClick={() => handleTabChange(type.id)} // Use new handler
                   className={`text-left px-4 py-2 rounded ${activeTab === type.id ? "bg-gray-200" : "hover:bg-gray-100"}`}
                 >
                   {type.name}
@@ -379,7 +406,7 @@ export function CardSelectionModal({ isOpen, onClose, onSelect, selectedCardInde
                 scrollThreshold="800px"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {displayedCards.map((card, index) => (
+                  {displayedCards.map((card: StandardCard, index: number) => ( // Added types for card and index
                     <SelectableCard
                       key={`${card.id}-${index}`}
                       card={card}

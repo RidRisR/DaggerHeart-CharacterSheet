@@ -13,6 +13,14 @@ import type { CSSProperties, MouseEvent } from "react";
 interface CardDeckSectionProps {
   formData: FormData
   onCardChange: (index: number, card: StandardCard) => void
+  cardModalActiveTab: string;
+  setCardModalActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  cardModalSearchTerm: string;
+  setCardModalSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+  cardModalSelectedClasses: string[];
+  setCardModalSelectedClasses: React.Dispatch<React.SetStateAction<string[]>>;
+  cardModalSelectedLevels: string[];
+  setCardModalSelectedLevels: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 // Utility function for border color
@@ -138,7 +146,18 @@ function Card({
 
 const MemoizedCard = memo(Card);
 
-export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps) {
+export function CardDeckSection({
+  formData,
+  onCardChange,
+  cardModalActiveTab,
+  setCardModalActiveTab,
+  cardModalSearchTerm,
+  setCardModalSearchTerm,
+  cardModalSelectedClasses,
+  setCardModalSelectedClasses,
+  cardModalSelectedLevels,
+  setCardModalSelectedLevels,
+}: CardDeckSectionProps) {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
   const [selectedCards, setSelectedCards] = useState<number[]>([])
   const [isAltPressed, setIsAltPressed] = useState(false)
@@ -300,6 +319,15 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
           onClose={() => setCardSelectionModalOpen(false)}
           onSelect={handleCardSelect}
           selectedCardIndex={selectedCardIndex}
+          // Pass down the lifted state and setters
+          activeTab={cardModalActiveTab}
+          setActiveTab={setCardModalActiveTab}
+          searchTerm={cardModalSearchTerm}
+          setSearchTerm={setCardModalSearchTerm}
+          selectedClasses={cardModalSelectedClasses}
+          setSelectedClasses={setCardModalSelectedClasses}
+          selectedLevels={cardModalSelectedLevels}
+          setSelectedLevels={setCardModalSelectedLevels}
         />
       )}
 

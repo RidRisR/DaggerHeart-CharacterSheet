@@ -259,7 +259,7 @@ export default function Home() {
       {/* 固定位置的按钮 - 移到父组件 */}
       <div className="print:hidden fixed bottom-4 right-4 z-50 flex flex-col gap-2">
         <Button onClick={openImportExportModal} className="bg-gray-800 hover:bg-gray-700">
-          保存/读取
+          存档与重置
         </Button>
         <Button onClick={handlePrintAll} className="bg-gray-800 hover:bg-gray-700"> {/* Changed Link to Button */}
           导出PDF

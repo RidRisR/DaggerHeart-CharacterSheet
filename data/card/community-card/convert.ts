@@ -1,8 +1,13 @@
 import { v4 as uuidv4 } from "uuid"
 import { CARD_CLASS_OPTIONS, CardType, type StandardCard } from "@/data/card/card-types"
 
+// 定义社群卡牌的可用名称
+export const COMMUNITY_CARD_NAMES = [
+  "高城之民", "博识之民", "结社之民", "山岭之民", "滨海之民", "法外之民", "地下之民", "漂泊之民", "荒野之民"
+] as const;
+
 // 社群卡牌类型
-export type CommunityCardClass = typeof CARD_CLASS_OPTIONS.community[number];
+export type CommunityCardClass = typeof COMMUNITY_CARD_NAMES[number];
 
 // 社群卡牌数据结构
 export interface CommunityCard {

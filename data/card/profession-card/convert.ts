@@ -1,8 +1,13 @@
 import { v4 as uuidv4 } from "uuid"
 import { CARD_CLASS_OPTIONS, CardType, type StandardCard } from "@/data/card/card-types"
 
+// 定义职业卡牌的可用名称
+export const PROFESSION_CARD_NAMES = [
+  "吟游诗人", "德鲁伊", "守护者", "游侠", "盗贼", "神使", "术士", "战士", "法师"
+] as const;
+
 // 职业卡牌类型
-export type ProfessionCardClass = typeof CARD_CLASS_OPTIONS.profession[number];
+export type ProfessionCardClass = typeof PROFESSION_CARD_NAMES[number];
 
 // 职业卡牌数据结构
 export interface ProfessionCard {

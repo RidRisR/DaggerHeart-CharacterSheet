@@ -1,8 +1,13 @@
 import { v4 as uuidv4 } from "uuid"
-import { CARD_CLASS_OPTIONS, CardType, type StandardCard } from "@/data/card/card-types"
+import { CardType, type StandardCard } from "@/data/card/card-types"
+
+// 定义子职业卡牌的可用名称
+export const SUBCLASS_CARD_NAMES = [
+  "吟游诗人", "德鲁伊", "守护者", "游侠", "盗贼", "神使", "术士", "战士", "法师"
+] as const;
 
 // 领域卡牌类型
-export type SubClassClass = typeof CARD_CLASS_OPTIONS.subclass[number];
+export type SubClassClass = typeof SUBCLASS_CARD_NAMES[number];
 
 // 领域卡牌数据结构
 export interface SubClassCard {

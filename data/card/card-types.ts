@@ -1,3 +1,9 @@
+import { COMMUNITY_CARD_NAMES } from "@/data/card/community-card/convert";
+import { DOMAIN_CARD_NAMES } from "@/data/card/domain-card/convert";
+import { ANCESTRY_CARD_NAMES } from "@/data/card/ancestry-card/convert";
+import { PROFESSION_CARD_NAMES } from "@/data/card/profession-card/convert";
+import { SUBCLASS_CARD_NAMES } from "@/data/card/subclass-card/convert";
+
 export interface StandardCard {
   standarized: boolean
   id: string
@@ -45,11 +51,11 @@ export const ALL_CARD_TYPES = new Map<string, string>([
 
 // 卡牌类别选项
 export const CARD_CLASS_OPTIONS = {
-  [CardType.Profession]: ["吟游诗人", "德鲁伊", "守护者", "游侠", "盗贼", "神使", "术士", "战士", "法师"],
-  [CardType.Ancestry]: ["械灵", "恶魔", "龙人", "矮人", "精灵", "仙灵", "羊蹄人", "费尔伯格", "孢菌人", "龟人", "巨人", "哥布林", "半身人", "人类", "猫人", "兽人", "蛙裔", "猿人"],
-  [CardType.Community]: ["高城之民", "博识之民", "结社之民", "山岭之民", "滨海之民", "法外之民", "地下之民", "漂泊之民", "荒野之民"],
-  [CardType.Subclass]: ["吟游诗人", "德鲁伊", "守护者", "游侠", "盗贼", "神使", "术士", "战士", "法师"],
-  [CardType.Domain]: ["奥术", "利刃", "骸骨", "典籍", "优雅", "午夜", "贤者", "辉耀", "勇气"],
+  [CardType.Profession]: PROFESSION_CARD_NAMES,
+  [CardType.Ancestry]: ANCESTRY_CARD_NAMES,
+  [CardType.Community]: COMMUNITY_CARD_NAMES,
+  [CardType.Subclass]: SUBCLASS_CARD_NAMES,
+  [CardType.Domain]: DOMAIN_CARD_NAMES,
 }
 
 // 定义不同卡牌类型对应的等级选项

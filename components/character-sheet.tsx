@@ -10,7 +10,6 @@ import { ArmorItem, armorItems } from "@/data/list/armor"
 import { ALL_STANDARD_CARDS } from "@/data/card"
 import {
   getStandardCardsByType,
-  getCardTypeName,
   CardType, // Import CardType
 } from "@/data/card"
 

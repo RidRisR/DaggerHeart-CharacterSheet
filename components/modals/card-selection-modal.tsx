@@ -64,24 +64,8 @@ export function CardSelectionModal({
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
-  const availableCardTypes = ALL_CARD_TYPES; // Define availableCardTypes
-
-  // Effect to set a default active tab when the modal opens and no tab is active
-  useEffect(() => {
-    if (isOpen && !activeTab && availableCardTypes.length > 0) {
-      setActiveTab(availableCardTypes[0].id); // Set to the first available type
-    }
-  }, [isOpen, activeTab, setActiveTab, availableCardTypes]);
-
-  const handleTabChange = (tabId: string) => { // Define handleTabChange
-    setActiveTab(tabId);
-    // Reset filters when tab changes
-    setSearchTerm("");
-    setSelectedClasses([]);
-    setSelectedLevels([]);
-    setClassDropdownOpen(false);
-    setLevelDropdownOpen(false);
-  };
+  // Update availableCardTypes to adapt to Map structure
+  const availableCardTypes = Array.from(ALL_CARD_TYPES.entries()).map(([id, name]) => ({ id, name }));
 
   const classOptions = useMemo(() => {
     if (!activeTab) return []
@@ -194,6 +178,16 @@ export function CardSelectionModal({
     setSelectedLevels(prev => allLevelValues.filter(val => !prev.includes(val)));
   };
 
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    // Reset filters when tab changes
+    setSearchTerm("");
+    setSelectedClasses([]);
+    setSelectedLevels([]);
+    setClassDropdownOpen(false);
+    setLevelDropdownOpen(false);
+  };
+
   const positionTitle = `选择卡牌 #${selectedCardIndex + 1}`
 
   return (
@@ -218,10 +212,10 @@ export function CardSelectionModal({
         <div className="flex-1 flex overflow-hidden">
           <div className="w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto">
             <div className="flex flex-col p-2">
-              {availableCardTypes.map((type: { id: string; name: string }) => ( // Add type for 'type'
+              {availableCardTypes.map((type) => (
                 <button
                   key={type.id}
-                  onClick={() => handleTabChange(type.id)} // Use new handler
+                  onClick={() => handleTabChange(type.id)}
                   className={`text-left px-4 py-2 rounded ${activeTab === type.id ? "bg-gray-200" : "hover:bg-gray-100"}`}
                 >
                   {type.name}

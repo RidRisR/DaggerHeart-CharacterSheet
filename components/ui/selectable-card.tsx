@@ -1,7 +1,8 @@
 "use client"
 
-import type { StandardCard } from "@/data/card/card-types"
-import { getCardTypeColor, ALL_CARD_TYPES } from "@/data/card/card-ui-config"
+import type { CardType, StandardCard } from "@/data/card/card-types"
+import { getCardTypeColor, ALL_CARD_TYPES, getCardTypeName } from "@/data/card/card-ui-config"
+import { get } from "http"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 
@@ -54,11 +55,6 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
     const displayItem3 = card.cardSelectDisplay?.item3 || "";
     const displayItem4 = card.cardSelectDisplay?.item4 || "";
 
-    const getTypeName = (type: string) => {
-        const found = ALL_CARD_TYPES.find(t => t.id === type)
-        return found ? found.name : type
-    }
-
     return (
         <div
             ref={cardRef}
@@ -73,7 +69,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
         >
             <div className="flex items-center justify-between mb-1">
                 <span className="font-semibold text-base truncate max-w-[60%]" title={displayName}>{displayName}</span>
-                <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-gray-100">{getTypeName(card.type)}</span>
+                <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-gray-100">{getCardTypeName(card.type as CardType)}</span>
             </div>
             {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
                 <div className="flex flex-row gap-2 text-xs font-mono mb-2 pb-2 border-b border-dashed border-gray-300">

@@ -16,7 +16,6 @@ import type { FormData } from "@/lib/form-data";
 import { createEmptyCard, StandardCard } from "@/data/card/card-types"
 import {
   getStandardCardsByType,
-  getCardTypeName,
   CardType, // Import CardType
 } from "@/data/card"
 

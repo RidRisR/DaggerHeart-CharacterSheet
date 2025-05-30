@@ -23,9 +23,9 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { StandardCard } from "@/data/card/card-types"
+import { CardType, StandardCard } from "@/data/card/card-types"
 import { loadFocusedCardIds } from "@/lib/storage"
-import { ALL_STANDARD_CARDS, ALL_CARD_TYPES } from "@/data/card"
+import { ALL_STANDARD_CARDS, getCardTypeName } from "@/data/card"
 import ReactMarkdown from "react-markdown"
 import React, { useRef } from "react"
 
@@ -48,10 +48,6 @@ function SortableCard({
     getBadgeVariant: (type: string) => "default" | "secondary" | "outline" | "destructive" | null | undefined
 }) {
   const cardId = `${card.type}-${card.name}-${index}`
-  const getTypeName = (type: string) => {
-    const found = ALL_CARD_TYPES.find(t => t.id === type)
-    return found ? found.name : type
-  }
 
   // 新增：获取item1~item4
   const displayItem1 = card.cardSelectDisplay?.item1 || "";
@@ -89,7 +85,7 @@ function SortableCard({
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={getBadgeVariant(card.type)} className="text-xs">
-                {getTypeName(card.type) || "未知"}
+                {getCardTypeName(card.type as CardType) || "未知"}
               </Badge>
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4 text-gray-500" />

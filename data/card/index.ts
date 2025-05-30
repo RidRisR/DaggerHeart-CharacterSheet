@@ -108,16 +108,16 @@ export const ALL_STANDARD_CARDS: StandardCard[] = (() => {
 
 // 按类型分组的标准格式卡牌
 export const STANDARD_CARDS_BY_TYPE: Record<string, StandardCard[]> = (() => {
-  const result: Record<string, StandardCard[]> = {}
+  const result: Record<string, StandardCard[]> = {};
 
-  for (const tab of ALL_CARD_TYPES) {
-    if (tab.id !== "all") {
-      result[tab.id] = ALL_STANDARD_CARDS.filter((card) => card.type === tab.id)
-      console.log(`[STANDARD_CARDS_BY_TYPE] ${tab.id}类型卡牌数量: ${result[tab.id].length}`)
+  for (const [id, name] of ALL_CARD_TYPES.entries()) {
+    if (id !== "all") {
+      result[id] = ALL_STANDARD_CARDS.filter((card) => card.type === id);
+      console.log(`[STANDARD_CARDS_BY_TYPE] ${name}类型卡牌数量: ${result[id].length}`);
     }
   }
 
-  return result
+  return result;
 })()
 
 // 获取所有标准格式卡牌

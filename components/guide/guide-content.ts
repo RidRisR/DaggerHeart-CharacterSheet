@@ -1,5 +1,6 @@
 import type { StandardCard } from "@/data/card/card-types";
 import { isEmptyCard } from "@/data/card/card-types"; // Import isEmptyCard
+import { getStandardCardsByType, CardType } from "@/data/card"; // Add this import
 
 // 引导内容数据结构
 export interface GuideStep {
@@ -19,47 +20,50 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step1",
         title: "选择职业",
-        content: (formData: any, allCards: StandardCard[]): string => {
+        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused if we switch to getStandardCardsByType
             if (!isFilled(formData.profession)) {
                 return "请点开角色卡左上方<strong>'选择职业'</strong>选项框查看并选择自己的职业，不同的职业有不同的游玩和扮演风格。";
             }
-            const professionCard = allCards.find(
-                (card) => card.id === formData.profession && card.type === "profession"
+            const professionCards = getStandardCardsByType(CardType.Profession);
+            const professionCard = professionCards.find(
+                (card) => card.id === formData.profession
             );
             const professionClass = professionCard?.class || "未知职业";
             const professionHint = professionCard?.hint || "";
-            return `您选择的职业是：<strong>${professionClass}</strong> \n${professionHint}\n请问您确定吗,您可以尝试切换其他职业，点击下一步按钮继续。`;
+            return `您选择的职业是：<strong>${professionClass}</strong> \\n${professionHint}\\n请问您确定吗,您可以尝试切换其他职业，点击下一步按钮继续。`;
         },
-        validation: (formData, allCards) => {
+        validation: (formData, allCards) => { // allCards might be unused
             return isFilled(formData.profession);
         },
     },
     {
         id: "step2",
         title: "选择子职业",
-        content: (formData: any, allCards: StandardCard[]): string => {
+        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
             if (!isFilled(formData.subclass)) {
                 return "请点开角色卡右上方<strong>'选择子职业'</strong>选项框查看并选择自己的子职业。子职业为您的角色提供额外的能力和风格。";
             }
-            const subclassCard = allCards.find(
-                (card) => card.id === formData.subclass && card.type === "subclass"
+            const subclassCards = getStandardCardsByType(CardType.Subclass);
+            const subclassCard = subclassCards.find(
+                (card) => card.id === formData.subclass
             );
             const subclassName = subclassCard?.headerDisplay || "未知子职业";
             const subclassSpell = subclassCard?.cardSelectDisplay?.item3 || "未知施法属性";
-            return `您选择的子职业是：<strong>${subclassName}</strong> \n选定子职业的同时，您也决定了角色的施法属性，${subclassName}的施法属性是:<strong>${subclassSpell}</strong>\n\n请问您确定吗,您可以尝试切换其他子职业，点击下一步按钮继续。`;
+            return `您选择的子职业是：<strong>${subclassName}</strong> \\n选定子职业的同时，您也决定了角色的施法属性，${subclassName}的施法属性是:<strong>${subclassSpell}</strong>\\n\\n请问您确定吗,您可以尝试切换其他子职业，点击下一步按钮继续。`;
         },
-        validation: (formData, allCards) => {
+        validation: (formData, allCards) => { // allCards might be unused
             return isFilled(formData.subclass);
         },
     },
     {
         id: "step3",
         title: "选择血统",
-        content: (formData: any, allCards: StandardCard[] = []): string => {
+        content: (formData: any, allCards: StandardCard[] = []): string => { // allCards might be unused
             const ancestry1 = formData?.ancestry1;
             const ancestry2 = formData?.ancestry2;
-            const ancestry1Card = allCards.find((card) => card.id === ancestry1 && card.type === "ancestry");
-            const ancestry2Card = allCards.find((card) => card.id === ancestry2 && card.type === "ancestry");
+            const ancestryCards = getStandardCardsByType(CardType.Ancestry);
+            const ancestry1Card = ancestryCards.find((card) => card.id === ancestry1);
+            const ancestry2Card = ancestryCards.find((card) => card.id === ancestry2);
             if (!isFilled(ancestry1) && !isFilled(ancestry2)) {
                 return "请移动至职业选项框右侧，选择您的血统，您可以选择两种血统，并各自从中继承一项能力。";
             }
@@ -76,9 +80,9 @@ export const guideSteps: GuideStep[] = [
             let ancestry2Class = ancestry2Card?.class || "未知血统";
             let ancestry1Hint = ancestry1Card?.hint || "";
             let ancestry2Hint = ancestry2Card?.hint || "";
-            return `您选择的血统是：${ancestry1Class} 和 ${ancestry2Class} \n请问您确定吗,您可以尝试切换血统，点击下一步按钮继续。`;
+            return `您选择的血统是：${ancestry1Class} 和 ${ancestry2Class} \\n请问您确定吗,您可以尝试切换血统，点击下一步按钮继续。`;
         },
-        validation: (formData, allCards = []) => {
+        validation: (formData, allCards = []) => { // allCards might be unused
             return isFilled(formData.ancestry1) && isFilled(formData.ancestry2);
         },
     },
@@ -102,16 +106,17 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step5",
         title: "记录基础数据",
-        content: (formData: any, allCards: StandardCard[]): string => {
+        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
             if (!formData) return "请先填写基本信息";
 
             const professionId = formData.profession;
             let evasion = "未知";
             let hp = "未知";
 
-            if (professionId && allCards && allCards.length > 0) {
-                const professionCard = allCards.find(
-                    (card) => card.id === professionId && card.type === "profession"
+            if (professionId) {
+                const professionCards = getStandardCardsByType(CardType.Profession);
+                const professionCard = professionCards.find(
+                    (card) => card.id === professionId
                 );
                 if (professionCard && professionCard.professionSpecial) {
                     evasion = professionCard.professionSpecial["起始闪避"] !== undefined
@@ -122,9 +127,9 @@ export const guideSteps: GuideStep[] = [
                         : "未知";
                 }
             }
-            return `现在记录角色的基础数据：\n在角色表顶部的指定位置记录您的等级。现在请将等级记录为 <strong>1级</strong>。\n闪避值代表您角色避免伤害的能力。您角色的起始闪避值由其职业决定。<strong>您的初始闪避是 ${evasion}</strong>。\n生命值 (HP) 是您身体健康的抽象衡量标准，您的起始最大生命值由职业决定。<strong>您的初始最大生命值是 ${hp}</strong>。`;
+            return `现在记录角色的基础数据：\\n在角色表顶部的指定位置记录您的等级。现在请将等级记录为 <strong>1级</strong>。\\n闪避值代表您角色避免伤害的能力。您角色的起始闪避值由其职业决定。<strong>您的初始闪避是 ${evasion}</strong>。\\n生命值 (HP) 是您身体健康的抽象衡量标准，您的起始最大生命值由职业决定。<strong>您的初始最大生命值是 ${hp}</strong>。`;
         },
-        validation: (formData, allCards) => {
+        validation: (formData, allCards) => { // allCards might be unused
             if (!formData) return false;
             if (!isFilled(formData.level) || !isFilled(formData.evasion) || !isFilled(formData.hpMax)) {
                 return false;
@@ -132,9 +137,10 @@ export const guideSteps: GuideStep[] = [
             // 检查 hpMax 是否等于职业卡的起始生命
             const professionId = formData.profession;
             let expectedHp: any = undefined;
-            if (professionId && allCards && allCards.length > 0) {
-                const professionCard = allCards.find(
-                    (card) => card.id === professionId && card.type === "profession"
+            if (professionId) {
+                const professionCards = getStandardCardsByType(CardType.Profession);
+                const professionCard = professionCards.find(
+                    (card) => card.id === professionId
                 );
                 if (professionCard && professionCard.professionSpecial && professionCard.professionSpecial["起始生命"] !== undefined) {
                     expectedHp = professionCard.professionSpecial["起始生命"];
@@ -150,33 +156,27 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step6",
         title: "记录压力与希望",
-        content: (formData: any, allCards: StandardCard[]): string => {
+        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
             const professionId = formData?.profession;
             let hopeFeature = "未知";
-
-            if (professionId && allCards && allCards.length > 0) {
-                const professionCard = allCards.find(
-                    (card) => card.id === professionId && card.type === "profession"
-                );
-                if (professionCard && professionCard.professionSpecial) {
-                    hopeFeature = professionCard.professionSpecial["希望特性"]
-                        ? String(professionCard.professionSpecial["希望特性"])
-                        : "无特殊希望特性";
-                }
-            }
-
-            // 获取职业名称
             let professionName = "未知职业";
-            if (professionId && allCards && allCards.length > 0) {
-                const professionCard = allCards.find(
-                    (card) => card.id === professionId && card.type === "profession"
+
+            if (professionId) {
+                const professionCards = getStandardCardsByType(CardType.Profession);
+                const professionCard = professionCards.find(
+                    (card) => card.id === professionId
                 );
-                if (professionCard && professionCard.name) {
-                    professionName = professionCard.name;
+                if (professionCard) {
+                    professionName = professionCard.name || "未知职业";
+                    if (professionCard.professionSpecial) {
+                        hopeFeature = professionCard.professionSpecial["希望特性"]
+                            ? String(professionCard.professionSpecial["希望特性"])
+                            : "无特殊希望特性";
+                    }
                 }
             }
 
-            return `压力反映了您承受危险情境的精神和情感压力以及身体消耗的能力。每个PC开始时有<strong>6个压力栏位</strong>。\n希望是一种元货币，可以用于激活经历或者帮助队友。不同职业会有专属的希望特性,可以在希望槽下方查看。${professionName}的希望特性是：\n<strong>${hopeFeature}</strong>\n\n所有角色开始游戏时有2点希望。`;
+            return `压力反映了您承受危险情境的精神和情感压力以及身体消耗的能力。每个PC开始时有<strong>6个压力栏位</strong>。\\n希望是一种元货币，可以用于激活经历或者帮助队友。不同职业会有专属的希望特性,可以在希望槽下方查看。${professionName}的希望特性是：\\n<strong>${hopeFeature}</strong>\\n\\n所有角色开始游戏时有2点希望。`;
         },
         validation: (formData) => {
             return true;
@@ -226,13 +226,14 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step9",
         title: "添加初始物品",
-        content: (formData: any, allCards: StandardCard[]): string => {
+        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
             const professionId = formData?.profession;
             let startingItems = "未知";
 
-            if (professionId && allCards && allCards.length > 0) {
-                const professionCard = allCards.find(
-                    (card) => card.id === professionId && card.type === "profession"
+            if (professionId) {
+                const professionCards = getStandardCardsByType(CardType.Profession);
+                const professionCard = professionCards.find(
+                    (card) => card.id === professionId
                 );
                 if (professionCard && professionCard.professionSpecial) {
                     startingItems = professionCard.professionSpecial["起始物品"]
@@ -241,7 +242,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
 
-            return `将以下物品添加到角色表的"物品栏"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡左下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
+            return `将以下物品添加到角色表的\\"物品栏\\"字段中： \\n1.一支火把、50 英尺长的绳索、基本补给品。 \\n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\\n3.职业特殊起始物品：<strong>${startingItems} </strong> \\n4. 其他GM批准您携带的物品。\\n5. 在角色卡左下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
         },
         validation: () => true,
     },
@@ -254,15 +255,16 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step11",
         title: "选择能力卡牌",
-        content: (formData: any, allCards: StandardCard[]): string => {
+        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
             const professionId = formData?.profession;
             let name = "未知职业";
             let domain1 = "未知";
             let domain2 = "未知";
 
-            if (professionId && allCards && allCards.length > 0) {
-                const professionCard = allCards.find(
-                    (card) => card.id === professionId && card.type === "profession"
+            if (professionId) {
+                const professionCards = getStandardCardsByType(CardType.Profession);
+                const professionCard = professionCards.find(
+                    (card) => card.id === professionId
                 );
                 if (professionCard && professionCard.cardSelectDisplay) {
                     name = professionCard.name || "未知职业";
@@ -271,7 +273,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
 
-            return `现在点击任意一个空白的卡组位置，为您的角色选择:\n两张1级<strong>领域卡</strong>。您可以选择的两个领域是<strong>${domain1}</strong>和<strong>${domain2}</strong>。`;
+            return `现在点击任意一个空白的卡组位置，为您的角色选择:\\n两张1级<strong>领域卡</strong>。您可以选择的两个领域是<strong>${domain1}</strong>和<strong>${domain2}</strong>。`;
         },
         validation: (formData) => {
             if (!formData || !formData.cards || !Array.isArray(formData.cards)) {
@@ -326,12 +328,12 @@ export function getProfessionSpecificContent(
     step: GuideStep,
     profession: string,
     formData: any,
-    allCards: StandardCard[]
+    allCards: StandardCard[] // This allCards parameter might become redundant if content functions are self-sufficient with getStandardCardsByType
 ): string {
     // 确保所有参数都有有效值
     if (!step) return "步骤数据丢失";
     formData = formData || {};
-    allCards = allCards || [];
+    // allCards = allCards || []; // Potentially remove if not used by content functions
 
     let contentSource: string | ((formData: any, allCardsList: StandardCard[]) => string);
 
@@ -343,7 +345,8 @@ export function getProfessionSpecificContent(
 
     if (typeof contentSource === 'function') {
         try {
-            return contentSource(formData, allCards);
+            // Pass an empty array or handle differently if allCards is truly no longer needed by any content function
+            return contentSource(formData, allCards); // or contentSource(formData, [])
         } catch (error) {
             console.error("在处理引导内容时出错:", error);
             return "获取内容时出错，请重试或选择其他选项";
@@ -353,7 +356,8 @@ export function getProfessionSpecificContent(
 }
 
 // 检查步骤是否可以进入下一步
-export function canProceedToNextStep(step: GuideStep, formData: any, allCards?: StandardCard[]): boolean {
+export function canProceedToNextStep(step: GuideStep, formData: any, allCards?: StandardCard[]): boolean { // allCards might be unused
     if (!step.validation) return true;
-    return step.validation(formData, allCards);
+    // Pass an empty array or handle differently if allCards is truly no longer needed by any validation function
+    return step.validation(formData, allCards); // or step.validation(formData, [])
 }

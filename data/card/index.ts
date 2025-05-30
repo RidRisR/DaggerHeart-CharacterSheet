@@ -32,6 +32,7 @@ import {
 
 // 导入类型定义
 import type { StandardCard } from "@/data/card/card-types"
+import { CardType } from "@/data/card/card-types"; // Import the new CardType enum
 import { convertToStandardCard } from "@/data/card/card-converter"
 // Import CardManager directly from the file
 import { CardManager } from "./card-manager"
@@ -125,7 +126,7 @@ export function getAllStandardCards(): StandardCard[] {
 }
 
 // 根据类型获取标准格式卡牌
-export function getStandardCardsByType(typeId: string): StandardCard[] {
+export function getStandardCardsByType(typeId: CardType): StandardCard[] {
   return STANDARD_CARDS_BY_TYPE[typeId] || []
 }
 
@@ -151,4 +152,5 @@ export {
   cardManager,
   // Re-export CardManager
   CardManager,
+  CardType, // Export the CardType enum
 }

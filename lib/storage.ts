@@ -1,3 +1,8 @@
+import {
+  getStandardCardsByType,
+  getCardTypeName,
+  CardType, // Import CardType
+} from "@/data/card";
 import type { FormData } from "./form-data"
 
 /**
@@ -62,17 +67,20 @@ export function exportCharacterData(formData: FormData): void {
       return;
     }
 
-    const getCardClass = (cardId: string, cardType: string, allCards: FormData["cards"]): string => {
-      if (!cardId || !allCards || !Array.isArray(allCards)) return '()';
-      const card = allCards.find((c) => c.id === cardId && c.type === cardType);
+    const getCardClass = (cardId: string, cardType: CardType): string => { // Changed cardType to CardType
+      if (!cardId) return '()';
+      // Removed allCards parameter, using getStandardCardsByType instead
+      const cardsOfType = getStandardCardsByType(cardType); // Removed 'as CardType'
+      const card = cardsOfType.find((c) => c.id === cardId);
       return card && card.class ? String(card.class) : '()';
     };
 
     const name = formData.name || '()';
-    const ancestry1Class = getCardClass(formData.ancestry1 ?? '', 'ancestry', formData.cards);
-    const professionClass = getCardClass(formData.profession, 'profession', formData.cards);
-    const ancestry2Class = getCardClass(formData.ancestry2 ?? '', 'ancestry', formData.cards);
-    const communityClass = getCardClass(formData.community, 'community', formData.cards);
+    // Removed formData.cards from calls to getCardClass
+    const ancestry1Class = getCardClass(formData.ancestry1 ?? '', CardType.Ancestry); // Changed to CardType.Ancestry
+    const professionClass = getCardClass(formData.profession, CardType.Profession); // Changed to CardType.Profession
+    const ancestry2Class = getCardClass(formData.ancestry2 ?? '', CardType.Ancestry); // Changed to CardType.Ancestry
+    const communityClass = getCardClass(formData.community, CardType.Community); // Changed to CardType.Community
     const level = formData.level ? String(formData.level) : '()';
 
     const exportFileDefaultName = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}.json`;

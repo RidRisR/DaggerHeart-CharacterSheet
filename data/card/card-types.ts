@@ -24,6 +24,16 @@ export interface StandardCard {
   // ... 其他字段
 }
 
+export enum CardType {
+  Profession = "profession",
+  Ancestry = "ancestry",
+  Community = "community",
+  Subclass = "subclass",
+  Domain = "domain",
+  // Add "all" if it's a valid type for getStandardCardsByType, or handle separately.
+  // For now, assuming it's not directly used with getStandardCardsByType for a filtered list.
+}
+
 export function createEmptyCard(type = "unknown"): StandardCard {
   return {
     standarized: true,

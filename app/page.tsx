@@ -14,6 +14,11 @@ import { ImportExportModal } from "@/components/modals/import-export-modal"
 import PrintHelper from "@/app/print-helper"
 import type { FormData } from "@/lib/form-data";
 import { createEmptyCard, StandardCard } from "@/data/card/card-types"
+import {
+  getStandardCardsByType,
+  getCardTypeName,
+  CardType, // Import CardType
+} from "@/data/card"
 
 // 默认表单数据
 const defaultFormData: FormData = {
@@ -121,17 +126,18 @@ export default function Home() {
   }
 
   const handlePrintAll = () => {
-    const getCardClass = (cardId: string | undefined, cardType: string, allCards: StandardCard[]): string => {
-      if (!cardId || !allCards || !Array.isArray(allCards)) return '()';
-      const card = allCards.find((c) => c.id === cardId && c.type === cardType);
+    const getCardClass = (cardId: string | undefined, cardType: CardType): string => { // Changed cardType to CardType
+      if (!cardId) return '()';
+      const cardsOfType: StandardCard[] = getStandardCardsByType(cardType); // Removed 'as CardType'
+      const card = cardsOfType.find((c: StandardCard) => c.id === cardId);
       return card && card.class ? String(card.class) : '()';
     };
 
     const name = formData.name || '()';
-    const ancestry1Class = getCardClass(formData.ancestry1, 'ancestry', formData.cards);
-    const professionClass = getCardClass(formData.profession, 'profession', formData.cards);
-    const ancestry2Class = getCardClass(formData.ancestry2, 'ancestry', formData.cards);
-    const communityClass = getCardClass(formData.community, 'community', formData.cards);
+    const ancestry1Class = getCardClass(formData.ancestry1, CardType.Ancestry); // Changed to CardType.Ancestry
+    const professionClass = getCardClass(formData.profession, CardType.Profession); // Changed to CardType.Profession
+    const ancestry2Class = getCardClass(formData.ancestry2, CardType.Ancestry); // Changed to CardType.Ancestry
+    const communityClass = getCardClass(formData.community, CardType.Community); // Changed to CardType.Community
     const level = formData.level ? String(formData.level) : '()';
 
     document.title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;

@@ -8,6 +8,11 @@ import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
 import { ArmorItem, armorItems } from "@/data/list/armor"
 import { ALL_STANDARD_CARDS } from "@/data/card"
+import {
+  getStandardCardsByType,
+  getCardTypeName,
+  CardType, // Import CardType
+} from "@/data/card"
 
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
@@ -230,26 +235,30 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   // 根据ID获取职业名称
   const getProfessionById = (id: string): StandardCard => {
-    const profession = ALL_STANDARD_CARDS.find((card) => card.type === "profession" && card.id === id)
-    return profession ? profession : createEmptyCard()
+    const professionCards = getStandardCardsByType(CardType.Profession);
+    const profession = professionCards.find((card) => card.id === id);
+    return profession ? profession : createEmptyCard();
   }
 
   // 根据ID获取血统名称
   const getAncestryById = (id: string): StandardCard => {
-    const ancestry = ALL_STANDARD_CARDS.find((card) => card.type === "ancestry" && card.id === id)
-    return ancestry ? ancestry : createEmptyCard()
+    const ancestryCards = getStandardCardsByType(CardType.Ancestry);
+    const ancestry = ancestryCards.find((card) => card.id === id);
+    return ancestry ? ancestry : createEmptyCard();
   }
 
   // 根据ID获取社群名称
   const getCommunityById = (id: string): StandardCard => {
-    const community = ALL_STANDARD_CARDS.find((card) => card.type === "community" && card.id === id)
-    return community ? community : createEmptyCard()
+    const communityCards = getStandardCardsByType(CardType.Community);
+    const community = communityCards.find((card) => card.id === id);
+    return community ? community : createEmptyCard();
   }
 
   // 根据ID获取子职业名称
   const getSubclassById = (id: string): StandardCard => {
-    const subclass = ALL_STANDARD_CARDS.find((card) => card.type === "subclass" && card.id === id)
-    return subclass ? subclass : createEmptyCard()
+    const subclassCards = getStandardCardsByType(CardType.Subclass);
+    const subclass = subclassCards.find((card) => card.id === id);
+    return subclass ? subclass : createEmptyCard();
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

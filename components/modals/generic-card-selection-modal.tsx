@@ -1,6 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { ALL_STANDARD_CARDS } from "@/data/card"
+import { getStandardCardsByType, CardType } from "@/data/card"; // Import CardType
 import { useState, useEffect } from "react"
 import type { StandardCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -78,31 +78,37 @@ export function GenericCardSelectionModal({
     }, [isOpen, onClose])
 
     useEffect(() => {
-        const filteredCards = ALL_STANDARD_CARDS.filter(
-            (card): card is StandardCard => {
-                if (cardType === "subclass") {
-                    const professionName = ALL_STANDARD_CARDS.find(
-                        (professionCard) => professionCard.id === formData.profession && professionCard.type === "profession",
-                    )?.name
+        let initialCards: StandardCard[] = [];
+        // Get base cards efficiently using getStandardCardsByType
+        const baseCards = getStandardCardsByType(cardType as CardType); // Cast cardType to CardType
 
-                    return (
-                        card.type === "subclass" &&
-                        card.level === 1 &&
-                        card.class === professionName
-                    )
-                }
+        if (cardType === "subclass") {
+            // Find the name of the selected profession card.
+            // formData.profession is assumed to be the ID of the selected profession card.
+            const allProfessionCards = getStandardCardsByType(CardType.Profession);
+            const selectedProfessionCard = allProfessionCards.find(pCard => pCard.id === formData.profession);
+            const professionName = selectedProfessionCard?.name;
 
-                return card.type === cardType && (!levelFilter || card.level === levelFilter)
-            },
-        )
+            // Filter subclass cards: must be level 1 and match the determined professionName.
+            initialCards = baseCards.filter(
+                (card): card is StandardCard =>
+                    card.level === 1 && card.class === professionName
+            );
+        } else {
+            // For other card types, apply levelFilter if it exists.
+            initialCards = baseCards;
+            if (levelFilter) {
+                initialCards = initialCards.filter(card => card.level === levelFilter);
+            }
+        }
 
-        setCards(filteredCards)
+        setCards(initialCards);
 
         const uniqueClasses = Array.from(
-            new Set(filteredCards.flatMap((card) => card.class || []).filter((cls) => cls)),
-        )
-        setAvailableClasses(["All", ...uniqueClasses])
-    }, [cardType, levelFilter, formData.profession])
+            new Set(initialCards.flatMap((card) => card.class || []).filter((cls) => cls)),
+        );
+        setAvailableClasses(["All", ...uniqueClasses]);
+    }, [cardType, levelFilter, formData.profession]); // Dependencies remain the same
 
     if (!isOpen) return null
 

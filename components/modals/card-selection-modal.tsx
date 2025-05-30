@@ -4,11 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react" // Added useState
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {
   ALL_CARD_TYPES,
-  ALL_STANDARD_CARDS,
   CARD_CLASS_OPTIONS_BY_TYPE,
   getLevelOptions,
-} from "@/data/card"
-import type { StandardCard } from "@/data/card/card-types"
+} from "@/data/card/card-ui-config"
+import { getStandardCardsByType, CardType } from "@/data/card"; // Add this import
+import { StandardCard } from "@/data/card/card-types"
 import { createEmptyCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -55,76 +55,36 @@ export function CardSelectionModal({
   selectedLevels,
   setSelectedLevels,
 }: CardSelectionModalProps) {
+  const [displayedCards, setDisplayedCards] = useState<StandardCard[]>([])
+  const [filteredCards, setFilteredCards] = useState<StandardCard[]>([]) // Add state for filtered cards
+  const [hasMore, setHasMore] = useState(true)
+  const scrollableContainerRef = useRef<HTMLDivElement>(null)
+  const [classDropdownOpen, setClassDropdownOpen] = useState(false); // Add state for class dropdown
+  const [levelDropdownOpen, setLevelDropdownOpen] = useState(false); // Add state for level dropdown
 
-  const availableCardTypes = ALL_CARD_TYPES
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
-  // Remove local state for these as they are now props
-  // const [activeTab, setActiveTab] = useState("")
-  // const [searchTerm, setSearchTerm] = useState("")
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const availableCardTypes = ALL_CARD_TYPES; // Define availableCardTypes
 
-  // Remove local state for these as they are now props
-  // const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
-  // const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
-
-  // Dropdown visibility state
-  const [classDropdownOpen, setClassDropdownOpen] = useState(false);
-  const [levelDropdownOpen, setLevelDropdownOpen] = useState(false);
-
-  const [filteredCards, setFilteredCards] = useState<StandardCard[]>([]) // Still used for the end message of InfiniteScroll
-  const [displayedCards, setDisplayedCards] = useState<StandardCard[]>([]);
-  const [hasMore, setHasMore] = useState(true);
-  const scrollableContainerRef = useRef<HTMLDivElement>(null);
-
+  // Effect to set a default active tab when the modal opens and no tab is active
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (classDropdownOpen) {
-          event.preventDefault();
-          event.stopPropagation();
-          setClassDropdownOpen(false);
-        } else if (levelDropdownOpen) {
-          event.preventDefault();
-          event.stopPropagation();
-          setLevelDropdownOpen(false);
-        } else if (isOpen) {
-          onClose();
-        }
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleKeyDown);
-    } else {
-      document.removeEventListener("keydown", handleKeyDown);
+    if (isOpen && !activeTab && availableCardTypes.length > 0) {
+      setActiveTab(availableCardTypes[0].id); // Set to the first available type
     }
+  }, [isOpen, activeTab, setActiveTab, availableCardTypes]);
 
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen, classDropdownOpen, levelDropdownOpen, onClose]);
-
-  useEffect(() => {
-    if (isOpen) {
-      if (availableCardTypes.length > 0 && !activeTab) {
-        const initialTab = availableCardTypes[0].id;
-        setActiveTab(initialTab); // Use the prop setter
-      }
-    }
-  }, [isOpen, availableCardTypes, activeTab, setActiveTab]); // Add setActiveTab to dependencies
-
-  const handleTabChange = (newTabId: string) => {
-    if (newTabId !== activeTab) { // Only reset if the tab is actually changing
-      setSelectedClasses([]); // Call the prop setter from CharacterSheetPageTwo
-      setSelectedLevels([]);  // Call the prop setter from CharacterSheetPageTwo
-      // Reset local dropdown visibility states as well
-      setClassDropdownOpen(false);
-      setLevelDropdownOpen(false);
-      setActiveTab(newTabId);   // Call the prop setter from CharacterSheetPageTwo
-    }
+  const handleTabChange = (tabId: string) => { // Define handleTabChange
+    setActiveTab(tabId);
+    // Reset filters when tab changes
+    setSearchTerm("");
+    setSelectedClasses([]);
+    setSelectedLevels([]);
+    setClassDropdownOpen(false);
+    setLevelDropdownOpen(false);
   };
 
   const classOptions = useMemo(() => {
+    if (!activeTab) return []
     return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
   }, [activeTab]);
 
@@ -134,11 +94,10 @@ export function CardSelectionModal({
 
   const cardsForActiveTab = useMemo(() => {
     if (!activeTab) return [];
-    return ALL_STANDARD_CARDS.filter(card => {
-      const cardTypeProcessed = (card.type || "unknown").replace(/卡$/, "");
-      const activeTabProcessed = activeTab.replace(/卡$/, "");
-      return cardTypeProcessed === activeTabProcessed;
-    });
+    // Use getStandardCardsByType for efficiency.
+    // Assumes activeTab is a clean type ID like "profession", "domain", etc.
+    // and card.type is also a clean type ID.
+    return getStandardCardsByType(activeTab as CardType); // Cast activeTab to CardType
   }, [activeTab]);
 
   const fullyFilteredCards = useMemo(() => {
@@ -187,6 +146,7 @@ export function CardSelectionModal({
       setHasMore(false);
       return;
     }
+    // Ensure displayedCards and fullyFilteredCards are correctly typed
     const newDisplayedCards = displayedCards.concat(
       fullyFilteredCards.slice(displayedCards.length, displayedCards.length + ITEMS_PER_PAGE)
     );
@@ -194,7 +154,7 @@ export function CardSelectionModal({
     setHasMore(newDisplayedCards.length < fullyFilteredCards.length);
   };
 
-  const handleSelectCard = (selectedCard: StandardCard) => {
+  const handleSelectCard = (selectedCard: StandardCard) => { // Ensure selectedCard is StandardCard
     try {
       if (!selectedCard.type) {
         selectedCard.type = activeTab
@@ -258,7 +218,7 @@ export function CardSelectionModal({
         <div className="flex-1 flex overflow-hidden">
           <div className="w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto">
             <div className="flex flex-col p-2">
-              {availableCardTypes.map((type) => (
+              {availableCardTypes.map((type: { id: string; name: string }) => ( // Add type for 'type'
                 <button
                   key={type.id}
                   onClick={() => handleTabChange(type.id)} // Use new handler

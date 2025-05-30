@@ -1,6 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { ALL_STANDARD_CARDS } from "@/data/card"
+import { CardType, getStandardCardsByType } from "@/data/card"
 import { useState, useEffect } from "react"
 import type { StandardCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -43,9 +43,7 @@ export function CommunitySelectionModal({ isOpen, onClose, onSelect, title }: Co
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    const cards = ALL_STANDARD_CARDS.filter(
-      (card): card is StandardCard => card.type === "community",
-    )
+    const cards = getStandardCardsByType(CardType.Community)
     setCommunityCards(cards)
     const uniqueClasses = Array.from(new Set(cards.flatMap(card => card.class || []).filter(cls => cls)))
     setAvailableClasses(["All", ...uniqueClasses])

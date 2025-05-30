@@ -2,7 +2,10 @@
 
 import type React from "react"
 import type { FormData } from "@/lib/form-data"
-import { ALL_STANDARD_CARDS } from "@/data/card"
+import {
+  getStandardCardsByType,
+  CardType, // Import CardType
+} from "@/data/card"
 
 interface HeaderSectionProps {
   formData: FormData
@@ -21,6 +24,11 @@ export function HeaderSection({
   openCommunityModal,
   openSubclassModal, // 添加openSubclassModal
 }: HeaderSectionProps) {
+  const professionCards = getStandardCardsByType(CardType.Profession)
+  const ancestryCards = getStandardCardsByType(CardType.Ancestry)
+  const communityCards = getStandardCardsByType(CardType.Community)
+  const subclassCards = getStandardCardsByType(CardType.Subclass)
+
   return (
     <div className="bg-gray-800 text-white p-2 flex justify-between items-center rounded-t-md">
       <div className="flex flex-col">
@@ -32,9 +40,8 @@ export function HeaderSection({
             className="header-selection-button printable-selection-button w-56 bg-white border-gray-400 text-gray-800 text-xl font-bold print:bg-white print:text-black rounded p-1 h-7 text-xs text-left px-2"
           >
             {formData.profession
-              ? ALL_STANDARD_CARDS.find(
-                (card) =>
-                  card.id === formData.profession && card.type === "profession",
+              ? professionCards.find(
+                (card) => card.id === formData.profession
               )?.headerDisplay || "选择职业"
               : "选择职业"}
           </button>
@@ -61,9 +68,8 @@ export function HeaderSection({
               className="header-selection-button printable-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
             >
               {formData.community
-                ? ALL_STANDARD_CARDS.find(
-                  (card) =>
-                    card.id === formData.community && card.type === "community",
+                ? communityCards.find(
+                  (card) => card.id === formData.community
                 )?.headerDisplay || "选择社群"
                 : "选择社群"}
             </button>
@@ -79,9 +85,9 @@ export function HeaderSection({
                 className="header-selection-button printable-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
               >
                 {formData.ancestry1
-                  ? ALL_STANDARD_CARDS.find(
+                  ? ancestryCards.find(
                     (card) =>
-                      card.id === formData.ancestry1 && card.type === "ancestry" && card.level === 1,
+                      card.id === formData.ancestry1 && card.level === 1,
                   )?.headerDisplay || "选择血统"
                   : "选择血统"}
               </button>
@@ -92,9 +98,9 @@ export function HeaderSection({
                 className="header-selection-button printable-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
               >
                 {formData.ancestry2
-                  ? ALL_STANDARD_CARDS.find(
+                  ? ancestryCards.find(
                     (card) =>
-                      card.id === formData.ancestry2 && card.type === "ancestry" && card.level === 2,
+                      card.id === formData.ancestry2 && card.level === 2,
                   )?.headerDisplay || "选择血统"
                   : "选择血统"}
               </button>
@@ -108,7 +114,7 @@ export function HeaderSection({
               className="header-selection-button printable-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
             >
               {formData.subclass
-                ? ALL_STANDARD_CARDS.find(
+                ? subclassCards.find(
                   (card) => card.id === formData.subclass && card.type === "subclass",
                 )?.headerDisplay || "选择子职业"
                 : "选择子职业"}

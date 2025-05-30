@@ -1,6 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { ALL_STANDARD_CARDS } from "@/data/card"
+import { CardType, getStandardCardsByType } from "@/data/card"
 import { useState, useEffect } from "react"
 import type { StandardCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -44,9 +44,7 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    const cards = ALL_STANDARD_CARDS.filter(
-      (card): card is StandardCard => card.type === "ancestry",
-    )
+    const cards = getStandardCardsByType(CardType.Ancestry)
     setAncestryCards(cards)
     const uniqueClasses = Array.from(new Set(cards.flatMap(card => card.class || []).filter(cls => cls))) // Filter out empty/undefined classes
     setAvailableClasses(["All", ...uniqueClasses])

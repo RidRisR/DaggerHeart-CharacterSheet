@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import type { StandardCard } from "@/data/card/card-types"
+import { CardType, type StandardCard } from "@/data/card/card-types"
 
 // 社群卡牌类型
 export type CommunityCardClass = "高贵之民" | "学识之民" | "秩序之民" | "山脊之民" | "海滨之民" | "狡诈之民" | "地下之民" | "流浪之民" | "荒野之民"
@@ -21,7 +21,7 @@ class CommunityCardConverter {
       standarized: true,
       id: card.ID || uuidv4(),
       name: card.名称,
-      type: "community",
+      type: CardType.Community,
       description: card.描述,
       hint: card.简介,
       imageUrl: "",

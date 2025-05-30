@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import type { StandardCard } from "@/data/card/card-types"
+import { CardType, type StandardCard } from "@/data/card/card-types"
 
 // 职业卡牌类型
 export type ProfessionCardClass = "吟游诗人" | "德鲁伊" | "守护者" | "游侠" | "盗贼" | "神使" | "术士" | "战士" | "法师"
@@ -26,7 +26,7 @@ class ProfessionCardConverter {
       standarized: true,
       id: card.id || uuidv4(),
       name: card.名称,
-      type: "profession",
+      type: CardType.Profession,
       description: card.职业特性,
       hint: card.简介,
       imageUrl: "",

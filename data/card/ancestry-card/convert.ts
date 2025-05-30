@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import type { StandardCard } from "@/data/card/card-types";
+import { CardType, type StandardCard } from "@/data/card/card-types";
 // 血统卡牌类型
 export type AncestryCardClass =
   | "械灵"
@@ -38,7 +38,7 @@ class AncestryCardConverter {
       standarized: true,
       id: rawCard.id || uuidv4(),
       name: rawCard.名称,
-      type: "ancestry",
+      type: CardType.Ancestry,
       description: rawCard.效果,
       hint: rawCard.简介,
       imageUrl: "",

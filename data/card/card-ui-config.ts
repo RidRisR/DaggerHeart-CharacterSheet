@@ -3,13 +3,15 @@
  * 用于定义卡牌UI相关的配置和辅助函数
  */
 
+import { CardType } from "./card-types";
+
 // 所有卡牌类型
 export const ALL_CARD_TYPES = [
-  { id: "profession", name: "职业" },
-  { id: "ancestry", name: "血统" },
-  { id: "community", name: "社群" },
-  { id: "subclass", name: "子职业" },
-  { id: "domain", name: "领域" }, // 添加领域卡牌类型
+  { id: CardType.Profession, name: "职业" },
+  { id: CardType.Ancestry, name: "血统" },
+  { id: CardType.Community, name: "社群" },
+  { id: CardType.Subclass, name: "子职业" },
+  { id: CardType.Domain, name: "领域" }, // 添加领域卡牌类型
 ]
 
 // 卡牌类别选项

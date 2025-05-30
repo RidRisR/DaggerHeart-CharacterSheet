@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import type { StandardCard } from "@/data/card/card-types"
+import { CardType, type StandardCard } from "@/data/card/card-types"
 
 // 领域卡牌类型
 export type SubClassClass = "吟游诗人" | "德鲁伊" | "守护者" | "游侠" | "盗贼" | "神使" | "术士" | "战士" | "法师"
@@ -39,7 +39,7 @@ class SubClassCardConverter {
       standarized: true,
       id: card.id || uuidv4(),
       name: card.名称,
-      type: "subclass",
+      type: CardType.Subclass,
       description: card.描述,
       imageUrl: "",
       class: card.主职,

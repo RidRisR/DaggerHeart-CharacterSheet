@@ -88,6 +88,25 @@ export const guideSteps: GuideStep[] = [
     },
     {
         id: "step4",
+        title: "选择社群",
+        content: (formData: any, allCards: StandardCard[]): string => {
+            if (!isFilled(formData.community)) {
+                return "请点开子职业选项框上方的<strong>'选择社群'</strong>选项框查看并选择自己的社群。社群描述了你的角色成长的文化或环境。您的角色很可能在成长过程中曾加入过众多社群，这个选择代表了对角色个性和技能影响最大的那个社群。";
+            }
+            const communityCards = getStandardCardsByType(CardType.Community);
+            const communityCard = communityCards.find(
+                (card) => card.id === formData.community
+            );
+            const communityName = communityCard?.name || "未知社群";
+            const communityHint = communityCard?.hint || "";
+            return `您选择的社群是：<strong>${communityName}</strong> \n${communityHint}\n请问您确定吗,您可以尝试切换其他社群，点击下一步按钮继续。`;
+        },
+        validation: (formData, allCards) => {
+            return isFilled(formData.community);
+        },
+    },
+    {
+        id: "step5",
         title: "属性分配",
         content:
             "现在请分配您的角色属性，角色一共有六种属性，分别是敏捷，力量，灵巧，本能，风度，知识。它们将在大部分的属性检定中使用。\n将修正值 <strong>+2、+1、+1、+0、+0、-1</strong> 以您希望的任何顺序分配给您的角色特性。",
@@ -104,7 +123,7 @@ export const guideSteps: GuideStep[] = [
         },
     },
     {
-        id: "step5",
+        id: "step6",
         title: "记录基础数据",
         content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
             if (!formData) return "请先填写基本信息";
@@ -154,7 +173,7 @@ export const guideSteps: GuideStep[] = [
         },
     },
     {
-        id: "step6",
+        id: "step7",
         title: "记录压力与希望",
         content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
             const professionId = formData?.profession;
@@ -183,7 +202,7 @@ export const guideSteps: GuideStep[] = [
         },
     },
     {
-        id: "step7",
+        id: "step8",
         title: "选择初始武器",
         content: "现在请选择您的初始武器。请从<strong>T1</strong>武器表中选择\n1.<strong>一把双手主武器</strong>;\n2. 或者 <strong>一把单手主武器和一把单手副武器</strong>。\n填写在主武器和副武器栏位上。",
         validation: (formData) => {
@@ -191,7 +210,7 @@ export const guideSteps: GuideStep[] = [
         }
     },
     {
-        id: "step8",
+        id: "step9",
         title: "选择初始护甲",
         content: (formData: any): string => {
             const isArmorSelected = formData?.armorName && formData?.armorBaseScore !== undefined && formData?.armorThreshold !== undefined && String(formData.armorName).trim() !== '';
@@ -224,7 +243,7 @@ export const guideSteps: GuideStep[] = [
         }
     },
     {
-        id: "step9",
+        id: "step10",
         title: "添加初始物品",
         content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
             const professionId = formData?.profession;
@@ -247,13 +266,13 @@ export const guideSteps: GuideStep[] = [
         validation: () => true,
     },
     {
-        id: "step10",
+        id: "step11",
         title: "角色背景与关系",
         content: "现在将角色卡翻到第二页。为您的角色设定一个背景故事，外貌衣着，和您的队友协商您们之间的关系。并填写在角色卡上。",
         validation: () => true,
     },
     {
-        id: "step11",
+        id: "step12",
         title: "选择能力卡牌",
         content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
             const professionId = formData?.profession;
@@ -293,7 +312,7 @@ export const guideSteps: GuideStep[] = [
         },
     },
     {
-        id: "step12",
+        id: "step13",
         title: "添加经历或特质",
         content: "几乎就要完成了，现在将角色卡翻回正面。为您的角色添加<strong>两条</strong>独特的经历或者特质。您只需要用一个简单的短语就足够了。比如：身经百战、广交朋友或者环游世界。\n\n每条经历会为您提供+2的判定加值。",
         validation: (formData) => {
@@ -316,7 +335,7 @@ export const guideSteps: GuideStep[] = [
         },
     },
     {
-        id: "step13",
+        id: "step14",
         title: "完成创建",
         content: "恭喜您，您的角色卡已经创建完成。别忘了取一个好听的名字！点击\"导入/ 导出角色\"可以保存这个角色，点击\"打印角色卡\"可以导出为PDF。",
         validation: () => true,

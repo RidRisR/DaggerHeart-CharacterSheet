@@ -3,7 +3,7 @@ import { CARD_CLASS_OPTIONS, CardType, type StandardCard } from "@/data/card/car
 
 // 定义职业卡牌的可用名称
 export const PROFESSION_CARD_NAMES = [
-  "吟游诗人", "德鲁伊", "守护者", "游侠", "盗贼", "神使", "术士", "战士", "法师"
+  "吟游诗人", "德鲁伊", "守护者", "游侠", "游荡者", "神使", "术士", "战士", "法师"
 ] as const;
 
 // 职业卡牌类型

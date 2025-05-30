@@ -30,7 +30,7 @@ export const guideSteps: GuideStep[] = [
             );
             const professionClass = professionCard?.class || "未知职业";
             const professionHint = professionCard?.hint || "";
-            return `您选择的职业是：<strong>${professionClass}</strong> \\n${professionHint}\\n请问您确定吗,您可以尝试切换其他职业，点击下一步按钮继续。`;
+            return `您选择的职业是：<strong>${professionClass}</strong> \n${professionHint}\n请问您确定吗,您可以尝试切换其他职业，点击下一步按钮继续。`;
         },
         validation: (formData, allCards) => { // allCards might be unused
             return isFilled(formData.profession);
@@ -49,7 +49,7 @@ export const guideSteps: GuideStep[] = [
             );
             const subclassName = subclassCard?.headerDisplay || "未知子职业";
             const subclassSpell = subclassCard?.cardSelectDisplay?.item3 || "未知施法属性";
-            return `您选择的子职业是：<strong>${subclassName}</strong> \\n选定子职业的同时，您也决定了角色的施法属性，${subclassName}的施法属性是:<strong>${subclassSpell}</strong>\\n\\n请问您确定吗,您可以尝试切换其他子职业，点击下一步按钮继续。`;
+            return `您选择的子职业是：<strong>${subclassName}</strong> \n选定子职业的同时，您也决定了角色的施法属性，${subclassName}的施法属性是:<strong>${subclassSpell}</strong>\n\n请问您确定吗,您可以尝试切换其他子职业，点击下一步按钮继续。`;
         },
         validation: (formData, allCards) => { // allCards might be unused
             return isFilled(formData.subclass);
@@ -80,7 +80,7 @@ export const guideSteps: GuideStep[] = [
             let ancestry2Class = ancestry2Card?.class || "未知血统";
             let ancestry1Hint = ancestry1Card?.hint || "";
             let ancestry2Hint = ancestry2Card?.hint || "";
-            return `您选择的血统是：${ancestry1Class} 和 ${ancestry2Class} \\n请问您确定吗,您可以尝试切换血统，点击下一步按钮继续。`;
+            return `您选择的血统是：${ancestry1Class} 和 ${ancestry2Class} \n请问您确定吗,您可以尝试切换血统，点击下一步按钮继续。`;
         },
         validation: (formData, allCards = []) => { // allCards might be unused
             return isFilled(formData.ancestry1) && isFilled(formData.ancestry2);
@@ -127,7 +127,7 @@ export const guideSteps: GuideStep[] = [
                         : "未知";
                 }
             }
-            return `现在记录角色的基础数据：\\n在角色表顶部的指定位置记录您的等级。现在请将等级记录为 <strong>1级</strong>。\\n闪避值代表您角色避免伤害的能力。您角色的起始闪避值由其职业决定。<strong>您的初始闪避是 ${evasion}</strong>。\\n生命值 (HP) 是您身体健康的抽象衡量标准，您的起始最大生命值由职业决定。<strong>您的初始最大生命值是 ${hp}</strong>。`;
+            return `现在记录角色的基础数据：\n在角色表顶部的指定位置记录您的等级。现在请将等级记录为 <strong>1级</strong>。\n闪避值代表您角色避免伤害的能力。您角色的起始闪避值由其职业决定。<strong>您的初始闪避是 ${evasion}</strong>。\n生命值 (HP) 是您身体健康的抽象衡量标准，您的起始最大生命值由职业决定。<strong>您的初始最大生命值是 ${hp}</strong>。`;
         },
         validation: (formData, allCards) => { // allCards might be unused
             if (!formData) return false;
@@ -242,7 +242,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
 
-            return `将以下物品添加到角色表的\\"物品栏\\"字段中： \\n1.一支火把、50 英尺长的绳索、基本补给品。 \\n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\\n3.职业特殊起始物品：<strong>${startingItems} </strong> \\n4. 其他GM批准您携带的物品。\\n5. 在角色卡左下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
+            return `将以下物品添加到角色表的\\"物品栏\\"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡左下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
         },
         validation: () => true,
     },
@@ -273,7 +273,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
 
-            return `现在点击任意一个空白的卡组位置，为您的角色选择:\\n两张1级<strong>领域卡</strong>。您可以选择的两个领域是<strong>${domain1}</strong>和<strong>${domain2}</strong>。`;
+            return `现在点击任意一个空白的卡组位置，为您的角色选择:\n两张1级<strong>领域卡</strong>。您可以选择的两个领域是<strong>${domain1}</strong>和<strong>${domain2}</strong>。`;
         },
         validation: (formData) => {
             if (!formData || !formData.cards || !Array.isArray(formData.cards)) {

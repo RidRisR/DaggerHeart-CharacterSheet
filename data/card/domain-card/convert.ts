@@ -4,21 +4,15 @@
  */
 
 import { v4 as uuidv4 } from "uuid"
-import { CARD_CLASS_OPTIONS, CardType, type StandardCard } from "@/data/card/card-types"
+import { CardType, type StandardCard } from "@/data/card/card-types"
+import { DomainClass } from "../card-predefined-field"
 
-// 定义领域卡牌的可用名称
-export const DOMAIN_CARD_NAMES = [
-  "奥术", "利刃", "骸骨", "典籍", "优雅", "午夜", "贤者", "辉耀", "勇气"
-] as const;
-
-// 领域卡牌类型
-export type DomainCardClass = typeof DOMAIN_CARD_NAMES[number];
 
 // 领域卡牌数据结构
 export interface DomainCard {
   ID: string
   名称: string
-  领域: DomainCardClass
+  领域: DomainClass
   描述: string
   imageUrl?: string
   等级: number

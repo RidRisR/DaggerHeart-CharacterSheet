@@ -1,8 +1,10 @@
-import { COMMUNITY_CARD_NAMES } from "@/data/card/community-card/convert";
-import { DOMAIN_CARD_NAMES } from "@/data/card/domain-card/convert";
-import { ANCESTRY_CARD_NAMES } from "@/data/card/ancestry-card/convert";
-import { PROFESSION_CARD_NAMES } from "@/data/card/profession-card/convert";
-import { SUBCLASS_CARD_NAMES } from "@/data/card/subclass-card/convert";
+import {
+  PROFESSION_CARD_NAMES,
+  ANCESTRY_CARD_NAMES,
+  COMMUNITY_CARD_NAMES,
+  SUBCLASS_CARD_NAMES,
+  DOMAIN_CARD_NAMES
+} from "@/data/card/card-predefined-field";
 
 export interface StandardCard {
   standarized: boolean

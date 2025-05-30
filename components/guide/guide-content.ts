@@ -195,7 +195,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
 
-            return `压力反映了您承受危险情境的精神和情感压力以及身体消耗的能力。每个PC开始时有<strong>6个压力栏位</strong>。\\n希望是一种元货币，可以用于激活经历或者帮助队友。不同职业会有专属的希望特性,可以在希望槽下方查看。${professionName}的希望特性是：\\n<strong>${hopeFeature}</strong>\\n\\n所有角色开始游戏时有2点希望。`;
+            return `压力反映了您承受危险情境的精神和情感压力以及身体消耗的能力。每个PC开始时有<strong>6个压力栏位</strong>。\n希望是一种元货币，可以用于激活经历或者帮助队友。不同职业会有专属的希望特性,可以在希望槽下方查看。${professionName}的希望特性是：\n<strong>${hopeFeature}</strong>\n\n所有角色开始游戏时有2点希望。`;
         },
         validation: (formData) => {
             return true;
@@ -261,7 +261,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
 
-            return `将以下物品添加到角色表的\\"物品栏\\"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡左下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
+            return `将以下物品添加到角色表的\"物品栏\"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡左下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
         },
         validation: () => true,
     },
@@ -337,7 +337,7 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step14",
         title: "完成创建",
-        content: "恭喜您，您的角色卡已经创建完成。别忘了取一个好听的名字！点击\"导入/ 导出角色\"可以保存这个角色，点击\"打印角色卡\"可以导出为PDF。",
+        content: "恭喜您，您的角色卡已经创建完成。别忘了取一个好听的名字！点击\"存档与重置\"可以保存这个角色，点击\"导出PDF\"可以导出为PDF。",
         validation: () => true,
     },
 ]

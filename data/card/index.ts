@@ -19,17 +19,13 @@ import { domainCards } from "@/data/card/domain-card/cards" // 导入领域卡�
 
 // 导入UI配置
 import {
-  ALL_CARD_TYPES,
-  CARD_CLASS_OPTIONS,
   CARD_CLASS_OPTIONS_BY_TYPE,
-  CARD_LEVEL_OPTIONS, // Updated import
   getCardTypeName,
   getLevelOptions,
 } from "@/data/card/card-ui-config"
 
 // 导入类型定义
-import type { StandardCard } from "@/data/card/card-types"
-import { CardType } from "@/data/card/card-types"; // Import the new CardType enum
+import { ALL_CARD_TYPES, CARD_CLASS_OPTIONS, CARD_LEVEL_OPTIONS, CardType, StandardCard } from "@/data/card/card-types"
 import { convertToStandardCard } from "@/data/card/card-converter"
 // Import CardManager directly from the file
 import { CardManager } from "./card-manager"

@@ -1,25 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
-import { CardType, type StandardCard } from "@/data/card/card-types";
+import { CARD_CLASS_OPTIONS, CardType, type StandardCard } from "@/data/card/card-types";
 // 血统卡牌类型
-export type AncestryCardClass =
-  | "械灵"
-  | "恶魔"
-  | "龙人"
-  | "矮人"
-  | "精灵"
-  | "仙灵"
-  | "羊蹄人"
-  | "费尔伯格"
-  | "孢菌人"
-  | "龟人"
-  | "巨人"
-  | "哥布林"
-  | "半身人"
-  | "人类"
-  | "猫人"
-  | "兽人"
-  | "蛙裔"
-  | "猿人";
+export type AncestryCardClass = typeof CARD_CLASS_OPTIONS.ancestry[number];
 
 export interface AncestryCard {
   id: string;

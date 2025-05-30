@@ -3,12 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react" // Added useState
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {
-  ALL_CARD_TYPES,
   CARD_CLASS_OPTIONS_BY_TYPE,
   getLevelOptions,
 } from "@/data/card/card-ui-config"
 import { getStandardCardsByType, CardType } from "@/data/card"; // Add this import
-import { StandardCard } from "@/data/card/card-types"
+import { StandardCard, ALL_CARD_TYPES } from "@/data/card/card-types"
 import { createEmptyCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -80,7 +79,7 @@ export function CardSelectionModal({
   }, [activeTab]);
 
   const levelOptions = useMemo(() => {
-    return getLevelOptions(activeTab)
+    return getLevelOptions(activeTab as CardType)
   }, [activeTab]);
 
   const cardsForActiveTab = useMemo(() => {

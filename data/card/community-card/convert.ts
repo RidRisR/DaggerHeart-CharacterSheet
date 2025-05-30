@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from "uuid"
-import { CardType, type StandardCard } from "@/data/card/card-types"
+import { CARD_CLASS_OPTIONS, CardType, type StandardCard } from "@/data/card/card-types"
 
 // 社群卡牌类型
-export type CommunityCardClass = "高贵之民" | "学识之民" | "秩序之民" | "山脊之民" | "海滨之民" | "狡诈之民" | "地下之民" | "流浪之民" | "荒野之民"
+export type CommunityCardClass = typeof CARD_CLASS_OPTIONS.community[number];
 
 // 社群卡牌数据结构
 export interface CommunityCard {

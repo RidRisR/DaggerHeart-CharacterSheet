@@ -4,10 +4,10 @@
  */
 
 import { v4 as uuidv4 } from "uuid"
-import { CardType, type StandardCard } from "@/data/card/card-types"
+import { CARD_CLASS_OPTIONS, CardType, type StandardCard } from "@/data/card/card-types"
 
 // 领域卡牌类型
-export type DomainCardClass = "奥术" | "利刃" | "骸骨" | "典籍" | "优雅" | "午夜" | "贤者" | "辉耀" | "勇气"
+export type DomainCardClass = typeof CARD_CLASS_OPTIONS.domain[number];
 
 // 领域卡牌数据结构
 export interface DomainCard {

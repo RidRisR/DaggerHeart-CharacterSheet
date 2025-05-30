@@ -3,74 +3,32 @@
  * 用于定义卡牌UI相关的配置和辅助函数
  */
 
-// 所有卡牌类型
-export const ALL_CARD_TYPES = [
-  { id: "profession", name: "职业" },
-  { id: "ancestry", name: "血统" },
-  { id: "community", name: "社区" },
-  { id: "subclass", name: "子职业" },
-  { id: "domain", name: "领域" }, // 添加领域卡牌类型
-]
-
-// 特殊卡牌位置
-export const SPECIAL_CARD_POSITIONS = ["profession", "ancestry", "community"]
-
-// 卡牌类别选项
-export const CARD_CLASS_OPTIONS = {
-  profession: ["吟游诗人", "德鲁伊", "守护者", "游侠", "盗贼", "神使", "术士", "战士", "法师"],
-  ancestry: ["械灵", "恶魔", "龙人", "矮人", "精灵", "仙灵", "羊蹄人", "费尔伯格", "孢菌人", "龟人", "巨人", "哥布林", "半身人", "人类", "猫人", "兽人", "蛙裔", "猿人"],
-  community: ["高贵之民", "学识之民", "秩序之民", "山脊之民", "海滨之民", "狡诈之民", "地下之民", "流浪之民", "荒野之民"],
-  subclass: ["吟游诗人", "德鲁伊", "守护者", "游侠", "盗贼", "神使", "术士", "战士", "法师"],
-  domain: ["奥术", "利刃", "骸骨", "典籍", "优雅", "午夜", "贤者", "辉耀", "勇气"],
-}
+import { ALL_CARD_TYPES, CARD_CLASS_OPTIONS, CARD_LEVEL_OPTIONS, CardType } from "./card-types";
 
 // 按类型分组的卡牌类别选项
 export const CARD_CLASS_OPTIONS_BY_TYPE = {
-  profession: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.profession.map(value => ({ value, label: value }))],
-  ancestry: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.ancestry.map(value => ({ value, label: value }))],
-  community: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.community.map(value => ({ value, label: value }))],
-  subclass: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.subclass.map(value => ({ value, label: value }))],
-  domain: [{ value: "all", label: "全部" }, ...CARD_CLASS_OPTIONS.domain.map(value => ({ value, label: value }))]
+  [CardType.Profession]: [...CARD_CLASS_OPTIONS.profession.map(value => ({ value, label: value }))],
+  [CardType.Ancestry]: [...CARD_CLASS_OPTIONS.ancestry.map(value => ({ value, label: value }))],
+  [CardType.Community]: [...CARD_CLASS_OPTIONS.community.map(value => ({ value, label: value }))],
+  [CardType.Subclass]: [...CARD_CLASS_OPTIONS.subclass.map(value => ({ value, label: value }))],
+  [CardType.Domain]: [...CARD_CLASS_OPTIONS.domain.map(value => ({ value, label: value }))]
 }
 
-// 等级选项
-export const LEVEL_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+// Define a dictionary for level options by type with display names
+export const CARD_LEVEL_OPTIONS_BY_TYPE = {
+  [CardType.Profession]: [],
+  [CardType.Ancestry]: [],
+  [CardType.Community]: [...CARD_LEVEL_OPTIONS.ancestry.map((label, index) => ({ value: (index + 1).toString(), label }))],
+  [CardType.Subclass]: [...CARD_LEVEL_OPTIONS.subclass.map((label, index) => ({ value: (index + 1).toString(), label }))],
+  [CardType.Domain]: [...CARD_LEVEL_OPTIONS.domain.map((label, index) => ({ value: (index + 1).toString(), label }))],
+};
 
 // 获取卡牌类型名称
-export function getCardTypeName(typeId: string): string {
-  const type = ALL_CARD_TYPES.find((t) => t.id === typeId)
-  return type ? type.name : typeId
-}
-
-// 获取卡牌类型颜色
-export function getCardTypeColor(typeId: string): string {
-  return "gray-500"
-}
-
-// 获取卡牌类别选项
-export function getCardClassOptions(typeId: string): string[] {
-  return CARD_CLASS_OPTIONS[typeId as keyof typeof CARD_CLASS_OPTIONS] || []
+export function getCardTypeName(typeId: CardType): string {
+  return ALL_CARD_TYPES.get(typeId) || "未知类型";
 }
 
 // 获取等级选项
-export function getLevelOptions(): string[] {
-  return LEVEL_OPTIONS
-}
-
-// 获取等级名称
-export function getLevelName(level: number): string {
-  return `LV.${level}`
-}
-
-// 检查是否是特殊卡牌位置
-export function isSpecialCardPosition(position: string): boolean {
-  return SPECIAL_CARD_POSITIONS.includes(position)
-}
-
-// 获取允许的卡牌类型
-export function getAllowedCardTypeForPosition(position: string): string {
-  if (isSpecialCardPosition(position)) {
-    return position
-  }
-  return "any"
+export function getLevelOptions(typeId: CardType): { value: string; label: string }[] {
+  return CARD_LEVEL_OPTIONS_BY_TYPE[typeId as keyof typeof CARD_LEVEL_OPTIONS_BY_TYPE] || [];
 }

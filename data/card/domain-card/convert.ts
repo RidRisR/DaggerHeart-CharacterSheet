@@ -4,16 +4,15 @@
  */
 
 import { v4 as uuidv4 } from "uuid"
-import type { StandardCard } from "@/data/card/card-types"
+import { CardType, type StandardCard } from "@/data/card/card-types"
+import { DomainClass } from "../card-predefined-field"
 
-// 领域卡牌类型
-export type DomainCardClass = "奥术" | "利刃" | "骸骨" | "典籍" | "优雅" | "午夜" | "贤者" | "辉耀" | "勇气"
 
 // 领域卡牌数据结构
 export interface DomainCard {
   ID: string
   名称: string
-  领域: DomainCardClass
+  领域: DomainClass
   描述: string
   imageUrl?: string
   等级: number
@@ -29,7 +28,7 @@ class DomainCardConverter {
       standarized: true,
       id: card.ID || uuidv4(),
       name: card.名称 || "",
-      type: "domain",
+      type: CardType.Domain,
       description: card.描述 || "",
       imageUrl: "",
       class: card.领域,

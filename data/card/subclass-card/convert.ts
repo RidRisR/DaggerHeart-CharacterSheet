@@ -1,9 +1,6 @@
 import { v4 as uuidv4 } from "uuid"
-import type { StandardCard } from "@/data/card/card-types"
-
-// 领域卡牌类型
-export type SubClassClass = "吟游诗人" | "德鲁伊" | "守护者" | "游侠" | "盗贼" | "神使" | "术士" | "战士" | "法师"
-
+import { CardType, type StandardCard } from "@/data/card/card-types"
+import { SubClassClass } from "../card-predefined-field"
 // 领域卡牌数据结构
 export interface SubClassCard {
   id: string
@@ -13,7 +10,7 @@ export interface SubClassCard {
   主职: SubClassClass
   子职业: string
   等级: string
-  施法?: string
+  施法: string
 }
 
 class SubClassCardConverter {
@@ -28,7 +25,7 @@ class SubClassCardConverter {
       case "专精":
         levelNum = 2
         break
-      case "精通":
+      case "大师":
         levelNum = 3
         break
       default:
@@ -39,15 +36,16 @@ class SubClassCardConverter {
       standarized: true,
       id: card.id || uuidv4(),
       name: card.名称,
-      type: "subclass",
+      type: CardType.Subclass,
       description: card.描述,
       imageUrl: "",
       class: card.主职,
       level: levelNum,
+      headerDisplay: card.子职业,
       cardSelectDisplay: {
-        item1: card.子职业,
+        item1: card.主职,
         item2: card.等级,
-        item3: card.施法 || "",
+        item3: card.施法,
       },
     }
   }

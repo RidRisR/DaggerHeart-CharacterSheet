@@ -1,3 +1,11 @@
+import {
+  PROFESSION_CARD_NAMES,
+  ANCESTRY_CARD_NAMES,
+  COMMUNITY_CARD_NAMES,
+  SUBCLASS_CARD_NAMES,
+  DOMAIN_CARD_NAMES
+} from "@/data/card/card-predefined-field";
+
 export interface StandardCard {
   standarized: boolean
   id: string
@@ -8,6 +16,7 @@ export interface StandardCard {
   description?: string
   hint?: string
   imageUrl?: string
+  headerDisplay?: string
   cardSelectDisplay: {
     item1?: string
     item2?: string
@@ -22,6 +31,43 @@ export interface StandardCard {
   }
   // ... 其他字段
 }
+
+export enum CardType {
+  Profession = "profession",
+  Ancestry = "ancestry",
+  Community = "community",
+  Subclass = "subclass",
+  Domain = "domain",
+  // Add "all" if it's a valid type for getStandardCardsByType, or handle separately.
+  // For now, assuming it's not directly used with getStandardCardsByType for a filtered list.
+}
+
+// 所有卡牌类型
+export const ALL_CARD_TYPES = new Map<string, string>([
+  [CardType.Profession, "职业"],
+  [CardType.Ancestry, "血统"],
+  [CardType.Community, "社群"],
+  [CardType.Subclass, "子职业"],
+  [CardType.Domain, "领域"], // 添加领域卡牌类型
+]);
+
+// 卡牌类别选项
+export const CARD_CLASS_OPTIONS = {
+  [CardType.Profession]: PROFESSION_CARD_NAMES,
+  [CardType.Ancestry]: ANCESTRY_CARD_NAMES,
+  [CardType.Community]: COMMUNITY_CARD_NAMES,
+  [CardType.Subclass]: SUBCLASS_CARD_NAMES,
+  [CardType.Domain]: DOMAIN_CARD_NAMES,
+}
+
+// 定义不同卡牌类型对应的等级选项
+export const CARD_LEVEL_OPTIONS = {
+  [CardType.Profession]: [],
+  [CardType.Ancestry]: [],
+  [CardType.Community]: ["特性一", "特性二"],
+  [CardType.Subclass]: ["基石", "专精", "大师"],
+  [CardType.Domain]: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+};
 
 export function createEmptyCard(type = "unknown"): StandardCard {
   return {
@@ -47,24 +93,4 @@ export function isEmptyCard(card: any): boolean {
 
   // 检查卡牌是否为空（没有名称或其他关键属性）
   return !card.name || card.name === "" || card.type === "unknown" || card.id === ""
-}
-
-// 添加 isSpecialCardPosition 和 specialCardPositions 的定义
-export const specialCardPositions = {
-  0: { name: "职业卡", type: "profession" },
-  1: { name: "血统卡 1", type: "ancestry" },
-  2: { name: "血统卡 2", type: "ancestry" },
-  3: { name: "社区卡", type: "community" },
-}
-
-// 确保 isSpecialCardPosition 函数只将前4个位置视为特殊卡位
-export function isSpecialCardPosition(index: number): boolean {
-  return index >= 0 && index <= 3
-}
-
-export function getAllowedCardTypeForPosition(index: number): string {
-  if (isSpecialCardPosition(index)) {
-    return specialCardPositions[index as keyof typeof specialCardPositions].type
-  }
-  return ""
 }

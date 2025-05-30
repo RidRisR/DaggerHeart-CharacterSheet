@@ -1,25 +1,9 @@
 import { v4 as uuidv4 } from "uuid";
-import type { StandardCard } from "@/data/card/card-types";
+import { CardType, type StandardCard } from "@/data/card/card-types";
+import { ANCESTRY_CARD_NAMES } from "@/data/card/card-predefined-field";
+
 // 血统卡牌类型
-export type AncestryCardClass =
-  | "械灵"
-  | "恶魔"
-  | "龙人"
-  | "矮人"
-  | "精灵"
-  | "仙灵"
-  | "羊蹄人"
-  | "费尔伯格"
-  | "孢菌人"
-  | "龟人"
-  | "巨人"
-  | "哥布林"
-  | "半身人"
-  | "人类"
-  | "猫人"
-  | "兽人"
-  | "蛙裔"
-  | "猿人";
+export type AncestryCardClass = typeof ANCESTRY_CARD_NAMES[number];
 
 export interface AncestryCard {
   id: string;
@@ -38,12 +22,13 @@ class AncestryCardConverter {
       standarized: true,
       id: rawCard.id || uuidv4(),
       name: rawCard.名称,
-      type: "ancestry",
+      type: CardType.Ancestry,
       description: rawCard.效果,
       hint: rawCard.简介,
       imageUrl: "",
       level: rawCard.类别,
       class: rawCard.种族, // Map 种族 to class
+      headerDisplay: rawCard.名称,
       cardSelectDisplay: {
         "item1": rawCard.种族,
       },

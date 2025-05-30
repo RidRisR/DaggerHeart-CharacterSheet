@@ -1,7 +1,7 @@
 "use client"
 import React from "react"
-import { isEmptyCard, StandardCard } from "@/data/card/card-types"
-import { ALL_CARD_TYPES } from "@/data/card/card-ui-config"
+import { CardType, isEmptyCard, StandardCard } from "@/data/card/card-types"
+import { getCardTypeName } from "@/data/card/card-ui-config"
 import ReactMarkdown from "react-markdown"
 import type { FormData } from "@/lib/form-data"
 
@@ -20,11 +20,6 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
     });
     const cards: StandardCard[] = Array.from(uniqueCardsMap.values());
 
-    const getTypeName = (type: string) => {
-        const found = ALL_CARD_TYPES.find(t => t.id === type)
-        return found ? found.name : type
-    }
-
     if (!cards.length) {
         return <div className="a4-page text-center text-gray-500">没有已加入的卡牌</div>
     }
@@ -37,7 +32,7 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
                     <div key={card.id || idx} className="border rounded p-3 bg-white flex flex-col gap-1 break-inside-avoid shadow-sm">
                         <div className="flex items-center justify-between mb-1">
                             <span className="font-semibold text-base truncate max-w-[60%]">{card.name}</span>
-                            <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-gray-100">{getTypeName(card.type)}</span>
+                            <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-gray-100">{getCardTypeName(card.type as CardType)}</span>
                         </div>
                         {card.cardSelectDisplay && (card.cardSelectDisplay.item1 || card.cardSelectDisplay.item2 || card.cardSelectDisplay.item3) && (
                             <div className="flex flex-row gap-2 text-xs text-blue-700 font-mono mb-1">
@@ -57,7 +52,7 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
                                         li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
                                     }}
                                 >
-                                    {card.description.replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
+                                    {card.description}
                                 </ReactMarkdown>
                             </div>
                         )}

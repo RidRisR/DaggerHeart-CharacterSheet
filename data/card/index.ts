@@ -19,22 +19,13 @@ import { domainCards } from "@/data/card/domain-card/cards" // 导入领域卡�
 
 // 导入UI配置
 import {
-  ALL_CARD_TYPES,
-  SPECIAL_CARD_POSITIONS,
-  CARD_CLASS_OPTIONS,
   CARD_CLASS_OPTIONS_BY_TYPE,
-  LEVEL_OPTIONS,
   getCardTypeName,
-  getCardTypeColor,
-  getCardClassOptions,
   getLevelOptions,
-  getLevelName,
-  isSpecialCardPosition,
-  getAllowedCardTypeForPosition,
 } from "@/data/card/card-ui-config"
 
 // 导入类型定义
-import type { StandardCard } from "@/data/card/card-types"
+import { ALL_CARD_TYPES, CARD_CLASS_OPTIONS, CARD_LEVEL_OPTIONS, CardType, StandardCard } from "@/data/card/card-types"
 import { convertToStandardCard } from "@/data/card/card-converter"
 // Import CardManager directly from the file
 import { CardManager } from "./card-manager"
@@ -110,16 +101,16 @@ export const ALL_STANDARD_CARDS: StandardCard[] = (() => {
 
 // 按类型分组的标准格式卡牌
 export const STANDARD_CARDS_BY_TYPE: Record<string, StandardCard[]> = (() => {
-  const result: Record<string, StandardCard[]> = {}
+  const result: Record<string, StandardCard[]> = {};
 
-  for (const tab of ALL_CARD_TYPES) {
-    if (tab.id !== "all") {
-      result[tab.id] = ALL_STANDARD_CARDS.filter((card) => card.type === tab.id)
-      console.log(`[STANDARD_CARDS_BY_TYPE] ${tab.id}类型卡牌数量: ${result[tab.id].length}`)
+  for (const [id, name] of ALL_CARD_TYPES.entries()) {
+    if (id !== "all") {
+      result[id] = ALL_STANDARD_CARDS.filter((card) => card.type === id);
+      console.log(`[STANDARD_CARDS_BY_TYPE] ${name}类型卡牌数量: ${result[id].length}`);
     }
   }
 
-  return result
+  return result;
 })()
 
 // 获取所有标准格式卡牌
@@ -128,7 +119,7 @@ export function getAllStandardCards(): StandardCard[] {
 }
 
 // 根据类型获取标准格式卡牌
-export function getStandardCardsByType(typeId: string): StandardCard[] {
+export function getStandardCardsByType(typeId: CardType): StandardCard[] {
   return STANDARD_CARDS_BY_TYPE[typeId] || []
 }
 
@@ -139,22 +130,17 @@ export const getCardsByType = getStandardCardsByType
 export {
   // UI配置
   ALL_CARD_TYPES,
-  SPECIAL_CARD_POSITIONS,
   CARD_CLASS_OPTIONS,
   CARD_CLASS_OPTIONS_BY_TYPE,
-  LEVEL_OPTIONS,
+  CARD_LEVEL_OPTIONS, // Updated export
   // UI辅助函数
   getCardTypeName,
-  getCardTypeColor,
-  getCardClassOptions,
   getLevelOptions,
-  getLevelName,
-  isSpecialCardPosition,
-  getAllowedCardTypeForPosition,
   // 卡牌转换
   convertToStandardCard,
   // 卡牌注册
   cardManager,
   // Re-export CardManager
   CardManager,
+  CardType, // Export the CardType enum
 }

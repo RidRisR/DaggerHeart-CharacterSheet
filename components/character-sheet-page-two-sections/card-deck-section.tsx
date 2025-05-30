@@ -1,20 +1,163 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, memo } from "react"
 import { getCardTypeName, convertToStandardCard } from "@/data/card"
-import { createEmptyCard, isEmptyCard, specialCardPositions, StandardCard } from "@/data/card/card-types"
+import { CardType, createEmptyCard, StandardCard } from "@/data/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { saveFocusedCardIds, loadFocusedCardIds } from "@/lib/storage" // Import storage functions
 import { SelectableCard } from "@/components/ui/selectable-card"
 import type { FormData } from "@/lib/form-data"
+import type { CSSProperties, MouseEvent } from "react";
 
 interface CardDeckSectionProps {
   formData: FormData
   onCardChange: (index: number, card: StandardCard) => void
+  cardModalActiveTab: string;
+  setCardModalActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  cardModalSearchTerm: string;
+  setCardModalSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+  cardModalSelectedClasses: string[];
+  setCardModalSelectedClasses: React.Dispatch<React.SetStateAction<string[]>>;
+  cardModalSelectedLevels: string[];
+  setCardModalSelectedLevels: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps) {
+// Utility function for border color
+const getBorderColor = (type?: string, isSpecial = false): string => {
+  if (isSpecial) return "border-yellow-400";
+  return "border-gray-300";
+};
+
+// Utility function for special slot label
+const getSpecialSlotLabel = (index: number): string => {
+  switch (index) {
+    case 0:
+      return "职业卡";
+    case 1:
+      return "子职业卡";
+    case 2:
+      return "血统卡一";
+    case 3:
+      return "血统卡二";
+    case 4:
+      return "社群卡";
+    default:
+      return "普通卡";
+  }
+};
+
+interface CardProps {
+  card: StandardCard;
+  index: number;
+  isSelected: boolean;
+  isSpecial: boolean;
+  onCardClick: (index: number) => void;
+  onCardRightClick: (index: number, e: MouseEvent<HTMLDivElement>) => void;
+  onHover: (index: number | null) => void;
+  getPreviewPosition: (index: number) => CSSProperties;
+  hoveredCard: number | null;
+}
+
+function Card({
+  card,
+  index,
+  isSelected,
+  isSpecial,
+  onCardClick,
+  onCardRightClick,
+  onHover,
+  getPreviewPosition,
+  hoveredCard,
+}: CardProps) {
+  const standardCard = convertToStandardCard(card);
+
+  return (
+    <div
+      className={`relative cursor-pointer transition-colors rounded-md p-1 h-16 ${isSelected ? "border-3" : "border"
+        } ${getBorderColor(standardCard?.type, isSpecial)}`}
+      onClick={() => onCardClick(index)}
+      onContextMenu={(e) => onCardRightClick(index, e)}
+      onMouseEnter={() => card?.name && onHover(index)}
+      onMouseLeave={() => onHover(null)}
+    >
+      {/* 卡牌标题 */}
+      {card?.name && <div className="text-sm font-medium">{standardCard?.name || card.name}</div>}
+
+      {/* 分隔线 */}
+      <div className="h-px bg-gray-300 w-full my-0.5"></div>
+
+      {/* 卡牌底部信息 */}
+      {card?.name && (
+        <div className="flex justify-between items-center text-xs text-gray-500">
+          <span className="truncate max-w-[33%]">
+            {standardCard?.cardSelectDisplay?.item1 || ""}
+          </span>
+          <span className="truncate max-w-[33%]">{standardCard?.cardSelectDisplay?.item2 || ""}</span>
+          <span className="truncate max-w-[33%]">{standardCard?.cardSelectDisplay?.item3 || ""}</span>
+        </div>
+      )}
+
+      {/* 特殊卡位标签 */}
+      {isSpecial && (
+        <div className="absolute -top-4 left-0 right-0 text-center">
+          <span className="text-[10px] font-medium bg-yellow-100 px-1 py-0 rounded-t-sm border border-yellow-300 border-b-0">
+            {getSpecialSlotLabel(index)}
+          </span>
+        </div>
+      )}
+
+      {/* 卡牌类型标签 */}
+      {!isSpecial && card?.name && standardCard?.type && (
+        <div className="absolute -top-4 left-0 right-0 text-center">
+          <span
+            className={`text-[10px] font-medium px-1 py-0 rounded-t-sm border border-b-0 ${standardCard.type.includes("ancestry")
+                ? "bg-gray-100 border-gray-300"
+                : standardCard.type.includes("community")
+                  ? "bg-teal-100 border-teal-300"
+                  : standardCard.type.includes("profession")
+                    ? "bg-blue-100 border-blue-300"
+                    : standardCard.type.includes("subclass")
+                      ? "bg-purple-100 border-purple-300"
+                      : "bg-red-100 border-red-300"
+              }`}
+          >
+            {getCardTypeName(standardCard.type as CardType)}
+          </span>
+        </div>
+      )}
+
+      {/* Hover preview */}
+      {hoveredCard === index && card?.name && (
+        <div
+          className="absolute z-50"
+          style={getPreviewPosition(index)}
+        >
+          <SelectableCard
+            card={standardCard}
+            onClick={() => { }}
+            isSelected={isSelected}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const MemoizedCard = memo(Card);
+
+export function CardDeckSection({
+  formData,
+  onCardChange,
+  cardModalActiveTab,
+  setCardModalActiveTab,
+  cardModalSearchTerm,
+  setCardModalSearchTerm,
+  cardModalSelectedClasses,
+  setCardModalSelectedClasses,
+  cardModalSelectedLevels,
+  setCardModalSelectedLevels,
+}: CardDeckSectionProps) {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
   const [selectedCards, setSelectedCards] = useState<number[]>([])
   const [isAltPressed, setIsAltPressed] = useState(false)
@@ -71,29 +214,7 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
 
   // 检查是否是特殊卡位（前四个位置）
   const isSpecialSlot = (index: number): boolean => {
-    return index < 4
-  }
-
-  // 获取特殊卡位的标签
-  const getSpecialSlotLabel = (index: number): string => {
-    switch (index) {
-      case 0:
-        return "职业卡"
-      case 1:
-        return "血统卡 1"
-      case 2:
-        return "血统卡 2"
-      case 3:
-        return "社区卡"
-      default:
-        return ""
-    }
-  }
-
-  // 获取卡牌类型的边框颜色
-  const getBorderColor = (type?: string, isSpecial = false) => {
-    if (isSpecial) return "border-yellow-400"
-    return "border-gray-300"
+    return index < 5; // 更新逻辑支持前五个位置
   }
 
   // 处理卡牌右键点击事件
@@ -166,119 +287,28 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
       <div className="grid grid-cols-4 gap-1">
         {cards &&
           Array.isArray(cards) &&
-          cards.map((card: any, index: number) => {
-            // 确保卡牌对象存在
+          cards.map((card: StandardCard, index: number) => {
             if (!card) {
-              card = createEmptyCard()
+              card = createEmptyCard();
             }
 
-            const isSpecial = index < 4 // 确保前四张卡都被识别为特殊卡
-            const isSelected = selectedCards.includes(index)
-
-            // 安全地转换为标准格式
-            let standardCard
-
-            try {
-              if (isEmptyCard(card)) {
-                // 为空卡牌添加默认类型
-                const defaultType = isSpecial
-                  ? specialCardPositions[index as keyof typeof specialCardPositions]?.type || "unknown"
-                  : "unknown"
-                standardCard = createEmptyCard(defaultType)
-              } else {
-                standardCard = convertToStandardCard(card)
-              }
-            } catch (error) {
-              console.error(`处理卡牌 ${index} 时出错:`, error)
-              console.error(`问题卡牌数据:`, card)
-              // 为错误卡牌添加默认类型
-              const defaultType = isSpecial
-                ? specialCardPositions[index as keyof typeof specialCardPositions]?.type || "unknown"
-                : "unknown"
-              standardCard = createEmptyCard(defaultType)
-            }
+            const isSpecial = index < 5;
+            const isSelected = selectedCards.includes(index);
 
             return (
-              <div
+              <MemoizedCard
                 key={`card-${index}`}
-                ref={(el) => { cardRefs.current[index] = el }}
-                className={`relative cursor-pointer transition-colors rounded-md p-1 h-16 ${
-                  isSelected ? "border-3" : "border"
-                  } ${getBorderColor(standardCard?.type, isSpecial)}`}
-                onClick={() => handleCardClick(index)}
-                onContextMenu={(e) => handleCardRightClick(index, e)}
-                onMouseEnter={() => card?.name && setHoveredCard(index)}
-                onMouseLeave={() => {
-                  setHoveredCard(null)
-                  setIsAltPressed(false)
-                }}
-              >
-                {/* 卡牌标题 */}
-                {card?.name && <div className="text-sm font-medium">{standardCard?.name || card.name}</div>}
-
-                {/* 分隔线 */}
-                <div className="h-px bg-gray-300 w-full my-0.5"></div>
-
-                {/* 卡牌底部信息 */}
-                {card?.name && (
-                  <div className="flex justify-between items-center text-xs text-gray-500">
-                    <span className="truncate max-w-[33%]">
-                      {standardCard?.cardSelectDisplay?.item1 || "——"}
-                    </span>
-                    <span className="truncate max-w-[33%]">{standardCard?.cardSelectDisplay?.item2 || "——"}</span>
-                    <span className="truncate max-w-[33%]">{standardCard?.cardSelectDisplay?.item3 || "——"}</span>
-                  </div>
-                )}
-
-                {/* 特殊卡位标签 */}
-                {isSpecialSlot(index) && (
-                  <div className="absolute -top-4 left-0 right-0 text-center">
-                    <span className="text-[10px] font-medium bg-yellow-100 px-1 py-0 rounded-t-sm border border-yellow-300 border-b-0">
-                      {getSpecialSlotLabel(index)}
-                    </span>
-                  </div>
-                )}
-
-                {/* 卡牌类型标签 */}
-                {!isSpecialSlot(index) && card?.name && standardCard?.type && (
-                  <div className="absolute -top-4 left-0 right-0 text-center">
-                    <span
-                      className={`text-[10px] font-medium px-1 py-0 rounded-t-sm border border-b-0 ${
-                        standardCard.type.includes("ancestry")
-                          ? "bg-green-100 border-green-300"
-                        : standardCard.type.includes("attack")
-                            ? "bg-red-100 border-red-300"
-                          : standardCard.type.includes("defense")
-                              ? "bg-blue-100 border-blue-300"
-                            : standardCard.type.includes("community")
-                                ? "bg-teal-100 border-teal-300"
-                              : standardCard.type.includes("profession")
-                                  ? "bg-yellow-100 border-yellow-300"
-                                : standardCard.type.includes("subclass")
-                                    ? "bg-purple-100 border-purple-300"
-                                    : "bg-gray-100 border-gray-300"
-                      }`}
-                    >
-                      {getCardTypeName(standardCard.type)}
-                    </span>
-                  </div>
-                )}
-
-                {/* Hover preview: 替换为 SelectableCard */}
-                {hoveredCard === index && card?.name && (
-                  <div
-                    className="absolute z-50"
-                    style={getPreviewPosition(index)}
-                  >
-                    <SelectableCard
-                      card={standardCard}
-                      onClick={() => { }}
-                      isSelected={isSelected}
-                    />
-                  </div>
-                )}
-              </div>
-            )
+                card={card}
+                index={index}
+                isSelected={isSelected}
+                isSpecial={isSpecial}
+                onCardClick={handleCardClick}
+                onCardRightClick={handleCardRightClick}
+                onHover={setHoveredCard}
+                getPreviewPosition={getPreviewPosition}
+                hoveredCard={hoveredCard}
+              />
+            );
           })}
       </div>
 
@@ -289,6 +319,15 @@ export function CardDeckSection({ formData, onCardChange }: CardDeckSectionProps
           onClose={() => setCardSelectionModalOpen(false)}
           onSelect={handleCardSelect}
           selectedCardIndex={selectedCardIndex}
+          // Pass down the lifted state and setters
+          activeTab={cardModalActiveTab}
+          setActiveTab={setCardModalActiveTab}
+          searchTerm={cardModalSearchTerm}
+          setSearchTerm={setCardModalSearchTerm}
+          selectedClasses={cardModalSelectedClasses}
+          setSelectedClasses={setCardModalSelectedClasses}
+          selectedLevels={cardModalSelectedLevels}
+          setSelectedLevels={setCardModalSelectedLevels}
         />
       )}
 

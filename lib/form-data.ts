@@ -31,6 +31,8 @@ export interface FormData {
   ancestry2?: string
   profession: string
   community: string
+  subclass?: string
+  evasion?: string
   agility?: AttributeValue
   strength?: AttributeValue
   finesse?: AttributeValue
@@ -85,7 +87,6 @@ export interface FormData {
   inventoryWeapon2Feature?: string
   inventoryWeapon2Primary?: boolean
   inventoryWeapon2Secondary?: boolean
-  // ===== 新增：补充组件实际引用但未定义的字段 =====
   // 伙伴相关
   companionImage?: string
   companionDescription?: string
@@ -93,9 +94,6 @@ export interface FormData {
   companionStress?: boolean[]
   companionEvasion?: string
   companionStressMax?: number
-  // 其他页面引用但未定义字段
-  evasion?: string
-  subclass?: string
   // ===== 伙伴基础信息（page-three） =====
   companionName?: string // 伙伴名称
   companionWeapon?: string // 伙伴武器/攻击方式

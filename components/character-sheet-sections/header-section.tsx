@@ -2,7 +2,10 @@
 
 import type React from "react"
 import type { FormData } from "@/lib/form-data"
-import { ALL_STANDARD_CARDS } from "@/data/card"
+import {
+  getStandardCardsByType,
+  CardType, // Import CardType
+} from "@/data/card"
 
 interface HeaderSectionProps {
   formData: FormData
@@ -10,6 +13,7 @@ interface HeaderSectionProps {
   openProfessionModal: () => void
   openAncestryModal: (field: string) => void
   openCommunityModal: () => void
+  openSubclassModal: () => void // 添加openSubclassModal
 }
 
 export function HeaderSection({
@@ -18,7 +22,13 @@ export function HeaderSection({
   openProfessionModal,
   openAncestryModal,
   openCommunityModal,
+  openSubclassModal, // 添加openSubclassModal
 }: HeaderSectionProps) {
+  const professionCards = getStandardCardsByType(CardType.Profession)
+  const ancestryCards = getStandardCardsByType(CardType.Ancestry)
+  const communityCards = getStandardCardsByType(CardType.Community)
+  const subclassCards = getStandardCardsByType(CardType.Subclass)
+
   return (
     <div className="bg-gray-800 text-white p-2 flex justify-between items-center rounded-t-md">
       <div className="flex flex-col">
@@ -30,14 +40,12 @@ export function HeaderSection({
             className="header-selection-button printable-selection-button w-56 bg-white border-gray-400 text-gray-800 text-xl font-bold print:bg-white print:text-black rounded p-1 h-7 text-xs text-left px-2"
           >
             {formData.profession
-              ? ALL_STANDARD_CARDS.find(
-                (card) =>
-                  card.id === formData.profession && card.type === "profession",
-              )?.name || "选择职业"
+              ? professionCards.find(
+                (card) => card.id === formData.profession
+              )?.headerDisplay || "选择职业"
               : "选择职业"}
           </button>
         </div>
-        {/* 删除了subtitle显示 */}
         <div className="text-[9px] mt-1">DAGGERHEART V20250520</div>
       </div>
       <div className="flex flex-col items-center gap-1">
@@ -53,18 +61,17 @@ export function HeaderSection({
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">社区</label>
+            <label className="text-[9px] text-gray-300">社群</label>
             <button
               type="button"
               onClick={openCommunityModal}
               className="header-selection-button printable-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
             >
               {formData.community
-                ? ALL_STANDARD_CARDS.find(
-                  (card) =>
-                    card.id === formData.community && card.type === "community",
-                )?.name || "选择社区"
-                : "选择社区"}
+                ? communityCards.find(
+                  (card) => card.id === formData.community
+                )?.headerDisplay || "选择社群"
+                : "选择社群"}
             </button>
           </div>
         </div>
@@ -78,10 +85,10 @@ export function HeaderSection({
                 className="header-selection-button printable-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
               >
                 {formData.ancestry1
-                  ? ALL_STANDARD_CARDS.find(
+                  ? ancestryCards.find(
                     (card) =>
-                      card.id === formData.ancestry1 && card.type === "ancestry" && card.level === 1,
-                  )?.name || "选择血统"
+                      card.id === formData.ancestry1 && card.level === 1,
+                  )?.headerDisplay || "选择血统"
                   : "选择血统"}
               </button>
               <span className="flex items-center text-white text-xs">+</span>
@@ -91,23 +98,27 @@ export function HeaderSection({
                 className="header-selection-button printable-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
               >
                 {formData.ancestry2
-                  ? ALL_STANDARD_CARDS.find(
+                  ? ancestryCards.find(
                     (card) =>
-                      card.id === formData.ancestry2 && card.type === "ancestry" && card.level === 2,
-                  )?.name || "选择血统"
+                      card.id === formData.ancestry2 && card.level === 2,
+                  )?.headerDisplay || "选择血统"
                   : "选择血统"}
               </button>
             </div>
           </div>
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">性别/年龄/体型</label>
-            <input
-              type="text"
-              name="subclass"
-              value={formData.subclass}
-              onChange={handleInputChange}
-              className="bg-white text-gray-800 border border-gray-400 rounded p-1 focus:outline-none w-40 text-sm print-empty-hide"
-            />
+            <label className="text-[9px] text-gray-300">子职业</label>
+            <button
+              type="button"
+              onClick={openSubclassModal}
+              className="header-selection-button printable-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
+            >
+              {formData.subclass
+                ? subclassCards.find(
+                  (card) => card.id === formData.subclass && card.type === "subclass",
+                )?.headerDisplay || "选择子职业"
+                : "选择子职业"}
+            </button>
           </div>
         </div>
       </div>

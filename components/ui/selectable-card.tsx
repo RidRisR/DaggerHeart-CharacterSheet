@@ -1,8 +1,7 @@
 "use client"
 
-import type { StandardCard } from "@/data/card/card-types"
-import { getCardTypeColor, ALL_CARD_TYPES } from "@/data/card/card-ui-config"
-import { saveSelectedCardIds, loadSelectedCardIds } from "@/lib/storage"
+import type { CardType, StandardCard } from "@/data/card/card-types"
+import { getCardTypeName } from "@/data/card/card-ui-config"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 
@@ -48,34 +47,12 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
     // Prepare derived values for display, handling potential undefined fields and fallbacks
     const displayName = card.name || "未命名卡牌";
     const displayDescription = card.description || "无描述。";
-    const displayType = card.type?.replace(/卡$/, "") || "unknown";
-    const displayImageUrl = card.imageUrl;
 
     // Get display items, providing empty strings as fallbacks
     const displayItem1 = card.cardSelectDisplay?.item1 || "";
     const displayItem2 = card.cardSelectDisplay?.item2 || "";
     const displayItem3 = card.cardSelectDisplay?.item3 || "";
     const displayItem4 = card.cardSelectDisplay?.item4 || "";
-
-    const getTypeName = (type: string) => {
-        const found = ALL_CARD_TYPES.find(t => t.id === type)
-        return found ? found.name : type
-    }
-
-    const getPreviewPosition = (): React.CSSProperties => {
-        if (!cardRef.current) return {}
-        const rect = cardRef.current.getBoundingClientRect()
-        const isRightSide = rect.left > window.innerWidth / 2
-        return {
-            position: "fixed",
-            top: `${rect.top}px`,
-            left: isRightSide ? "auto" : `${rect.right + 10}px`,
-            right: isRightSide ? `${window.innerWidth - rect.left + 10}px` : "auto",
-            maxHeight: "80vh",
-            overflowY: "auto",
-            zIndex: 1000,
-        }
-    }
 
     return (
         <div
@@ -91,7 +68,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
         >
             <div className="flex items-center justify-between mb-1">
                 <span className="font-semibold text-base truncate max-w-[60%]" title={displayName}>{displayName}</span>
-                <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-gray-100">{getTypeName(card.type)}</span>
+                <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-gray-100">{getCardTypeName(card.type as CardType)}</span>
             </div>
             {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
                 <div className="flex flex-row gap-2 text-xs font-mono mb-2 pb-2 border-b border-dashed border-gray-300">
@@ -109,7 +86,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                         li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
                     }}
                 >
-                    {displayDescription.replace(/\n{2,}/g, '\n\n').replace(/(\n\n)(?=\s*[-*+] )/g, '\n')}
+                    {displayDescription}
                 </ReactMarkdown>
             </div>
         </div>

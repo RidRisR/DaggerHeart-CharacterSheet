@@ -1,8 +1,10 @@
 "use client"
-import { allWeapons } from "@/data/list/all-weapons"; // Updated import
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { allWeapons } from "@/data/list/all-weapons";
 import { Button } from "@/components/ui/button";
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react'; // Added useRef
+import InfiniteScroll from 'react-infinite-scroll-component'; // Added import
+
+const ITEMS_PER_PAGE = 30; // Define items per page
 
 const LEVELS = ["T1", "T2", "T3", "T4"] as const;
 const CHECKS = ["敏捷", "灵巧", "知识", "力量", "本能", "风度"] as const;
@@ -47,12 +49,18 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
   // 新增主/副武器筛选
   const [weaponTypeFilter, setWeaponTypeFilter] = useState<"" | "primary" | "secondary">("");
 
+  // State for pagination
+  const [displayedWeapons, setDisplayedWeapons] = useState<Weapon[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const scrollableContainerRef = useRef<HTMLDivElement>(null);
+
+
   const availableWeapons: Weapon[] = useMemo(() => {
     if (weaponSlotType === "inventory") {
       return allWeapons; // Use allWeapons directly
     }
     return allWeapons.filter(w => w.weaponType === weaponSlotType);
-  }, [weaponSlotType]);
+  }, [weaponSlotType]); 
 
   // 组合筛选逻辑
   const filteredWeapons = useMemo(() => {
@@ -65,6 +73,19 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
       return true;
     });
   }, [availableWeapons, levelFilter, checkFilter, attributeFilter, rangeFilter, weaponTypeFilter]);
+
+  // Effect to update displayed weapons when filters change or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const initialDisplay = filteredWeapons.slice(0, ITEMS_PER_PAGE);
+      setDisplayedWeapons(initialDisplay);
+      setHasMore(filteredWeapons.length > ITEMS_PER_PAGE);
+      if (scrollableContainerRef.current) {
+        scrollableContainerRef.current.scrollTop = 0; // Reset scroll position
+      }
+    }
+  }, [isOpen, filteredWeapons]);
+
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -93,6 +114,20 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  // Function to fetch more data for infinite scroll
+  const fetchMoreData = () => {
+    if (displayedWeapons.length >= filteredWeapons.length) {
+      setHasMore(false);
+      return;
+    }
+    const nextItems = filteredWeapons.slice(
+      displayedWeapons.length,
+      displayedWeapons.length + ITEMS_PER_PAGE
+    );
+    setDisplayedWeapons(prevItems => [...prevItems, ...nextItems]);
+    setHasMore((displayedWeapons.length + nextItems.length) < filteredWeapons.length);
+  };
 
   // 选择自定义武器类型
   const customWeaponType: 'primary' | 'secondary' = weaponSlotType === 'secondary' ? 'secondary' : 'primary';
@@ -177,39 +212,56 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
         )}
         <div className="p-4">
         </div>
-        <ScrollArea className="h-[calc(80vh-8rem)]">
-          <div className="p-2">
-            <table className="w-full border-collapse min-w-[max-content]">
-              <thead className="bg-gray-800 text-white sticky top-0 z-10">
-                <tr><th className="p-2 text-left whitespace-nowrap">等级</th><th className="p-2 text-left whitespace-nowrap">名称</th><th className="p-2 text-left whitespace-nowrap">类型</th><th className="p-2 text-left whitespace-nowrap">属性</th><th className="p-2 text-left whitespace-nowrap">负荷</th><th className="p-2 text-left whitespace-nowrap">范围</th><th className="p-2 text-left whitespace-nowrap">检定</th><th className="p-2 text-left whitespace-nowrap">伤害</th><th className="p-2 text-left whitespace-nowrap">特性</th><th className="p-2 text-left whitespace-nowrap">描述</th></tr>
-              </thead>
-              <tbody>
-                {isCustom && customName && (
-                  <tr className="bg-blue-50">
-                    <td className="p-2 whitespace-nowrap"></td>
-                    <td className="p-2 whitespace-nowrap">{customName}</td>
-                    <td className="p-2 whitespace-nowrap">{customWeaponType === 'primary' ? '主武器' : '副武器'}</td>
-                    <td className="p-2 whitespace-nowrap"></td>
-                    <td className="p-2 whitespace-nowrap"></td>
-                    <td className="p-2 whitespace-nowrap"></td>
-                    <td className="p-2 whitespace-nowrap"></td>
-                    <td className="p-2 whitespace-nowrap"></td>
-                    <td className="p-2 whitespace-nowrap"></td>
-                    <td className="p-2 whitespace-nowrap"></td>
-                  </tr>
-                )}
-                {filteredWeapons.map((weapon) => (
-                  <tr
-                    key={weapon.id}
-                    className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => { setIsCustom(false); setCustomName(""); onSelect(weapon.id, weapon.weaponType); }}
-                  ><td className="p-2 whitespace-nowrap">{weapon.等级}</td><td className="p-2 whitespace-nowrap">{weapon.名称}</td><td className="p-2 whitespace-nowrap">{weapon.weaponType === "primary" ? "主武器" : "副武器"}</td><td className="p-2 whitespace-nowrap">{weapon.属性}</td><td className="p-2 whitespace-nowrap">{weapon.负荷}</td><td className="p-2 whitespace-nowrap">{weapon.范围}</td><td className="p-2 whitespace-nowrap">{weapon.检定}</td><td className="p-2 whitespace-nowrap">{weapon.伤害}</td><td className="p-2 whitespace-nowrap">{weapon.特性名称}</td><td className="p-2 whitespace-nowrap">{weapon.描述}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        {/* Replace ScrollArea with a div for InfiniteScroll target */}
+        <div id="scrollableWeaponDiv" ref={scrollableContainerRef} className="h-[calc(80vh-12rem)] overflow-auto"> {/* Adjusted height and added overflow-auto */}
+          <InfiniteScroll
+            dataLength={displayedWeapons.length}
+            next={fetchMoreData}
+            hasMore={hasMore}
+            loader={<div className="text-center py-4">加载中...</div>}
+            endMessage={
+              <p style={{ textAlign: 'center' }} className="py-4">
+                <b>{filteredWeapons.length > 0 ? "已加载全部武器" : "未找到符合条件的武器"}</b>
+              </p>
+            }
+            scrollableTarget="scrollableWeaponDiv"
+            scrollThreshold="800px" // Added scrollThreshold
+          >
+            <div className="p-2">
+              <table className="w-full border-collapse min-w-[max-content]">
+                <thead className="bg-gray-800 text-white sticky top-0 z-10">
+                  <tr><th className="p-2 text-left whitespace-nowrap">等级</th><th className="p-2 text-left whitespace-nowrap">名称</th><th className="p-2 text-left whitespace-nowrap">类型</th><th className="p-2 text-left whitespace-nowrap">属性</th><th className="p-2 text-left whitespace-nowrap">负荷</th><th className="p-2 text-left whitespace-nowrap">范围</th><th className="p-2 text-left whitespace-nowrap">检定</th><th className="p-2 text-left whitespace-nowrap">伤害</th><th className="p-2 text-left whitespace-nowrap">特性</th><th className="p-2 text-left whitespace-nowrap">描述</th></tr>
+                </thead>
+                <tbody>
+                  {isCustom && customName && (
+                    <tr className="bg-blue-50">
+                      <td className="p-2 whitespace-nowrap"></td>
+                      <td className="p-2 whitespace-nowrap">{customName}</td>
+                      <td className="p-2 whitespace-nowrap">{customWeaponType === 'primary' ? '主武器' : '副武器'}</td>
+                      <td className="p-2 whitespace-nowrap"></td>
+                      <td className="p-2 whitespace-nowrap"></td>
+                      <td className="p-2 whitespace-nowrap"></td>
+                      <td className="p-2 whitespace-nowrap"></td>
+                      <td className="p-2 whitespace-nowrap"></td>
+                      <td className="p-2 whitespace-nowrap"></td>
+                      <td className="p-2 whitespace-nowrap"></td>
+                    </tr>
+                  )}
+                  {/* Map over displayedWeapons instead of filteredWeapons */}
+                  {displayedWeapons.map((weapon) => (
+                    <tr
+                      key={weapon.id}
+                      className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => { setIsCustom(false); setCustomName(""); onSelect(weapon.id, weapon.weaponType); }}
+                    ><td className="p-2 whitespace-nowrap">{weapon.等级}</td><td className="p-2 whitespace-nowrap">{weapon.名称}</td><td className="p-2 whitespace-nowrap">{weapon.weaponType === "primary" ? "主武器" : "副武器"}</td><td className="p-2 whitespace-nowrap">{weapon.属性}</td><td className="p-2 whitespace-nowrap">{weapon.负荷}</td><td className="p-2 whitespace-nowrap">{weapon.范围}</td><td className="p-2 whitespace-nowrap">{weapon.检定}</td><td className="p-2 whitespace-nowrap">{weapon.伤害}</td><td className="p-2 whitespace-nowrap">{weapon.特性名称}</td><td className="p-2 whitespace-nowrap">{weapon.描述}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* ScrollBar might not be needed here if the parent div handles scrolling */}
+          </InfiniteScroll>
+          {/* Removed ScrollArea and ScrollBar as InfiniteScroll handles its own scroll container */}
+        </div>
       </div>
     </div>
   );

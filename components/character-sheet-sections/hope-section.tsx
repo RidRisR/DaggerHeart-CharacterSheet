@@ -1,6 +1,7 @@
 "use client"
 import { StandardCard } from "@/data/card/card-types";
 import type { FormData } from "@/lib/form-data"
+import ReactMarkdown from 'react-markdown';
 
 interface HopeSectionProps {
   formData: FormData
@@ -42,9 +43,9 @@ export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps
       </div>
 
       <div className="text-center px-2">
-        <p className="text-[12px] leading-tight">
-          {hopeFeatureDescription}
-        </p>
+        <div className="text-[12px] leading-tight">
+          <ReactMarkdown>{hopeFeatureDescription}</ReactMarkdown>
+        </div>
       </div>
     </div>
   );

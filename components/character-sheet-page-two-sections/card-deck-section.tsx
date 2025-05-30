@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useRef, memo } from "react"
 import { getCardTypeName, convertToStandardCard } from "@/data/card"
-import { createEmptyCard, isEmptyCard, specialCardPositions, StandardCard } from "@/data/card/card-types"
+import { CardType, createEmptyCard, StandardCard } from "@/data/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { saveFocusedCardIds, loadFocusedCardIds } from "@/lib/storage" // Import storage functions
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -122,7 +122,7 @@ function Card({
                       : "bg-red-100 border-red-300"
               }`}
           >
-            {getCardTypeName(standardCard.type)}
+            {getCardTypeName(standardCard.type as CardType)}
           </span>
         </div>
       )}

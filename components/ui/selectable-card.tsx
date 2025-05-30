@@ -1,8 +1,7 @@
 "use client"
 
 import type { CardType, StandardCard } from "@/data/card/card-types"
-import { getCardTypeColor, ALL_CARD_TYPES, getCardTypeName } from "@/data/card/card-ui-config"
-import { get } from "http"
+import { getCardTypeName } from "@/data/card/card-ui-config"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 

@@ -55,22 +55,7 @@ export function getCardTypeName(typeId: CardType): string {
   return ALL_CARD_TYPES.get(typeId) || "未知类型";
 }
 
-// 获取卡牌类型颜色
-export function getCardTypeColor(typeId: string): string {
-  return "gray-500"
-}
-
-// 获取卡牌类别选项
-export function getCardClassOptions(typeId: string): string[] {
-  return CARD_CLASS_OPTIONS[typeId as keyof typeof CARD_CLASS_OPTIONS] || []
-}
-
 // 获取等级选项
 export function getLevelOptions(typeId: string): { value: string; label: string }[] {
   return CARD_LEVEL_OPTIONS_BY_TYPE[typeId as keyof typeof CARD_LEVEL_OPTIONS_BY_TYPE] || [];
-}
-
-// 获取等级名称
-export function getLevelName(level: number): string {
-  return `LV.${level}`
 }

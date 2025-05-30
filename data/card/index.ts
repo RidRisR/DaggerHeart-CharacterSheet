@@ -24,10 +24,7 @@ import {
   CARD_CLASS_OPTIONS_BY_TYPE,
   CARD_LEVEL_OPTIONS, // Updated import
   getCardTypeName,
-  getCardTypeColor,
-  getCardClassOptions,
   getLevelOptions,
-  getLevelName,
 } from "@/data/card/card-ui-config"
 
 // 导入类型定义
@@ -142,10 +139,7 @@ export {
   CARD_LEVEL_OPTIONS, // Updated export
   // UI辅助函数
   getCardTypeName,
-  getCardTypeColor,
-  getCardClassOptions,
   getLevelOptions,
-  getLevelName,
   // 卡牌转换
   convertToStandardCard,
   // 卡牌注册

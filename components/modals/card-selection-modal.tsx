@@ -67,6 +67,13 @@ export function CardSelectionModal({
   // Update availableCardTypes to adapt to Map structure
   const availableCardTypes = Array.from(ALL_CARD_TYPES.entries()).map(([id, name]) => ({ id, name }));
 
+  // Effect to set a default active tab when the modal opens and no tab is active
+  useEffect(() => {
+    if (isOpen && !activeTab && availableCardTypes.length > 0) {
+      setActiveTab(availableCardTypes[0].id); // Set to the first available type
+    }
+  }, [isOpen, activeTab, setActiveTab, availableCardTypes]);
+
   const classOptions = useMemo(() => {
     if (!activeTab) return []
     return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []

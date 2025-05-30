@@ -1,6 +1,5 @@
 "use client"
-import { primaryWeapons } from "@/data/list/primary-weapon";
-import { secondaryWeapons } from "@/data/list/secondary-weapon";
+import { allWeapons } from "@/data/list/all-weapons"; // Updated import
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useMemo, useEffect, useState } from 'react';
@@ -25,10 +24,10 @@ interface WeaponModalProps {
 
 interface Weapon {
   名称: string;
-  等级: string;
-  检定: string;
-  属性: string;
-  范围: string;
+  等级: Level; // Changed from string
+  检定: Check; // Changed from string
+  属性: Attribute; // Changed from string
+  范围: Range; // Changed from string
   伤害: string;
   负荷: string;
   特性名称: string;
@@ -49,18 +48,10 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
   const [weaponTypeFilter, setWeaponTypeFilter] = useState<"" | "primary" | "secondary">("");
 
   const availableWeapons: Weapon[] = useMemo(() => {
-    let weapons: Weapon[] = [];
-    if (weaponSlotType === "primary" || weaponSlotType === "inventory") {
-      weapons = weapons.concat(
-        primaryWeapons.map((w) => ({ ...w, id: w.名称, weaponType: "primary" }))
-      );
+    if (weaponSlotType === "inventory") {
+      return allWeapons; // Use allWeapons directly
     }
-    if (weaponSlotType === "secondary" || weaponSlotType === "inventory") {
-      weapons = weapons.concat(
-        secondaryWeapons.map((w) => ({ ...w, id: w.名称, weaponType: "secondary" }))
-      );
-    }
-    return weapons;
+    return allWeapons.filter(w => w.weaponType === weaponSlotType);
   }, [weaponSlotType]);
 
   // 组合筛选逻辑
@@ -127,12 +118,14 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
             <option value="">等级(全部)</option>
             {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
-          {/* 类型 */}
-          <select className="border rounded px-2 py-1 text-sm" value={weaponTypeFilter} onChange={e => setWeaponTypeFilter(e.target.value as "" | "primary" | "secondary")}>
-            <option value="">类型(全部)</option>
-            <option value="primary">主武器</option>
-            <option value="secondary">副武器</option>
-          </select>
+          {/* 类型 - Conditionally render this filter */}
+          {weaponSlotType === "inventory" && (
+            <select className="border rounded px-2 py-1 text-sm" value={weaponTypeFilter} onChange={e => setWeaponTypeFilter(e.target.value as "" | "primary" | "secondary")}>
+              <option value="">类型(全部)</option>
+              <option value="primary">主武器</option>
+              <option value="secondary">副武器</option>
+            </select>
+          )}
           {/* 属性 */}
           <select className="border rounded px-2 py-1 text-sm" value={attributeFilter} onChange={e => setAttributeFilter(e.target.value as Attribute | "")}>
             <option value="">属性(全部)</option>

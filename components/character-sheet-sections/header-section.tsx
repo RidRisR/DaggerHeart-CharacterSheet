@@ -6,6 +6,7 @@ import {
   getStandardCardsByType,
   CardType, // Import CardType
 } from "@/data/card"
+import { useCardInitialization } from "@/data/card/initialization-context"
 
 interface HeaderSectionProps {
   formData: FormData
@@ -24,10 +25,12 @@ export function HeaderSection({
   openCommunityModal,
   openSubclassModal, // 添加openSubclassModal
 }: HeaderSectionProps) {
-  const professionCards = getStandardCardsByType(CardType.Profession)
-  const ancestryCards = getStandardCardsByType(CardType.Ancestry)
-  const communityCards = getStandardCardsByType(CardType.Community)
-  const subclassCards = getStandardCardsByType(CardType.Subclass)
+  const { isInitialized } = useCardInitialization()
+  // 只有在初始化完成后才获取卡牌数据
+  const professionCards = isInitialized ? getStandardCardsByType(CardType.Profession) : []
+  const ancestryCards = isInitialized ? getStandardCardsByType(CardType.Ancestry) : []
+  const communityCards = isInitialized ? getStandardCardsByType(CardType.Community) : []
+  const subclassCards = isInitialized ? getStandardCardsByType(CardType.Subclass) : []
 
   return (
     <div className="bg-gray-800 text-white p-2 flex justify-between items-center rounded-t-md">
@@ -39,7 +42,7 @@ export function HeaderSection({
             onClick={openProfessionModal}
             className="header-selection-button printable-selection-button w-56 bg-white border-gray-400 text-gray-800 text-xl font-bold print:bg-white print:text-black rounded p-1 h-7 text-xs text-left px-2"
           >
-            {formData.profession
+            {formData.profession && professionCards.length > 0
               ? professionCards.find(
                 (card) => card.id === formData.profession
               )?.headerDisplay || "选择职业"
@@ -67,7 +70,7 @@ export function HeaderSection({
               onClick={openCommunityModal}
               className="header-selection-button printable-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
             >
-              {formData.community
+              {formData.community && communityCards.length > 0
                 ? communityCards.find(
                   (card) => card.id === formData.community
                 )?.headerDisplay || "选择社群"
@@ -84,7 +87,7 @@ export function HeaderSection({
                 onClick={() => openAncestryModal("ancestry1")}
                 className="header-selection-button printable-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
               >
-                {formData.ancestry1
+                {formData.ancestry1 && ancestryCards.length > 0
                   ? ancestryCards.find(
                     (card) =>
                       card.id === formData.ancestry1 && card.level === 1,
@@ -97,7 +100,7 @@ export function HeaderSection({
                 onClick={() => openAncestryModal("ancestry2")}
                 className="header-selection-button printable-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
               >
-                {formData.ancestry2
+                {formData.ancestry2 && ancestryCards.length > 0
                   ? ancestryCards.find(
                     (card) =>
                       card.id === formData.ancestry2 && card.level === 2,
@@ -113,7 +116,7 @@ export function HeaderSection({
               onClick={openSubclassModal}
               className="header-selection-button printable-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
             >
-              {formData.subclass
+              {formData.subclass && subclassCards.length > 0
                 ? subclassCards.find(
                   (card) => card.id === formData.subclass && card.type === "subclass",
                 )?.headerDisplay || "选择子职业"

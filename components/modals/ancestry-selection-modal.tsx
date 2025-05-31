@@ -4,6 +4,8 @@ import { CardType, getStandardCardsByType } from "@/data/card"
 import { useState, useEffect } from "react"
 import type { StandardCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
+import { useCardInitialization } from "@/data/card/initialization-context"
+import { Loader2 } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -24,6 +26,7 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
   const [ancestryCards, setAncestryCards] = useState<StandardCard[]>([])
   const [selectedClass, setSelectedClass] = useState<string>("All")
   const [availableClasses, setAvailableClasses] = useState<string[]>(["All"])
+  const { isInitialized, isLoading } = useCardInitialization()
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -44,11 +47,13 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    const cards = getStandardCardsByType(CardType.Ancestry)
-    setAncestryCards(cards)
-    const uniqueClasses = Array.from(new Set(cards.flatMap(card => card.class || []).filter(cls => cls))) // Filter out empty/undefined classes
-    setAvailableClasses(["All", ...uniqueClasses])
-  }, [])
+    if (isInitialized) {
+      const cards = getStandardCardsByType(CardType.Ancestry)
+      setAncestryCards(cards)
+      const uniqueClasses = Array.from(new Set(cards.flatMap(card => card.class || []).filter(cls => cls))) // Filter out empty/undefined classes
+      setAvailableClasses(["All", ...uniqueClasses])
+    }
+  }, [isInitialized])
 
   if (!isOpen) return null
 
@@ -98,13 +103,19 @@ export function AncestrySelectionModal({ isOpen, onClose, onSelect, title, field
         {/* New structure for content area */}
         <div className="flex-1 flex flex-col overflow-hidden"> {/* Outer content wrapper */}
           <div className="flex-1 overflow-y-auto p-4"> {/* Inner scrollable grid area, changed pr-4 to p-4 */}
-            {/* Adjusted grid columns for wider cards to match SelectableCard's w-72 (288px) */}
-            {/* Max-w-4xl (896px) for modal: 896 / 288 = ~3 cards. Gap is 1rem (16px). (288*3) + (16*2) = 864 + 32 = 896 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCards.map((card) => (
-                <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id, field)} isSelected={false} />
-              ))}
-            </div>
+            {/* Show loading state when cards are still being loaded */}
+            {isLoading ? (
+              <div className="flex items-center justify-center h-48">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="ml-2 text-gray-600">加载血统卡牌中...</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredCards.map((card) => (
+                  <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id, field)} isSelected={false} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

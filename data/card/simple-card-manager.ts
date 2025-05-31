@@ -172,12 +172,20 @@ export class SimpleCardManager {
 
   /**
    * 确保管理器已初始化
+   * 在异步环境下，如果还没初始化则抛出错误
    */
   private ensureInitialized(): void {
     if (!this.initialized) {
       throw new Error('SimpleCardManager not initialized. Call initialize() first.');
     }
   }
+
+    /**
+     * 安全检查是否初始化（不抛出错误）
+     */
+    private safeCheckInitialized(): boolean {
+        return this.initialized;
+    }
 }
 
 // 导出单例实例

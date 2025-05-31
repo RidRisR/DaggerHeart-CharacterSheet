@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import PrintHelper from "./print-helper"
-import CardDataInitializer from "@/components/card-data-initializer"
+import { CardInitializationProvider } from "@/data/card/initialization-context"
 
 export const metadata: Metadata = {
   title: "Character Sheet",
@@ -20,25 +20,26 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <CardDataInitializer />
-          <PrintHelper />
-          {children}
-          {/* 水印 */}
-          <div className="fixed bottom-2 left-2 text-gray-500 text-xs opacity-75 pointer-events-none">
-            本作品完全开源且免费
-            <br />
-            作者：RidRisR
-            <br />
-            项目地址&本地运行下载地址：
-            <a
-              href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline pointer-events-auto"
-            >
-              https://github.com/RidRisR/DaggerHeart-CharacterSheet
-            </a>
-          </div>
+          <CardInitializationProvider>
+            <PrintHelper />
+            {children}
+            {/* 水印 */}
+            <div className="fixed bottom-2 left-2 text-gray-500 text-xs opacity-75 pointer-events-none">
+              本作品完全开源且免费
+              <br />
+              作者：RidRisR
+              <br />
+              项目地址&本地运行下载地址：
+              <a
+                href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline pointer-events-auto"
+              >
+                https://github.com/RidRisR/DaggerHeart-CharacterSheet
+              </a>
+            </div>
+          </CardInitializationProvider>
         </ThemeProvider>
       </body>
     </html>

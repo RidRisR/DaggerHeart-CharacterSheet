@@ -75,6 +75,12 @@ export const getCardsCountByType = (type: any) => {
  */
 export function getStandardCardsByType(type: CardType): StandardCard[] {
   try {
+    // 如果管理器还没初始化，返回空数组
+    if (!simpleCardManager.isInitialized()) {
+      console.warn(`[getStandardCardsByType] Manager not yet initialized, returning empty array for ${type}`);
+      return [];
+    }
+
     switch (type) {
       case CardType.Profession:
         return simpleCardManager.getProfessionCards().map(card => professionCardConverter.toStandard(card));

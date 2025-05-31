@@ -4,6 +4,8 @@ import { getStandardCardsByType, CardType } from "@/data/card"; // Import CardTy
 import { useState, useEffect } from "react"
 import type { StandardCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
+import { useCardInitialization } from "@/data/card/initialization-context"
+import { Loader2 } from "lucide-react"
 import {
     Select,
     SelectContent,
@@ -58,6 +60,7 @@ export function GenericCardSelectionModal({
     const [cards, setCards] = useState<StandardCard[]>([])
     const [selectedClass, setSelectedClass] = useState<string>("All")
     const [availableClasses, setAvailableClasses] = useState<string[]>(["All"])
+    const { isInitialized, isLoading } = useCardInitialization()
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -78,37 +81,39 @@ export function GenericCardSelectionModal({
     }, [isOpen, onClose])
 
     useEffect(() => {
-        let initialCards: StandardCard[] = [];
-        // Get base cards efficiently using getStandardCardsByType
-        const baseCards = getStandardCardsByType(cardType as CardType); // Cast cardType to CardType
+        if (isInitialized) {
+            let initialCards: StandardCard[] = [];
+            // Get base cards efficiently using getStandardCardsByType
+            const baseCards = getStandardCardsByType(cardType as CardType); // Cast cardType to CardType
 
-        if (cardType === "subclass") {
-            // Find the name of the selected profession card.
-            // formData.profession is assumed to be the ID of the selected profession card.
-            const allProfessionCards = getStandardCardsByType(CardType.Profession);
-            const selectedProfessionCard = allProfessionCards.find(pCard => pCard.id === formData.profession);
-            const professionName = selectedProfessionCard?.name;
+            if (cardType === "subclass") {
+                // Find the name of the selected profession card.
+                // formData.profession is assumed to be the ID of the selected profession card.
+                const allProfessionCards = getStandardCardsByType(CardType.Profession);
+                const selectedProfessionCard = allProfessionCards.find(pCard => pCard.id === formData.profession);
+                const professionName = selectedProfessionCard?.name;
 
-            // Filter subclass cards: must be level 1 and match the determined professionName.
-            initialCards = baseCards.filter(
-                (card): card is StandardCard =>
-                    card.level === 1 && card.class === professionName
-            );
-        } else {
-            // For other card types, apply levelFilter if it exists.
-            initialCards = baseCards;
-            if (levelFilter) {
-                initialCards = initialCards.filter(card => card.level === levelFilter);
+                // Filter subclass cards: must be level 1 and match the determined professionName.
+                initialCards = baseCards.filter(
+                    (card): card is StandardCard =>
+                        card.level === 1 && card.class === professionName
+                );
+            } else {
+                // For other card types, apply levelFilter if it exists.
+                initialCards = baseCards;
+                if (levelFilter) {
+                    initialCards = initialCards.filter(card => card.level === levelFilter);
+                }
             }
+
+            setCards(initialCards);
+
+            const uniqueClasses = Array.from(
+                new Set(initialCards.flatMap((card) => card.class || []).filter((cls) => cls)),
+            );
+            setAvailableClasses(["All", ...uniqueClasses]);
         }
-
-        setCards(initialCards);
-
-        const uniqueClasses = Array.from(
-            new Set(initialCards.flatMap((card) => card.class || []).filter((cls) => cls)),
-        );
-        setAvailableClasses(["All", ...uniqueClasses]);
-    }, [cardType, levelFilter, formData.profession]); // Dependencies remain the same
+    }, [cardType, levelFilter, formData.profession, isInitialized]); // Add isInitialized to dependencies
 
     if (!isOpen) return null
 
@@ -146,16 +151,24 @@ export function GenericCardSelectionModal({
                 </div>
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <div className="flex-1 overflow-y-auto p-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {filteredCards.map((card) => (
-                                <SelectableCard
-                                    key={card.id}
-                                    card={card}
-                                    onClick={() => onSelect(card.id, field)}
-                                    isSelected={false}
-                                />
-                            ))}
-                        </div>
+                        {/* Show loading state when cards are still being loaded */}
+                        {isLoading ? (
+                            <div className="flex items-center justify-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                                <span className="ml-2 text-gray-600">加载卡牌中...</span>
+                            </div>
+                        ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {filteredCards.map((card) => (
+                                        <SelectableCard
+                                            key={card.id}
+                                            card={card}
+                                            onClick={() => onSelect(card.id, field)}
+                                            isSelected={false}
+                                        />
+                                    ))}
+                                </div>
+                        )}
                     </div>
                 </div>
             </div>

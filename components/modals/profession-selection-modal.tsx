@@ -1,6 +1,7 @@
 "use client"
 import { Button } from "@/components/ui/button"
 import { CardType, getStandardCardsByType } from "@/data/card"
+import { useCardInitialization } from "@/data/card/initialization-context"
 import { useState, useEffect } from "react"
 import type { StandardCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -20,6 +21,7 @@ interface ProfessionModalProps {
 }
 
 export function ProfessionSelectionModal({ isOpen, onClose, onSelect, title }: ProfessionModalProps) {
+  const { isInitialized, isLoading } = useCardInitialization()
   const [professionCards, setProfessionCards] = useState<StandardCard[]>([])
   const [selectedClass, setSelectedClass] = useState<string>("All")
   const [availableClasses, setAvailableClasses] = useState<string[]>(["All"])
@@ -43,13 +45,37 @@ export function ProfessionSelectionModal({ isOpen, onClose, onSelect, title }: P
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    const cards = getStandardCardsByType(CardType.Profession)
-    setProfessionCards(cards)
-    const uniqueClasses = Array.from(new Set(cards.flatMap(card => card.class || []).filter(cls => cls)))
-    setAvailableClasses(["All", ...uniqueClasses])
-  }, [])
+    // 只有在初始化完成后才加载卡牌数据
+    if (isInitialized) {
+      const cards = getStandardCardsByType(CardType.Profession)
+      setProfessionCards(cards)
+      const uniqueClasses = Array.from(new Set(cards.flatMap(card => card.class || []).filter(cls => cls)))
+      setAvailableClasses(["All", ...uniqueClasses])
+    }
+  }, [isInitialized])
 
   if (!isOpen) return null
+
+  // 显示加载状态
+  if (isLoading || !isInitialized) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+        <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 className="text-xl font-bold">{title}</h2>
+            <Button variant="outline" onClick={onClose}>关闭</Button>
+          </div>
+          <div className="flex-1 flex items-center justify-center p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+              <p className="text-gray-600">正在加载卡牌数据...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const filteredCards = professionCards.filter(card =>
     selectedClass === "All" || (card.class && card.class.includes(selectedClass))

@@ -16,6 +16,7 @@ export function createEmptyCard(type = "unknown"): StandardCard {
     type: type,
     description: "",
     imageUrl: "",
+    cardSelectDisplay: {}
   }
 }
 

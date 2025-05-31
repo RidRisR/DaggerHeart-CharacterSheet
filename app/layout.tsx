@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import PrintHelper from "./print-helper"
+import CardDataInitializer from "@/components/card-data-initializer"
 
 export const metadata: Metadata = {
   title: "Character Sheet",
@@ -19,6 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <CardDataInitializer />
           <PrintHelper />
           {children}
           {/* 水印 */}

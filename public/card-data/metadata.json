@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-05-31T16:46:11.963Z",
+  "generatedBy": "convert-cards-to-json-v2.js",
+  "totalCards": 297,
+  "typeDistribution": {
+    "profession": 9,
+    "ancestry": 36,
+    "community": 9,
+    "domain": 189,
+    "subclass": 54
+  },
+  "description": "DaggerHeart角色卡牌数据集合"
+}

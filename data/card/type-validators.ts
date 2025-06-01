@@ -3,12 +3,13 @@
  * 用于验证导入的原始卡牌数据是否符合各自的类型定义
  */
 
-import type { ProfessionCard } from '@/data/card/profession-card/convert';
-import type { AncestryCard } from '@/data/card/ancestry-card/convert';
-import type { CommunityCard } from '@/data/card/community-card/convert';
-import type { SubClassCard } from '@/data/card/subclass-card/convert';
-import type { DomainCard } from '@/data/card/domain-card/convert';
-import { PROFESSION_CARD_NAMES, ANCESTRY_CARD_NAMES, COMMUNITY_CARD_NAMES, SUBCLASS_CARD_NAMES, DOMAIN_CARD_NAMES } from '@/data/card/card-predefined-field';
+import {
+    getProfessionCardNames,
+    getAncestryCardNames,
+    getCommunityCardNames,
+    getSubClassCardNames,
+    getDomainCardNames
+} from './card-predefined-field';
 
 export interface ValidationError {
     path: string;
@@ -27,16 +28,18 @@ export interface TypeValidationResult {
 export function validateProfessionCard(card: any, index: number): TypeValidationResult {
     const errors: ValidationError[] = [];
     const prefix = `profession[${index}]`;
+    const validProfessions = getProfessionCardNames();
+    const validDomains = getDomainCardNames();
 
     // 必需字段验证
     if (!card.id || typeof card.id !== 'string') {
         errors.push({ path: `${prefix}.id`, message: 'id字段是必需的，且必须是字符串' });
     }
 
-    if (!card.名称 || !PROFESSION_CARD_NAMES.includes(card.名称 as any)) {
+    if (!card.名称 || !validProfessions.includes(card.名称 as any)) {
         errors.push({
             path: `${prefix}.名称`,
-            message: `名称字段必须是有效的职业名称。有效选项: ${PROFESSION_CARD_NAMES.join(', ')}`,
+            message: `名称字段必须是有效的职业名称。有效选项: ${validProfessions.join(', ')} (或用户自定义)`,
             value: card.名称
         });
     }
@@ -45,18 +48,18 @@ export function validateProfessionCard(card: any, index: number): TypeValidation
         errors.push({ path: `${prefix}.简介`, message: '简介字段是必需的，且必须是字符串' });
     }
 
-    if (!card.领域1 || !DOMAIN_CARD_NAMES.includes(card.领域1 as any)) {
+    if (!card.领域1 || !validDomains.includes(card.领域1 as any)) {
         errors.push({
             path: `${prefix}.领域1`,
-            message: `领域1字段必须是有效的领域名称。有效选项: ${DOMAIN_CARD_NAMES.join(', ')}`,
+            message: `领域1字段必须是有效的领域名称。有效选项: ${validDomains.join(', ')} (或用户自定义)`,
             value: card.领域1
         });
     }
 
-    if (!card.领域2 || !DOMAIN_CARD_NAMES.includes(card.领域2 as any)) {
+    if (!card.领域2 || !validDomains.includes(card.领域2 as any)) {
         errors.push({
             path: `${prefix}.领域2`,
-            message: `领域2字段必须是有效的领域名称。有效选项: ${DOMAIN_CARD_NAMES.join(', ')}`,
+            message: `领域2字段必须是有效的领域名称。有效选项: ${validDomains.join(', ')} (或用户自定义)`,
             value: card.领域2
         });
     }
@@ -93,6 +96,7 @@ export function validateProfessionCard(card: any, index: number): TypeValidation
 export function validateAncestryCard(card: any, index: number): TypeValidationResult {
     const errors: ValidationError[] = [];
     const prefix = `ancestry[${index}]`;
+    const validAncestries = getAncestryCardNames();
 
     if (!card.id || typeof card.id !== 'string') {
         errors.push({ path: `${prefix}.id`, message: 'id字段是必需的，且必须是字符串' });
@@ -102,10 +106,10 @@ export function validateAncestryCard(card: any, index: number): TypeValidationRe
         errors.push({ path: `${prefix}.名称`, message: '名称字段是必需的，且必须是字符串' });
     }
 
-    if (!card.种族 || !ANCESTRY_CARD_NAMES.includes(card.种族 as any)) {
+    if (!card.种族 || !validAncestries.includes(card.种族 as any)) {
         errors.push({
             path: `${prefix}.种族`,
-            message: `种族字段必须是有效的血统名称。有效选项: ${ANCESTRY_CARD_NAMES.join(', ')}`,
+            message: `种族字段必须是有效的血统名称。有效选项: ${validAncestries.join(', ')} (或用户自定义)`,
             value: card.种族
         });
     }
@@ -134,15 +138,16 @@ export function validateAncestryCard(card: any, index: number): TypeValidationRe
 export function validateCommunityCard(card: any, index: number): TypeValidationResult {
     const errors: ValidationError[] = [];
     const prefix = `community[${index}]`;
+    const validCommunities = getCommunityCardNames();
 
     if (!card.ID || typeof card.ID !== 'string') {
         errors.push({ path: `${prefix}.ID`, message: 'ID字段是必需的，且必须是字符串' });
     }
 
-    if (!card.名称 || !COMMUNITY_CARD_NAMES.includes(card.名称 as any)) {
+    if (!card.名称 || !validCommunities.includes(card.名称 as any)) {
         errors.push({
             path: `${prefix}.名称`,
-            message: `名称字段必须是有效的社群名称。有效选项: ${COMMUNITY_CARD_NAMES.join(', ')}`,
+            message: `名称字段必须是有效的社群名称。有效选项: ${validCommunities.join(', ')} (或用户自定义)`,
             value: card.名称
         });
     }
@@ -171,6 +176,7 @@ export function validateCommunityCard(card: any, index: number): TypeValidationR
 export function validateSubClassCard(card: any, index: number): TypeValidationResult {
     const errors: ValidationError[] = [];
     const prefix = `subclass[${index}]`;
+    const validSubClasses = getSubClassCardNames();
 
     if (!card.id || typeof card.id !== 'string') {
         errors.push({ path: `${prefix}.id`, message: 'id字段是必需的，且必须是字符串' });
@@ -184,10 +190,10 @@ export function validateSubClassCard(card: any, index: number): TypeValidationRe
         errors.push({ path: `${prefix}.描述`, message: '描述字段是必需的，且必须是字符串' });
     }
 
-    if (!card.主职 || !SUBCLASS_CARD_NAMES.includes(card.主职 as any)) {
+    if (!card.主职 || !validSubClasses.includes(card.主职 as any)) {
         errors.push({
             path: `${prefix}.主职`,
-            message: `主职字段必须是有效的子职业名称。有效选项: ${SUBCLASS_CARD_NAMES.join(', ')}`,
+            message: `主职字段必须是有效的子职业名称。有效选项: ${validSubClasses.join(', ')} (或用户自定义)`,
             value: card.主职
         });
     }
@@ -221,6 +227,7 @@ export function validateSubClassCard(card: any, index: number): TypeValidationRe
 export function validateDomainCard(card: any, index: number): TypeValidationResult {
     const errors: ValidationError[] = [];
     const prefix = `domain[${index}]`;
+    const validDomains = getDomainCardNames();
 
     if (!card.ID || typeof card.ID !== 'string') {
         errors.push({ path: `${prefix}.ID`, message: 'ID字段是必需的，且必须是字符串' });
@@ -230,10 +237,10 @@ export function validateDomainCard(card: any, index: number): TypeValidationResu
         errors.push({ path: `${prefix}.名称`, message: '名称字段是必需的，且必须是字符串' });
     }
 
-    if (!card.领域 || !DOMAIN_CARD_NAMES.includes(card.领域 as any)) {
+    if (!card.领域 || !validDomains.includes(card.领域 as any)) {
         errors.push({
             path: `${prefix}.领域`,
-            message: `领域字段必须是有效的领域名称。有效选项: ${DOMAIN_CARD_NAMES.join(', ')}`,
+            message: `领域字段必须是有效的领域名称。有效选项: ${validDomains.join(', ')} (或用户自定义)`,
             value: card.领域
         });
     }

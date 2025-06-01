@@ -1,9 +1,10 @@
 import {
-  PROFESSION_CARD_NAMES,
-  ANCESTRY_CARD_NAMES,
-  COMMUNITY_CARD_NAMES,
-  SUBCLASS_CARD_NAMES,
-  DOMAIN_CARD_NAMES
+  // Import the new getter functions
+  getProfessionCardNames,
+  getAncestryCardNames,
+  getCommunityCardNames,
+  getSubClassCardNames,
+  getDomainCardNames
 } from "@/data/card/card-predefined-field";
 
 export interface StandardCard {
@@ -52,12 +53,15 @@ export const ALL_CARD_TYPES = new Map<string, string>([
 ]);
 
 // 卡牌类别选项
+// This structure might need to be dynamically generated if it's used to populate UI directly
+// For now, we assume it might be used for initial setup or as a base, and UI components
+// will call the getter functions directly for the most up-to-date list.
 export const CARD_CLASS_OPTIONS = {
-  [CardType.Profession]: PROFESSION_CARD_NAMES,
-  [CardType.Ancestry]: ANCESTRY_CARD_NAMES,
-  [CardType.Community]: COMMUNITY_CARD_NAMES,
-  [CardType.Subclass]: SUBCLASS_CARD_NAMES,
-  [CardType.Domain]: DOMAIN_CARD_NAMES,
+  [CardType.Profession]: getProfessionCardNames(),
+  [CardType.Ancestry]: getAncestryCardNames(),
+  [CardType.Community]: getCommunityCardNames(),
+  [CardType.Subclass]: getSubClassCardNames(),
+  [CardType.Domain]: getDomainCardNames(),
 }
 
 // 定义不同卡牌类型对应的等级选项
@@ -110,6 +114,16 @@ export interface ImportData {
   version?: string;     // 版本
   description?: string; // 描述
   author?: string;      // 作者
+
+  // New field for defining custom field names
+  customFieldDefinitions?: {
+    profession?: string[];
+    ancestry?: string[];
+    community?: string[];
+    subclass?: string[];
+    domain?: string[];
+    [key: string]: string[] | undefined; // Allows for other potential categories
+  };
 
   // 类型化的卡牌数组 - 用户导入原始格式
   profession?: ProfessionCard[];

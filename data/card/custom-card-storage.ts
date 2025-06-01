@@ -7,7 +7,8 @@
 export const STORAGE_KEYS = {
     INDEX: 'daggerheart_custom_cards_index',
     BATCH_PREFIX: 'daggerheart_custom_cards_batch_',
-    CONFIG: 'daggerheart_custom_cards_config'
+    CONFIG: 'daggerheart_custom_cards_config',
+    CUSTOM_FIELD_NAMES: 'daggerheart_custom_field_names' // New key for custom field names
 } as const;
 
 // 默认配置
@@ -55,6 +56,11 @@ export interface StorageConfig {
     maxStorageSize: number; // 字节数
     autoCleanup: boolean;
     compressionEnabled: boolean;
+}
+
+// New interface for storing custom field names
+export interface CustomFieldNamesStore {
+    [category: string]: string[];
 }
 
 export interface StorageStats {
@@ -227,6 +233,80 @@ export class CustomCardStorage {
             throw new Error('无法保存存储配置');
         }
     }
+
+    // ===== 新增：自定义字段名操作 =====
+
+    /**
+     * 加载所有自定义字段名
+     */
+    static getAllCustomFieldNames(): CustomFieldNamesStore {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            return {};
+        }
+        try {
+            const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELD_NAMES);
+            if (stored) {
+                return JSON.parse(stored);
+            }
+        } catch (error) {
+            console.error('[CustomCardStorage] 自定义字段名加载失败:', error);
+        }
+        return {};
+    }
+
+    /**
+     * 保存指定类别的自定义字段名列表
+     */
+    static saveCustomFieldNames(category: string, names: string[]): void {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+        try {
+            const allCustomFieldNames = this.getAllCustomFieldNames();
+            allCustomFieldNames[category] = [...new Set(names)]; // Ensure uniqueness before saving
+            localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELD_NAMES, JSON.stringify(allCustomFieldNames));
+        } catch (error) {
+            console.error(`[CustomCardStorage] 类别 ${category} 的自定义字段名保存失败:`, error);
+            throw new Error(`无法保存类别 ${category} 的自定义字段名`);
+        }
+    }
+
+    /**
+     * 加载指定类别的自定义字段名列表
+     */
+    static loadCustomFieldNames(category: string): string[] {
+        const allCustomFieldNames = this.getAllCustomFieldNames();
+        return allCustomFieldNames[category] || [];
+    }
+
+    /**
+     * 清除指定类别的自定义字段名
+     */
+    static clearCustomFieldNames(category: string): void {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+        try {
+            const allCustomFieldNames = this.getAllCustomFieldNames();
+            if (allCustomFieldNames[category]) {
+                delete allCustomFieldNames[category];
+                localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELD_NAMES, JSON.stringify(allCustomFieldNames));
+            }
+        } catch (error) {
+            console.error(`[CustomCardStorage] 类别 ${category} 的自定义字段名清除失败:`, error);
+            throw new Error(`无法清除类别 ${category} 的自定义字段名`);
+        }
+    }
+
+    /**
+     * 清空所有自定义字段名数据
+     */
+    static clearAllCustomFieldNamesData(): void {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+        try {
+            localStorage.removeItem(STORAGE_KEYS.CUSTOM_FIELD_NAMES);
+        } catch (error) {
+            console.error('[CustomCardStorage] 清空所有自定义字段名数据失败:', error);
+            throw new Error('无法清空所有自定义字段名数据');
+        }
+    }
+
 
     // ===== 维护操作 =====
 
@@ -457,6 +537,8 @@ export class CustomCardStorage {
             // 清空索引和配置
             localStorage.removeItem(STORAGE_KEYS.INDEX);
             localStorage.removeItem(STORAGE_KEYS.CONFIG);
+            // 清空自定义字段名
+            this.clearAllCustomFieldNamesData();
 
         } catch (error) {
             console.error('[CustomCardStorage] 清空数据失败:', error);

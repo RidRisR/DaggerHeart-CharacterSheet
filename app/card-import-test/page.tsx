@@ -23,7 +23,7 @@ import {
 
 interface ImportStatus {
   isImporting: boolean
-  result: ImportResult | null
+  result: ImportResult | ImportResultWithFileName[] | null
   error: string | null
 }
 
@@ -68,13 +68,17 @@ function ViewCardModal({ cards, isOpen, onClose }: ViewCardModalProps) {
   )
 }
 
+// 新增：用于UI显示的导入结果类型
+interface ImportResultWithFileName extends ImportResult {
+  fileName: string
+}
+
 export default function CardImportTestPage() {
   const [importStatus, setImportStatus] = useState<ImportStatus>({
     isImporting: false,
     result: null,
     error: null
   })
-  const [batchName, setBatchName] = useState('')
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [stats, setStats] = useState(() => ({
@@ -144,17 +148,50 @@ export default function CardImportTestPage() {
   const handleFileSelect = (files: FileList | null) => {
     if (!files || files.length === 0) return
 
-    const file = files[0]
-    if (!file.name.endsWith('.json')) {
+    const fileArr = Array.from(files)
+    // 检查所有文件类型
+    const invalid = fileArr.find(f => !f.name.endsWith('.json'))
+    if (invalid) {
       setImportStatus({
         isImporting: false,
         result: null,
-        error: '请选择一个 JSON 文件'
+        error: '请选择 JSON 文件（可多选）'
       })
       return
     }
 
-    handleFileImport(file)
+    handleMultiFileImport(fileArr)
+  }
+
+  // 支持多文件批量导入
+  const handleMultiFileImport = async (files: File[]) => {
+    setImportStatus({ isImporting: true, result: null, error: null })
+    let allResults: ImportResultWithFileName[] = []
+    let anyError = false
+    for (const file of files) {
+      try {
+        const text = await file.text()
+        const importData: ImportData = JSON.parse(text)
+        // 只用文件名作为批次名
+        const result = await importCustomCards(importData, file.name)
+        allResults.push({ ...result, fileName: file.name })
+        if (!result.success) anyError = true
+      } catch (error) {
+        allResults.push({
+          success: false,
+          imported: 0,
+          errors: [error instanceof Error ? error.message : '文件解析失败'],
+          fileName: file.name
+        })
+        anyError = true
+      }
+    }
+    setImportStatus({
+      isImporting: false,
+      result: allResults.length === 1 ? allResults[0] : allResults,
+      error: anyError ? '部分文件导入失败，请检查下方结果' : null
+    })
+    refreshData()
   }
 
   // 处理文件导入
@@ -164,8 +201,7 @@ export default function CardImportTestPage() {
     try {
       const text = await file.text()
       const importData: ImportData = JSON.parse(text)
-      
-      const result = await importCustomCards(importData, batchName || file.name)
+      const result = await importCustomCards(importData, file.name)
       
       setImportStatus({
         isImporting: false,
@@ -174,7 +210,6 @@ export default function CardImportTestPage() {
       })
 
       if (result.success) {
-        setBatchName('')
         refreshData()
       }
     } catch (error) {
@@ -201,8 +236,7 @@ export default function CardImportTestPage() {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFileSelect(e.dataTransfer.files)
     }
   }
@@ -314,18 +348,6 @@ export default function CardImportTestPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* 批次名称输入 */}
-              <div>
-                <Label htmlFor="batchName">批次名称（可选）</Label>
-                <Input
-                  id="batchName"
-                  value={batchName}
-                  onChange={(e) => setBatchName(e.target.value)}
-                  placeholder="输入批次名称或留空使用文件名"
-                  disabled={importStatus.isImporting}
-                />
-              </div>
-
               {/* 拖拽上传区域 */}
               <div
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -370,56 +392,104 @@ export default function CardImportTestPage() {
               )}
 
               {/* 导入结果 */}
-              {importStatus.result && (
-                <div className={`p-3 rounded-lg ${
-                  importStatus.result.success 
-                    ? 'bg-green-50 border border-green-200' 
-                    : 'bg-red-50 border border-red-200'
-                }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    {importStatus.result.success ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-600" />
-                    )}
-                    <span className={`font-medium ${
-                      importStatus.result.success ? 'text-green-700' : 'text-red-700'
-                    }`}>
-                      {importStatus.result.success ? '导入成功' : '导入失败'}
-                    </span>
-                  </div>
-                  
-                  {importStatus.result.success && (
-                    <p className="text-green-600 text-sm">
-                      成功导入 {importStatus.result.imported} 张卡牌
-                      {importStatus.result.batchId && ` (批次ID: ${importStatus.result.batchId})`}
-                    </p>
-                  )}
-                  
-                  {importStatus.result.errors.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-red-600 text-sm font-medium mb-1">错误信息：</p>
-                      <ul className="text-red-600 text-sm list-disc list-inside">
-                        {importStatus.result.errors.map((error, index) => (
-                          <li key={index}>{error}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {importStatus.result.duplicateIds && importStatus.result.duplicateIds.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-red-600 text-sm font-medium mb-1">重复的ID：</p>
-                      <div className="flex flex-wrap gap-1">
-                        {importStatus.result.duplicateIds.map((id, index) => (
-                          <Badge key={index} variant="destructive" className="text-xs">
-                            {id}
-                          </Badge>
-                        ))}
+              {Array.isArray(importStatus.result) ? (
+                <div className="space-y-2">
+                  {(importStatus.result as ImportResultWithFileName[]).map((res, idx) => (
+                    <div key={idx} className={`p-3 rounded-lg ${res.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+                      }`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        {res.success ? (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-600" />
+                        )}
+                        <span className={`font-medium ${res.success ? 'text-green-700' : 'text-red-700'
+                          }`}>
+                          {res.success ? '导入成功' : '导入失败'}
+                        </span>
+                        <span className="ml-2 text-xs text-muted-foreground">{res.fileName}</span>
                       </div>
+                      {res.success && (
+                        <p className="text-green-600 text-sm">
+                          成功导入 {res.imported} 张卡牌
+                          {res.batchId && ` (批次ID: ${res.batchId})`}
+                        </p>
+                      )}
+                      {res.errors && res.errors.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-red-600 text-sm font-medium mb-1">错误信息：</p>
+                          <ul className="text-red-600 text-sm list-disc list-inside">
+                            {res.errors.map((error: string, i: number) => (
+                              <li key={i}>{error}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {res.duplicateIds && res.duplicateIds.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-red-600 text-sm font-medium mb-1">重复的ID：</p>
+                          <div className="flex flex-wrap gap-1">
+                            {res.duplicateIds.map((id: string, i: number) => (
+                              <Badge key={i} variant="destructive" className="text-xs">
+                                {id}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
+              ) : (
+                importStatus.result && (
+                  <div className={`p-3 rounded-lg ${importStatus.result.success
+                    ? 'bg-green-50 border border-green-200'
+                    : 'bg-red-50 border border-red-200'
+                    }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {importStatus.result.success ? (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-600" />
+                      )}
+                        <span className={`font-medium ${importStatus.result.success ? 'text-green-700' : 'text-red-700'
+                          }`}>
+                          {importStatus.result.success ? '导入成功' : '导入失败'}
+                        </span>
+                        {'fileName' in importStatus.result && (
+                          <span className="ml-2 text-xs text-muted-foreground">{(importStatus.result as any).fileName}</span>
+                        )}
+                      </div>
+                      {importStatus.result.success && (
+                        <p className="text-green-600 text-sm">
+                          成功导入 {importStatus.result.imported} 张卡牌
+                          {importStatus.result.batchId && ` (批次ID: ${importStatus.result.batchId})`}
+                        </p>
+                      )}
+                      {importStatus.result.errors.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-red-600 text-sm font-medium mb-1">错误信息：</p>
+                          <ul className="text-red-600 text-sm list-disc list-inside">
+                            {importStatus.result.errors.map((error, index) => (
+                              <li key={index}>{error}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {importStatus.result.duplicateIds && importStatus.result.duplicateIds.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-red-600 text-sm font-medium mb-1">重复的ID：</p>
+                          <div className="flex flex-wrap gap-1">
+                            {importStatus.result.duplicateIds.map((id, index) => (
+                              <Badge key={index} variant="destructive" className="text-xs">
+                                {id}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
               )}
 
               {/* 导入错误 */}

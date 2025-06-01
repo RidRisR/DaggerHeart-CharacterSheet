@@ -41,7 +41,11 @@ export interface BatchData {
         batchId: string;
         fileName: string;
         importTime: string;
-        originalData: any; // 原始导入数据备份
+        // 保留卡包源信息
+        name?: string;
+        version?: string;
+        description?: string;
+        author?: string;
     };
     cards: any[]; // StandardCard[] - 避免循环依赖，使用any
 }

@@ -95,7 +95,10 @@ export class CustomCardManager {
                     batchId,
                     fileName: batchName || 'imported.json',
                     importTime: new Date().toISOString(),
-                    originalData: importData
+                    name: importData.name,
+                    version: importData.version,
+                    description: importData.description,
+                    author: importData.author
                 },
                 cards: convertResult.cards
             };

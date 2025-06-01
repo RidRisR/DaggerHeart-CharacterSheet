@@ -162,3 +162,8 @@ export interface ExtendedStandardCard extends StandardCard {
   source?: CardSource;
   batchId?: string; // 自定义卡牌的批次ID
 }
+
+// Helper: 判断卡牌是否为自定义卡牌
+export function isCustomCard(card: StandardCard | ExtendedStandardCard): boolean {
+  return (card as ExtendedStandardCard).source === CardSource.CUSTOM;
+}

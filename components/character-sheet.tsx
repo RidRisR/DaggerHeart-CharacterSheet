@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/form-data"
 
 import { useState, useEffect, useRef } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
@@ -35,7 +35,7 @@ import { InventoryWeaponSection } from "@/components/character-sheet-sections/in
 import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
 
 // 默认表单数据
-const defaultFormData: FormData = {
+const defaultFormData: SheetData = {
   characterImage: "",
   name: "",
   ancestry1: "",
@@ -96,8 +96,8 @@ const defaultFormData: FormData = {
 }
 
 interface CharacterSheetProps {
-  formData: FormData
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+  formData: SheetData
+  setFormData: React.Dispatch<React.SetStateAction<SheetData>>
 }
 
 export default function CharacterSheet({ formData, setFormData }: CharacterSheetProps) {
@@ -276,7 +276,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     });
   }
 
-  const handleAttributeValueChange = (attribute: keyof FormData, value: string) => {
+  const handleAttributeValueChange = (attribute: keyof SheetData, value: string) => {
     console.log("Updating attribute:", attribute, "with value:", value);
     setFormData((prev) => {
       const currentAttribute = prev[attribute]
@@ -291,7 +291,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     })
   }
 
-  const handleCheckboxChange = (field: keyof FormData, index: number) => {
+  const handleCheckboxChange = (field: keyof SheetData, index: number) => {
     setFormData((prev) => {
       let currentArray = prev[field] as boolean[] | undefined
       if (!Array.isArray(currentArray)) {
@@ -307,7 +307,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     })
   }
 
-  const handleBooleanChange = (field: keyof FormData) => {
+  const handleBooleanChange = (field: keyof SheetData) => {
     setFormData((prev) => {
       const currentAttribute = prev[field]
       if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
@@ -328,7 +328,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     })
   }
 
-  const handleMaxChange = (field: keyof FormData, value: string) => {
+  const handleMaxChange = (field: keyof SheetData, value: string) => {
     const numValue = Number.parseInt(value) || 0
     setFormData((prev) => ({ ...prev, [field]: numValue }))
   }
@@ -563,7 +563,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }, [formData])
 
   // Generate boxes based on max values
-  const renderBoxes = (field: keyof FormData, max: number, total: number) => {
+  const renderBoxes = (field: keyof SheetData, max: number, total: number) => {
     return (
       <div className="flex gap-1 flex-wrap">
         {Array(total)

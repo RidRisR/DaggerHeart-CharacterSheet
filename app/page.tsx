@@ -12,7 +12,7 @@ import { CharacterCreationGuide } from "@/components/guide/character-creation-gu
 import { Button } from "@/components/ui/button"
 import { ImportExportModal } from "@/components/modals/import-export-modal"
 import PrintHelper from "@/app/print-helper"
-import type { FormData } from "@/lib/form-data";
+import type { SheetData } from "@/lib/form-data";
 import { createEmptyCard, StandardCard } from "@/data/card/card-types"
 import {
   getStandardCardsByType,
@@ -20,7 +20,7 @@ import {
 } from "@/data/card"
 
 // 默认表单数据
-const defaultFormData: FormData = {
+const defaultFormData: SheetData = {
   name: "",
   level: 1,
   proficiency: Array(6).fill(false),
@@ -110,7 +110,7 @@ const defaultFormData: FormData = {
 
 export default function Home() {
   // 类型安全 useState
-  const [formData, setFormData] = useState<FormData>(defaultFormData);
+  const [formData, setFormData] = useState<SheetData>(defaultFormData);
   const [isLoading, setIsLoading] = useState(true);
   const [isPrintingAll, setIsPrintingAll] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -163,7 +163,7 @@ export default function Home() {
       setIsLoading(true);
       const savedData = loadCharacterData();
       // 类型安全合并，优先以 defaultFormData 结构为准
-      const mergedData: FormData = { ...defaultFormData, ...(savedData || {}) };
+      const mergedData: SheetData = { ...defaultFormData, ...(savedData || {}) };
       setFormData(mergedData);
     } catch (error) {
       console.error("Error loading character data:", error);

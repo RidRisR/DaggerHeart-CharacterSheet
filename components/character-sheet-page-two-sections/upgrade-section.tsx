@@ -1,11 +1,11 @@
 "use client"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/form-data"
 
 interface UpgradeSectionProps {
   tier: number
   title: string
   description: string
-  formData: FormData
+  formData: SheetData
   isUpgradeChecked: (tier: string, index: number) => boolean
   handleUpgradeCheck: (tier: string, index: number) => void
   getUpgradeOptions: (profession: string, tier: number) => any[]

@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/form-data"
 import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
 
 // Import sections
@@ -12,8 +12,8 @@ import { CardDeckSection } from "@/components/character-sheet-page-two-sections/
 import { UpgradeSection } from "@/components/character-sheet-page-two-sections/upgrade-section"
 
 interface CharacterSheetPageTwoProps {
-  formData: FormData
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+  formData: SheetData
+  setFormData: React.Dispatch<React.SetStateAction<SheetData>>
 }
 
 export default function CharacterSheetPageTwo({ formData, setFormData }: CharacterSheetPageTwoProps) {

@@ -7,11 +7,11 @@ import { CardType, createEmptyCard, StandardCard } from "@/data/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { saveFocusedCardIds, loadFocusedCardIds } from "@/lib/storage" // Import storage functions
 import { SelectableCard } from "@/components/ui/selectable-card"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/form-data"
 import type { CSSProperties, MouseEvent } from "react";
 
 interface CardDeckSectionProps {
-  formData: FormData
+  formData: SheetData
   onCardChange: (index: number, card: StandardCard) => void
   cardModalActiveTab: string;
   setCardModalActiveTab: React.Dispatch<React.SetStateAction<string>>;

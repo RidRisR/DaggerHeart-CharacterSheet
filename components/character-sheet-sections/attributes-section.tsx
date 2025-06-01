@@ -1,11 +1,11 @@
-import type { FormData, AttributeValue } from "@/lib/form-data"
+import type { SheetData, AttributeValue } from "@/lib/form-data"
 
 "use client"
 
 interface AttributesSectionProps {
-  formData: FormData
-  handleAttributeValueChange: (attribute: keyof FormData, value: string) => void
-  handleBooleanChange: (field: keyof FormData) => void
+  formData: SheetData
+  handleAttributeValueChange: (attribute: keyof SheetData, value: string) => void
+  handleBooleanChange: (field: keyof SheetData) => void
 }
 
 export function AttributesSection({
@@ -41,7 +41,7 @@ export function AttributesSection({
                   <div
                     className={`w-3 h-3 rounded-full border border-gray-800 flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-gray-800" : "bg-white"
                       }`}
-                    onClick={() => handleBooleanChange(attr.key as keyof FormData)}
+                    onClick={() => handleBooleanChange(attr.key as keyof SheetData)}
                   >
                     {isAttributeValue(attrValue) && attrValue.checked && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
                   </div>
@@ -59,7 +59,7 @@ export function AttributesSection({
                     }
                     return isAttributeValue(attrValue) ? attrValue.value : "";
                   })()}
-                  onChange={(e) => handleAttributeValueChange(attr.key as keyof FormData, e.target.value)}
+                  onChange={(e) => handleAttributeValueChange(attr.key as keyof SheetData, e.target.value)}
                   className="w-6 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
                   placeholder="#"
                 />

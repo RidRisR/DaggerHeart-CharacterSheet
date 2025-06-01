@@ -1,10 +1,10 @@
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/form-data"
 
 "use client"
 
 interface GoldSectionProps {
-  formData: FormData
-  handleCheckboxChange: (field: keyof FormData, index: number) => void
+  formData: SheetData
+  handleCheckboxChange: (field: keyof SheetData, index: number) => void
 }
 
 export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps) {

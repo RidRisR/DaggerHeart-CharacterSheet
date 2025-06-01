@@ -1,14 +1,14 @@
 "use client"
 
 import type React from "react"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/form-data"
 import {
   getStandardCardsByType,
   CardType, // Import CardType
 } from "@/data/card"
 
 interface HeaderSectionProps {
-  formData: FormData
+  formData: SheetData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   openProfessionModal: () => void
   openAncestryModal: (field: string) => void

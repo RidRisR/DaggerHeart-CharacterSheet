@@ -13,7 +13,7 @@ export interface AttributeValue {
   value: string
 }
 
-export interface FormData {
+export interface SheetData {
   // 通用属性
   name: string
   characterImage?: string

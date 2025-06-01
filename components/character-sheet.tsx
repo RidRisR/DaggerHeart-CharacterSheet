@@ -7,11 +7,12 @@ import { useState, useEffect, useRef } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
 import { ArmorItem, armorItems } from "@/data/list/armor"
-import { ALL_STANDARD_CARDS } from "@/data/card"
 import {
   getStandardCardsByType,
-  CardType, // Import CardType
+  CardType,
+  getAllStandardCards, // Import the function
 } from "@/data/card"
+import { useCardInitialization } from "@/data/card/initialization-context"
 
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
@@ -101,6 +102,9 @@ interface CharacterSheetProps {
 }
 
 export default function CharacterSheet({ formData, setFormData }: CharacterSheetProps) {
+  // Add card initialization context
+  const { isInitialized } = useCardInitialization()
+  
   // 模态框状态
   const [weaponModalOpen, setWeaponModalOpen] = useState(false)
   const [currentWeaponField, setCurrentWeaponField] = useState("")
@@ -207,11 +211,14 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
       // 只检查前5张特殊卡牌
       for (let i = 0; i < 5; i++) {
+        const currentCard = safeFormData.cards[i];
+        const newCard = updatedCards[i];
+        
         if (
-          !safeFormData.cards[i] ||
-          !updatedCards[i] ||
-          safeFormData.cards[i].name !== updatedCards[i].name ||
-          safeFormData.cards[i].type !== updatedCards[i].type
+          !currentCard ||
+          !newCard ||
+          currentCard.name !== newCard.name ||
+          currentCard.type !== newCard.type
         ) {
           needsUpdate = true
           break
@@ -220,12 +227,13 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
       // 只有在需要更新时才调用setFormData
       if (needsUpdate) {
-        setFormData((prev) => ({
-          ...prev,
-          cards: updatedCards,
-        }))
-      } else {
-        console.log("No card updates needed")
+        setFormData((prev) => {
+          const newFormData = {
+            ...prev,
+            cards: updatedCards,
+          };
+          return newFormData;
+        })
       }
     } catch (error) {
       console.error("Error syncing special cards:", error)
@@ -277,10 +285,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }
 
   const handleAttributeValueChange = (attribute: keyof FormData, value: string) => {
-    console.log("Updating attribute:", attribute, "with value:", value);
     setFormData((prev) => {
       const currentAttribute = prev[attribute]
-      console.log("Current attribute:", currentAttribute);
       if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
         return {
           ...prev,
@@ -334,11 +340,12 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }
 
   const handleProfessionChange = (value: string) => {
-    console.log("handleProfessionChange called with value:", value);
+    // Check if cards are initialized before attempting lookup
+    if (!isInitialized) {
+      return;
+    }
 
     if (value === "none") {
-      console.log("Clearing profession selection");
-
       // Clear profession and subclass selections
       setFormData((prev) => {
           const updatedFormData = {
@@ -351,7 +358,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         });
     } else {
       // Select new profession
-      const profession = ALL_STANDARD_CARDS.find((p) => p.id === value);
+      const profession = getAllStandardCards().find((p) => p.id === value);
+      
       if (profession) {
           setFormData((prev) => {
               const updatedFormData = {
@@ -364,11 +372,17 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
             });
         }
     }
+    
     // Mark cards for synchronization
     needsSyncRef.current = true;
   }
 
   const handleAncestryChange = (field: string, value: string) => {
+    // Check if cards are initialized before attempting lookup
+    if (!isInitialized) {
+      return;
+    }
+
     if (value === "none" || !value) {
       setFormData((prev) => {
         return {
@@ -377,7 +391,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         }
       })
     } else {
-      const ancestry = ALL_STANDARD_CARDS.find((a) => a.id === value)
+      const ancestry = getAllStandardCards().find((a: any) => a.id === value)
       if (ancestry) {
         setFormData((prev) => {
           return {
@@ -392,6 +406,11 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }
 
   const handleCommunityChange = (value: string) => {
+    // Check if cards are initialized before attempting lookup
+    if (!isInitialized) {
+      return;
+    }
+
     if (value === "none" || !value) {
       setFormData((prev) => {
         return {
@@ -400,7 +419,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         }
       })
     } else {
-      const community = ALL_STANDARD_CARDS.find((c) => c.id === value)
+      const community = getAllStandardCards().find((c: any) => c.id === value)
       if (community) {
         setFormData((prev) => {
           return {
@@ -557,7 +576,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   // 在组件挂载时执行一次同步
   useEffect(() => {
     if (initialRenderRef.current && formData) {
-      console.log("Initial card sync")
       syncSpecialCardsWithCharacterChoices()
     }
   }, [formData])
@@ -625,6 +643,11 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }
 
   const handleSubclassChange = (value: string) => {
+    // Check if cards are initialized before attempting lookup
+    if (!isInitialized) {
+      return;
+    }
+
     if (value === "none" || !value) {
       setFormData((prev) => {
         return {
@@ -633,7 +656,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         }
       })
     } else {
-      const subclass = ALL_STANDARD_CARDS.find((s) => s.id === value && s.type === "subclass")
+      const subclass = getAllStandardCards().find((s: any) => s.id === value && s.type === "subclass")
       if (subclass) {
         setFormData((prev) => {
           return {

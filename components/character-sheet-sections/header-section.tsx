@@ -26,6 +26,7 @@ export function HeaderSection({
   openSubclassModal, // 添加openSubclassModal
 }: HeaderSectionProps) {
   const { isInitialized } = useCardInitialization()
+  
   // 只有在初始化完成后才获取卡牌数据
   const professionCards = isInitialized ? getStandardCardsByType(CardType.Profession) : []
   const ancestryCards = isInitialized ? getStandardCardsByType(CardType.Ancestry) : []

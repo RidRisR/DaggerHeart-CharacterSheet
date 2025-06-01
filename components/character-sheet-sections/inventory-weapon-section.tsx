@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-import type { FormData } from "@/lib/form-data"
+import type { CharacterFormData } from "@/lib/form-data"
 
 interface InventoryWeaponSectionProps {
-  formData: FormData
+  formData: CharacterFormData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   openWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void
-  handleBooleanChange: (field: keyof FormData) => void
+  handleBooleanChange: (field: keyof CharacterFormData) => void
   index: number
 }
 
@@ -22,8 +22,8 @@ export function InventoryWeaponSection({
   const traitField = `inventoryWeapon${index}Trait`
   const damageField = `inventoryWeapon${index}Damage`
   const featureField = `inventoryWeapon${index}Feature`
-  const primaryField = `inventoryWeapon${index}Primary`
-  const secondaryField = `inventoryWeapon${index}Secondary`
+  const primaryField = `inventoryWeapon${index}Primary` as keyof CharacterFormData;
+  const secondaryField = `inventoryWeapon${index}Secondary` as keyof CharacterFormData;
 
   return (
     <div className="py-1 mb-2">
@@ -79,7 +79,7 @@ export function InventoryWeaponSection({
             type="checkbox"
             id={primaryField}
             checked={!!(formData as any)[primaryField]} // Ensure value is boolean
-            onChange={() => handleBooleanChange(primaryField as keyof FormData)}
+            onChange={() => handleBooleanChange(primaryField)}
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={primaryField} className="text-[8px]">
@@ -91,7 +91,7 @@ export function InventoryWeaponSection({
             type="checkbox"
             id={secondaryField}
             checked={!!(formData as any)[secondaryField]} // Ensure value is boolean
-            onChange={() => handleBooleanChange(secondaryField as keyof FormData)}
+            onChange={() => handleBooleanChange(secondaryField)}
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={secondaryField} className="text-[8px]">

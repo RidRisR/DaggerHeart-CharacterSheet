@@ -11,7 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import type { FormData } from "@/lib/form-data"
+import type { CharacterFormData } from "@/lib/form-data"
 
 // Remove SafeFormData and use FormData, with runtime fallback for required fields
 
@@ -23,7 +23,7 @@ interface GenericCardSelectionModalProps {
     cardType: "profession" | "ancestry" | "community" | "subclass"
     field?: string // Optional field for ancestry
     levelFilter?: number // Optional level filter for ancestry
-    formData: FormData // Use FormData, not SafeFormData
+    formData: CharacterFormData // Updated to use CharacterFormData
 }
 
 export function GenericCardSelectionModal({

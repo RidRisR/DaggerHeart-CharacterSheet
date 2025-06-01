@@ -1,16 +1,17 @@
 import type { StandardCard } from "@/data/card/card-types";
 import { isEmptyCard } from "@/data/card/card-types"; // Import isEmptyCard
 import { getStandardCardsByType, CardType } from "@/data/card"; // Add this import
+import type { CharacterFormData } from "@/lib/form-data";
 
 // 引导内容数据结构
 export interface GuideStep {
     id: string
     title: string
-    content: string | ((formData: any, allCardsList: StandardCard[]) => string)
+    content: string | ((formData: CharacterFormData, allCardsList: StandardCard[]) => string)
     // 如果需要根据职业显示不同内容，则使用这个字段
     professionSpecificContent?: Record<string, string>
     // 验证条件，返回true表示可以进入下一步
-    validation?: (formData: any, allCards?: StandardCard[]) => boolean
+    validation?: (formData: CharacterFormData, allCards?: StandardCard[]) => boolean
 }
 
 const isFilled = (val: any) => val !== undefined && val !== null && String(val).trim() !== '';

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,58 +34,34 @@ interface ViewCardModalProps {
 }
 
 function ViewCardModal({ cards, isOpen, onClose }: ViewCardModalProps) {
-    const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
-
   if (!isOpen) return null
-
+  // 只在本测试页面使用 card-selection-modal 风格的网格展示
+  const gridCards = useMemo(() => cards || [], [cards])
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-7xl max-h-[90vh] overflow-auto w-full">
-              <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center z-10">
-          <h2 className="text-lg font-semibold">卡牌详情 ({cards.length} 张)</h2>
-                  <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-sm">
-                          {cards.filter(card => card.source === 'custom').length} 自定义 / {cards.filter(card => card.source !== 'custom').length} 内置
-                      </Badge>
-                      <Button onClick={onClose} variant="ghost" size="sm">
-                          <XCircle className="h-4 w-4" />
-                      </Button>
-                  </div>
-              </div>
-              <div className="p-6">
-                  {cards.length === 0 ? (
-                      <div className="text-center py-12">
-                          <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                          <p className="text-muted-foreground text-lg">没有找到任何卡牌</p>
-                      </div>
-                  ) : (
-                      <div className="flex flex-wrap gap-4 justify-center">
-                          {cards.map((card) => (
-                              <div key={card.id} className="relative">
-                                  <SelectableCard
-                                      card={card}
-                                      onClick={(cardId) => setSelectedCardId(cardId === selectedCardId ? null : cardId)}
-                                      isSelected={selectedCardId === card.id}
-                                  />
-                                  <div className="absolute top-2 right-2">
-                                      <Badge
-                                          variant={card.source === 'custom' ? 'secondary' : 'default'}
-                                          className="text-xs shadow-sm"
-                                      >
-                                          {card.source === 'custom' ? '自定义' : '内置'}
-                                      </Badge>
-                                  </div>
-                                  {card.batchId && (
-                                      <div className="absolute bottom-2 left-2">
-                                          <Badge variant="outline" className="text-xs opacity-75">
-                                              {card.batchId.slice(0, 8)}...
-                                          </Badge>
-                                      </div>
-                                  )}
-                  </div>
-                          ))}
-                      </div>
-                  )}
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+          <h2 className="text-xl font-bold">卡牌详情（{gridCards.length} 张）</h2>
+          <Button onClick={onClose} variant="ghost" size="sm">
+            <XCircle className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {gridCards.length === 0 ? (
+              <div className="col-span-full text-center text-gray-500 py-8">没有找到任何卡牌</div>
+            ) : (
+                gridCards.map((card, index) => (
+                  <SelectableCard
+                    key={`${card.id}-${index}`}
+                    card={card}
+                    onClick={() => { }}
+                    isSelected={false}
+                  />
+                ))
+            )}
+          </div>
         </div>
       </div>
     </div>

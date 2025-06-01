@@ -35,6 +35,8 @@ export interface ImportBatch {
     cardCount: number;
     cardTypes: string[];
     size: number;
+    isSystemBatch?: boolean; // 标识是否为系统内置卡包
+    version?: string; // 内置卡包版本号
 }
 
 export interface BatchData {

@@ -61,6 +61,24 @@ cardManager.registerCardType("domain", {
   converter: domainCardConverter.toStandard,
 })
 
+// 确保CustomCardManager在所有转换器注册后初始化
+if (typeof window !== 'undefined') {
+  // 使用较长延迟确保转换器完全注册后再初始化
+  setTimeout(async () => {
+    try {
+      console.log('[Card Index] 开始延迟初始化统一卡牌系统...');
+      const cardManager = CardManager.getInstance();
+      const registeredTypes = cardManager.getRegisteredTypes();
+      console.log('[Card Index] 当前已注册转换器:', registeredTypes);
+      
+      await customCardManager.ensureInitialized();
+      console.log('[Card Index] 统一卡牌系统初始化完成');
+    } catch (error) {
+      console.error('[Card Index] 统一卡牌系统初始化失败:', error);
+    }
+  }, 500); // 增加到500ms延迟
+}
+
 // 卡牌数据映射
 export const cardDataByType = {
   profession: professionCards,
@@ -160,9 +178,73 @@ export const BUILTIN_CARDS_BY_TYPE: Record<string, ExtendedStandardCard[]> = (()
   return result;
 })()
 
-// 获取所有标准格式卡牌（内置+自定义）
+// 获取所有标准格式卡牌（内置+自定义）- 动态版本
 export function getAllStandardCards(): ExtendedStandardCard[] {
-  return ALL_STANDARD_CARDS
+  // 在客户端，尝试使用统一的卡牌系统
+  if (typeof window !== 'undefined') {
+    try {
+      // 检查系统是否已初始化
+      if (customCardManager.isSystemInitialized()) {
+        const unifiedCards = customCardManager.getAllCards();
+        if (unifiedCards.length > 0) {
+          console.log(`[getAllStandardCards] 使用统一系统，卡牌数量: ${unifiedCards.length}`);
+          return unifiedCards;
+        }
+      } else {
+        // 系统未初始化，尝试获取但不等待
+        const cards = customCardManager.tryGetAllCards();
+        if (cards && cards.length > 0) {
+          console.log(`[getAllStandardCards] 使用统一系统（未完全初始化），卡牌数量: ${cards.length}`);
+          return cards;
+        }
+      }
+    } catch (error) {
+      console.warn('[getAllStandardCards] 统一系统暂不可用，回退到ALL_STANDARD_CARDS:', error);
+    }
+  }
+  
+  // 回退到原有的常量
+  console.log(`[getAllStandardCards] 使用常量，卡牌数量: ${ALL_STANDARD_CARDS.length}`);
+  return ALL_STANDARD_CARDS;
+}
+
+// 获取所有标准格式卡牌（内置+自定义）- 异步版本，确保系统已初始化
+export async function getAllStandardCardsAsync(): Promise<ExtendedStandardCard[]> {
+  // 在客户端，确保统一系统已初始化
+  if (typeof window !== 'undefined') {
+    try {
+      await customCardManager.ensureInitialized();
+      const unifiedCards = customCardManager.getAllCards();
+      if (unifiedCards.length > 0) {
+        console.log(`[getAllStandardCardsAsync] 使用统一系统，卡牌数量: ${unifiedCards.length}`);
+        return unifiedCards;
+      }
+    } catch (error) {
+      console.warn('[getAllStandardCardsAsync] 统一系统初始化失败，回退到ALL_STANDARD_CARDS:', error);
+    }
+  }
+  
+  // 回退到原有的常量
+  console.log(`[getAllStandardCardsAsync] 使用常量，卡牌数量: ${ALL_STANDARD_CARDS.length}`);
+  return ALL_STANDARD_CARDS;
+}
+
+// 根据类型获取标准格式卡牌（内置+自定义）- 异步版本
+export async function getStandardCardsByTypeAsync(typeId: CardType): Promise<ExtendedStandardCard[]> {
+  // 在客户端，确保统一系统已初始化
+  if (typeof window !== 'undefined') {
+    try {
+      await customCardManager.ensureInitialized();
+      const unifiedCards = customCardManager.getAllCardsByType(typeId);
+      console.log(`[getStandardCardsByTypeAsync] 使用统一系统，${typeId}类型卡牌数量: ${unifiedCards.length}`);
+      return unifiedCards;
+    } catch (error) {
+      console.warn(`[getStandardCardsByTypeAsync] 统一系统初始化失败，回退到常量 (${typeId}):`, error);
+    }
+  }
+  
+  // 回退到原有的常量
+  return STANDARD_CARDS_BY_TYPE[typeId] || []
 }
 
 // 获取所有内置卡牌
@@ -172,6 +254,21 @@ export function getAllBuiltinCards(): ExtendedStandardCard[] {
 
 // 根据类型获取标准格式卡牌（内置+自定义）
 export function getStandardCardsByType(typeId: CardType): ExtendedStandardCard[] {
+  // 在客户端，尝试使用统一的卡牌系统
+  if (typeof window !== 'undefined') {
+    try {
+      // 检查系统是否已初始化
+      if (customCardManager.isSystemInitialized()) {
+        const unifiedCards = customCardManager.getAllCardsByType(typeId);
+        console.log(`[getStandardCardsByType] 使用统一系统，${typeId}类型卡牌数量: ${unifiedCards.length}`);
+        return unifiedCards;
+      }
+    } catch (error) {
+      console.warn(`[getStandardCardsByType] 统一系统暂不可用，回退到常量 (${typeId}):`, error);
+    }
+  }
+  
+  // 回退到原有的常量
   return STANDARD_CARDS_BY_TYPE[typeId] || []
 }
 

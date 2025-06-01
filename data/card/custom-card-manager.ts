@@ -16,6 +16,7 @@ import {
     ExtendedStandardCard,
     CardType // Assuming CardType enum might be useful here or for keys
 } from './card-types';
+import { getBuiltinStandardCards, getBuiltinBatchMetadata, BUILTIN_BATCH_ID, BUILTIN_CARDS_VERSION } from './builtin-card-data';
 import { CardTypeValidator } from './type-validators';
 import { professionCardConverter } from './profession-card/convert';
 import { ancestryCardConverter } from './ancestry-card/convert';
@@ -49,10 +50,38 @@ export class CustomCardManager {
     private customCards: ExtendedStandardCard[] = [];
     private cardManager: CardManager;
 
+    private isInitialized = false;
+    private initializationPromise: Promise<void> | null = null;
+
     private constructor() {
         this.cardManager = CardManager.getInstance();
         if (typeof window !== 'undefined') {
+            // 立即开始初始化但不等待
+            this.initializationPromise = this.initializeSystem();
+        }
+    }
+
+    /**
+     * 初始化系统，包括内置卡牌种子化和自定义卡牌加载
+     */
+    private async initializeSystem(): Promise<void> {
+        if (this.isInitialized) return;
+        
+        try {
+            console.log('[CustomCardManager] 开始初始化系统...');
+            
+            // 简化初始化逻辑，直接尝试种子化
+            await this._seedOrUpdateBuiltinCards();
+            // 然后加载自定义卡牌
             this.loadCustomCards();
+            
+            this.isInitialized = true;
+            console.log('[CustomCardManager] 系统初始化完成');
+        } catch (error) {
+            console.error('[CustomCardManager] 系统初始化失败:', error);
+            // 即使内置卡牌初始化失败，也要尝试加载自定义卡牌
+            this.loadCustomCards();
+            this.isInitialized = true; // 标记为已初始化，避免重复尝试
         }
     }
 
@@ -61,6 +90,27 @@ export class CustomCardManager {
             CustomCardManager.instance = new CustomCardManager();
         }
         return CustomCardManager.instance;
+    }
+
+    /**
+     * 手动初始化系统（用于确保转换器已注册后再初始化）
+     */
+    async ensureInitialized(): Promise<void> {
+        if (typeof window !== 'undefined') {
+            if (this.initializationPromise) {
+                await this.initializationPromise;
+            } else if (!this.isInitialized) {
+                this.initializationPromise = this.initializeSystem();
+                await this.initializationPromise;
+            }
+        }
+    }
+
+    /**
+     * 检查系统是否已初始化（同步方法）
+     */
+    isSystemInitialized(): boolean {
+        return this.isInitialized;
     }
 
     // ===== 核心导入功能 =====
@@ -507,6 +557,89 @@ export class CustomCardManager {
         this.reloadCustomCards();
     }
 
+    /**
+     * 种子化或更新内置卡牌到存储系统
+     * 检查版本号，如果不匹配则更新内置卡牌
+     */
+    private async _seedOrUpdateBuiltinCards(): Promise<void> {
+        try {
+            console.log('[CustomCardManager] 检查内置卡牌状态...');
+            
+            const index = CustomCardStorage.loadIndex();
+            const existingBatch = index.batches[BUILTIN_BATCH_ID];
+            
+            // 检查是否需要种子化或更新
+            const needsUpdate = !existingBatch || 
+                               !existingBatch.version ||
+                               existingBatch.version !== BUILTIN_CARDS_VERSION;
+            
+            if (needsUpdate) {
+                console.log('[CustomCardManager] 内置卡牌需要更新，开始种子化...');
+                
+                // 获取内置卡牌数据
+                const builtinCards = getBuiltinStandardCards();
+                const batchMetadata = getBuiltinBatchMetadata();
+                
+                // 转换为扩展标准卡牌格式
+                const extendedCards: ExtendedStandardCard[] = builtinCards.map(card => ({
+                    ...card,
+                    source: CardSource.BUILTIN,
+                    batchId: BUILTIN_BATCH_ID
+                }));
+                
+                // 准备批次数据
+                const batchData: BatchData = {
+                    metadata: {
+                        batchId: BUILTIN_BATCH_ID,
+                        fileName: batchMetadata.fileName,
+                        importTime: batchMetadata.importTime,
+                        name: batchMetadata.name,
+                        version: batchMetadata.version,
+                        description: "系统内置卡牌包",
+                        author: "DaggerHeart System"
+                    },
+                    cards: extendedCards
+                };
+                
+                // 如果已存在旧版本，先删除
+                if (existingBatch) {
+                    console.log('[CustomCardManager] 移除旧版本内置卡牌...');
+                    CustomCardStorage.removeBatch(BUILTIN_BATCH_ID);
+                }
+                
+                // 添加新的内置卡牌批次
+                CustomCardStorage.saveBatch(BUILTIN_BATCH_ID, batchData);
+                
+                // 更新索引 - 添加内置卡包信息
+                const newIndex = CustomCardStorage.loadIndex();
+                const builtinBatchInfo: ImportBatch = {
+                    id: BUILTIN_BATCH_ID,
+                    name: batchMetadata.name,
+                    fileName: batchMetadata.fileName,
+                    importTime: batchMetadata.importTime,
+                    cardCount: batchMetadata.cardCount,
+                    cardTypes: batchMetadata.cardTypes,
+                    size: batchMetadata.size,
+                    isSystemBatch: true,
+                    version: BUILTIN_CARDS_VERSION
+                };
+                
+                newIndex.batches[BUILTIN_BATCH_ID] = builtinBatchInfo;
+                newIndex.totalBatches = Object.keys(newIndex.batches).length;
+                newIndex.totalCards = Object.values(newIndex.batches).reduce((sum, batch) => sum + batch.cardCount, 0);
+                newIndex.lastUpdate = new Date().toISOString();
+                CustomCardStorage.saveIndex(newIndex);
+                
+                console.log(`[CustomCardManager] 内置卡牌种子化完成，版本: ${BUILTIN_CARDS_VERSION}, 卡牌数量: ${builtinCards.length}`);
+            } else {
+                console.log(`[CustomCardManager] 内置卡牌已是最新版本: ${BUILTIN_CARDS_VERSION}`);
+            }
+        } catch (error) {
+            console.error('[CustomCardManager] 内置卡牌种子化失败:', error);
+            throw error;
+        }
+    }
+
     // ===== 公共接口 =====
 
     /**
@@ -521,6 +654,71 @@ export class CustomCardManager {
      */
     getCustomCardsByType(type: string): ExtendedStandardCard[] {
         return this.customCards.filter(card => card.type === type);
+    }
+
+    /**
+     * 懒加载确保初始化（每次访问时都检查）
+     */
+    private async lazyEnsureInitialized(): Promise<void> {
+        if (this.isInitialized) return;
+        
+        // 如果已有正在进行的初始化，等待它完成
+        if (this.initializationPromise) {
+            await this.initializationPromise;
+            return;
+        }
+        
+        // 开始新的初始化
+        this.initializationPromise = this.initializeSystem();
+        await this.initializationPromise;
+    }
+
+    /**
+     * 获取所有卡牌（包括内置和自定义）- 带懒加载初始化
+     */
+    async getAllCardsAsync(): Promise<ExtendedStandardCard[]> {
+        await this.lazyEnsureInitialized();
+        return this.getAllCards();
+    }
+
+    /**
+     * 获取所有卡牌（包括内置和自定义）
+     * 使用统一的数据访问，内置卡牌作为特殊批次存储
+     */
+    getAllCards(): ExtendedStandardCard[] {
+        const index = CustomCardStorage.loadIndex();
+        const allCards: ExtendedStandardCard[] = [];
+
+        // 遍历所有批次，包括系统内置批次
+        for (const batchId of Object.keys(index.batches)) {
+            try {
+                const batchData = CustomCardStorage.loadBatch(batchId);
+                if (batchData && batchData.cards) {
+                    allCards.push(...batchData.cards as ExtendedStandardCard[]);
+                }
+            } catch (error) {
+                console.error(`[CustomCardManager] 加载批次 ${batchId} 失败:`, error);
+            }
+        }
+
+        return allCards;
+    }
+
+    /**
+     * 尝试获取所有卡牌，如果系统未初始化则返回null
+     */
+    tryGetAllCards(): ExtendedStandardCard[] | null {
+        if (!this.isInitialized) {
+            return null;
+        }
+        return this.getAllCards();
+    }
+
+    /**
+     * 根据类型获取所有卡牌（包括内置和自定义）
+     */
+    getAllCardsByType(type: string): ExtendedStandardCard[] {
+        return this.getAllCards().filter(card => card.type === type);
     }
 
     /**
@@ -544,6 +742,12 @@ export class CustomCardManager {
      */
     removeBatch(batchId: string): boolean {
         try {
+            // 防止删除系统内置卡包
+            if (batchId === BUILTIN_BATCH_ID) {
+                console.warn('[CustomCardManager] 不允许删除系统内置卡包');
+                return false;
+            }
+
             const index = CustomCardStorage.loadIndex();
 
             if (!index.batches[batchId]) {

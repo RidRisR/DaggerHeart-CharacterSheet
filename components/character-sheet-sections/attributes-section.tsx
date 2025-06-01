@@ -1,11 +1,11 @@
-import type { FormData, AttributeValue } from "@/lib/form-data"
+import type { CharacterFormData, CharacterAttributeValue } from "@/lib/form-data"
 
 "use client"
 
 interface AttributesSectionProps {
-  formData: FormData
-  handleAttributeValueChange: (attribute: keyof FormData, value: string) => void
-  handleBooleanChange: (field: keyof FormData) => void
+  formData: CharacterFormData
+  handleAttributeValueChange: (attribute: keyof CharacterFormData, value: string) => void
+  handleBooleanChange: (field: keyof CharacterFormData) => void
 }
 
 export function AttributesSection({
@@ -32,8 +32,8 @@ export function AttributesSection({
             <div className="flex items-center justify-between w-full mb-0.5">
               <div className="text-[12px] font-bold">{attr.name}</div>
               {(() => {
-                const attrValue = formData[attr.key as keyof typeof formData];
-                function isAttributeValue(val: unknown): val is AttributeValue {
+                const attrValue = formData[attr.key as keyof CharacterFormData];
+                function isAttributeValue(val: unknown): val is CharacterAttributeValue {
                   return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
                 }
 
@@ -41,7 +41,7 @@ export function AttributesSection({
                   <div
                     className={`w-3 h-3 rounded-full border border-gray-800 flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-gray-800" : "bg-white"
                       }`}
-                    onClick={() => handleBooleanChange(attr.key as keyof FormData)}
+                    onClick={() => handleBooleanChange(attr.key as keyof CharacterFormData)}
                   >
                     {isAttributeValue(attrValue) && attrValue.checked && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
                   </div>
@@ -53,13 +53,13 @@ export function AttributesSection({
                 <input
                   type="text"
                   value={(() => {
-                    const attrValue = formData[attr.key as keyof typeof formData];
-                    function isAttributeValue(val: unknown): val is AttributeValue {
+                    const attrValue = formData[attr.key as keyof CharacterFormData];
+                    function isAttributeValue(val: unknown): val is CharacterAttributeValue {
                       return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
                     }
                     return isAttributeValue(attrValue) ? attrValue.value : "";
                   })()}
-                  onChange={(e) => handleAttributeValueChange(attr.key as keyof FormData, e.target.value)}
+                  onChange={(e) => handleAttributeValueChange(attr.key as keyof CharacterFormData, e.target.value)}
                   className="w-6 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
                   placeholder="#"
                 />

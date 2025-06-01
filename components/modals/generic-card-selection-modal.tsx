@@ -11,28 +11,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import type { FormData } from "@/lib/form-data"
 
-// Extend SafeFormData to include missing properties
-interface SafeFormData {
-    gold: any[]
-    experience: string[]
-    hope: any[]
-    hpMax: number
-    hp: any[]
-    stressMax: number
-    stress: any[]
-    armorBoxes: any[]
-    armorMax: number
-    companionExperience: string[]
-    companionExperienceValue: string[]
-    companionStress: any[]
-    cards: StandardCard[]
-    agility: { checked: boolean; value: string }
-    strength: { checked: boolean; value: string }
-    finesse: { checked: boolean; value: string }
-    profession?: string // Add profession property
-    // Add other properties as needed
-}
+// Remove SafeFormData and use FormData, with runtime fallback for required fields
 
 interface GenericCardSelectionModalProps {
     isOpen: boolean
@@ -42,7 +23,7 @@ interface GenericCardSelectionModalProps {
     cardType: "profession" | "ancestry" | "community" | "subclass"
     field?: string // Optional field for ancestry
     levelFilter?: number // Optional level filter for ancestry
-    formData: SafeFormData // Use the defined type for safeFormData
+    formData: FormData // Use FormData, not SafeFormData
 }
 
 export function GenericCardSelectionModal({

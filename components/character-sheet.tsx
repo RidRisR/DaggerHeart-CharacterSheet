@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { FormData } from "@/lib/form-data"
+import type { CharacterFormData, CharacterFormDataEditProps } from "@/lib/form-data"
 
 import { useState, useEffect, useRef } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
@@ -34,70 +34,20 @@ import { InventorySection } from "@/components/character-sheet-sections/inventor
 import { InventoryWeaponSection } from "@/components/character-sheet-sections/inventory-weapon-section"
 import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
 
-// 默认表单数据
-const defaultFormData: FormData = {
-  characterImage: "",
-  name: "",
-  ancestry1: "",
-  ancestry2: "",
-  community: "",
-  subclass: "",
-  level: 1,
-  profession: "",
-  agility: { checked: false, value: "" },
-  strength: { checked: false, value: "" },
-  finesse: { checked: false, value: "" },
-  instinct: { checked: false, value: "" },
-  presence: { checked: false, value: "" },
-  knowledge: { checked: false, value: "" },
-  proficiency: Array(6).fill(false),
-  evasion: "",
-  armorValue: "",
-  armorMax: 0, // 保留默认值
-  armorBoxes: Array(12).fill(false),
-  hpMax: 6, // 保留默认值
-  stressMax: 6, // 保留默认值
-  hp: Array(18).fill(false),
-  stress: Array(18).fill(false),
-  minorThreshold: "",
-  majorThreshold: "",
-  hope: Array(6).fill(false),
-  primaryWeaponName: "",
-  primaryWeaponTrait: "",
-  primaryWeaponDamage: "",
-  primaryWeaponFeature: "",
-  secondaryWeaponName: "",
-  secondaryWeaponTrait: "",
-  secondaryWeaponDamage: "",
-  secondaryWeaponFeature: "",
-  armorName: "",
-  armorBaseScore: "",
-  armorThreshold: "", // Added armorThreshold
-  armorFeature: "",
-  inventory: ["", "", "", "", ""], // 确保有5个空字符串
-  inventoryWeapon1Name: "",
-  inventoryWeapon1Trait: "",
-  inventoryWeapon1Damage: "",
-  inventoryWeapon1Feature: "",
-  inventoryWeapon1Primary: false,
-  inventoryWeapon1Secondary: false,
-  inventoryWeapon2Name: "",
-  inventoryWeapon2Trait: "",
-  inventoryWeapon2Damage: "",
-  inventoryWeapon2Feature: "",
-  inventoryWeapon2Primary: false,
-  inventoryWeapon2Secondary: false,
-  gold: Array(20).fill(false),
-  experience: ["", "", "", "", ""],
-  experienceValues: ["", "", "", "", ""],
-  cards: Array(20)
-    .fill(0)
-    .map(() => createEmptyCard()),
-}
+// 移除本地 defaultFormData，全部依赖 props 传递
 
 interface CharacterSheetProps {
-  formData: FormData
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+  formData: CharacterFormData
+  setFormData: React.Dispatch<React.SetStateAction<CharacterFormData>>
+}
+
+// Helper to ensure array fallback for possibly undefined fields
+function getArray<T>(arr: T[] | undefined, length: number, fallback: T): T[] {
+  return Array.isArray(arr) ? arr : Array(length).fill(fallback)
+}
+// Helper to ensure number fallback for possibly undefined fields
+function getNumber(val: number | undefined, fallback: number): number {
+  return typeof val === "number" ? val : fallback
 }
 
 export default function CharacterSheet({ formData, setFormData }: CharacterSheetProps) {
@@ -118,77 +68,47 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   const needsSyncRef = useRef(false)
   const initialRenderRef = useRef(true)
 
-  // 确保 formData 和所有必要的子属性都存在
-  // 适配 gold、experience、hope、hp、stress、armorBoxes 等字段为数组类型
-  const safeFormData = {
-    ...defaultFormData,
-    ...(formData || {}),
-    gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
-    experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
-    hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),
-    hpMax: formData?.hpMax || 6,
-    hp: Array.isArray(formData?.hp) ? formData.hp : Array(18).fill(false),
-    stressMax: formData?.stressMax || 6,
-    stress: Array.isArray(formData?.stress) ? formData.stress : Array(18).fill(false),
-    armorBoxes: Array.isArray(formData?.armorBoxes) ? formData.armorBoxes : Array(12).fill(false),
-    armorMax: formData?.armorMax || 0, // 保留默认值
-    companionExperience: Array.isArray(formData?.companionExperience) ? formData.companionExperience : ["", "", "", "", ""],
-    companionExperienceValue: Array.isArray(formData?.companionExperienceValue) ? formData.companionExperienceValue : ["", "", "", "", ""],
-    companionStress: Array.isArray(formData?.companionStress) ? formData.companionStress : Array(6).fill(false),
-    cards: Array.isArray(formData?.cards)
-      ? formData.cards // 只允许 StandardCard[]
-      : Array(20).fill(0).map(() => createEmptyCard()),
-    // 确保属性对象存在
-    agility: formData?.agility || { checked: false, value: "" },
-    strength: formData?.strength || { checked: false, value: "" },
-    finesse: formData?.finesse || { checked: false, value: "" },
-    instinct: formData?.instinct || { checked: false, value: "" },
-    presence: formData?.presence || { checked: false, value: "" },
-    knowledge: formData?.knowledge || { checked: false, value: "" },
-    proficiency: Array.isArray(formData?.proficiency) ? formData.proficiency : Array(6).fill(false),
-  }
-
   // 同步特殊卡牌与角色选择 - 不直接修改状态，而是返回新的卡牌数组
   const getUpdatedSpecialCards = () => {
-    const newCards = [...safeFormData.cards];
+    const newCards = [...formData.cards];
 
     while (newCards.length < 5) {
       newCards.push(createEmptyCard("unknown"));
     }
 
     // 同步职业卡（位置0）
-    if (safeFormData.profession) {
-      newCards[0] = getProfessionById(safeFormData.profession);
+    if (formData.profession) {
+      newCards[0] = getProfessionById(formData.profession);
     } else {
       newCards[0] = createEmptyCard();
     }
 
     // 同步子职业卡（位置1）
-    if (safeFormData.subclass) {
-      newCards[1] = getSubclassById(safeFormData.subclass);
+    if (formData.subclass) {
+      newCards[1] = getSubclassById(formData.subclass);
     } else {
       newCards[1] = createEmptyCard();
     }
 
     // 同步血统卡1（位置2）
-    if (safeFormData.ancestry1) {
-      const ancestry1 = getAncestryById(safeFormData.ancestry1);
+    if (formData.ancestry1) {
+      const ancestry1 = getAncestryById(formData.ancestry1);
       newCards[2] = ancestry1;
     } else {
       newCards[2] = createEmptyCard();
     }
 
     // 同步血统卡2（位置3）
-    if (safeFormData.ancestry2) {
-      const ancestry2 = getAncestryById(safeFormData.ancestry2);
+    if (formData.ancestry2) {
+      const ancestry2 = getAncestryById(formData.ancestry2);
       newCards[3] = ancestry2;
     } else {
       newCards[3] = createEmptyCard();
     }
 
     // 同步社群卡（位置4）
-    if (safeFormData.community) {
-      newCards[4] = getCommunityById(safeFormData.community);
+    if (formData.community) {
+      newCards[4] = getCommunityById(formData.community);
     } else {
       newCards[4] = createEmptyCard();
     }
@@ -208,10 +128,10 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       // 只检查前5张特殊卡牌
       for (let i = 0; i < 5; i++) {
         if (
-          !safeFormData.cards[i] ||
+          !formData.cards[i] ||
           !updatedCards[i] ||
-          safeFormData.cards[i].name !== updatedCards[i].name ||
-          safeFormData.cards[i].type !== updatedCards[i].type
+          formData.cards[i].name !== updatedCards[i].name ||
+          formData.cards[i].type !== updatedCards[i].type
         ) {
           needsUpdate = true
           break
@@ -276,7 +196,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     });
   }
 
-  const handleAttributeValueChange = (attribute: keyof FormData, value: string) => {
+  const handleAttributeValueChange = (attribute: keyof CharacterFormData, value: string) => {
     console.log("Updating attribute:", attribute, "with value:", value);
     setFormData((prev) => {
       const currentAttribute = prev[attribute]
@@ -291,7 +211,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     })
   }
 
-  const handleCheckboxChange = (field: keyof FormData, index: number) => {
+  const handleCheckboxChange = (field: keyof CharacterFormData, index: number) => {
     setFormData((prev) => {
       let currentArray = prev[field] as boolean[] | undefined
       if (!Array.isArray(currentArray)) {
@@ -307,7 +227,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     })
   }
 
-  const handleBooleanChange = (field: keyof FormData) => {
+  const handleBooleanChange = (field: keyof CharacterFormData) => {
     setFormData((prev) => {
       const currentAttribute = prev[field]
       if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
@@ -328,7 +248,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     })
   }
 
-  const handleMaxChange = (field: keyof FormData, value: string) => {
+  const handleMaxChange = (field: keyof CharacterFormData, value: string) => {
     const numValue = Number.parseInt(value) || 0
     setFormData((prev) => ({ ...prev, [field]: numValue }))
   }
@@ -341,28 +261,28 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
       // Clear profession and subclass selections
       setFormData((prev) => {
+        const updatedFormData = {
+          ...prev,
+          profession: "",
+          subclass: "", // Clear subclass
+          cards: prev.cards.map((card, index) => (index === 1 ? createEmptyCard() : card)), // Clear subclass card on second page
+        };
+        return updatedFormData;
+      });
+    } else {
+      // Select new profession
+      const profession = ALL_STANDARD_CARDS.find((p) => p.id === value);
+      if (profession) {
+        setFormData((prev) => {
           const updatedFormData = {
             ...prev,
-            profession: "",
+            profession: value,
             subclass: "", // Clear subclass
             cards: prev.cards.map((card, index) => (index === 1 ? createEmptyCard() : card)), // Clear subclass card on second page
           };
           return updatedFormData;
         });
-    } else {
-      // Select new profession
-      const profession = ALL_STANDARD_CARDS.find((p) => p.id === value);
-      if (profession) {
-          setFormData((prev) => {
-              const updatedFormData = {
-                ...prev,
-                profession: value,
-                subclass: "", // Clear subclass
-                cards: prev.cards.map((card, index) => (index === 1 ? createEmptyCard() : card)), // Clear subclass card on second page
-              };
-              return updatedFormData;
-            });
-        }
+      }
     }
     // Mark cards for synchronization
     needsSyncRef.current = true;
@@ -563,13 +483,13 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }, [formData])
 
   // Generate boxes based on max values
-  const renderBoxes = (field: keyof FormData, max: number, total: number) => {
+  const renderBoxes = (field: keyof CharacterFormData, max: number, total: number) => {
     return (
       <div className="flex gap-1 flex-wrap">
         {Array(total)
           .fill(0)
           .map((_, i) => {
-            const fieldArray = Array.isArray(safeFormData[field]) ? (safeFormData[field] as boolean[]) : Array(total).fill(false)
+            const fieldArray = Array.isArray(formData[field]) ? (formData[field] as boolean[]) : Array(total).fill(false)
             return (
               <div
                 key={`${String(field)}-${i}`}
@@ -659,7 +579,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         >
           {/* Header Section */}
           <HeaderSection
-            formData={safeFormData}
+            formData={formData}
             handleInputChange={handleInputChange}
             openProfessionModal={openProfessionModal}
             openAncestryModal={openAncestryModal}
@@ -676,9 +596,9 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 {/* Character Image Upload */}
                 <div className="flex flex-col items-center">
                   <div className="w-24 h-24 border-2 border-gray-800 flex flex-col items-center justify-center relative overflow-hidden">
-                    {safeFormData.characterImage ? (
+                    {formData.characterImage ? (
                       <img
-                        src={safeFormData.characterImage || "/placeholder.svg"}
+                        src={formData.characterImage || "/placeholder.svg"}
                         alt="Character Portrait"
                         className="w-full h-full object-cover"
                       />
@@ -717,7 +637,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                     <input
                       type="text"
                       name="evasion"
-                      value={safeFormData.evasion}
+                      value={formData.evasion}
                       onChange={handleInputChange}
                       className="w-10 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
                     />
@@ -732,7 +652,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                       <input
                         type="text"
                         name="armorValue"
-                        value={safeFormData.armorValue}
+                        value={formData.armorValue}
                         onChange={handleInputChange}
                         className="w-10 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
                       />
@@ -743,18 +663,16 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                       </div>
                       {/* Armor Boxes - 3 per row, 4 rows */}
                       <div className="grid grid-cols-3 gap-1">
-                        {Array(12)
-                          .fill(0)
-                          .map((_, i) => (
-                            <div
-                              key={`armor-box-${i}`}
-                              className={`w-4 h-4 border ${i < Number(safeFormData.armorValue)
-                                ? "border-gray-800 cursor-pointer"
-                                : "border-gray-400 border-dashed"
-                                } ${safeFormData.armorBoxes[i] && i < safeFormData.armorMax ? "bg-gray-800" : "bg-white"}`}
-                              onClick={() => i < safeFormData.armorMax && handleCheckboxChange("armorBoxes", i)}
-                            ></div>
-                          ))}
+                        {getArray(formData.armorBoxes, 12, false).map((checked, i) => (
+                          <div
+                            key={`armor-box-${i}`}
+                            className={`w-4 h-4 border ${i < getNumber(formData.armorMax, 0)
+                              ? "border-gray-800 cursor-pointer"
+                              : "border-gray-400 border-dashed"
+                              } ${checked && i < getNumber(formData.armorMax, 0) ? "bg-gray-800" : "bg-white"}`}
+                            onClick={() => i < getNumber(formData.armorMax, 0) && handleCheckboxChange("armorBoxes", i)}
+                          ></div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -763,27 +681,27 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
               {/* Attributes Section */}
               <AttributesSection
-                formData={safeFormData}
+                formData={formData}
                 handleAttributeValueChange={handleAttributeValueChange}
                 handleBooleanChange={handleBooleanChange}
               />
 
               {/* Hit Points & Stress */}
               <HitPointsSection
-                formData={safeFormData}
+                formData={formData}
                 handleInputChange={handleInputChange}
                 handleMaxChange={handleMaxChange}
                 renderBoxes={renderBoxes}
               />
 
               {/* Hope */}
-              <HopeSection formData={safeFormData} handleCheckboxChange={handleCheckboxChange} />
+              <HopeSection formData={formData} handleCheckboxChange={handleCheckboxChange} />
 
               {/* Experience */}
-              <ExperienceSection formData={safeFormData} setFormData={setFormData} />
+              <ExperienceSection formData={formData} setFormData={setFormData} />
 
               {/* Gold */}
-              <GoldSection formData={safeFormData} handleCheckboxChange={handleCheckboxChange} />
+              <GoldSection formData={formData} handleCheckboxChange={handleCheckboxChange} />
             </div>
 
             {/* Right Column */}
@@ -799,7 +717,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                     .map((_, i) => (
                       <div
                         key={`prof-${i}`}
-                        className={`w-3 h-3 rounded-full border-2 border-gray-800 cursor-pointer ${safeFormData.proficiency[i] ? "bg-gray-800" : "bg-white"
+                        className={`w-3 h-3 rounded-full border-2 border-gray-800 cursor-pointer ${formData.proficiency && Array.isArray(formData.proficiency) && formData.proficiency[i] ? "bg-gray-800" : "bg-white"
                           }`}
                         onClick={() => handleCheckboxChange("proficiency", i)}
                       ></div>
@@ -807,7 +725,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 </div>
 
                 <WeaponSection
-                  formData={safeFormData}
+                  formData={formData}
                   handleInputChange={handleInputChange}
                   openWeaponModal={openWeaponModal}
                   isPrimary={true}
@@ -815,7 +733,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 />
 
                 <WeaponSection
-                  formData={safeFormData}
+                  formData={formData}
                   handleInputChange={handleInputChange}
                   openWeaponModal={openWeaponModal}
                   isPrimary={false}
@@ -825,17 +743,17 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
               {/* Active Armor */}
               <ArmorSection
-                formData={safeFormData}
+                formData={formData}
                 handleInputChange={handleInputChange}
                 openArmorModal={openArmorModal}
               />
 
               {/* Inventory */}
-              <InventorySection formData={safeFormData} setFormData={setFormData} />
+              <InventorySection formData={formData} setFormData={setFormData} />
 
               {/* Inventory Weapons */}
               <InventoryWeaponSection
-                formData={safeFormData}
+                formData={formData}
                 handleInputChange={handleInputChange}
                 openWeaponModal={openWeaponModal}
                 handleBooleanChange={handleBooleanChange}
@@ -843,7 +761,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
               />
 
               <InventoryWeaponSection
-                formData={safeFormData}
+                formData={formData}
                 handleInputChange={handleInputChange}
                 openWeaponModal={openWeaponModal}
                 handleBooleanChange={handleBooleanChange}
@@ -996,7 +914,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           cardType={currentModal.type}
           field={currentModal.field}
           levelFilter={currentModal.levelFilter}
-          formData={safeFormData}
+          formData={formData}
         />
       )}
     </>

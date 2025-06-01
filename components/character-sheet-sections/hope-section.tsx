@@ -1,11 +1,11 @@
 "use client"
 import { StandardCard } from "@/data/card/card-types";
-import type { FormData } from "@/lib/form-data"
+import type { CharacterFormData } from "@/lib/form-data"
 import ReactMarkdown from 'react-markdown';
 
 interface HopeSectionProps {
-  formData: FormData
-  handleCheckboxChange: (field: keyof FormData, index: number) => void
+  formData: CharacterFormData
+  handleCheckboxChange: (field: keyof CharacterFormData, index: number) => void
 }
 
 export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps) {

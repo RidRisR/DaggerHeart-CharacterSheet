@@ -3,7 +3,7 @@ import {
   getCardTypeName,
   CardType, // Import CardType
 } from "@/data/card";
-import type { FormData } from "./form-data"
+import type { CharacterFormData } from "./form-data"
 
 /**
  * 角色表数据存储和读取工具
@@ -13,7 +13,7 @@ import type { FormData } from "./form-data"
 const STORAGE_KEY = "charactersheet_data"
 
 // 保存角色数据到 localStorage
-export function saveCharacterData(data: FormData): void {
+export function saveCharacterData(data: CharacterFormData): void {
   try {
     if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
@@ -24,11 +24,11 @@ export function saveCharacterData(data: FormData): void {
 }
 
 // 从 localStorage 读取角色数据
-export function loadCharacterData(): FormData | null {
+export function loadCharacterData(): CharacterFormData | null {
   try {
     if (typeof window !== "undefined" && window.localStorage) {
       const savedData = localStorage.getItem(STORAGE_KEY)
-      return savedData ? (JSON.parse(savedData) as FormData) : null
+      return savedData ? (JSON.parse(savedData) as CharacterFormData) : null
     }
     return null
   } catch (error) {
@@ -38,11 +38,11 @@ export function loadCharacterData(): FormData | null {
 }
 
 // 合并部分数据到已保存的数据中
-export function mergeAndSaveCharacterData(partialData: Partial<FormData>): void {
+export function mergeAndSaveCharacterData(partialData: Partial<CharacterFormData>): void {
   try {
-    const existingData = loadCharacterData() || {} as FormData
+    const existingData = loadCharacterData() || {} as CharacterFormData
     const mergedData = { ...existingData, ...partialData }
-    saveCharacterData(mergedData as FormData)
+    saveCharacterData(mergedData as CharacterFormData)
   } catch (error) {
     console.error("合并角色数据失败:", error)
   }
@@ -60,7 +60,7 @@ export function clearCharacterData(): void {
 }
 
 // 导出角色数据为JSON文件
-export function exportCharacterData(formData: FormData): void {
+export function exportCharacterData(formData: CharacterFormData): void {
   try {
     if (!formData) {
       alert("没有可导出的角色数据");
@@ -99,7 +99,7 @@ export function exportCharacterData(formData: FormData): void {
 }
 
 // 从JSON文件导入角色数据
-export function importCharacterData(file: File): Promise<FormData> {
+export function importCharacterData(file: File): Promise<CharacterFormData> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
 
@@ -108,7 +108,7 @@ export function importCharacterData(file: File): Promise<FormData> {
         if (!event.target?.result) {
           throw new Error("读取文件失败")
         }
-        const data = JSON.parse(event.target.result as string) as FormData
+        const data = JSON.parse(event.target.result as string) as CharacterFormData
         saveCharacterData(data)
         resolve(data)
       } catch (error) {

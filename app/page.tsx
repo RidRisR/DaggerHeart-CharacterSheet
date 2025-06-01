@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
@@ -12,7 +12,8 @@ import { CharacterCreationGuide } from "@/components/guide/character-creation-gu
 import { Button } from "@/components/ui/button"
 import { ImportExportModal } from "@/components/modals/import-export-modal"
 import PrintHelper from "@/app/print-helper"
-import type { FormData } from "@/lib/form-data";
+import { useSingletonCharacterFormData, getDefaultCharacterFormData } from "@/lib/form-data"
+import type { CharacterFormData } from "@/lib/form-data"
 import { createEmptyCard, StandardCard } from "@/data/card/card-types"
 import {
   getStandardCardsByType,
@@ -20,97 +21,22 @@ import {
 } from "@/data/card"
 
 // 默认表单数据
-const defaultFormData: FormData = {
-  name: "",
-  level: 1,
-  proficiency: Array(6).fill(false),
-  ancestry1: "",
-  ancestry2: "",
-  profession: "",
-  community: "",
-  agility: { checked: false, value: "" },
-  strength: { checked: false, value: "" },
-  finesse: { checked: false, value: "" },
-  instinct: { checked: false, value: "" },
-  presence: { checked: false, value: "" },
-  knowledge: { checked: false, value: "" },
-  gold: Array(20).fill(false),
-  experience: ["", "", "", "", ""],
-  experienceValues: ["", "", "", "", ""],
-  hope: Array(6).fill(false),
-  hp: Array(18).fill(false),
-  stress: Array(18).fill(false),
-  armorBoxes: Array(12).fill(false),
-  inventory: ["", "", "", "", ""],
-  characterBackground: "",
-  characterAppearance: "",
-  characterMotivation: "",
-  cards: Array(20).fill(0).map(() => createEmptyCard()),
-  checkedUpgrades: {
-    tier1: {},
-    tier2: {},
-    tier3: {},
-  },
-  minorThreshold: "",
-  majorThreshold: "",
-  armorValue: "",
-  armorBonus: "",
-  armorMax: 0,
-  hpMax: 0,
-  stressMax: 0,
-  primaryWeaponName: "",
-  primaryWeaponTrait: "",
-  primaryWeaponDamage: "",
-  primaryWeaponFeature: "",
-  secondaryWeaponName: "",
-  secondaryWeaponTrait: "",
-  secondaryWeaponDamage: "",
-  secondaryWeaponFeature: "",
-  armorName: "",
-  armorBaseScore: "",
-  armorThreshold: "",
-  armorFeature: "",
-  inventoryWeapon1Name: "",
-  inventoryWeapon1Trait: "",
-  inventoryWeapon1Damage: "",
-  inventoryWeapon1Feature: "",
-  inventoryWeapon1Primary: false,
-  inventoryWeapon1Secondary: false,
-  inventoryWeapon2Name: "",
-  inventoryWeapon2Trait: "",
-  inventoryWeapon2Damage: "",
-  inventoryWeapon2Feature: "",
-  inventoryWeapon2Primary: false,
-  inventoryWeapon2Secondary: false,
-  // 伙伴相关
-  companionImage: "",
-  companionDescription: "",
-  companionRange: "",
-  companionStress: Array(18).fill(false),
-  companionEvasion: "",
-  companionStressMax: 0,
-  evasion: "",
-  subclass: "",
-  companionName: "",
-  companionWeapon: "",
-  companionExperience: ["", "", "", "", ""],
-  companionExperienceValue: ["", "", "", "", ""],
-  // 伙伴训练
-  trainingOptions: {
-    intelligent: Array(3).fill(false),
-    radiantInDarkness: [false],
-    creatureComfort: [false],
-    armored: [false],
-    vicious: Array(3).fill(false),
-    resilient: Array(3).fill(false),
-    bonded: [false],
-    aware: Array(3).fill(false),
-  },
+const defaultFormData = getDefaultCharacterFormData();
+
+// 兼容 setFormData 的类型（支持直接赋值和 updater）
+function setFormDataCompat(setter: (updater: (prev: CharacterFormData) => CharacterFormData) => void) {
+  return (value: CharacterFormData | ((prev: CharacterFormData) => CharacterFormData)) => {
+    if (typeof value === "function") {
+      setter(value as (prev: CharacterFormData) => CharacterFormData)
+    } else {
+      setter(() => value)
+    }
+  }
 }
 
 export default function Home() {
-  // 类型安全 useState
-  const [formData, setFormData] = useState<FormData>(defaultFormData);
+  const [formData, singletonSetFormData] = useSingletonCharacterFormData(defaultFormData)
+  const setFormData = setFormDataCompat(singletonSetFormData)
   const [isLoading, setIsLoading] = useState(true);
   const [isPrintingAll, setIsPrintingAll] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -163,7 +89,7 @@ export default function Home() {
       setIsLoading(true);
       const savedData = loadCharacterData();
       // 类型安全合并，优先以 defaultFormData 结构为准
-      const mergedData: FormData = { ...defaultFormData, ...(savedData || {}) };
+      const mergedData: CharacterFormData = { ...defaultFormData, ...(savedData || {}) };
       setFormData(mergedData);
     } catch (error) {
       console.error("Error loading character data:", error);
@@ -188,6 +114,9 @@ export default function Home() {
   const toggleGuide = () => {
     setIsGuideOpen(!isGuideOpen)
   }
+
+  // 兼容 onFormDataChange 用法
+  const onFormDataChange = (data: CharacterFormData) => setFormData(data)
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">加载中...</div>
@@ -219,7 +148,7 @@ export default function Home() {
 
         {/* 第三页 */}
         <div className="page-three">
-          <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
+          <CharacterSheetPageThree formData={formData} onFormDataChange={onFormDataChange} allCards={formData.cards} />
         </div>
 
         {/* 第四页（仅打印时显示） */}
@@ -255,7 +184,7 @@ export default function Home() {
               <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
             </TabsContent>
             <TabsContent value="page3"> {/* Added content for page 3 */}
-              <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
+              <CharacterSheetPageThree formData={formData} onFormDataChange={onFormDataChange} allCards={formData.cards} />
             </TabsContent>
           </Tabs>
         </div>

@@ -1,180 +1,116 @@
-# 自定义卡牌导入功能 - 分步执行计划
+Okay, let's formulate a comprehensive plan and execute it step by step.
 
-## 总体目标
-为DaggerHeart角色表系统添加自定义卡牌导入功能，允许用户通过JSON文件导入自定义卡牌数据，使用localStorage存储，完全独立于内置卡牌系统。
+**Overall Goal:** Refactor `FormData` access to be centralized through form-data.ts and a custom hook, then implement card ID validation.
 
-## 核心特性
-- 使用FileReader API读取JSON文件
-- 严格的ID冲突检查（检测到重复ID直接报错）
-- 批次管理系统（每次导入作为独立批次）
-- localStorage持久化存储
-- 与现有CardManager系统完全兼容
-- 完整的错误处理和用户反馈
+**Phase 1: Centralize `FormData` Access Logic**
 
----
+**Step 1.1: Define `CharacterData` and `getDefaultFormData` (if not already perfect)**
 
-## 阶段1：基础存储架构（第1-3步）
+*   Ensure form-data.ts has a robust `getDefaultFormData()` function that returns a complete and valid initial `FormData` object.
+*   I'll also need to understand the `CharacterData` type if it's a wrapper around `FormData` as hinted in previous discussions. The semantic search didn't explicitly return its definition, so I'll proceed assuming `FormData` is the primary state object managed directly for now.
 
-### ✅ 第1步：创建CustomCardStorage类
-**目标：** 创建localStorage抽象层，定义存储架构
-**文件：** `data/card/custom-card-storage.ts`
-**功能：**
-- 定义存储键值命名规范
-- 实现批次索引管理
-- 实现批次数据的CRUD操作
-- 添加存储空间监控
-- 数据完整性检查
+**Step 1.2: Create Selector and Mutator Functions in form-data.ts**
 
-**存储架构：**
+*   I will start by adding a few basic selector and mutator functions to form-data.ts for commonly accessed fields like `name`, `level`, `ancestry1`, `profession`, and `cards`.
+*   Selectors will take `formData: FormData` and return the specific field's value.
+*   Mutators will take `formData: FormData` and the new value, returning a *new* `FormData` object.
+
+**Step 1.3: Create the `useCharacterSheet` Hook**
+
+*   Create a new file: `/Users/ris/Desktop/DaggerHeart-CharacterSheet/hooks/useCharacterSheet.ts`.
+*   This hook will:
+    *   Initialize its state using `loadCharacterData()` from storage.ts (or `getDefaultFormData()` if loading fails).
+    *   Provide selected data points (e.g., `characterName`) using the selector functions from form-data.ts.
+    *   Provide updater functions (e.g., `setCharacterName`) that use the mutator functions from form-data.ts and then call `setFormData` (from `useState`) and `saveCharacterData` (from storage.ts).
+
+**Step 1.4: Refactor a Pilot Component (e.g., `HeaderSection`)**
+
+*   Identify a component that uses `formData` and `setFormData` directly, for example, header-section.tsx.
+*   Modify this component to:
+    *   Use the `useCharacterSheet` hook.
+    *   Access data via the properties exposed by the hook (e.g., `hook.characterName`).
+    *   Update data using the functions exposed by the hook (e.g., `hook.setCharacterName('new name')`).
+    *   Remove direct `formData` prop drilling if possible (this might be a later step if `HeaderSection` is deeply nested).
+
+**Step 1.5: Iteratively Refactor Other Components**
+
+*   Gradually apply Step 1.4 to other components that interact with `FormData`.
+*   As new data fields or update patterns are encountered, add corresponding selector/mutator functions to form-data.ts and expose them through the `useCharacterSheet` hook.
+*   Key components to target early would be those in character-sheet-sections and the main page components like character-sheet.tsx and page.tsx.
+
+**Phase 2: Implement Card ID Validation**
+
+**Step 2.1: Create `extractAllCardIds` Function**
+
+*   In form-data.ts, implement `extractAllCardIds(formData: FormData): string[]` as discussed previously, ensuring it covers all fields that store card IDs (e.g., `ancestry1`, `profession`, `cards`, etc.). I will use the provided form-data.ts structure as a reference.
+    *   The `cards: StandardCard[]` field in `FormData` will require iterating through the array and extracting `card.id` from each `StandardCard` object.
+
+**Step 2.2: Integrate Validation into `useCharacterSheet` Hook or Loading Process**
+
+*   **Fetch Valid IDs:** Inside the `useCharacterSheet` hook (or a dedicated validation function called by it), use `getAllCards()` from card-manager.ts (or index.ts) to get all valid `StandardCard` objects and create a `Set` of their IDs.
+*   **Perform Validation:** After `formData` is loaded (or on specific updates):
+    1.  Call `extractAllCardIds` on the current `formData`.
+    2.  Compare these IDs against the set of valid card IDs.
+    3.  Collect any invalid IDs.
+*   **Notification:**
+    *   If invalid IDs are found, use the `toast` system (use-toast.ts) to notify the user. The `useCharacterSheet` hook is a suitable place to invoke `useToast`.
+*   **Sanitization (Optional - to be decided based on strictness):**
+    *   Decide on the sanitization strategy (e.g., remove invalid IDs, nullify fields). This logic would also reside in form-data.ts as new mutator functions or be part of the validation flow within the hook. For now, the focus will be on detection and notification.
+
+**Execution Plan - Starting with Phase 1:**
+
+Let's begin with **Step 1.2** and **Step 1.3**. I'll create the initial helper functions in form-data.ts and the basic structure for `hooks/useCharacterSheet.ts`.
+
+**Step 1.2: Add initial selectors and mutators to form-data.ts**
+I will add functions for `name`, `level`, `ancestry1`, `profession`, and `cards`.
+```typescript
+// File: /Users/ris/Desktop/DaggerHeart-CharacterSheet/lib/form-data.ts
+
+// ...existing code...
+import { StandardCard } from "@/data/card/card-types"; // Ensure this is imported
+
+// ... existing interfaces (CheckedUpgrades, AttributeValue, FormData) ...
+
+// --- Selector Functions ---
+export const getCharacterName = (formData: FormData): string => formData.name;
+export const getCharacterLevel = (formData: FormData): number => formData.level;
+export const getAncestry1Id = (formData: FormData): string | undefined => formData.ancestry1;
+export const getProfessionId = (formData: FormData): string => formData.profession;
+export const getAllCardsFromData = (formData: FormData): StandardCard[] => formData.cards || [];
+
+// --- Mutator Functions ---
+// Note: These return new FormData objects for immutability
+
+export const updateCharacterName = (formData: FormData, newName: string): FormData => ({
+  ...formData,
+  name: newName,
+});
+
+export const updateCharacterLevel = (formData: FormData, newLevel: number): FormData => ({
+  ...formData,
+  level: newLevel,
+});
+
+export const updateAncestry1Id = (formData: FormData, newAncestry1Id?: string): FormData => ({
+  ...formData,
+  ancestry1: newAncestry1Id,
+});
+
+export const updateProfessionId = (formData: FormData, newProfessionId: string): FormData => ({
+  ...formData,
+  profession: newProfessionId,
+});
+
+export const setCardsInData = (formData: FormData, newCards: StandardCard[]): FormData => ({
+  ...formData,
+  cards: newCards,
+});
+
+export const addCardToData = (formData: FormData, newCard: StandardCard): FormData => ({
+  ...formData,
+  cards: [...(formData.cards || []), newCard],
+});
+
+// It's good practice to also have a getDefaultFormData function if not already present or perfect.
+// export const getDefaultFormData = (): FormData => { ... };
 ```
-'daggerheart_custom_cards_index': 主索引（批次元数据）
-'daggerheart_custom_cards_batch_[batchId]': 批次数据
-'daggerheart_custom_cards_config': 配置信息
-```
-
-### ✅ 第2步：实现存储索引管理
-**目标：** 完善存储层功能 **（已完成 - 集成在第1步中）**
-**功能：**
-- 批次索引管理
-- 存储空间监控
-- 数据完整性检查
-- 孤立数据清理
-
-### ✅ 第3步：创建核心接口定义
-**目标：** 在 `data/card/card-types.ts` 中添加自定义卡牌相关类型 **（已完成）**
-**文件：** `data/card/card-types.ts`
-**功能：**
-- 定义ImportData、ImportResult等接口
-- 定义CustomCardIndex、BatchData等类型
-- 确保与现有类型系统兼容
-
----
-
-## 阶段2：核心管理器实现（第4-6步）
-
-### ✅ 第4步：实现CustomCardManager核心逻辑
-**目标：** 创建自定义卡牌核心管理器 **（已完成）**
-**文件：** `data/card/custom-card-manager.ts`
-**功能：**
-- 实现卡牌导入和ID冲突检测（严格模式）
-- 集成现有的CardManager转换系统
-- 批次管理功能
-- 错误处理和验证
-
-### ✅ 第5步：集成到主卡牌系统
-**目标：** 修改主索引文件集成自定义卡牌 **（已完成）**
-**文件：** `data/card/index.ts`
-**功能：**
-- 提供统一的查询接口（内置+自定义）
-- 导出CustomCardManager
-- 确保向后兼容
-
-### ✅ 第6步：添加批次管理功能
-**目标：** 完善批次管理功能 **（已完成 - 集成在第4步中）**
-**功能：**
-- 批次的增删改查
-- 统计和监控功能
-- 数据清理机制
-
----
-
-## 阶段3：用户界面开发（第7-9步）
-
-### 第7步：创建测试页面基础结构
-**目标：** 创建导入测试页面
-**文件：** `app/card-import-test/page.tsx`
-**功能：**
-- 文件上传界面（拖拽/选择）
-- 基础的导入功能
-- 结果显示
-
-### 第8步：开发批次管理UI组件
-**目标：** 创建批次管理UI组件
-**文件：** `components/custom-card-manager-ui.tsx`
-**功能：**
-- 批次列表显示
-- 批次删除和查看功能
-- 导入进度指示器
-- 统计信息显示
-
-### 第9步：完善错误处理和用户反馈
-**目标：** 优化用户体验
-**功能：**
-- 详细的错误消息显示
-- 成功/失败状态提示
-- ID冲突的友好提示
-- 导入进度反馈
-
----
-
-## 阶段4：测试和优化（第10-12步）
-
-### 第10步：功能测试
-**目标：** 创建测试用例和验证功能
-**功能：**
-- 创建测试JSON文件
-- 验证各种卡牌类型的导入
-- 测试错误处理机制
-- ID冲突场景测试
-
-### 第11步：性能优化
-**目标：** 优化性能和用户体验
-**功能：**
-- 大文件处理优化
-- 数据压缩
-- 内存使用优化
-- 导入进度优化
-
-### 第12步：文档和完善
-**目标：** 完善文档和代码质量
-**功能：**
-- 更新技术文档
-- 添加使用说明
-- 代码优化和重构
-- 最终测试
-
----
-
-## 技术要点
-
-### ID冲突处理（严格模式）
-- 检测到任何ID冲突都会直接终止导入流程
-- 提供明确的错误信息，指出冲突的具体ID
-- 错误信息格式：`"ID冲突: profession.custom-warrior-1, ancestry.elf-ranger"`
-
-### JSON数据格式
-```json
-{
-  "ancestry": [
-    {
-      "id": "custom-ancestry-1",
-      "名称": "自定义血统",
-      "种族": "人类",
-      "简介": "这是一个自定义的血统卡牌",
-      "效果": "提供某种特殊能力",
-      "类别": 1,
-      "imageURL": ""
-    }
-  ],
-  "profession": [...],
-  "domain": [...],
-  "community": [...],
-  "subclass": [...]
-}
-```
-
-### 存储策略
-- **内置卡牌**：静态编译时生成，独立管理
-- **自定义卡牌**：动态运行时管理，localStorage存储
-- **分离管理**：两类数据永不混合
-- **统一查询**：提供接口按需组合查询
-
----
-
-## 当前状态：执行中
-- ✅ 计划制定完成
-- ✅ 第1步：创建CustomCardStorage类 - 已完成
-- 🔄 正在执行第2步：实现存储索引管理
-
-## 下一步行动
-执行第2步：完善存储层功能，实现更详细的索引管理和监控功能。

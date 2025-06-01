@@ -94,3 +94,58 @@ export function isEmptyCard(card: any): boolean {
   // 检查卡牌是否为空（没有名称或其他关键属性）
   return !card.name || card.name === "" || card.type === "unknown" || card.id === ""
 }
+
+// ===== 自定义卡牌导入相关类型定义 =====
+
+// 导入数据格式定义
+export interface ImportData {
+  name?: string;        // 卡牌包名称
+  version?: string;     // 版本
+  description?: string; // 描述
+  author?: string;      // 作者
+  cards: StandardCard[]; // 统一的卡牌数组
+}
+
+// 导入结果定义
+export interface ImportResult {
+  success: boolean;
+  imported: number;
+  errors: string[];
+  duplicateIds?: string[];
+  batchId?: string; // 成功导入时返回批次ID
+}
+
+// ID验证结果定义
+export interface ValidationResult {
+  isValid: boolean;
+  duplicateIds: string[];
+}
+
+// 自定义卡牌统计信息
+export interface CustomCardStats {
+  totalCards: number;
+  totalBatches: number;
+  cardsByType: Record<string, number>;
+  cardsByBatch: Record<string, number>;
+  storageUsed: number; // 字节数
+}
+
+// 批次统计信息
+export interface BatchStats {
+  cardCount: number;
+  cardTypes: string[];
+  storageSize: number;
+  importTime: string;
+}
+
+// 卡牌来源标识
+export enum CardSource {
+  BUILTIN = 'builtin',
+  CUSTOM = 'custom'
+}
+
+// 扩展的StandardCard，包含来源信息
+export interface ExtendedStandardCard extends StandardCard {
+  source?: CardSource;
+  batchId?: string; // 自定义卡牌的批次ID
+}

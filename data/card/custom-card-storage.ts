@@ -87,6 +87,15 @@ export class CustomCardStorage {
      * 加载主索引
      */
     static loadIndex(): CustomCardIndex {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            // SSR 环境下返回默认索引结构
+            return {
+                batches: {},
+                totalCards: 0,
+                totalBatches: 0,
+                lastUpdate: new Date().toISOString()
+            };
+        }
         try {
             const stored = localStorage.getItem(STORAGE_KEYS.INDEX);
             if (stored) {
@@ -95,7 +104,6 @@ export class CustomCardStorage {
         } catch (error) {
             console.error('[CustomCardStorage] 索引加载失败:', error);
         }
-
         // 返回默认索引结构
         return {
             batches: {},
@@ -109,6 +117,7 @@ export class CustomCardStorage {
      * 保存主索引
      */
     static saveIndex(index: CustomCardIndex): void {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
         try {
             index.lastUpdate = new Date().toISOString();
             localStorage.setItem(STORAGE_KEYS.INDEX, JSON.stringify(index));

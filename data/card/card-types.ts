@@ -97,13 +97,26 @@ export function isEmptyCard(card: any): boolean {
 
 // ===== 自定义卡牌导入相关类型定义 =====
 
-// 导入数据格式定义
+// 引入原始卡牌类型
+import type { ProfessionCard } from '@/data/card/profession-card/convert';
+import type { AncestryCard } from '@/data/card/ancestry-card/convert';
+import type { CommunityCard } from '@/data/card/community-card/convert';
+import type { SubClassCard } from '@/data/card/subclass-card/convert';
+import type { DomainCard } from '@/data/card/domain-card/convert';
+
+// 新的导入数据格式定义 - 支持原始卡牌类型
 export interface ImportData {
   name?: string;        // 卡牌包名称
   version?: string;     // 版本
   description?: string; // 描述
   author?: string;      // 作者
-  cards: StandardCard[]; // 统一的卡牌数组
+
+  // 类型化的卡牌数组 - 用户导入原始格式
+  profession?: ProfessionCard[];
+  ancestry?: AncestryCard[];
+  community?: CommunityCard[];
+  subclass?: SubClassCard[];
+  domain?: DomainCard[];
 }
 
 // 导入结果定义

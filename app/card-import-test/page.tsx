@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SelectableCard } from '@/components/ui/selectable-card'
-import { AlertCircle, Upload, FileText, CheckCircle, XCircle, Info, Download, Eye, RefreshCw, Copy, Home } from 'lucide-react'
+import { AlertCircle, Upload, FileText, CheckCircle, XCircle, Info, Eye, RefreshCw, Copy, Home } from 'lucide-react'
 import { 
   importCustomCards, 
   getCustomCardBatches, 
@@ -155,41 +155,6 @@ export default function CardImportTestPage() {
     setViewModalOpen(true)
   }
 
-  // 导出批次为JSON
-  const handleExportBatch = (batchId: string) => {
-    const customCards = getCustomCards()
-    const batchCards = customCards.filter(card => card.batchId === batchId)
-    const batch = batches.find(b => b.id === batchId)
-    
-    if (batchCards.length === 0) {
-      alert('该批次没有卡牌可导出')
-      return
-    }
-
-    const exportData = {
-      name: batch?.name || batchId,
-      version: "1.0.0",
-      description: `导出自批次: ${batch?.name || batchId}`,
-      author: "DaggerHeart Character Sheet",
-      exportTime: new Date().toISOString(),
-      cards: batchCards.map(card => {
-        // 移除内部字段
-        const { source, batchId: _, standarized, ...exportCard } = card
-        return exportCard
-      })
-    }
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${batch?.name || batchId}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
   // 复制批次ID
   const handleCopyBatchId = (batchId: string) => {
     navigator.clipboard.writeText(batchId).then(() => {
@@ -197,107 +162,6 @@ export default function CardImportTestPage() {
     }).catch(() => {
       alert('复制失败')
     })
-  }
-
-  // 生成示例JSON文件
-  const handleDownloadSample = () => {
-    const sampleData = {
-      name: "示例卡牌包",
-      version: "1.0.0",
-      description: "这是一个示例卡牌包，展示了自定义卡牌的数据格式",
-      author: "示例作者",
-      cards: [
-        {
-              id: "sample_profession_1",
-          type: "profession",
-              name: "示例战士",
-          class: "战士",
-          level: 1,
-              description: "强壮的近战战士，擅长使用各种武器和盔甲",
-              hint: "战士是前线的守护者，具有强大的生存能力",
-          cardSelectDisplay: {
-            item1: "起始生命: 25",
-              item2: "起始闪避: 12", 
-                  item3: "起始物品: 长剑与盾牌",
-                  item4: "希望特性: 战斗意志"
-              },
-              professionSpecial: {
-                  "起始生命": 25,
-                  "起始闪避": 12,
-                  "起始物品": "长剑与盾牌",
-                  "希望特性": "战斗意志"
-          }
-        },
-        {
-            id: "sample_ancestry_1", 
-          type: "ancestry",
-            name: "示例精灵",
-          class: "精灵",
-            description: "优雅敏捷的森林居民，天生具有魔法天赋",
-            hint: "精灵拥有敏锐的感知和自然魔法能力",
-          cardSelectDisplay: {
-            item1: "种族特性: 敏锐感知",
-                  item2: "天赋能力: 自然魔法",
-                  item3: "文化背景: 森林守护者",
-                  item4: "额外语言: 精灵语"
-              }
-          },
-          {
-              id: "sample_community_1",
-              type: "community",
-              name: "示例学者议会",
-              class: "学者",
-              description: "致力于知识传承的学者组织",
-              hint: "学者议会的成员擅长研究和魔法理论",
-              cardSelectDisplay: {
-                  item1: "社群特性: 博学多识",
-                  item2: "资源获取: 图书馆通行证",
-                  item3: "社交网络: 学者联盟",
-                  item4: "特殊技能: 古文献解读"
-              }
-          },
-          {
-              id: "sample_subclass_1",
-              type: "subclass",
-              name: "示例圣骑士",
-              class: "圣骑士",
-              level: 2,
-              description: "信仰坚定的神圣战士",
-              hint: "圣骑士结合了战士的力量和神术的神圣",
-              cardSelectDisplay: {
-                  item1: "子职业特性: 神圣打击",
-                  item2: "法术能力: 治疗术",
-                  item3: "特殊装备: 圣徽",
-                  item4: "誓言能力: 保护无辜"
-              }
-          },
-          {
-              id: "sample_domain_1",
-              type: "domain",
-              name: "示例火焰领域",
-              class: "元素",
-              level: 1,
-              description: "掌控火焰力量的魔法领域",
-              hint: "火焰领域提供强大的攻击性法术",
-              cardSelectDisplay: {
-                  item1: "领域法术: 火球术",
-                  item2: "元素抗性: 火焰免疫",
-                  item3: "特殊能力: 火焰护盾",
-                  item4: "进阶法术: 火焰风暴"
-          }
-        }
-      ]
-    }
-
-    const blob = new Blob([JSON.stringify(sampleData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'sample-cards.json'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
   }
 
   // 处理文件选择
@@ -431,15 +295,6 @@ export default function CardImportTestPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleDownloadSample}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            下载示例JSON
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
             onClick={() => handleViewCards()}
             disabled={stats.totalCards === 0}
             className="flex items-center gap-2"
@@ -473,10 +328,13 @@ export default function CardImportTestPage() {
                 卡牌导入
               </CardTitle>
               <CardDescription>
-                              拖拽或选择 JSON 文件导入自定义卡牌数据<br />
-                              <span className="text-xs text-muted-foreground mt-1 block">
-                                  支持的卡牌类型: profession (职业), ancestry (血统), community (社群), subclass (子职业), domain (领域)
-                              </span>
+                拖拽或选择 JSON 文件导入自定义卡牌数据<br />
+                <span className="text-xs text-muted-foreground mt-1 block">
+                  支持原始卡牌类型格式：profession (职业), ancestry (血统), community (社群), subclass (子职业), domain (领域)
+                </span>
+                <span className="text-xs text-muted-foreground mt-1 block">
+                  请参考项目中的 sample-cards-new-format.json 文件作为格式示例
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -700,14 +558,6 @@ export default function CardImportTestPage() {
                             className="h-8 px-2"
                           >
                             <Eye className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleExportBatch(batch.id)}
-                            className="h-8 px-2"
-                          >
-                            <Download className="h-3 w-3" />
                           </Button>
                           <Button
                             size="sm"

@@ -15,6 +15,12 @@ import {
     CardSource,
     ExtendedStandardCard
 } from './card-types';
+import { CardTypeValidator } from './type-validators';
+import { professionCardConverter } from './profession-card/convert';
+import { ancestryCardConverter } from './ancestry-card/convert';
+import { communityCardConverter } from './community-card/convert';
+import { subclassCardConverter } from './subclass-card/convert';
+import { domainCardConverter } from './domain-card/convert';
 
 /**
  * 自定义卡牌管理器类
@@ -26,7 +32,9 @@ export class CustomCardManager {
 
     private constructor() {
         this.cardManager = CardManager.getInstance();
-        this.loadCustomCards();
+        if (typeof window !== 'undefined') {
+            this.loadCustomCards();
+        }
     }
 
     static getInstance(): CustomCardManager {
@@ -154,77 +162,67 @@ export class CustomCardManager {
     // ===== 数据验证 =====
 
     /**
-     * 验证导入数据格式
+     * 验证导入数据格式（支持新的类型化格式和传统格式）
      */
     private validateImportDataFormat(importData: ImportData): { isValid: boolean; errors: string[] } {
         const errors: string[] = [];
+
+        console.log('[DEBUG] 开始验证导入数据格式');
+        console.log('[DEBUG] 导入数据:', JSON.stringify(importData, null, 2));
 
         if (!importData || typeof importData !== 'object') {
             errors.push('导入数据格式无效：必须是JSON对象');
             return { isValid: false, errors };
         }
 
-        // 检查必需的cards字段
-        if (!importData.cards) {
-            errors.push('导入数据缺少cards字段');
-            return { isValid: false, errors };
+        // 使用新的类型验证器
+        console.log('[DEBUG] 使用CardTypeValidator验证数据');
+        const typeValidation = CardTypeValidator.validateImportData(importData);
+        console.log('[DEBUG] 验证结果:', typeValidation);
+
+        if (!typeValidation.isValid) {
+            const errorMessages = typeValidation.errors.map(err => `${err.path}: ${err.message}`);
+            errors.push(...errorMessages);
         }
 
-        if (!Array.isArray(importData.cards)) {
-            errors.push('cards字段必须是数组');
-            return { isValid: false, errors };
-        }
-
-        if (importData.cards.length === 0) {
+        // 检查是否有任何卡牌数据
+        if (typeValidation.totalCards === 0) {
             errors.push('导入数据为空：没有找到任何卡牌数据');
-            return { isValid: false, errors };
         }
 
-        // 验证每张卡牌的基本字段
-        const supportedTypes = ['profession', 'ancestry', 'community', 'subclass', 'domain'];
-
-        for (let i = 0; i < importData.cards.length; i++) {
-            const card = importData.cards[i];
-
-            if (!card || typeof card !== 'object') {
-                errors.push(`卡牌${i + 1}格式错误：必须是对象`);
-                continue;
-            }
-
-            if (!card.id || typeof card.id !== 'string') {
-                errors.push(`卡牌${i + 1}缺少有效的id字段`);
-            }
-
-            if (!card.type || typeof card.type !== 'string') {
-                errors.push(`卡牌${i + 1}缺少有效的type字段`);
-            } else if (!supportedTypes.includes(card.type)) {
-                errors.push(`卡牌${i + 1}的类型"${card.type}"不受支持。支持的类型: ${supportedTypes.join(', ')}`);
-            }
-
-            if (!card.name || typeof card.name !== 'string') {
-                errors.push(`卡牌${i + 1}缺少有效的name字段`);
-            }
-        }
-
+        console.log('[DEBUG] 最终验证结果:', { isValid: errors.length === 0, errors });
         return { isValid: errors.length === 0, errors };
     }
 
     /**
-     * 验证ID唯一性（严格模式）
+     * 验证ID唯一性（支持新的类型化格式和传统格式）
      */
     private validateUniqueIds(importData: ImportData, existingCards: StandardCard[]): ValidationResult {
         const duplicateIds: string[] = [];
         const existingIds = new Set(existingCards.map(card => card.id).filter(Boolean));
 
         console.log(`[CustomCardManager] 当前已存在的卡牌ID数量: ${existingIds.size}`);
-        console.log(`[CustomCardManager] 现有卡牌ID:`, Array.from(existingIds));
 
-        // 检查所有导入卡牌的ID
-        if (importData.cards && Array.isArray(importData.cards)) {
-            for (const card of importData.cards) {
-                if (card && card.id && existingIds.has(card.id)) {
-                    duplicateIds.push(`${card.type || 'unknown'}.${card.id}`);
-                    console.log(`[CustomCardManager] 发现重复ID: ${card.id} (类型: ${card.type})`);
+        // 检查各种类型的卡牌ID
+        const cardTypesToCheck = [
+            { cards: importData.profession, type: 'profession' },
+            { cards: importData.ancestry, type: 'ancestry' },
+            { cards: importData.community, type: 'community' },
+            { cards: importData.subclass, type: 'subclass' },
+            { cards: importData.domain, type: 'domain' },
+        ];
+
+        for (const { cards, type } of cardTypesToCheck) {
+            if (cards && Array.isArray(cards)) {
+                for (const card of cards) {
+                    if (card) {
+                        // 根据卡牌类型提取ID
+                        const cardId = this.extractCardId(card, type);
+                        if (cardId && existingIds.has(cardId)) {
+                            duplicateIds.push(`${type}.${cardId}`);
+                            console.log(`[CustomCardManager] 发现重复ID: ${cardId} (类型: ${type})`);
+                        }
+                    }
                 }
             }
         }
@@ -236,20 +234,29 @@ export class CustomCardManager {
     }
 
     /**
-     * 从卡牌数据中提取ID
+     * 从卡牌数据中提取ID（支持不同卡牌类型的字段名）
      */
     private extractCardId(card: any, cardType: string): string | null {
+        if (!card) return null;
+
         // 根据不同卡牌类型的字段名提取ID
-        if (cardType === 'domain') {
-            return card.ID || card.id || null;
+        switch (cardType) {
+            case 'domain':
+            case 'community':
+                return card.ID || card.id || null;
+            case 'profession':
+            case 'ancestry':
+            case 'subclass':
+                return card.id || null;
+            default:
+                return card.id || card.ID || null;
         }
-        return card.id || null;
     }
 
     // ===== 数据转换 =====
 
     /**
-     * 转换导入数据为StandardCard格式
+     * 转换导入数据为StandardCard格式（支持新的类型化格式）
      */
     private async convertImportData(importData: ImportData): Promise<{
         success: boolean;
@@ -260,40 +267,90 @@ export class CustomCardManager {
         const errors: string[] = [];
 
         try {
-            if (!importData.cards || !Array.isArray(importData.cards)) {
-                errors.push('导入数据中没有有效的cards数组');
-                return { success: false, cards: [], errors };
-            }
+            console.log(`[CustomCardManager] 开始转换卡牌数据`);
 
-            console.log(`[CustomCardManager] 开始转换卡牌，总数量: ${importData.cards.length}`);
-
-            for (let i = 0; i < importData.cards.length; i++) {
-                const card = importData.cards[i];
-
-                try {
-                    if (!card || !card.type) {
-                        errors.push(`卡牌${i + 1}: 缺少type字段`);
-                        continue;
-                    }
-
-                    // 使用现有的CardManager进行转换
-                    const standardCard = this.cardManager.ConvertCard(card, card.type as any);
-
-                    if (standardCard) {
-                        // 添加自定义卡牌标识
+            // 转换职业卡牌
+            if (importData.profession && Array.isArray(importData.profession)) {
+                for (let i = 0; i < importData.profession.length; i++) {
+                    try {
+                        const standardCard = professionCardConverter.toStandard(importData.profession[i]);
                         const extendedCard: ExtendedStandardCard = {
                             ...standardCard,
                             source: CardSource.CUSTOM
                         };
                         convertedCards.push(extendedCard);
-                    } else {
-                        console.warn(`[CustomCardManager] 卡牌${i + 1} (${card.type}) 转换失败，跳过该卡牌:`, card);
-                        errors.push(`卡牌${i + 1} (${card.type}): 转换失败，卡牌数据格式不正确`);
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        errors.push(`profession[${i}]: 转换失败 - ${errorMessage}`);
                     }
-                } catch (error) {
-                    console.error(`[CustomCardManager] 卡牌${i + 1} (${card.type}) 转换出错:`, error, card);
-                    const errorMessage = error instanceof Error ? error.message : String(error);
-                    errors.push(`卡牌${i + 1} (${card.type}): 转换出错 - ${errorMessage}`);
+                }
+            }
+
+            // 转换血统卡牌
+            if (importData.ancestry && Array.isArray(importData.ancestry)) {
+                for (let i = 0; i < importData.ancestry.length; i++) {
+                    try {
+                        const standardCard = ancestryCardConverter.toStandard(importData.ancestry[i]);
+                        const extendedCard: ExtendedStandardCard = {
+                            ...standardCard,
+                            source: CardSource.CUSTOM
+                        };
+                        convertedCards.push(extendedCard);
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        errors.push(`ancestry[${i}]: 转换失败 - ${errorMessage}`);
+                    }
+                }
+            }
+
+            // 转换社群卡牌
+            if (importData.community && Array.isArray(importData.community)) {
+                for (let i = 0; i < importData.community.length; i++) {
+                    try {
+                        const standardCard = communityCardConverter.toStandard(importData.community[i]);
+                        const extendedCard: ExtendedStandardCard = {
+                            ...standardCard,
+                            source: CardSource.CUSTOM
+                        };
+                        convertedCards.push(extendedCard);
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        errors.push(`community[${i}]: 转换失败 - ${errorMessage}`);
+                    }
+                }
+            }
+
+            // 转换子职业卡牌
+            if (importData.subclass && Array.isArray(importData.subclass)) {
+                for (let i = 0; i < importData.subclass.length; i++) {
+                    try {
+                        const standardCard = subclassCardConverter.toStandard(importData.subclass[i]);
+                        const extendedCard: ExtendedStandardCard = {
+                            ...standardCard,
+                            source: CardSource.CUSTOM
+                        };
+                        convertedCards.push(extendedCard);
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        errors.push(`subclass[${i}]: 转换失败 - ${errorMessage}`);
+                    }
+                }
+            }
+
+            // 转换领域卡牌
+            if (importData.domain && Array.isArray(importData.domain)) {
+                for (let i = 0; i < importData.domain.length; i++) {
+                    try {
+                        const standardCard = domainCardConverter.toStandard(importData.domain[i]);
+                        const extendedCard: ExtendedStandardCard = {
+                            ...standardCard,
+                            source: CardSource.CUSTOM
+                        };
+                        convertedCards.push(extendedCard);
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        errors.push(`domain[${i}]: 转换失败 - ${errorMessage}`);
+                    }
                 }
             }
 

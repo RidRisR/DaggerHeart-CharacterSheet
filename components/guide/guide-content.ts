@@ -21,19 +21,19 @@ export const guideSteps: GuideStep[] = [
         id: "step1",
         title: "选择职业",
         content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused if we switch to getStandardCardsByType
-            if (!isFilled(formData.profession)) {
+            if (!isFilled(formData.professionRef?.id)) {
                 return "请点开角色卡左上方<strong>'选择职业'</strong>选项框查看并选择自己的职业，不同的职业有不同的游玩和扮演风格。";
             }
             const professionCards = getStandardCardsByType(CardType.Profession);
             const professionCard = professionCards.find(
-                (card) => card.id === formData.profession
+                (card) => card.id === formData.professionRef?.id
             );
             const professionClass = professionCard?.class || "未知职业";
             const professionHint = professionCard?.hint || "";
             return `您选择的职业是：<strong>${professionClass}</strong> \n${professionHint}\n请问您确定吗,您可以尝试切换其他职业，点击下一步按钮继续。`;
         },
         validation: (formData, allCards) => { // allCards might be unused
-            return isFilled(formData.profession);
+            return isFilled(formData.professionRef?.id);
         },
     },
     {

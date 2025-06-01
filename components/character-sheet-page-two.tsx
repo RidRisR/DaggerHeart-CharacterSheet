@@ -24,7 +24,6 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
       ? formData.cards
       : Array(20).fill(0).map(() => createEmptyCard()),
     checkedUpgrades: formData?.checkedUpgrades || { tier1: {}, tier2: {}, tier3: {} },
-    profession: formData?.profession || "",
     gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
     experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
     hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),

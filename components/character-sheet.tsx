@@ -295,6 +295,21 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     setFormData((prev) => ({ ...prev, [field]: numValue }))
   }
 
+  // Helper function to map modal string type to CardType enum
+  const getModalCardType = (modalType: "profession" | "ancestry" | "community" | "subclass"): Exclude<CardType, CardType.Domain> => {
+    switch (modalType) {
+      case "profession":
+        return CardType.Profession;
+      case "ancestry":
+        return CardType.Ancestry;
+      case "community":
+        return CardType.Community;
+      case "subclass":
+        return CardType.Subclass;
+      // No default needed as modalType is a constrained union type
+    }
+  };
+
   const handleProfessionChange = (value: string) => {
     console.log("handleProfessionChange called with value (ID):", value, "timestamp:", Date.now());
 
@@ -999,10 +1014,10 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                   ? "选择社群"
                   : "选择子职业"
           }
-          cardType={currentModal.type}
+          cardType={getModalCardType(currentModal.type)} // Use the helper function here
           field={currentModal.field}
           levelFilter={currentModal.levelFilter}
-          formData={safeFormData}
+          formData={safeFormData} // Pass safeFormData here
         />
       )}
     </>

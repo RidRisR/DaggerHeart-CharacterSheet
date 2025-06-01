@@ -11,6 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { SheetCardReference } from "@/lib/sheet-data";
 
 // Extend SafeFormData to include missing properties
 interface SafeFormData {
@@ -30,7 +31,7 @@ interface SafeFormData {
     agility: { checked: boolean; value: string }
     strength: { checked: boolean; value: string }
     finesse: { checked: boolean; value: string }
-    profession?: string // Add profession property
+    professionRef?: SheetCardReference;
     // Add other properties as needed
 }
 
@@ -39,7 +40,7 @@ interface GenericCardSelectionModalProps {
     onClose: () => void
     onSelect: (cardId: string, field?: string) => void
     title: string
-    cardType: "profession" | "ancestry" | "community" | "subclass"
+    cardType: Exclude<CardType, CardType.Domain> // Changed to exclude CardType.Domain
     field?: string // Optional field for ancestry
     levelFilter?: number // Optional level filter for ancestry
     formData: SafeFormData // Use the defined type for safeFormData
@@ -84,12 +85,14 @@ export function GenericCardSelectionModal({
 
         if (cardType === "subclass") {
             // Find the name of the selected profession card.
-            // formData.profession is assumed to be the ID of the selected profession card.
+            // Use formData.professionRef?.id to get the selected profession's ID.
             const allProfessionCards = getStandardCardsByType(CardType.Profession);
-            const selectedProfessionCard = allProfessionCards.find(pCard => pCard.id === formData.profession);
+            // Updated to use formData.professionRef?.id
+            const selectedProfessionCard = allProfessionCards.find(pCard => pCard.id === formData.professionRef?.id);
             const professionName = selectedProfessionCard?.name;
 
             // Filter subclass cards: must be level 1 and match the determined professionName.
+            // This logic (card.level === 1 && card.class === professionName) is preserved from your current code.
             initialCards = baseCards.filter(
                 (card): card is StandardCard =>
                     card.level === 1 && card.class === professionName
@@ -108,7 +111,8 @@ export function GenericCardSelectionModal({
             new Set(initialCards.flatMap((card) => card.class || []).filter((cls) => cls)),
         );
         setAvailableClasses(["All", ...uniqueClasses]);
-    }, [cardType, levelFilter, formData.profession]); // Dependencies remain the same
+        // Updated dependency array to use formData.professionRef?.id
+    }, [cardType, levelFilter, formData.professionRef?.id]);
 
     if (!isOpen) return null
 

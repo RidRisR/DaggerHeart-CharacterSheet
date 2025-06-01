@@ -9,18 +9,14 @@ interface HopeSectionProps {
 }
 
 export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps) {
-  let hopeFeatureDescription = "";
-
-  if (formData && formData.profession && formData.cards && Array.isArray(formData.cards)) {
+  let hopeTrait = ""
+  // Ensure formData, profession, and cards are defined and cards is an array
+  if (formData && formData.professionRef?.id && formData.cards && Array.isArray(formData.cards)) {
     const professionCard = formData.cards.find(
-      (card: StandardCard | null) => card && card.id === formData.profession && card.type === "profession"
-    );
-
-    if (professionCard &&
-      professionCard.professionSpecial &&
-      professionCard.professionSpecial["希望特性"]
-    ) {
-      hopeFeatureDescription = String(professionCard.professionSpecial["希望特性"]);
+      (card: StandardCard | null) => card && card.id === formData.professionRef?.id && card.type === "profession"
+    ) as StandardCard & { hopeTrait?: string }; // Cast to access optional hopeTrait
+    if (professionCard && typeof professionCard.hopeTrait === 'string') {
+      hopeTrait = professionCard.hopeTrait
     }
   }
 
@@ -44,7 +40,7 @@ export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps
 
       <div className="text-center px-2">
         <div className="text-[12px] leading-tight">
-          <ReactMarkdown>{hopeFeatureDescription}</ReactMarkdown>
+          <ReactMarkdown>{hopeTrait}</ReactMarkdown>
         </div>
       </div>
     </div>

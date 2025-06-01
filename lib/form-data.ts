@@ -2,15 +2,7 @@
 
 import { StandardCard } from "@/data/card/card-types"
 
-export interface WeaponData {
-  name: string
-  damage: string
-  type: string
-  properties: string[]
-  description: string
-}
-
-export interface CheckedUpgrades {
+interface CheckedUpgrades {
   tier1: Record<number, boolean>
   tier2: Record<number, boolean>
   tier3: Record<number, boolean>

@@ -3,7 +3,7 @@ import React from "react"
 import { CardType, isEmptyCard, StandardCard } from "@/data/card/card-types"
 import { getCardTypeName } from "@/data/card/card-ui-config"
 import ReactMarkdown from "react-markdown"
-import type { SheetData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface CharacterSheetPageFourProps {
     formData: SheetData

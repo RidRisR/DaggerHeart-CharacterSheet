@@ -1,5 +1,5 @@
 "use client"
-import type { SheetData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface UpgradeSectionProps {
   tier: number

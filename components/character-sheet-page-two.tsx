@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
-import type { SheetData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
 
 // Import sections

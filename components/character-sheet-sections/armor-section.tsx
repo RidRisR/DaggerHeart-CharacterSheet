@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { SheetData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface ArmorSectionProps {
   formData: SheetData

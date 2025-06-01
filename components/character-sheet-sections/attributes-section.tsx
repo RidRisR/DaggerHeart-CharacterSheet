@@ -1,4 +1,4 @@
-import type { SheetData, AttributeValue } from "@/lib/form-data"
+import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 
 "use client"
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import type { SheetData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface CharacterSheetPageThreeProps {
     formData: SheetData

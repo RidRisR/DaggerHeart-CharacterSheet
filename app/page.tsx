@@ -12,7 +12,7 @@ import { CharacterCreationGuide } from "@/components/guide/character-creation-gu
 import { Button } from "@/components/ui/button"
 import { ImportExportModal } from "@/components/modals/import-export-modal"
 import PrintHelper from "@/app/print-helper"
-import type { SheetData } from "@/lib/form-data";
+import type { SheetData } from "@/lib/sheet-data";
 import { createEmptyCard, StandardCard } from "@/data/card/card-types"
 import {
   getStandardCardsByType,

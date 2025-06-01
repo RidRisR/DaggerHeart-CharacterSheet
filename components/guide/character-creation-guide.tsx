@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { guideSteps, canProceedToNextStep, getProfessionSpecificContent } from "@/components/guide/guide-content"
-import type { SheetData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface CharacterCreationGuideProps {
   isOpen: boolean

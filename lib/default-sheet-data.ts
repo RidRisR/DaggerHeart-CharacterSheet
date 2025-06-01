@@ -1,16 +1,23 @@
+import { createEmptyCard, type StandardCard } from "@/data/card/card-types";
 import type { SheetData } from "./sheet-data";
-import { createEmptyCard } from "@/data/card/card-types";
 
 export const defaultSheetData: SheetData = {
     name: "",
+    characterImage: "",
     level: 1,
-    proficiency: Array(6).fill(false),
+    proficiency: [false, false, false, false, false, false], // Default as boolean array
     ancestry1: "",
     ancestry2: "",
     profession: "",
     community: "",
     subclass: "",
-    characterImage: "",
+    // Initialize new Ref fields
+    professionRef: { id: "", name: "" },
+    ancestry1Ref: { id: "", name: "" },
+    ancestry2Ref: { id: "", name: "" },
+    communityRef: { id: "", name: "" },
+    subclassRef: { id: "", name: "" },
+
     evasion: "",
 
     agility: { checked: false, value: "" },

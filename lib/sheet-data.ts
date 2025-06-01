@@ -2,6 +2,11 @@
 
 import { StandardCard } from "@/data/card/card-types"
 
+export interface SheetCardReference {
+  id: string
+  name: string
+}
+
 interface CheckedUpgrades {
   tier1: Record<number, boolean>
   tier2: Record<number, boolean>
@@ -24,6 +29,14 @@ export interface SheetData {
   profession: string
   community: string
   subclass?: string
+
+  // New fields for storing full card references to avoid compatibility issues
+  professionRef?: SheetCardReference
+  ancestry1Ref?: SheetCardReference
+  ancestry2Ref?: SheetCardReference
+  communityRef?: SheetCardReference
+  subclassRef?: SheetCardReference
+
   evasion?: string
   agility?: AttributeValue
   strength?: AttributeValue

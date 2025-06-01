@@ -63,6 +63,13 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   const safeFormData = {
     ...defaultSheetData,
     ...(formData || {}),
+    // Ensure new Ref fields are initialized if not present in formData
+    professionRef: formData?.professionRef || { id: "", name: "" },
+    ancestry1Ref: formData?.ancestry1Ref || { id: "", name: "" },
+    ancestry2Ref: formData?.ancestry2Ref || { id: "", name: "" },
+    communityRef: formData?.communityRef || { id: "", name: "" },
+    subclassRef: formData?.subclassRef || { id: "", name: "" },
+
     gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
     experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
     hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),
@@ -90,6 +97,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   // 同步特殊卡牌与角色选择 - 不直接修改状态，而是返回新的卡牌数组
   const getUpdatedSpecialCards = () => {
+    console.log("getUpdatedSpecialCards: Called. Current safeFormData.professionRef:", safeFormData.professionRef, "timestamp:", Date.now());
     const newCards = [...safeFormData.cards];
 
     while (newCards.length < 5) {
@@ -97,48 +105,62 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     }
 
     // 同步职业卡（位置0）
-    if (safeFormData.profession) {
-      newCards[0] = getProfessionById(safeFormData.profession);
+    if (safeFormData.professionRef?.id) {
+      const professionCard = getProfessionById(safeFormData.professionRef.id);
+      console.log("getUpdatedSpecialCards: Fetched professionCard:", professionCard, "for ID from professionRef:", safeFormData.professionRef.id);
+      newCards[0] = professionCard;
     } else {
+      console.log("getUpdatedSpecialCards: No professionRef ID, creating empty card for slot 0.");
       newCards[0] = createEmptyCard();
     }
 
     // 同步子职业卡（位置1）
-    if (safeFormData.subclass) {
-      newCards[1] = getSubclassById(safeFormData.subclass);
+    if (safeFormData.subclassRef?.id) {
+      const subclassCard = getSubclassById(safeFormData.subclassRef.id);
+      console.log("getUpdatedSpecialCards: Fetched subclassCard:", subclassCard, "for ID from subclassRef:", safeFormData.subclassRef.id);
+      newCards[1] = subclassCard;
     } else {
+      console.log("getUpdatedSpecialCards: No subclassRef ID, creating empty card for slot 1.");
       newCards[1] = createEmptyCard();
     }
 
     // 同步血统卡1（位置2）
-    if (safeFormData.ancestry1) {
-      const ancestry1 = getAncestryById(safeFormData.ancestry1);
-      newCards[2] = ancestry1;
+    if (safeFormData.ancestry1Ref?.id) {
+      const ancestry1Card = getAncestryById(safeFormData.ancestry1Ref.id);
+      console.log("getUpdatedSpecialCards: Fetched ancestry1Card:", ancestry1Card, "for ID from ancestry1Ref:", safeFormData.ancestry1Ref.id);
+      newCards[2] = ancestry1Card;
     } else {
+      console.log("getUpdatedSpecialCards: No ancestry1Ref ID, creating empty card for slot 2.");
       newCards[2] = createEmptyCard();
     }
 
     // 同步血统卡2（位置3）
-    if (safeFormData.ancestry2) {
-      const ancestry2 = getAncestryById(safeFormData.ancestry2);
-      newCards[3] = ancestry2;
+    if (safeFormData.ancestry2Ref?.id) {
+      const ancestry2Card = getAncestryById(safeFormData.ancestry2Ref.id);
+      console.log("getUpdatedSpecialCards: Fetched ancestry2Card:", ancestry2Card, "for ID from ancestry2Ref:", safeFormData.ancestry2Ref.id);
+      newCards[3] = ancestry2Card;
     } else {
+      console.log("getUpdatedSpecialCards: No ancestry2Ref ID, creating empty card for slot 3.");
       newCards[3] = createEmptyCard();
     }
 
     // 同步社群卡（位置4）
-    if (safeFormData.community) {
-      newCards[4] = getCommunityById(safeFormData.community);
+    if (safeFormData.communityRef?.id) {
+      const communityCard = getCommunityById(safeFormData.communityRef.id);
+      console.log("getUpdatedSpecialCards: Fetched communityCard:", communityCard, "for ID from communityRef:", safeFormData.communityRef.id);
+      newCards[4] = communityCard;
     } else {
+      console.log("getUpdatedSpecialCards: No communityRef ID, creating empty card for slot 4.");
       newCards[4] = createEmptyCard();
     }
-
+    console.log("getUpdatedSpecialCards: Returning newCards IDs:", newCards.slice(0, 5).map(c => c.id));
     return newCards;
   }
 
   // 同步特殊卡牌 - 仅在需要时更新状态
   const syncSpecialCardsWithCharacterChoices = () => {
     try {
+      console.log("syncSpecialCardsWithCharacterChoices: Called. Current safeFormData.professionRef:", safeFormData.professionRef, "timestamp:", Date.now());
       // 获取更新后的卡牌
       const updatedCards = getUpdatedSpecialCards()
 
@@ -274,84 +296,116 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }
 
   const handleProfessionChange = (value: string) => {
-    console.log("handleProfessionChange called with value:", value);
+    console.log("handleProfessionChange called with value (ID):", value, "timestamp:", Date.now());
 
     if (value === "none") {
       console.log("Clearing profession selection");
-
-      // Clear profession and subclass selections
       setFormData((prev) => {
+        console.log("handleProfessionChange (none): prev.profession:", prev.profession, "prev.professionRef:", prev.professionRef);
+        const updatedFormData = {
+          ...prev,
+          profession: "", // Keep old field for now
+          professionRef: { id: "", name: "" },
+          subclass: "", // Clear subclass
+          subclassRef: { id: "", name: "" },
+        };
+        console.log("handleProfessionChange (none): updatedFormData.professionRef:", updatedFormData.professionRef);
+        return updatedFormData;
+      });
+    } else {
+      const professionCard = ALL_STANDARD_CARDS.find((p) => p.id === value && p.type === CardType.Profession);
+      if (professionCard) {
+        console.log("handleProfessionChange: Found professionCard:", professionCard);
+        setFormData((prev) => {
+          console.log("handleProfessionChange (select): prev.profession:", prev.profession, "prev.professionRef:", prev.professionRef);
           const updatedFormData = {
             ...prev,
-            profession: "",
-            subclass: "", // Clear subclass
-            cards: prev.cards.map((card, index) => (index === 1 ? createEmptyCard() : card)), // Clear subclass card on second page
+            profession: professionCard.id, // Keep old field
+            professionRef: { id: professionCard.id, name: professionCard.name },
+            subclass: "", // Clear subclass when profession changes
+            subclassRef: { id: "", name: "" },
           };
+          console.log("handleProfessionChange (select): updatedFormData.professionRef:", updatedFormData.professionRef);
           return updatedFormData;
         });
-    } else {
-      // Select new profession
-      const profession = ALL_STANDARD_CARDS.find((p) => p.id === value);
-      if (profession) {
-          setFormData((prev) => {
-              const updatedFormData = {
-                ...prev,
-                profession: value,
-                subclass: "", // Clear subclass
-                cards: prev.cards.map((card, index) => (index === 1 ? createEmptyCard() : card)), // Clear subclass card on second page
-              };
-              return updatedFormData;
-            });
-        }
+      } else {
+        console.warn("handleProfessionChange: Profession card not found for ID:", value);
+      }
     }
-    // Mark cards for synchronization
     needsSyncRef.current = true;
+    console.log("handleProfessionChange: Set needsSyncRef.current to true.");
   }
 
   const handleAncestryChange = (field: string, value: string) => {
+    console.log(`handleAncestryChange called for field: ${field}, value (ID): ${value}, timestamp: ${Date.now()}`);
+    const refField = field === "ancestry1" ? "ancestry1Ref" : "ancestry2Ref";
+
     if (value === "none" || !value) {
       setFormData((prev) => {
-        return {
+        console.log(`handleAncestryChange (none): prev.${field}:`, prev[field as keyof SheetData], `prev.${refField}:`, prev[refField as keyof SheetData]);
+        const updatedFormData = {
           ...prev,
-          [field]: "",
-        }
+          [field]: "", // Keep old field
+          [refField]: { id: "", name: "" },
+        };
+        console.log(`handleAncestryChange (none): updatedFormData.${refField}:`, updatedFormData[refField as keyof SheetData]);
+        return updatedFormData;
       })
     } else {
-      const ancestry = ALL_STANDARD_CARDS.find((a) => a.id === value)
-      if (ancestry) {
+      const ancestryCard = ALL_STANDARD_CARDS.find((a) => a.id === value && a.type === CardType.Ancestry);
+      if (ancestryCard) {
+        console.log("handleAncestryChange: Found ancestryCard:", ancestryCard);
         setFormData((prev) => {
-          return {
+          console.log(`handleAncestryChange (select): prev.${field}:`, prev[field as keyof SheetData], `prev.${refField}:`, prev[refField as keyof SheetData]);
+          const updatedFormData = {
             ...prev,
-            [field]: value,
-          }
+            [field]: ancestryCard.id, // Keep old field
+            [refField]: { id: ancestryCard.id, name: ancestryCard.name },
+          };
+          console.log(`handleAncestryChange (select): updatedFormData.${refField}:`, updatedFormData[refField as keyof SheetData]);
+          return updatedFormData;
         })
+      } else {
+        console.warn(`handleAncestryChange: Ancestry card not found for ID: ${value} in field: ${field}`);
       }
     }
-    // 标记需要同步卡牌
     needsSyncRef.current = true
+    console.log("handleAncestryChange: Set needsSyncRef.current to true.");
   }
 
   const handleCommunityChange = (value: string) => {
+    console.log("handleCommunityChange called with value (ID):", value, "timestamp:", Date.now());
     if (value === "none" || !value) {
       setFormData((prev) => {
-        return {
+        console.log("handleCommunityChange (none): prev.community:", prev.community, "prev.communityRef:", prev.communityRef);
+        const updatedFormData = {
           ...prev,
-          community: "",
-        }
+          community: "", // Keep old field
+          communityRef: { id: "", name: "" },
+        };
+        console.log("handleCommunityChange (none): updatedFormData.communityRef:", updatedFormData.communityRef);
+        return updatedFormData;
       })
     } else {
-      const community = ALL_STANDARD_CARDS.find((c) => c.id === value)
-      if (community) {
+      const communityCard = ALL_STANDARD_CARDS.find((c) => c.id === value && c.type === CardType.Community);
+      if (communityCard) {
+        console.log("handleCommunityChange: Found communityCard:", communityCard);
         setFormData((prev) => {
-          return {
+          console.log("handleCommunityChange (select): prev.community:", prev.community, "prev.communityRef:", prev.communityRef);
+          const updatedFormData = {
             ...prev,
-            community: value,
-          }
+            community: communityCard.id, // Keep old field
+            communityRef: { id: communityCard.id, name: communityCard.name },
+          };
+          console.log("handleCommunityChange (select): updatedFormData.communityRef:", updatedFormData.communityRef);
+          return updatedFormData;
         })
+      } else {
+        console.warn("handleCommunityChange: Community card not found for ID:", value);
       }
     }
-    // 标记需要同步卡牌
     needsSyncRef.current = true
+    console.log("handleCommunityChange: Set needsSyncRef.current to true.");
   }
 
   const handleWeaponChange = (field: string, weaponId: string, weaponType: "primary" | "secondary") => {
@@ -565,26 +619,38 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }
 
   const handleSubclassChange = (value: string) => {
+    console.log("handleSubclassChange called with value (ID):", value, "timestamp:", Date.now());
     if (value === "none" || !value) {
       setFormData((prev) => {
-        return {
+        console.log("handleSubclassChange (none): prev.subclass:", prev.subclass, "prev.subclassRef:", prev.subclassRef);
+        const updatedFormData = {
           ...prev,
-          subclass: "",
-        }
+          subclass: "", // Keep old field
+          subclassRef: { id: "", name: "" },
+        };
+        console.log("handleSubclassChange (none): updatedFormData.subclassRef:", updatedFormData.subclassRef);
+        return updatedFormData;
       })
     } else {
-      const subclass = ALL_STANDARD_CARDS.find((s) => s.id === value && s.type === "subclass")
-      if (subclass) {
+      const subclassCard = ALL_STANDARD_CARDS.find((s) => s.id === value && (s.type === CardType.Subclass || s.type === CardType.Profession)); // Assuming subclass might share type with profession for some reason or uses its own
+      if (subclassCard) {
+        console.log("handleSubclassChange: Found subclassCard:", subclassCard);
         setFormData((prev) => {
-          return {
+          console.log("handleSubclassChange (select): prev.subclass:", prev.subclass, "prev.subclassRef:", prev.subclassRef);
+          const updatedFormData = {
             ...prev,
-            subclass: value,
-          }
+            subclass: subclassCard.id, // Keep old field
+            subclassRef: { id: subclassCard.id, name: subclassCard.name },
+          };
+          console.log("handleSubclassChange (select): updatedFormData.subclassRef:", updatedFormData.subclassRef);
+          return updatedFormData;
         })
+      } else {
+        console.warn("handleSubclassChange: Subclass card not found for ID:", value);
       }
     }
-    // 标记需要同步卡牌
-    needsSyncRef.current = true
+    needsSyncRef.current = true;
+    console.log("handleSubclassChange: Set needsSyncRef.current to true.");
   }
 
   return (

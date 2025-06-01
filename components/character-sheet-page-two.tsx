@@ -113,7 +113,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
   }
 
   // 更新 getUpgradeOptions 函数以移除职业相关逻辑，并确保其与新的升级选项系统一致
-  const getUpgradeOptions = (_profession: string, tier: number) => {
+  const getUpgradeOptions = (tier: number) => {
     // 获取基础升级选项
     const baseUpgrades = [...upgradeOptionsData.baseUpgrades]
 

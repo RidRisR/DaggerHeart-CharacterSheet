@@ -45,10 +45,10 @@ export default function Home() {
     };
 
     const name = formData.name || '()';
-    const ancestry1Class = getCardClass(formData.ancestry1, CardType.Ancestry); // Changed to CardType.Ancestry
-    const professionClass = getCardClass(formData.profession, CardType.Profession); // Changed to CardType.Profession
-    const ancestry2Class = getCardClass(formData.ancestry2, CardType.Ancestry); // Changed to CardType.Ancestry
-    const communityClass = getCardClass(formData.community, CardType.Community); // Changed to CardType.Community
+    const ancestry1Class = getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry); // Changed to CardType.Ancestry
+    const professionClass = getCardClass(formData.professionRef?.id, CardType.Profession); // Changed to CardType.Profession
+    const ancestry2Class = getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry); // Changed to CardType.Ancestry
+    const communityClass = getCardClass(formData.communityRef?.id, CardType.Community); // Changed to CardType.Community
     const level = formData.level ? String(formData.level) : '()';
 
     document.title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;

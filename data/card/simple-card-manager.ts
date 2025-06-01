@@ -1,9 +1,9 @@
 /**
  * Simple Card Manager
- * 简化的卡牌管理器 - 使用同步JSON加载器
+ * 简化的卡牌管理器 - 使用JSON加载器
  */
 
-import { CardType, StandardCard } from './card-types';
+import { CardType } from './card-types';
 import { simpleJsonCardLoader } from './simple-json-loader';
 
 // Import the specific card types and converters from their respective modules
@@ -12,12 +12,6 @@ import type { AncestryCard } from './ancestry-card/convert';
 import type { CommunityCard } from './community-card/convert';
 import type { DomainCard } from './domain-card/convert';
 import type { SubClassCard } from './subclass-card/convert';
-
-import { professionCardConverter } from './profession-card/convert';
-import { ancestryCardConverter } from './ancestry-card/convert';
-import { communityCardConverter } from './community-card/convert';
-import { domainCardConverter } from './domain-card/convert';
-import { subclassCardConverter } from './subclass-card/convert';
 
 /**
  * Simple Card Manager

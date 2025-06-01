@@ -32,68 +32,8 @@ import { WeaponSection } from "@/components/character-sheet-sections/weapon-sect
 import { ArmorSection } from "@/components/character-sheet-sections/armor-section"
 import { InventorySection } from "@/components/character-sheet-sections/inventory-section"
 import { InventoryWeaponSection } from "@/components/character-sheet-sections/inventory-weapon-section"
-import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
-
-// 默认表单数据
-const defaultFormData: SheetData = {
-  characterImage: "",
-  name: "",
-  ancestry1: "",
-  ancestry2: "",
-  community: "",
-  subclass: "",
-  level: 1,
-  profession: "",
-  agility: { checked: false, value: "" },
-  strength: { checked: false, value: "" },
-  finesse: { checked: false, value: "" },
-  instinct: { checked: false, value: "" },
-  presence: { checked: false, value: "" },
-  knowledge: { checked: false, value: "" },
-  proficiency: Array(6).fill(false),
-  evasion: "",
-  armorValue: "",
-  armorMax: 0, // 保留默认值
-  armorBoxes: Array(12).fill(false),
-  hpMax: 6, // 保留默认值
-  stressMax: 6, // 保留默认值
-  hp: Array(18).fill(false),
-  stress: Array(18).fill(false),
-  minorThreshold: "",
-  majorThreshold: "",
-  hope: Array(6).fill(false),
-  primaryWeaponName: "",
-  primaryWeaponTrait: "",
-  primaryWeaponDamage: "",
-  primaryWeaponFeature: "",
-  secondaryWeaponName: "",
-  secondaryWeaponTrait: "",
-  secondaryWeaponDamage: "",
-  secondaryWeaponFeature: "",
-  armorName: "",
-  armorBaseScore: "",
-  armorThreshold: "", // Added armorThreshold
-  armorFeature: "",
-  inventory: ["", "", "", "", ""], // 确保有5个空字符串
-  inventoryWeapon1Name: "",
-  inventoryWeapon1Trait: "",
-  inventoryWeapon1Damage: "",
-  inventoryWeapon1Feature: "",
-  inventoryWeapon1Primary: false,
-  inventoryWeapon1Secondary: false,
-  inventoryWeapon2Name: "",
-  inventoryWeapon2Trait: "",
-  inventoryWeapon2Damage: "",
-  inventoryWeapon2Feature: "",
-  inventoryWeapon2Primary: false,
-  inventoryWeapon2Secondary: false,
-  gold: Array(20).fill(false),
-  experience: ["", "", "", "", ""],
-  experienceValues: ["", "", "", "", ""],
-  cards: Array(20)
-    .fill(0)
-    .map(() => createEmptyCard()),
-}
+import { createEmptyCard, type StandardCard } from "@/data/card/card-types";
+import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
 
 interface CharacterSheetProps {
   formData: SheetData
@@ -121,7 +61,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   // 确保 formData 和所有必要的子属性都存在
   // 适配 gold、experience、hope、hp、stress、armorBoxes 等字段为数组类型
   const safeFormData = {
-    ...defaultFormData,
+    ...defaultSheetData,
     ...(formData || {}),
     gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
     experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],

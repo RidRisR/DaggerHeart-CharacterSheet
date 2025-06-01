@@ -87,6 +87,26 @@ This document outlines the step-by-step process to refactor the card management 
     *   **`loadCustomCards()` / `reloadCustomCards()`:** Verify these methods correctly load all batches from `CustomCardStorage`, including the built-in system batch, into `this.customCards`.
 *   **Reference:** `plan.md` - Section 3.2.
 
+### Step 3.5: Refactor `data/card/index.ts` for Unified Data Access
+
+*   **Action:** Modify `data/card/index.ts` to ensure it sources all card data dynamically from the updated `CustomCardManager`, which now serves as the single source of truth.
+*   **Details:**
+    *   **Review and Remove/Refactor Built-in Specific Exports:**
+        *   Remove the `BUILTIN_STANDARD_CARDS` constant.
+        *   Remove the `BUILTIN_CARDS_BY_TYPE` constant.
+        *   Refactor `getAllBuiltinCards()`: If this function is still required, it should be updated to retrieve cards from `customCardManager` by filtering for `source: CardSource.Builtin` or by the `BUILTIN_BATCH_ID`.
+        *   Refactor `getBuiltinCardsByType(typeId: CardType)`: Similar to `getAllBuiltinCards()`, this should filter data obtained from `customCardManager`.
+    *   **Update Combined Card Exports to be Dynamic Functions:**
+        *   Convert `ALL_STANDARD_CARDS` from a module-level constant to a function, e.g., `export function getAllStandardCards(): ExtendedStandardCard[] { return customCardManager.getAllExistingCards(); }`.
+        *   Convert `STANDARD_CARDS_BY_TYPE` from a module-level constant to a function, e.g., `export function getStandardCardsByType(typeId: CardType): ExtendedStandardCard[] { const allCards = getAllStandardCards(); return allCards.filter(card => card.type === typeId); }`.
+        *   The existing functions `getAllStandardCards()` and `getStandardCardsByType()` (if they are already functions rather than constants) must be updated to use `customCardManager.getAllExistingCards()` as their data source.
+    *   **Consolidate Access Functions:**
+        *   Ensure any alias functions like `getCardsByType` correctly point to or use the new dynamic retrieval methods (e.g., the new `getStandardCardsByType` function).
+    *   **Evaluate `cardDataByType`:** Determine if this constant (mapping types to raw data arrays) is still necessary within `data/card/index.ts`, as `data/card/builtin-card-data.ts` and `CustomCardManager` now handle raw built-in data sourcing and conversion.
+    *   **Re-evaluate `refreshCustomCards()`:** With card data being fetched dynamically from `CustomCardManager` through functions, the original purpose of `refreshCustomCards()` (to trigger recalculation of module-level constants) may no longer be relevant. Assess if it's still needed for other side effects (like triggering UI updates) or if it can be simplified or removed.
+*   **Rationale:** These changes will ensure that all parts of the application using `data/card/index.ts` receive live, consistent data from the unified card management system, preventing issues with stale data from pre-calculated constants.
+*   **Reference:** Previous discussion regarding the refactoring of `data/card/index.ts`.
+
 ## Phase 4: Modify `CustomCardStorage` (If Necessary)
 
 ### Step 4.1: Enhance Batch Removal in `data/card/custom-card-storage.ts`

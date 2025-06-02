@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { BuiltinCardManager, customCardManager } from '@/data/card'
+import { customCardManager } from '@/data/card'
 
 /**
  * 卡牌系统初始化组件

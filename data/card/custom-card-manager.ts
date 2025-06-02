@@ -57,23 +57,6 @@ export class CustomCardManager {
         
         try {
             console.log('[CustomCardManager] 开始初始化系统...');
-            
-            // 检查转换器是否已注册
-            const registeredTypes = this.builtinCardManager.getRegisteredTypes();
-            console.log('[CustomCardManager] 当前已注册转换器:', registeredTypes);
-
-            if (registeredTypes.length === 0) {
-                throw new Error('没有转换器注册，无法初始化内置卡牌系统');
-            }
-
-            // 检查是否有必要的转换器类型
-            const requiredTypes = ['profession', 'ancestry', 'community', 'subclass', 'domain'];
-            const missingTypes = requiredTypes.filter(type => !registeredTypes.includes(type));
-
-            if (missingTypes.length > 0) {
-                console.warn('[CustomCardManager] 部分转换器未注册:', missingTypes);
-                // 不抛出错误，继续进行，因为可能在开发过程中某些类型暂时不可用
-            }
 
             // 种子化内置卡牌
             await this._seedOrUpdateBuiltinCards();
@@ -110,7 +93,8 @@ export class CustomCardManager {
 
         if (this.initializationPromise) {
             await this.initializationPromise;
-        } else if (!this.isInitialized) {
+        }
+        if (!this.isInitialized) {
             this.initializationPromise = this.initializeSystem();
             await this.initializationPromise;
         }
@@ -585,7 +569,7 @@ export class CustomCardManager {
             // 只导入内置卡牌，不包含自定义卡牌
             const cardModule = await import('./index');
             // 获取内置卡牌，避免包含可能过时的自定义卡牌
-            builtinCards = cardModule.getAllBuiltinCards();
+            builtinCards = cardModule.getBuiltinStandardCards();
         } catch (error) {
             console.warn('[CustomCardManager] 无法加载内置卡牌，仅检查自定义卡牌ID冲突');
         }

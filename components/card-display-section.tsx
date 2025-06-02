@@ -25,7 +25,7 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import { CardType, StandardCard } from "@/data/card/card-types"
 import { loadFocusedCardIds } from "@/lib/storage"
-import { ALL_STANDARD_CARDS, getCardTypeName } from "@/data/card"
+import { getAllStandardCards, getCardTypeName } from "@/data/card"
 import ReactMarkdown from "react-markdown"
 import React, { useRef } from "react"
 
@@ -153,7 +153,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
 
     const loadAndSetFocusedCards = () => {
       const focusedCardIds = loadFocusedCardIds()
-      const newFocusedCards = ALL_STANDARD_CARDS.filter(card => {
+      const newFocusedCards = getAllStandardCards().filter(card => {
         const cardId = card.id;
         return cardId !== undefined && focusedCardIds.includes(cardId);
       });

@@ -74,69 +74,32 @@ export const cardDataByType = {
   domain: domainCards,
 }
 
-// 预先转换好的内置卡牌（仅包含内置卡牌）
-export const BUILTIN_STANDARD_CARDS: StandardCard[] = (() => {
-  try {
-    console.log("[BUILTIN_STANDARD_CARDS] 开始转换所有内置卡牌")
-    const standardCards: StandardCard[] = []
+let _cachedBuiltinCards: ExtendedStandardCard[] | null = null
 
-    // 按类型转换卡牌
-    Object.entries(cardDataByType).forEach(([type, cards]) => {
-      console.log(`[BUILTIN_STANDARD_CARDS] 开始转换 ${type} 类型卡牌, 数量: ${cards.length}`)
-
-      const convertedCards = cards
-        .map((card, index) => {
-          try {
-            const converted = builtinCardManager.ConvertCard(card, type as keyof typeof cardDataByType)
-            if (converted) {
-              // 标记为内置卡牌
-              const extendedCard: ExtendedStandardCard = {
-                ...converted,
-                source: CardSource.BUILTIN
-              }
-              return extendedCard
-            }
-            return null
-          } catch (error) {
-            console.error(`[BUILTIN_STANDARD_CARDS] ${type}类型卡牌转换失败, 索引: ${index}:`, error, card)
-            return null
-          }
-        })
-        .filter(Boolean) as ExtendedStandardCard[]
-
-      standardCards.push(...convertedCards)
-      console.log(`[BUILTIN_STANDARD_CARDS] ${type}类型卡牌转换完成, 数量: ${convertedCards.length}`)
-    })
-
-    console.log(`[BUILTIN_STANDARD_CARDS] 所有内置卡牌转换完成, 总数: ${standardCards.length}`)
-    return standardCards
-  } catch (error) {
-    console.error("[BUILTIN_STANDARD_CARDS] 转换过程出错:", error)
-    return []
+export function getBuiltinStandardCards(): ExtendedStandardCard[] {
+  if (!_cachedBuiltinCards) {
+    _cachedBuiltinCards = computeBuiltinStandardCards()
   }
-})()
+  return _cachedBuiltinCards
+}
 
-// 合并内置卡牌和自定义卡牌的标准格式卡牌集合
-export const ALL_STANDARD_CARDS: ExtendedStandardCard[] = (() => {
-  // 在模块加载时，只返回内置卡牌，避免触发过早的初始化
-  console.log("[ALL_STANDARD_CARDS] 模块加载时只包含内置卡牌，避免过早初始化")
-  return [...BUILTIN_STANDARD_CARDS];
-})()
+function computeBuiltinStandardCards(): ExtendedStandardCard[] {
+  console.log("[computeBuiltinStandardCards] 开始转换内置卡牌")
+  const standardCards: ExtendedStandardCard[] = []
 
-// 按类型分组的标准格式卡牌（包含内置和自定义）
-export const STANDARD_CARDS_BY_TYPE: Record<string, ExtendedStandardCard[]> = (() => {
-  const result: Record<string, ExtendedStandardCard[]> = {};
+  Object.entries(cardDataByType).forEach(([type, cards]) => {
+    const convertedCards = cards
+      .map(card => {
+        const converted = builtinCardManager.ConvertCard(card, type as keyof typeof cardDataByType)
+        return converted ? { ...converted, source: CardSource.BUILTIN } : null
+      })
+      .filter(Boolean) as ExtendedStandardCard[]
 
-  for (const [id, name] of ALL_CARD_TYPES.entries()) {
-    if (id !== "all") {
-      // 在模块加载时，只使用内置卡牌，避免过早初始化
-      result[id] = BUILTIN_STANDARD_CARDS.filter((card) => card.type === id);
-      console.log(`[STANDARD_CARDS_BY_TYPE] ${name}类型内置卡牌数量: ${result[id].length}`);
-    }
-  }
+    standardCards.push(...convertedCards)
+  })
 
-  return result;
-})()
+  return standardCards
+}
 
 // 获取所有标准格式卡牌（内置+自定义）- 动态版本
 export function getAllStandardCards(): ExtendedStandardCard[] {
@@ -159,13 +122,11 @@ export function getAllStandardCards(): ExtendedStandardCard[] {
         }
       }
     } catch (error) {
-      console.warn('[getAllStandardCards] 统一系统暂不可用，回退到ALL_STANDARD_CARDS:', error);
+      console.warn('[getAllStandardCards] 统一系统暂不可用', error);
     }
   }
   
-  // 回退到原有的常量
-  console.log(`[getAllStandardCards] 使用常量，卡牌数量: ${ALL_STANDARD_CARDS.length}`);
-  return ALL_STANDARD_CARDS;
+  return [];
 }
 
 // 获取所有标准格式卡牌（内置+自定义）- 异步版本，确保系统已初始化
@@ -180,13 +141,11 @@ export async function getAllStandardCardsAsync(): Promise<ExtendedStandardCard[]
         return unifiedCards;
       }
     } catch (error) {
-      console.warn('[getAllStandardCardsAsync] 统一系统初始化失败，回退到ALL_STANDARD_CARDS:', error);
+      console.warn('[getAllStandardCardsAsync] 统一系统初始化失败', error);
     }
   }
   
-  // 回退到原有的常量
-  console.log(`[getAllStandardCardsAsync] 使用常量，卡牌数量: ${ALL_STANDARD_CARDS.length}`);
-  return ALL_STANDARD_CARDS;
+  return [];
 }
 
 // 根据类型获取标准格式卡牌（内置+自定义）- 异步版本
@@ -203,13 +162,7 @@ export async function getStandardCardsByTypeAsync(typeId: CardType): Promise<Ext
     }
   }
   
-  // 回退到原有的常量
-  return STANDARD_CARDS_BY_TYPE[typeId] || []
-}
-
-// 获取所有内置卡牌
-export function getAllBuiltinCards(): ExtendedStandardCard[] {
-  return BUILTIN_STANDARD_CARDS
+  return []
 }
 
 // 根据类型获取标准格式卡牌（内置+自定义）
@@ -224,12 +177,11 @@ export function getStandardCardsByType(typeId: CardType): ExtendedStandardCard[]
         return unifiedCards;
       }
     } catch (error) {
-      console.warn(`[getStandardCardsByType] 统一系统暂不可用，回退到常量 (${typeId}):`, error);
+      console.warn(`[getStandardCardsByType] 统一系统暂不可用`, error);
     }
   }
   
-  // 回退到原有的常量
-  return STANDARD_CARDS_BY_TYPE[typeId] || []
+  return []
 }
 
 // ===== 自定义卡牌功能 =====

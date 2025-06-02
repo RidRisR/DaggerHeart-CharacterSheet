@@ -26,7 +26,7 @@ const ITEMS_PER_PAGE = 30;
 interface CardSelectionModalProps {
   isOpen: boolean
   onClose: () => void
-  onSelect: (card: any) => void
+  onSelect: (card: StandardCard) => void
   selectedCardIndex: number
   // Add the lifted state and setters as props
   activeTab: string;

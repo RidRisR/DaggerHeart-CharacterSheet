@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && rm -f out/*.txt && cp sample-cards-import-guide.json out/ && cp sample-cards-import-guide.md out/",
+    "build": "next build && rm -f out/*.txt && cp 示例卡牌包.json out/示例卡牌包.json",
     "start": "next start",
     "lint": "next lint"
   },

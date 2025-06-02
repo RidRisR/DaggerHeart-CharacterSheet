@@ -6,7 +6,7 @@ import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-three"; // Import the new page
 import {
-  getStandardCardsByType,
+  getStandardCardsByTypeAsync,
   CardType, // Import CardType
 } from "@/data/card";
 import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
@@ -36,19 +36,24 @@ export default function Home() {
     setImportExportModalOpen(false)
   }
 
-  const handlePrintAll = () => {
-    const getCardClass = (cardId: string | undefined, cardType: CardType): string => { // Changed cardType to CardType
+  const handlePrintAll = async () => {
+    const getCardClass = async (cardId: string | undefined, cardType: CardType): Promise<string> => { // Changed cardType to CardType and made async
       if (!cardId) return '()';
-      const cardsOfType: StandardCard[] = getStandardCardsByType(cardType); // Removed 'as CardType'
-      const card = cardsOfType.find((c: StandardCard) => c.id === cardId);
-      return card && card.class ? String(card.class) : '()';
+      try {
+        const cardsOfType: StandardCard[] = await getStandardCardsByTypeAsync(cardType); // Now async
+        const card = cardsOfType.find((c: StandardCard) => c.id === cardId);
+        return card && card.class ? String(card.class) : '()';
+      } catch (error) {
+        console.error('Error getting card class:', error);
+        return '()';
+      }
     };
 
     const name = formData.name || '()';
-    const ancestry1Class = getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry); // Changed to CardType.Ancestry
-    const professionClass = getCardClass(formData.professionRef?.id, CardType.Profession); // Changed to CardType.Profession
-    const ancestry2Class = getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry); // Changed to CardType.Ancestry
-    const communityClass = getCardClass(formData.communityRef?.id, CardType.Community); // Changed to CardType.Community
+    const ancestry1Class = await getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry); // Now with await
+    const professionClass = await getCardClass(formData.professionRef?.id, CardType.Profession); // Now with await
+    const ancestry2Class = await getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry); // Now with await
+    const communityClass = await getCardClass(formData.communityRef?.id, CardType.Community); // Now with await
     const level = formData.level ? String(formData.level) : '()';
 
     document.title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
@@ -178,7 +183,7 @@ export default function Home() {
         <Button onClick={openImportExportModal} className="bg-gray-800 hover:bg-gray-700">
           存档与重置
         </Button>
-        <Button onClick={handlePrintAll} className="bg-gray-800 hover:bg-gray-700"> {/* Changed Link to Button */}
+        <Button onClick={() => handlePrintAll().catch(console.error)} className="bg-gray-800 hover:bg-gray-700"> {/* Changed Link to Button and handle async */}
           导出PDF
         </Button>
         <button
@@ -211,7 +216,7 @@ export default function Home() {
       <ImportExportModal
         isOpen={importExportModalOpen}
         onClose={closeImportExportModal}
-        onExport={() => exportCharacterData(formData)}
+        onExport={() => exportCharacterData(formData).catch(console.error)}
         onImport={(data) => {
           setFormData({ ...defaultSheetData, ...data })
           closeImportExportModal()

@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    getStandardCardsByType,
+    getStandardCardsByTypeAsync,
     CardType,
     ExtendedStandardCard
 } from '@/data/card';
@@ -47,7 +47,7 @@ export function useCardSelection(options: UseCardSelectionOptions = {}): UseCard
     const [rawCards, setRawCards] = useState<ExtendedStandardCard[]>([]);
 
     // 加载卡牌数据
-    const loadCards = useCallback(() => {
+    const loadCards = useCallback(async () => {
         if (!enabled || !cardType) {
             setRawCards([]);
             return;
@@ -59,8 +59,8 @@ export function useCardSelection(options: UseCardSelectionOptions = {}): UseCard
         try {
             console.log(`[useCardSelection] 加载 ${cardType} 类型卡牌`);
 
-            // 使用同步API，但会检查系统状态
-            const cards = getStandardCardsByType(cardType);
+            // 使用异步API
+            const cards = await getStandardCardsByTypeAsync(cardType);
 
             setRawCards(cards);
             setLoading(false);
@@ -77,12 +77,12 @@ export function useCardSelection(options: UseCardSelectionOptions = {}): UseCard
 
     // 刷新函数
     const refresh = useCallback(() => {
-        loadCards();
+        loadCards().catch(console.error);
     }, [loadCards]);
 
     // 初始加载
     useEffect(() => {
-        loadCards();
+        loadCards().catch(console.error);
     }, [loadCards]);
 
     // 计算可用的类别选项
@@ -160,13 +160,17 @@ export function useCards(cardType?: CardType): ExtendedStandardCard[] {
             return;
         }
 
-        try {
-            const result = getStandardCardsByType(cardType);
-            setCards(result);
-        } catch (error) {
-            console.error(`[useCards] 获取 ${cardType} 卡牌失败:`, error);
-            setCards([]);
-        }
+        const loadCards = async () => {
+            try {
+                const result = await getStandardCardsByTypeAsync(cardType);
+                setCards(result);
+            } catch (error) {
+                console.error(`[useCards] 获取 ${cardType} 卡牌失败:`, error);
+                setCards([]);
+            }
+        };
+
+        loadCards().catch(console.error);
     }, [cardType]);
 
     return cards;
@@ -177,7 +181,22 @@ export function useCards(cardType?: CardType): ExtendedStandardCard[] {
  */
 export function useSubclassCardsForProfession(professionId?: string): ExtendedStandardCard[] {
     const allSubclassCards = useCards(CardType.Subclass);
-    const [professionCards] = useState(() => getStandardCardsByType(CardType.Profession));
+    const [professionCards, setProfessionCards] = useState<ExtendedStandardCard[]>([]);
+
+    // 异步加载职业卡牌
+    useEffect(() => {
+        const loadProfessionCards = async () => {
+            try {
+                const cards = await getStandardCardsByTypeAsync(CardType.Profession);
+                setProfessionCards(cards);
+            } catch (error) {
+                console.error('[useSubclassCardsForProfession] 加载职业卡牌失败:', error);
+                setProfessionCards([]);
+            }
+        };
+
+        loadProfessionCards().catch(console.error);
+    }, []);
 
     return useMemo(() => {
         if (!professionId) return [];

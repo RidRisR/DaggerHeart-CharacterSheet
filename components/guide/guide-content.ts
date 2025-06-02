@@ -1,6 +1,6 @@
 import type { StandardCard } from "@/data/card/card-types";
 import { isEmptyCard } from "@/data/card/card-types"; // Import isEmptyCard
-import { getStandardCardsByType, CardType } from "@/data/card"; // Add this import
+import { CardType } from "@/data/card"; // Only import CardType since we no longer use getStandardCardsByTypeAsync
 
 // 引导内容数据结构
 export interface GuideStep {
@@ -20,11 +20,12 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step1",
         title: "选择职业",
-        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused if we switch to getStandardCardsByType
+        content: (formData: any, allCardsList: StandardCard[]): string => {
             if (!isFilled(formData.professionRef?.id)) {
                 return "请点开角色卡左上方<strong>'选择职业'</strong>选项框查看并选择自己的职业，不同的职业有不同的游玩和扮演风格。";
             }
-            const professionCards = getStandardCardsByType(CardType.Profession);
+            // Use allCardsList instead of synchronous API call
+            const professionCards = allCardsList.filter(card => card.type === CardType.Profession);
             const professionCard = professionCards.find(
                 (card) => card.id === formData.professionRef?.id
             );
@@ -39,11 +40,12 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step2",
         title: "选择子职业",
-        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
+        content: (formData: any, allCardsList: StandardCard[]): string => {
             if (!isFilled(formData.subclass)) {
                 return "请点开角色卡右上方<strong>'选择子职业'</strong>选项框查看并选择自己的子职业。子职业为您的角色提供额外的能力和风格。";
             }
-            const subclassCards = getStandardCardsByType(CardType.Subclass);
+            // Use allCardsList instead of synchronous API call
+            const subclassCards = allCardsList.filter(card => card.type === CardType.Subclass);
             const subclassCard = subclassCards.find(
                 (card) => card.id === formData.subclass
             );
@@ -58,10 +60,11 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step3",
         title: "选择血统",
-        content: (formData: any, allCards: StandardCard[] = []): string => { // allCards might be unused
+        content: (formData: any, allCardsList: StandardCard[] = []): string => {
             const ancestry1 = formData?.ancestry1;
             const ancestry2 = formData?.ancestry2;
-            const ancestryCards = getStandardCardsByType(CardType.Ancestry);
+            // Use allCardsList instead of synchronous API call
+            const ancestryCards = allCardsList.filter(card => card.type === CardType.Ancestry);
             const ancestry1Card = ancestryCards.find((card) => card.id === ancestry1);
             const ancestry2Card = ancestryCards.find((card) => card.id === ancestry2);
             if (!isFilled(ancestry1) && !isFilled(ancestry2)) {
@@ -89,11 +92,12 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step4",
         title: "选择社群",
-        content: (formData: any, allCards: StandardCard[]): string => {
+        content: (formData: any, allCardsList: StandardCard[]): string => {
             if (!isFilled(formData.community)) {
                 return "请点开子职业选项框上方的<strong>'选择社群'</strong>选项框查看并选择自己的社群。社群描述了你的角色成长的文化或环境。您的角色很可能在成长过程中曾加入过众多社群，这个选择代表了对角色个性和技能影响最大的那个社群。";
             }
-            const communityCards = getStandardCardsByType(CardType.Community);
+            // Use allCardsList instead of synchronous API call
+            const communityCards = allCardsList.filter(card => card.type === CardType.Community);
             const communityCard = communityCards.find(
                 (card) => card.id === formData.community
             );
@@ -125,7 +129,7 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step6",
         title: "记录基础数据",
-        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
+        content: (formData: any, allCardsList: StandardCard[]): string => {
             if (!formData) return "请先填写基本信息";
 
             const professionId = formData.profession;
@@ -133,7 +137,8 @@ export const guideSteps: GuideStep[] = [
             let hp = "未知";
 
             if (professionId) {
-                const professionCards = getStandardCardsByType(CardType.Profession);
+                // Use allCardsList instead of synchronous API call
+                const professionCards = allCardsList.filter(card => card.type === CardType.Profession);
                 const professionCard = professionCards.find(
                     (card) => card.id === professionId
                 );
@@ -156,8 +161,8 @@ export const guideSteps: GuideStep[] = [
             // 检查 hpMax 是否等于职业卡的起始生命
             const professionId = formData.profession;
             let expectedHp: any = undefined;
-            if (professionId) {
-                const professionCards = getStandardCardsByType(CardType.Profession);
+            if (professionId && allCards) {
+                const professionCards = allCards.filter(card => card.type === CardType.Profession);
                 const professionCard = professionCards.find(
                     (card) => card.id === professionId
                 );
@@ -175,13 +180,13 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step7",
         title: "记录压力与希望",
-        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
+        content: (formData: any, allCardsList: StandardCard[]): string => {
             const professionId = formData?.profession;
             let hopeFeature = "未知";
             let professionName = "未知职业";
 
             if (professionId) {
-                const professionCards = getStandardCardsByType(CardType.Profession);
+                const professionCards = allCardsList.filter(card => card.type === CardType.Profession);
                 const professionCard = professionCards.find(
                     (card) => card.id === professionId
                 );
@@ -245,12 +250,12 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step10",
         title: "添加初始物品",
-        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
+        content: (formData: any, allCardsList: StandardCard[]): string => {
             const professionId = formData?.profession;
             let startingItems = "未知";
 
             if (professionId) {
-                const professionCards = getStandardCardsByType(CardType.Profession);
+                const professionCards = allCardsList.filter(card => card.type === CardType.Profession);
                 const professionCard = professionCards.find(
                     (card) => card.id === professionId
                 );
@@ -274,14 +279,14 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step12",
         title: "选择能力卡牌",
-        content: (formData: any, allCards: StandardCard[]): string => { // allCards might be unused
+        content: (formData: any, allCardsList: StandardCard[]): string => {
             const professionId = formData?.profession;
             let name = "未知职业";
             let domain1 = "未知";
             let domain2 = "未知";
 
             if (professionId) {
-                const professionCards = getStandardCardsByType(CardType.Profession);
+                const professionCards = allCardsList.filter(card => card.type === CardType.Profession);
                 const professionCard = professionCards.find(
                     (card) => card.id === professionId
                 );

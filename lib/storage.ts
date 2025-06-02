@@ -1,17 +1,22 @@
 import {
-  getStandardCardsByType,
+  getStandardCardsByTypeAsync,
   CardType, // Import CardType
 } from "@/data/card";
 import type { SheetData, SheetCardReference } from "./sheet-data"; // Ensure SheetCardReference is imported if not already
 import { defaultSheetData } from "./default-sheet-data";
 
-// Moved getCardClass to module scope
-const getCardClass = (cardId: string | undefined, cardType: CardType): string => {
+// Moved getCardClass to module scope - now async
+const getCardClass = async (cardId: string | undefined, cardType: CardType): Promise<string> => {
   if (!cardId) return '()';
-  const cardsOfType = getStandardCardsByType(cardType);
-  const card = cardsOfType.find((c) => c.id === cardId);
-  // Assuming card.class is a string. If it can be a number, convert to String.
-  return card && card.class ? String(card.class) : '()';
+  try {
+    const cardsOfType = await getStandardCardsByTypeAsync(cardType);
+    const card = cardsOfType.find((c) => c.id === cardId);
+    // Assuming card.class is a string. If it can be a number, convert to String.
+    return card && card.class ? String(card.class) : '()';
+  } catch (error) {
+    console.error('Error getting card class:', error);
+    return '()';
+  }
 };
 
 /**
@@ -69,21 +74,21 @@ export function clearCharacterData(): void {
 }
 
 // 导出角色数据为JSON文件
-export function exportCharacterData(formData: SheetData): void {
+export async function exportCharacterData(formData: SheetData): Promise<void> {
   try {
     if (!formData) {
       alert("没有可导出的角色数据");
       return;
     }
 
-    // getCardClass is now defined at module scope
+    // getCardClass is now defined at module scope and is async
 
     const name = formData.name || '()';
-    // Use ...Ref.id for getting card class
-    const ancestry1Class = getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry);
-    const professionClass = getCardClass(formData.professionRef?.id, CardType.Profession);
-    const ancestry2Class = getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry);
-    const communityClass = getCardClass(formData.communityRef?.id, CardType.Community);
+    // Use ...Ref.id for getting card class - now with await
+    const ancestry1Class = await getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry);
+    const professionClass = await getCardClass(formData.professionRef?.id, CardType.Profession);
+    const ancestry2Class = await getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry);
+    const communityClass = await getCardClass(formData.communityRef?.id, CardType.Community);
     const level = formData.level ? String(formData.level) : '()';
 
     const exportFileDefaultName = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}.json`;

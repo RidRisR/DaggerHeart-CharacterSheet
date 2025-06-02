@@ -8,10 +8,11 @@ import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
 import { ArmorItem, armorItems } from "@/data/list/armor"
 import {
-  getAllStandardCards,
-  getStandardCardsByType,
+  getAllStandardCardsAsync,
+  getStandardCardsByTypeAsync,
   CardType, // Import CardType
 } from "@/data/card"
+import { useAllCards } from "@/hooks/use-cards"
 
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
@@ -38,6 +39,16 @@ interface CharacterSheetProps {
 }
 
 export default function CharacterSheet({ formData, setFormData }: CharacterSheetProps) {
+  // 使用异步卡牌Hook
+  const { 
+    cards: allStandardCards, 
+    loading: cardsLoading, 
+    error: cardsError 
+  } = useAllCards({
+    enabled: true,
+    autoRefresh: false
+  });
+
   // 模态框状态
   const [weaponModalOpen, setWeaponModalOpen] = useState(false)
   const [currentWeaponField, setCurrentWeaponField] = useState("")
@@ -178,29 +189,37 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   // 根据ID获取职业名称
   const getProfessionById = (id: string): StandardCard => {
-    const professionCards = getStandardCardsByType(CardType.Profession);
-    const profession = professionCards.find((card) => card.id === id);
+    if (cardsLoading || !allStandardCards.length) {
+      return createEmptyCard();
+    }
+    const profession = allStandardCards.find((card) => card.id === id && card.type === CardType.Profession);
     return profession ? profession : createEmptyCard();
   }
 
   // 根据ID获取血统名称
   const getAncestryById = (id: string): StandardCard => {
-    const ancestryCards = getStandardCardsByType(CardType.Ancestry);
-    const ancestry = ancestryCards.find((card) => card.id === id);
+    if (cardsLoading || !allStandardCards.length) {
+      return createEmptyCard();
+    }
+    const ancestry = allStandardCards.find((card) => card.id === id && card.type === CardType.Ancestry);
     return ancestry ? ancestry : createEmptyCard();
   }
 
   // 根据ID获取社群名称
   const getCommunityById = (id: string): StandardCard => {
-    const communityCards = getStandardCardsByType(CardType.Community);
-    const community = communityCards.find((card) => card.id === id);
+    if (cardsLoading || !allStandardCards.length) {
+      return createEmptyCard();
+    }
+    const community = allStandardCards.find((card) => card.id === id && card.type === CardType.Community);
     return community ? community : createEmptyCard();
   }
 
   // 根据ID获取子职业名称
   const getSubclassById = (id: string): StandardCard => {
-    const subclassCards = getStandardCardsByType(CardType.Subclass);
-    const subclass = subclassCards.find((card) => card.id === id);
+    if (cardsLoading || !allStandardCards.length) {
+      return createEmptyCard();
+    }
+    const subclass = allStandardCards.find((card) => card.id === id && card.type === CardType.Subclass);
     return subclass ? subclass : createEmptyCard();
   }
 
@@ -307,8 +326,11 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         return updatedFormData;
       });
     } else {
-      const allCards = getAllStandardCards();
-      const professionCard = allCards.find((p) => p.id === value && p.type === CardType.Profession);
+      if (cardsLoading || !allStandardCards.length) {
+        console.warn('handleProfessionChange: Cards not loaded yet');
+        return;
+      }
+      const professionCard = allStandardCards.find((p) => p.id === value && p.type === CardType.Profession);
       if (professionCard) {
         setFormData((prev) => {
           const updatedFormData = {
@@ -341,8 +363,11 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         return updatedFormData;
       })
     } else {
-      const allCards = getAllStandardCards();
-      const ancestryCard = allCards.find((a) => a.id === value && a.type === CardType.Ancestry);
+      if (cardsLoading || !allStandardCards.length) {
+        console.warn('handleAncestryChange: Cards not loaded yet');
+        return;
+      }
+      const ancestryCard = allStandardCards.find((a) => a.id === value && a.type === CardType.Ancestry);
       if (ancestryCard) {
         setFormData((prev) => {
           const updatedFormData = {
@@ -371,8 +396,11 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         return updatedFormData;
       })
     } else {
-      const allCards = getAllStandardCards();
-      const communityCard = allCards.find((c) => c.id === value && c.type === CardType.Community);
+      if (cardsLoading || !allStandardCards.length) {
+        console.warn('handleCommunityChange: Cards not loaded yet');
+        return;
+      }
+      const communityCard = allStandardCards.find((c) => c.id === value && c.type === CardType.Community);
       if (communityCard) {
         setFormData((prev) => {
           const updatedFormData = {
@@ -611,8 +639,11 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         return updatedFormData;
       })
     } else {
-      const allCards = getAllStandardCards();
-      const subclassCard = allCards.find((s) => s.id === value && (s.type === CardType.Subclass || s.type === CardType.Profession));
+      if (cardsLoading || !allStandardCards.length) {
+        console.warn('handleSubclassChange: Cards not loaded yet');
+        return;
+      }
+      const subclassCard = allStandardCards.find((s) => s.id === value && (s.type === CardType.Subclass || s.type === CardType.Profession));
       if (subclassCard) {
         setFormData((prev) => {
           const updatedFormData = {

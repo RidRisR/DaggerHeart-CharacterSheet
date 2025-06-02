@@ -14,9 +14,9 @@ export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps
   if (formData && formData.professionRef?.id && formData.cards && Array.isArray(formData.cards)) {
     const professionCard = formData.cards.find(
       (card: StandardCard | null) => card && card.id === formData.professionRef?.id && card.type === "profession"
-    ) as StandardCard & { hopeTrait?: string }; // Cast to access optional hopeTrait
-    if (professionCard && typeof professionCard.hopeTrait === 'string') {
-      hopeTrait = professionCard.hopeTrait
+    ) as StandardCard;
+    if (professionCard && professionCard.professionSpecial && professionCard.professionSpecial["希望特性"]) {
+      hopeTrait = String(professionCard.professionSpecial["希望特性"])
     }
   }
 

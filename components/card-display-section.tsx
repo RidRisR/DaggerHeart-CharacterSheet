@@ -25,9 +25,10 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import { CardType, StandardCard } from "@/data/card/card-types"
 import { loadFocusedCardIds } from "@/lib/storage"
-import { getAllStandardCards, getCardTypeName } from "@/data/card"
+import { getCardTypeName } from "@/data/card"
+import { useAllCards } from "@/hooks/use-cards"
 import ReactMarkdown from "react-markdown"
-import React, { useRef } from "react"
+import React, { useRef, useCallback } from "react"
 
 interface CardDisplaySectionProps {
   cards: Array<StandardCard>
@@ -133,6 +134,16 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   // 触发rerender的state
   const [, forceUpdate] = useState(0)
 
+  // 使用异步Hook获取所有卡牌数据用于聚焦功能
+  const { 
+    cards: allStandardCards, 
+    loading: cardsLoading, 
+    error: cardsError 
+  } = useAllCards({
+    enabled: true,
+    autoRefresh: false
+  });
+
   // 存储当前显示的卡牌列表
   const [allCards, setAllCards] = useState(cards.filter((card) => card && card.name))
   const [professionCards, setProfessionCards] = useState<typeof cards>([])
@@ -143,6 +154,27 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   // 当前选中的标签
   const [activeTab, setActiveTab] = useState("all")
 
+  // 异步加载聚焦卡牌的函数
+  const loadAndSetFocusedCards = useCallback(async () => {
+    if (cardsLoading || !allStandardCards.length) {
+      console.log('[CardDisplaySection] 等待卡牌数据加载...');
+      return;
+    }
+
+    try {
+      const focusedCardIds = loadFocusedCardIds();
+      const newFocusedCards = allStandardCards.filter(card => {
+        const cardId = card.id;
+        return cardId !== undefined && focusedCardIds.includes(cardId);
+      });
+      
+      console.log(`[CardDisplaySection] 更新聚焦卡牌，共 ${newFocusedCards.length} 张`);
+      setFocusedCards(newFocusedCards);
+    } catch (error) {
+      console.error('[CardDisplaySection] 加载聚焦卡牌失败:', error);
+    }
+  }, [allStandardCards, cardsLoading]);
+
   // 更新卡牌分类和聚焦卡牌
   useEffect(() => {
     const validCards = cards.filter((card) => card && card.name)
@@ -151,26 +183,25 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     setBackgroundCards(validCards.filter((card) => card.type === "ancestry" || card.type === "community"))
     setDomainCards(validCards.filter((card) => card.type === "domain"))
 
-    const loadAndSetFocusedCards = () => {
-      const focusedCardIds = loadFocusedCardIds()
-      const newFocusedCards = getAllStandardCards().filter(card => {
-        const cardId = card.id;
-        return cardId !== undefined && focusedCardIds.includes(cardId);
-      });
-      setFocusedCards(newFocusedCards);
-    }
-
-    loadAndSetFocusedCards();
-
-    const handleFocusedCardsChange = () => {
+    // 只有当卡牌数据可用时才加载聚焦卡牌
+    if (!cardsLoading && allStandardCards.length > 0) {
       loadAndSetFocusedCards();
+    }
+  }, [cards, loadAndSetFocusedCards, cardsLoading, allStandardCards.length])
+
+  // 监听 focusedCardsChanged 事件
+  useEffect(() => {
+    const handleFocusedCardsChange = () => {
+      if (!cardsLoading && allStandardCards.length > 0) {
+        loadAndSetFocusedCards();
+      }
     };
 
     window.addEventListener('focusedCardsChanged', handleFocusedCardsChange);
     return () => {
       window.removeEventListener('focusedCardsChanged', handleFocusedCardsChange);
     };
-  }, [cards])
+  }, [loadAndSetFocusedCards, cardsLoading, allStandardCards.length])
 
   // 切换卡片展开状态
   const toggleCard = (cardId: string) => {

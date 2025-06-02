@@ -20,6 +20,8 @@ import {
   type ImportResult,
   type ExtendedStandardCard
 } from '@/data/card/index'
+import { CustomCardManager } from '@/data/card/custom-card-manager'
+import { CustomCardStorage } from '@/data/card/custom-card-storage'
 
 interface ImportStatus {
   isImporting: boolean
@@ -267,13 +269,36 @@ export default function CardImportTestPage() {
     }
   }
 
+  // 强制重载内置数据
+  const handleForceReloadBuiltinData = async () => {
+    if (confirm('确定要强制重新加载内置卡牌数据吗？这将清除当前的内置卡牌缓存并重新初始化。')) {
+      try {
+        // 清除localStorage中的内置卡牌数据
+        localStorage.removeItem('daggerheart_custom_cards_index')
+        localStorage.removeItem('daggerheart_custom_cards_batch_SYSTEM_BUILTIN_CARDS')
+
+        // 强制重新初始化CustomCardManager
+        const customCardManager = CustomCardManager.getInstance()
+        await customCardManager.forceReinitialize()
+
+        // 刷新数据显示
+        refreshData()
+
+        alert('内置卡牌数据重新加载成功！')
+      } catch (error) {
+        alert('强制重载失败: ' + (error instanceof Error ? error.message : String(error)))
+        console.error('强制重载内置数据失败:', error)
+      }
+    }
+  }
+
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       {/* 页面头部 */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">自定义卡牌导入测试</h1>
+            <h1 className="text-3xl font-bold mb-2">卡牌管理</h1>
             <p className="text-muted-foreground">
               测试自定义卡牌导入功能，支持批次管理和数据统计
             </p>
@@ -311,6 +336,15 @@ export default function CardImportTestPage() {
           >
             <Eye className="h-4 w-4" />
             查看所有卡牌 ({stats.totalCards})
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleForceReloadBuiltinData}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            强制重载内置数据
           </Button>
           <div className="flex items-center gap-2 text-sm">
             <input

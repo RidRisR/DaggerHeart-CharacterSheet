@@ -651,6 +651,7 @@ export default function CardImportTestPage() {
               <CardTitle>卡牌包管理</CardTitle>
               <CardDescription>管理已导入的卡牌包</CardDescription>
             </CardHeader>
+            {/* 修改卡牌包管理部分的布局 */}
             <CardContent>
               {batches.length === 0 ? (
                 <div className="text-center py-8">
@@ -664,8 +665,17 @@ export default function CardImportTestPage() {
                 <div className="space-y-3">
                   {batches.map((batch) => (
                     <div key={batch.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium text-lg">{batch.name}</h4>
+                      {/* 调整按钮位置，将三个小图标放在名称同一行最右边 */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={getBatchDisabledStatus(batch.id) ? "destructive" : "default"}
+                            className="text-xs"
+                          >
+                            {getBatchDisabledStatus(batch.id) ? "未启用" : "已启用"}
+                          </Badge>
+                          <h4 className="font-medium text-lg">{batch.name}</h4>
+                        </div>
                         <div className="flex gap-1">
                           <Button
                             size="sm"
@@ -698,18 +708,9 @@ export default function CardImportTestPage() {
                           </Button>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 text-sm text-muted-foreground">
+                      <div className="grid grid-cols-1 gap-3 text-sm text-muted-foreground">
                         <div>
                           <span className="font-medium">卡牌数量:</span> {batch.cardCount}
-                        </div>
-                        <div>
-                          <span className="font-medium">状态:</span>
-                          <Badge
-                            variant={getBatchDisabledStatus(batch.id) ? "destructive" : "default"}
-                            className="ml-2 text-xs"
-                          >
-                            {getBatchDisabledStatus(batch.id) ? "未启用" : "已启用"}
-                          </Badge>
                         </div>
                         <div>
                           <span className="font-medium">导入时间:</span> {new Date(batch.importTime).toLocaleString()}
@@ -717,23 +718,21 @@ export default function CardImportTestPage() {
                         <div>
                           <span className="font-medium">文件名:</span> {batch.fileName}
                         </div>
-                        <div className="col-span-2">
+                        <div>
                           <span className="font-medium">批次ID:</span> 
                           <code className="ml-2 px-1 py-0.5 bg-muted rounded text-xs">{batch.id}</code>
                         </div>
-                      </div>
-                      {batch.cardTypes.length > 0 && (
-                        <div className="flex gap-1 mt-3">
-                          <span className="text-sm font-medium text-muted-foreground">类型:</span>
+                        {batch.cardTypes.length > 0 && (
                           <div className="flex flex-wrap gap-1">
+                            <span className="text-sm font-medium text-muted-foreground">类型:</span>
                             {batch.cardTypes.map((type: string) => (
                               <Badge key={type} variant="outline" className="text-xs">
                                 {type}
                               </Badge>
                             ))}
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -746,7 +745,6 @@ export default function CardImportTestPage() {
                     variant="destructive"
                     onClick={handleClearAll}
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
                     清空所有自定义卡牌
                   </Button>
                 </div>

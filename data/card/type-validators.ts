@@ -10,6 +10,12 @@ import {
     getSubClassCardNames,
     getDomainCardNames
 } from './card-predefined-field';
+import { CustomFieldsForBatch } from './card-storage';
+
+export interface TemporaryCustomFields {
+    tempBatchId?: string;
+    tempDefinitions?: CustomFieldsForBatch;
+}
 
 export interface ValidationError {
     path: string;
@@ -25,11 +31,11 @@ export interface TypeValidationResult {
 /**
  * 职业卡牌验证器
  */
-export function validateProfessionCard(card: any, index: number): TypeValidationResult {
+export function validateProfessionCard(card: any, index: number, tempFields?: TemporaryCustomFields): TypeValidationResult {
     const errors: ValidationError[] = [];
     const prefix = `profession[${index}]`;
-    const validProfessions = getProfessionCardNames();
-    const validDomains = getDomainCardNames();
+    const validProfessions = getProfessionCardNames(tempFields?.tempBatchId, tempFields?.tempDefinitions);
+    const validDomains = getDomainCardNames(tempFields?.tempBatchId, tempFields?.tempDefinitions);
 
     // 必需字段验证
     if (!card.id || typeof card.id !== 'string') {
@@ -93,10 +99,10 @@ export function validateProfessionCard(card: any, index: number): TypeValidation
 /**
  * 血统卡牌验证器
  */
-export function validateAncestryCard(card: any, index: number): TypeValidationResult {
+export function validateAncestryCard(card: any, index: number, tempFields?: TemporaryCustomFields): TypeValidationResult {
     const errors: ValidationError[] = [];
     const prefix = `ancestry[${index}]`;
-    const validAncestries = getAncestryCardNames();
+    const validAncestries = getAncestryCardNames(tempFields?.tempBatchId, tempFields?.tempDefinitions);
 
     if (!card.id || typeof card.id !== 'string') {
         errors.push({ path: `${prefix}.id`, message: 'id字段是必需的，且必须是字符串' });
@@ -135,10 +141,10 @@ export function validateAncestryCard(card: any, index: number): TypeValidationRe
 /**
  * 社群卡牌验证器
  */
-export function validateCommunityCard(card: any, index: number): TypeValidationResult {
+export function validateCommunityCard(card: any, index: number, tempFields?: TemporaryCustomFields): TypeValidationResult {
     const errors: ValidationError[] = [];
     const prefix = `community[${index}]`;
-    const validCommunities = getCommunityCardNames();
+    const validCommunities = getCommunityCardNames(tempFields?.tempBatchId, tempFields?.tempDefinitions);
 
     if (!card.ID || typeof card.ID !== 'string') {
         errors.push({ path: `${prefix}.ID`, message: 'ID字段是必需的，且必须是字符串' });
@@ -173,10 +179,10 @@ export function validateCommunityCard(card: any, index: number): TypeValidationR
 /**
  * 子职业卡牌验证器
  */
-export function validateSubClassCard(card: any, index: number): TypeValidationResult {
+export function validateSubClassCard(card: any, index: number, tempFields?: TemporaryCustomFields): TypeValidationResult {
     const errors: ValidationError[] = [];
     const prefix = `subclass[${index}]`;
-    const validSubClasses = getSubClassCardNames();
+    const validSubClasses = getSubClassCardNames(tempFields?.tempBatchId, tempFields?.tempDefinitions);
 
     if (!card.id || typeof card.id !== 'string') {
         errors.push({ path: `${prefix}.id`, message: 'id字段是必需的，且必须是字符串' });
@@ -224,10 +230,10 @@ export function validateSubClassCard(card: any, index: number): TypeValidationRe
 /**
  * 领域卡牌验证器
  */
-export function validateDomainCard(card: any, index: number): TypeValidationResult {
+export function validateDomainCard(card: any, index: number, tempFields?: TemporaryCustomFields): TypeValidationResult {
     const errors: ValidationError[] = [];
     const prefix = `domain[${index}]`;
-    const validDomains = getDomainCardNames();
+    const validDomains = getDomainCardNames(tempFields?.tempBatchId, tempFields?.tempDefinitions);
 
     if (!card.ID || typeof card.ID !== 'string') {
         errors.push({ path: `${prefix}.ID`, message: 'ID字段是必需的，且必须是字符串' });
@@ -274,9 +280,10 @@ export class CardTypeValidator {
     /**
      * 验证完整的导入数据
      */
-    static validateImportData(importData: any): { isValid: boolean; errors: ValidationError[]; totalCards: number } {
+    static validateImportData(importData: any, tempFields?: TemporaryCustomFields): { isValid: boolean; errors: ValidationError[]; totalCards: number } {
         console.log('[DEBUG] CardTypeValidator.validateImportData 开始');
         console.log('[DEBUG] 输入数据结构:', Object.keys(importData));
+        console.log('[DEBUG] 临时字段参数:', tempFields);
 
         const allErrors: ValidationError[] = [];
         let totalCards = 0;
@@ -286,7 +293,7 @@ export class CardTypeValidator {
             console.log('[DEBUG] 验证职业卡牌，数量:', importData.profession.length);
             totalCards += importData.profession.length;
             importData.profession.forEach((card: any, index: number) => {
-                const result = validateProfessionCard(card, index);
+                const result = validateProfessionCard(card, index, tempFields);
                 allErrors.push(...result.errors);
             });
         }
@@ -296,7 +303,7 @@ export class CardTypeValidator {
             console.log('[DEBUG] 验证血统卡牌，数量:', importData.ancestry.length);
             totalCards += importData.ancestry.length;
             importData.ancestry.forEach((card: any, index: number) => {
-                const result = validateAncestryCard(card, index);
+                const result = validateAncestryCard(card, index, tempFields);
                 allErrors.push(...result.errors);
             });
         }
@@ -306,7 +313,7 @@ export class CardTypeValidator {
             console.log('[DEBUG] 验证社群卡牌，数量:', importData.community.length);
             totalCards += importData.community.length;
             importData.community.forEach((card: any, index: number) => {
-                const result = validateCommunityCard(card, index);
+                const result = validateCommunityCard(card, index, tempFields);
                 allErrors.push(...result.errors);
             });
         }
@@ -316,7 +323,7 @@ export class CardTypeValidator {
             console.log('[DEBUG] 验证子职业卡牌，数量:', importData.subclass.length);
             totalCards += importData.subclass.length;
             importData.subclass.forEach((card: any, index: number) => {
-                const result = validateSubClassCard(card, index);
+                const result = validateSubClassCard(card, index, tempFields);
                 allErrors.push(...result.errors);
             });
         }
@@ -326,7 +333,7 @@ export class CardTypeValidator {
             console.log('[DEBUG] 验证领域卡牌，数量:', importData.domain.length);
             totalCards += importData.domain.length;
             importData.domain.forEach((card: any, index: number) => {
-                const result = validateDomainCard(card, index);
+                const result = validateDomainCard(card, index, tempFields);
                 allErrors.push(...result.errors);
             });
         }

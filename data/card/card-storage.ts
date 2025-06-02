@@ -3,6 +3,14 @@
  * 提供对localStorage的抽象操作，管理自定义卡牌的存储架构
  */
 
+// 调试日志标记
+const DEBUG_CARD_STORAGE = true;
+const logDebug = (operation: string, details: any) => {
+    if (DEBUG_CARD_STORAGE) {
+        console.log(`[CardStorage:${operation}]`, details);
+    }
+};
+
 // 存储键常量定义
 export const STORAGE_KEYS = {
     INDEX: 'daggerheart_custom_cards_index',
@@ -266,18 +274,41 @@ export class CustomCardStorage {
      * 保存指定批次的自定义字段定义
      */
     static saveCustomFieldsForBatch(batchId: string, definitions: CustomFieldsForBatch): void {
-        if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+        logDebug('saveCustomFieldsForBatch', { batchId, definitions });
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('saveCustomFieldsForBatch', 'localStorage unavailable');
+            return;
+        }
+
         try {
             // 获取现有的所有批次自定义字段数据
             const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
             const allFields: AllCustomFieldsByBatch = stored ? JSON.parse(stored) : {};
+
+            logDebug('saveCustomFieldsForBatch', {
+                beforeSave: allFields,
+                storageKey: STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH
+            });
 
             // 设置此批次的自定义字段
             allFields[batchId] = definitions;
 
             // 保存更新后的数据
             localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(allFields));
+
+            // 验证保存
+            const verification = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+            const parsedVerification = verification ? JSON.parse(verification) : {};
+
+            logDebug('saveCustomFieldsForBatch', {
+                afterSave: parsedVerification,
+                savedSuccessfully: JSON.stringify(allFields) === verification,
+                batchDefinitions: parsedVerification[batchId]
+            });
+
         } catch (error) {
+            logDebug('saveCustomFieldsForBatch', { error });
             console.error(`[CustomCardStorage] 批次 ${batchId} 的自定义字段保存失败:`, error);
             throw new Error(`无法保存批次 ${batchId} 的自定义字段`);
         }
@@ -287,19 +318,41 @@ export class CustomCardStorage {
      * 移除指定批次的自定义字段定义
      */
     static removeCustomFieldsForBatch(batchId: string): void {
-        if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+        logDebug('removeCustomFieldsForBatch', { batchId });
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('removeCustomFieldsForBatch', 'localStorage unavailable');
+            return;
+        }
+
         try {
             const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-            if (!stored) return;
+            if (!stored) {
+                logDebug('removeCustomFieldsForBatch', 'no stored data found');
+                return;
+            }
 
             const allFields: AllCustomFieldsByBatch = JSON.parse(stored);
+            logDebug('removeCustomFieldsForBatch', { beforeRemoval: allFields });
 
             // 删除指定批次的自定义字段
             if (allFields[batchId]) {
                 delete allFields[batchId];
                 localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(allFields));
+
+                // 验证删除
+                const verification = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+                const parsedVerification = verification ? JSON.parse(verification) : {};
+
+                logDebug('removeCustomFieldsForBatch', {
+                    afterRemoval: parsedVerification,
+                    batchRemoved: !(batchId in parsedVerification)
+                });
+            } else {
+                logDebug('removeCustomFieldsForBatch', 'batch not found in stored data');
             }
         } catch (error) {
+            logDebug('removeCustomFieldsForBatch', { error });
             console.error(`[CustomCardStorage] 批次 ${batchId} 的自定义字段删除失败:`, error);
             throw new Error(`无法删除批次 ${batchId} 的自定义字段`);
         }
@@ -309,19 +362,30 @@ export class CustomCardStorage {
      * 获取聚合的自定义字段名称（来自所有启用的批次）
      */
     static getAggregatedCustomFieldNames(): CustomFieldNamesStore {
+        logDebug('getAggregatedCustomFieldNames', 'starting aggregation');
+
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('getAggregatedCustomFieldNames', 'localStorage unavailable');
             return {};
         }
 
         try {
             // 加载所有批次的自定义字段
             const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-            if (!stored) return {};
+            if (!stored) {
+                logDebug('getAggregatedCustomFieldNames', 'no custom fields stored');
+                return {};
+            }
 
             const allFieldsByBatch: AllCustomFieldsByBatch = JSON.parse(stored);
+            logDebug('getAggregatedCustomFieldNames', { allFieldsByBatch });
 
             // 加载主索引以检查批次状态
             const index = this.loadIndex();
+            logDebug('getAggregatedCustomFieldNames', {
+                indexBatches: Object.keys(index.batches),
+                enabledBatches: Object.keys(index.batches).filter(batchId => !index.batches[batchId].disabled)
+            });
 
             // 初始化聚合结果
             const aggregatedFields: CustomFieldNamesStore = {};
@@ -332,10 +396,20 @@ export class CustomCardStorage {
 
                 // 只处理未被禁用的批次
                 if (!batchInfo || batchInfo.disabled) {
+                    logDebug('getAggregatedCustomFieldNames', {
+                        batchId,
+                        status: !batchInfo ? 'not found in index' : 'disabled',
+                        skipped: true
+                    });
                     continue;
                 }
 
                 const batchFields = allFieldsByBatch[batchId];
+                logDebug('getAggregatedCustomFieldNames', {
+                    batchId,
+                    enabled: true,
+                    batchFields
+                });
 
                 // 遍历此批次的每个类别
                 for (const category in batchFields) {
@@ -356,10 +430,62 @@ export class CustomCardStorage {
                 aggregatedFields[category] = [...new Set(aggregatedFields[category])];
             }
 
+            logDebug('getAggregatedCustomFieldNames', { result: aggregatedFields });
+
             return aggregatedFields;
         } catch (error) {
             console.error('[CustomCardStorage] 聚合自定义字段名加载失败:', error);
             return {};
+        }
+    }
+
+    /**
+     * 获取聚合的自定义字段名称（包含临时批次定义，用于验证阶段）
+     */
+    static getAggregatedCustomFieldNamesWithTemp(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): CustomFieldNamesStore {
+        logDebug('getAggregatedCustomFieldNamesWithTemp', { tempBatchId, tempDefinitions });
+        
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('getAggregatedCustomFieldNamesWithTemp', 'localStorage unavailable');
+            // 如果没有localStorage，至少返回临时定义
+            return tempDefinitions || {};
+        }
+
+        try {
+            // 首先获取现有的聚合字段
+            const existingFields = this.getAggregatedCustomFieldNames();
+            
+            // 如果没有临时定义，直接返回现有字段
+            if (!tempBatchId || !tempDefinitions) {
+                return existingFields;
+            }
+            
+            // 合并临时定义
+            const mergedFields: CustomFieldNamesStore = { ...existingFields };
+            
+            for (const category in tempDefinitions) {
+                const tempNames = tempDefinitions[category];
+                
+                if (!mergedFields[category]) {
+                    mergedFields[category] = [];
+                }
+                
+                // 添加临时定义的字段名并去重
+                mergedFields[category] = [...new Set([...mergedFields[category], ...tempNames])];
+            }
+            
+            logDebug('getAggregatedCustomFieldNamesWithTemp', { 
+                existingFields, 
+                tempDefinitions, 
+                mergedFields 
+            });
+            
+            return mergedFields;
+        } catch (error) {
+            logDebug('getAggregatedCustomFieldNamesWithTemp', { error });
+            console.error('[CustomCardStorage] 聚合自定义字段名加载失败:', error);
+            // 出错时至少返回临时定义
+            return tempDefinitions || {};
         }
     }
 

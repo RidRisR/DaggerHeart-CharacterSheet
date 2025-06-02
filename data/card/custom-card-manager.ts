@@ -3,6 +3,14 @@
  * 负责自定义卡牌的导入、管理和与现有卡牌系统的集成
  */
 
+// 调试日志标记
+const DEBUG_CARD_MANAGER = true;
+const logDebug = (operation: string, details: any) => {
+    if (DEBUG_CARD_MANAGER) {
+        console.log(`[CustomCardManager:${operation}]`, details);
+    }
+};
+
 import { BuiltinCardManager } from './builtin-card-manager';
 import { CustomCardStorage, type BatchData, type ImportBatch } from './card-storage';
 import {
@@ -125,6 +133,16 @@ export class CustomCardManager {
         const batchId = CustomCardStorage.generateBatchId();
         let hasCreatedBatch = false;
 
+        logDebug('importCards', {
+            batchId,
+            batchName,
+            hasCustomFieldDefs: !!importData.customFieldDefinitions,
+            customFieldDefs: importData.customFieldDefinitions,
+            professionCount: importData.profession?.length || 0,
+            ancestryCount: importData.ancestry?.length || 0,
+            communityCount: importData.community?.length || 0
+        });
+
         try {
             // 第一步：临时保存自定义字段定义（在验证之前）
             // 这样验证器就能访问到新的自定义字段定义
@@ -134,12 +152,31 @@ export class CustomCardManager {
                         .filter(([, value]) => Array.isArray(value))
                         .map(([key, value]) => [key, value as string[]])
                 );
+
+                logDebug('importCards', {
+                    step: 'saving custom fields',
+                    batchId,
+                    filteredDefinitions
+                });
+
                 CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
+
+                // 验证保存是否成功
+                const savedFields = CustomCardStorage.getAggregatedCustomFieldNames();
+                logDebug('importCards', {
+                    step: 'verification after save',
+                    savedFields
+                });
             }
 
             // 第二步：验证导入数据格式
+            logDebug('importCards', { step: 'format validation' });
             const formatValidation = this.validateImportDataFormat(importData);
             if (!formatValidation.isValid) {
+                logDebug('importCards', {
+                    step: 'format validation failed',
+                    errors: formatValidation.errors
+                });
                 // 如果验证失败，清理临时保存的自定义字段定义
                 if (importData.customFieldDefinitions) {
                     CustomCardStorage.removeCustomFieldsForBatch(batchId);
@@ -152,9 +189,14 @@ export class CustomCardManager {
             }
 
             // 第三步：ID冲突检查（严格模式）
+            logDebug('importCards', { step: 'ID conflict check' });
             const existingCards = await this.getAllExistingCards();
             const validation = this.validateUniqueIds(importData, existingCards);
             if (!validation.isValid) {
+                logDebug('importCards', {
+                    step: 'ID conflict detected',
+                    duplicateIds: validation.duplicateIds
+                });
                 // 如果ID冲突，清理临时保存的自定义字段定义
                 if (importData.customFieldDefinitions) {
                     CustomCardStorage.removeCustomFieldsForBatch(batchId);
@@ -168,8 +210,13 @@ export class CustomCardManager {
             }
 
             // 第四步：数据转换
+            logDebug('importCards', { step: 'data conversion' });
             const convertResult = await this.convertImportData(importData);
             if (!convertResult.success) {
+                logDebug('importCards', {
+                    step: 'conversion failed',
+                    errors: convertResult.errors
+                });
                 // 如果转换失败，清理临时保存的自定义字段定义
                 if (importData.customFieldDefinitions) {
                     CustomCardStorage.removeCustomFieldsForBatch(batchId);
@@ -182,6 +229,7 @@ export class CustomCardManager {
             }
 
             // 第五步：准备批次数据
+            logDebug('importCards', { step: 'preparing batch data' });
             const batchData: BatchData = {
                 metadata: {
                     id: batchId, // Ensure id is part of metadata, consistent with BatchBase
@@ -202,9 +250,23 @@ export class CustomCardManager {
                     : undefined // Store custom field definitions in BatchData, filtering out undefined values
             };
 
+            logDebug('importCards', {
+                step: 'batch data prepared',
+                cardCount: convertResult.cards.length,
+                batchData: {
+                    metadata: batchData.metadata,
+                    customFieldDefinitions: batchData.customFieldDefinitions
+                }
+            });
+
             // 第六步：检查存储空间
+            logDebug('importCards', { step: 'storage space check' });
             const dataSize = JSON.stringify(batchData).length * 2;
             if (!CustomCardStorage.checkStorageSpace(dataSize)) {
+                logDebug('importCards', {
+                    step: 'insufficient storage space',
+                    requiredSize: dataSize
+                });
                 // 如果存储空间不足，清理临时保存的自定义字段定义
                 if (importData.customFieldDefinitions) {
                     CustomCardStorage.removeCustomFieldsForBatch(batchId);
@@ -218,12 +280,14 @@ export class CustomCardManager {
             }
 
             // 第七步：存储操作（事务性）
+            logDebug('importCards', { step: 'saving batch' });
             CustomCardStorage.saveBatch(batchId, batchData);
             hasCreatedBatch = true;
 
             // 注意：自定义字段定义已经在第一步中保存了，这里不需要重复保存
 
             // 第八步：更新索引
+            logDebug('importCards', { step: 'updating index' });
             const index = CustomCardStorage.loadIndex();
             const cardTypes = [...new Set(convertResult.cards.map(card => card.type))];
 
@@ -292,9 +356,19 @@ export class CustomCardManager {
             return { isValid: false, errors };
         }
 
-        // 使用新的类型验证器
+        // 使用新的类型验证器，传递临时自定义字段定义
         console.log('[DEBUG] 使用CardTypeValidator验证数据');
-        const typeValidation = CardTypeValidator.validateImportData(importData);
+        const tempFields = importData.customFieldDefinitions ? {
+            tempBatchId: 'temp_validation',
+            tempDefinitions: Object.fromEntries(
+                Object.entries(importData.customFieldDefinitions)
+                    .filter(([, value]) => Array.isArray(value))
+                    .map(([key, value]) => [key, value as string[]])
+            )
+        } : undefined;
+        
+        console.log('[DEBUG] 临时字段定义传递给验证器:', tempFields);
+        const typeValidation = CardTypeValidator.validateImportData(importData, tempFields);
         console.log('[DEBUG] 验证结果:', typeValidation);
 
         if (!typeValidation.isValid) {
@@ -730,9 +804,15 @@ export class CustomCardManager {
      * 删除批次
      */
     removeBatch(batchId: string): boolean {
+        logDebug('removeBatch', { batchId });
+
         try {
             // 防止删除系统内置卡包
             if (batchId === BUILTIN_BATCH_ID) {
+                logDebug('removeBatch', {
+                    result: 'rejected',
+                    reason: 'cannot delete builtin batch'
+                });
                 console.warn('[CustomCardManager] 不允许删除系统内置卡包');
                 return false;
             }
@@ -740,18 +820,29 @@ export class CustomCardManager {
             const index = CustomCardStorage.loadIndex();
 
             if (!index.batches[batchId]) {
+                logDebug('removeBatch', {
+                    result: 'not found',
+                    availableBatches: Object.keys(index.batches)
+                });
                 return false;
             }
 
             const batch = index.batches[batchId];
+            logDebug('removeBatch', {
+                batchInfo: batch,
+                step: 'batch found, proceeding with deletion'
+            });
 
             // 删除批次数据
+            logDebug('removeBatch', { step: 'removing batch data' });
             CustomCardStorage.removeBatch(batchId);
 
             // 删除批次对应的自定义字段
+            logDebug('removeBatch', { step: 'removing custom fields for batch' });
             CustomCardStorage.removeCustomFieldsForBatch(batchId);
 
             // 更新索引
+            logDebug('removeBatch', { step: 'updating index' });
             delete index.batches[batchId];
             index.totalBatches--;
             index.totalCards -= batch.cardCount;
@@ -759,10 +850,13 @@ export class CustomCardManager {
             CustomCardStorage.saveIndex(index);
 
             // 重新加载内存中的卡牌数据
+            logDebug('removeBatch', { step: 'reloading custom cards' });
             this.reloadCustomCards();
 
+            logDebug('removeBatch', { result: 'success' });
             return true;
         } catch (error) {
+            logDebug('removeBatch', { result: 'error', error });
             console.error(`[CustomCardManager] 删除批次 ${batchId} 失败:`, error);
             return false;
         }

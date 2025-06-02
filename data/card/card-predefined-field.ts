@@ -21,41 +21,92 @@ export type CommunityClass = string;
 export type DomainClass = string;
 
 // Import storage functions
-import { CustomCardStorage } from './card-storage';
+import { CustomCardStorage, type CustomFieldsForBatch } from './card-storage';
+
+// 调试日志标记
+const DEBUG_PREDEFINED_FIELDS = true;
+const logDebug = (operation: string, details: any) => {
+    if (DEBUG_PREDEFINED_FIELDS) {
+        console.log(`[PredefinedFields:${operation}]`, details);
+    }
+};
 
 // Getter functions
-export function getProfessionCardNames(): string[] {
+export function getProfessionCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
     const defaultNames = [...PROFESSION_CARD_NAMES];
-    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNames();
-    const customNames = aggregatedCustomFields.profession || [];
-    return [...new Set([...defaultNames, ...customNames])];
+    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
+    const customNames = aggregatedCustomFields.professions || []; // Use 'professions' instead of 'profession'
+    const result = [...new Set([...defaultNames, ...customNames])];
+    
+    logDebug('getProfessionCardNames', {
+        defaultCount: defaultNames.length,
+        customCount: customNames.length,
+        totalCount: result.length,
+        defaultNames,
+        customNames,
+        result,
+        tempBatchId,
+        tempDefinitions: tempDefinitions?.professions // Use 'professions' instead of 'profession'
+    });
+    
+    return result;
 }
 
-export function getAncestryCardNames(): string[] {
+export function getAncestryCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
     const defaultNames = [...ANCESTRY_CARD_NAMES];
-    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNames();
-    const customNames = aggregatedCustomFields.ancestry || [];
-    return [...new Set([...defaultNames, ...customNames])];
+    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
+    const customNames = aggregatedCustomFields.ancestries || []; // Use 'ancestries' instead of 'ancestry'
+    const result = [...new Set([...defaultNames, ...customNames])];
+    
+    logDebug('getAncestryCardNames', {
+        defaultCount: defaultNames.length,
+        customCount: customNames.length,
+        totalCount: result.length,
+        tempBatchId,
+        tempDefinitions: tempDefinitions?.ancestries // Use 'ancestries' instead of 'ancestry'
+    });
+    
+    return result;
 }
 
-export function getCommunityCardNames(): string[] {
+export function getCommunityCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
     const defaultNames = [...COMMUNITY_CARD_NAMES];
-    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNames();
-    const customNames = aggregatedCustomFields.community || [];
-    return [...new Set([...defaultNames, ...customNames])];
+    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
+    const customNames = aggregatedCustomFields.communities || []; // Use 'communities' instead of 'community'
+    const result = [...new Set([...defaultNames, ...customNames])];
+    
+    logDebug('getCommunityCardNames', {
+        defaultCount: defaultNames.length,
+        customCount: customNames.length,
+        totalCount: result.length,
+        tempBatchId,
+        tempDefinitions: tempDefinitions?.communities // Use 'communities' instead of 'community'
+    });
+    
+    return result;
 }
 
-export function getSubClassCardNames(): string[] {
+export function getSubClassCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
     // Subclass names are now directly derived from profession names.
     // This includes default professions and any custom professions added.
-    return getProfessionCardNames();
+    return getProfessionCardNames(tempBatchId, tempDefinitions);
 }
 
-export function getDomainCardNames(): string[] {
+export function getDomainCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
     const defaultNames = [...DOMAIN_CARD_NAMES];
-    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNames();
-    const customNames = aggregatedCustomFields.domain || [];
-    return [...new Set([...defaultNames, ...customNames])];
+    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
+    const customNames = aggregatedCustomFields.domains || []; // Use 'domains' instead of 'domain'
+    const result = [...new Set([...defaultNames, ...customNames])];
+    
+    logDebug('getDomainCardNames', {
+        defaultCount: defaultNames.length,
+        customCount: customNames.length,
+        totalCount: result.length,
+        tempBatchId,
+        tempDefinitions: tempDefinitions?.domains // Use 'domains' instead of 'domain'
+    });
+    
+    return result;
 }
 
 // Note: Custom field names are now managed per-batch during card pack import/deletion.

@@ -1,6 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { CardType, getStandardCardsByType } from "@/data/card"
+import { CardType } from "@/data/card"
 import { useState, useEffect } from "react"
 import type { StandardCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useCardsByType } from "@/hooks/use-cards"
 
 interface CommunityModalProps {
   isOpen: boolean
@@ -20,9 +21,17 @@ interface CommunityModalProps {
 }
 
 export function CommunitySelectionModal({ isOpen, onClose, onSelect, title }: CommunityModalProps) {
-  const [communityCards, setCommunityCards] = useState<StandardCard[]>([])
   const [selectedClass, setSelectedClass] = useState<string>("All")
   const [availableClasses, setAvailableClasses] = useState<string[]>(["All"])
+
+  // 使用Hook获取卡牌数据
+  const {
+    cards: communityCards,
+    loading: cardsLoading,
+    error: cardsError
+  } = useCardsByType(CardType.Community, {
+    enabled: isOpen
+  });
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -42,12 +51,13 @@ export function CommunitySelectionModal({ isOpen, onClose, onSelect, title }: Co
     };
   }, [isOpen, onClose]);
 
+  // 当卡牌数据加载完成时，更新可用类别
   useEffect(() => {
-    const cards = getStandardCardsByType(CardType.Community)
-    setCommunityCards(cards)
-    const uniqueClasses = Array.from(new Set(cards.flatMap(card => card.class || []).filter(cls => cls)))
-    setAvailableClasses(["All", ...uniqueClasses])
-  }, [])
+    if (communityCards.length > 0) {
+      const uniqueClasses = Array.from(new Set(communityCards.flatMap((card: StandardCard) => card.class || []).filter((cls: string) => cls)))
+      setAvailableClasses(["All", ...uniqueClasses])
+    }
+  }, [communityCards])
 
   if (!isOpen) return null
 
@@ -91,13 +101,35 @@ export function CommunitySelectionModal({ isOpen, onClose, onSelect, title }: Co
         {/* New structure for content area */}
         <div className="flex-1 flex flex-col overflow-hidden"> {/* Outer content wrapper */}
           <div className="flex-1 overflow-y-auto p-4"> {/* Inner scrollable grid area, changed pr-4 to p-4 */}
-            {/* Adjusted grid columns for wider cards to match SelectableCard's w-72 (288px) */}
-            {/* Max-w-4xl (896px) for modal: 896 / 288 = ~3 cards. Gap is 1rem (16px). (288*3) + (16*2) = 864 + 32 = 896 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCards.map((card) => (
-                <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id)} isSelected={false} />
-              ))}
-            </div>
+            
+            {/* 显示加载状态 */}
+            {cardsLoading && (
+              <div className="flex items-center justify-center h-32">
+                <div className="text-center">
+                  <div className="text-lg">加载社群卡牌中...</div>
+                  <div className="text-sm text-gray-500">请稍候</div>
+                </div>
+              </div>
+            )}
+
+            {/* 显示错误状态 */}
+            {cardsError && !cardsLoading && (
+              <div className="flex items-center justify-center h-32">
+                <div className="text-center text-red-600">
+                  <div className="text-lg">加载失败</div>
+                  <div className="text-sm">{cardsError}</div>
+                </div>
+              </div>
+            )}
+
+            {/* 显示卡牌内容 */}
+            {!cardsLoading && !cardsError && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredCards.map((card) => (
+                  <SelectableCard key={card.id} card={card} onClick={() => onSelect(card.id)} isSelected={false} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

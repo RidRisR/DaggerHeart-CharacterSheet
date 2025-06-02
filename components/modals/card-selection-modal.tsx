@@ -6,7 +6,7 @@ import {
   CARD_CLASS_OPTIONS_BY_TYPE,
   getLevelOptions,
 } from "@/data/card/card-ui-config"
-import { getStandardCardsByType, CardType } from "@/data/card"; // Add this import
+import { CardType } from "@/data/card"; // Add this import
 import { StandardCard, ALL_CARD_TYPES } from "@/data/card/card-types"
 import { createEmptyCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce";
+import { useCardsByType } from "@/hooks/use-cards";
 
 const ITEMS_PER_PAGE = 30;
 
@@ -82,16 +83,17 @@ export function CardSelectionModal({
     return getLevelOptions(activeTab as CardType)
   }, [activeTab]);
 
-  const cardsForActiveTab = useMemo(() => {
-    if (!activeTab) return [];
-    // Use getStandardCardsByType for efficiency.
-    // Assumes activeTab is a clean type ID like "profession", "domain", etc.
-    // and card.type is also a clean type ID.
-    return getStandardCardsByType(activeTab as CardType); // Cast activeTab to CardType
-  }, [activeTab]);
+  // 使用新的Hook获取卡牌数据
+  const {
+    cards: cardsForActiveTab,
+    loading: cardsLoading,
+    error: cardsError
+  } = useCardsByType(activeTab as CardType, {
+    enabled: isOpen && !!activeTab
+  });
 
   const fullyFilteredCards = useMemo(() => {
-    if (!activeTab || !isOpen) {
+    if (!activeTab || !isOpen || cardsLoading || !cardsForActiveTab.length) {
       return [];
     }
     let filtered = cardsForActiveTab;
@@ -195,6 +197,9 @@ export function CardSelectionModal({
   };
 
   const positionTitle = `选择卡牌 #${selectedCardIndex + 1}`
+
+  // 如果正在加载，显示加载状态
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -352,7 +357,29 @@ export function CardSelectionModal({
             </div>
 
             <div id="scrollableDiv" ref={scrollableContainerRef} className="flex-1 overflow-y-auto p-4">
-              <InfiniteScroll
+              {/* 显示加载状态 */}
+              {cardsLoading && (
+                <div className="flex items-center justify-center h-32">
+                  <div className="text-center">
+                    <div className="text-lg">加载卡牌中...</div>
+                    <div className="text-sm text-gray-500">请稍候</div>
+                  </div>
+                </div>
+              )}
+
+              {/* 显示错误状态 */}
+              {cardsError && !cardsLoading && (
+                <div className="flex items-center justify-center h-32">
+                  <div className="text-center text-red-600">
+                    <div className="text-lg">加载失败</div>
+                    <div className="text-sm">{cardsError}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* 显示卡牌内容 */}
+              {!cardsLoading && !cardsError && (
+                <InfiniteScroll
                 dataLength={displayedCards.length}
                 next={fetchMoreData}
                 hasMore={hasMore}
@@ -376,6 +403,7 @@ export function CardSelectionModal({
                   ))}
                 </div>
               </InfiniteScroll>
+              )}
             </div>
           </div>
         </div>

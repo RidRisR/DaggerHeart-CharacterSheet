@@ -535,15 +535,23 @@ export class CustomCardManager {
         console.log(`[CustomCardManager] 索引中的批次数量: ${Object.keys(index.batches).length}`);
 
         for (const batchId of Object.keys(index.batches)) {
+            console.log(`[CustomCardManager] 正在加载批次: ${batchId}`);
             const batchData = CustomCardStorage.loadBatch(batchId);
+            console.log(`[CustomCardManager] 批次 ${batchId} 数据:`, batchData ? `存在，cards字段: ${batchData.cards ? `数组长度${batchData.cards.length}` : '不存在'}` : '不存在');
+
             if (batchData && batchData.cards) {
+                const batch = index.batches[batchId];
+                const isSystemBatch = batch.isSystemBatch === true;
+
                 const cardsWithBatchId = batchData.cards.map(card => ({
                     ...card,
-                    source: CardSource.CUSTOM,
+                    source: isSystemBatch ? CardSource.BUILTIN : CardSource.CUSTOM,
                     batchId
                 }));
                 this.customCards.push(...cardsWithBatchId);
-                console.log(`[CustomCardManager] 从批次 ${batchId} 加载了 ${cardsWithBatchId.length} 张卡牌`);
+                console.log(`[CustomCardManager] 从批次 ${batchId} (${isSystemBatch ? '系统' : '自定义'}) 加载了 ${cardsWithBatchId.length} 张卡牌`);
+            } else {
+                console.warn(`[CustomCardManager] 批次 ${batchId} 数据无效或缺少cards字段`);
             }
         }
 
@@ -580,6 +588,9 @@ export class CustomCardManager {
                 const builtinCards = getBuiltinStandardCards();
                 const batchMetadata = getBuiltinBatchMetadata();
                 
+                console.log(`[CustomCardManager] 获取到内置卡牌数量: ${builtinCards.length}`);
+                console.log(`[CustomCardManager] 批次元数据:`, batchMetadata);
+
                 // 转换为扩展标准卡牌格式
                 const extendedCards: ExtendedStandardCard[] = builtinCards.map(card => ({
                     ...card,
@@ -587,6 +598,8 @@ export class CustomCardManager {
                     batchId: BUILTIN_BATCH_ID
                 }));
                 
+                console.log(`[CustomCardManager] 转换后卡牌数量: ${extendedCards.length}`);
+
                 // 准备批次数据
                 const batchData: BatchData = {
                     metadata: {
@@ -601,6 +614,8 @@ export class CustomCardManager {
                     cards: extendedCards
                 };
                 
+                console.log(`[CustomCardManager] 准备保存的批次数据包含 ${batchData.cards.length} 张卡牌`);
+
                 // 如果已存在旧版本，先删除
                 if (existingBatch) {
                     console.log('[CustomCardManager] 移除旧版本内置卡牌...');
@@ -686,22 +701,7 @@ export class CustomCardManager {
      * 使用统一的数据访问，内置卡牌作为特殊批次存储
      */
     getAllCards(): ExtendedStandardCard[] {
-        const index = CustomCardStorage.loadIndex();
-        const allCards: ExtendedStandardCard[] = [];
-
-        // 遍历所有批次，包括系统内置批次
-        for (const batchId of Object.keys(index.batches)) {
-            try {
-                const batchData = CustomCardStorage.loadBatch(batchId);
-                if (batchData && batchData.cards) {
-                    allCards.push(...batchData.cards as ExtendedStandardCard[]);
-                }
-            } catch (error) {
-                console.error(`[CustomCardManager] 加载批次 ${batchId} 失败:`, error);
-            }
-        }
-
-        return allCards;
+        return [...this.customCards];
     }
 
     /**
@@ -856,6 +856,28 @@ export class CustomCardManager {
      */
     getStorageInfo() {
         return CustomCardStorage.getFormattedStorageInfo();
+    }
+
+    /**
+     * 强制重置初始化状态并重新初始化系统
+     * 用于调试和强制重新种子化
+     */
+    async forceReinitialize(): Promise<void> {
+        console.log('[CustomCardManager] 强制重置初始化状态...');
+        this.isInitialized = false;
+        this.initializationPromise = null;
+        this.customCards = [];
+
+        try {
+            // 重新初始化
+            console.log('[CustomCardManager] 开始强制重新初始化...');
+            this.initializationPromise = this.initializeSystem();
+            await this.initializationPromise;
+            console.log('[CustomCardManager] 强制重新初始化完成');
+        } catch (error) {
+            console.error('[CustomCardManager] 强制重新初始化失败:', error);
+            throw error;
+        }
     }
 }
 

@@ -179,8 +179,21 @@ export class CustomCardStorage {
     static loadBatch(batchId: string): BatchData | null {
         try {
             const key = this.getBatchStorageKey(batchId);
+            console.log(`[CustomCardStorage] 加载批次 ${batchId}，存储键: ${key}`);
             const stored = localStorage.getItem(key);
-            return stored ? JSON.parse(stored) : null;
+            if (stored) {
+                console.log(`[CustomCardStorage] 批次 ${batchId} 原始数据长度: ${stored.length}`);
+                const parsed = JSON.parse(stored);
+                console.log(`[CustomCardStorage] 批次 ${batchId} 解析后数据:`, {
+                    hasMetadata: !!parsed.metadata,
+                    hasCards: !!parsed.cards,
+                    cardsLength: parsed.cards ? parsed.cards.length : 'N/A'
+                });
+                return parsed;
+            } else {
+                console.warn(`[CustomCardStorage] 批次 ${batchId} 在localStorage中不存在`);
+                return null;
+            }
         } catch (error) {
             console.error(`[CustomCardStorage] 批次 ${batchId} 加载失败:`, error);
             return null;

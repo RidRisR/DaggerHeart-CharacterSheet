@@ -4,7 +4,7 @@
  */
 
 import type { StandardCard } from "@/data/card/card-types"
-import { CardManager } from "@/data/card/card-manager"
+import { BuiltinCardManager } from "@/data/card/builtin-card-manager"
 
 
 export function createEmptyCard(type = "unknown"): StandardCard {
@@ -47,7 +47,7 @@ export function convertToStandardCard(card: any): StandardCard {
       console.warn("[convertToStandardCard] 卡牌类型不合法，返回空卡牌")
       return createEmptyCard()
     }
-    const standardCard = CardManager.getInstance().ConvertCard(card, card.type)
+    const standardCard = BuiltinCardManager.getInstance().ConvertCard(card, card.type)
     if (standardCard === null) {
       return createEmptyCard()
     }

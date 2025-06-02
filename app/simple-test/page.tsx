@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { CardManager } from '@/data/card/card-manager';
+import { BuiltinCardManager } from '@/data/card/builtin-card-manager';
 import { CustomCardManager } from '@/data/card/custom-card-manager';
 import { getBuiltinStandardCards } from '@/data/card/builtin-card-data';
 
@@ -21,7 +21,7 @@ export default function SimpleTestPage() {
       try {
         // 步骤1: 测试CardManager基础功能
         addLog('步骤1: 获取CardManager实例...');
-        const cardManager = CardManager.getInstance();
+        const cardManager = BuiltinCardManager.getInstance();
         addLog('✅ CardManager获取成功');
         
         // 步骤2: 检查初始转换器状态

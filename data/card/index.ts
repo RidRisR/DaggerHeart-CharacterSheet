@@ -28,7 +28,7 @@ import {
 import { ALL_CARD_TYPES, CARD_CLASS_OPTIONS, CARD_LEVEL_OPTIONS, CardType, StandardCard, ExtendedStandardCard, CardSource, ImportData, ImportResult } from "@/data/card/card-types"
 import { convertToStandardCard } from "@/data/card/card-converter"
 // Import CardManager directly from the file
-import { CardManager } from "./card-manager"
+import { BuiltinCardManager } from "./builtin-card-manager"
 // Import CustomCardManager
 import { CustomCardManager } from "./custom-card-manager"
 
@@ -36,28 +36,28 @@ import { CustomCardManager } from "./custom-card-manager"
 // export { CardManager } from "@/data/card/card-manager"
 
 // 获取CardManager实例
-const cardManager = CardManager.getInstance()
+const builtinCardManager = BuiltinCardManager.getInstance()
 // 获取CustomCardManager实例
 const customCardManager = CustomCardManager.getInstance()
 
 // 统一注册卡牌类型
-cardManager.registerCardType("profession", {
+builtinCardManager.registerCardType("profession", {
   converter: professionCardConverter.toStandard,
 })
 
-cardManager.registerCardType("ancestry", {
+builtinCardManager.registerCardType("ancestry", {
   converter: ancestryCardConverter.toStandard,
 })
 
-cardManager.registerCardType("community", {
+builtinCardManager.registerCardType("community", {
   converter: communityCardConverter.toStandard,
 })
 
-cardManager.registerCardType("subclass", {
+builtinCardManager.registerCardType("subclass", {
   converter: subclassCardConverter.toStandard,
 })
 
-cardManager.registerCardType("domain", {
+builtinCardManager.registerCardType("domain", {
   converter: domainCardConverter.toStandard,
 })
 
@@ -67,8 +67,8 @@ if (typeof window !== 'undefined') {
   setTimeout(async () => {
     try {
       console.log('[Card Index] 开始延迟初始化统一卡牌系统...');
-      const cardManager = CardManager.getInstance();
-      const registeredTypes = cardManager.getRegisteredTypes();
+      const builtinCardManager = BuiltinCardManager.getInstance();
+      const registeredTypes = builtinCardManager.getRegisteredTypes();
       console.log('[Card Index] 当前已注册转换器:', registeredTypes);
       
       await customCardManager.ensureInitialized();
@@ -101,7 +101,7 @@ export const BUILTIN_STANDARD_CARDS: StandardCard[] = (() => {
       const convertedCards = cards
         .map((card, index) => {
           try {
-            const converted = cardManager.ConvertCard(card, type as keyof typeof cardDataByType)
+            const converted = builtinCardManager.ConvertCard(card, type as keyof typeof cardDataByType)
             if (converted) {
               // 标记为内置卡牌
               const extendedCard: ExtendedStandardCard = {
@@ -330,11 +330,11 @@ export {
   // 卡牌转换
   convertToStandardCard,
   // 卡牌注册
-  cardManager,
+  builtinCardManager as cardManager,
   // 自定义卡牌管理器
   customCardManager,
   // Re-export CardManager and CustomCardManager
-  CardManager,
+  BuiltinCardManager,
   CustomCardManager,
   // 类型定义
   CardType,

@@ -3,8 +3,8 @@
  * 负责自定义卡牌的导入、管理和与现有卡牌系统的集成
  */
 
-import { CardManager } from './card-manager';
-import { CustomCardStorage, type BatchData, type ImportBatch } from './custom-card-storage';
+import { BuiltinCardManager } from './builtin-card-manager';
+import { CustomCardStorage, type BatchData, type ImportBatch } from './card-storage';
 import {
     StandardCard,
     ImportData,
@@ -48,13 +48,13 @@ const customFieldNameAdders: { [key: string]: (name: string) => void } = {
 export class CustomCardManager {
     private static instance: CustomCardManager;
     private customCards: ExtendedStandardCard[] = [];
-    private cardManager: CardManager;
+    private builtinCardManager: BuiltinCardManager;
 
     private isInitialized = false;
     private initializationPromise: Promise<void> | null = null;
 
     private constructor() {
-        this.cardManager = CardManager.getInstance();
+        this.builtinCardManager = BuiltinCardManager.getInstance();
         // 不在构造函数中立即开始初始化，等待ensureInitialized()被调用
         console.log('[CustomCardManager] 构造函数完成，等待显式初始化');
     }
@@ -69,7 +69,7 @@ export class CustomCardManager {
             console.log('[CustomCardManager] 开始初始化系统...');
             
             // 检查转换器是否已注册
-            const registeredTypes = this.cardManager.getRegisteredTypes();
+            const registeredTypes = this.builtinCardManager.getRegisteredTypes();
             console.log('[CustomCardManager] 当前已注册转换器:', registeredTypes);
 
             if (registeredTypes.length === 0) {

@@ -21,7 +21,7 @@ export type CommunityClass = string;
 export type DomainClass = string;
 
 // Import storage functions
-import { CustomCardStorage } from './custom-card-storage';
+import { CustomCardStorage } from './card-storage';
 
 // Define categories for custom names (must match what will be used in UI/logic)
 const CATEGORIES = {

@@ -14,19 +14,19 @@ type CardTypeMap = {
     subclass: SubClassCard;
 }
 
-export class CardManager {
-    private static instance: CardManager
+export class BuiltinCardManager {
+    private static instance: BuiltinCardManager
     private cardConverters: {
         [K in keyof CardTypeMap]?: (card: CardTypeMap[K]) => StandardCard
     } = {}
 
     private constructor() { }
 
-    static getInstance(): CardManager {
-        if (!CardManager.instance) {
-            CardManager.instance = new CardManager()
+    static getInstance(): BuiltinCardManager {
+        if (!BuiltinCardManager.instance) {
+            BuiltinCardManager.instance = new BuiltinCardManager()
         }
-        return CardManager.instance
+        return BuiltinCardManager.instance
     }
 
     registerConverter<T extends keyof CardTypeMap>(

@@ -3,7 +3,7 @@
  * 提供所有内置卡牌的原始数据，用于统一管理和版本控制
  */
 
-import { CardManager } from './card-manager';
+import { BuiltinCardManager } from './builtin-card-manager';
 import { StandardCard } from './card-types';
 
 // 导入各个卡牌类型的数据
@@ -35,12 +35,12 @@ const cardDataByType = {
 export function getBuiltinStandardCards(): StandardCard[] {
   console.log("[BuiltinCardData] 开始转换所有内置卡牌");
   
-  const cardManager = CardManager.getInstance();
+  const builtinCardManager = BuiltinCardManager.getInstance();
   const standardCards: StandardCard[] = [];
 
   try {
     // 检查转换器注册状态
-    const registeredTypes = cardManager.getRegisteredTypes();
+    const registeredTypes = builtinCardManager.getRegisteredTypes();
     console.log('[BuiltinCardData] 当前已注册的转换器:', registeredTypes);
     
     if (registeredTypes.length === 0) {
@@ -53,7 +53,7 @@ export function getBuiltinStandardCards(): StandardCard[] {
       console.log(`[BuiltinCardData] 检查 ${type} 类型转换器...`);
       
       // 检查该类型的转换器是否已注册
-      if (!cardManager.isTypeRegistered(type)) {
+      if (!builtinCardManager.isTypeRegistered(type)) {
         console.warn(`[BuiltinCardData] ${type} 类型转换器未注册，跳过该类型`);
         return;
       }
@@ -62,7 +62,7 @@ export function getBuiltinStandardCards(): StandardCard[] {
       
       const convertedCards = cards.map((card: any, index: number) => {
         try {
-          const convertedCard = cardManager.ConvertCard(card, type as keyof typeof cardDataByType);
+          const convertedCard = builtinCardManager.ConvertCard(card, type as keyof typeof cardDataByType);
           if (!convertedCard) {
             console.warn(`[BuiltinCardData] ${type}类型卡牌转换失败, 索引: ${index}:`, card);
             return null;

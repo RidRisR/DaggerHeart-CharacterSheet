@@ -5,10 +5,10 @@ import { CardType } from '@/data/card/card-types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import '@/data/card/index' // 保证副作用注册
-import { CardManager } from '@/data/card/card-manager'
+import { BuiltinCardManager } from '@/data/card/builtin-card-manager'
 import { getBuiltinStandardCards } from '@/data/card/builtin-card-data'
 import { CustomCardManager } from '@/data/card/custom-card-manager'
-import { CustomCardStorage } from '@/data/card/custom-card-storage'
+import { CustomCardStorage } from '@/data/card/card-storage'
 import * as cardIndex from '@/data/card/index'
 
 export default function DebugPage() {
@@ -35,7 +35,7 @@ export default function DebugPage() {
         try {
             // 步骤1: 检查CardManager
             addLog('步骤1: 检查CardManager状态...')
-            const cardManager = CardManager.getInstance()
+            const cardManager = BuiltinCardManager.getInstance()
             const registeredTypes = cardManager.getRegisteredTypes()
             addLog(`已注册转换器: ${registeredTypes.join(', ')}`)
 

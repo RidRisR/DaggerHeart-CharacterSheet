@@ -24,24 +24,6 @@ import { communityCardConverter } from './community-card/convert';
 import { subclassCardConverter } from './subclass-card/convert';
 import { domainCardConverter } from './domain-card/convert';
 
-// Import functions to add custom names
-import {
-    addCustomProfessionName,
-    addCustomAncestryName,
-    addCustomCommunityName,
-    addCustomSubClassName,
-    addCustomDomainName
-} from './card-predefined-field';
-
-// Helper map to call the correct add function based on category key from JSON
-const customFieldNameAdders: { [key: string]: (name: string) => void } = {
-    [CardType.Profession]: addCustomProfessionName,
-    [CardType.Ancestry]: addCustomAncestryName,
-    [CardType.Community]: addCustomCommunityName,
-    [CardType.Subclass]: addCustomSubClassName,
-    [CardType.Domain]: addCustomDomainName,
-};
-
 /**
  * 自定义卡牌管理器类
  */
@@ -131,56 +113,6 @@ export class CustomCardManager {
     // ===== 核心导入功能 =====
 
     /**
-     * 处理导入数据中定义的自定义字段名
-     */
-    private processCustomFieldDefinitions(definitions: NonNullable<ImportData['customFieldDefinitions']>) {
-        console.log('[CustomCardManager] Processing custom field definitions:', definitions);
-
-        const keyMap: { [jsonKey: string]: CardType | undefined } = {
-            "professions": CardType.Profession,
-            "ancestries": CardType.Ancestry,
-            "communities": CardType.Community,
-            // "subclasses": CardType.Subclass, // Remove or comment out to prevent processing
-            "domains": CardType.Domain
-        };
-
-        for (const categoryKey in definitions) {
-            const names = definitions[categoryKey as keyof typeof definitions];
-            const lowerCategoryKey = categoryKey.toLowerCase();
-
-            // Explicitly skip 'subclasses' if it's still in the JSON for some reason
-            if (lowerCategoryKey === 'subclasses') {
-                console.log(`[CustomCardManager] Skipping 'subclasses' in customFieldDefinitions as it's no longer processed through this mechanism.`);
-                continue;
-            }
-
-            const mappedCardTypeKey = keyMap[lowerCategoryKey]; // Get CardType enum value like CardType.Profession
-
-            if (mappedCardTypeKey) {
-                const adder = customFieldNameAdders[mappedCardTypeKey]; // Look up adder using CardType value (e.g., "profession")
-
-                if (names && Array.isArray(names) && adder) {
-                    names.forEach(name => {
-                        if (typeof name === 'string' && name.trim() !== '') {
-                            try {
-                                adder(name.trim());
-                                console.log(`[CustomCardManager] Added/updated custom field name '${name.trim()}' for category '${categoryKey}' (mapped to ${mappedCardTypeKey})`);
-                            } catch (error) {
-                                console.error(`[CustomCardManager] Error adding custom field name '${name.trim()}' for category '${categoryKey}':`, error);
-                                // Optionally collect these errors to return in ImportResult
-                            }
-                        }
-                    });
-                } else if (!adder) {
-                    console.warn(`[CustomCardManager] No adder function found for mapped key '${mappedCardTypeKey}' from JSON key '${categoryKey}'`);
-                }
-            } else {
-                console.warn(`[CustomCardManager] Unknown category key '${lowerCategoryKey}' in customFieldDefinitions. Ensure it is one of: ${Object.keys(keyMap).join(', ')}`);
-            }
-        }
-    }
-
-    /**
      * 导入自定义卡牌数据
      * @param importData 导入的原始数据
      * @param batchName 批次名称（可选）
@@ -194,16 +126,24 @@ export class CustomCardManager {
         let hasCreatedBatch = false;
 
         try {
-            // 新增：处理自定义字段定义
+            // 第一步：临时保存自定义字段定义（在验证之前）
+            // 这样验证器就能访问到新的自定义字段定义
             if (importData.customFieldDefinitions) {
-                this.processCustomFieldDefinitions(importData.customFieldDefinitions);
-                // After this, calls to get<Category>CardNames() will include these new definitions,
-                // making them available for subsequent validation steps.
+                const filteredDefinitions = Object.fromEntries(
+                    Object.entries(importData.customFieldDefinitions)
+                        .filter(([, value]) => Array.isArray(value))
+                        .map(([key, value]) => [key, value as string[]])
+                );
+                CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
             }
 
-            // 第一步：验证导入数据格式
+            // 第二步：验证导入数据格式
             const formatValidation = this.validateImportDataFormat(importData);
             if (!formatValidation.isValid) {
+                // 如果验证失败，清理临时保存的自定义字段定义
+                if (importData.customFieldDefinitions) {
+                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                }
                 return {
                     success: false,
                     imported: 0,
@@ -211,10 +151,14 @@ export class CustomCardManager {
                 };
             }
 
-            // 第二步：ID冲突检查（严格模式）
+            // 第三步：ID冲突检查（严格模式）
             const existingCards = await this.getAllExistingCards();
             const validation = this.validateUniqueIds(importData, existingCards);
             if (!validation.isValid) {
+                // 如果ID冲突，清理临时保存的自定义字段定义
+                if (importData.customFieldDefinitions) {
+                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                }
                 return {
                     success: false,
                     imported: 0,
@@ -223,9 +167,13 @@ export class CustomCardManager {
                 };
             }
 
-            // 第三步：数据转换
+            // 第四步：数据转换
             const convertResult = await this.convertImportData(importData);
             if (!convertResult.success) {
+                // 如果转换失败，清理临时保存的自定义字段定义
+                if (importData.customFieldDefinitions) {
+                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                }
                 return {
                     success: false,
                     imported: 0,
@@ -233,7 +181,7 @@ export class CustomCardManager {
                 };
             }
 
-            // 第四步：准备批次数据
+            // 第五步：准备批次数据
             const batchData: BatchData = {
                 metadata: {
                     id: batchId, // Ensure id is part of metadata, consistent with BatchBase
@@ -244,12 +192,23 @@ export class CustomCardManager {
                     description: importData.description,
                     author: importData.author 
                 },
-                cards: convertResult.cards
+                cards: convertResult.cards,
+                customFieldDefinitions: importData.customFieldDefinitions
+                    ? Object.fromEntries(
+                        Object.entries(importData.customFieldDefinitions)
+                            .filter(([, value]) => Array.isArray(value))
+                            .map(([key, value]) => [key, value as string[]])
+                    )
+                    : undefined // Store custom field definitions in BatchData, filtering out undefined values
             };
 
-            // 第五步：检查存储空间
+            // 第六步：检查存储空间
             const dataSize = JSON.stringify(batchData).length * 2;
             if (!CustomCardStorage.checkStorageSpace(dataSize)) {
+                // 如果存储空间不足，清理临时保存的自定义字段定义
+                if (importData.customFieldDefinitions) {
+                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                }
                 const storageInfo = CustomCardStorage.getFormattedStorageInfo();
                 return {
                     success: false,
@@ -258,11 +217,13 @@ export class CustomCardManager {
                 };
             }
 
-            // 第六步：存储操作（事务性）
+            // 第七步：存储操作（事务性）
             CustomCardStorage.saveBatch(batchId, batchData);
             hasCreatedBatch = true;
 
-            // 第七步：更新索引
+            // 注意：自定义字段定义已经在第一步中保存了，这里不需要重复保存
+
+            // 第八步：更新索引
             const index = CustomCardStorage.loadIndex();
             const cardTypes = [...new Set(convertResult.cards.map(card => card.type))];
 
@@ -298,6 +259,11 @@ export class CustomCardManager {
             // 清理失败的操作
             if (hasCreatedBatch) {
                 CustomCardStorage.removeBatch(batchId);
+            }
+            
+            // 无论是否创建了批次，都要清理临时保存的自定义字段定义
+            if (importData.customFieldDefinitions) {
+                CustomCardStorage.removeCustomFieldsForBatch(batchId);
             }
 
             console.error('[CustomCardManager] 导入失败:', error);
@@ -781,6 +747,9 @@ export class CustomCardManager {
 
             // 删除批次数据
             CustomCardStorage.removeBatch(batchId);
+
+            // 删除批次对应的自定义字段
+            CustomCardStorage.removeCustomFieldsForBatch(batchId);
 
             // 更新索引
             delete index.batches[batchId];

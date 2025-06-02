@@ -23,31 +23,25 @@ export type DomainClass = string;
 // Import storage functions
 import { CustomCardStorage } from './card-storage';
 
-// Define categories for custom names (must match what will be used in UI/logic)
-const CATEGORIES = {
-    PROFESSION: 'profession',
-    ANCESTRY: 'ancestry',
-    COMMUNITY: 'community',
-    SUBCLASS: 'subclass',
-    DOMAIN: 'domain'
-};
-
 // Getter functions
 export function getProfessionCardNames(): string[] {
     const defaultNames = [...PROFESSION_CARD_NAMES];
-    const customNames = CustomCardStorage.loadCustomFieldNames(CATEGORIES.PROFESSION);
+    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNames();
+    const customNames = aggregatedCustomFields.profession || [];
     return [...new Set([...defaultNames, ...customNames])];
 }
 
 export function getAncestryCardNames(): string[] {
     const defaultNames = [...ANCESTRY_CARD_NAMES];
-    const customNames = CustomCardStorage.loadCustomFieldNames(CATEGORIES.ANCESTRY);
+    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNames();
+    const customNames = aggregatedCustomFields.ancestry || [];
     return [...new Set([...defaultNames, ...customNames])];
 }
 
 export function getCommunityCardNames(): string[] {
     const defaultNames = [...COMMUNITY_CARD_NAMES];
-    const customNames = CustomCardStorage.loadCustomFieldNames(CATEGORIES.COMMUNITY);
+    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNames();
+    const customNames = aggregatedCustomFields.community || [];
     return [...new Set([...defaultNames, ...customNames])];
 }
 
@@ -59,44 +53,13 @@ export function getSubClassCardNames(): string[] {
 
 export function getDomainCardNames(): string[] {
     const defaultNames = [...DOMAIN_CARD_NAMES];
-    const customNames = CustomCardStorage.loadCustomFieldNames(CATEGORIES.DOMAIN);
+    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNames();
+    const customNames = aggregatedCustomFields.domain || [];
     return [...new Set([...defaultNames, ...customNames])];
 }
 
-// Functions to add custom names (example for one category, repeat for others)
-export function addCustomProfessionName(name: string): void {
-    const currentCustomNames = CustomCardStorage.loadCustomFieldNames(CATEGORIES.PROFESSION);
-    if (!currentCustomNames.includes(name)) {
-        CustomCardStorage.saveCustomFieldNames(CATEGORIES.PROFESSION, [...currentCustomNames, name]);
-    }
-}
-
-export function addCustomAncestryName(name: string): void {
-    const currentCustomNames = CustomCardStorage.loadCustomFieldNames(CATEGORIES.ANCESTRY);
-    if (!currentCustomNames.includes(name)) {
-        CustomCardStorage.saveCustomFieldNames(CATEGORIES.ANCESTRY, [...currentCustomNames, name]);
-    }
-}
-
-export function addCustomCommunityName(name: string): void {
-    const currentCustomNames = CustomCardStorage.loadCustomFieldNames(CATEGORIES.COMMUNITY);
-    if (!currentCustomNames.includes(name)) {
-        CustomCardStorage.saveCustomFieldNames(CATEGORIES.COMMUNITY, [...currentCustomNames, name]);
-    }
-}
-
-export function addCustomSubClassName(name: string): void {
-    // This function is now a no-op as subclass names are derived from professions
-    // and are not independently customizable through this mechanism.
-    console.warn(`[card-predefined-field] addCustomSubClassName called with '${name}', but subclass names are now derived from professions and not stored separately.`);
-    // No longer saves to CustomCardStorage for CATEGORIES.SUBCLASS
-}
-
-export function addCustomDomainName(name: string): void {
-    const currentCustomNames = CustomCardStorage.loadCustomFieldNames(CATEGORIES.DOMAIN);
-    if (!currentCustomNames.includes(name)) {
-        CustomCardStorage.saveCustomFieldNames(CATEGORIES.DOMAIN, [...currentCustomNames, name]);
-    }
-}
+// Note: Custom field names are now managed per-batch during card pack import/deletion.
+// The add functions below are deprecated and no longer used.
+// Custom field names are automatically aggregated from all enabled card packs.
 
 // (Optional) Functions to remove custom names can be added here if needed

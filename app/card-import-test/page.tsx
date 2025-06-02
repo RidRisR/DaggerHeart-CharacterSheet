@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SelectableCard } from '@/components/ui/selectable-card'
-import { AlertCircle, Upload, FileText, CheckCircle, XCircle, Info, Eye, RefreshCw, Copy, Home } from 'lucide-react'
+import { AlertCircle, Upload, FileText, CheckCircle, XCircle, Info, Eye, RefreshCw, Home, Power, PowerOff } from 'lucide-react'
 import { 
   importCustomCards, 
   getCustomCardBatches, 
@@ -124,6 +124,12 @@ export default function CardImportTestPage() {
     }
   }
 
+  // 刷新数据并重载页面
+  const refreshDataAndPage = () => {
+    refreshData()
+    window.location.reload()
+  }
+
   // 查看卡牌
   const handleViewCards = (batchId?: string) => {
     const customCards = getCustomCards()
@@ -134,13 +140,34 @@ export default function CardImportTestPage() {
     setViewModalOpen(true)
   }
 
-  // 复制批次ID
-  const handleCopyBatchId = (batchId: string) => {
-    navigator.clipboard.writeText(batchId).then(() => {
-      alert('批次ID已复制到剪贴板')
-    }).catch(() => {
-      alert('复制失败')
-    })
+
+  // 切换批次启用/禁用状态
+  const handleToggleBatchDisabled = async (batchId: string) => {
+    try {
+      const customCardManager = CustomCardManager.getInstance()
+      const success = await customCardManager.toggleBatchDisabled(batchId)
+
+      if (success) {
+        // 刷新数据以反映更改
+        refreshData()
+      } else {
+        alert('切换批次状态失败')
+      }
+    } catch (error) {
+      console.error('切换批次状态时出错:', error)
+      alert('切换批次状态时出错')
+    }
+  }
+
+  // 获取批次禁用状态
+  const getBatchDisabledStatus = (batchId: string): boolean => {
+    try {
+      const customCardManager = CustomCardManager.getInstance()
+      return customCardManager.getBatchDisabledStatus(batchId)
+    } catch (error) {
+      console.error('获取批次状态时出错:', error)
+      return false
+    }
   }
 
   // 处理文件选择
@@ -304,20 +331,20 @@ export default function CardImportTestPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.location.href = '/'}
-              className="flex items-center gap-2"
-            >
-              <Home className="h-4 w-4" />
-              返回主页
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
               onClick={refreshData}
               className="flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />
               刷新数据
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshDataAndPage}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              刷新页面
             </Button>
           </div>
         </div>
@@ -638,11 +665,16 @@ export default function CardImportTestPage() {
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => handleCopyBatchId(batch.id)}
+                            variant={getBatchDisabledStatus(batch.id) ? "outline" : "secondary"}
+                            onClick={() => handleToggleBatchDisabled(batch.id)}
                             className="h-8 px-2"
+                            title={getBatchDisabledStatus(batch.id) ? "启用批次" : "禁用批次"}
                           >
-                            <Copy className="h-3 w-3" />
+                            {getBatchDisabledStatus(batch.id) ? (
+                              <PowerOff className="h-3 w-3" />
+                            ) : (
+                              <Power className="h-3 w-3" />
+                            )}
                           </Button>
                           <Button
                             size="sm"
@@ -659,9 +691,18 @@ export default function CardImportTestPage() {
                           <span className="font-medium">卡牌数量:</span> {batch.cardCount}
                         </div>
                         <div>
+                          <span className="font-medium">状态:</span>
+                          <Badge
+                            variant={getBatchDisabledStatus(batch.id) ? "destructive" : "default"}
+                            className="ml-2 text-xs"
+                          >
+                            {getBatchDisabledStatus(batch.id) ? "未启用" : "已启用"}
+                          </Badge>
+                        </div>
+                        <div>
                           <span className="font-medium">导入时间:</span> {new Date(batch.importTime).toLocaleString()}
                         </div>
-                        <div className="col-span-2">
+                        <div>
                           <span className="font-medium">文件名:</span> {batch.fileName}
                         </div>
                         <div className="col-span-2">

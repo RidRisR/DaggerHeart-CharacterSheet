@@ -37,6 +37,7 @@ export interface ImportBatch {
     size: number;
     isSystemBatch?: boolean; // 标识是否为系统内置卡包
     version?: string; // 内置卡包版本号
+    disabled?: boolean; // 新字段：如果为 true，批次将被禁用且不会加载
 }
 
 export interface BatchData {
@@ -538,22 +539,48 @@ export class CustomCardStorage {
     }
 
     /**
-     * 清空所有自定义卡牌数据
+     * 清空所有自定义卡牌数据（保留内置卡牌）
      */
     static clearAllData(): void {
         try {
             const index = this.loadIndex();
 
-            // 删除所有批次数据
+            // 删除所有非系统批次数据
             for (const batchId of Object.keys(index.batches)) {
+                const batch = index.batches[batchId];
+                // 跳过系统内置卡包
+                if (batch.isSystemBatch === true) {
+                    console.log(`[CustomCardStorage] 跳过删除系统内置卡包: ${batchId}`);
+                    continue;
+                }
                 this.removeBatch(batchId);
             }
 
-            // 清空索引和配置
-            localStorage.removeItem(STORAGE_KEYS.INDEX);
-            localStorage.removeItem(STORAGE_KEYS.CONFIG);
+            // 重新计算索引，只保留系统批次
+            const newIndex = this.loadIndex();
+            const systemBatches: Record<string, ImportBatch> = {};
+            let systemCardCount = 0;
+            let systemBatchCount = 0;
+
+            for (const [batchId, batch] of Object.entries(newIndex.batches)) {
+                if (batch.isSystemBatch === true) {
+                    systemBatches[batchId] = batch;
+                    systemCardCount += batch.cardCount;
+                    systemBatchCount++;
+                }
+            }
+
+            newIndex.batches = systemBatches;
+            newIndex.totalCards = systemCardCount;
+            newIndex.totalBatches = systemBatchCount;
+            newIndex.lastUpdate = new Date().toISOString();
+
+            this.saveIndex(newIndex);
+
             // 清空自定义字段名
             this.clearAllCustomFieldNamesData();
+
+            console.log(`[CustomCardStorage] 清空完成，保留 ${systemBatchCount} 个系统批次，${systemCardCount} 张系统卡牌`);
 
         } catch (error) {
             console.error('[CustomCardStorage] 清空数据失败:', error);

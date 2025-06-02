@@ -263,14 +263,18 @@ export class CustomCardManager {
             const index = CustomCardStorage.loadIndex();
             const cardTypes = [...new Set(convertResult.cards.map(card => card.type))];
 
+            // 优先使用 JSON 内的 name 字段，如果没有则使用文件名，最后使用默认名称
+            const batchDisplayName = importData.name || batchName || `导入批次 ${new Date().toLocaleDateString()}`;
+
             index.batches[batchId] = {
                 id: batchId,
-                name: batchName || `导入批次 ${new Date().toLocaleDateString()}`,
+                name: batchDisplayName,
                 fileName: batchName || 'imported.json',
                 importTime: batchData.metadata.importTime,
                 cardCount: convertResult.cards.length,
                 cardTypes,
-                size: dataSize
+                size: dataSize,
+                disabled: false // 初始化为启用状态
             };
             index.totalCards += convertResult.cards.length;
             index.totalBatches++;
@@ -550,13 +554,20 @@ export class CustomCardManager {
         console.log(`[CustomCardManager] 索引中的批次数量: ${Object.keys(index.batches).length}`);
 
         for (const batchId of Object.keys(index.batches)) {
+            const batchInfo = index.batches[batchId]; // 获取完整的ImportBatch对象
+
+            // 检查批次是否被禁用
+            if (batchInfo.disabled === true) {
+                console.log(`[CustomCardManager] 批次 ${batchId} (${batchInfo.name}) 已被禁用，跳过加载`);
+                continue; // 跳过此批次的加载
+            }
+
             console.log(`[CustomCardManager] 正在加载批次: ${batchId}`);
             const batchData = CustomCardStorage.loadBatch(batchId);
             console.log(`[CustomCardManager] 批次 ${batchId} 数据:`, batchData ? `存在，cards字段: ${batchData.cards ? `数组长度${batchData.cards.length}` : '不存在'}` : '不存在');
 
             if (batchData && batchData.cards) {
-                const batch = index.batches[batchId];
-                const isSystemBatch = batch.isSystemBatch === true;
+                const isSystemBatch = batchInfo.isSystemBatch === true;
 
                 const cardsWithBatchId = batchData.cards.map(card => ({
                     ...card,
@@ -651,7 +662,8 @@ export class CustomCardManager {
                     cardTypes: batchMetadata.cardTypes,
                     size: batchMetadata.size,
                     isSystemBatch: true,
-                    version: BUILTIN_CARDS_VERSION
+                    version: BUILTIN_CARDS_VERSION,
+                    disabled: false // 初始化为启用状态
                 };
                 
                 newIndex.batches[BUILTIN_BATCH_ID] = builtinBatchInfo;
@@ -893,6 +905,49 @@ export class CustomCardManager {
             console.error('[CustomCardManager] 强制重新初始化失败:', error);
             throw error;
         }
+    }
+
+    /**
+     * 切换批次的禁用状态
+     * 重新加载卡牌以反映更改
+     * @param batchId 要切换的批次ID
+     * @returns 操作成功返回true，失败返回false
+     */
+    async toggleBatchDisabled(batchId: string): Promise<boolean> {
+        try {
+            const index = CustomCardStorage.loadIndex();
+            const batchInfo = index.batches[batchId];
+
+            if (!batchInfo) {
+                console.warn(`[CustomCardManager] 批次 ${batchId} 未找到，无法切换禁用状态`);
+                return false;
+            }
+
+            // 切换禁用状态
+            batchInfo.disabled = !batchInfo.disabled;
+            index.lastUpdate = new Date().toISOString();
+            CustomCardStorage.saveIndex(index);
+
+            // 重新加载卡牌以反映更改
+            this.reloadCustomCards();
+
+            console.log(`[CustomCardManager] 批次 ${batchId} (${batchInfo.name}) 禁用状态已设置为: ${batchInfo.disabled}`);
+            return true;
+        } catch (error) {
+            console.error(`[CustomCardManager] 切换批次 ${batchId} 禁用状态时出错:`, error);
+            return false;
+        }
+    }
+
+    /**
+     * 获取批次的禁用状态
+     * @param batchId 批次ID
+     * @returns 如果禁用返回true，如果启用或未找到返回false（默认为启用）
+     */
+    getBatchDisabledStatus(batchId: string): boolean {
+        const index = CustomCardStorage.loadIndex();
+        const batchInfo = index.batches[batchId];
+        return batchInfo?.disabled === true; // 如果batchInfo或batchInfo.disabled为undefined，则视为启用
     }
 }
 

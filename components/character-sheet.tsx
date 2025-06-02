@@ -7,8 +7,8 @@ import { useState, useEffect, useRef } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
 import { ArmorItem, armorItems } from "@/data/list/armor"
-import { ALL_STANDARD_CARDS } from "@/data/card"
 import {
+  getAllStandardCards,
   getStandardCardsByType,
   CardType, // Import CardType
 } from "@/data/card"
@@ -315,7 +315,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         return updatedFormData;
       });
     } else {
-      const professionCard = ALL_STANDARD_CARDS.find((p) => p.id === value && p.type === CardType.Profession);
+      const allCards = getAllStandardCards();
+      const professionCard = allCards.find((p) => p.id === value && p.type === CardType.Profession);
       if (professionCard) {
         setFormData((prev) => {
           const updatedFormData = {
@@ -348,7 +349,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         return updatedFormData;
       })
     } else {
-      const ancestryCard = ALL_STANDARD_CARDS.find((a) => a.id === value && a.type === CardType.Ancestry);
+      const allCards = getAllStandardCards();
+      const ancestryCard = allCards.find((a) => a.id === value && a.type === CardType.Ancestry);
       if (ancestryCard) {
         setFormData((prev) => {
           const updatedFormData = {
@@ -377,7 +379,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         return updatedFormData;
       })
     } else {
-      const communityCard = ALL_STANDARD_CARDS.find((c) => c.id === value && c.type === CardType.Community);
+      const allCards = getAllStandardCards();
+      const communityCard = allCards.find((c) => c.id === value && c.type === CardType.Community);
       if (communityCard) {
         setFormData((prev) => {
           const updatedFormData = {
@@ -616,7 +619,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         return updatedFormData;
       })
     } else {
-      const subclassCard = ALL_STANDARD_CARDS.find((s) => s.id === value && (s.type === CardType.Subclass || s.type === CardType.Profession));
+      const allCards = getAllStandardCards();
+      const subclassCard = allCards.find((s) => s.id === value && (s.type === CardType.Subclass || s.type === CardType.Profession));
       if (subclassCard) {
         setFormData((prev) => {
           const updatedFormData = {

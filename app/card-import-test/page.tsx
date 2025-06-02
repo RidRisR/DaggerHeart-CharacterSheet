@@ -2,8 +2,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SelectableCard } from '@/components/ui/selectable-card'
@@ -21,7 +19,6 @@ import {
   type ExtendedStandardCard
 } from '@/data/card/index'
 import { CustomCardManager } from '@/data/card/custom-card-manager'
-import { CustomCardStorage } from '@/data/card/custom-card-storage'
 
 interface ImportStatus {
   isImporting: boolean

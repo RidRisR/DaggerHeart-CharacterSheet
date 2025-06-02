@@ -101,34 +101,6 @@ function computeBuiltinStandardCards(): ExtendedStandardCard[] {
   return standardCards
 }
 
-// 获取所有标准格式卡牌（内置+自定义）- 动态版本
-export function getAllStandardCards(): ExtendedStandardCard[] {
-  // 在客户端，尝试使用统一的卡牌系统
-  if (typeof window !== 'undefined') {
-    try {
-      // 检查系统是否已初始化
-      if (customCardManager.isSystemInitialized()) {
-        const unifiedCards = customCardManager.getAllCards();
-        if (unifiedCards.length > 0) {
-          console.log(`[getAllStandardCards] 使用统一系统，卡牌数量: ${unifiedCards.length}`);
-          return unifiedCards;
-        }
-      } else {
-        // 系统未初始化，尝试获取但不等待
-        const cards = customCardManager.tryGetAllCards();
-        if (cards && cards.length > 0) {
-          console.log(`[getAllStandardCards] 使用统一系统（未完全初始化），卡牌数量: ${cards.length}`);
-          return cards;
-        }
-      }
-    } catch (error) {
-      console.warn('[getAllStandardCards] 统一系统暂不可用', error);
-    }
-  }
-  
-  return [];
-}
-
 // 获取所有标准格式卡牌（内置+自定义）- 异步版本，确保系统已初始化
 export async function getAllStandardCardsAsync(): Promise<ExtendedStandardCard[]> {
   // 在客户端，确保统一系统已初始化
@@ -159,25 +131,6 @@ export async function getStandardCardsByTypeAsync(typeId: CardType): Promise<Ext
       return unifiedCards;
     } catch (error) {
       console.warn(`[getStandardCardsByTypeAsync] 统一系统初始化失败，回退到常量 (${typeId}):`, error);
-    }
-  }
-  
-  return []
-}
-
-// 根据类型获取标准格式卡牌（内置+自定义）
-export function getStandardCardsByType(typeId: CardType): ExtendedStandardCard[] {
-  // 在客户端，尝试使用统一的卡牌系统
-  if (typeof window !== 'undefined') {
-    try {
-      // 检查系统是否已初始化
-      if (customCardManager.isSystemInitialized()) {
-        const unifiedCards = customCardManager.getAllCardsByType(typeId);
-        console.log(`[getStandardCardsByType] 使用统一系统，${typeId}类型卡牌数量: ${unifiedCards.length}`);
-        return unifiedCards;
-      }
-    } catch (error) {
-      console.warn(`[getStandardCardsByType] 统一系统暂不可用`, error);
     }
   }
   
@@ -233,9 +186,6 @@ export function refreshCustomCards(): void {
   console.log('[Card Index] 自定义卡牌数据已更新，请刷新页面以查看最新数据')
 }
 
-// 添加 getCardsByType 作为 getStandardCardsByType 的别名
-export const getCardsByType = getStandardCardsByType
-
 // 导出所有内容
 export {
   // UI配置
@@ -249,7 +199,7 @@ export {
   // 卡牌转换
   convertToStandardCard,
   // 卡牌注册
-  builtinCardManager as cardManager,
+  builtinCardManager,
   // 自定义卡牌管理器
   customCardManager,
   // Re-export CardManager and CustomCardManager

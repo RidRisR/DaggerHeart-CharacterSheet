@@ -24,13 +24,14 @@ import {
     ExtendedStandardCard,
     CardType // Assuming CardType enum might be useful here or for keys
 } from './card-types';
-import { getBuiltinStandardCards, getBuiltinBatchMetadata, BUILTIN_BATCH_ID, BUILTIN_CARDS_VERSION } from './builtin-card-data';
+import { getBuiltinBatchMetadata, BUILTIN_BATCH_ID, BUILTIN_CARDS_VERSION } from './builtin-card-data';
 import { CardTypeValidator } from './type-validators';
 import { professionCardConverter } from './profession-card/convert';
 import { ancestryCardConverter } from './ancestry-card/convert';
 import { communityCardConverter } from './community-card/convert';
 import { subclassCardConverter } from './subclass-card/convert';
 import { domainCardConverter } from './domain-card/convert';
+import { getBuiltinStandardCards } from './index';
 
 /**
  * 自定义卡牌管理器类
@@ -385,11 +386,11 @@ export class CustomCardManager {
 
         // 检查各种类型的卡牌ID
         const cardTypesToCheck = [
-            { cards: importData.profession, type: 'profession' },
-            { cards: importData.ancestry, type: 'ancestry' },
-            { cards: importData.community, type: 'community' },
-            { cards: importData.subclass, type: 'subclass' },
-            { cards: importData.domain, type: 'domain' },
+            { cards: importData.profession, type: CardType.Profession },
+            { cards: importData.ancestry, type: CardType.Ancestry },
+            { cards: importData.community, type: CardType.Community },
+            { cards: importData.subclass, type: CardType.Subclass },
+            { cards: importData.domain, type: CardType.Domain },
         ];
 
         for (const { cards, type } of cardTypesToCheck) {

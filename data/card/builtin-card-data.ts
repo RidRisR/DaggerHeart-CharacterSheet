@@ -30,67 +30,6 @@ const cardDataByType = {
 };
 
 /**
- * 获取所有内置卡牌的标准化数据
- * @returns 标准化的内置卡牌数组
- */
-export function getBuiltinStandardCards(): StandardCard[] {
-  console.log("[BuiltinCardData] 开始转换所有内置卡牌");
-  
-  const builtinCardManager = BuiltinCardManager.getInstance();
-  const standardCards: StandardCard[] = [];
-
-  try {
-    // 检查转换器注册状态
-    const registeredTypes = builtinCardManager.getRegisteredTypes();
-    console.log('[BuiltinCardData] 当前已注册的转换器:', registeredTypes);
-    
-    if (registeredTypes.length === 0) {
-      console.warn('[BuiltinCardData] 没有转换器注册，返回空数组');
-      return [];
-    }
-
-    // 按类型转换卡牌
-    Object.entries(cardDataByType).forEach(([type, cards]) => {
-      console.log(`[BuiltinCardData] 检查 ${type} 类型转换器...`);
-      
-      // 检查该类型的转换器是否已注册
-      if (!builtinCardManager.isTypeRegistered(type)) {
-        console.warn(`[BuiltinCardData] ${type} 类型转换器未注册，跳过该类型`);
-        return;
-      }
-      
-      console.log(`[BuiltinCardData] 开始转换 ${type} 类型卡牌, 数量: ${cards.length}`);
-      
-      const convertedCards = cards.map((card: any, index: number) => {
-        try {
-          const convertedCard = builtinCardManager.ConvertCard(card, type as keyof typeof cardDataByType);
-          if (!convertedCard) {
-            console.warn(`[BuiltinCardData] ${type}类型卡牌转换失败, 索引: ${index}:`, card);
-            return null;
-          }
-          // 确保内置卡牌标记为标准化
-          convertedCard.standarized = true;
-          return convertedCard;
-        } catch (error) {
-          console.error(`[BuiltinCardData] ${type}类型卡牌转换失败, 索引: ${index}:`, error, card);
-          return null;
-        }
-      }).filter(Boolean) as StandardCard[];
-      
-      standardCards.push(...convertedCards);
-      console.log(`[BuiltinCardData] ${type}类型卡牌转换完成, 数量: ${convertedCards.length}`);
-    });
-    
-    console.log(`[BuiltinCardData] 所有内置卡牌转换完成, 总数: ${standardCards.length}`);
-    return standardCards;
-  } catch (error) {
-    console.error("[BuiltinCardData] 转换过程出错:", error);
-    // 发生错误时返回空数组而不是抛出异常
-    return [];
-  }
-}
-
-/**
  * 获取内置卡包的元数据
  * @returns 内置卡包的ImportBatch元数据
  */

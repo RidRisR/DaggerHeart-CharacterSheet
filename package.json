@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && rm -f out/*.txt && cp sample-cards-import-guide.json out/ && cp sample-cards-import-guide.md out/",
     "start": "next start",
     "lint": "next lint"
   },

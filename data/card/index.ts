@@ -61,23 +61,9 @@ builtinCardManager.registerCardType("domain", {
   converter: domainCardConverter.toStandard,
 })
 
-// 确保CustomCardManager在所有转换器注册后初始化
-if (typeof window !== 'undefined') {
-  // 使用较长延迟确保转换器完全注册后再初始化
-  setTimeout(async () => {
-    try {
-      console.log('[Card Index] 开始延迟初始化统一卡牌系统...');
-      const builtinCardManager = BuiltinCardManager.getInstance();
-      const registeredTypes = builtinCardManager.getRegisteredTypes();
-      console.log('[Card Index] 当前已注册转换器:', registeredTypes);
-      
-      await customCardManager.ensureInitialized();
-      console.log('[Card Index] 统一卡牌系统初始化完成');
-    } catch (error) {
-      console.error('[Card Index] 统一卡牌系统初始化失败:', error);
-    }
-  }, 500); // 增加到500ms延迟
-}
+// 注意：卡牌系统的初始化现在由 CardSystemInitializer 组件在客户端处理
+// 这里只进行转换器注册，不执行运行时初始化
+console.log('[Card Index] 所有转换器注册完成，等待客户端初始化...')
 
 // 卡牌数据映射
 export const cardDataByType = {
@@ -146,20 +132,6 @@ export const STANDARD_CARDS_BY_TYPE: Record<string, ExtendedStandardCard[]> = ((
       // 在模块加载时，只使用内置卡牌，避免过早初始化
       result[id] = BUILTIN_STANDARD_CARDS.filter((card) => card.type === id);
       console.log(`[STANDARD_CARDS_BY_TYPE] ${name}类型内置卡牌数量: ${result[id].length}`);
-    }
-  }
-
-  return result;
-})()
-
-// 按类型分组的内置卡牌
-export const BUILTIN_CARDS_BY_TYPE: Record<string, ExtendedStandardCard[]> = (() => {
-  const result: Record<string, ExtendedStandardCard[]> = {};
-
-  for (const [id, name] of ALL_CARD_TYPES.entries()) {
-    if (id !== "all") {
-      result[id] = BUILTIN_STANDARD_CARDS.filter((card) => card.type === id);
-      console.log(`[BUILTIN_CARDS_BY_TYPE] ${name}类型内置卡牌数量: ${result[id].length}`);
     }
   }
 
@@ -258,11 +230,6 @@ export function getStandardCardsByType(typeId: CardType): ExtendedStandardCard[]
   
   // 回退到原有的常量
   return STANDARD_CARDS_BY_TYPE[typeId] || []
-}
-
-// 根据类型获取内置卡牌
-export function getBuiltinCardsByType(typeId: CardType): ExtendedStandardCard[] {
-  return BUILTIN_CARDS_BY_TYPE[typeId] || []
 }
 
 // ===== 自定义卡牌功能 =====

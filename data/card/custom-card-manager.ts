@@ -101,13 +101,18 @@ export class CustomCardManager {
      * 手动初始化系统（用于确保转换器已注册后再初始化）
      */
     async ensureInitialized(): Promise<void> {
-        if (typeof window !== 'undefined') {
-            if (this.initializationPromise) {
-                await this.initializationPromise;
-            } else if (!this.isInitialized) {
-                this.initializationPromise = this.initializeSystem();
-                await this.initializationPromise;
-            }
+        // 在静态导出项目中，这个方法只在浏览器环境中有意义
+        // 构建时的预渲染会跳过这个初始化
+        if (typeof window === 'undefined') {
+            console.log('[CustomCardManager] 跳过服务端/构建时初始化');
+            return;
+        }
+
+        if (this.initializationPromise) {
+            await this.initializationPromise;
+        } else if (!this.isInitialized) {
+            this.initializationPromise = this.initializeSystem();
+            await this.initializationPromise;
         }
     }
 

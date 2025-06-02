@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { CardSystemInitializer } from "@/components/card-system-initializer"
 import PrintHelper from "./print-helper"
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <CardSystemInitializer />
           <PrintHelper />
           {children}
           {/* 水印 */}

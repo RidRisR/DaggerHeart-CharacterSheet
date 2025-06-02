@@ -27,30 +27,29 @@ export interface CustomCardIndex {
     lastUpdate: string;
 }
 
-export interface ImportBatch {
-    id: string;
-    name: string;
-    fileName: string;
-    importTime: string;
+// New base interface for common batch metadata
+export interface BatchBase {
+    id: string;          // Standardized identifier for the batch
+    name?: string;        // Optional: Original name of the batch from source data.
+    fileName: string;    // Original file name of the imported batch.
+    importTime: string;  // Timestamp of import.
+    version?: string;     // Version of the batch, if applicable (e.g., 内置卡包版本号).
+    description?: string; // Optional: Description of the batch.
+    author?: string;      // Optional: Author of the batch.
+}
+
+export interface ImportBatch extends BatchBase {
+    name: string; // Name is required for index display (can be derived if missing in source).
+// id, fileName, importTime, version are inherited from BatchBase.
     cardCount: number;
     cardTypes: string[];
     size: number;
     isSystemBatch?: boolean; // 标识是否为系统内置卡包
-    version?: string; // 内置卡包版本号
     disabled?: boolean; // 新字段：如果为 true，批次将被禁用且不会加载
 }
 
 export interface BatchData {
-    metadata: {
-        batchId: string;
-        fileName: string;
-        importTime: string;
-        // 保留卡包源信息
-        name?: string;
-        version?: string;
-        description?: string;
-        author?: string;
-    };
+    metadata: BatchBase; // Metadata for the batch
     cards: any[]; // StandardCard[] - 避免循环依赖，使用any
 }
 

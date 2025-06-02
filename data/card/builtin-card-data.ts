@@ -5,6 +5,7 @@
 
 import { BuiltinCardManager } from './builtin-card-manager';
 import { StandardCard } from './card-types';
+import { ImportBatch } from './card-storage';
 
 // 导入各个卡牌类型的数据
 import { professionCards } from "./profession-card/cards";
@@ -93,17 +94,7 @@ export function getBuiltinStandardCards(): StandardCard[] {
  * 获取内置卡包的元数据
  * @returns 内置卡包的ImportBatch元数据
  */
-export function getBuiltinBatchMetadata(): {
-  id: string;
-  name: string;
-  fileName: string;
-  importTime: string;
-  cardCount: number;
-  cardTypes: string[];
-  size: number;
-  isSystemBatch: boolean;
-  version: string;
-} {
+export function getBuiltinBatchMetadata(): ImportBatch {
   // 直接计算卡牌数量，避免递归调用getBuiltinStandardCards
   const totalCards = Object.values(cardDataByType).reduce((sum, cards) => sum + cards.length, 0);
   const cardTypes = Object.keys(cardDataByType);
@@ -112,6 +103,8 @@ export function getBuiltinBatchMetadata(): {
     id: BUILTIN_BATCH_ID,
     name: "系统内置卡牌包",
     fileName: "builtin-cards",
+    description: "系统内置卡牌包，数据来自SRD。",
+    author: "RidRisR",
     importTime: new Date().toISOString(),
     cardCount: totalCards,
     cardTypes,

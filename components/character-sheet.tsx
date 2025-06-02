@@ -16,9 +16,6 @@ import {
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
 import { ArmorSelectionModal } from "@/components/modals/armor-selection-modal"
-import { ProfessionSelectionModal } from "@/components/modals/profession-selection-modal"
-import { AncestrySelectionModal } from "@/components/modals/ancestry-selection-modal"
-import { CommunitySelectionModal } from "@/components/modals/community-selection-modal"
 import { GenericCardSelectionModal } from "@/components/modals/generic-card-selection-modal"
 
 // Import sections
@@ -46,11 +43,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   const [currentWeaponField, setCurrentWeaponField] = useState("")
   const [currentWeaponSlotType, setCurrentWeaponSlotType] = useState<"primary" | "secondary" | "inventory">("primary") // Default to primary to avoid null
   const [armorModalOpen, setArmorModalOpen] = useState(false)
-  const [professionModalOpen, setProfessionModalOpen] = useState(false)
-  const [ancestryModalOpen, setAncestryModalOpen] = useState(false)
-  const [currentAncestryField, setCurrentAncestryField] = useState("")
-  const [communityModalOpen, setCommunityModalOpen] = useState(false)
-  const [importExportModalOpen, setImportExportModalOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [currentModal, setCurrentModal] = useState<{ type: "profession" | "ancestry" | "community" | "subclass"; field?: string; levelFilter?: number }>({ type: "profession" })
 
@@ -894,45 +886,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           closeArmorModal()
         }}
         title="选择护甲"
-      />
-
-      <ProfessionSelectionModal
-        isOpen={professionModalOpen}
-        onClose={closeGenericModal}
-        onSelect={(professionId) => {
-          handleProfessionChange(professionId)
-          closeGenericModal()
-        }}
-        title="选择职业"
-      />
-
-      <AncestrySelectionModal
-        isOpen={ancestryModalOpen}
-        onClose={() => setAncestryModalOpen(false)}
-        field={currentAncestryField}
-        title={currentAncestryField === "ancestry1" ? "选择血统一" : "选择血统二"}
-        onSelect={(ancestryId, field) => {
-          if (ancestryId === "none") {
-            handleAncestryChange(field, "")
-          } else {
-            handleAncestryChange(field, ancestryId)
-          }
-          setAncestryModalOpen(false)
-        }}
-      />
-
-      <CommunitySelectionModal
-        isOpen={communityModalOpen}
-        onClose={closeGenericModal}
-        onSelect={(communityId) => {
-          if (communityId === "none") {
-            handleCommunityChange("")
-          } else {
-            handleCommunityChange(communityId)
-          }
-          closeGenericModal()
-        }}
-        title="选择社群"
       />
 
       {modalOpen && (

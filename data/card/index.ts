@@ -132,22 +132,9 @@ export const BUILTIN_STANDARD_CARDS: StandardCard[] = (() => {
 
 // 合并内置卡牌和自定义卡牌的标准格式卡牌集合
 export const ALL_STANDARD_CARDS: ExtendedStandardCard[] = (() => {
-  try {
-    console.log("[ALL_STANDARD_CARDS] 开始合并内置和自定义卡牌")
-
-    // 获取所有自定义卡牌
-    const customCards = customCardManager.getCustomCards()
-    console.log(`[ALL_STANDARD_CARDS] 自定义卡牌数量: ${customCards.length}`)
-
-    // 合并内置和自定义卡牌
-    const allCards = [...BUILTIN_STANDARD_CARDS, ...customCards]
-    console.log(`[ALL_STANDARD_CARDS] 总卡牌数量: ${allCards.length}`)
-
-    return allCards
-  } catch (error) {
-    console.error("[ALL_STANDARD_CARDS] 合并卡牌过程出错:", error)
-    return BUILTIN_STANDARD_CARDS
-  }
+  // 在模块加载时，只返回内置卡牌，避免触发过早的初始化
+  console.log("[ALL_STANDARD_CARDS] 模块加载时只包含内置卡牌，避免过早初始化")
+  return [...BUILTIN_STANDARD_CARDS];
 })()
 
 // 按类型分组的标准格式卡牌（包含内置和自定义）
@@ -156,8 +143,9 @@ export const STANDARD_CARDS_BY_TYPE: Record<string, ExtendedStandardCard[]> = ((
 
   for (const [id, name] of ALL_CARD_TYPES.entries()) {
     if (id !== "all") {
-      result[id] = ALL_STANDARD_CARDS.filter((card) => card.type === id);
-      console.log(`[STANDARD_CARDS_BY_TYPE] ${name}类型卡牌数量: ${result[id].length}`);
+      // 在模块加载时，只使用内置卡牌，避免过早初始化
+      result[id] = BUILTIN_STANDARD_CARDS.filter((card) => card.type === id);
+      console.log(`[STANDARD_CARDS_BY_TYPE] ${name}类型内置卡牌数量: ${result[id].length}`);
     }
   }
 

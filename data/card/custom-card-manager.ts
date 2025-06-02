@@ -55,10 +55,8 @@ export class CustomCardManager {
 
     private constructor() {
         this.cardManager = CardManager.getInstance();
-        if (typeof window !== 'undefined') {
-            // 立即开始初始化但不等待
-            this.initializationPromise = this.initializeSystem();
-        }
+        // 不在构造函数中立即开始初始化，等待ensureInitialized()被调用
+        console.log('[CustomCardManager] 构造函数完成，等待显式初始化');
     }
 
     /**
@@ -70,7 +68,24 @@ export class CustomCardManager {
         try {
             console.log('[CustomCardManager] 开始初始化系统...');
             
-            // 简化初始化逻辑，直接尝试种子化
+            // 检查转换器是否已注册
+            const registeredTypes = this.cardManager.getRegisteredTypes();
+            console.log('[CustomCardManager] 当前已注册转换器:', registeredTypes);
+
+            if (registeredTypes.length === 0) {
+                throw new Error('没有转换器注册，无法初始化内置卡牌系统');
+            }
+
+            // 检查是否有必要的转换器类型
+            const requiredTypes = ['profession', 'ancestry', 'community', 'subclass', 'domain'];
+            const missingTypes = requiredTypes.filter(type => !registeredTypes.includes(type));
+
+            if (missingTypes.length > 0) {
+                console.warn('[CustomCardManager] 部分转换器未注册:', missingTypes);
+                // 不抛出错误，继续进行，因为可能在开发过程中某些类型暂时不可用
+            }
+
+            // 种子化内置卡牌
             await this._seedOrUpdateBuiltinCards();
             // 然后加载自定义卡牌
             this.loadCustomCards();

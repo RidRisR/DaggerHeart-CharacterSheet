@@ -99,10 +99,16 @@ export default function CardImportTestPage() {
 
   // 客户端初始化
   useEffect(() => {
-    setIsClient(true)
-    if (typeof window !== 'undefined') {
-      refreshData()
+    const initializeData = async () => {
+      setIsClient(true)
+      if (typeof window !== 'undefined') {
+        // 确保系统初始化后再刷新数据
+        const customCardManager = CustomCardManager.getInstance()
+        await customCardManager.ensureInitialized()
+        refreshData()
+      }
     }
+    initializeData()
   }, [])
 
   // 自动刷新数据
@@ -151,11 +157,11 @@ export default function CardImportTestPage() {
         // 刷新数据以反映更改
         refreshData()
       } else {
-        alert('切换批次状态失败')
+        alert('切换卡牌包状态失败')
       }
     } catch (error) {
-      console.error('切换批次状态时出错:', error)
-      alert('切换批次状态时出错')
+      console.error('切换卡牌包状态时出错:', error)
+      alert('切换卡牌包状态时出错')
     }
   }
 
@@ -165,7 +171,7 @@ export default function CardImportTestPage() {
       const customCardManager = CustomCardManager.getInstance()
       return customCardManager.getBatchDisabledStatus(batchId)
     } catch (error) {
-      console.error('获取批次状态时出错:', error)
+      console.error('获取卡牌包状态时出错:', error)
       return false
     }
   }
@@ -269,13 +275,13 @@ export default function CardImportTestPage() {
 
   // 删除批次
   const handleRemoveBatch = (batchId: string) => {
-    if (confirm('确定要删除这个批次吗？这将删除批次中的所有卡牌。')) {
+    if (confirm('确定要删除这个卡牌包吗？这将删除卡牌包中的所有卡牌。')) {
       const success = removeCustomCardBatch(batchId)
       if (success) {
         refreshData()
-        alert('批次删除成功')
+        alert('卡牌包删除成功')
       } else {
-        alert('批次删除失败')
+        alert('卡牌包删除失败')
       }
     }
   }
@@ -324,7 +330,7 @@ export default function CardImportTestPage() {
           <div>
             <h1 className="text-3xl font-bold mb-2">卡牌管理</h1>
             <p className="text-muted-foreground">
-              测试自定义卡牌导入功能，支持批次管理和数据统计
+              测试自定义卡牌导入功能，支持卡牌包管理和数据统计
             </p>
           </div>
           <div className="flex gap-2">
@@ -426,7 +432,13 @@ export default function CardImportTestPage() {
                   或点击下方按钮选择文件
                 </p>
                 <Button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    // 清空文件输入框的值，确保相同文件也能触发onChange
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
+                    fileInputRef.current?.click();
+                  }}
                   disabled={importStatus.isImporting}
                   variant="outline"
                 >
@@ -612,7 +624,7 @@ export default function CardImportTestPage() {
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">{stats.totalBatches}</div>
-                  <div className="text-sm text-green-600">批次数量</div>
+                  <div className="text-sm text-green-600">卡牌包数量</div>
                 </div>
               </div>
 
@@ -636,16 +648,16 @@ export default function CardImportTestPage() {
           {/* 批次管理 */}
           <Card>
             <CardHeader>
-              <CardTitle>批次管理</CardTitle>
-              <CardDescription>管理已导入的卡牌批次</CardDescription>
+              <CardTitle>卡牌包管理</CardTitle>
+              <CardDescription>管理已导入的卡牌包</CardDescription>
             </CardHeader>
             <CardContent>
               {batches.length === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">暂无导入的卡牌批次</p>
+                  <p className="text-muted-foreground">暂无导入的批次</p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    导入一些卡牌来开始使用批次管理功能
+                    导入一些卡牌来开始使用卡牌包管理功能
                   </p>
                 </div>
               ) : (

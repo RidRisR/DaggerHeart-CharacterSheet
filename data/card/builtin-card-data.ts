@@ -110,7 +110,7 @@ export function getBuiltinBatchMetadata(): {
   
   return {
     id: BUILTIN_BATCH_ID,
-    name: "系统内置卡牌",
+    name: "系统内置卡牌包",
     fileName: "builtin-cards",
     importTime: new Date().toISOString(),
     cardCount: totalCards,

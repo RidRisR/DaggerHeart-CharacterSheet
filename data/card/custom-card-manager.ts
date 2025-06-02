@@ -187,6 +187,9 @@ export class CustomCardManager {
      * @returns 导入结果
      */
     async importCards(importData: ImportData, batchName?: string): Promise<ImportResult> {
+        // 确保系统已初始化
+        await this.ensureInitialized();
+        
         const batchId = CustomCardStorage.generateBatchId();
         let hasCreatedBatch = false;
 
@@ -527,6 +530,9 @@ export class CustomCardManager {
      * 获取所有现有卡牌（内置+自定义）
      */
     private async getAllExistingCards(): Promise<StandardCard[]> {
+        // 确保系统已初始化
+        await this.ensureInitialized();
+        
         // 导入内置卡牌（避免循环依赖，在运行时导入）
         let builtinCards: StandardCard[] = [];
 
@@ -635,7 +641,7 @@ export class CustomCardManager {
                         name: batchMetadata.name,
                         version: batchMetadata.version,
                         description: "系统内置卡牌包",
-                        author: "DaggerHeart System"
+                        author: "RidRisR"
                     },
                     cards: extendedCards
                 };

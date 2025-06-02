@@ -14,7 +14,7 @@ import { subclassCards } from "./subclass-card/cards";
 import { domainCards } from "./domain-card/cards";
 
 // 内置卡包版本号 - 修改此版本号以触发重新种子化
-export const BUILTIN_CARDS_VERSION = "V20250120";
+export const BUILTIN_CARDS_VERSION = "V20250520";
 
 // 内置卡包唯一标识符
 export const BUILTIN_BATCH_ID = "SYSTEM_BUILTIN_CARDS";

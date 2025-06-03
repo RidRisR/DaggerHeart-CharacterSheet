@@ -30,6 +30,11 @@ export interface StandardCard {
     "起始物品": string
     "希望特性": string
   }
+  // 变体卡牌信息（仅在type="variant"时使用）
+  variantSpecial?: {
+    realType: string;      // 真实卡牌类型，来自RawVariantCard.类型
+    subCategory: string;   // 子类别，来自RawVariantCard.子类别
+  }
   // ... 其他字段
 }
 
@@ -61,12 +66,14 @@ export const ALL_CARD_TYPES = new Map<string, string>([
 ]);
 
 // 根据分类获取卡牌类型
-export function getCardTypesByCategory(category: CardCategory): CardType[] {
+export function getCardTypesByCategory(category: CardCategory): string[] {
   switch (category) {
     case CardCategory.Standard:
       return [CardType.Profession, CardType.Ancestry, CardType.Community, CardType.Subclass, CardType.Domain];
     case CardCategory.Extended:
-      return [CardType.Variant];
+      // 动态获取可用的variant类型
+      const { getVariantTypeNames } = require('./card-predefined-field');
+      return getVariantTypeNames();
     default:
       return Object.values(CardType);
   }
@@ -127,6 +134,7 @@ import type { AncestryCard } from '@/data/card/ancestry-card/convert';
 import type { CommunityCard } from '@/data/card/community-card/convert';
 import type { SubClassCard } from '@/data/card/subclass-card/convert';
 import type { DomainCard } from '@/data/card/domain-card/convert';
+import { RawVariantCard } from "./variant-card/convert";
 
 // 变体类型定义接口（简化版）
 export interface VariantTypeDefinition {
@@ -135,23 +143,6 @@ export interface VariantTypeDefinition {
   defaultLevel?: number;          // 默认等级
   levelRange?: [number, number];  // 等级范围 [最小值, 最大值]
   description?: string;           // 类型描述
-}
-
-// 原始变体卡牌数据结构（用户导入的格式）
-export interface RawVariantCard {
-  id: string;
-  名称: string;
-  类型: string;          // 变体类型，如 "食物"、"人物" 等
-  子类别?: string;       // 可选的子类别，如 "饮料"、"盟友" 等
-  等级?: number;         // 可选的等级
-  效果: string;          // 卡牌效果描述
-  imageUrl?: string;     // 图片URL
-  简略信息: {           // 卡牌选择时显示的简要信息
-    item1?: string;
-    item2?: string;
-    item3?: string;
-  };
-  [key: string]: any;    // 允许扩展字段
 }
 
 // 新的导入数据格式定义 - 支持原始卡牌类型
@@ -223,6 +214,51 @@ export enum CardSource {
 export interface ExtendedStandardCard extends StandardCard {
   source?: CardSource;
   batchId?: string; // 自定义卡牌的批次ID
+}
+
+// Helper: 判断给定的类型ID是否是变体类型
+export function isVariantType(typeId: string): boolean {
+  // 如果是标准卡牌类型，则不是variant类型
+  if (Object.values(CardType).includes(typeId as CardType)) {
+    return false;
+  }
+  
+  // 检查是否在已注册的variant类型中
+  try {
+    const { hasVariantType } = require('./card-predefined-field');
+    return hasVariantType(typeId);
+  } catch (error) {
+    return false;
+  }
+}
+
+// Helper: 判断卡牌是否为变体卡牌
+export function isVariantCard(card: StandardCard): boolean {
+  return card.type === CardType.Variant;
+}
+
+// Helper: 获取变体卡牌的真实类型
+export function getVariantRealType(card: StandardCard): string | null {
+  if (!isVariantCard(card) || !card.variantSpecial) {
+    return null;
+  }
+  return card.variantSpecial.realType;
+}
+
+// Helper: 获取变体卡牌的子类别
+export function getVariantSubCategory(card: StandardCard): string | null {
+  if (!isVariantCard(card) || !card.variantSpecial) {
+    return null;
+  }
+  return card.variantSpecial.subCategory;
+}
+
+// Helper: 获取卡牌的有效类型（变体卡牌返回真实类型，其他返回type）
+export function getEffectiveCardType(card: StandardCard): string {
+  if (isVariantCard(card)) {
+    return getVariantRealType(card) || card.type;
+  }
+  return card.type;
 }
 
 // Helper: 判断卡牌是否为自定义卡牌

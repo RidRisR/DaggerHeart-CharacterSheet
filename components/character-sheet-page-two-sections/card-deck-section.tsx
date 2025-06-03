@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect, useRef, memo } from "react"
 import { getCardTypeName, convertToStandardCard } from "@/data/card"
 import { CardType, createEmptyCard, StandardCard } from "@/data/card/card-types"
+import { isVariantCard, getVariantRealType } from "@/data/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { saveFocusedCardIds, loadFocusedCardIds } from "@/lib/storage" // Import storage functions
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -72,6 +73,17 @@ function Card({
 }: CardProps) {
   const standardCard = convertToStandardCard(card);
 
+  // Enhanced card type name display for variants
+  const displayTypeName = (() => {
+    if (standardCard && isVariantCard(standardCard)) {
+      const realType = getVariantRealType(standardCard);
+      if (realType) {
+        return getCardTypeName(realType);
+      }
+    }
+    return standardCard ? getCardTypeName(standardCard.type) : "";
+  })();
+
   return (
     <div
       className={`relative cursor-pointer transition-colors rounded-md p-1 h-16 ${isSelected ? "border-3" : "border"
@@ -122,7 +134,7 @@ function Card({
                       : "bg-red-100 border-red-300"
               }`}
           >
-            {getCardTypeName(standardCard.type as CardType)}
+            {displayTypeName}
           </span>
         </div>
       )}

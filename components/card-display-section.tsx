@@ -26,6 +26,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { CardType, StandardCard } from "@/data/card/card-types"
 import { loadFocusedCardIds } from "@/lib/storage"
 import { getCardTypeName } from "@/data/card"
+import { isVariantCard, getVariantRealType } from "@/data/card/card-types"
 import { useAllCards } from "@/hooks/use-cards"
 import ReactMarkdown from "react-markdown"
 import React, { useRef, useCallback } from "react"
@@ -49,6 +50,17 @@ function SortableCard({
     getBadgeVariant: (type: string) => "default" | "secondary" | "outline" | "destructive" | null | undefined
 }) {
   const cardId = `${card.type}-${card.name}-${index}`
+
+  // Enhanced card type name display for variants
+  const displayTypeName = (() => {
+    if (isVariantCard(card)) {
+      const realType = getVariantRealType(card);
+      if (realType) {
+        return getCardTypeName(realType);
+      }
+    }
+    return getCardTypeName(card.type);
+  })();
 
   // 新增：获取item1~item4
   const displayItem1 = card.cardSelectDisplay?.item1 || "";
@@ -86,7 +98,7 @@ function SortableCard({
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={getBadgeVariant(card.type)} className="text-xs">
-                {getCardTypeName(card.type as CardType) || "未知"}
+                {displayTypeName || "未知"}
               </Badge>
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4 text-gray-500" />

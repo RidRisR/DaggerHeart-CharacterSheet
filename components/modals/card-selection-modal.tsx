@@ -5,9 +5,11 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 import {
   CARD_CLASS_OPTIONS_BY_TYPE,
   getLevelOptions,
+  getVariantSubclassOptions,
+  getCardTypeName,
 } from "@/data/card/card-ui-config"
 import { CardType } from "@/data/card"; // Add this import
-import { StandardCard, ALL_CARD_TYPES } from "@/data/card/card-types"
+import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType } from "@/data/card/card-types"
 import { createEmptyCard } from "@/data/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -62,24 +64,48 @@ export function CardSelectionModal({
   const [classDropdownOpen, setClassDropdownOpen] = useState(false); // Add state for class dropdown
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false); // Add state for level dropdown
 
+  // Add category state management
+  const [expandedCategories, setExpandedCategories] = useState(new Set(['standard'])); // Default: standard expanded
+
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
-  // Update availableCardTypes to adapt to Map structure
-  const availableCardTypes = Array.from(ALL_CARD_TYPES.entries()).map(([id, name]) => ({ id, name }));
+  // Group card types by category
+  const cardTypesByCategory = useMemo(() => {
+    const standard = getCardTypesByCategory(CardCategory.Standard);
+    const extended = getCardTypesByCategory(CardCategory.Extended);
+    return { standard, extended };
+  }, []);
 
   // Effect to set a default active tab when the modal opens and no tab is active
   useEffect(() => {
-    if (isOpen && !activeTab && availableCardTypes.length > 0) {
-      setActiveTab(availableCardTypes[0].id); // Set to the first available type
+    if (isOpen && !activeTab) {
+      // Default to the first standard card type
+      const standardTypes = cardTypesByCategory.standard;
+      if (standardTypes.length > 0) {
+        setActiveTab(standardTypes[0]);
+      }
     }
-  }, [isOpen, activeTab, setActiveTab, availableCardTypes]);
+  }, [isOpen, activeTab, setActiveTab, cardTypesByCategory.standard]);
 
   const classOptions = useMemo(() => {
     if (!activeTab) return []
+    
+    // 如果是变体类型，返回该类型的子类别作为class选项
+    if (isVariantType(activeTab)) {
+      return getVariantSubclassOptions(activeTab);
+    }
+    
+    // 否则返回标准卡牌类型的class选项
     return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
   }, [activeTab]);
 
   const levelOptions = useMemo(() => {
+    // 如果是变体类型，返回该变体类型的等级选项
+    if (isVariantType(activeTab)) {
+      return getLevelOptions(activeTab);
+    }
+    
+    // 否则返回标准卡牌类型的等级选项
     return getLevelOptions(activeTab as CardType)
   }, [activeTab]);
 
@@ -88,15 +114,27 @@ export function CardSelectionModal({
     cards: cardsForActiveTab,
     loading: cardsLoading,
     error: cardsError
-  } = useCardsByType(activeTab as CardType, {
-    enabled: isOpen && !!activeTab
-  });
+  } = useCardsByType(
+    isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType), 
+    {
+      enabled: isOpen && !!activeTab
+    }
+  );
 
   const fullyFilteredCards = useMemo(() => {
     if (!activeTab || !isOpen || cardsLoading || !cardsForActiveTab.length) {
       return [];
     }
     let filtered = cardsForActiveTab;
+
+    // 如果当前选中的是variant类型，需要按照真实的variant类型过滤
+    if (isVariantType(activeTab)) {
+      // 只显示匹配当前variant类型的卡牌
+      filtered = filtered.filter(card => {
+        // 对于variant卡牌，检查variantSpecial.realType是否匹配当前选中的variant类型
+        return card.variantSpecial?.realType === activeTab;
+      });
+    }
 
     if (debouncedSearchTerm) {
       const term = debouncedSearchTerm.toLowerCase();
@@ -112,7 +150,14 @@ export function CardSelectionModal({
 
     if (classOptions.length > 0) {
       if (selectedClasses.length > 0) {
-        filtered = filtered.filter((card) => card.class && selectedClasses.includes(card.class));
+        // 对于variant类型，class实际上是子类别
+        if (isVariantType(activeTab)) {
+          filtered = filtered.filter((card) => 
+            card.variantSpecial?.subCategory && selectedClasses.includes(card.variantSpecial.subCategory)
+          );
+        } else {
+          filtered = filtered.filter((card) => card.class && selectedClasses.includes(card.class));
+        }
       }
     }
 
@@ -186,6 +231,19 @@ export function CardSelectionModal({
     setSelectedLevels(prev => allLevelValues.filter(val => !prev.includes(val)));
   };
 
+  // Add category toggle function
+  const toggleCategoryExpansion = (category: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
+  };
+
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     // Reset filters when tab changes
@@ -223,15 +281,57 @@ export function CardSelectionModal({
         <div className="flex-1 flex overflow-hidden">
           <div className="w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto">
             <div className="flex flex-col p-2">
-              {availableCardTypes.map((type) => (
+              {/* Standard Category */}
+              <div className="mb-2">
                 <button
-                  key={type.id}
-                  onClick={() => handleTabChange(type.id)}
-                  className={`text-left px-4 py-2 rounded ${activeTab === type.id ? "bg-gray-200" : "hover:bg-gray-100"}`}
+                  onClick={() => toggleCategoryExpansion('standard')}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded"
                 >
-                  {type.name}
+                  <span>标准卡牌</span>
+                  <span className={`transform transition-transform ${expandedCategories.has('standard') ? 'rotate-90' : ''}`}>
+                    ▶
+                  </span>
                 </button>
-              ))}
+                {expandedCategories.has('standard') && (
+                  <div className="ml-2 mt-1 space-y-1">
+                    {cardTypesByCategory.standard.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => handleTabChange(type)}
+                        className={`w-full text-left px-4 py-2 text-sm rounded ${activeTab === type ? "bg-blue-100 text-blue-700 font-medium" : "hover:bg-gray-100 text-gray-600"}`}
+                      >
+                        {ALL_CARD_TYPES.get(type) || type}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Extended Category */}
+              <div className="mb-2">
+                <button
+                  onClick={() => toggleCategoryExpansion('extended')}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded"
+                >
+                  <span>扩展卡牌</span>
+                  <span className={`transform transition-transform ${expandedCategories.has('extended') ? 'rotate-90' : ''}`}>
+                    ▶
+                  </span>
+                </button>
+                {expandedCategories.has('extended') && (
+                  <div className="ml-2 mt-1 space-y-1">
+                    {cardTypesByCategory.extended.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => handleTabChange(type)}
+                        className={`w-full text-left px-4 py-2 text-sm rounded ${activeTab === type ? "bg-blue-100 text-blue-700 font-medium" : "hover:bg-gray-100 text-gray-600"}`}
+                      >
+                        {getCardTypeName(type)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

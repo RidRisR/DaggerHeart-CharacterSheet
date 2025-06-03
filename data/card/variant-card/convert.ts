@@ -32,26 +32,6 @@ export class VariantCardConverter {
       }
     };
   }
-
-  /**
-   * 将标准格式转换回原始变体卡牌格式（用于导出）
-   */
-  fromStandard(standardCard: StandardCard): RawVariantCard {
-    return {
-      id: standardCard.id,
-      名称: standardCard.name,
-      类型: standardCard.class,
-      子类别: standardCard.cardSelectDisplay?.item4 || undefined,
-      等级: standardCard.level,
-      效果: standardCard.description || "",
-      imageUrl: standardCard.imageUrl,
-      简略信息: {
-        item1: standardCard.cardSelectDisplay?.item1,
-        item2: standardCard.cardSelectDisplay?.item2,
-        item3: standardCard.cardSelectDisplay?.item3
-      }
-    };
-  }
 }
 
 export const variantCardConverter = new VariantCardConverter();

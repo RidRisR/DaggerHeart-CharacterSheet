@@ -8,7 +8,7 @@ import {
     getStandardCardsByTypeAsync,
     CardType,
     ExtendedStandardCard
-} from '@/data/card';
+} from '@/card';
 
 // 卡牌选择Hook的选项
 export interface UseCardSelectionOptions {

@@ -7,10 +7,10 @@ import {
   getLevelOptions,
   getVariantSubclassOptions,
   getCardTypeName,
-} from "@/data/card/card-ui-config"
-import { CardType } from "@/data/card"; // Add this import
-import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType } from "@/data/card/card-types"
-import { createEmptyCard } from "@/data/card/card-types"
+} from "@/card/card-ui-config"
+import { CardType } from "@/card"; // Add this import
+import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType } from "@/card/card-types"
+import { createEmptyCard } from "@/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {

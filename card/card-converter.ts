@@ -3,8 +3,8 @@
  * 用于将各种格式的卡牌转换为标准格式
  */
 
-import type { StandardCard } from "@/data/card/card-types"
-import { CustomCardManager } from "@/data/card/custom-card-manager"
+import type { StandardCard } from "@/card/card-types"
+import { CustomCardManager } from "@/card/custom-card-manager"
 
 
 export function createEmptyCard(type = "unknown"): StandardCard {

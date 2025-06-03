@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
-import { CardType, type StandardCard } from "@/data/card/card-types";
+import { CardType, type StandardCard } from "@/card/card-types";
 
 // 原始变体卡牌数据结构（用户导入的格式）
 export interface RawVariantCard {

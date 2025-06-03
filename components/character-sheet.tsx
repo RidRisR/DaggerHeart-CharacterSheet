@@ -11,7 +11,7 @@ import {
   getAllStandardCardsAsync,
   getStandardCardsByTypeAsync,
   CardType, // Import CardType
-} from "@/data/card"
+} from "@/card"
 import { useAllCards } from "@/hooks/use-cards"
 
 // Import modals
@@ -30,7 +30,7 @@ import { WeaponSection } from "@/components/character-sheet-sections/weapon-sect
 import { ArmorSection } from "@/components/character-sheet-sections/armor-section"
 import { InventorySection } from "@/components/character-sheet-sections/inventory-section"
 import { InventoryWeaponSection } from "@/components/character-sheet-sections/inventory-weapon-section"
-import { createEmptyCard, type StandardCard } from "@/data/card/card-types";
+import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
 
 interface CharacterSheetProps {

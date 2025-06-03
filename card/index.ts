@@ -4,28 +4,28 @@
  */
 
 // 导入各个卡牌类型的转换器
-import { professionCardConverter } from "@/data/card/profession-card/convert"
-import { ancestryCardConverter } from "@/data/card/ancestry-card/convert"
-import { communityCardConverter } from "@/data/card/community-card/convert"
-import { subclassCardConverter } from "@/data/card/subclass-card/convert"
-import { domainCardConverter } from "@/data/card/domain-card/convert" // 导入领域卡牌转换器
-import { variantCardConverter } from "@/data/card/variant-card/convert" // 导入变体卡牌转换器
+import { professionCardConverter } from "@/card/profession-card/convert"
+import { ancestryCardConverter } from "@/card/ancestry-card/convert"
+import { communityCardConverter } from "@/card/community-card/convert"
+import { subclassCardConverter } from "@/card/subclass-card/convert"
+import { domainCardConverter } from "@/card/domain-card/convert" // 导入领域卡牌转换器
+import { variantCardConverter } from "@/card/variant-card/convert" // 导入变体卡牌转换器
 
 // 导入UI配置
 import {
   CARD_CLASS_OPTIONS_BY_TYPE,
   getCardTypeName,
   getLevelOptions,
-} from "@/data/card/card-ui-config"
+} from "@/card/card-ui-config"
 
 // 导入类型定义
-import { ALL_CARD_TYPES, CARD_CLASS_OPTIONS, CARD_LEVEL_OPTIONS, CardType, StandardCard, ExtendedStandardCard, CardSource, ImportData, ImportResult } from "@/data/card/card-types"
-import { convertToStandardCard } from "@/data/card/card-converter"
+import { ALL_CARD_TYPES, CARD_CLASS_OPTIONS, CARD_LEVEL_OPTIONS, CardType, StandardCard, ExtendedStandardCard, CardSource, ImportData, ImportResult } from "@/card/card-types"
+import { convertToStandardCard } from "@/card/card-converter"
 // Import CardManager directly from the file
 import { CustomCardManager } from "./custom-card-manager"
 
 // 导入CardManager
-// export { CardManager } from "@/data/card/card-manager"
+// export { CardManager } from "@/card/card-manager"
 
 // 获取CustomCardManager实例（现在集成了转换器功能）
 const customCardManager = CustomCardManager.getInstance()
@@ -73,7 +73,7 @@ export function getBuiltinStandardCards(): ExtendedStandardCard[] {
 
 function computeBuiltinStandardCards(): ExtendedStandardCard[] {
   console.log("[computeBuiltinStandardCards] 从统一系统获取内置卡牌")
-  
+
   // 尝试从统一系统获取内置卡牌
   const allCards = customCardManager.tryGetAllCards()
   if (allCards) {
@@ -101,7 +101,7 @@ export async function getAllStandardCardsAsync(): Promise<ExtendedStandardCard[]
       console.warn('[getAllStandardCardsAsync] 统一系统初始化失败', error);
     }
   }
-  
+
   return [];
 }
 
@@ -118,7 +118,7 @@ export async function getStandardCardsByTypeAsync(typeId: CardType): Promise<Ext
       console.warn(`[getStandardCardsByTypeAsync] 统一系统初始化失败，回退到常量 (${typeId}):`, error);
     }
   }
-  
+
   return []
 }
 

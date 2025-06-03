@@ -1,8 +1,8 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { CardType } from "@/data/card"; // Import CardType
+import { CardType } from "@/card"; // Import CardType
 import { useState, useEffect, useMemo } from "react"
-import type { StandardCard } from "@/data/card/card-types"
+import type { StandardCard } from "@/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import {
     Select,

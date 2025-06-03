@@ -17,8 +17,8 @@ import {
   type ImportData,
   type ImportResult,
   type ExtendedStandardCard
-} from '@/data/card/index'
-import { CustomCardManager } from '@/data/card/custom-card-manager'
+} from '@/card/index'
+import { CustomCardManager } from '@/card/custom-card-manager'
 
 interface ImportStatus {
   isImporting: boolean

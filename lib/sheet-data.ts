@@ -1,6 +1,6 @@
 // types/form-data.ts
 
-import { StandardCard } from "@/data/card/card-types"
+import { StandardCard } from "@/card/card-types"
 
 export interface SheetCardReference {
   id: string

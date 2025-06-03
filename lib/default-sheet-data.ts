@@ -1,4 +1,4 @@
-import { createEmptyCard, type StandardCard } from "@/data/card/card-types";
+import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import type { SheetData } from "./sheet-data";
 
 export const defaultSheetData: SheetData = {

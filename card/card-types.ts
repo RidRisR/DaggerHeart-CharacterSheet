@@ -5,7 +5,7 @@ import {
   getCommunityCardNames,
   getSubClassCardNames,
   getDomainCardNames
-} from "@/data/card/card-predefined-field";
+} from "@/card/card-predefined-field";
 
 export interface StandardCard {
   standarized: boolean
@@ -129,11 +129,11 @@ export function isEmptyCard(card: any): boolean {
 // ===== 自定义卡牌导入相关类型定义 =====
 
 // 引入原始卡牌类型
-import type { ProfessionCard } from '@/data/card/profession-card/convert';
-import type { AncestryCard } from '@/data/card/ancestry-card/convert';
-import type { CommunityCard } from '@/data/card/community-card/convert';
-import type { SubClassCard } from '@/data/card/subclass-card/convert';
-import type { DomainCard } from '@/data/card/domain-card/convert';
+import type { ProfessionCard } from '@/card/profession-card/convert';
+import type { AncestryCard } from '@/card/ancestry-card/convert';
+import type { CommunityCard } from '@/card/community-card/convert';
+import type { SubClassCard } from '@/card/subclass-card/convert';
+import type { DomainCard } from '@/card/domain-card/convert';
 import { RawVariantCard } from "./variant-card/convert";
 
 // 变体类型定义接口（简化版）
@@ -222,7 +222,7 @@ export function isVariantType(typeId: string): boolean {
   if (Object.values(CardType).includes(typeId as CardType)) {
     return false;
   }
-  
+
   // 检查是否在已注册的variant类型中
   try {
     const { hasVariantType } = require('./card-predefined-field');

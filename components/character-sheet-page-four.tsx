@@ -1,7 +1,7 @@
 "use client"
 import React from "react"
-import { CardType, isEmptyCard, StandardCard } from "@/data/card/card-types"
-import { getCardTypeName } from "@/data/card/card-ui-config"
+import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
+import { getCardTypeName } from "@/card/card-ui-config"
 import ReactMarkdown from "react-markdown"
 import type { SheetData } from "@/lib/sheet-data"
 

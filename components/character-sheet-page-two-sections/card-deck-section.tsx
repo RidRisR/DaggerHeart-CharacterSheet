@@ -2,9 +2,9 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, memo } from "react"
-import { getCardTypeName, convertToStandardCard } from "@/data/card"
-import { CardType, createEmptyCard, StandardCard } from "@/data/card/card-types"
-import { isVariantCard, getVariantRealType } from "@/data/card/card-types"
+import { getCardTypeName, convertToStandardCard } from "@/card"
+import { CardType, createEmptyCard, StandardCard } from "@/card/card-types"
+import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { saveFocusedCardIds, loadFocusedCardIds } from "@/lib/storage" // Import storage functions
 import { SelectableCard } from "@/components/ui/selectable-card"

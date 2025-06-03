@@ -8,14 +8,14 @@ import CharacterSheetPageThree from "@/components/character-sheet-page-three"; /
 import {
   getStandardCardsByTypeAsync,
   CardType, // Import CardType
-} from "@/data/card";
+} from "@/card";
 import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
 import { CardDisplaySection } from "@/components/card-display-section"
 import CharacterSheetPageFour from "@/components/character-sheet-page-four"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { ImportExportModal } from "@/components/modals/import-export-modal"
 import { Button } from "@/components/ui/button"
-import { StandardCard } from "@/data/card/card-types"
+import { StandardCard } from "@/card/card-types"
 import { SheetData } from "@/lib/sheet-data"
 import { loadCharacterData, saveCharacterData, exportCharacterData } from "@/lib/storage"
 import PrintHelper from "./print-helper"

@@ -1,6 +1,6 @@
-import type { StandardCard } from "@/data/card/card-types";
-import { isEmptyCard } from "@/data/card/card-types"; // Import isEmptyCard
-import { CardType } from "@/data/card"; // Only import CardType since we no longer use getStandardCardsByTypeAsync
+import type { StandardCard } from "@/card/card-types";
+import { isEmptyCard } from "@/card/card-types"; // Import isEmptyCard
+import { CardType } from "@/card"; // Only import CardType since we no longer use getStandardCardsByTypeAsync
 
 // 引导内容数据结构
 export interface GuideStep {

@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
 import type { SheetData } from "@/lib/sheet-data"
-import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
+import { createEmptyCard, type StandardCard } from "@/card/card-types"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"

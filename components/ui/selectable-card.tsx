@@ -1,8 +1,8 @@
 "use client"
 
-import type { CardType, StandardCard } from "@/data/card/card-types"
-import { getCardTypeName } from "@/data/card/card-ui-config"
-import { isVariantCard, getVariantRealType } from "@/data/card/card-types"
+import type { CardType, StandardCard } from "@/card/card-types"
+import { getCardTypeName } from "@/card/card-ui-config"
+import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 

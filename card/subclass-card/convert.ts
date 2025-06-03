@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import { CardType, type StandardCard } from "@/data/card/card-types"
+import { CardType, type StandardCard } from "@/card/card-types"
 import { SubClassClass } from "../card-predefined-field"
 // 领域卡牌数据结构
 export interface SubClassCard {

@@ -10,7 +10,7 @@ import {
     customCardManager,
     CardType,
     ExtendedStandardCard
-} from '@/data/card';
+} from '@/card';
 
 // Hook状态类型定义
 export interface UseCardsState {

@@ -1,5 +1,5 @@
 "use client"
-import { StandardCard } from "@/data/card/card-types";
+import { StandardCard } from "@/card/card-types";
 import type { SheetData } from "@/lib/sheet-data"
 import ReactMarkdown from 'react-markdown';
 

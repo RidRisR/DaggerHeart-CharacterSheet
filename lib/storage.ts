@@ -1,7 +1,7 @@
 import {
   getStandardCardsByTypeAsync,
   CardType, // Import CardType
-} from "@/data/card";
+} from "@/card";
 import type { SheetData, SheetCardReference } from "./sheet-data"; // Ensure SheetCardReference is imported if not already
 import { defaultSheetData } from "./default-sheet-data";
 

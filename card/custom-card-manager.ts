@@ -23,23 +23,22 @@ import {
     ExtendedStandardCard,
     CardType // Assuming CardType enum might be useful here or for keys
 } from './card-types';
-import { BUILTIN_BATCH_ID, BUILTIN_CARDS_VERSION } from './builtin-card-data';
+import { BUILTIN_BATCH_ID } from './builtin-card-data';
 import { CardTypeValidator } from './type-validators';
 import { professionCardConverter } from './profession-card/convert';
 import { ancestryCardConverter } from './ancestry-card/convert';
 import { communityCardConverter } from './community-card/convert';
-import { AncestryCard } from "@/data/card/ancestry-card/convert";
-import { CommunityCard } from "@/data/card/community-card/convert";
-import { DomainCard } from "@/data/card/domain-card/convert";
-import { ProfessionCard } from "@/data/card/profession-card/convert";
-import { SubClassCard } from "@/data/card/subclass-card/convert";
+import { AncestryCard } from "@/card/ancestry-card/convert";
+import { CommunityCard } from "@/card/community-card/convert";
+import { DomainCard } from "@/card/domain-card/convert";
+import { ProfessionCard } from "@/card/profession-card/convert";
+import { SubClassCard } from "@/card/subclass-card/convert";
 import { RawVariantCard } from "./variant-card/convert";
 import { subclassCardConverter } from './subclass-card/convert';
 import { domainCardConverter } from './domain-card/convert';
 import { variantCardConverter } from './variant-card/convert';
-import { getBuiltinStandardCards } from './index';
 // 静态导入内置卡牌包JSON文件
-import builtinCardPackJson from '../../public/card-packs/builtin-base.json';
+import builtinCardPackJson from '../data/cards/builtin-base.json';
 
 /**
  * JSON卡牌包接口定义
@@ -116,7 +115,7 @@ class BuiltinCardPackLoader {
 export class CustomCardManager {
     private static instance: CustomCardManager;
     private customCards: ExtendedStandardCard[] = [];
-    
+
     // 转换器注册功能（原BuiltinCardManager功能）
     private cardConverters: {
         [K in keyof CardTypeMap]?: (card: CardTypeMap[K]) => StandardCard
@@ -135,7 +134,7 @@ export class CustomCardManager {
      */
     private async initializeSystem(): Promise<void> {
         if (this.isInitialized) return;
-        
+
         try {
             console.log('[CustomCardManager] 开始初始化系统...');
 
@@ -143,7 +142,7 @@ export class CustomCardManager {
             await this._seedOrUpdateBuiltinCards();
             // 然后加载自定义卡牌
             this.loadCustomCards();
-            
+
             this.isInitialized = true;
             console.log('[CustomCardManager] 系统初始化完成');
         } catch (error) {
@@ -199,7 +198,7 @@ export class CustomCardManager {
     async importCards(importData: ImportData, batchName?: string): Promise<ImportResult> {
         // 确保系统已初始化
         await this.ensureInitialized();
-        
+
         const batchId = CustomCardStorage.generateBatchId();
         let hasCreatedBatch = false;
 
@@ -338,7 +337,7 @@ export class CustomCardManager {
                     name: importData.name, // This is optional in BatchBase, but good to have if available
                     version: importData.version || 'NO VERSION PROVIDED',
                     description: importData.description,
-                    author: importData.author 
+                    author: importData.author
                 },
                 cards: convertResult.cards,
                 customFieldDefinitions: importData.customFieldDefinitions
@@ -427,7 +426,7 @@ export class CustomCardManager {
             if (hasCreatedBatch) {
                 CustomCardStorage.removeBatch(batchId);
             }
-            
+
             // 无论是否创建了批次，都要清理临时保存的自定义字段定义和变体类型定义
             if (importData.customFieldDefinitions) {
                 CustomCardStorage.removeCustomFieldsForBatch(batchId);
@@ -472,7 +471,7 @@ export class CustomCardManager {
                     .map(([key, value]) => [key, value as string[]])
             )
         } : undefined;
-        
+
         console.log('[DEBUG] 临时字段定义传递给验证器:', tempFields);
         const typeValidation = CardTypeValidator.validateImportData(importData, tempFields);
         console.log('[DEBUG] 验证结果:', typeValidation);
@@ -695,7 +694,7 @@ export class CustomCardManager {
     private async getAllExistingCards(): Promise<StandardCard[]> {
         // 确保系统已初始化
         await this.ensureInitialized();
-        
+
         // 导入内置卡牌（避免循环依赖，在运行时导入）
         let builtinCards: StandardCard[] = [];
 
@@ -874,13 +873,13 @@ export class CustomCardManager {
      */
     private async lazyEnsureInitialized(): Promise<void> {
         if (this.isInitialized) return;
-        
+
         // 如果已有正在进行的初始化，等待它完成
         if (this.initializationPromise) {
             await this.initializationPromise;
             return;
         }
-        
+
         // 开始新的初始化
         this.initializationPromise = this.initializeSystem();
         await this.initializationPromise;
@@ -975,7 +974,7 @@ export class CustomCardManager {
             // 删除批次对应的自定义字段和变体类型定义
             logDebug('removeBatch', { step: 'removing custom fields for batch' });
             CustomCardStorage.removeCustomFieldsForBatch(batchId);
-            
+
             logDebug('removeBatch', { step: 'removing variant types for batch' });
             CustomCardStorage.removeVariantTypesForBatch(batchId);
 

@@ -28,7 +28,6 @@ export class VariantCardConverter {
         item1: card.简略信息?.item1 || "",
         item2: card.简略信息?.item2 || "",
         item3: card.简略信息?.item3 || "",
-        item4: card.子类别 || ""        // 子类别作为第4项显示
       }
     };
   }

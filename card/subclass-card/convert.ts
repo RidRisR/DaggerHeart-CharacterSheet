@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid"
 import { CardType, type StandardCard } from "@/card/card-types"
-import { SubClassClass } from "../card-predefined-field"
+import { AttributeClass, SubClassClass, SubClassLevel } from "../card-predefined-field"
 // 领域卡牌数据结构
 export interface SubClassCard {
   id: string
@@ -9,8 +9,8 @@ export interface SubClassCard {
   imageUrl?: string
   主职: SubClassClass
   子职业: string
-  等级: string
-  施法: string
+  等级: SubClassLevel
+  施法: AttributeClass
 }
 
 class SubClassCardConverter {

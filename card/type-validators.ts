@@ -8,7 +8,11 @@ import {
     getAncestryCardNames,
     getCommunityCardNames,
     getSubClassCardNames,
-    getDomainCardNames
+    getDomainCardNames,
+    ATTRIBUTE_CLASS_NAMES,
+    SUBCLASS_LEVEL_NAMES,
+    type AttributeClass,
+    type SubClassLevel
 } from './card-predefined-field';
 import { CustomFieldsForBatch } from './card-storage';
 
@@ -208,17 +212,22 @@ export function validateSubClassCard(card: any, index: number, tempFields?: Temp
         errors.push({ path: `${prefix}.子职业`, message: '子职业字段是必需的，且必须是字符串' });
     }
 
-    const validLevels = ["基石", "专精", "大师"];
-    if (!card.等级 || !validLevels.includes(card.等级)) {
+    // 等级验证 - 使用 SubClassLevel 类型约束
+    if (!card.等级 || !SUBCLASS_LEVEL_NAMES.includes(card.等级)) {
         errors.push({
             path: `${prefix}.等级`,
-            message: `等级字段必须是有效的等级名称。有效选项: ${validLevels.join(', ')}`,
+            message: `等级字段必须是有效的等级名称。有效选项: ${SUBCLASS_LEVEL_NAMES.join(', ')}`,
             value: card.等级
         });
     }
 
-    if (!card.施法 || typeof card.施法 !== 'string') {
-        errors.push({ path: `${prefix}.施法`, message: '施法字段是必需的，且必须是字符串' });
+    // 施法属性验证 - 使用 AttributeClass 类型约束
+    if (!card.施法 || !ATTRIBUTE_CLASS_NAMES.includes(card.施法)) {
+        errors.push({
+            path: `${prefix}.施法`,
+            message: `施法字段必须是有效的属性名称。有效选项: ${ATTRIBUTE_CLASS_NAMES.join(', ')}`,
+            value: card.施法
+        });
     }
 
     return {

@@ -1,10 +1,9 @@
-import type { StandardCard } from "@/data/card/card-types"
+import type { StandardCard, RawVariantCard } from "@/data/card/card-types"
 import { AncestryCard } from "@/data/card/ancestry-card/convert";
 import { CommunityCard } from "@/data/card/community-card/convert";
 import { DomainCard } from "@/data/card/domain-card/convert";
 import { ProfessionCard } from "@/data/card/profession-card/convert";
 import { SubClassCard } from "@/data/card/subclass-card/convert";
-import { RawVariantCard } from "@/data/card/variant-card/convert";
 
 // 定义所有可用的卡牌类型映射
 type CardTypeMap = {

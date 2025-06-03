@@ -4,31 +4,12 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
-import { CardType, type StandardCard } from "@/data/card/card-types";
-
-/**
- * 原始变体卡牌数据结构（用户导入的格式）
- */
-export interface RawVariantCard {
-  id: string;
-  名称: string;
-  类型: string;          // 变体类型，如 "食物"、"人物" 等
-  子类别?: string;       // 可选的子类别，如 "饮料"、"盟友" 等
-  等级?: number;         // 可选的等级
-  效果: string;          // 卡牌效果描述
-  imageUrl?: string;     // 图片URL
-  简略信息: {           // 卡牌选择时显示的简要信息
-    item1?: string;
-    item2?: string;
-    item3?: string;
-  };
-  [key: string]: any;    // 允许扩展字段
-}
+import { CardType, type StandardCard, type RawVariantCard } from "@/data/card/card-types";
 
 /**
  * 变体卡牌转换器类
  */
-class VariantCardConverter {
+export class VariantCardConverter {
   /**
    * 将原始变体卡牌转换为标准格式
    */

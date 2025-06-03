@@ -127,7 +127,32 @@ import type { AncestryCard } from '@/data/card/ancestry-card/convert';
 import type { CommunityCard } from '@/data/card/community-card/convert';
 import type { SubClassCard } from '@/data/card/subclass-card/convert';
 import type { DomainCard } from '@/data/card/domain-card/convert';
-import type { VariantTypeDefinition } from '@/data/card/variant-card/variant-registry';
+
+// 变体类型定义接口（简化版）
+export interface VariantTypeDefinition {
+  name: string;                    // 显示名称
+  subclasses: string[];           // 允许的子类别列表
+  defaultLevel?: number;          // 默认等级
+  levelRange?: [number, number];  // 等级范围 [最小值, 最大值]
+  description?: string;           // 类型描述
+}
+
+// 原始变体卡牌数据结构（用户导入的格式）
+export interface RawVariantCard {
+  id: string;
+  名称: string;
+  类型: string;          // 变体类型，如 "食物"、"人物" 等
+  子类别?: string;       // 可选的子类别，如 "饮料"、"盟友" 等
+  等级?: number;         // 可选的等级
+  效果: string;          // 卡牌效果描述
+  imageUrl?: string;     // 图片URL
+  简略信息: {           // 卡牌选择时显示的简要信息
+    item1?: string;
+    item2?: string;
+    item3?: string;
+  };
+  [key: string]: any;    // 允许扩展字段
+}
 
 // 新的导入数据格式定义 - 支持原始卡牌类型
 export interface ImportData {
@@ -153,7 +178,7 @@ export interface ImportData {
   community?: CommunityCard[];
   subclass?: SubClassCard[];
   domain?: DomainCard[];
-  variant?: any[]; // 变体卡牌数组，使用any[]因为结构是动态的
+  variant?: RawVariantCard[]; // 变体卡牌数组
 }
 
 // 导入结果定义

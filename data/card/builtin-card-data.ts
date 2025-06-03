@@ -3,8 +3,6 @@
  * 提供所有内置卡牌的原始数据，用于统一管理和版本控制
  */
 
-import { BuiltinCardManager } from './builtin-card-manager';
-import { StandardCard } from './card-types';
 import { ImportBatch } from './card-storage';
 
 // 导入各个卡牌类型的数据

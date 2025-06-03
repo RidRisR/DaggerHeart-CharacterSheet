@@ -4,7 +4,7 @@
  */
 
 // 调试日志标记
-const DEBUG_CARD_MANAGER = true;
+const DEBUG_CARD_MANAGER = false;
 const logDebug = (operation: string, details: any) => {
     if (DEBUG_CARD_MANAGER) {
         console.log(`[CustomCardManager:${operation}]`, details);
@@ -48,6 +48,7 @@ interface JsonCardPack {
     version: string;
     description: string;
     author: string;
+    customFieldDefinitions?: any; // 支持自定义字段定义和变体类型定义
     profession?: any[];
     ancestry?: any[];
     community?: any[];
@@ -453,8 +454,8 @@ export class CustomCardManager {
     private validateImportDataFormat(importData: ImportData): { isValid: boolean; errors: string[] } {
         const errors: string[] = [];
 
-        console.log('[DEBUG] 开始验证导入数据格式');
-        console.log('[DEBUG] 导入数据:', JSON.stringify(importData, null, 2));
+        logDebug('[DEBUG] 开始验证导入数据格式', {});
+        logDebug('[DEBUG] 导入数据:', JSON.stringify(importData, null, 2));
 
         if (!importData || typeof importData !== 'object') {
             errors.push('导入数据格式无效：必须是JSON对象');
@@ -761,6 +762,7 @@ export class CustomCardManager {
 
     /**
      * 种子化或更新内置卡牌（从JSON文件加载）
+     * 重构：使用与自定义卡牌相同的validation流程
      */
     private async _seedOrUpdateBuiltinCards(): Promise<void> {
         try {
@@ -770,85 +772,203 @@ export class CustomCardManager {
             // 静态加载JSON卡牌包
             const jsonCardPack = BuiltinCardPackLoader.getBuiltinCardPack();
 
-            const builtinBatchMeta = {
-                id: BUILTIN_BATCH_ID,
-                name: jsonCardPack.name,
-                fileName: 'builtin-base.json',
-                importTime: new Date().toISOString(),
-                version: jsonCardPack.version,
-                description: jsonCardPack.description,
-                author: jsonCardPack.author
-            };
-
             // 检查内置卡包是否已存在且版本一致
-            const existingBuiltinBatch = index.batches[builtinBatchMeta.id];
-            if (existingBuiltinBatch && existingBuiltinBatch.version === builtinBatchMeta.version) {
-                console.log(`[CustomCardManager] 内置卡牌版本 (${builtinBatchMeta.version}) 已是最新，无需更新`);
+            const existingBuiltinBatch = index.batches[BUILTIN_BATCH_ID];
+            if (existingBuiltinBatch && existingBuiltinBatch.version === jsonCardPack.version) {
+                console.log(`[CustomCardManager] 内置卡牌版本 (${jsonCardPack.version}) 已是最新，无需更新`);
                 return;
             }
 
-            console.log('[CustomCardManager] 内置卡牌需要种子化或更新，开始从JSON文件转换');
-
-            // 转换JSON数据为标准卡牌格式
-            const builtinCards = BuiltinCardPackLoader.convertJsonPackToStandardCards(jsonCardPack);
-            if (builtinCards.length === 0) {
-                throw new Error('JSON卡牌包转换后没有卡牌数据，无法加载内置卡牌');
-            }
-
-            const batchData: BatchData = {
-                metadata: {
-                    id: builtinBatchMeta.id,
-                    name: builtinBatchMeta.name,
-                    fileName: builtinBatchMeta.fileName,
-                    importTime: builtinBatchMeta.importTime,
-                    version: builtinBatchMeta.version,
-                    description: builtinBatchMeta.description,
-                    author: builtinBatchMeta.author,
-                },
-                cards: builtinCards
-            };
-
-            // 检查存储空间
-            const dataSize = JSON.stringify(batchData).length * 2;
-            if (!CustomCardStorage.checkStorageSpace(dataSize)) {
-                const storageInfo = CustomCardStorage.getFormattedStorageInfo();
-                throw new Error(`存储空间不足，无法种子化内置卡牌。当前使用: ${storageInfo.used}/${storageInfo.total}`);
-            }
+            console.log('[CustomCardManager] 内置卡牌需要种子化或更新，使用完整导入流程');
 
             // 如果已存在旧版本，先删除
             if (existingBuiltinBatch) {
                 console.log('[CustomCardManager] 移除旧版本内置卡牌...');
-                CustomCardStorage.removeBatch(builtinBatchMeta.id);
+                CustomCardStorage.removeBatch(BUILTIN_BATCH_ID);
             }
 
-            // 添加新的内置卡牌批次
-            CustomCardStorage.saveBatch(builtinBatchMeta.id, batchData);
+            // 使用完整的导入流程，确保validation和customFieldDefinitions处理
+            const importResult = await this.importBuiltinCards(jsonCardPack);
 
-            // 更新索引 - 添加内置卡包信息
-            const newIndex = CustomCardStorage.loadIndex();
-            const builtinBatchInfo: ImportBatch = {
-                id: builtinBatchMeta.id,
-                name: builtinBatchMeta.name,
-                fileName: builtinBatchMeta.fileName,
-                importTime: builtinBatchMeta.importTime,
-                cardCount: builtinCards.length,
-                cardTypes: [...new Set(builtinCards.map(card => card.type))],
-                size: dataSize,
-                isSystemBatch: true,
-                version: builtinBatchMeta.version,
-                disabled: false // 初始化为启用状态
+            if (!importResult.success) {
+                throw new Error(`内置卡牌导入失败: ${importResult.errors.join(', ')}`);
+            }
+
+            console.log(`[CustomCardManager] 内置卡牌种子化完成，版本: ${jsonCardPack.version}, 卡牌数量: ${importResult.imported}`);
+        } catch (error) {
+            console.error('[CustomCardManager] 内置卡牌种子化失败:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 内置卡牌专用导入方法
+     * 使用与自定义卡牌相同的流程，但标记为系统内置
+     */
+    private async importBuiltinCards(jsonCardPack: JsonCardPack): Promise<ImportResult> {
+        const batchId = BUILTIN_BATCH_ID;
+        let hasCreatedBatch = false;
+
+        console.log('[CustomCardManager] 开始导入内置卡牌，使用完整validation流程');
+
+        try {
+            // 第一步：处理自定义字段定义和变体类型定义（内置数据也需要validation）
+            if (jsonCardPack.customFieldDefinitions) {
+                // 处理传统的自定义字段定义（字符串数组）
+                const filteredDefinitions = Object.fromEntries(
+                    Object.entries(jsonCardPack.customFieldDefinitions)
+                        .filter(([, value]) => Array.isArray(value))
+                        .map(([key, value]) => [key, value as string[]])
+                );
+
+                if (Object.keys(filteredDefinitions).length > 0) {
+                    console.log('[CustomCardManager] 保存内置卡牌的customFieldDefinitions:', filteredDefinitions);
+                    CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
+                }
+
+                // 处理变体类型定义
+                if (jsonCardPack.customFieldDefinitions.variantTypes) {
+                    console.log('[CustomCardManager] 保存内置卡牌的variantTypes:', jsonCardPack.customFieldDefinitions.variantTypes);
+                    CustomCardStorage.saveVariantTypesForBatch(batchId, jsonCardPack.customFieldDefinitions.variantTypes);
+                }
+            }
+
+            // 第二步：验证导入数据格式
+            console.log('[CustomCardManager] 验证内置卡牌数据格式');
+            const formatValidation = this.validateImportDataFormat(jsonCardPack);
+            if (!formatValidation.isValid) {
+                console.error('[CustomCardManager] 内置卡牌格式验证失败:', formatValidation.errors);
+                // 清理临时保存的数据
+                if (jsonCardPack.customFieldDefinitions) {
+                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    if (jsonCardPack.customFieldDefinitions.variantTypes) {
+                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                    }
+                }
+                return {
+                    success: false,
+                    imported: 0,
+                    errors: formatValidation.errors
+                };
+            }
+
+            // 第三步：数据转换（使用相同的转换逻辑）
+            console.log('[CustomCardManager] 转换内置卡牌数据');
+            const convertResult = await this.convertImportData(jsonCardPack);
+            if (!convertResult.success) {
+                console.error('[CustomCardManager] 内置卡牌转换失败:', convertResult.errors);
+                // 清理临时保存的数据
+                if (jsonCardPack.customFieldDefinitions) {
+                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    if (jsonCardPack.customFieldDefinitions.variantTypes) {
+                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                    }
+                }
+                return {
+                    success: false,
+                    imported: 0,
+                    errors: convertResult.errors
+                };
+            }
+
+            // 第四步：将卡牌标记为内置卡牌并准备批次数据
+            const builtinCards = convertResult.cards.map(card => ({
+                ...card,
+                source: CardSource.BUILTIN
+            }));
+
+            const batchData: BatchData = {
+                metadata: {
+                    id: batchId,
+                    fileName: 'builtin-base.json',
+                    importTime: new Date().toISOString(),
+                    name: jsonCardPack.name,
+                    version: jsonCardPack.version,
+                    description: jsonCardPack.description,
+                    author: jsonCardPack.author,
+                },
+                cards: builtinCards,
+                customFieldDefinitions: jsonCardPack.customFieldDefinitions
+                    ? Object.fromEntries(
+                        Object.entries(jsonCardPack.customFieldDefinitions)
+                            .filter(([, value]) => Array.isArray(value))
+                            .map(([key, value]) => [key, value as string[]])
+                    )
+                    : undefined
             };
 
-            newIndex.batches[builtinBatchMeta.id] = builtinBatchInfo;
-            newIndex.totalBatches = Object.keys(newIndex.batches).length;
-            newIndex.totalCards = Object.values(newIndex.batches).reduce((sum, batch) => sum + batch.cardCount, 0);
-            newIndex.lastUpdate = new Date().toISOString();
-            CustomCardStorage.saveIndex(newIndex);
+            // 第五步：检查存储空间
+            const dataSize = JSON.stringify(batchData).length * 2;
+            if (!CustomCardStorage.checkStorageSpace(dataSize)) {
+                const storageInfo = CustomCardStorage.getFormattedStorageInfo();
+                // 清理临时保存的数据
+                if (jsonCardPack.customFieldDefinitions) {
+                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    if (jsonCardPack.customFieldDefinitions.variantTypes) {
+                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                    }
+                }
+                return {
+                    success: false,
+                    imported: 0,
+                    errors: [`存储空间不足。当前使用: ${storageInfo.used}/${storageInfo.total}`]
+                };
+            }
 
-            console.log(`[CustomCardManager] JSON内置卡牌种子化完成，版本: ${builtinBatchMeta.version}, 卡牌数量: ${builtinCards.length}`);
+            // 第六步：保存批次数据
+            CustomCardStorage.saveBatch(batchId, batchData);
+            hasCreatedBatch = true;
+
+            // 第七步：更新索引
+            const index = CustomCardStorage.loadIndex();
+            const cardTypes = [...new Set(builtinCards.map(card => card.type))];
+
+            index.batches[batchId] = {
+                id: batchId,
+                name: jsonCardPack.name,
+                fileName: 'builtin-base.json',
+                importTime: batchData.metadata.importTime,
+                cardCount: builtinCards.length,
+                cardTypes,
+                size: dataSize,
+                isSystemBatch: true, // 标记为系统内置
+                version: jsonCardPack.version,
+                disabled: false
+            };
+            index.totalCards += builtinCards.length;
+            index.totalBatches++;
+            index.lastUpdate = new Date().toISOString();
+
+            CustomCardStorage.saveIndex(index);
+
+            return {
+                success: true,
+                imported: builtinCards.length,
+                errors: [],
+                batchId
+            };
+
         } catch (error) {
-            console.error('[CustomCardManager] JSON内置卡牌种子化失败:', error);
-            throw error;
+            // 清理失败的操作
+            if (hasCreatedBatch) {
+                CustomCardStorage.removeBatch(batchId);
+            }
+
+            // 清理临时保存的数据
+            if (jsonCardPack.customFieldDefinitions) {
+                CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                if (jsonCardPack.customFieldDefinitions.variantTypes) {
+                    CustomCardStorage.removeVariantTypesForBatch(batchId);
+                }
+            }
+
+            console.error('[CustomCardManager] 内置卡牌导入失败:', error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                imported: 0,
+                errors: [`内置卡牌导入失败: ${errorMessage}`]
+            };
         }
     }
 

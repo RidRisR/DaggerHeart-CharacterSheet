@@ -4,7 +4,7 @@
  */
 
 // 调试日志标记
-const DEBUG_CARD_STORAGE = true;
+const DEBUG_CARD_STORAGE = false;
 const logDebug = (operation: string, details: any) => {
     if (DEBUG_CARD_STORAGE) {
         console.log(`[CardStorage:${operation}]`, details);

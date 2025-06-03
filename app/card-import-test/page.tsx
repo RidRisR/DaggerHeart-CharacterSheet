@@ -299,13 +299,12 @@ export default function CardImportTestPage() {
     }
   }
 
-  // 强制重载内置数据
-  const handleForceReloadBuiltinData = async () => {
-    if (confirm('确定要强制重新加载内置卡牌数据吗？这将清除当前的内置卡牌缓存并重新初始化。')) {
+  // 清空所有localStorage数据
+  const handleClearAllLocalStorage = async () => {
+    if (confirm('确定要清空所有本地存储数据吗？这将删除所有自定义卡牌、内置卡牌缓存和其他本地数据。此操作不可恢复！')) {
       try {
-        // 清除localStorage中的内置卡牌数据
-        localStorage.removeItem('daggerheart_custom_cards_index')
-        localStorage.removeItem('daggerheart_custom_cards_batch_SYSTEM_BUILTIN_CARDS')
+        // 清空所有localStorage数据
+        localStorage.clear()
 
         // 强制重新初始化CustomCardManager
         const customCardManager = CustomCardManager.getInstance()
@@ -314,10 +313,15 @@ export default function CardImportTestPage() {
         // 刷新数据显示
         refreshData()
 
-        alert('内置卡牌数据重新加载成功！')
+        alert('所有本地存储数据已清空！页面将自动刷新。')
+
+        // 延迟刷新页面以确保用户看到提示
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       } catch (error) {
-        alert('强制重载失败: ' + (error instanceof Error ? error.message : String(error)))
-        console.error('强制重载内置数据失败:', error)
+        alert('清空数据失败: ' + (error instanceof Error ? error.message : String(error)))
+        console.error('清空localStorage数据失败:', error)
       }
     }
   }
@@ -370,11 +374,11 @@ export default function CardImportTestPage() {
           <Button
             variant="destructive"
             size="sm"
-            onClick={handleForceReloadBuiltinData}
+            onClick={handleClearAllLocalStorage}
             className="flex items-center gap-2"
           >
             <RefreshCw className="h-4 w-4" />
-            强制重载内置数据
+            强制重新初始化
           </Button>
           <div className="flex items-center gap-2 text-sm">
             <input

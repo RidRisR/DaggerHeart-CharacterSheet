@@ -33,7 +33,7 @@ export interface StandardCard {
   // 变体卡牌信息（仅在type="variant"时使用）
   variantSpecial?: {
     realType: string;      // 真实卡牌类型，来自RawVariantCard.类型
-    subCategory: string;   // 子类别，来自RawVariantCard.子类别
+    subCategory?: string;   // 子类别，来自RawVariantCard.子类别
   }
   // ... 其他字段
 }
@@ -250,7 +250,7 @@ export function getVariantSubCategory(card: StandardCard): string | null {
   if (!isVariantCard(card) || !card.variantSpecial) {
     return null;
   }
-  return card.variantSpecial.subCategory;
+  return card.variantSpecial.subCategory || null;
 }
 
 // Helper: 获取卡牌的有效类型（变体卡牌返回真实类型，其他返回type）

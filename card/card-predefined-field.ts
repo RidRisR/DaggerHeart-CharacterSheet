@@ -37,7 +37,7 @@ export type DomainClass = string;
 import { CustomCardStorage, type CustomFieldsForBatch, type VariantTypesForBatch } from './card-storage';
 
 // 调试日志标记
-const DEBUG_PREDEFINED_FIELDS = true;
+const DEBUG_PREDEFINED_FIELDS = false;
 const logDebug = (operation: string, details: any) => {
     if (DEBUG_PREDEFINED_FIELDS) {
         console.log(`[PredefinedFields:${operation}]`, details);

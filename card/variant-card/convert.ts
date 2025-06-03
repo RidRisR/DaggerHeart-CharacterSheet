@@ -11,7 +11,7 @@ export interface RawVariantCard {
   id: string;
   名称: string;
   类型: string;          // 变体类型，如 "食物"、"人物" 等
-  子类别: string;       // 子类别，如 "饮料"、"盟友" 等
+  子类别?: string;       // 子类别，如 "饮料"、"盟友" 等
   等级?: number;         // 可选的等级
   效果: string;          // 卡牌效果描述
   imageUrl?: string;     // 图片URL
@@ -36,7 +36,7 @@ export class VariantCardConverter {
       id: card.id || uuidv4(),
       name: card.名称,
       type: CardType.Variant,
-      class: card.子类别,              // 将 "子类别" 映射到 class 字段
+      class: card.子类别 || "",              // 将 "子类别" 映射到 class 字段，确保为字符串
       level: card.等级,
       description: card.效果,
       imageUrl: card.imageUrl || "",

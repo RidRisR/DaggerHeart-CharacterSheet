@@ -31,6 +31,7 @@ import { ancestryCardConverter } from './ancestry-card/convert';
 import { communityCardConverter } from './community-card/convert';
 import { subclassCardConverter } from './subclass-card/convert';
 import { domainCardConverter } from './domain-card/convert';
+import { variantCardConverter } from './variant-card/convert';
 import { getBuiltinStandardCards } from './index';
 
 /**
@@ -134,29 +135,50 @@ export class CustomCardManager {
         });
 
         try {
-            // 第一步：临时保存自定义字段定义（在验证之前）
-            // 这样验证器就能访问到新的自定义字段定义
+            // 第一步：临时保存自定义字段定义和变体类型定义（在验证之前）
+            // 这样验证器就能访问到新的自定义字段定义和变体类型定义
             if (importData.customFieldDefinitions) {
+                // 处理传统的自定义字段定义（字符串数组）
                 const filteredDefinitions = Object.fromEntries(
                     Object.entries(importData.customFieldDefinitions)
                         .filter(([, value]) => Array.isArray(value))
                         .map(([key, value]) => [key, value as string[]])
                 );
 
-                logDebug('importCards', {
-                    step: 'saving custom fields',
-                    batchId,
-                    filteredDefinitions
-                });
+                if (Object.keys(filteredDefinitions).length > 0) {
+                    logDebug('importCards', {
+                        step: 'saving custom fields',
+                        batchId,
+                        filteredDefinitions
+                    });
 
-                CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
+                    CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
 
-                // 验证保存是否成功
-                const savedFields = CustomCardStorage.getAggregatedCustomFieldNames();
-                logDebug('importCards', {
-                    step: 'verification after save',
-                    savedFields
-                });
+                    // 验证保存是否成功
+                    const savedFields = CustomCardStorage.getAggregatedCustomFieldNames();
+                    logDebug('importCards', {
+                        step: 'verification after custom fields save',
+                        savedFields
+                    });
+                }
+
+                // 处理变体类型定义
+                if (importData.customFieldDefinitions.variantTypes) {
+                    logDebug('importCards', {
+                        step: 'saving variant type definitions',
+                        batchId,
+                        variantTypes: importData.customFieldDefinitions.variantTypes
+                    });
+
+                    CustomCardStorage.saveVariantTypesForBatch(batchId, importData.customFieldDefinitions.variantTypes);
+
+                    // 验证保存是否成功
+                    const savedVariantTypes = CustomCardStorage.getAggregatedVariantTypes();
+                    logDebug('importCards', {
+                        step: 'verification after variant types save',
+                        savedVariantTypes: Object.keys(savedVariantTypes)
+                    });
+                }
             }
 
             // 第二步：验证导入数据格式
@@ -167,9 +189,12 @@ export class CustomCardManager {
                     step: 'format validation failed',
                     errors: formatValidation.errors
                 });
-                // 如果验证失败，清理临时保存的自定义字段定义
+                // 如果验证失败，清理临时保存的自定义字段定义和变体类型定义
                 if (importData.customFieldDefinitions) {
                     CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    if (importData.customFieldDefinitions.variantTypes) {
+                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                    }
                 }
                 return {
                     success: false,
@@ -187,9 +212,12 @@ export class CustomCardManager {
                     step: 'ID conflict detected',
                     duplicateIds: validation.duplicateIds
                 });
-                // 如果ID冲突，清理临时保存的自定义字段定义
+                // 如果ID冲突，清理临时保存的自定义字段定义和变体类型定义
                 if (importData.customFieldDefinitions) {
                     CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    if (importData.customFieldDefinitions.variantTypes) {
+                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                    }
                 }
                 return {
                     success: false,
@@ -207,9 +235,12 @@ export class CustomCardManager {
                     step: 'conversion failed',
                     errors: convertResult.errors
                 });
-                // 如果转换失败，清理临时保存的自定义字段定义
+                // 如果转换失败，清理临时保存的自定义字段定义和变体类型定义
                 if (importData.customFieldDefinitions) {
                     CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    if (importData.customFieldDefinitions.variantTypes) {
+                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                    }
                 }
                 return {
                     success: false,
@@ -257,9 +288,12 @@ export class CustomCardManager {
                     step: 'insufficient storage space',
                     requiredSize: dataSize
                 });
-                // 如果存储空间不足，清理临时保存的自定义字段定义
+                // 如果存储空间不足，清理临时保存的自定义字段定义和变体类型定义
                 if (importData.customFieldDefinitions) {
                     CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    if (importData.customFieldDefinitions.variantTypes) {
+                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                    }
                 }
                 const storageInfo = CustomCardStorage.getFormattedStorageInfo();
                 return {
@@ -274,7 +308,7 @@ export class CustomCardManager {
             CustomCardStorage.saveBatch(batchId, batchData);
             hasCreatedBatch = true;
 
-            // 注意：自定义字段定义已经在第一步中保存了，这里不需要重复保存
+            // 注意：自定义字段定义和变体类型定义已经在第一步中保存了，这里不需要重复保存
 
             // 第八步：更新索引
             logDebug('importCards', { step: 'updating index' });
@@ -315,9 +349,12 @@ export class CustomCardManager {
                 CustomCardStorage.removeBatch(batchId);
             }
             
-            // 无论是否创建了批次，都要清理临时保存的自定义字段定义
+            // 无论是否创建了批次，都要清理临时保存的自定义字段定义和变体类型定义
             if (importData.customFieldDefinitions) {
                 CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                if (importData.customFieldDefinitions.variantTypes) {
+                    CustomCardStorage.removeVariantTypesForBatch(batchId);
+                }
             }
 
             console.error('[CustomCardManager] 导入失败:', error);
@@ -531,6 +568,23 @@ export class CustomCardManager {
                     } catch (error) {
                         const errorMessage = error instanceof Error ? error.message : String(error);
                         errors.push(`domain[${i}]: 转换失败 - ${errorMessage}`);
+                    }
+                }
+            }
+
+            // 转换变体卡牌
+            if (importData.variant && Array.isArray(importData.variant)) {
+                for (let i = 0; i < importData.variant.length; i++) {
+                    try {
+                        const standardCard = variantCardConverter.toStandard(importData.variant[i]);
+                        const extendedCard: ExtendedStandardCard = {
+                            ...standardCard,
+                            source: CardSource.CUSTOM
+                        };
+                        convertedCards.push(extendedCard);
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        errors.push(`variant[${i}]: 转换失败 - ${errorMessage}`);
                     }
                 }
             }
@@ -827,9 +881,12 @@ export class CustomCardManager {
             logDebug('removeBatch', { step: 'removing batch data' });
             CustomCardStorage.removeBatch(batchId);
 
-            // 删除批次对应的自定义字段
+            // 删除批次对应的自定义字段和变体类型定义
             logDebug('removeBatch', { step: 'removing custom fields for batch' });
             CustomCardStorage.removeCustomFieldsForBatch(batchId);
+            
+            logDebug('removeBatch', { step: 'removing variant types for batch' });
+            CustomCardStorage.removeVariantTypesForBatch(batchId);
 
             // 更新索引
             logDebug('removeBatch', { step: 'updating index' });

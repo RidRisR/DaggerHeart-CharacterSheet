@@ -16,7 +16,8 @@ export const STORAGE_KEYS = {
     INDEX: 'daggerheart_custom_cards_index',
     BATCH_PREFIX: 'daggerheart_custom_cards_batch_',
     CONFIG: 'daggerheart_custom_cards_config',
-    CUSTOM_FIELDS_BY_BATCH: 'daggerheart_custom_fields_by_batch' // New key for batch-based custom fields
+    CUSTOM_FIELDS_BY_BATCH: 'daggerheart_custom_fields_by_batch', // New key for batch-based custom fields
+    VARIANT_TYPES_BY_BATCH: 'daggerheart_variant_types_by_batch' // New key for batch-based variant type definitions
 } as const;
 
 // 默认配置
@@ -82,6 +83,16 @@ export interface CustomFieldsForBatch {
 // Interface for the entire structure stored in localStorage
 export interface AllCustomFieldsByBatch {
     [batchId: string]: CustomFieldsForBatch;
+}
+
+// Interface for variant type definitions defined by a single batch
+export interface VariantTypesForBatch {
+    [typeId: string]: any; // VariantTypeDefinition, but using any to avoid import cycles
+}
+
+// Interface for the entire variant types structure stored in localStorage
+export interface AllVariantTypesByBatch {
+    [batchId: string]: VariantTypesForBatch;
 }
 
 export interface StorageStats {
@@ -490,6 +501,222 @@ export class CustomCardStorage {
     }
 
 
+    // ===== 新增：按批次的变体类型定义操作 =====
+
+    /**
+     * 保存指定批次的变体类型定义
+     */
+    static saveVariantTypesForBatch(batchId: string, variantTypes: VariantTypesForBatch): void {
+        logDebug('saveVariantTypesForBatch', { batchId, variantTypes });
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('saveVariantTypesForBatch', 'localStorage unavailable');
+            return;
+        }
+
+        try {
+            // 获取现有的所有批次变体类型数据
+            const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+            const allVariantTypes: AllVariantTypesByBatch = stored ? JSON.parse(stored) : {};
+
+            logDebug('saveVariantTypesForBatch', {
+                beforeSave: allVariantTypes,
+                storageKey: STORAGE_KEYS.VARIANT_TYPES_BY_BATCH
+            });
+
+            // 设置此批次的变体类型定义
+            allVariantTypes[batchId] = variantTypes;
+
+            // 保存更新后的数据
+            localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(allVariantTypes));
+
+            // 验证保存
+            const verification = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+            const parsedVerification = verification ? JSON.parse(verification) : {};
+
+            logDebug('saveVariantTypesForBatch', {
+                afterSave: parsedVerification,
+                savedSuccessfully: JSON.stringify(allVariantTypes) === verification,
+                batchDefinitions: parsedVerification[batchId]
+            });
+
+        } catch (error) {
+            logDebug('saveVariantTypesForBatch', { error });
+            console.error(`[CustomCardStorage] 批次 ${batchId} 的变体类型定义保存失败:`, error);
+            throw new Error(`无法保存批次 ${batchId} 的变体类型定义`);
+        }
+    }
+
+    /**
+     * 移除指定批次的变体类型定义
+     */
+    static removeVariantTypesForBatch(batchId: string): void {
+        logDebug('removeVariantTypesForBatch', { batchId });
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('removeVariantTypesForBatch', 'localStorage unavailable');
+            return;
+        }
+
+        try {
+            const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+            if (!stored) {
+                logDebug('removeVariantTypesForBatch', 'no stored data found');
+                return;
+            }
+
+            const allVariantTypes: AllVariantTypesByBatch = JSON.parse(stored);
+            logDebug('removeVariantTypesForBatch', { beforeRemoval: allVariantTypes });
+
+            // 删除指定批次的变体类型定义
+            if (allVariantTypes[batchId]) {
+                delete allVariantTypes[batchId];
+                localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(allVariantTypes));
+
+                // 验证删除
+                const verification = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+                const parsedVerification = verification ? JSON.parse(verification) : {};
+
+                logDebug('removeVariantTypesForBatch', {
+                    afterRemoval: parsedVerification,
+                    batchRemoved: !(batchId in parsedVerification)
+                });
+            } else {
+                logDebug('removeVariantTypesForBatch', 'batch not found in stored data');
+            }
+        } catch (error) {
+            logDebug('removeVariantTypesForBatch', { error });
+            console.error(`[CustomCardStorage] 批次 ${batchId} 的变体类型定义删除失败:`, error);
+            throw new Error(`无法删除批次 ${batchId} 的变体类型定义`);
+        }
+    }
+
+    /**
+     * 获取聚合的变体类型定义（来自所有启用的批次）
+     */
+    static getAggregatedVariantTypes(): VariantTypesForBatch {
+        logDebug('getAggregatedVariantTypes', 'starting aggregation');
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('getAggregatedVariantTypes', 'localStorage unavailable');
+            return {};
+        }
+
+        try {
+            // 加载所有批次的变体类型定义
+            const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+            if (!stored) {
+                logDebug('getAggregatedVariantTypes', 'no variant types stored');
+                return {};
+            }
+
+            const allVariantTypesByBatch: AllVariantTypesByBatch = JSON.parse(stored);
+            logDebug('getAggregatedVariantTypes', { allVariantTypesByBatch });
+
+            // 加载主索引以检查批次状态
+            const index = this.loadIndex();
+            logDebug('getAggregatedVariantTypes', {
+                indexBatches: Object.keys(index.batches),
+                enabledBatches: Object.keys(index.batches).filter(batchId => !index.batches[batchId].disabled)
+            });
+
+            // 初始化聚合结果
+            const aggregatedTypes: VariantTypesForBatch = {};
+
+            // 遍历所有批次
+            for (const batchId in allVariantTypesByBatch) {
+                const batchInfo = index.batches[batchId];
+
+                // 只处理未被禁用的批次
+                if (!batchInfo || batchInfo.disabled) {
+                    logDebug('getAggregatedVariantTypes', {
+                        batchId,
+                        status: !batchInfo ? 'not found in index' : 'disabled',
+                        skipped: true
+                    });
+                    continue;
+                }
+
+                const batchTypes = allVariantTypesByBatch[batchId];
+                logDebug('getAggregatedVariantTypes', {
+                    batchId,
+                    enabled: true,
+                    batchTypes
+                });
+
+                // 遍历此批次的每个变体类型
+                for (const typeId in batchTypes) {
+                    const typeDef = batchTypes[typeId];
+
+                    // 如果类型ID已存在，发出警告但允许覆盖（后加载的批次优先）
+                    if (aggregatedTypes[typeId]) {
+                        console.warn(`[CustomCardStorage] 变体类型 "${typeId}" 在多个批次中定义，使用批次 "${batchId}" 的定义`);
+                    }
+
+                    aggregatedTypes[typeId] = typeDef;
+                }
+            }
+
+            logDebug('getAggregatedVariantTypes', { result: aggregatedTypes });
+
+            return aggregatedTypes;
+        } catch (error) {
+            console.error('[CustomCardStorage] 聚合变体类型定义加载失败:', error);
+            return {};
+        }
+    }
+
+    /**
+     * 获取聚合的变体类型定义（包含临时批次定义，用于验证阶段）
+     */
+    static getAggregatedVariantTypesWithTemp(tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): VariantTypesForBatch {
+        logDebug('getAggregatedVariantTypesWithTemp', { tempBatchId, tempDefinitions });
+        
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('getAggregatedVariantTypesWithTemp', 'localStorage unavailable');
+            // 如果没有localStorage，至少返回临时定义
+            return tempDefinitions || {};
+        }
+
+        try {
+            // 首先获取现有的聚合变体类型
+            const existingTypes = this.getAggregatedVariantTypes();
+            
+            // 如果没有临时定义，直接返回现有类型
+            if (!tempBatchId || !tempDefinitions) {
+                return existingTypes;
+            }
+            
+            // 合并临时定义
+            const mergedTypes: VariantTypesForBatch = { ...existingTypes };
+            
+            for (const typeId in tempDefinitions) {
+                const tempTypeDef = tempDefinitions[typeId];
+                
+                // 如果类型ID已存在，临时定义优先
+                if (mergedTypes[typeId]) {
+                    console.warn(`[CustomCardStorage] 变体类型 "${typeId}" 已存在，临时定义将覆盖现有定义`);
+                }
+                
+                mergedTypes[typeId] = tempTypeDef;
+            }
+            
+            logDebug('getAggregatedVariantTypesWithTemp', { 
+                existingTypes, 
+                tempDefinitions, 
+                mergedTypes 
+            });
+            
+            return mergedTypes;
+        } catch (error) {
+            logDebug('getAggregatedVariantTypesWithTemp', { error });
+            console.error('[CustomCardStorage] 聚合变体类型定义加载失败:', error);
+            // 出错时至少返回临时定义
+            return tempDefinitions || {};
+        }
+    }
+
+
     // ===== 维护操作 =====
 
     /**
@@ -746,6 +973,7 @@ export class CustomCardStorage {
             // 清空批次自定义字段存储
             if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
                 localStorage.removeItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+                localStorage.removeItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
             }
 
             console.log(`[CustomCardStorage] 清空完成，保留 ${systemBatchCount} 个系统批次，${systemCardCount} 张系统卡牌`);

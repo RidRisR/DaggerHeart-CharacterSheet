@@ -39,8 +39,15 @@ export enum CardType {
   Community = "community",
   Subclass = "subclass",
   Domain = "domain",
+  Variant = "variant", // 新增变体卡牌类型
   // Add "all" if it's a valid type for getStandardCardsByType, or handle separately.
   // For now, assuming it's not directly used with getStandardCardsByType for a filtered list.
+}
+
+// 卡牌分类枚举
+export enum CardCategory {
+  Standard = "standard",   // 标准卡牌（内置类型）
+  Extended = "extended"    // 扩展卡牌（变体卡牌）
 }
 
 // 所有卡牌类型
@@ -50,7 +57,20 @@ export const ALL_CARD_TYPES = new Map<string, string>([
   [CardType.Community, "社群"],
   [CardType.Subclass, "子职业"],
   [CardType.Domain, "领域"], // 添加领域卡牌类型
+  [CardType.Variant, "杂项"], // 添加变体卡牌类型
 ]);
+
+// 根据分类获取卡牌类型
+export function getCardTypesByCategory(category: CardCategory): CardType[] {
+  switch (category) {
+    case CardCategory.Standard:
+      return [CardType.Profession, CardType.Ancestry, CardType.Community, CardType.Subclass, CardType.Domain];
+    case CardCategory.Extended:
+      return [CardType.Variant];
+    default:
+      return Object.values(CardType);
+  }
+}
 
 // 卡牌类别选项
 // This structure might need to be dynamically generated if it's used to populate UI directly
@@ -107,6 +127,7 @@ import type { AncestryCard } from '@/data/card/ancestry-card/convert';
 import type { CommunityCard } from '@/data/card/community-card/convert';
 import type { SubClassCard } from '@/data/card/subclass-card/convert';
 import type { DomainCard } from '@/data/card/domain-card/convert';
+import type { VariantTypeDefinition } from '@/data/card/variant-card/variant-registry';
 
 // 新的导入数据格式定义 - 支持原始卡牌类型
 export interface ImportData {
@@ -122,7 +143,8 @@ export interface ImportData {
     community?: string[];
     subclass?: string[];
     domain?: string[];
-    [key: string]: string[] | undefined; // Allows for other potential categories
+    variantTypes?: Record<string, VariantTypeDefinition>; // 变体类型定义
+    [key: string]: string[] | Record<string, VariantTypeDefinition> | undefined; // Allows for other potential categories
   };
 
   // 类型化的卡牌数组 - 用户导入原始格式
@@ -131,6 +153,7 @@ export interface ImportData {
   community?: CommunityCard[];
   subclass?: SubClassCard[];
   domain?: DomainCard[];
+  variant?: any[]; // 变体卡牌数组，使用any[]因为结构是动态的
 }
 
 // 导入结果定义

@@ -21,7 +21,7 @@ export type CommunityClass = string;
 export type DomainClass = string;
 
 // Import storage functions
-import { CustomCardStorage, type CustomFieldsForBatch } from './card-storage';
+import { CustomCardStorage, type CustomFieldsForBatch, type VariantTypesForBatch } from './card-storage';
 
 // 调试日志标记
 const DEBUG_PREDEFINED_FIELDS = true;
@@ -112,5 +112,91 @@ export function getDomainCardNames(tempBatchId?: string, tempDefinitions?: Custo
 // Note: Custom field names are now managed per-batch during card pack import/deletion.
 // The add functions below are deprecated and no longer used.
 // Custom field names are automatically aggregated from all enabled card packs.
+
+// ===== 新增：变体类型相关函数 =====
+
+/**
+ * 获取所有可用的变体类型定义
+ */
+export function getVariantTypes(tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): Record<string, any> {
+    const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
+    
+    logDebug('getVariantTypes', {
+        typeCount: Object.keys(aggregatedTypes).length,
+        typeIds: Object.keys(aggregatedTypes),
+        tempBatchId,
+        tempDefinitions
+    });
+    
+    return aggregatedTypes;
+}
+
+/**
+ * 获取指定变体类型的子类别选项
+ */
+export function getVariantSubclasses(variantType: string, tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): string[] {
+    const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
+    const typeDef = aggregatedTypes[variantType];
+    
+    logDebug('getVariantSubclasses', {
+        variantType,
+        typeDef: !!typeDef,
+        subclasses: typeDef?.subclasses || [],
+        tempBatchId
+    });
+    
+    return typeDef?.subclasses || [];
+}
+
+/**
+ * 获取所有变体类型的名称列表
+ */
+export function getVariantTypeNames(tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): string[] {
+    const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
+    
+    const typeNames = Object.keys(aggregatedTypes);
+    
+    logDebug('getVariantTypeNames', {
+        typeCount: typeNames.length,
+        typeNames,
+        tempBatchId
+    });
+    
+    return typeNames;
+}
+
+/**
+ * 检查变体类型是否存在
+ */
+export function hasVariantType(variantType: string, tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): boolean {
+    const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
+    const exists = variantType in aggregatedTypes;
+    
+    logDebug('hasVariantType', {
+        variantType,
+        exists,
+        tempBatchId
+    });
+    
+    return exists;
+}
+
+/**
+ * 获取变体类型的显示名称
+ */
+export function getVariantTypeName(variantType: string, tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): string {
+    const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
+    const typeDef = aggregatedTypes[variantType];
+    
+    const displayName = typeDef?.name || variantType;
+    
+    logDebug('getVariantTypeName', {
+        variantType,
+        displayName,
+        tempBatchId
+    });
+    
+    return displayName;
+}
 
 // (Optional) Functions to remove custom names can be added here if needed

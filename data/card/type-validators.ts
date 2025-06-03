@@ -274,6 +274,135 @@ export function validateDomainCard(card: any, index: number, tempFields?: Tempor
 }
 
 /**
+ * 变体卡牌验证器
+ */
+export function validateVariantCard(card: any, index: number, variantTypes?: Record<string, any>): TypeValidationResult {
+    const errors: ValidationError[] = [];
+    const prefix = `variant[${index}]`;
+
+    // 必需字段验证
+    if (!card.id || typeof card.id !== 'string') {
+        errors.push({ 
+            path: `${prefix}.id`, 
+            message: 'id字段是必需的，且必须是字符串' 
+        });
+    }
+
+    if (!card.名称 || typeof card.名称 !== 'string') {
+        errors.push({ 
+            path: `${prefix}.名称`, 
+            message: '名称字段是必需的，且必须是字符串' 
+        });
+    }
+
+    if (!card.类型 || typeof card.类型 !== 'string') {
+        errors.push({ 
+            path: `${prefix}.类型`, 
+            message: '类型字段是必需的，且必须是字符串' 
+        });
+    } else if (variantTypes && !variantTypes[card.类型]) {
+        const availableTypes = Object.keys(variantTypes);
+        errors.push({ 
+            path: `${prefix}.类型`, 
+            message: `类型字段必须是预定义的变体类型。可用类型: ${availableTypes.join(', ')}`,
+            value: card.类型
+        });
+    }
+
+    // 子类别验证（如果提供）
+    if (card.子类别) {
+        if (typeof card.子类别 !== 'string') {
+            errors.push({ 
+                path: `${prefix}.子类别`, 
+                message: '子类别字段必须是字符串' 
+            });
+        } else if (variantTypes && variantTypes[card.类型]) {
+            const validSubclasses = variantTypes[card.类型].subclasses;
+            if (validSubclasses && Array.isArray(validSubclasses) && !validSubclasses.includes(card.子类别)) {
+                errors.push({ 
+                    path: `${prefix}.子类别`, 
+                    message: `子类别字段必须是类型"${card.类型}"的有效子类别。可用选项: ${validSubclasses.join(', ')}`,
+                    value: card.子类别
+                });
+            }
+        }
+    }
+
+    // 等级验证（如果提供）
+    if (card.等级 !== undefined) {
+        if (typeof card.等级 !== 'number' || card.等级 < 0) {
+            errors.push({ 
+                path: `${prefix}.等级`, 
+                message: '等级字段必须是非负数字',
+                value: card.等级
+            });
+        } else if (variantTypes && variantTypes[card.类型]?.levelRange) {
+            const [min, max] = variantTypes[card.类型].levelRange;
+            if (card.等级 < min || card.等级 > max) {
+                errors.push({ 
+                    path: `${prefix}.等级`, 
+                    message: `等级字段必须在范围 ${min}-${max} 内`,
+                    value: card.等级
+                });
+            }
+        }
+    }
+
+    // 效果验证
+    if (!card.效果 || typeof card.效果 !== 'string') {
+        errors.push({ 
+            path: `${prefix}.效果`, 
+            message: '效果字段是必需的，且必须是字符串' 
+        });
+    }
+
+    // 简略信息验证
+    if (!card.简略信息 || typeof card.简略信息 !== 'object') {
+        errors.push({ 
+            path: `${prefix}.简略信息`, 
+            message: '简略信息字段是必需的，且必须是对象' 
+        });
+    }
+
+    return {
+        isValid: errors.length === 0,
+        errors
+    };
+}
+
+/**
+ * 验证变体类型定义
+ */
+export function validateVariantTypeDefinitions(variantTypes: Record<string, any>): ValidationError[] {
+    const errors: ValidationError[] = [];
+    
+    Object.entries(variantTypes).forEach(([typeId, typeDef]) => {
+        if (!typeDef.name || typeof typeDef.name !== 'string') {
+            errors.push({
+                path: `customFieldDefinitions.variantTypes.${typeId}.name`,
+                message: 'name字段是必需的，且必须是字符串'
+            });
+        }
+        
+        if (!Array.isArray(typeDef.subclasses)) {
+            errors.push({
+                path: `customFieldDefinitions.variantTypes.${typeId}.subclasses`,
+                message: 'subclasses字段必须是字符串数组'
+            });
+        }
+        
+        if (typeDef.levelRange && (!Array.isArray(typeDef.levelRange) || typeDef.levelRange.length !== 2)) {
+            errors.push({
+                path: `customFieldDefinitions.variantTypes.${typeId}.levelRange`,
+                message: 'levelRange字段必须是长度为2的数字数组 [min, max]'
+            });
+        }
+    });
+    
+    return errors;
+}
+
+/**
  * 综合类型验证器
  */
 export class CardTypeValidator {
@@ -334,6 +463,25 @@ export class CardTypeValidator {
             totalCards += importData.domain.length;
             importData.domain.forEach((card: any, index: number) => {
                 const result = validateDomainCard(card, index, tempFields);
+                allErrors.push(...result.errors);
+            });
+        }
+
+        // 验证变体卡牌
+        if (importData.variant && Array.isArray(importData.variant)) {
+            console.log('[DEBUG] 验证变体卡牌，数量:', importData.variant.length);
+            totalCards += importData.variant.length;
+            
+            // 获取变体类型定义
+            const variantTypes = importData.customFieldDefinitions?.variantTypes || {};
+            
+            // 先验证变体类型定义
+            const typeDefErrors = validateVariantTypeDefinitions(variantTypes);
+            allErrors.push(...typeDefErrors);
+            
+            // 然后验证每张变体卡牌
+            importData.variant.forEach((card: any, index: number) => {
+                const result = validateVariantCard(card, index, variantTypes);
                 allErrors.push(...result.errors);
             });
         }

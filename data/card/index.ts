@@ -9,6 +9,7 @@ import { ancestryCardConverter } from "@/data/card/ancestry-card/convert"
 import { communityCardConverter } from "@/data/card/community-card/convert"
 import { subclassCardConverter } from "@/data/card/subclass-card/convert"
 import { domainCardConverter } from "@/data/card/domain-card/convert" // 导入领域卡牌转换器
+import { variantCardConverter } from "@/data/card/variant-card/convert" // 导入变体卡牌转换器
 
 // 导入各个卡牌类型的数据
 import { professionCards } from "@/data/card/profession-card/cards"
@@ -59,6 +60,10 @@ builtinCardManager.registerCardType("subclass", {
 
 builtinCardManager.registerCardType("domain", {
   converter: domainCardConverter.toStandard,
+})
+
+builtinCardManager.registerCardType("variant", {
+  converter: variantCardConverter.toStandard,
 })
 
 // 注意：卡牌系统的初始化现在由 CardSystemInitializer 组件在客户端处理

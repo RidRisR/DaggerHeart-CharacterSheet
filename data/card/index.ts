@@ -11,13 +11,6 @@ import { subclassCardConverter } from "@/data/card/subclass-card/convert"
 import { domainCardConverter } from "@/data/card/domain-card/convert" // 导入领域卡牌转换器
 import { variantCardConverter } from "@/data/card/variant-card/convert" // 导入变体卡牌转换器
 
-// 导入各个卡牌类型的数据
-import { professionCards } from "@/data/card/profession-card/cards"
-import { ancestryCards } from "@/data/card/ancestry-card/cards"
-import { communityCards } from "@/data/card/community-card/cards"
-import { subclassCards } from "@/data/card/subclass-card/cards"
-import { domainCards } from "@/data/card/domain-card/cards" // 导入领域卡牌数据
-
 // 导入UI配置
 import {
   CARD_CLASS_OPTIONS_BY_TYPE,
@@ -29,40 +22,36 @@ import {
 import { ALL_CARD_TYPES, CARD_CLASS_OPTIONS, CARD_LEVEL_OPTIONS, CardType, StandardCard, ExtendedStandardCard, CardSource, ImportData, ImportResult } from "@/data/card/card-types"
 import { convertToStandardCard } from "@/data/card/card-converter"
 // Import CardManager directly from the file
-import { BuiltinCardManager } from "./builtin-card-manager"
-// Import CustomCardManager
 import { CustomCardManager } from "./custom-card-manager"
 
 // 导入CardManager
 // export { CardManager } from "@/data/card/card-manager"
 
-// 获取CardManager实例
-const builtinCardManager = BuiltinCardManager.getInstance()
-// 获取CustomCardManager实例
+// 获取CustomCardManager实例（现在集成了转换器功能）
 const customCardManager = CustomCardManager.getInstance()
 
 // 统一注册卡牌类型
-builtinCardManager.registerCardType("profession", {
+customCardManager.registerCardType("profession", {
   converter: professionCardConverter.toStandard,
 })
 
-builtinCardManager.registerCardType("ancestry", {
+customCardManager.registerCardType("ancestry", {
   converter: ancestryCardConverter.toStandard,
 })
 
-builtinCardManager.registerCardType("community", {
+customCardManager.registerCardType("community", {
   converter: communityCardConverter.toStandard,
 })
 
-builtinCardManager.registerCardType("subclass", {
+customCardManager.registerCardType("subclass", {
   converter: subclassCardConverter.toStandard,
 })
 
-builtinCardManager.registerCardType("domain", {
+customCardManager.registerCardType("domain", {
   converter: domainCardConverter.toStandard,
 })
 
-builtinCardManager.registerCardType("variant", {
+customCardManager.registerCardType("variant", {
   converter: variantCardConverter.toStandard,
 })
 
@@ -70,14 +59,8 @@ builtinCardManager.registerCardType("variant", {
 // 这里只进行转换器注册，不执行运行时初始化
 console.log('[Card Index] 所有转换器注册完成，等待客户端初始化...')
 
-// 卡牌数据映射
-export const cardDataByType = {
-  profession: professionCards,
-  ancestry: ancestryCards,
-  community: communityCards,
-  subclass: subclassCards,
-  domain: domainCards,
-}
+// 内置卡牌现在直接从JSON加载，通过CustomCardManager的统一系统管理
+// 不再需要单独的TypeScript卡牌数据映射
 
 let _cachedBuiltinCards: ExtendedStandardCard[] | null = null
 
@@ -89,21 +72,18 @@ export function getBuiltinStandardCards(): ExtendedStandardCard[] {
 }
 
 function computeBuiltinStandardCards(): ExtendedStandardCard[] {
-  console.log("[computeBuiltinStandardCards] 开始转换内置卡牌")
-  const standardCards: ExtendedStandardCard[] = []
+  console.log("[computeBuiltinStandardCards] 从统一系统获取内置卡牌")
+  
+  // 尝试从统一系统获取内置卡牌
+  const allCards = customCardManager.tryGetAllCards()
+  if (allCards) {
+    const builtinCards = allCards.filter(card => card.source === CardSource.BUILTIN)
+    console.log(`[computeBuiltinStandardCards] 从统一系统获取到 ${builtinCards.length} 张内置卡牌`)
+    return builtinCards
+  }
 
-  Object.entries(cardDataByType).forEach(([type, cards]) => {
-    const convertedCards = cards
-      .map(card => {
-        const converted = builtinCardManager.ConvertCard(card, type as keyof typeof cardDataByType)
-        return converted ? { ...converted, source: CardSource.BUILTIN } : null
-      })
-      .filter(Boolean) as ExtendedStandardCard[]
-
-    standardCards.push(...convertedCards)
-  })
-
-  return standardCards
+  console.warn("[computeBuiltinStandardCards] 统一系统未初始化，返回空数组")
+  return []
 }
 
 // 获取所有标准格式卡牌（内置+自定义）- 异步版本，确保系统已初始化
@@ -203,12 +183,11 @@ export {
   getLevelOptions,
   // 卡牌转换
   convertToStandardCard,
-  // 卡牌注册
-  builtinCardManager,
-  // 自定义卡牌管理器
+  // 统一卡牌管理器
   customCardManager,
+  // 自定义卡牌管理器
+  customCardManager as builtinCardManager, // 向后兼容别名
   // Re-export CardManager and CustomCardManager
-  BuiltinCardManager,
   CustomCardManager,
   // 类型定义
   CardType,

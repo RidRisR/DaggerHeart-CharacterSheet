@@ -1,7 +1,7 @@
 {
   "name": "系统内置卡牌包",
-  "version": "V20250603",
-  "description": "系统内置卡牌包，数据来自SRD。",
+  "version": "V20250603-JSON",
+  "description": "系统内置卡牌包，数据来自JSON文件，非TypeScript文件。",
   "author": "RidRisR",
   "profession": [
     {

@@ -11,7 +11,6 @@ const logDebug = (operation: string, details: any) => {
     }
 };
 
-import { BuiltinCardManager } from './builtin-card-manager';
 import { CustomCardStorage, type BatchData, type ImportBatch } from './card-storage';
 import {
     StandardCard,
@@ -24,29 +23,109 @@ import {
     ExtendedStandardCard,
     CardType // Assuming CardType enum might be useful here or for keys
 } from './card-types';
-import { getBuiltinBatchMetadata, BUILTIN_BATCH_ID, BUILTIN_CARDS_VERSION } from './builtin-card-data';
+import { BUILTIN_BATCH_ID, BUILTIN_CARDS_VERSION } from './builtin-card-data';
 import { CardTypeValidator } from './type-validators';
 import { professionCardConverter } from './profession-card/convert';
 import { ancestryCardConverter } from './ancestry-card/convert';
 import { communityCardConverter } from './community-card/convert';
+import { AncestryCard } from "@/data/card/ancestry-card/convert";
+import { CommunityCard } from "@/data/card/community-card/convert";
+import { DomainCard } from "@/data/card/domain-card/convert";
+import { ProfessionCard } from "@/data/card/profession-card/convert";
+import { SubClassCard } from "@/data/card/subclass-card/convert";
+import { RawVariantCard } from "./variant-card/convert";
 import { subclassCardConverter } from './subclass-card/convert';
 import { domainCardConverter } from './domain-card/convert';
 import { variantCardConverter } from './variant-card/convert';
 import { getBuiltinStandardCards } from './index';
+// 静态导入内置卡牌包JSON文件
+import builtinCardPackJson from '../../public/card-packs/builtin-base.json';
 
 /**
- * 自定义卡牌管理器类
+ * JSON卡牌包接口定义
+ */
+interface JsonCardPack {
+    name: string;
+    version: string;
+    description: string;
+    author: string;
+    profession?: any[];
+    ancestry?: any[];
+    community?: any[];
+    subclass?: any[];
+    domain?: any[];
+    variant?: any[];
+}
+
+/**
+ * 内置卡牌包加载器类
+ */
+class BuiltinCardPackLoader {
+    /**
+     * 获取静态导入的内置卡牌包
+     */
+    static getBuiltinCardPack(): JsonCardPack {
+        const cardPack = builtinCardPackJson as JsonCardPack;
+        return cardPack;
+    }
+
+    /**
+     * 将JSON卡牌包转换为标准卡牌格式
+     */
+    static convertJsonPackToStandardCards(jsonPack: JsonCardPack): ExtendedStandardCard[] {
+        const standardCards: ExtendedStandardCard[] = [];
+
+        // 转换各种类型的卡牌
+        const typeConverters = {
+            profession: professionCardConverter,
+            ancestry: ancestryCardConverter,
+            community: communityCardConverter,
+            subclass: subclassCardConverter,
+            domain: domainCardConverter,
+            variant: variantCardConverter
+        };
+
+        Object.entries(typeConverters).forEach(([type, converter]) => {
+            const cards = jsonPack[type as keyof JsonCardPack];
+            if (Array.isArray(cards)) {
+                const convertedCards = cards
+                    .map(card => {
+                        try {
+                            const converted = converter.toStandard(card);
+                            return converted ? { ...converted, source: CardSource.BUILTIN } : null;
+                        } catch (error) {
+                            console.warn(`[BuiltinCardPackLoader] 转换${type}卡牌失败:`, card, error);
+                            return null;
+                        }
+                    })
+                    .filter(Boolean) as ExtendedStandardCard[];
+
+                standardCards.push(...convertedCards);
+                console.log(`[BuiltinCardPackLoader] 转换${type}卡牌: ${convertedCards.length}张`);
+            }
+        });
+
+        return standardCards;
+    }
+}
+
+/**
+ * 统一卡牌管理器类 (原CustomCardManager)
+ * 集成了BuiltinCardManager的转换器功能
  */
 export class CustomCardManager {
     private static instance: CustomCardManager;
     private customCards: ExtendedStandardCard[] = [];
-    private builtinCardManager: BuiltinCardManager;
+    
+    // 转换器注册功能（原BuiltinCardManager功能）
+    private cardConverters: {
+        [K in keyof CardTypeMap]?: (card: CardTypeMap[K]) => StandardCard
+    } = {}
 
     private isInitialized = false;
     private initializationPromise: Promise<void> | null = null;
 
     private constructor() {
-        this.builtinCardManager = BuiltinCardManager.getInstance();
         // 不在构造函数中立即开始初始化，等待ensureInitialized()被调用
         console.log('[CustomCardManager] 构造函数完成，等待显式初始化');
     }
@@ -682,14 +761,25 @@ export class CustomCardManager {
     }
 
     /**
-     * 种子化或更新内置卡牌到存储系统
-     * 检查版本号，如果不匹配则更新内置卡牌
+     * 种子化或更新内置卡牌（从JSON文件加载）
      */
     private async _seedOrUpdateBuiltinCards(): Promise<void> {
         try {
-            console.log('[CustomCardManager] 开始种子化或更新内置卡牌');
+            console.log('[CustomCardManager] 开始种子化或更新内置卡牌（从JSON文件）');
             const index = CustomCardStorage.loadIndex();
-            const builtinBatchMeta = getBuiltinBatchMetadata(); // Uses ImportBatch directly
+
+            // 静态加载JSON卡牌包
+            const jsonCardPack = BuiltinCardPackLoader.getBuiltinCardPack();
+
+            const builtinBatchMeta = {
+                id: BUILTIN_BATCH_ID,
+                name: jsonCardPack.name,
+                fileName: 'builtin-base.json',
+                importTime: new Date().toISOString(),
+                version: jsonCardPack.version,
+                description: jsonCardPack.description,
+                author: jsonCardPack.author
+            };
 
             // 检查内置卡包是否已存在且版本一致
             const existingBuiltinBatch = index.batches[builtinBatchMeta.id];
@@ -698,24 +788,25 @@ export class CustomCardManager {
                 return;
             }
 
-            console.log('[CustomCardManager] 内置卡牌需要种子化或更新');
-            const builtinCards = getBuiltinStandardCards();
+            console.log('[CustomCardManager] 内置卡牌需要种子化或更新，开始从JSON文件转换');
+
+            // 转换JSON数据为标准卡牌格式
+            const builtinCards = BuiltinCardPackLoader.convertJsonPackToStandardCards(jsonCardPack);
             if (builtinCards.length === 0) {
-                console.warn('[CustomCardManager] 没有获取到内置卡牌数据，跳过种子化');
-                return;
+                throw new Error('JSON卡牌包转换后没有卡牌数据，无法加载内置卡牌');
             }
 
             const batchData: BatchData = {
                 metadata: {
-                    id: builtinBatchMeta.id, // from ImportBatch
-                    name: builtinBatchMeta.name, // from ImportBatch
-                    fileName: builtinBatchMeta.fileName, // from ImportBatch
-                    importTime: builtinBatchMeta.importTime, // from ImportBatch
-                    version: builtinBatchMeta.version, // from ImportBatch
+                    id: builtinBatchMeta.id,
+                    name: builtinBatchMeta.name,
+                    fileName: builtinBatchMeta.fileName,
+                    importTime: builtinBatchMeta.importTime,
+                    version: builtinBatchMeta.version,
                     description: builtinBatchMeta.description,
                     author: builtinBatchMeta.author,
                 },
-                cards: builtinCards.map(card => ({ ...card, source: CardSource.BUILTIN }))
+                cards: builtinCards
             };
 
             // 检查存储空间
@@ -755,9 +846,9 @@ export class CustomCardManager {
             newIndex.lastUpdate = new Date().toISOString();
             CustomCardStorage.saveIndex(newIndex);
 
-            console.log(`[CustomCardManager] 内置卡牌种子化完成，版本: ${builtinBatchMeta.version}, 卡牌数量: ${builtinCards.length}`);
+            console.log(`[CustomCardManager] JSON内置卡牌种子化完成，版本: ${builtinBatchMeta.version}, 卡牌数量: ${builtinCards.length}`);
         } catch (error) {
-            console.error('[CustomCardManager] 内置卡牌种子化失败:', error);
+            console.error('[CustomCardManager] JSON内置卡牌种子化失败:', error);
             throw error;
         }
     }
@@ -1055,7 +1146,72 @@ export class CustomCardManager {
         const batchInfo = index.batches[batchId];
         return batchInfo?.disabled === true; // 如果batchInfo或batchInfo.disabled为undefined，则视为启用
     }
+
+    // ===== 转换器注册功能（原BuiltinCardManager功能）=====
+
+    registerConverter<T extends keyof CardTypeMap>(
+        type: T,
+        converter: (card: CardTypeMap[T]) => StandardCard
+    ): void {
+        this.cardConverters[type] = converter as (card: any) => StandardCard
+    }
+
+    registerCardType<T extends keyof CardTypeMap>(
+        type: T,
+        registration: {
+            converter: (card: CardTypeMap[T]) => StandardCard;
+        }
+    ): void {
+        this.registerConverter(type, registration.converter)
+    }
+
+    ConvertCard<T extends keyof CardTypeMap>(
+        card: CardTypeMap[T],
+        type: T
+    ): StandardCard | null {
+        const converter = this.cardConverters[type]
+        if (converter) {
+            try {
+                var standCard = converter(card)
+                standCard.standarized = true
+
+                // 对 displayDescription 进行文本处理
+                if (standCard.description) {
+                    standCard.description = standCard.description
+                        .replace(/\n/g, '\n\n')
+                        .replace(/\n{2,}/g, '\n\n')
+                        .replace(/(\n\n)(?=\s*[-*+] )/g, '\n');
+                }
+
+                return standCard
+            } catch (error) {
+                console.error(`使用${type}转换器转换卡牌失败:`, error, card)
+                return null
+            }
+        }
+        return null
+    }
+
+    getRegisteredTypes(): string[] {
+        return Object.keys(this.cardConverters)
+    }
+
+    isTypeRegistered(type: string): boolean {
+        return type in this.cardConverters
+    }
+
+    // ===== 系统初始化功能 =====
 }
 
 // 导出单例实例
 export const customCardManager = CustomCardManager.getInstance();
+
+// 定义所有可用的卡牌类型映射
+type CardTypeMap = {
+    profession: ProfessionCard;
+    ancestry: AncestryCard;
+    community: CommunityCard;
+    domain: DomainCard;
+    subclass: SubClassCard;
+    variant: RawVariantCard;
+}

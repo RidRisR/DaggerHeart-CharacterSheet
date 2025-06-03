@@ -16,12 +16,12 @@ export const DOMAIN_CARD_NAMES: string[] = [
 
 // 属性类别常量列表
 export const ATTRIBUTE_CLASS_NAMES: string[] = [
-    "力量", "敏捷", "灵巧", "风度", "本能", "知识"
+    "力量", "敏捷", "灵巧", "风度", "本能", "知识", "不可施法"
 ];
 
 // 子职业等级常量列表  
 export const SUBCLASS_LEVEL_NAMES: string[] = [
-    "基石", "专精", "大师", "不可施法"
+    "基石", "专精", "大师", "未知"
 ];
 
 // 从常量列表生成类型

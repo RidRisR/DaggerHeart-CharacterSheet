@@ -21,7 +21,7 @@ export const ATTRIBUTE_CLASS_NAMES: string[] = [
 
 // 子职业等级常量列表  
 export const SUBCLASS_LEVEL_NAMES: string[] = [
-    "基石", "专精", "大师", "未知"
+    "基石", "专精", "大师", "不可施法"
 ];
 
 // 从常量列表生成类型

@@ -161,6 +161,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   const [professionCards, setProfessionCards] = useState<typeof cards>([])
   const [backgroundCards, setBackgroundCards] = useState<typeof cards>([])
   const [domainCards, setDomainCards] = useState<typeof cards>([])
+  const [variantCards, setVariantCards] = useState<typeof cards>([])
   const [focusedCards, setFocusedCards] = useState<typeof cards>([])
 
   // 当前选中的标签
@@ -194,6 +195,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     setProfessionCards(validCards.filter((card) => card.type === "profession" || card.type === "subclass"))
     setBackgroundCards(validCards.filter((card) => card.type === "ancestry" || card.type === "community"))
     setDomainCards(validCards.filter((card) => card.type === "domain"))
+    setVariantCards(validCards.filter((card) => isVariantCard(card)))
 
     // 只有当卡牌数据可用时才加载聚焦卡牌
     if (!cardsLoading && allStandardCards.length > 0) {
@@ -284,6 +286,13 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
             return arrayMove(cards, oldIndex, newIndex)
           })
           break
+        case "variant":
+          setVariantCards((cards) => {
+            const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
+            const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
+            return arrayMove(cards, oldIndex, newIndex)
+          })
+          break
         case "focused":
           setFocusedCards((cards) => {
             const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
@@ -357,6 +366,9 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
       case "domain":
         numCards = domainCards.length
         break
+      case "variant":
+        numCards = variantCards.length
+        break
       case "focused":
         numCards = focusedCards.length
         break
@@ -373,12 +385,13 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     <div className="border rounded-lg bg-gray-50 shadow-sm flex flex-col" style={{ height: containerHeightRef.current }}>
       <div className="p-2 flex-grow overflow-hidden">
         <Tabs defaultValue="all" className="w-full h-full flex flex-col" onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-6 mb-2">
-            <TabsTrigger value="all">全部</TabsTrigger>
-            <TabsTrigger value="profession">职业</TabsTrigger>
-            <TabsTrigger value="background">背景</TabsTrigger>
-            <TabsTrigger value="domain">领域</TabsTrigger>
-            <TabsTrigger value="focused">聚焦</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-6 mb-2">
+            <TabsTrigger value="all" className="text-s">全部</TabsTrigger>
+            <TabsTrigger value="profession" className="text-s">职业</TabsTrigger>
+            <TabsTrigger value="background" className="text-s">背景</TabsTrigger>
+            <TabsTrigger value="domain" className="text-s">领域</TabsTrigger>
+            <TabsTrigger value="variant" className="text-s">扩展</TabsTrigger>
+            <TabsTrigger value="focused" className="text-s">聚焦</TabsTrigger>
           </TabsList>
           <div className="flex-grow overflow-hidden">
             <TabsContent value="all" className="h-full m-0">
@@ -396,6 +409,9 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
             </TabsContent>
             <TabsContent value="domain" className="h-full m-0">
               {renderCardList(domainCards)}
+            </TabsContent>
+            <TabsContent value="variant" className="h-full m-0">
+              {renderCardList(variantCards)}
             </TabsContent>
             <TabsContent value="focused" className="h-full m-0">
               {renderCardList(focusedCards)}

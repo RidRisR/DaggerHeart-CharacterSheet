@@ -150,8 +150,8 @@ export function validateCommunityCard(card: any, index: number, tempFields?: Tem
     const prefix = `community[${index}]`;
     const validCommunities = getCommunityCardNames(tempFields?.tempBatchId, tempFields?.tempDefinitions);
 
-    if (!card.ID || typeof card.ID !== 'string') {
-        errors.push({ path: `${prefix}.ID`, message: 'ID字段是必需的，且必须是字符串' });
+    if (!card.id || typeof card.id !== 'string') {
+        errors.push({ path: `${prefix}.id`, message: 'ID字段是必需的，且必须是字符串' });
     }
 
     if (!card.名称 || !validCommunities.includes(card.名称 as any)) {
@@ -244,8 +244,8 @@ export function validateDomainCard(card: any, index: number, tempFields?: Tempor
     const prefix = `domain[${index}]`;
     const validDomains = getDomainCardNames(tempFields?.tempBatchId, tempFields?.tempDefinitions);
 
-    if (!card.ID || typeof card.ID !== 'string') {
-        errors.push({ path: `${prefix}.ID`, message: 'ID字段是必需的，且必须是字符串' });
+    if (!card.id || typeof card.id !== 'string') {
+        errors.push({ path: `${prefix}.id`, message: 'ID字段是必需的，且必须是字符串' });
     }
 
     if (!card.名称 || typeof card.名称 !== 'string') {

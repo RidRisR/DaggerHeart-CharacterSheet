@@ -453,7 +453,7 @@
   ],
   "community": [
     {
-      "ID": "HIGHBORNE",
+      "id": "HIGHBORNE",
       "名称": "高城之民",
       "特性": "高人一等",
       "简介": "高城之民通常表现为：亲切、坦率、狡猾、有进取心、炫耀、沉着。\n作为高城之民的一分子，意味着你在充满优雅、奢华和极具声望的上流社会中生活。传统上，高城之民的成员拥有令人难以置信的物质财富。虽然这根据社区的不同可能采取多种形式——包括黄金和其他矿物、土地，或控制生产资料——同时带来的还有巨大的权力和影响力。高城之民非常重视头衔和财产，而且在其内部的社会流动性非常小。高城之民的成员拥有着用巨额财富影响他人和当地经济运转的能力，控制他们生活地区的政治和经济状况并不罕见。这些地方中不太富裕的人们的健康和安全，往往取决于这个高城之民社区是否能优先考虑他们的福祉而非利润。",
@@ -461,7 +461,7 @@
       "imageUrl": ""
     },
     {
-      "ID": "LOREBORNE",
+      "id": "LOREBORNE",
       "名称": "博识之民",
       "特性": "博览群书",
       "简介": "博识之民通常表现为：直率、雄辩、好奇、耐心、狂热、机智。\n作为博学之民的一分子，意味着你来自一个重视学术或政治才能的社会。博识之民社区高度重视知识，通常表现为历史的传承、政治的进步、科学的研究、技能的磨练或神话的收集。这些社区的大多数成员在繁华城镇中建立的学术机构里进行研究，而少数特立独行者则擅长从自然世界中搜集知识。有些人可能是孤立主义者，在较小的飞地、学校或行会中运作，并遵循自己独特的理念。另一些人则在更大范围内运用他们的知识，在政治格局中进行巧妙的政治操作。",
@@ -469,7 +469,7 @@
       "imageUrl": ""
     },
     {
-      "ID": "ORDERBORNE",
+      "id": "ORDERBORNE",
       "名称": "结社之民",
       "特性": "恪守不渝",
       "简介": "结社之民通常表现为：雄心勃勃、仁慈、深思熟虑、谨慎、轻蔑、克己。\n作为结社之民的一分子，意味着你来自一个注重纪律或信仰的集体，并且秉持着一套原则，这些原则通常在你的经历中所体现。结社之民往往是周围社区中最强大的一部分。通过围绕一个共同的价值或目标——例如一位神明、一种教义、一种精神，甚至是一项共同的商业或贸易——将社群成员联合起来，这些社区的统治机构能够轻易动员大量人口。虽然结社之民社区形式多样——有些甚至是极端和平主义——但最令人畏惧的是那些以军事实力为基础构建自身的社区。在这种情况下，结社之民为其他城市或国家提供雇佣兵的情况并不少见。",
@@ -477,7 +477,7 @@
       "imageUrl": ""
     },
     {
-      "ID": "RIDGEBORNE",
+      "id": "RIDGEBORNE",
       "名称": "山岭之民",
       "特性": "脚踏实地",
       "简介": "山岭之民通常表现为：勇敢、坚韧、不屈、忠诚、内敛、固执。\n作为山岭之民的一分子，意味着你把岩石峰峦和险峻悬崖当作家园。那些生活在山里的人们常常自认为比大多数人更为坚韧，因为他们能够在这片大陆上最危险的地形中生存下来。这些团体擅长适应，会开发出独特的技术和设备，以便在崎岖的地形上运送人员和货物。因此，山岭之民的孩子从小就在攀爬和奔跑中长大，这让他们尤其稳健且意志坚定。山岭之民的聚居地形式多样——有的城市在峭壁上凿建整个崖面，有的则建造石砌城堡，还有更多的人居住在只有风能到达的山巅小屋中。外部势力很难攻破山岭之民的聚居地，因为山岭之民的小规模民兵和大规模军队都擅长利用其高地优势。",
@@ -485,7 +485,7 @@
       "imageUrl": ""
     },
     {
-      "ID": "SEABORNE",
+      "id": "SEABORNE",
       "名称": "滨海之民",
       "特性": "潮起潮落",
       "简介": "滨海之民通常表现为：直率、合作、热情、勇猛、坚定、饱经风霜。\n作为滨海之民的一分子，意味着你生活在大型水域上或水域附近。滨海之民社区在物质和文化上都围绕着他们称之为家的特定水域而建。其中一些群体居住在海岸线上，为当地人和旅行者建造港口。这些港口是商业中心、旅游景点，甚至只是经过数周旅行后一个安全休息的地方。另一些滨海之民则生活在或大或小的船上，“家”的概念包括一艘船及其船员，而不是任何一块陆地。无论他们的确切位置如何，滨海之民社区都与海洋潮汐及栖息其中的生物紧密相连。滨海之民从出生起就开始学习捕鱼，练习在最汹涌的水域中屏住呼吸和游泳。这些团体的成员因其航海能力而备受追捧，无论是在他们自己的社区内、为他人工作，甚至是在强大的海军舰队中掌舵，许多人都成为船只的船长。",
@@ -493,7 +493,7 @@
       "imageUrl": ""
     },
     {
-      "ID": "SLYBORNE",
+      "id": "SLYBORNE",
       "名称": "法外之民",
       "特性": "恶贯满盈",
       "简介": "法外之民通常表现为：精于算计、狡猾、强大、敏锐、机灵、顽固。\n作为法外之民的一分子，意味着你来自由一群法外狂徒组成的社区，包括各种罪犯、骗子和江湖术士。法外之民社区的成员因其声名狼藉的目标以及实现这些目标的巧妙手段而聚集在一起。这些社区中的许多人拥有一系列不择手段的技能：伪造、盗窃、走私和暴力。无论是那些积累了巨额财富和影响力的人，还是那些身无分文的人，任何社会阶层的人都可以是法外之民。在外人看来，法外之民可能像是没有忠诚感的恶棍，但这些社区拥有一些最严格的荣誉准则，一旦被打破，违法者可能会面临可怕的结局。",
@@ -501,7 +501,7 @@
       "imageUrl": ""
     },
     {
-      "ID": "UNDERBORNE",
+      "id": "UNDERBORNE",
       "名称": "地下之民",
       "特性": "微光生存",
       "简介": "地下之民通常表现为：沉着、难以捉摸、不屈不挠、创新、足智多谋、朴实无华。\n作为地下之民的一分子，意味着你来自一个地下世界。许多地下之民就住在其他社区的城市和村庄之下，而有些则生活得更深。这些社区从洞穴中的小型家庭群落，到石质洞穴中的巨大都市应有尽有。在许多地方，地下之民以其惊人的胆识和技能而闻名，这些技能使他们能够完成伟大的建筑和工程壮举。地下之民的成员因其勇敢而常被雇佣，即使是其中最胆小的人，在日常生活中也很可能遇到过数种地下的怪兽，学会对付这些生物是这些社会中的常见做法。由于他们所处环境的危险性，许多地下之民社区会发展出独特的非语言交流方式，这些方式在地表也同样有用。",
@@ -509,7 +509,7 @@
       "imageUrl": ""
     },
     {
-      "ID": "WANDERBORNE",
+      "id": "WANDERBORNE",
       "名称": "漂泊之民",
       "特性": "游牧行囊",
       "简介": "漂泊之民通常表现为：高深莫测、大度、开朗、可靠、精明、不循规蹈矩。\n作为漂泊之民的一分子，意味着你曾过着游牧的生活，没有固定的家，在不同的地方体验了各种各样的文化。与许多以地理位置定义的社群不同，漂泊之民是由游牧生活方式所定义的。由于他们频繁迁徙，相比于物质财富，漂泊之民更看重信息、技能和人脉的积累。虽然一些漂泊之民因共同的理念，如宗教、政治或经济价值观而结伴游牧，但也有一些人是在共同的悲剧之后聚在一起，如被迫失去家园或土地。无论原因如何，即使旅途中的游牧生活可能十分危险，他们也依然选择继续一同走下去，这意味着漂泊之民通常对同伴有着坚定不移的忠诚。",
@@ -517,7 +517,7 @@
       "imageUrl": ""
     },
     {
-      "ID": "WILDBORNE",
+      "id": "WILDBORNE",
       "名称": "荒野之民",
       "特性": "轻盈步伐",
       "简介": "荒野之民的成员通常表现为：坚韧、忠诚、善于养育、隐居、睿智、充满活力。\n作为荒野之民的一分子，意味着你生活在森林深处。荒野之民社区的特点在于他们致力于保护家园，许多社区与生活其中的动植物有着强烈的宗教和文化联系。这导致了荒野之民聚落内独特的建筑和科技发展，其更倾向于可持续性而非短期高收益的结果。荒野之民聚落的一个显著特征，是将他们的村庄和城市与自然环境融为一体，以避免干扰原本动植物的生活。虽然有些人将自己的住所建在树冠高处，但也有人在树冠下的地面建立家园。荒野之民成员隐居在林地家园中避世不出，并非罕见之事。",
@@ -1015,7 +1015,7 @@
   ],
   "domain": [
     {
-      "ID": "rune-ward",
+      "id": "rune-ward",
       "名称": "符文护符",
       "领域": "奥术",
       "等级": 1,
@@ -1025,7 +1025,7 @@
       "imageUrl": "resource/领域/符文守护.png"
     },
     {
-      "ID": "unleash-chaos",
+      "id": "unleash-chaos",
       "名称": "释放混沌",
       "领域": "奥术",
       "等级": 1,
@@ -1035,7 +1035,7 @@
       "imageUrl": "resource/领域/施放混乱.png"
     },
     {
-      "ID": "wall-walk",
+      "id": "wall-walk",
       "名称": "墙面行走",
       "领域": "奥术",
       "等级": 1,
@@ -1045,7 +1045,7 @@
       "imageUrl": "resource/领域/墙壁行走.png"
     },
     {
-      "ID": "cinder-grasp",
+      "id": "cinder-grasp",
       "名称": "余烬之握",
       "领域": "奥术",
       "等级": 2,
@@ -1055,7 +1055,7 @@
       "imageUrl": "resource/领域/灰烬之握.png"
     },
     {
-      "ID": "floating-eye",
+      "id": "floating-eye",
       "名称": "浮游之眼",
       "领域": "奥术",
       "等级": 2,
@@ -1065,7 +1065,7 @@
       "imageUrl": "resource/领域/浮空之眼.png"
     },
     {
-      "ID": "counterspell",
+      "id": "counterspell",
       "名称": "法术反制",
       "领域": "奥术",
       "等级": 3,
@@ -1075,7 +1075,7 @@
       "imageUrl": "resource/领域/反制法术.png"
     },
     {
-      "ID": "flight",
+      "id": "flight",
       "名称": "飞行奇术",
       "领域": "奥术",
       "等级": 3,
@@ -1085,7 +1085,7 @@
       "imageUrl": "resource/领域/飞行.png"
     },
     {
-      "ID": "blink-out",
+      "id": "blink-out",
       "名称": "闪烁现身",
       "领域": "奥术",
       "等级": 4,
@@ -1095,7 +1095,7 @@
       "imageUrl": "resource/领域/闪现.png"
     },
     {
-      "ID": "preservation-blast",
+      "id": "preservation-blast",
       "名称": "护身爆发",
       "领域": "奥术",
       "等级": 4,
@@ -1105,7 +1105,7 @@
       "imageUrl": "resource/领域/保存冲击.png"
     },
     {
-      "ID": "chain-lightning",
+      "id": "chain-lightning",
       "名称": "连锁闪电",
       "领域": "奥术",
       "等级": 5,
@@ -1115,7 +1115,7 @@
       "imageUrl": "resource/领域/连锁闪电.png"
     },
     {
-      "ID": "premonition",
+      "id": "premonition",
       "名称": "预见未来",
       "领域": "奥术",
       "等级": 5,
@@ -1125,7 +1125,7 @@
       "imageUrl": "resource/领域/预感.png"
     },
     {
-      "ID": "rift-walker",
+      "id": "rift-walker",
       "名称": "裂隙行者",
       "领域": "奥术",
       "等级": 6,
@@ -1135,7 +1135,7 @@
       "imageUrl": "resource/领域/裂隙行者.png"
     },
     {
-      "ID": "telekinesis",
+      "id": "telekinesis",
       "名称": "心灵遥控",
       "领域": "奥术",
       "等级": 6,
@@ -1145,7 +1145,7 @@
       "imageUrl": "resource/领域/念力.png"
     },
     {
-      "ID": "arcana-touched",
+      "id": "arcana-touched",
       "名称": "奥术恩泽",
       "领域": "奥术",
       "等级": 7,
@@ -1155,7 +1155,7 @@
       "imageUrl": "resource/领域/奥术触及.png"
     },
     {
-      "ID": "cloaking-blast",
+      "id": "cloaking-blast",
       "名称": "匿踪诡术",
       "领域": "奥术",
       "等级": 7,
@@ -1165,7 +1165,7 @@
       "imageUrl": "resource/领域/隐匿冲击.png"
     },
     {
-      "ID": "arcane-reflection",
+      "id": "arcane-reflection",
       "名称": "奥术反射",
       "领域": "奥术",
       "等级": 8,
@@ -1175,7 +1175,7 @@
       "imageUrl": "resource/领域/奥术反射.png"
     },
     {
-      "ID": "confusing-aura",
+      "id": "confusing-aura",
       "名称": "惑像灵光",
       "领域": "奥术",
       "等级": 8,
@@ -1185,7 +1185,7 @@
       "imageUrl": "resource/领域/迷惑光环.png"
     },
     {
-      "ID": "earthquake",
+      "id": "earthquake",
       "名称": "地动山摇",
       "领域": "奥术",
       "等级": 9,
@@ -1195,7 +1195,7 @@
       "imageUrl": "resource/领域/地震.png"
     },
     {
-      "ID": "sensory-projection",
+      "id": "sensory-projection",
       "名称": "感官投射",
       "领域": "奥术",
       "等级": 9,
@@ -1205,7 +1205,7 @@
       "imageUrl": "resource/领域/感官投射.png"
     },
     {
-      "ID": "adjust-reality",
+      "id": "adjust-reality",
       "名称": "调整现实",
       "领域": "奥术",
       "等级": 10,
@@ -1215,7 +1215,7 @@
       "imageUrl": "resource/领域/调整现实.png"
     },
     {
-      "ID": "falling-sky",
+      "id": "falling-sky",
       "名称": "星辰陨落",
       "领域": "奥术",
       "等级": 10,
@@ -1225,7 +1225,7 @@
       "imageUrl": "resource/领域/落空.png"
     },
     {
-      "ID": "get-back-up",
+      "id": "get-back-up",
       "名称": "卷土重来",
       "领域": "利刃",
       "等级": 1,
@@ -1235,7 +1235,7 @@
       "imageUrl": "resource/领域/重新站起.png"
     },
     {
-      "ID": "not-good-enough",
+      "id": "not-good-enough",
       "名称": "还不够好",
       "领域": "利刃",
       "等级": 1,
@@ -1245,7 +1245,7 @@
       "imageUrl": "resource/领域/尚不足够.png"
     },
     {
-      "ID": "whirlwind",
+      "id": "whirlwind",
       "名称": "旋风猛袭",
       "领域": "利刃",
       "等级": 1,
@@ -1255,7 +1255,7 @@
       "imageUrl": "resource/领域/旋风斩.png"
     },
     {
-      "ID": "a-soldiers-bond",
+      "id": "a-soldiers-bond",
       "名称": "老兵羁绊",
       "领域": "利刃",
       "等级": 2,
@@ -1265,7 +1265,7 @@
       "imageUrl": "resource/领域/战士之羁.png"
     },
     {
-      "ID": "reckless",
+      "id": "reckless",
       "名称": "鲁莽攻击",
       "领域": "利刃",
       "等级": 2,
@@ -1275,7 +1275,7 @@
       "imageUrl": "resource/领域/鲁莽.png"
     },
     {
-      "ID": "scramble",
+      "id": "scramble",
       "名称": "快步急闪",
       "领域": "利刃",
       "等级": 3,
@@ -1285,7 +1285,7 @@
       "imageUrl": "resource/领域/争夺.png"
     },
     {
-      "ID": "versatile-fighter",
+      "id": "versatile-fighter",
       "名称": "多面武者",
       "领域": "利刃",
       "等级": 3,
@@ -1295,7 +1295,7 @@
       "imageUrl": "resource/领域/全能战士.png"
     },
     {
-      "ID": "deadly-focus",
+      "id": "deadly-focus",
       "名称": "致命专注",
       "领域": "利刃",
       "等级": 4,
@@ -1305,7 +1305,7 @@
       "imageUrl": "resource/领域/致命专注.png"
     },
     {
-      "ID": "fortified-armor",
+      "id": "fortified-armor",
       "名称": "强化护甲",
       "领域": "利刃",
       "等级": 4,
@@ -1315,7 +1315,7 @@
       "imageUrl": "resource/领域/强化护甲.png"
     },
     {
-      "ID": "champions-edge",
+      "id": "champions-edge",
       "名称": "勇士锐锋",
       "领域": "利刃",
       "等级": 5,
@@ -1325,7 +1325,7 @@
       "imageUrl": "resource/领域/冠军之刃.png"
     },
     {
-      "ID": "vitality",
+      "id": "vitality",
       "名称": "蓬勃生命",
       "领域": "利刃",
       "等级": 5,
@@ -1335,7 +1335,7 @@
       "imageUrl": "resource/领域/活力.png"
     },
     {
-      "ID": "battle-hardened",
+      "id": "battle-hardened",
       "名称": "久经沙场",
       "领域": "利刃",
       "等级": 6,
@@ -1345,7 +1345,7 @@
       "imageUrl": "resource/领域/战斗磨砺.png"
     },
     {
-      "ID": "rage-up",
+      "id": "rage-up",
       "名称": "怒意重击",
       "领域": "利刃",
       "等级": 6,
@@ -1355,7 +1355,7 @@
       "imageUrl": "resource/领域/怒气爆发.png"
     },
     {
-      "ID": "blade-touched",
+      "id": "blade-touched",
       "名称": "利刃恩泽",
       "领域": "利刃",
       "等级": 7,
@@ -1365,7 +1365,7 @@
       "imageUrl": "resource/领域/利刃触及.png"
     },
     {
-      "ID": "glancing-blow",
+      "id": "glancing-blow",
       "名称": "斜掠攻势",
       "领域": "利刃",
       "等级": 7,
@@ -1375,7 +1375,7 @@
       "imageUrl": "resource/领域/擦伤.png"
     },
     {
-      "ID": "battle-cry",
+      "id": "battle-cry",
       "名称": "战斗咆哮",
       "领域": "利刃",
       "等级": 8,
@@ -1385,7 +1385,7 @@
       "imageUrl": "resource/领域/战吼.png"
     },
     {
-      "ID": "frenzy",
+      "id": "frenzy",
       "名称": "狂怒出击",
       "领域": "利刃",
       "等级": 8,
@@ -1395,7 +1395,7 @@
       "imageUrl": "resource/领域/狂暴.png"
     },
     {
-      "ID": "gore-and-glory",
+      "id": "gore-and-glory",
       "名称": "血与荣耀",
       "领域": "利刃",
       "等级": 9,
@@ -1405,7 +1405,7 @@
       "imageUrl": "resource/领域/血肉荣耀.png"
     },
     {
-      "ID": "reapers-strike",
+      "id": "reapers-strike",
       "名称": "死亡收割",
       "领域": "利刃",
       "等级": 9,
@@ -1415,7 +1415,7 @@
       "imageUrl": "resource/领域/死神打击.png"
     },
     {
-      "ID": "battle-monster",
+      "id": "battle-monster",
       "名称": "战场猛兽",
       "领域": "利刃",
       "等级": 10,
@@ -1425,7 +1425,7 @@
       "imageUrl": "resource/领域/战斗巨兽.png"
     },
     {
-      "ID": "onslaught",
+      "id": "onslaught",
       "名称": "猛攻强袭",
       "领域": "利刃",
       "等级": 10,
@@ -1435,7 +1435,7 @@
       "imageUrl": "resource/领域/猛攻.png"
     },
     {
-      "ID": "deft-maneuvers",
+      "id": "deft-maneuvers",
       "名称": "灵巧机动",
       "领域": "骸骨",
       "等级": 1,
@@ -1445,7 +1445,7 @@
       "imageUrl": "resource/领域/灵巧机动.png"
     },
     {
-      "ID": "i-see-it-coming",
+      "id": "i-see-it-coming",
       "名称": "先见之明",
       "领域": "骸骨",
       "等级": 1,
@@ -1455,7 +1455,7 @@
       "imageUrl": "resource/领域/我早料到.png"
     },
     {
-      "ID": "untouchable",
+      "id": "untouchable",
       "名称": "不可侵犯",
       "领域": "骸骨",
       "等级": 1,
@@ -1465,7 +1465,7 @@
       "imageUrl": "resource/领域/不可触及.png"
     },
     {
-      "ID": "ferocity",
+      "id": "ferocity",
       "名称": "凶猛残暴",
       "领域": "骸骨",
       "等级": 2,
@@ -1475,7 +1475,7 @@
       "imageUrl": "resource/领域/凶猛.png"
     },
     {
-      "ID": "strategic-approach",
+      "id": "strategic-approach",
       "名称": "战术方针",
       "领域": "骸骨",
       "等级": 2,
@@ -1485,7 +1485,7 @@
       "imageUrl": "resource/领域/战略方针.png"
     },
     {
-      "ID": "brace",
+      "id": "brace",
       "名称": "警戒防备",
       "领域": "骸骨",
       "等级": 3,
@@ -1495,7 +1495,7 @@
       "imageUrl": "resource/领域/支撑.png"
     },
     {
-      "ID": "tactician",
+      "id": "tactician",
       "名称": "战术行家",
       "领域": "骸骨",
       "等级": 3,
@@ -1505,7 +1505,7 @@
       "imageUrl": "resource/领域/战术家.png"
     },
     {
-      "ID": "boost",
+      "id": "boost",
       "名称": "高高跃起",
       "领域": "骸骨",
       "等级": 4,
@@ -1515,7 +1515,7 @@
       "imageUrl": "resource/领域/助推.png"
     },
     {
-      "ID": "redirect",
+      "id": "redirect",
       "名称": "借力打力",
       "领域": "骸骨",
       "等级": 4,
@@ -1525,7 +1525,7 @@
       "imageUrl": "resource/领域/转移.png"
     },
     {
-      "ID": "know-thy-enemy",
+      "id": "know-thy-enemy",
       "名称": "知己知彼",
       "领域": "骸骨",
       "等级": 5,
@@ -1535,7 +1535,7 @@
       "imageUrl": "resource/领域/知己知彼.png"
     },
     {
-      "ID": "signature-move",
+      "id": "signature-move",
       "名称": "招牌动作",
       "领域": "骸骨",
       "等级": 5,
@@ -1545,7 +1545,7 @@
       "imageUrl": "resource/领域/招牌动作.png"
     },
     {
-      "ID": "rapid-riposte",
+      "id": "rapid-riposte",
       "名称": "迅速报复",
       "领域": "骸骨",
       "等级": 6,
@@ -1555,7 +1555,7 @@
       "imageUrl": "resource/领域/快速反击.png"
     },
     {
-      "ID": "recovery",
+      "id": "recovery",
       "名称": "恢复如新",
       "领域": "骸骨",
       "等级": 6,
@@ -1565,7 +1565,7 @@
       "imageUrl": "resource/领域/恢复.png"
     },
     {
-      "ID": "bone-touched",
+      "id": "bone-touched",
       "名称": "骸骨恩泽",
       "领域": "骸骨",
       "等级": 7,
@@ -1575,7 +1575,7 @@
       "imageUrl": "resource/领域/骸骨触及.png"
     },
     {
-      "ID": "cruel-precision",
+      "id": "cruel-precision",
       "名称": "残酷精准",
       "领域": "骸骨",
       "等级": 7,
@@ -1585,7 +1585,7 @@
       "imageUrl": "resource/领域/残酷精准.png"
     },
     {
-      "ID": "breaking-blow",
+      "id": "breaking-blow",
       "名称": "碎骨打击",
       "领域": "骸骨",
       "等级": 8,
@@ -1595,7 +1595,7 @@
       "imageUrl": "resource/领域/破甲一击.png"
     },
     {
-      "ID": "wrangle",
+      "id": "wrangle",
       "名称": "缠斗乱战",
       "领域": "骸骨",
       "等级": 8,
@@ -1605,7 +1605,7 @@
       "imageUrl": "resource/领域/纠缠.png"
     },
     {
-      "ID": "on-the-brink",
+      "id": "on-the-brink",
       "名称": "生死边缘",
       "领域": "骸骨",
       "等级": 9,
@@ -1615,7 +1615,7 @@
       "imageUrl": "resource/领域/濒临边缘.png"
     },
     {
-      "ID": "splintering-strike",
+      "id": "splintering-strike",
       "名称": "分裂打击",
       "领域": "骸骨",
       "等级": 9,
@@ -1625,7 +1625,7 @@
       "imageUrl": "resource/领域/裂骨打击.png"
     },
     {
-      "ID": "deathrun",
+      "id": "deathrun",
       "名称": "死亡奔袭",
       "领域": "骸骨",
       "等级": 10,
@@ -1635,7 +1635,7 @@
       "imageUrl": "resource/领域/死亡冲刺.png"
     },
     {
-      "ID": "swift-step",
+      "id": "swift-step",
       "名称": "闪转腾挪",
       "领域": "骸骨",
       "等级": 10,
@@ -1645,7 +1645,7 @@
       "imageUrl": "resource/领域/迅捷步伐.png"
     },
     {
-      "ID": "book-of-ava",
+      "id": "book-of-ava",
       "名称": "艾娃之书",
       "领域": "典籍",
       "等级": 1,
@@ -1655,7 +1655,7 @@
       "imageUrl": "resource/领域/阿瓦之书.png"
     },
     {
-      "ID": "book-of-illiat",
+      "id": "book-of-illiat",
       "名称": "伊利亚特之书",
       "领域": "典籍",
       "等级": 1,
@@ -1665,7 +1665,7 @@
       "imageUrl": "resource/领域/伊利亚特之书.png"
     },
     {
-      "ID": "book-of-tyfar",
+      "id": "book-of-tyfar",
       "名称": "提法之书",
       "领域": "典籍",
       "等级": 1,
@@ -1675,7 +1675,7 @@
       "imageUrl": "resource/领域/泰法之书.png"
     },
     {
-      "ID": "book-of-sitil",
+      "id": "book-of-sitil",
       "名称": "斯泰尔之书",
       "领域": "典籍",
       "等级": 2,
@@ -1685,7 +1685,7 @@
       "imageUrl": "resource/领域/西蒂尔之书.png"
     },
     {
-      "ID": "book-of-vagras",
+      "id": "book-of-vagras",
       "名称": "瓦格拉斯之书",
       "领域": "典籍",
       "等级": 2,
@@ -1695,7 +1695,7 @@
       "imageUrl": "resource/领域/瓦格拉斯之书.png"
     },
     {
-      "ID": "book-of-korvax",
+      "id": "book-of-korvax",
       "名称": "库瓦斯之书",
       "领域": "典籍",
       "等级": 3,
@@ -1705,7 +1705,7 @@
       "imageUrl": "resource/领域/科瓦克斯之书.png"
     },
     {
-      "ID": "book-of-norai",
+      "id": "book-of-norai",
       "名称": "诺莱伊之书",
       "领域": "典籍",
       "等级": 3,
@@ -1715,7 +1715,7 @@
       "imageUrl": "resource/领域/诺莱之书.png"
     },
     {
-      "ID": "book-of-exota",
+      "id": "book-of-exota",
       "名称": "埃索塔之书",
       "领域": "典籍",
       "等级": 4,
@@ -1725,7 +1725,7 @@
       "imageUrl": "resource/领域/艾索塔之书.png"
     },
     {
-      "ID": "book-of-grynn",
+      "id": "book-of-grynn",
       "名称": "格林之书",
       "领域": "典籍",
       "等级": 4,
@@ -1735,7 +1735,7 @@
       "imageUrl": "resource/领域/格林之书.png"
     },
     {
-      "ID": "manifest-wall",
+      "id": "manifest-wall",
       "名称": "具现之墙",
       "领域": "典籍",
       "等级": 5,
@@ -1745,7 +1745,7 @@
       "imageUrl": "resource/领域/显现之墙.png"
     },
     {
-      "ID": "teleport",
+      "id": "teleport",
       "名称": "传送术",
       "领域": "典籍",
       "等级": 5,
@@ -1755,7 +1755,7 @@
       "imageUrl": "resource/领域/传送.png"
     },
     {
-      "ID": "banish",
+      "id": "banish",
       "名称": "放逐术",
       "领域": "典籍",
       "等级": 6,
@@ -1765,7 +1765,7 @@
       "imageUrl": "resource/领域/放逐.png"
     },
     {
-      "ID": "sigil-of-retribution",
+      "id": "sigil-of-retribution",
       "名称": "惩戒符印",
       "领域": "典籍",
       "等级": 6,
@@ -1775,7 +1775,7 @@
       "imageUrl": "resource/领域/报复符文.png"
     },
     {
-      "ID": "book-of-homet",
+      "id": "book-of-homet",
       "名称": "霍梅特之书",
       "领域": "典籍",
       "等级": 7,
@@ -1785,7 +1785,7 @@
       "imageUrl": "resource/领域/霍梅特之书.png"
     },
     {
-      "ID": "codex-touched",
+      "id": "codex-touched",
       "名称": "典籍恩泽",
       "领域": "典籍",
       "等级": 7,
@@ -1795,7 +1795,7 @@
       "imageUrl": "resource/领域/典籍触及.png"
     },
     {
-      "ID": "book-of-vyola",
+      "id": "book-of-vyola",
       "名称": "维奥拉之书",
       "领域": "典籍",
       "等级": 8,
@@ -1805,7 +1805,7 @@
       "imageUrl": "resource/领域/维奥拉之书.png"
     },
     {
-      "ID": "safe-haven",
+      "id": "safe-haven",
       "名称": "避风港湾",
       "领域": "典籍",
       "等级": 8,
@@ -1815,7 +1815,7 @@
       "imageUrl": "resource/领域/安全港.png"
     },
     {
-      "ID": "book-of-ronin",
+      "id": "book-of-ronin",
       "名称": "罗宁之书",
       "领域": "典籍",
       "等级": 9,
@@ -1825,7 +1825,7 @@
       "imageUrl": "resource/领域/浪人之书.png"
     },
     {
-      "ID": "disintegration-wave",
+      "id": "disintegration-wave",
       "名称": "解离波",
       "领域": "典籍",
       "等级": 9,
@@ -1835,7 +1835,7 @@
       "imageUrl": "resource/领域/分解波.png"
     },
     {
-      "ID": "book-of-yarrow",
+      "id": "book-of-yarrow",
       "名称": "亚罗之书",
       "领域": "典籍",
       "等级": 10,
@@ -1845,7 +1845,7 @@
       "imageUrl": "resource/领域/蓍草之书.png"
     },
     {
-      "ID": "transcendent-union",
+      "id": "transcendent-union",
       "名称": "超凡联结",
       "领域": "典籍",
       "等级": 10,
@@ -1855,7 +1855,7 @@
       "imageUrl": "resource/领域/超越联合.png"
     },
     {
-      "ID": "deft-deceiver",
+      "id": "deft-deceiver",
       "名称": "欺瞒熟手",
       "领域": "优雅",
       "等级": 1,
@@ -1865,7 +1865,7 @@
       "imageUrl": "resource/领域/巧妙欺诈者.png"
     },
     {
-      "ID": "enrapture",
+      "id": "enrapture",
       "名称": "心醉神迷",
       "领域": "优雅",
       "等级": 1,
@@ -1875,7 +1875,7 @@
       "imageUrl": "resource/领域/魅惑.png"
     },
     {
-      "ID": "inspirational-words",
+      "id": "inspirational-words",
       "名称": "豪言壮语",
       "领域": "优雅",
       "等级": 1,
@@ -1885,7 +1885,7 @@
       "imageUrl": "resource/领域/激励言语.png"
     },
     {
-      "ID": "tell-no-lies",
+      "id": "tell-no-lies",
       "名称": "无可讳言",
       "领域": "优雅",
       "等级": 2,
@@ -1895,7 +1895,7 @@
       "imageUrl": "resource/领域/不说谎话.png"
     },
     {
-      "ID": "troublemaker",
+      "id": "troublemaker",
       "名称": "惹是生非",
       "领域": "优雅",
       "等级": 2,
@@ -1905,7 +1905,7 @@
       "imageUrl": "resource/领域/捣蛋鬼.png"
     },
     {
-      "ID": "hypnotic-shimmer",
+      "id": "hypnotic-shimmer",
       "名称": "催眠闪光",
       "领域": "优雅",
       "等级": 3,
@@ -1915,7 +1915,7 @@
       "imageUrl": "resource/领域/催眠闪光.png"
     },
     {
-      "ID": "invisibility",
+      "id": "invisibility",
       "名称": "无影无踪",
       "领域": "优雅",
       "等级": 3,
@@ -1925,7 +1925,7 @@
       "imageUrl": "resource/领域/隐形.png"
     },
     {
-      "ID": "soothing-speech",
+      "id": "soothing-speech",
       "名称": "宽慰言语",
       "领域": "优雅",
       "等级": 4,
@@ -1935,7 +1935,7 @@
       "imageUrl": "resource/领域/安抚言语.png"
     },
     {
-      "ID": "through-your-eyes",
+      "id": "through-your-eyes",
       "名称": "感官共享",
       "领域": "优雅",
       "等级": 4,
@@ -1945,7 +1945,7 @@
       "imageUrl": "resource/领域/透过你眼.png"
     },
     {
-      "ID": "thought-delver",
+      "id": "thought-delver",
       "名称": "挖掘思想",
       "领域": "优雅",
       "等级": 5,
@@ -1955,7 +1955,7 @@
       "imageUrl": "resource/领域/思想深探.png"
     },
     {
-      "ID": "words-of-discord",
+      "id": "words-of-discord",
       "名称": "挑拨离间",
       "领域": "优雅",
       "等级": 5,
@@ -1965,7 +1965,7 @@
       "imageUrl": "resource/领域/不和之语.png"
     },
     {
-      "ID": "never-upstaged",
+      "id": "never-upstaged",
       "名称": "绝不怯场",
       "领域": "优雅",
       "等级": 6,
@@ -1975,7 +1975,7 @@
       "imageUrl": "resource/领域/永不抢镜.png"
     },
     {
-      "ID": "share-the-burden",
+      "id": "share-the-burden",
       "名称": "排忧解难",
       "领域": "优雅",
       "等级": 6,
@@ -1985,7 +1985,7 @@
       "imageUrl": "resource/领域/分担重担.png"
     },
     {
-      "ID": "endless-charisma",
+      "id": "endless-charisma",
       "名称": "无穷魅力",
       "领域": "优雅",
       "等级": 7,
@@ -1995,7 +1995,7 @@
       "imageUrl": "resource/领域/无尽魅力.png"
     },
     {
-      "ID": "grace-touched",
+      "id": "grace-touched",
       "名称": "优雅恩泽",
       "领域": "优雅",
       "等级": 7,
@@ -2005,7 +2005,7 @@
       "imageUrl": "resource/领域/优雅触及.png"
     },
     {
-      "ID": "astral-projection",
+      "id": "astral-projection",
       "名称": "星界投影",
       "领域": "优雅",
       "等级": 8,
@@ -2015,7 +2015,7 @@
       "imageUrl": "resource/领域/星体投射.png"
     },
     {
-      "ID": "mass-enrapture",
+      "id": "mass-enrapture",
       "名称": "群体心醉神迷",
       "领域": "优雅",
       "等级": 8,
@@ -2025,7 +2025,7 @@
       "imageUrl": "resource/领域/群体魅惑.png"
     },
     {
-      "ID": "copycat",
+      "id": "copycat",
       "名称": "如法炮制",
       "领域": "优雅",
       "等级": 9,
@@ -2035,7 +2035,7 @@
       "imageUrl": "resource/领域/模仿者.png"
     },
     {
-      "ID": "master-of-the-craft",
+      "id": "master-of-the-craft",
       "名称": "技艺大师",
       "领域": "优雅",
       "等级": 9,
@@ -2045,7 +2045,7 @@
       "imageUrl": "resource/领域/工艺大师.png"
     },
     {
-      "ID": "encore",
+      "id": "encore",
       "名称": "再次上演",
       "领域": "优雅",
       "等级": 10,
@@ -2055,7 +2055,7 @@
       "imageUrl": "resource/领域/再来一次.png"
     },
     {
-      "ID": "notorious",
+      "id": "notorious",
       "名称": "恶名昭彰",
       "领域": "优雅",
       "等级": 10,
@@ -2065,7 +2065,7 @@
       "imageUrl": "resource/领域/声名显赫.png"
     },
     {
-      "ID": "pick-and-pull",
+      "id": "pick-and-pull",
       "名称": "妙手空空",
       "领域": "午夜",
       "等级": 1,
@@ -2075,7 +2075,7 @@
       "imageUrl": "resource/领域/拾取与牵引.png"
     },
     {
-      "ID": "rain-of-blades",
+      "id": "rain-of-blades",
       "名称": "滂沱剑雨",
       "领域": "午夜",
       "等级": 1,
@@ -2085,7 +2085,7 @@
       "imageUrl": "resource/领域/刀刃之雨.png"
     },
     {
-      "ID": "uncanny-disguise",
+      "id": "uncanny-disguise",
       "名称": "奇异伪装",
       "领域": "午夜",
       "等级": 1,
@@ -2095,7 +2095,7 @@
       "imageUrl": "resource/领域/奇妙伪装.png"
     },
     {
-      "ID": "midnight-spirit",
+      "id": "midnight-spirit",
       "名称": "午夜精魂",
       "领域": "午夜",
       "等级": 2,
@@ -2105,7 +2105,7 @@
       "imageUrl": "resource/领域/午夜之灵.png"
     },
     {
-      "ID": "shadowbind",
+      "id": "shadowbind",
       "名称": "暗影束缚",
       "领域": "午夜",
       "等级": 2,
@@ -2115,7 +2115,7 @@
       "imageUrl": "resource/领域/影缚.png"
     },
     {
-      "ID": "chokehold",
+      "id": "chokehold",
       "名称": "锁喉勒颈",
       "领域": "午夜",
       "等级": 3,
@@ -2125,7 +2125,7 @@
       "imageUrl": "resource/领域/锁喉.png"
     },
     {
-      "ID": "veil-of-night",
+      "id": "veil-of-night",
       "名称": "暗夜帷幕",
       "领域": "午夜",
       "等级": 3,
@@ -2135,7 +2135,7 @@
       "imageUrl": "resource/领域/夜幕.png"
     },
     {
-      "ID": "stealth-expertise",
+      "id": "stealth-expertise",
       "名称": "潜行专家",
       "领域": "午夜",
       "等级": 4,
@@ -2145,7 +2145,7 @@
       "imageUrl": "resource/领域/潜行专精.png"
     },
     {
-      "ID": "glyph-of-nightfall",
+      "id": "glyph-of-nightfall",
       "名称": "夜幕符文",
       "领域": "午夜",
       "等级": 4,
@@ -2155,7 +2155,7 @@
       "imageUrl": "resource/领域/夜坠符文.png"
     },
     {
-      "ID": "hush",
+      "id": "hush",
       "名称": "沉默不言",
       "领域": "午夜",
       "等级": 5,
@@ -2165,7 +2165,7 @@
       "imageUrl": "resource/领域/寂静.png"
     },
     {
-      "ID": "phantom-retreat",
+      "id": "phantom-retreat",
       "名称": "移形换影",
       "领域": "午夜",
       "等级": 5,
@@ -2175,7 +2175,7 @@
       "imageUrl": "resource/领域/幻影撤退.png"
     },
     {
-      "ID": "dark-whispers",
+      "id": "dark-whispers",
       "名称": "黑暗低语",
       "领域": "午夜",
       "等级": 6,
@@ -2185,7 +2185,7 @@
       "imageUrl": "resource/领域/黑暗低语.png"
     },
     {
-      "ID": "mass-disguise",
+      "id": "mass-disguise",
       "名称": "群体伪装",
       "领域": "午夜",
       "等级": 6,
@@ -2195,7 +2195,7 @@
       "imageUrl": "resource/领域/群体伪装.png"
     },
     {
-      "ID": "midnight-touched",
+      "id": "midnight-touched",
       "名称": "午夜恩泽",
       "领域": "午夜",
       "等级": 7,
@@ -2205,7 +2205,7 @@
       "imageUrl": "resource/领域/午夜触及.png"
     },
     {
-      "ID": "vanishing-dodge",
+      "id": "vanishing-dodge",
       "名称": "无踪影遁",
       "领域": "午夜",
       "等级": 7,
@@ -2215,7 +2215,7 @@
       "imageUrl": "resource/领域/消失闪避.png"
     },
     {
-      "ID": "shadowhunter",
+      "id": "shadowhunter",
       "名称": "暗影猎手",
       "领域": "午夜",
       "等级": 8,
@@ -2225,7 +2225,7 @@
       "imageUrl": "resource/领域/暗影猎手.png"
     },
     {
-      "ID": "spellcharge",
+      "id": "spellcharge",
       "名称": "法术充能",
       "领域": "午夜",
       "等级": 8,
@@ -2235,7 +2235,7 @@
       "imageUrl": "resource/领域/法术充能.png"
     },
     {
-      "ID": "night-terror",
+      "id": "night-terror",
       "名称": "夜魇降临",
       "领域": "午夜",
       "等级": 9,
@@ -2245,7 +2245,7 @@
       "imageUrl": "resource/领域/夜之恐怖.png"
     },
     {
-      "ID": "twilight-toll",
+      "id": "twilight-toll",
       "名称": "暮光丧钟",
       "领域": "午夜",
       "等级": 9,
@@ -2255,7 +2255,7 @@
       "imageUrl": "resource/领域/薄暮之钟.png"
     },
     {
-      "ID": "eclipse",
+      "id": "eclipse",
       "名称": "日蚀无光",
       "领域": "午夜",
       "等级": 10,
@@ -2265,7 +2265,7 @@
       "imageUrl": "resource/领域/日蚀.png"
     },
     {
-      "ID": "specter-of-the-dark",
+      "id": "specter-of-the-dark",
       "名称": "黑暗幽影",
       "领域": "午夜",
       "等级": 10,
@@ -2275,7 +2275,7 @@
       "imageUrl": "resource/领域/黑暗幽灵.png"
     },
     {
-      "ID": "gifted-tracker",
+      "id": "gifted-tracker",
       "名称": "追猎才能",
       "领域": "贤者",
       "等级": 1,
@@ -2285,7 +2285,7 @@
       "imageUrl": "resource/领域/天赋追踪者.png"
     },
     {
-      "ID": "natures-tongue",
+      "id": "natures-tongue",
       "名称": "自然之语",
       "领域": "贤者",
       "等级": 1,
@@ -2295,7 +2295,7 @@
       "imageUrl": "resource/领域/自然语言.png"
     },
     {
-      "ID": "vicious-entangle",
+      "id": "vicious-entangle",
       "名称": "怨毒缠绕",
       "领域": "贤者",
       "等级": 1,
@@ -2305,7 +2305,7 @@
       "imageUrl": "resource/领域/缠绕藤蔓.png"
     },
     {
-      "ID": "conjure-swarm",
+      "id": "conjure-swarm",
       "名称": "召唤虫群",
       "领域": "贤者",
       "等级": 2,
@@ -2315,7 +2315,7 @@
       "imageUrl": "resource/领域/召唤虫群.png"
     },
     {
-      "ID": "natural-familiar",
+      "id": "natural-familiar",
       "名称": "自然魔宠",
       "领域": "贤者",
       "等级": 2,
@@ -2325,7 +2325,7 @@
       "imageUrl": "resource/领域/自然魔宠.png"
     },
     {
-      "ID": "corrosive-projectile",
+      "id": "corrosive-projectile",
       "名称": "腐蚀射弹",
       "领域": "贤者",
       "等级": 3,
@@ -2335,7 +2335,7 @@
       "imageUrl": "resource/领域/腐蚀弹丸.png"
     },
     {
-      "ID": "towering-stalk",
+      "id": "towering-stalk",
       "名称": "高茎成塔",
       "领域": "贤者",
       "等级": 3,
@@ -2345,7 +2345,7 @@
       "imageUrl": "resource/领域/参天之茎.png"
     },
     {
-      "ID": "death-grip",
+      "id": "death-grip",
       "名称": "死亡卷握",
       "领域": "贤者",
       "等级": 4,
@@ -2355,7 +2355,7 @@
       "imageUrl": "resource/领域/死亡之握.png"
     },
     {
-      "ID": "healing-field",
+      "id": "healing-field",
       "名称": "治疗之域",
       "领域": "贤者",
       "等级": 4,
@@ -2365,7 +2365,7 @@
       "imageUrl": "resource/领域/治疗领域.png"
     },
     {
-      "ID": "thorn-skin",
+      "id": "thorn-skin",
       "名称": "荆棘皮肤",
       "领域": "贤者",
       "等级": 5,
@@ -2375,7 +2375,7 @@
       "imageUrl": "resource/领域/荆棘皮肤.png"
     },
     {
-      "ID": "wild-fortress",
+      "id": "wild-fortress",
       "名称": "荒野壁垒",
       "领域": "贤者",
       "等级": 5,
@@ -2385,7 +2385,7 @@
       "imageUrl": "resource/领域/野性堡垒.png"
     },
     {
-      "ID": "conjured-steeds",
+      "id": "conjured-steeds",
       "名称": "召唤坐骑",
       "领域": "贤者",
       "等级": 6,
@@ -2395,7 +2395,7 @@
       "imageUrl": "resource/领域/召唤坐骑.png"
     },
     {
-      "ID": "forager",
+      "id": "forager",
       "名称": "丰收采集",
       "领域": "贤者",
       "等级": 6,
@@ -2405,7 +2405,7 @@
       "imageUrl": "resource/领域/觅食者.png"
     },
     {
-      "ID": "sage-touched",
+      "id": "sage-touched",
       "名称": "贤者恩泽",
       "领域": "贤者",
       "等级": 7,
@@ -2415,7 +2415,7 @@
       "imageUrl": "resource/领域/贤者触及.png"
     },
     {
-      "ID": "wild-surge",
+      "id": "wild-surge",
       "名称": "狂野浪涌",
       "领域": "贤者",
       "等级": 7,
@@ -2425,7 +2425,7 @@
       "imageUrl": "resource/领域/野性涌动.png"
     },
     {
-      "ID": "forest-sprites",
+      "id": "forest-sprites",
       "名称": "森林精魂",
       "领域": "贤者",
       "等级": 8,
@@ -2435,7 +2435,7 @@
       "imageUrl": "resource/领域/森林精灵.png"
     },
     {
-      "ID": "rejuvenation-barrier",
+      "id": "rejuvenation-barrier",
       "名称": "回春屏障",
       "领域": "贤者",
       "等级": 8,
@@ -2445,7 +2445,7 @@
       "imageUrl": "resource/领域/活力屏障.png"
     },
     {
-      "ID": "fane-of-the-wilds",
+      "id": "fane-of-the-wilds",
       "名称": "野地神殿",
       "领域": "贤者",
       "等级": 9,
@@ -2455,7 +2455,7 @@
       "imageUrl": "resource/领域/荒野神殿.png"
     },
     {
-      "ID": "plant-dominion",
+      "id": "plant-dominion",
       "名称": "植物统御",
       "领域": "贤者",
       "等级": 9,
@@ -2465,7 +2465,7 @@
       "imageUrl": "resource/领域/植物领域.png"
     },
     {
-      "ID": "force-of-nature",
+      "id": "force-of-nature",
       "名称": "自然之力",
       "领域": "贤者",
       "等级": 10,
@@ -2475,7 +2475,7 @@
       "imageUrl": "resource/领域/自然之力.png"
     },
     {
-      "ID": "tempe-st",
+      "id": "tempe-st",
       "名称": "狂风怒号",
       "领域": "贤者",
       "等级": 10,
@@ -2485,7 +2485,7 @@
       "imageUrl": "resource/领域/暴风.png"
     },
     {
-      "ID": "bolt-beacon",
+      "id": "bolt-beacon",
       "名称": "曳光信标",
       "领域": "辉耀",
       "等级": 1,
@@ -2495,7 +2495,7 @@
       "imageUrl": "resource/领域/闪电信标.png"
     },
     {
-      "ID": "mending-touch",
+      "id": "mending-touch",
       "名称": "修复之触",
       "领域": "辉耀",
       "等级": 1,
@@ -2505,7 +2505,7 @@
       "imageUrl": "resource/领域/修复之触.png"
     },
     {
-      "ID": "reassurance",
+      "id": "reassurance",
       "名称": "解忧消难",
       "领域": "辉耀",
       "等级": 1,
@@ -2515,7 +2515,7 @@
       "imageUrl": "resource/领域/安抚.png"
     },
     {
-      "ID": "final-words",
+      "id": "final-words",
       "名称": "临终遗言",
       "领域": "辉耀",
       "等级": 2,
@@ -2525,7 +2525,7 @@
       "imageUrl": "resource/领域/临终遗言.png"
     },
     {
-      "ID": "healing-hands",
+      "id": "healing-hands",
       "名称": "治愈之手",
       "领域": "辉耀",
       "等级": 2,
@@ -2535,7 +2535,7 @@
       "imageUrl": "resource/领域/治疗之手.png"
     },
     {
-      "ID": "second-wind",
+      "id": "second-wind",
       "名称": "复苏之风",
       "领域": "辉耀",
       "等级": 3,
@@ -2545,7 +2545,7 @@
       "imageUrl": "resource/领域/第二次呼吸.png"
     },
     {
-      "ID": "voice-of-reason",
+      "id": "voice-of-reason",
       "名称": "理性之声",
       "领域": "辉耀",
       "等级": 3,
@@ -2555,7 +2555,7 @@
       "imageUrl": "resource/领域/理性之声.png"
     },
     {
-      "ID": "divination",
+      "id": "divination",
       "名称": "预言卜筮",
       "领域": "辉耀",
       "等级": 4,
@@ -2565,7 +2565,7 @@
       "imageUrl": "resource/领域/占卜.png"
     },
     {
-      "ID": "life-ward",
+      "id": "life-ward",
       "名称": "生命护符",
       "领域": "辉耀",
       "等级": 4,
@@ -2575,7 +2575,7 @@
       "imageUrl": "resource/领域/生命守护.png"
     },
     {
-      "ID": "shape-material",
+      "id": "shape-material",
       "名称": "物质塑形",
       "领域": "辉耀",
       "等级": 5,
@@ -2585,7 +2585,7 @@
       "imageUrl": "resource/领域/塑形物质.png"
     },
     {
-      "ID": "smite",
+      "id": "smite",
       "名称": "惩戒重击",
       "领域": "辉耀",
       "等级": 5,
@@ -2595,7 +2595,7 @@
       "imageUrl": "resource/领域/惩击.png"
     },
     {
-      "ID": "restoration",
+      "id": "restoration",
       "名称": "复原术法",
       "领域": "辉耀",
       "等级": 6,
@@ -2605,7 +2605,7 @@
       "imageUrl": "resource/领域/恢复.png"
     },
     {
-      "ID": "zone-of-protection",
+      "id": "zone-of-protection",
       "名称": "保护之域",
       "领域": "辉耀",
       "等级": 6,
@@ -2615,7 +2615,7 @@
       "imageUrl": "resource/领域/保护区.png"
     },
     {
-      "ID": "healing-strike",
+      "id": "healing-strike",
       "名称": "治愈打击",
       "领域": "辉耀",
       "等级": 7,
@@ -2625,7 +2625,7 @@
       "imageUrl": "resource/领域/治疗打击.png"
     },
     {
-      "ID": "splendor-touched",
+      "id": "splendor-touched",
       "名称": "辉耀恩泽",
       "领域": "辉耀",
       "等级": 7,
@@ -2635,7 +2635,7 @@
       "imageUrl": "resource/领域/辉耀触及.png"
     },
     {
-      "ID": "shield-aura",
+      "id": "shield-aura",
       "名称": "护盾灵光",
       "领域": "辉耀",
       "等级": 8,
@@ -2645,7 +2645,7 @@
       "imageUrl": "resource/领域/护盾光环.png"
     },
     {
-      "ID": "stunning-sunlight",
+      "id": "stunning-sunlight",
       "名称": "震撼烈阳",
       "领域": "辉耀",
       "等级": 8,
@@ -2655,7 +2655,7 @@
       "imageUrl": "resource/领域/眩目阳光.png"
     },
     {
-      "ID": "overwhelming-aura",
+      "id": "overwhelming-aura",
       "名称": "威压灵光",
       "领域": "辉耀",
       "等级": 9,
@@ -2665,7 +2665,7 @@
       "imageUrl": "resource/领域/压倒性光环. 后者更为准确"
     },
     {
-      "ID": "salvation-beam",
+      "id": "salvation-beam",
       "名称": "救赎光束",
       "领域": "辉耀",
       "等级": 9,
@@ -2675,7 +2675,7 @@
       "imageUrl": "resource/领域/救赎光束.png"
     },
     {
-      "ID": "invigoration",
+      "id": "invigoration",
       "名称": "壮举再现",
       "领域": "辉耀",
       "等级": 10,
@@ -2685,7 +2685,7 @@
       "imageUrl": "resource/领域/振奋.png"
     },
     {
-      "ID": "resurrection",
+      "id": "resurrection",
       "名称": "亡者苏生",
       "领域": "辉耀",
       "等级": 10,
@@ -2695,7 +2695,7 @@
       "imageUrl": "resource/领域/复活.png"
     },
     {
-      "ID": "bare-bones",
+      "id": "bare-bones",
       "名称": "铁骨铮铮",
       "领域": "勇气",
       "等级": 1,
@@ -2705,7 +2705,7 @@
       "imageUrl": "resource/领域/骨骼强韧.png"
     },
     {
-      "ID": "forceful-push",
+      "id": "forceful-push",
       "名称": "有力推击",
       "领域": "勇气",
       "等级": 1,
@@ -2715,7 +2715,7 @@
       "imageUrl": "resource/领域/强力推击.png"
     },
     {
-      "ID": "i-am-your-shield",
+      "id": "i-am-your-shield",
       "名称": "吾身为盾",
       "领域": "勇气",
       "等级": 1,
@@ -2725,7 +2725,7 @@
       "imageUrl": "resource/领域/我是你之盾.png"
     },
     {
-      "ID": "body-basher",
+      "id": "body-basher",
       "名称": "蛮力冲撞",
       "领域": "勇气",
       "等级": 2,
@@ -2735,7 +2735,7 @@
       "imageUrl": "resource/领域/身体猛击.png"
     },
     {
-      "ID": "bold-presence",
+      "id": "bold-presence",
       "名称": "刚健风采",
       "领域": "勇气",
       "等级": 2,
@@ -2745,7 +2745,7 @@
       "imageUrl": "resource/领域/傲然存在.png"
     },
     {
-      "ID": "critical-inspiration",
+      "id": "critical-inspiration",
       "名称": "关键鼓舞",
       "领域": "勇气",
       "等级": 3,
@@ -2755,7 +2755,7 @@
       "imageUrl": "resource/领域/关键鼓舞.png"
     },
     {
-      "ID": "lean-on-me",
+      "id": "lean-on-me",
       "名称": "中流砥柱",
       "领域": "勇气",
       "等级": 3,
@@ -2765,7 +2765,7 @@
       "imageUrl": "resource/领域/依靠我.png"
     },
     {
-      "ID": "goad-them-on",
+      "id": "goad-them-on",
       "名称": "激将大法",
       "领域": "勇气",
       "等级": 4,
@@ -2775,7 +2775,7 @@
       "imageUrl": "resource/领域/煽动他们.png"
     },
     {
-      "ID": "support-tank",
+      "id": "support-tank",
       "名称": "坚盾后援",
       "领域": "勇气",
       "等级": 4,
@@ -2785,7 +2785,7 @@
       "imageUrl": "resource/领域/支援坦克.png"
     },
     {
-      "ID": "armorer",
+      "id": "armorer",
       "名称": "护甲大师",
       "领域": "勇气",
       "等级": 5,
@@ -2795,7 +2795,7 @@
       "imageUrl": "resource/领域/护甲师.png"
     },
     {
-      "ID": "rousing-strike",
+      "id": "rousing-strike",
       "名称": "振奋打击",
       "领域": "勇气",
       "等级": 5,
@@ -2805,7 +2805,7 @@
       "imageUrl": "resource/领域/振奋打击.png"
     },
     {
-      "ID": "inevitable",
+      "id": "inevitable",
       "名称": "命中注定",
       "领域": "勇气",
       "等级": 6,
@@ -2815,7 +2815,7 @@
       "imageUrl": "resource/领域/必然.png"
     },
     {
-      "ID": "rise-up",
+      "id": "rise-up",
       "名称": "奋起直追",
       "领域": "勇气",
       "等级": 6,
@@ -2825,7 +2825,7 @@
       "imageUrl": "resource/领域/崛起.png"
     },
     {
-      "ID": "shrug-it-off",
+      "id": "shrug-it-off",
       "名称": "泰然自若",
       "领域": "勇气",
       "等级": 7,
@@ -2835,7 +2835,7 @@
       "imageUrl": "resource/领域/不屑一顾.png"
     },
     {
-      "ID": "valor-touched",
+      "id": "valor-touched",
       "名称": "勇气恩泽",
       "领域": "勇气",
       "等级": 7,
@@ -2845,7 +2845,7 @@
       "imageUrl": "resource/领域/勇气触及.png"
     },
     {
-      "ID": "full-surge",
+      "id": "full-surge",
       "名称": "火力全开",
       "领域": "勇气",
       "等级": 8,
@@ -2855,7 +2855,7 @@
       "imageUrl": "resource/领域/全力涌动.png"
     },
     {
-      "ID": "ground-pound",
+      "id": "ground-pound",
       "名称": "撼地猛击",
       "领域": "勇气",
       "等级": 8,
@@ -2865,7 +2865,7 @@
       "imageUrl": "resource/领域/大地重击.png"
     },
     {
-      "ID": "hold-the-line",
+      "id": "hold-the-line",
       "名称": "坚守阵线",
       "领域": "勇气",
       "等级": 9,
@@ -2875,7 +2875,7 @@
       "imageUrl": "resource/领域/坚守阵线.png"
     },
     {
-      "ID": "lead-by-example",
+      "id": "lead-by-example",
       "名称": "以身作则",
       "领域": "勇气",
       "等级": 9,
@@ -2885,7 +2885,7 @@
       "imageUrl": "resource/领域/以身作则.png"
     },
     {
-      "ID": "unbreakable",
+      "id": "unbreakable",
       "名称": "坚不可摧",
       "领域": "勇气",
       "等级": 10,
@@ -2895,7 +2895,7 @@
       "imageUrl": "resource/领域/坚不可摧.png"
     },
     {
-      "ID": "unyielding-armor",
+      "id": "unyielding-armor",
       "名称": "不灭甲胄",
       "领域": "勇气",
       "等级": 10,

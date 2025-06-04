@@ -10,7 +10,7 @@ import { DomainClass } from "../card-predefined-field"
 
 // 领域卡牌数据结构
 export interface DomainCard {
-  ID: string
+  id: string
   名称: string
   领域: DomainClass
   描述: string
@@ -26,7 +26,7 @@ class DomainCardConverter {
   toStandard(card: DomainCard): StandardCard {
     return {
       standarized: true,
-      id: card.ID || uuidv4(),
+      id: card.id || uuidv4(),
       name: card.名称 || "",
       type: CardType.Domain,
       description: card.描述 || "",

@@ -5,7 +5,7 @@ import { CommunityClass } from "../card-predefined-field"
 
 // 社群卡牌数据结构
 export interface CommunityCard {
-  ID: string
+  id: string
   名称: CommunityClass
   特性: string
   简介: string
@@ -18,7 +18,7 @@ class CommunityCardConverter {
   toStandard(card: CommunityCard): StandardCard {
     return {
       standarized: true,
-      id: card.ID || uuidv4(),
+      id: card.id || uuidv4(),
       name: card.名称,
       type: CardType.Community,
       description: card.描述,

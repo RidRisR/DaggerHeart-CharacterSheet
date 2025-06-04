@@ -6,8 +6,6 @@
     "customFieldDefinitions": {
         "variantTypes": {
             "人物": {
-                "id": "奇幻冒险卡牌包-自定义类型-character-npc",
-                "name": "人物",
                 "description": "NPC、盟友、敌人等角色卡牌",
                 "subclasses": [
                     "盟友",
@@ -17,8 +15,6 @@
                 ]
             },
             "物品": {
-                "id": "奇幻冒险卡牌包-自定义类型-equipment-items",
-                "name": "物品",
                 "description": "武器、防具、饰品等装备",
                 "subclasses": [
                     "武器",
@@ -29,16 +25,6 @@
                 "levelRange": [
                     1,
                     10
-                ]
-            },
-            "野兽形态": {
-                "id": "beast-transform",
-                "name": "野兽形态",
-                "description": "德鲁伊等职业的变身形态",
-                "subclasses": [],
-                "levelRange": [
-                    1,
-                    5
                 ]
             }
         },
@@ -138,7 +124,7 @@
     ],
     "community": [
         {
-            "ID": "fantasy-pack-author-1.0-community-magic-academy",
+            "id": "fantasy-pack-author-1.0-community-magic-academy",
             "名称": "魔法学院",
             "特性": "学者气质",
             "简介": "在古老的魔法学院中度过求学时光，接受最正统的魔法教育",
@@ -146,7 +132,7 @@
             "imageUrl": ""
         },
         {
-            "ID": "fantasy-pack-author-1.0-community-dragon-order",
+            "id": "fantasy-pack-author-1.0-community-dragon-order",
             "名称": "龙骑士团",
             "特性": "骑士荣誉",
             "简介": "出身于古老而荣耀的龙骑士团，肩负着保护王国的神圣使命",
@@ -154,7 +140,7 @@
             "imageUrl": ""
         },
         {
-            "ID": "fantasy-pack-author-1.0-community-star-cult",
+            "id": "fantasy-pack-author-1.0-community-star-cult",
             "名称": "星辰教团",
             "特性": "神秘主义",
             "简介": "星辰教团的成员，研究宇宙奥秘和预言术",
@@ -193,43 +179,43 @@
     ],
     "domain": [
         {
-            "ID": "fantasy-pack-author-1.0-domain-starfall",
+            "id": "fantasy-pack-author-1.0-domain-starfall",
             "名称": "星辰坠落",
             "领域": "星辰",
             "描述": "召唤星辰之力，让流星从天而降攻击敌人。\n\n**效果**：选择一个你能看到的区域（半径20英尺），3秒后该区域内的所有敌人受到4d6星辰伤害。敌人可以进行敏捷检定来减半伤害。",
             "imageUrl": "",
             "等级": 5,
-            "属性": "风度",
+            "属性": "法术",
             "回想": 4
         },
         {
-            "ID": "fantasy-pack-author-1.0-domain-dragon-breath",
+            "id": "fantasy-pack-author-1.0-domain-dragon-breath",
             "名称": "龙息术",
             "领域": "龙族",
             "描述": "模拟巨龙的吐息攻击，喷出炽热的龙焰。\n\n**效果**：对60英尺锥形区域内的所有目标造成3d8火焰伤害。目标可以进行体质检定来减半伤害。被击中的可燃物品会燃烧。",
             "imageUrl": "",
             "等级": 4,
-            "属性": "力量",
+            "属性": "能力",
             "回想": 3
         },
         {
-            "ID": "fantasy-pack-author-1.0-domain-mystic-insight",
+            "id": "fantasy-pack-author-1.0-domain-mystic-insight",
             "名称": "神秘洞察",
             "领域": "神秘",
             "描述": "窥探事物的本质，看穿伪装和幻象。\n\n**效果**：你能看穿所有幻象和变形效果，识别生物的真实形态。持续10分钟。此外，你能感知到附近的魔法灵光和隐藏的魔法物品。",
             "imageUrl": "",
             "等级": 3,
-            "属性": "风度",
+            "属性": "能力",
             "回想": 2
         },
         {
-            "ID": "fantasy-pack-author-1.0-domain-time-stop",
+            "id": "fantasy-pack-author-1.0-domain-time-stop",
             "名称": "时间静止",
             "领域": "时空",
             "描述": "短暂地停止时间的流逝，只有你能在这个静止的世界中行动。\n\n**效果**：除你之外的所有生物和物体都静止不动，持续6秒（一个完整回合）。在此期间，你可以自由行动，但无法对其他生物造成伤害。",
             "imageUrl": "",
             "等级": 7,
-            "属性": "智慧",
+            "属性": "法术",
             "回想": 5
         }
     ],
@@ -259,17 +245,6 @@
                 "item1": "月光照明",
                 "item2": "驱散不死",
                 "item3": "神秘美丽"
-            }
-        },
-        {
-            "id": "breast-transform-088",
-            "名称": "克苏鲁形态",
-            "类型": "野兽形态",
-            "等级": 5,
-            "效果": "（克苏鲁）\n\n变身为克苏鲁形态，获得强大的精神控制能力和恐怖外观。可以在战斗中造成额外的精神伤害，并且对敌人造成恐惧效果。",
-            "简略信息": {
-                "item1": "T5",
-                "item2": "力量"
             }
         }
     ]

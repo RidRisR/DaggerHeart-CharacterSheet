@@ -601,23 +601,13 @@ export class CustomCardManager {
     }
 
     /**
-     * 从卡牌数据中提取ID（支持不同卡牌类型的字段名）
+     * 从卡牌数据中提取ID（统一使用小写id字段）
      */
     private extractCardId(card: any, cardType: string): string | null {
         if (!card) return null;
 
-        // 根据不同卡牌类型的字段名提取ID
-        switch (cardType) {
-            case 'domain':
-            case 'community':
-                return card.ID || card.id || null;
-            case 'profession':
-            case 'ancestry':
-            case 'subclass':
-                return card.id || null;
-            default:
-                return card.id || card.ID || null;
-        }
+        // 所有卡牌类型现在都统一使用小写的 id 字段
+        return card.id || null;
     }
 
     // ===== 数据转换 =====

@@ -44,7 +44,7 @@ export function getAvailableVariantTypes(): { value: string; label: string }[] {
   const variantTypes = getVariantTypes();
   return Object.entries(variantTypes).map(([typeId, typeDef]) => ({
     value: typeId,
-    label: typeDef.name || typeId
+    label: typeId  // 直接使用对象键作为显示名称
   }));
 }
 

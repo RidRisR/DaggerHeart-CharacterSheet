@@ -306,7 +306,30 @@ export class CustomCardManager {
                 };
             }
 
-            // 第四步：数据转换
+            // 第四步：变体类型冲突检测（严格模式）
+            logDebug('importCards', { step: 'variant type conflict check' });
+            const variantTypeValidation = this.validateVariantTypeUniqueness(importData);
+            if (!variantTypeValidation.isValid) {
+                logDebug('importCards', {
+                    step: 'variant type conflict detected',
+                    conflictingTypes: variantTypeValidation.conflictingTypes
+                });
+                // 如果变体类型冲突，清理临时保存的自定义字段定义和变体类型定义
+                if (importData.customFieldDefinitions) {
+                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    if (importData.customFieldDefinitions.variantTypes) {
+                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                    }
+                }
+                return {
+                    success: false,
+                    imported: 0,
+                    errors: [`variantTypes冲突检测到重复类型: ${variantTypeValidation.conflictingTypes.join(', ')}`],
+                    conflictingTypes: variantTypeValidation.conflictingTypes
+                };
+            }
+
+            // 第五步：数据转换
             logDebug('importCards', { step: 'data conversion' });
             const convertResult = await this.convertImportData(importData);
             if (!convertResult.success) {
@@ -328,7 +351,7 @@ export class CustomCardManager {
                 };
             }
 
-            // 第五步：准备批次数据
+            // 第六步：准备批次数据
             logDebug('importCards', { step: 'preparing batch data' });
             const batchData: BatchData = {
                 metadata: {
@@ -359,7 +382,7 @@ export class CustomCardManager {
                 }
             });
 
-            // 第六步：检查存储空间
+            // 第七步：检查存储空间
             logDebug('importCards', { step: 'storage space check' });
             const dataSize = JSON.stringify(batchData).length * 2;
             if (!CustomCardStorage.checkStorageSpace(dataSize)) {
@@ -382,14 +405,14 @@ export class CustomCardManager {
                 };
             }
 
-            // 第七步：存储操作（事务性）
+            // 第八步：存储操作（事务性）
             logDebug('importCards', { step: 'saving batch' });
             CustomCardStorage.saveBatch(batchId, batchData);
             hasCreatedBatch = true;
 
             // 注意：自定义字段定义和变体类型定义已经在第一步中保存了，这里不需要重复保存
 
-            // 第八步：更新索引
+            // 第九步：更新索引
             logDebug('importCards', { step: 'updating index' });
             const index = CustomCardStorage.loadIndex();
             const cardTypes = [...new Set(convertResult.cards.map(card => card.type))];
@@ -528,6 +551,53 @@ export class CustomCardManager {
             isValid: duplicateIds.length === 0,
             duplicateIds
         };
+    }
+
+    /**
+     * 验证变体类型唯一性（严格模式）
+     * @param importData 导入数据
+     * @returns 验证结果和错误信息
+     */
+    private validateVariantTypeUniqueness(importData: ImportData): { isValid: boolean; errors: string[]; conflictingTypes: string[] } {
+        const errors: string[] = [];
+        
+        // 如果没有变体类型定义，直接通过验证
+        if (!importData.customFieldDefinitions?.variantTypes) {
+            return { isValid: true, errors, conflictingTypes: [] };
+        }
+        
+        const newVariantTypes = importData.customFieldDefinitions.variantTypes;
+        const existingVariantTypes = CustomCardStorage.getAggregatedVariantTypes();
+        const conflictingTypes: string[] = [];
+        
+        logDebug('validateVariantTypeUniqueness', {
+            newTypes: Object.keys(newVariantTypes),
+            existingTypes: Object.keys(existingVariantTypes)
+        });
+        
+        // 检查每个新的变体类型是否与现有类型冲突
+        for (const typeId in newVariantTypes) {
+            if (existingVariantTypes[typeId]) {
+                conflictingTypes.push(typeId);
+                errors.push(`变体类型 "${typeId}" 已存在，不允许覆盖`);
+            }
+        }
+        
+        if (conflictingTypes.length > 0) {
+            logDebug('validateVariantTypeUniqueness', {
+                result: 'conflicts detected',
+                conflictingTypes
+            });
+            
+            return {
+                isValid: false,
+                errors,
+                conflictingTypes
+            };
+        }
+        
+        logDebug('validateVariantTypeUniqueness', { result: 'no conflicts' });
+        return { isValid: true, errors, conflictingTypes: [] };
     }
 
     /**

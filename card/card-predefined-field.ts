@@ -201,7 +201,8 @@ export function getVariantTypeName(variantType: string, tempBatchId?: string, te
     const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
     const typeDef = aggregatedTypes[variantType];
     
-    const displayName = typeDef?.name || variantType;
+    // 直接使用variantType作为显示名称，不再依赖name字段
+    const displayName = variantType;
     
     logDebug('getVariantTypeName', {
         variantType,

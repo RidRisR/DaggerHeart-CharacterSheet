@@ -386,12 +386,7 @@ export function validateVariantTypeDefinitions(variantTypes: Record<string, any>
     const errors: ValidationError[] = [];
     
     Object.entries(variantTypes).forEach(([typeId, typeDef]) => {
-        if (!typeDef.name || typeof typeDef.name !== 'string') {
-            errors.push({
-                path: `customFieldDefinitions.variantTypes.${typeId}.name`,
-                message: 'name字段是必需的，且必须是字符串'
-            });
-        }
+        // 注意：不再验证name字段，显示名称直接使用对象键(typeId)
         
         if (!Array.isArray(typeDef.subclasses)) {
             errors.push({

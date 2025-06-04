@@ -138,11 +138,11 @@ import { RawVariantCard } from "./variant-card/convert";
 
 // 变体类型定义接口（简化版）
 export interface VariantTypeDefinition {
-  name: string;                    // 显示名称
   subclasses: string[];           // 允许的子类别列表
   defaultLevel?: number;          // 默认等级
   levelRange?: [number, number];  // 等级范围 [最小值, 最大值]
   description?: string;           // 类型描述
+  // 注意：显示名称直接使用对象键，不再需要name字段
 }
 
 // 新的导入数据格式定义 - 支持原始卡牌类型
@@ -178,6 +178,7 @@ export interface ImportResult {
   imported: number;
   errors: string[];
   duplicateIds?: string[];
+  conflictingTypes?: string[]; // 变体类型冲突列表
   batchId?: string; // 成功导入时返回批次ID
 }
 

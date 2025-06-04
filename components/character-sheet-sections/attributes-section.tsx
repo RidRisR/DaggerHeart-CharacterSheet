@@ -60,7 +60,7 @@ export function AttributesSection({
                     return isAttributeValue(attrValue) ? attrValue.value : "";
                   })()}
                   onChange={(e) => handleAttributeValueChange(attr.key as keyof SheetData, e.target.value)}
-                  className="w-6 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
+                  className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
                   placeholder="#"
                 />
                 <div className="text-[10px] text-center mt-0.5">{attr.skills.join(", ")}</div>

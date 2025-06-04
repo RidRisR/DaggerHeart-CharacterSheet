@@ -162,7 +162,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
             <UpgradeSection
               tier={1}
             title="T2 等级 2-4"
-            description="当你到达 2 级时：获得一项额外+2经2经历，熟练值标记+1。"
+            description="当你到达 2 级时：获得一项额外+2经历，熟练值标记+1。"
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}

@@ -22,8 +22,8 @@ export function AttributesSection({
       <div className="grid grid-cols-3 gap-x-2 gap-y-2">
         {[
           { name: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },
-          { name: "力量", key: "strength", skills: ["举起", "猛击", "摔倒"] },
-          { name: "灵巧", key: "finesse", skills: ["控制", "藏匿", "修理"] },
+          { name: "力量", key: "strength", skills: ["举起", "猛击", "擒抱"] },
+          { name: "灵巧", key: "finesse", skills: ["控制", "藏匿", "修补"] },
           { name: "本能", key: "instinct", skills: ["感知", "察觉", "导航"] },
           { name: "风度", key: "presence", skills: ["魅力", "表演", "欺骗"] },
           { name: "知识", key: "knowledge", skills: ["回忆", "分析", "理解"] },

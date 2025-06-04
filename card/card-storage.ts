@@ -49,7 +49,7 @@ export interface BatchBase {
 
 export interface ImportBatch extends BatchBase {
     name: string; // Name is required for index display (can be derived if missing in source).
-// id, fileName, importTime, version are inherited from BatchBase.
+    // id, fileName, importTime, version are inherited from BatchBase.
     cardCount: number;
     cardTypes: string[];
     size: number;
@@ -455,7 +455,7 @@ export class CustomCardStorage {
      */
     static getAggregatedCustomFieldNamesWithTemp(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): CustomFieldNamesStore {
         logDebug('getAggregatedCustomFieldNamesWithTemp', { tempBatchId, tempDefinitions });
-        
+
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
             logDebug('getAggregatedCustomFieldNamesWithTemp', 'localStorage unavailable');
             // 如果没有localStorage，至少返回临时定义
@@ -465,32 +465,32 @@ export class CustomCardStorage {
         try {
             // 首先获取现有的聚合字段
             const existingFields = this.getAggregatedCustomFieldNames();
-            
+
             // 如果没有临时定义，直接返回现有字段
             if (!tempBatchId || !tempDefinitions) {
                 return existingFields;
             }
-            
+
             // 合并临时定义
             const mergedFields: CustomFieldNamesStore = { ...existingFields };
-            
+
             for (const category in tempDefinitions) {
                 const tempNames = tempDefinitions[category];
-                
+
                 if (!mergedFields[category]) {
                     mergedFields[category] = [];
                 }
-                
+
                 // 添加临时定义的字段名并去重
                 mergedFields[category] = [...new Set([...mergedFields[category], ...tempNames])];
             }
-            
-            logDebug('getAggregatedCustomFieldNamesWithTemp', { 
-                existingFields, 
-                tempDefinitions, 
-                mergedFields 
+
+            logDebug('getAggregatedCustomFieldNamesWithTemp', {
+                existingFields,
+                tempDefinitions,
+                mergedFields
             });
-            
+
             return mergedFields;
         } catch (error) {
             logDebug('getAggregatedCustomFieldNamesWithTemp', { error });
@@ -671,7 +671,7 @@ export class CustomCardStorage {
      */
     static getAggregatedVariantTypesWithTemp(tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): VariantTypesForBatch {
         logDebug('getAggregatedVariantTypesWithTemp', { tempBatchId, tempDefinitions });
-        
+
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
             logDebug('getAggregatedVariantTypesWithTemp', 'localStorage unavailable');
             // 如果没有localStorage，至少返回临时定义
@@ -681,32 +681,32 @@ export class CustomCardStorage {
         try {
             // 首先获取现有的聚合变体类型
             const existingTypes = this.getAggregatedVariantTypes();
-            
+
             // 如果没有临时定义，直接返回现有类型
             if (!tempBatchId || !tempDefinitions) {
                 return existingTypes;
             }
-            
+
             // 合并临时定义
             const mergedTypes: VariantTypesForBatch = { ...existingTypes };
-            
+
             for (const typeId in tempDefinitions) {
                 const tempTypeDef = tempDefinitions[typeId];
-                
+
                 // 如果类型ID已存在，临时定义优先
                 if (mergedTypes[typeId]) {
                     console.warn(`[CustomCardStorage] 变体类型 "${typeId}" 已存在，临时定义将覆盖现有定义`);
                 }
-                
+
                 mergedTypes[typeId] = tempTypeDef;
             }
-            
-            logDebug('getAggregatedVariantTypesWithTemp', { 
-                existingTypes, 
-                tempDefinitions, 
-                mergedTypes 
+
+            logDebug('getAggregatedVariantTypesWithTemp', {
+                existingTypes,
+                tempDefinitions,
+                mergedTypes
             });
-            
+
             return mergedTypes;
         } catch (error) {
             logDebug('getAggregatedVariantTypesWithTemp', { error });
@@ -970,10 +970,39 @@ export class CustomCardStorage {
 
             this.saveIndex(newIndex);
 
-            // 清空批次自定义字段存储
+            // 清空批次自定义字段存储（只删除非系统批次）
             if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-                localStorage.removeItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-                localStorage.removeItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+                // 处理自定义字段存储
+                const storedCustomFields = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+                if (storedCustomFields) {
+                    const allCustomFields: AllCustomFieldsByBatch = JSON.parse(storedCustomFields);
+                    const systemCustomFields: AllCustomFieldsByBatch = {};
+
+                    // 只保留系统批次的自定义字段定义
+                    for (const batchId in allCustomFields) {
+                        if (systemBatches[batchId]) {
+                            systemCustomFields[batchId] = allCustomFields[batchId];
+                        }
+                    }
+
+                    localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(systemCustomFields));
+                }
+
+                // 处理变体类型存储
+                const storedVariantTypes = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+                if (storedVariantTypes) {
+                    const allVariantTypes: AllVariantTypesByBatch = JSON.parse(storedVariantTypes);
+                    const systemVariantTypes: AllVariantTypesByBatch = {};
+
+                    // 只保留系统批次的变体类型定义
+                    for (const batchId in allVariantTypes) {
+                        if (systemBatches[batchId]) {
+                            systemVariantTypes[batchId] = allVariantTypes[batchId];
+                        }
+                    }
+
+                    localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(systemVariantTypes));
+                }
             }
 
             console.log(`[CustomCardStorage] 清空完成，保留 ${systemBatchCount} 个系统批次，${systemCardCount} 张系统卡牌`);

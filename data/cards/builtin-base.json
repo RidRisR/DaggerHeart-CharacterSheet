@@ -6,8 +6,6 @@
   "customFieldDefinitions": {
     "variantTypes": {
       "野兽形态": {
-        "id": "breast-transform",
-        "name": "野兽形态",
         "description": "德鲁伊的野兽变身",
         "subclasses": [],
         "levelRange": [

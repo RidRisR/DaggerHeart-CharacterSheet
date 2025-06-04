@@ -378,7 +378,7 @@ export default function CardImportTestPage() {
             className="flex items-center gap-2"
           >
             <RefreshCw className="h-4 w-4" />
-            强制重新初始化
+            强制初始化
           </Button>
           <div className="flex items-center gap-2 text-sm">
             <input

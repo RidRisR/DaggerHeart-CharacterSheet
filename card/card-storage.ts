@@ -124,6 +124,12 @@ export interface CleanupReport {
  * 提供localStorage的抽象操作接口
  */
 export class CustomCardStorage {
+    static removeCustomFieldsForBatch(batchId: string) {
+        throw new Error('Method not implemented.');
+    }
+    static removeVariantTypesForBatch(batchId: string) {
+        throw new Error('Method not implemented.');
+    }
 
     // ===== 索引操作 =====
 
@@ -282,89 +288,6 @@ export class CustomCardStorage {
     }
 
     // ===== 新增：按批次的自定义字段名操作 =====
-
-    /**
-     * 保存指定批次的自定义字段定义（旧方法 - 兼容旧版本）
-     * @deprecated 使用 updateBatchCustomFields 代替
-     */
-    static saveCustomFieldsForBatch(batchId: string, definitions: CustomFieldsForBatch): void {
-        if (!batchId) {
-            console.error('[CustomCardStorage] 保存自定义字段失败: 批次ID无效');
-            throw new Error('保存自定义字段失败: 批次ID无效');
-        }
-
-        logDebug('saveCustomFieldsForBatch', { batchId, definitions });
-        
-        // 直接操作旧存储，不再调用 updateBatchCustomFields 以避免循环调用
-        try {
-            const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-            const allFields: AllCustomFieldsByBatch = stored ? JSON.parse(stored) : {};
-            
-            if (JSON.stringify(allFields[batchId]) === JSON.stringify(definitions)) {
-                logDebug('saveCustomFieldsForBatch', {
-                    message: 'definitions unchanged, skipping save to old storage',
-                    storageKey: STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH
-                });
-                return;
-            }
-
-            allFields[batchId] = definitions;
-            localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(allFields));
-            
-            const verification = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-            logDebug('saveCustomFieldsForBatch', {
-                message: 'saved to old storage for compatibility',
-                verification: !!verification
-            });
-        } catch (error) {
-            console.error('[CustomCardStorage] 保存自定义字段到旧存储失败:', error);
-            // 旧存储失败不会抛出异常，因为新的存储方式才是主要存储
-        }
-    }
-
-    /**
-     * 移除指定批次的自定义字段定义
-     */
-    static removeCustomFieldsForBatch(batchId: string): void {
-        logDebug('removeCustomFieldsForBatch', { batchId });
-
-        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-            logDebug('removeCustomFieldsForBatch', 'localStorage unavailable');
-            return;
-        }
-
-        try {
-            const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-            if (!stored) {
-                logDebug('removeCustomFieldsForBatch', 'no stored data found');
-                return;
-            }
-
-            const allFields: AllCustomFieldsByBatch = JSON.parse(stored);
-            logDebug('removeCustomFieldsForBatch', { beforeRemoval: allFields });
-
-            // 删除指定批次的自定义字段
-            if (allFields[batchId]) {
-                delete allFields[batchId];
-                localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(allFields));
-
-                // 验证删除
-                const verification = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-                const parsedVerification = verification ? JSON.parse(verification) : {};
-
-                logDebug('removeCustomFieldsForBatch', {
-                    afterRemoval: parsedVerification,
-                    batchRemoved: !(batchId in parsedVerification)
-                });
-            } else {
-                logDebug('removeCustomFieldsForBatch', 'batch not found in stored data');
-            }
-        } catch (error) {
-            logDebug('removeCustomFieldsForBatch', { error });
-            console.error(`[CustomCardStorage] 批次 ${batchId} 的自定义字段删除失败:`, error);
-            throw new Error(`无法删除批次 ${batchId} 的自定义字段`);
-        }
-    }
 
     /**
      * 获取聚合的自定义字段名称（来自所有启用的批次）
@@ -696,89 +619,6 @@ export class CustomCardStorage {
 
 
     // ===== 新增：按批次的变体类型定义操作 =====
-
-    /**
-     * 保存指定批次的变体类型定义（旧方法 - 兼容旧版本）
-     * @deprecated 使用 updateBatchVariantTypes 代替
-     */
-    static saveVariantTypesForBatch(batchId: string, variantTypes: VariantTypesForBatch): void {
-        if (!batchId) {
-            console.error('[CustomCardStorage] 保存变体类型定义失败: 批次ID无效');
-            throw new Error('保存变体类型定义失败: 批次ID无效');
-        }
-
-        logDebug('saveVariantTypesForBatch', { batchId, variantTypes: Object.keys(variantTypes) });
-        
-        // 直接操作旧存储，不再调用 updateBatchVariantTypes 以避免循环调用
-        try {
-            const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-            const allVariantTypes: AllVariantTypesByBatch = stored ? JSON.parse(stored) : {};
-            
-            if (JSON.stringify(allVariantTypes[batchId]) === JSON.stringify(variantTypes)) {
-                logDebug('saveVariantTypesForBatch', {
-                    message: 'variant types unchanged, skipping save to old storage',
-                    storageKey: STORAGE_KEYS.VARIANT_TYPES_BY_BATCH
-                });
-                return;
-            }
-
-            allVariantTypes[batchId] = variantTypes;
-            localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(allVariantTypes));
-            
-            const verification = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-            logDebug('saveVariantTypesForBatch', {
-                message: 'saved to old storage for compatibility',
-                verification: !!verification
-            });
-        } catch (error) {
-            console.error('[CustomCardStorage] 保存变体类型定义到旧存储失败:', error);
-            // 旧存储失败不会抛出异常，因为新的存储方式才是主要存储
-        }
-    }
-
-    /**
-     * 移除指定批次的变体类型定义
-     */
-    static removeVariantTypesForBatch(batchId: string): void {
-        logDebug('removeVariantTypesForBatch', { batchId });
-
-        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-            logDebug('removeVariantTypesForBatch', 'localStorage unavailable');
-            return;
-        }
-
-        try {
-            const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-            if (!stored) {
-                logDebug('removeVariantTypesForBatch', 'no stored data found');
-                return;
-            }
-
-            const allVariantTypes: AllVariantTypesByBatch = JSON.parse(stored);
-            logDebug('removeVariantTypesForBatch', { beforeRemoval: allVariantTypes });
-
-            // 删除指定批次的变体类型定义
-            if (allVariantTypes[batchId]) {
-                delete allVariantTypes[batchId];
-                localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(allVariantTypes));
-
-                // 验证删除
-                const verification = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-                const parsedVerification = verification ? JSON.parse(verification) : {};
-
-                logDebug('removeVariantTypesForBatch', {
-                    afterRemoval: parsedVerification,
-                    batchRemoved: !(batchId in parsedVerification)
-                });
-            } else {
-                logDebug('removeVariantTypesForBatch', 'batch not found in stored data');
-            }
-        } catch (error) {
-            logDebug('removeVariantTypesForBatch', { error });
-            console.error(`[CustomCardStorage] 批次 ${batchId} 的变体类型定义删除失败:`, error);
-            throw new Error(`无法删除批次 ${batchId} 的变体类型定义`);
-        }
-    }
 
     /**
      * 获取聚合的变体类型定义（来自所有启用的批次）

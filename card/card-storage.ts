@@ -370,7 +370,36 @@ export class CustomCardStorage {
                 return fromBatches;
             }
 
-            // 如果没有数据，尝试从旧版存储中读取
+            // 如果批次数据为空，检查是否需要迁移旧格式数据
+            // 如果存在旧格式数据但新格式为空，则执行迁移
+            const hasOldData = !!localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+            if (hasOldData) {
+                logDebug('getAggregatedCustomFieldNames', 'old data detected, attempting migration');
+                const migrationResult = this.migrateToIntegratedStorage();
+
+                if (migrationResult.migrated) {
+                    logDebug('getAggregatedCustomFieldNames', 'migration completed, retrying batch read');
+                    // 重新尝试从批次数据中读取
+                    const fromBatchesAfterMigration = this.getAggregatedCustomFieldNamesFromBatches();
+                    const categoriesCountAfterMigration = Object.keys(fromBatchesAfterMigration).length;
+                    if (categoriesCountAfterMigration > 0) {
+                        logDebug('getAggregatedCustomFieldNames', {
+                            source: 'from batches after migration',
+                            categoriesCount: categoriesCountAfterMigration
+                        });
+
+                        // 缓存数据
+                        CardStorageCache.setCachedCustomFieldNames(fromBatchesAfterMigration);
+                        return fromBatchesAfterMigration;
+                    }
+                }
+
+                if (migrationResult.errors.length > 0) {
+                    console.warn('[CustomCardStorage] Migration errors:', migrationResult.errors);
+                }
+            }
+
+            // 如果批次数据为空，尝试从旧版存储中读取并迁移
             // 加载所有批次的自定义字段
             const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
             if (!stored) {
@@ -717,7 +746,36 @@ export class CustomCardStorage {
                 return fromBatches;
             }
 
-            // 如果没有数据，尝试从旧版存储中读取
+            // 如果批次数据为空，检查是否需要迁移旧格式数据
+            // 如果存在旧格式数据但新格式为空，则执行迁移
+            const hasOldData = !!localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+            if (hasOldData) {
+                logDebug('getAggregatedVariantTypes', 'old data detected, attempting migration');
+                const migrationResult = this.migrateToIntegratedStorage();
+
+                if (migrationResult.migrated) {
+                    logDebug('getAggregatedVariantTypes', 'migration completed, retrying batch read');
+                    // 重新尝试从批次数据中读取
+                    const fromBatchesAfterMigration = this.getAggregatedVariantTypesFromBatches();
+                    const typesCountAfterMigration = Object.keys(fromBatchesAfterMigration).length;
+                    if (typesCountAfterMigration > 0) {
+                        logDebug('getAggregatedVariantTypes', {
+                            source: 'from batches after migration',
+                            typesCount: typesCountAfterMigration
+                        });
+
+                        // 缓存数据
+                        CardStorageCache.setCachedVariantTypes(fromBatchesAfterMigration);
+                        return fromBatchesAfterMigration;
+                    }
+                }
+
+                if (migrationResult.errors.length > 0) {
+                    console.warn('[CustomCardStorage] Migration errors:', migrationResult.errors);
+                }
+            }
+
+            // 如果批次数据为空，尝试从旧版存储中读取并迁移
             // 加载所有批次的变体类型定义
             const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
             if (!stored) {
@@ -1605,30 +1663,7 @@ export class CustomCardStorage {
                 definitions
             });
 
-            // 向后兼容：同时更新旧版存储中的数据
-            // 直接操作旧存储，而不是调用 saveCustomFieldsForBatch 以避免循环引用
-            try {
-                const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-                const allFields: AllCustomFieldsByBatch = stored ? JSON.parse(stored) : {};
-                
-                if (JSON.stringify(allFields[batchId]) !== JSON.stringify(definitions)) {
-                    allFields[batchId] = definitions;
-                    localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(allFields));
-                    
-                    logDebug('updateBatchCustomFields', {
-                        message: 'also updated old storage for compatibility',
-                        storageKey: STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH
-                    });
-                } else {
-                    logDebug('updateBatchCustomFields', {
-                        message: 'definitions unchanged, skipping save to old storage',
-                        storageKey: STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH
-                    });
-                }
-            } catch (error) {
-                console.warn('[CustomCardStorage] 更新旧自定义字段存储失败 (非致命错误):', error);
-                // 旧存储更新失败不阻止主要存储的成功
-            }
+            // 注意：移除了向后兼容的旧格式存储写入，因为我们现在通过迁移机制处理旧数据
 
         } catch (error) {
             logDebug('updateBatchCustomFields', { error });
@@ -1678,23 +1713,7 @@ export class CustomCardStorage {
                 variantTypesCount: Object.keys(variantTypes).length
             });
 
-            // 向后兼容：同时更新旧版存储中的数据
-            // 直接操作旧存储，而不是调用 saveVariantTypesForBatch 以避免循环引用
-            try {
-                const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-                const allVariantTypes: AllVariantTypesByBatch = stored ? JSON.parse(stored) : {};
-                
-                allVariantTypes[batchId] = variantTypes;
-                localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(allVariantTypes));
-                
-                logDebug('updateBatchVariantTypes', {
-                    message: 'also updated old storage for compatibility',
-                    storageKey: STORAGE_KEYS.VARIANT_TYPES_BY_BATCH
-                });
-            } catch (error) {
-                console.warn('[CustomCardStorage] 更新旧变体类型存储失败 (非致命错误):', error);
-                // 旧存储更新失败不阻止主要存储的成功
-            }
+            // 注意：移除了向后兼容的旧格式存储写入，因为我们现在通过迁移机制处理旧数据
 
         } catch (error) {
             logDebug('updateBatchVariantTypes', { error });

@@ -86,6 +86,7 @@ export default function CardImportTestPage() {
     cardsByType: {} as Record<string, number>
   }))
   const [batches, setBatches] = useState<any[]>([])
+  const [batchStatuses, setBatchStatuses] = useState<Record<string, boolean>>({})
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [viewingCards, setViewingCards] = useState<ExtendedStandardCard[]>([])
   const [autoRefresh, setAutoRefresh] = useState(true)
@@ -105,7 +106,7 @@ export default function CardImportTestPage() {
         // 确保系统初始化后再刷新数据
         const customCardManager = CustomCardManager.getInstance()
         await customCardManager.ensureInitialized()
-        refreshData()
+        await refreshData()
       }
     }
     initializeData()
@@ -114,25 +115,46 @@ export default function CardImportTestPage() {
   // 自动刷新数据
   useEffect(() => {
     if (autoRefresh && isClient) {
-      const interval = setInterval(() => {
-        refreshData()
+      const interval = setInterval(async () => {
+        await refreshData()
       }, 5000) // 每5秒刷新一次
       return () => clearInterval(interval)
     }
   }, [autoRefresh, isClient])
 
   // 刷新统计数据
-  const refreshData = () => {
+  const refreshData = async () => {
     if (typeof window !== 'undefined') {
-      setStats(getCustomCardStats())
-      setBatches(getCustomCardBatches())
-      setStorageInfo(getCustomCardStorageInfo())
+      try {
+        const [statsData, batchesData, storageData] = await Promise.all([
+          getCustomCardStats(),
+          getCustomCardBatches(),
+          getCustomCardStorageInfo()
+        ])
+        
+        setStats(statsData)
+        setBatches(batchesData)
+        setStorageInfo(storageData)
+        
+        // 获取所有批次的状态
+        const statusPromises = batchesData.map(async (batch: any) => {
+          const customCardManager = CustomCardManager.getInstance()
+          const status = await customCardManager.getBatchDisabledStatus(batch.id)
+          return [batch.id, status] as [string, boolean]
+        })
+        
+        const statuses = await Promise.all(statusPromises)
+        const statusMap = Object.fromEntries(statuses)
+        setBatchStatuses(statusMap)
+      } catch (error) {
+        console.error('Error refreshing data:', error)
+      }
     }
   }
 
   // 刷新数据并重载页面
-  const refreshDataAndPage = () => {
-    refreshData()
+  const refreshDataAndPage = async () => {
+    await refreshData()
     window.location.reload()
   }
 
@@ -155,7 +177,7 @@ export default function CardImportTestPage() {
 
       if (success) {
         // 刷新数据以反映更改
-        refreshData()
+        await refreshData()
       } else {
         alert('切换卡牌包状态失败')
       }
@@ -167,13 +189,7 @@ export default function CardImportTestPage() {
 
   // 获取批次禁用状态
   const getBatchDisabledStatus = (batchId: string): boolean => {
-    try {
-      const customCardManager = CustomCardManager.getInstance()
-      return customCardManager.getBatchDisabledStatus(batchId)
-    } catch (error) {
-      console.error('获取卡牌包状态时出错:', error)
-      return false
-    }
+    return batchStatuses[batchId] || false
   }
 
   // 处理文件选择
@@ -223,7 +239,7 @@ export default function CardImportTestPage() {
       result: allResults.length === 1 ? allResults[0] : allResults,
       error: anyError ? '部分文件导入失败，请检查下方结果' : null
     })
-    refreshData()
+    await refreshData()
   }
 
   // 处理文件导入
@@ -242,7 +258,7 @@ export default function CardImportTestPage() {
       })
 
       if (result.success) {
-        refreshData()
+        await refreshData()
       }
     } catch (error) {
       setImportStatus({
@@ -274,11 +290,11 @@ export default function CardImportTestPage() {
   }
 
   // 删除批次
-  const handleRemoveBatch = (batchId: string) => {
+  const handleRemoveBatch = async (batchId: string) => {
     if (confirm('确定要删除这个卡牌包吗？这将删除卡牌包中的所有卡牌。')) {
-      const success = removeCustomCardBatch(batchId)
+      const success = await removeCustomCardBatch(batchId)
       if (success) {
-        refreshData()
+        await refreshData()
         alert('卡牌包删除成功')
       } else {
         alert('卡牌包删除失败')
@@ -287,11 +303,11 @@ export default function CardImportTestPage() {
   }
 
   // 清空所有自定义卡牌
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (confirm('确定要清空所有自定义卡牌吗？此操作不可恢复。')) {
       try {
-        clearAllCustomCards()
-        refreshData()
+        await clearAllCustomCards()
+        await refreshData()
         alert('所有自定义卡牌已清空')
       } catch (error) {
         alert('清空失败: ' + (error instanceof Error ? error.message : String(error)))
@@ -311,7 +327,7 @@ export default function CardImportTestPage() {
         await customCardManager.forceReinitialize()
 
         // 刷新数据显示
-        refreshData()
+        await refreshData()
 
         alert('所有本地存储数据已清空！页面将自动刷新。')
 

@@ -3,6 +3,8 @@
  * 提供对localStorage的抽象操作，管理自定义卡牌的存储架构
  */
 
+import { safeJsonParse, safeGetItem, safeSetItem, safeRemoveItem } from './storage-utils';
+
 // 调试日志标记
 const DEBUG_CARD_STORAGE = false;
 const logDebug = (operation: string, details: any) => {
@@ -138,21 +140,15 @@ export class CustomCardStorage {
                 lastUpdate: new Date().toISOString()
             };
         }
-        try {
-            const stored = localStorage.getItem(STORAGE_KEYS.INDEX);
-            if (stored) {
-                return JSON.parse(stored);
-            }
-        } catch (error) {
-            console.error('[CustomCardStorage] 索引加载失败:', error);
-        }
-        // 返回默认索引结构
-        return {
+        
+        const defaultIndex = {
             batches: {},
             totalCards: 0,
             totalBatches: 0,
             lastUpdate: new Date().toISOString()
         };
+        
+        return safeGetItem(STORAGE_KEYS.INDEX, defaultIndex);
     }
 
     /**
@@ -160,11 +156,11 @@ export class CustomCardStorage {
      */
     static saveIndex(index: CustomCardIndex): void {
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
-        try {
-            index.lastUpdate = new Date().toISOString();
-            localStorage.setItem(STORAGE_KEYS.INDEX, JSON.stringify(index));
-        } catch (error) {
-            console.error('[CustomCardStorage] 索引保存失败:', error);
+        
+        index.lastUpdate = new Date().toISOString();
+        
+        if (!safeSetItem(STORAGE_KEYS.INDEX, index)) {
+            console.error('[CustomCardStorage] 索引保存失败');
             throw new Error('无法保存自定义卡牌索引');
         }
     }
@@ -184,18 +180,19 @@ export class CustomCardStorage {
     static saveBatch(batchId: string, data: BatchData): void {
         try {
             const key = this.getBatchStorageKey(batchId);
-            const jsonData = JSON.stringify(data);
 
             // 检查存储空间
             const config = this.getConfig();
             const currentUsage = this.calculateStorageUsage();
-            const dataSize = jsonData.length * 2; // UTF-16编码
+            const dataSize = JSON.stringify(data).length * 2; // UTF-16编码
 
             if (currentUsage.totalSize + dataSize > config.maxStorageSize) {
                 throw new Error(`存储空间不足。当前使用: ${(currentUsage.totalSize / 1024 / 1024).toFixed(2)}MB, 需要: ${(dataSize / 1024 / 1024).toFixed(2)}MB`);
             }
 
-            localStorage.setItem(key, jsonData);
+            if (!safeSetItem(key, data)) {
+                throw new Error(`无法保存批次数据到localStorage: ${batchId}`);
+            }
         } catch (error) {
             console.error(`[CustomCardStorage] 批次 ${batchId} 保存失败:`, error);
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -207,27 +204,26 @@ export class CustomCardStorage {
      * 加载批次数据
      */
     static loadBatch(batchId: string): BatchData | null {
-        try {
-            const key = this.getBatchStorageKey(batchId);
-            console.log(`[CustomCardStorage] 加载批次 ${batchId}，存储键: ${key}`);
-            const stored = localStorage.getItem(key);
-            if (stored) {
-                console.log(`[CustomCardStorage] 批次 ${batchId} 原始数据长度: ${stored.length}`);
-                const parsed = JSON.parse(stored);
-                console.log(`[CustomCardStorage] 批次 ${batchId} 解析后数据:`, {
-                    hasMetadata: !!parsed.metadata,
-                    hasCards: !!parsed.cards,
-                    cardsLength: parsed.cards ? parsed.cards.length : 'N/A'
-                });
-                return parsed;
-            } else {
-                console.warn(`[CustomCardStorage] 批次 ${batchId} 在localStorage中不存在`);
-                return null;
-            }
-        } catch (error) {
-            console.error(`[CustomCardStorage] 批次 ${batchId} 加载失败:`, error);
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
             return null;
         }
+        
+        const key = this.getBatchStorageKey(batchId);
+        console.log(`[CustomCardStorage] 加载批次 ${batchId}，存储键: ${key}`);
+        
+        const data = safeGetItem<BatchData | null>(key, null);
+        
+        if (data) {
+            console.log(`[CustomCardStorage] 批次 ${batchId} 解析后数据:`, {
+                hasMetadata: !!data.metadata,
+                hasCards: !!data.cards,
+                cardsLength: data.cards ? data.cards.length : 'N/A'
+            });
+        } else {
+            console.warn(`[CustomCardStorage] 批次 ${batchId} 在localStorage中不存在`);
+        }
+        
+        return data;
     }
 
     /**
@@ -235,7 +231,7 @@ export class CustomCardStorage {
      */
     static removeBatch(batchId: string): void {
         const key = this.getBatchStorageKey(batchId);
-        localStorage.removeItem(key);
+        safeRemoveItem(key);
     }
 
     /**
@@ -252,17 +248,8 @@ export class CustomCardStorage {
      * 获取存储配置
      */
     static getConfig(): StorageConfig {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEYS.CONFIG);
-            if (stored) {
-                const config = JSON.parse(stored);
-                return { ...DEFAULT_CONFIG, ...config };
-            }
-        } catch (error) {
-            console.error('[CustomCardStorage] 配置加载失败:', error);
-        }
-
-        return { ...DEFAULT_CONFIG };
+        const defaultConfig = { ...DEFAULT_CONFIG };
+        return safeGetItem(STORAGE_KEYS.CONFIG, defaultConfig);
     }
 
     /**
@@ -272,7 +259,9 @@ export class CustomCardStorage {
         try {
             const currentConfig = this.getConfig();
             const newConfig = { ...currentConfig, ...config };
-            localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(newConfig));
+            if (!safeSetItem(STORAGE_KEYS.CONFIG, newConfig)) {
+                throw new Error('无法保存存储配置到localStorage');
+            }
         } catch (error) {
             console.error('[CustomCardStorage] 配置保存失败:', error);
             throw new Error('无法保存存储配置');
@@ -294,8 +283,7 @@ export class CustomCardStorage {
 
         try {
             // 获取现有的所有批次自定义字段数据
-            const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-            const allFields: AllCustomFieldsByBatch = stored ? JSON.parse(stored) : {};
+            const allFields: AllCustomFieldsByBatch = safeGetItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, {});
 
             logDebug('saveCustomFieldsForBatch', {
                 beforeSave: allFields,
@@ -306,16 +294,17 @@ export class CustomCardStorage {
             allFields[batchId] = definitions;
 
             // 保存更新后的数据
-            localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(allFields));
+            if (!safeSetItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, allFields)) {
+                throw new Error('无法保存自定义字段数据到localStorage');
+            }
 
             // 验证保存
-            const verification = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-            const parsedVerification = verification ? JSON.parse(verification) : {};
+            const verification: AllCustomFieldsByBatch = safeGetItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, {});
 
             logDebug('saveCustomFieldsForBatch', {
-                afterSave: parsedVerification,
-                savedSuccessfully: JSON.stringify(allFields) === verification,
-                batchDefinitions: parsedVerification[batchId]
+                afterSave: verification,
+                savedSuccessfully: verification[batchId] !== undefined,
+                batchDefinitions: verification[batchId]
             });
 
         } catch (error) {
@@ -337,27 +326,22 @@ export class CustomCardStorage {
         }
 
         try {
-            const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-            if (!stored) {
-                logDebug('removeCustomFieldsForBatch', 'no stored data found');
-                return;
-            }
-
-            const allFields: AllCustomFieldsByBatch = JSON.parse(stored);
+            const allFields: AllCustomFieldsByBatch = safeGetItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, {});
             logDebug('removeCustomFieldsForBatch', { beforeRemoval: allFields });
 
             // 删除指定批次的自定义字段
             if (allFields[batchId]) {
                 delete allFields[batchId];
-                localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(allFields));
+                if (!safeSetItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, allFields)) {
+                    throw new Error('无法保存自定义字段数据到localStorage');
+                }
 
                 // 验证删除
-                const verification = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-                const parsedVerification = verification ? JSON.parse(verification) : {};
+                const verification: AllCustomFieldsByBatch = safeGetItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, {});
 
                 logDebug('removeCustomFieldsForBatch', {
-                    afterRemoval: parsedVerification,
-                    batchRemoved: !(batchId in parsedVerification)
+                    afterRemoval: verification,
+                    batchRemoved: !(batchId in verification)
                 });
             } else {
                 logDebug('removeCustomFieldsForBatch', 'batch not found in stored data');
@@ -382,13 +366,7 @@ export class CustomCardStorage {
 
         try {
             // 加载所有批次的自定义字段
-            const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-            if (!stored) {
-                logDebug('getAggregatedCustomFieldNames', 'no custom fields stored');
-                return {};
-            }
-
-            const allFieldsByBatch: AllCustomFieldsByBatch = JSON.parse(stored);
+            const allFieldsByBatch: AllCustomFieldsByBatch = safeGetItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, {});
             logDebug('getAggregatedCustomFieldNames', { allFieldsByBatch });
 
             // 加载主索引以检查批次状态
@@ -516,8 +494,7 @@ export class CustomCardStorage {
 
         try {
             // 获取现有的所有批次变体类型数据
-            const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-            const allVariantTypes: AllVariantTypesByBatch = stored ? JSON.parse(stored) : {};
+            const allVariantTypes: AllVariantTypesByBatch = safeGetItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, {});
 
             logDebug('saveVariantTypesForBatch', {
                 beforeSave: allVariantTypes,
@@ -528,16 +505,17 @@ export class CustomCardStorage {
             allVariantTypes[batchId] = variantTypes;
 
             // 保存更新后的数据
-            localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(allVariantTypes));
+            if (!safeSetItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, allVariantTypes)) {
+                throw new Error('无法保存变体类型数据到localStorage');
+            }
 
             // 验证保存
-            const verification = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-            const parsedVerification = verification ? JSON.parse(verification) : {};
+            const verification: AllVariantTypesByBatch = safeGetItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, {});
 
             logDebug('saveVariantTypesForBatch', {
-                afterSave: parsedVerification,
-                savedSuccessfully: JSON.stringify(allVariantTypes) === verification,
-                batchDefinitions: parsedVerification[batchId]
+                afterSave: verification,
+                savedSuccessfully: verification[batchId] !== undefined,
+                batchDefinitions: verification[batchId]
             });
 
         } catch (error) {
@@ -559,27 +537,22 @@ export class CustomCardStorage {
         }
 
         try {
-            const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-            if (!stored) {
-                logDebug('removeVariantTypesForBatch', 'no stored data found');
-                return;
-            }
-
-            const allVariantTypes: AllVariantTypesByBatch = JSON.parse(stored);
+            const allVariantTypes: AllVariantTypesByBatch = safeGetItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, {});
             logDebug('removeVariantTypesForBatch', { beforeRemoval: allVariantTypes });
 
             // 删除指定批次的变体类型定义
             if (allVariantTypes[batchId]) {
                 delete allVariantTypes[batchId];
-                localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(allVariantTypes));
+                if (!safeSetItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, allVariantTypes)) {
+                    throw new Error('无法保存变体类型数据到localStorage');
+                }
 
                 // 验证删除
-                const verification = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-                const parsedVerification = verification ? JSON.parse(verification) : {};
+                const verification: AllVariantTypesByBatch = safeGetItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, {});
 
                 logDebug('removeVariantTypesForBatch', {
-                    afterRemoval: parsedVerification,
-                    batchRemoved: !(batchId in parsedVerification)
+                    afterRemoval: verification,
+                    batchRemoved: !(batchId in verification)
                 });
             } else {
                 logDebug('removeVariantTypesForBatch', 'batch not found in stored data');
@@ -604,13 +577,7 @@ export class CustomCardStorage {
 
         try {
             // 加载所有批次的变体类型定义
-            const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-            if (!stored) {
-                logDebug('getAggregatedVariantTypes', 'no variant types stored');
-                return {};
-            }
-
-            const allVariantTypesByBatch: AllVariantTypesByBatch = JSON.parse(stored);
+            const allVariantTypesByBatch: AllVariantTypesByBatch = safeGetItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, {});
             logDebug('getAggregatedVariantTypes', { allVariantTypesByBatch });
 
             // 加载主索引以检查批次状态
@@ -729,29 +696,31 @@ export class CustomCardStorage {
         let configSize = 0;
 
         try {
-            // 计算索引大小
-            const indexData = localStorage.getItem(STORAGE_KEYS.INDEX);
-            if (indexData) {
-                indexSize = indexData.length * 2; // UTF-16编码
-                totalSize += indexSize;
-            }
+            // 计算索引大小 - 需要获取原始JSON字符串长度
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+                const indexData = localStorage.getItem(STORAGE_KEYS.INDEX);
+                if (indexData) {
+                    indexSize = indexData.length * 2; // UTF-16编码
+                    totalSize += indexSize;
+                }
 
-            // 计算配置大小
-            const configData = localStorage.getItem(STORAGE_KEYS.CONFIG);
-            if (configData) {
-                configSize = configData.length * 2;
-                totalSize += configSize;
-            }
+                // 计算配置大小
+                const configData = localStorage.getItem(STORAGE_KEYS.CONFIG);
+                if (configData) {
+                    configSize = configData.length * 2;
+                    totalSize += configSize;
+                }
 
-            // 计算各批次数据大小
-            const index = this.loadIndex();
-            for (const batchId of Object.keys(index.batches)) {
-                const key = this.getBatchStorageKey(batchId);
-                const data = localStorage.getItem(key);
-                if (data) {
-                    const size = data.length * 2;
-                    batchesSize += size;
-                    totalSize += size;
+                // 计算各批次数据大小
+                const index = this.loadIndex();
+                for (const batchId of Object.keys(index.batches)) {
+                    const key = this.getBatchStorageKey(batchId);
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                        const size = data.length * 2;
+                        batchesSize += size;
+                        totalSize += size;
+                    }
                 }
             }
         } catch (error) {
@@ -836,11 +805,14 @@ export class CustomCardStorage {
             // 清理孤立的批次数据
             for (const key of integrity.orphanedKeys) {
                 try {
-                    const data = localStorage.getItem(key);
-                    if (data) {
-                        freedSpace += data.length * 2;
+                    // Calculate freed space before removal
+                    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+                        const data = localStorage.getItem(key);
+                        if (data) {
+                            freedSpace += data.length * 2;
+                        }
                     }
-                    localStorage.removeItem(key);
+                    safeRemoveItem(key);
                     removedKeys.push(key);
                 } catch (error) {
                     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -973,36 +945,30 @@ export class CustomCardStorage {
             // 清空批次自定义字段存储（只删除非系统批次）
             if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
                 // 处理自定义字段存储
-                const storedCustomFields = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-                if (storedCustomFields) {
-                    const allCustomFields: AllCustomFieldsByBatch = JSON.parse(storedCustomFields);
-                    const systemCustomFields: AllCustomFieldsByBatch = {};
+                const allCustomFields: AllCustomFieldsByBatch = safeGetItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, {});
+                const systemCustomFields: AllCustomFieldsByBatch = {};
 
-                    // 只保留系统批次的自定义字段定义
-                    for (const batchId in allCustomFields) {
-                        if (systemBatches[batchId]) {
-                            systemCustomFields[batchId] = allCustomFields[batchId];
-                        }
+                // 只保留系统批次的自定义字段定义
+                for (const batchId in allCustomFields) {
+                    if (systemBatches[batchId]) {
+                        systemCustomFields[batchId] = allCustomFields[batchId];
                     }
-
-                    localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(systemCustomFields));
                 }
+
+                safeSetItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, systemCustomFields);
 
                 // 处理变体类型存储
-                const storedVariantTypes = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-                if (storedVariantTypes) {
-                    const allVariantTypes: AllVariantTypesByBatch = JSON.parse(storedVariantTypes);
-                    const systemVariantTypes: AllVariantTypesByBatch = {};
+                const allVariantTypes: AllVariantTypesByBatch = safeGetItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, {});
+                const systemVariantTypes: AllVariantTypesByBatch = {};
 
-                    // 只保留系统批次的变体类型定义
-                    for (const batchId in allVariantTypes) {
-                        if (systemBatches[batchId]) {
-                            systemVariantTypes[batchId] = allVariantTypes[batchId];
-                        }
+                // 只保留系统批次的变体类型定义
+                for (const batchId in allVariantTypes) {
+                    if (systemBatches[batchId]) {
+                        systemVariantTypes[batchId] = allVariantTypes[batchId];
                     }
-
-                    localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(systemVariantTypes));
                 }
+
+                safeSetItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, systemVariantTypes);
             }
 
             console.log(`[CustomCardStorage] 清空完成，保留 ${systemBatchCount} 个系统批次，${systemCardCount} 张系统卡牌`);

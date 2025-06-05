@@ -57,33 +57,48 @@ interface UnifiedBatchData {
 
 ### 🔄 进行中的步骤
 
-#### 4. 系统初始化集成 (已完成)
-- [x] **已完成**：集成到现有的 `components/card-system-initializer.tsx`
-- [x] 在现有初始化组件中添加存储迁移检查
-- [x] 确保迁移过程不影响用户体验
-- [x] 添加迁移进度反馈和错误处理
-- [x] 移除降级逻辑，失败时直接抛出错误便于调试
+#### 4. 兼容性适配器开发 (90% 完成)
+- [x] **已完成**：创建 `StorageAdapter` 兼容性层 (`storage-adapter.ts`)
+- [x] 实现所有 CustomCardStorage 方法的适配
+- [x] 保持现有API接口不变
+- [x] 添加完整的错误处理和日志记录
+
+#### 5. CustomCardManager 集成 (85% 完成)
+- [x] **已大部分完成**：替换 `CustomCardManager` 中的 `CustomCardStorage.` 调用
+- [x] 更新 `importCards` 方法为异步并使用 `await storageAdapter.`
+- [x] 更新 `validateVariantTypeUniqueness` 方法为异步
+- [x] 更新 `reloadCustomCards` 和相关方法为异步
+- [x] 更新 `_seedOrUpdateBuiltinCards` 和 `importBuiltinCards` 方法
+- [x] 更新 `removeBatch` 方法为异步
+- [ ] **进行中**：替换剩余的 `CustomCardStorage` 调用（约12处）
+- [ ] 更新方法调用链的异步传播
+- [ ] 测试异步方法的调用兼容性
 
 ### ⏳ 待完成的步骤
 
-#### 5. 现有代码适配 (即将开始)
-- [ ] **下一步**：更新 `card/card-storage.ts` 以使用新的存储管理器
-- [ ] 更新 `card/custom-card-manager.ts` 的存储调用
-- [ ] 更新 `hooks/use-cards.ts` 的数据获取逻辑
-- [ ] 检查并更新所有直接使用localStorage的地方
+#### 6. 系统初始化集成 (待开始)
+- [ ] **下一步**：集成到现有的 `components/card-system-initializer.tsx`
+- [ ] 在现有初始化组件中添加存储迁移检查
+- [ ] 确保迁移过程不影响用户体验
+- [ ] 添加迁移进度反馈和错误处理
 
-#### 6. API接口保持兼容 (待开始)
+#### 7. 现有代码全面适配 (待开始)
+- [ ] 检查并更新所有直接使用localStorage的地方
+- [ ] 更新 `hooks/use-cards.ts` 的数据获取逻辑
+- [ ] 确保所有异步方法调用正确await
+
+#### 8. API接口保持兼容 (待开始)
 - [ ] 确保现有组件的调用接口不变
 - [ ] 提供过渡期的兼容性适配器（如需要）
 - [ ] 更新类型定义以支持新结构
 
-#### 7. 测试和验证 (待开始)
+#### 9. 测试和验证 (待开始)
 - [ ] 创建单元测试覆盖新存储逻辑
 - [ ] 测试数据迁移的各种场景
 - [ ] 性能测试（内存使用、读写速度）
 - [ ] 边界情况测试（大数据量、损坏数据等）
 
-#### 8. 文档和清理 (待开始)
+#### 10. 文档和清理 (待开始)
 - [ ] 更新用户文档和开发文档
 - [ ] 清理废弃的代码和注释
 - [ ] 添加新功能的使用示例
@@ -127,18 +142,18 @@ interface UnifiedBatchData {
 ## 下一步行动
 
 ### 立即执行
-1. **集成初始化组件**：在现有的 `card-system-initializer.tsx` 中集成迁移逻辑
-2. **测试迁移流程**：确保迁移过程稳定可靠
+1. **完成CustomCardManager适配**：替换剩余的12处 `CustomCardStorage` 调用
+2. **异步方法传播**：确保所有相关方法调用正确处理异步
 
-### 短期目标（本周内）
-1. 完成现有代码的适配工作
+### 短期目标（本次会话内）
+1. 完成 `CustomCardManager` 的所有 `CustomCardStorage` 调用替换
 2. 进行基础功能测试
-3. 确保用户体验无明显变化
+3. 检查异步方法调用链的完整性
 
-### 中期目标（下周）
-1. 完善测试覆盖
-2. 性能优化和压力测试
-3. 文档完善
+### 中期目标（下次会话）
+1. 集成到系统初始化组件
+2. 测试完整的数据迁移流程
+3. 性能验证和优化
 
 ## 备注
 - 所有修改都应该保持向后兼容

@@ -1105,16 +1105,16 @@ export class CustomCardManager {
     /**
      * 获取所有批次信息
      */
-    getAllBatches(): ImportBatch[] {
-        const index = CustomCardStorage.loadIndex();
+    async getAllBatches(): Promise<ImportBatch[]> {
+        const index = await storageAdapter.loadIndex();
         return Object.values(index.batches);
     }
 
     /**
      * 根据ID获取批次信息
      */
-    getBatchById(batchId: string): ImportBatch | null {
-        const index = CustomCardStorage.loadIndex();
+    async getBatchById(batchId: string): Promise<ImportBatch | null> {
+        const index = await storageAdapter.loadIndex();
         return index.batches[batchId] || null;
     }
 
@@ -1186,9 +1186,9 @@ export class CustomCardManager {
     /**
      * 清空所有自定义卡牌
      */
-    clearAllCustomCards(): void {
+    async clearAllCustomCards(): Promise<void> {
         try {
-            CustomCardStorage.clearAllData();
+            await storageAdapter.clearAllData();
             this.customCards = [];
         } catch (error) {
             console.error('[CustomCardManager] 清空自定义卡牌失败:', error);
@@ -1199,8 +1199,8 @@ export class CustomCardManager {
     /**
      * 获取统计信息
      */
-    getStats(): CustomCardStats {
-        const index = CustomCardStorage.loadIndex();
+    async getStats(): Promise<CustomCardStats> {
+        const index = await storageAdapter.loadIndex();
         const cardsByType: Record<string, number> = {};
         const cardsByBatch: Record<string, number> = {};
 
@@ -1214,7 +1214,7 @@ export class CustomCardManager {
             cardsByBatch[batch.id] = batch.cardCount;
         }
 
-        const storageStats = CustomCardStorage.calculateStorageUsage();
+        const storageStats = await storageAdapter.calculateStorageUsage();
 
         return {
             totalCards: index.totalCards,
@@ -1228,8 +1228,8 @@ export class CustomCardManager {
     /**
      * 获取批次统计信息
      */
-    getBatchStats(batchId: string): BatchStats | null {
-        const batch = this.getBatchById(batchId);
+    async getBatchStats(batchId: string): Promise<BatchStats | null> {
+        const batch = await this.getBatchById(batchId);
         if (!batch) return null;
 
         return {
@@ -1243,17 +1243,17 @@ export class CustomCardManager {
     /**
      * 获取存储完整性报告
      */
-    validateIntegrity() {
-        return CustomCardStorage.validateIntegrity();
+    async validateIntegrity() {
+        return await storageAdapter.validateIntegrity();
     }
 
     /**
      * 清理孤立数据
      */
-    cleanupOrphanedData() {
-        const result = CustomCardStorage.cleanupOrphanedData();
+    async cleanupOrphanedData() {
+        const result = await storageAdapter.cleanupOrphanedData();
         if (result.removedKeys.length > 0) {
-            this.reloadCustomCards();
+            await this.reloadCustomCards();
         }
         return result;
     }
@@ -1261,8 +1261,8 @@ export class CustomCardManager {
     /**
      * 获取存储使用情况
      */
-    getStorageInfo() {
-        return CustomCardStorage.getFormattedStorageInfo();
+    async getStorageInfo() {
+        return await storageAdapter.getFormattedStorageInfo();
     }
 
     /**
@@ -1295,7 +1295,7 @@ export class CustomCardManager {
      */
     async toggleBatchDisabled(batchId: string): Promise<boolean> {
         try {
-            const index = CustomCardStorage.loadIndex();
+            const index = await storageAdapter.loadIndex();
             const batchInfo = index.batches[batchId];
 
             if (!batchInfo) {
@@ -1306,10 +1306,10 @@ export class CustomCardManager {
             // 切换禁用状态
             batchInfo.disabled = !batchInfo.disabled;
             index.lastUpdate = new Date().toISOString();
-            CustomCardStorage.saveIndex(index);
+            await storageAdapter.saveIndex(index);
 
             // 重新加载卡牌以反映更改
-            this.reloadCustomCards();
+            await this.reloadCustomCards();
 
             console.log(`[CustomCardManager] 批次 ${batchId} (${batchInfo.name}) 禁用状态已设置为: ${batchInfo.disabled}`);
             return true;
@@ -1324,8 +1324,8 @@ export class CustomCardManager {
      * @param batchId 批次ID
      * @returns 如果禁用返回true，如果启用或未找到返回false（默认为启用）
      */
-    getBatchDisabledStatus(batchId: string): boolean {
-        const index = CustomCardStorage.loadIndex();
+    async getBatchDisabledStatus(batchId: string): Promise<boolean> {
+        const index = await storageAdapter.loadIndex();
         const batchInfo = index.batches[batchId];
         return batchInfo?.disabled === true; // 如果batchInfo或batchInfo.disabled为undefined，则视为启用
     }

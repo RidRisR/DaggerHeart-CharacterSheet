@@ -145,7 +145,7 @@ export function getCustomCardBatches() {
 }
 
 // 删除自定义卡牌批次
-export function removeCustomCardBatch(batchId: string): boolean {
+export function removeCustomCardBatch(batchId: string): Promise<boolean> {
   return customCardManager.removeBatch(batchId)
 }
 
@@ -155,8 +155,8 @@ export function getCustomCardStats() {
 }
 
 // 清空所有自定义卡牌
-export function clearAllCustomCards(): void {
-  customCardManager.clearAllCustomCards()
+export function clearAllCustomCards(): Promise<void> {
+  return customCardManager.clearAllCustomCards()
 }
 
 // 获取存储使用情况

@@ -12,6 +12,9 @@ const logDebug = (operation: string, details: any) => {
 };
 
 import { CustomCardStorage, type BatchData, type ImportBatch } from './card-storage';
+import { UnifiedCardStorage } from './unified-storage';
+import { StorageMigration } from './storage-migration';
+import { storageAdapter } from './storage-adapter';
 import {
     StandardCard,
     ImportData,
@@ -143,14 +146,14 @@ export class CustomCardManager {
             // 种子化内置卡牌
             await this._seedOrUpdateBuiltinCards();
             // 然后加载自定义卡牌
-            this.loadCustomCards();
+            await this.loadCustomCards();
 
             this.isInitialized = true;
             console.log('[CustomCardManager] 系统初始化完成');
         } catch (error) {
             console.error('[CustomCardManager] 系统初始化失败:', error);
             // 即使内置卡牌初始化失败，也要尝试加载自定义卡牌
-            this.loadCustomCards();
+            await this.loadCustomCards();
             this.isInitialized = true; // 标记为已初始化，避免重复尝试
         }
     }
@@ -201,7 +204,7 @@ export class CustomCardManager {
         // 确保系统已初始化
         await this.ensureInitialized();
 
-        const batchId = CustomCardStorage.generateBatchId();
+        const batchId = await storageAdapter.generateBatchId();
         let hasCreatedBatch = false;
 
         logDebug('importCards', {
@@ -232,10 +235,10 @@ export class CustomCardManager {
                         filteredDefinitions
                     });
 
-                    CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
+                    await storageAdapter.saveCustomFieldsForBatch(batchId, filteredDefinitions);
 
                     // 验证保存是否成功
-                    const savedFields = CustomCardStorage.getAggregatedCustomFieldNames();
+                    const savedFields = await storageAdapter.getAggregatedCustomFieldNames();
                     logDebug('importCards', {
                         step: 'verification after custom fields save',
                         savedFields
@@ -250,10 +253,10 @@ export class CustomCardManager {
                         variantTypes: importData.customFieldDefinitions.variantTypes
                     });
 
-                    CustomCardStorage.saveVariantTypesForBatch(batchId, importData.customFieldDefinitions.variantTypes);
+                    await storageAdapter.saveVariantTypesForBatch(batchId, importData.customFieldDefinitions.variantTypes);
 
                     // 验证保存是否成功
-                    const savedVariantTypes = CustomCardStorage.getAggregatedVariantTypes();
+                    const savedVariantTypes = await storageAdapter.getAggregatedVariantTypes();
                     logDebug('importCards', {
                         step: 'verification after variant types save',
                         savedVariantTypes: Object.keys(savedVariantTypes)
@@ -271,9 +274,9 @@ export class CustomCardManager {
                 });
                 // 如果验证失败，清理临时保存的自定义字段定义和变体类型定义
                 if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    await storageAdapter.removeCustomFieldsForBatch(batchId);
                     if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                        await storageAdapter.removeVariantTypesForBatch(batchId);
                     }
                 }
                 return {
@@ -294,9 +297,9 @@ export class CustomCardManager {
                 });
                 // 如果ID冲突，清理临时保存的自定义字段定义和变体类型定义
                 if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    await storageAdapter.removeCustomFieldsForBatch(batchId);
                     if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                        await storageAdapter.removeVariantTypesForBatch(batchId);
                     }
                 }
                 return {
@@ -309,7 +312,7 @@ export class CustomCardManager {
 
             // 第四步：变体类型冲突检测（严格模式）
             logDebug('importCards', { step: 'variant type conflict check' });
-            const variantTypeValidation = this.validateVariantTypeUniqueness(importData);
+            const variantTypeValidation = await this.validateVariantTypeUniqueness(importData);
             if (!variantTypeValidation.isValid) {
                 logDebug('importCards', {
                     step: 'variant type conflict detected',
@@ -317,9 +320,9 @@ export class CustomCardManager {
                 });
                 // 如果变体类型冲突，清理临时保存的自定义字段定义和变体类型定义
                 if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    await storageAdapter.removeCustomFieldsForBatch(batchId);
                     if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                        await storageAdapter.removeVariantTypesForBatch(batchId);
                     }
                 }
                 return {
@@ -340,9 +343,9 @@ export class CustomCardManager {
                 });
                 // 如果转换失败，清理临时保存的自定义字段定义和变体类型定义
                 if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    await storageAdapter.removeCustomFieldsForBatch(batchId);
                     if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                        await storageAdapter.removeVariantTypesForBatch(batchId);
                     }
                 }
                 return {
@@ -386,19 +389,19 @@ export class CustomCardManager {
             // 第七步：检查存储空间
             logDebug('importCards', { step: 'storage space check' });
             const dataSize = JSON.stringify(batchData).length * 2;
-            if (!CustomCardStorage.checkStorageSpace(dataSize)) {
+            if (!(await storageAdapter.checkStorageSpace(dataSize))) {
                 logDebug('importCards', {
                     step: 'insufficient storage space',
                     requiredSize: dataSize
                 });
                 // 如果存储空间不足，清理临时保存的自定义字段定义和变体类型定义
                 if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    await storageAdapter.removeCustomFieldsForBatch(batchId);
                     if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                        await storageAdapter.removeVariantTypesForBatch(batchId);
                     }
                 }
-                const storageInfo = CustomCardStorage.getFormattedStorageInfo();
+                const storageInfo = await storageAdapter.getFormattedStorageInfo();
                 return {
                     success: false,
                     imported: 0,
@@ -408,14 +411,14 @@ export class CustomCardManager {
 
             // 第八步：存储操作（事务性）
             logDebug('importCards', { step: 'saving batch' });
-            CustomCardStorage.saveBatch(batchId, batchData);
+            await storageAdapter.saveBatch(batchId, batchData);
             hasCreatedBatch = true;
 
             // 注意：自定义字段定义和变体类型定义已经在第一步中保存了，这里不需要重复保存
 
             // 第九步：更新索引
             logDebug('importCards', { step: 'updating index' });
-            const index = CustomCardStorage.loadIndex();
+            const index = await storageAdapter.loadIndex();
             const cardTypes = [...new Set(convertResult.cards.map(card => card.type))];
 
             // 优先使用 JSON 内的 name 字段，如果没有则使用文件名，最后使用默认名称
@@ -434,10 +437,10 @@ export class CustomCardManager {
             index.totalCards += convertResult.cards.length;
             index.totalBatches++;
 
-            CustomCardStorage.saveIndex(index);
+            await storageAdapter.saveIndex(index);
 
             // 第八步：更新内存缓存
-            this.reloadCustomCards();
+            await this.reloadCustomCards();
 
             return {
                 success: true,
@@ -449,14 +452,14 @@ export class CustomCardManager {
         } catch (error) {
             // 清理失败的操作
             if (hasCreatedBatch) {
-                CustomCardStorage.removeBatch(batchId);
+                await storageAdapter.removeBatch(batchId);
             }
 
             // 无论是否创建了批次，都要清理临时保存的自定义字段定义和变体类型定义
             if (importData.customFieldDefinitions) {
-                CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                await storageAdapter.removeCustomFieldsForBatch(batchId);
                 if (importData.customFieldDefinitions.variantTypes) {
-                    CustomCardStorage.removeVariantTypesForBatch(batchId);
+                    await storageAdapter.removeVariantTypesForBatch(batchId);
                 }
             }
 
@@ -559,7 +562,7 @@ export class CustomCardManager {
      * @param importData 导入数据
      * @returns 验证结果和错误信息
      */
-    private validateVariantTypeUniqueness(importData: ImportData): { isValid: boolean; errors: string[]; conflictingTypes: string[] } {
+    private async validateVariantTypeUniqueness(importData: ImportData): Promise<{ isValid: boolean; errors: string[]; conflictingTypes: string[] }> {
         const errors: string[] = [];
         
         // 如果没有变体类型定义，直接通过验证
@@ -568,7 +571,7 @@ export class CustomCardManager {
         }
         
         const newVariantTypes = importData.customFieldDefinitions.variantTypes;
-        const existingVariantTypes = CustomCardStorage.getAggregatedVariantTypes();
+        const existingVariantTypes = await storageAdapter.getAggregatedVariantTypes();
         const conflictingTypes: string[] = [];
         
         logDebug('validateVariantTypeUniqueness', {
@@ -776,10 +779,10 @@ export class CustomCardManager {
     /**
      * 重新加载自定义卡牌到内存
      */
-    private reloadCustomCards(): void {
+    private async reloadCustomCards(): Promise<void> {
         console.log(`[CustomCardManager] 开始重新加载自定义卡牌`);
         this.customCards = [];
-        const index = CustomCardStorage.loadIndex();
+        const index = await storageAdapter.loadIndex();
 
         console.log(`[CustomCardManager] 索引中的批次数量: ${Object.keys(index.batches).length}`);
 
@@ -793,7 +796,7 @@ export class CustomCardManager {
             }
 
             console.log(`[CustomCardManager] 正在加载批次: ${batchId}`);
-            const batchData = CustomCardStorage.loadBatch(batchId);
+            const batchData = await storageAdapter.loadBatch(batchId);
             console.log(`[CustomCardManager] 批次 ${batchId} 数据:`, batchData ? `存在，cards字段: ${batchData.cards ? `数组长度${batchData.cards.length}` : '不存在'}` : '不存在');
 
             if (batchData && batchData.cards) {
@@ -817,8 +820,8 @@ export class CustomCardManager {
     /**
      * 初始加载自定义卡牌
      */
-    private loadCustomCards(): void {
-        this.reloadCustomCards();
+    private async loadCustomCards(): Promise<void> {
+        await this.reloadCustomCards();
     }
 
     /**
@@ -828,7 +831,7 @@ export class CustomCardManager {
     private async _seedOrUpdateBuiltinCards(): Promise<void> {
         try {
             console.log('[CustomCardManager] 开始种子化或更新内置卡牌（从JSON文件）');
-            const index = CustomCardStorage.loadIndex();
+            const index = await storageAdapter.loadIndex();
 
             // 静态加载JSON卡牌包
             const jsonCardPack = BuiltinCardPackLoader.getBuiltinCardPack();
@@ -845,7 +848,7 @@ export class CustomCardManager {
             // 如果已存在旧版本，先删除
             if (existingBuiltinBatch) {
                 console.log('[CustomCardManager] 移除旧版本内置卡牌...');
-                CustomCardStorage.removeBatch(BUILTIN_BATCH_ID);
+                await storageAdapter.removeBatch(BUILTIN_BATCH_ID);
             }
 
             // 使用完整的导入流程，确保validation和customFieldDefinitions处理
@@ -884,13 +887,13 @@ export class CustomCardManager {
 
                 if (Object.keys(filteredDefinitions).length > 0) {
                     console.log('[CustomCardManager] 保存内置卡牌的customFieldDefinitions:', filteredDefinitions);
-                    CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
+                    await storageAdapter.saveCustomFieldsForBatch(batchId, filteredDefinitions);
                 }
 
                 // 处理变体类型定义
                 if (jsonCardPack.customFieldDefinitions.variantTypes) {
                     console.log('[CustomCardManager] 保存内置卡牌的variantTypes:', jsonCardPack.customFieldDefinitions.variantTypes);
-                    CustomCardStorage.saveVariantTypesForBatch(batchId, jsonCardPack.customFieldDefinitions.variantTypes);
+                    await storageAdapter.saveVariantTypesForBatch(batchId, jsonCardPack.customFieldDefinitions.variantTypes);
                 }
             }
 
@@ -901,9 +904,9 @@ export class CustomCardManager {
                 console.error('[CustomCardManager] 内置卡牌格式验证失败:', formatValidation.errors);
                 // 清理临时保存的数据
                 if (jsonCardPack.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    await storageAdapter.removeCustomFieldsForBatch(batchId);
                     if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                        await storageAdapter.removeVariantTypesForBatch(batchId);
                     }
                 }
                 return {
@@ -920,9 +923,9 @@ export class CustomCardManager {
                 console.error('[CustomCardManager] 内置卡牌转换失败:', convertResult.errors);
                 // 清理临时保存的数据
                 if (jsonCardPack.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    await storageAdapter.removeCustomFieldsForBatch(batchId);
                     if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                        await storageAdapter.removeVariantTypesForBatch(batchId);
                     }
                 }
                 return {
@@ -960,13 +963,13 @@ export class CustomCardManager {
 
             // 第五步：检查存储空间
             const dataSize = JSON.stringify(batchData).length * 2;
-            if (!CustomCardStorage.checkStorageSpace(dataSize)) {
-                const storageInfo = CustomCardStorage.getFormattedStorageInfo();
+            if (!await storageAdapter.checkStorageSpace(dataSize)) {
+                const storageInfo = await storageAdapter.getFormattedStorageInfo();
                 // 清理临时保存的数据
                 if (jsonCardPack.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                    await storageAdapter.removeCustomFieldsForBatch(batchId);
                     if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
+                        await storageAdapter.removeVariantTypesForBatch(batchId);
                     }
                 }
                 return {
@@ -977,11 +980,11 @@ export class CustomCardManager {
             }
 
             // 第六步：保存批次数据
-            CustomCardStorage.saveBatch(batchId, batchData);
+            await storageAdapter.saveBatch(batchId, batchData);
             hasCreatedBatch = true;
 
             // 第七步：更新索引
-            const index = CustomCardStorage.loadIndex();
+            const index = await storageAdapter.loadIndex();
             const cardTypes = [...new Set(builtinCards.map(card => card.type))];
 
             index.batches[batchId] = {
@@ -1000,7 +1003,7 @@ export class CustomCardManager {
             index.totalBatches++;
             index.lastUpdate = new Date().toISOString();
 
-            CustomCardStorage.saveIndex(index);
+            await storageAdapter.saveIndex(index);
 
             return {
                 success: true,
@@ -1012,14 +1015,14 @@ export class CustomCardManager {
         } catch (error) {
             // 清理失败的操作
             if (hasCreatedBatch) {
-                CustomCardStorage.removeBatch(batchId);
+                await storageAdapter.removeBatch(batchId);
             }
 
             // 清理临时保存的数据
             if (jsonCardPack.customFieldDefinitions) {
-                CustomCardStorage.removeCustomFieldsForBatch(batchId);
+                await storageAdapter.removeCustomFieldsForBatch(batchId);
                 if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                    CustomCardStorage.removeVariantTypesForBatch(batchId);
+                    await storageAdapter.removeVariantTypesForBatch(batchId);
                 }
             }
 
@@ -1118,7 +1121,7 @@ export class CustomCardManager {
     /**
      * 删除批次
      */
-    removeBatch(batchId: string): boolean {
+    async removeBatch(batchId: string): Promise<boolean> {
         logDebug('removeBatch', { batchId });
 
         try {
@@ -1132,7 +1135,7 @@ export class CustomCardManager {
                 return false;
             }
 
-            const index = CustomCardStorage.loadIndex();
+            const index = await storageAdapter.loadIndex();
 
             if (!index.batches[batchId]) {
                 logDebug('removeBatch', {
@@ -1150,14 +1153,14 @@ export class CustomCardManager {
 
             // 删除批次数据
             logDebug('removeBatch', { step: 'removing batch data' });
-            CustomCardStorage.removeBatch(batchId);
+            await storageAdapter.removeBatch(batchId);
 
             // 删除批次对应的自定义字段和变体类型定义
             logDebug('removeBatch', { step: 'removing custom fields for batch' });
-            CustomCardStorage.removeCustomFieldsForBatch(batchId);
+            await storageAdapter.removeCustomFieldsForBatch(batchId);
 
             logDebug('removeBatch', { step: 'removing variant types for batch' });
-            CustomCardStorage.removeVariantTypesForBatch(batchId);
+            await storageAdapter.removeVariantTypesForBatch(batchId);
 
             // 更新索引
             logDebug('removeBatch', { step: 'updating index' });
@@ -1165,11 +1168,11 @@ export class CustomCardManager {
             index.totalBatches--;
             index.totalCards -= batch.cardCount;
 
-            CustomCardStorage.saveIndex(index);
+            await storageAdapter.saveIndex(index);
 
             // 重新加载内存中的卡牌数据
             logDebug('removeBatch', { step: 'reloading custom cards' });
-            this.reloadCustomCards();
+            await this.reloadCustomCards();
 
             logDebug('removeBatch', { result: 'success' });
             return true;

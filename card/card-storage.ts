@@ -127,11 +127,23 @@ export interface CleanupReport {
  * 提供localStorage的抽象操作接口
  */
 export class CustomCardStorage {
+    // 批次数据的内存缓存
+    private static batchCache: Map<string, BatchData | null> = new Map();
+    
     static removeCustomFieldsForBatch(batchId: string) {
         throw new Error('Method not implemented.');
     }
     static removeVariantTypesForBatch(batchId: string) {
         throw new Error('Method not implemented.');
+    }
+
+    /**
+     * 清除批次内存缓存
+     * 用于维护和调试目的
+     */
+    static clearBatchCache(): void {
+        this.batchCache.clear();
+        logDebug('clearBatchCache', 'Batch cache cleared');
     }
 
     // ===== 索引操作 =====
@@ -208,7 +220,10 @@ export class CustomCardStorage {
 
             localStorage.setItem(key, jsonData);
             
-            // 批次数据变更时清除缓存
+            // 更新内存缓存
+            this.batchCache.set(batchId, data);
+            
+            // 批次数据变更时清除其他缓存
             CardStorageCache.invalidateAll();
             logDebug('saveBatch', { message: 'cache invalidated after batch save', batchId });
         } catch (error) {
@@ -222,21 +237,34 @@ export class CustomCardStorage {
      * 加载批次数据
      */
     static loadBatch(batchId: string): BatchData | null {
+        // 首先检查内存缓存
+        if (this.batchCache.has(batchId)) {
+            const cached = this.batchCache.get(batchId);
+            logDebug('loadBatch', `批次 ${batchId} 命中内存缓存`);
+            return cached ?? null;
+        }
+        
         try {
             const key = this.getBatchStorageKey(batchId);
-            console.log(`[CustomCardStorage] 加载批次 ${batchId}，存储键: ${key}`);
+            logDebug('loadBatch', `加载批次 ${batchId}，存储键: ${key}`);
             const stored = localStorage.getItem(key);
             if (stored) {
-                console.log(`[CustomCardStorage] 批次 ${batchId} 原始数据长度: ${stored.length}`);
+                logDebug('loadBatch', `批次 ${batchId} 原始数据长度: ${stored.length}`);
                 const parsed = JSON.parse(stored);
-                console.log(`[CustomCardStorage] 批次 ${batchId} 解析后数据:`, {
+                logDebug('loadBatch', {
+                    message: `批次 ${batchId} 解析后数据`,
                     hasMetadata: !!parsed.metadata,
                     hasCards: !!parsed.cards,
                     cardsLength: parsed.cards ? parsed.cards.length : 'N/A'
                 });
+                
+                // 缓存解析后的数据
+                this.batchCache.set(batchId, parsed);
                 return parsed;
             } else {
                 console.warn(`[CustomCardStorage] 批次 ${batchId} 在localStorage中不存在`);
+                // 缓存 null 结果以避免重复的 localStorage 查询
+                this.batchCache.set(batchId, null);
                 return null;
             }
         } catch (error) {
@@ -252,7 +280,10 @@ export class CustomCardStorage {
         const key = this.getBatchStorageKey(batchId);
         localStorage.removeItem(key);
         
-        // 批次删除时清除缓存
+        // 清除内存缓存
+        this.batchCache.delete(batchId);
+        
+        // 批次删除时清除其他缓存
         CardStorageCache.invalidateAll();
         logDebug('removeBatch', { message: 'cache invalidated after batch removal', batchId });
     }

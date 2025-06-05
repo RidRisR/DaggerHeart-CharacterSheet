@@ -23,7 +23,8 @@ import {
     ExtendedStandardCard,
     CardType // Assuming CardType enum might be useful here or for keys
 } from './card-types';
-import { BUILTIN_BATCH_ID } from './builtin-card-data';
+// 移除对 builtin-card-data.ts 的依赖
+const BUILTIN_BATCH_ID = "SYSTEM_BUILTIN_CARDS";
 import { CardTypeValidator } from './type-validators';
 import { professionCardConverter } from './profession-card/convert';
 import { ancestryCardConverter } from './ancestry-card/convert';

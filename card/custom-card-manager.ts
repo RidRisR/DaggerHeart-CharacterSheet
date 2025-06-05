@@ -281,13 +281,8 @@ export class CustomCardManager {
                     step: 'format validation failed',
                     errors: formatValidation.errors
                 });
-                // 如果验证失败，清理临时保存的自定义字段定义和变体类型定义
-                if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // 验证失败时不需要清理，因为批次本身还未创建
                 return {
                     success: false,
                     imported: 0,
@@ -304,13 +299,8 @@ export class CustomCardManager {
                     step: 'ID conflict detected',
                     duplicateIds: validation.duplicateIds
                 });
-                // 如果ID冲突，清理临时保存的自定义字段定义和变体类型定义
-                if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // ID冲突时不需要清理，因为批次本身还未创建
                 return {
                     success: false,
                     imported: 0,
@@ -327,13 +317,8 @@ export class CustomCardManager {
                     step: 'variant type conflict detected',
                     conflictingTypes: variantTypeValidation.conflictingTypes
                 });
-                // 如果变体类型冲突，清理临时保存的自定义字段定义和变体类型定义
-                if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // 变体类型冲突时不需要清理，因为批次本身还未创建
                 return {
                     success: false,
                     imported: 0,
@@ -350,13 +335,8 @@ export class CustomCardManager {
                     step: 'conversion failed',
                     errors: convertResult.errors
                 });
-                // 如果转换失败，清理临时保存的自定义字段定义和变体类型定义
-                if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // 转换失败时不需要清理，因为批次本身还未创建
                 return {
                     success: false,
                     imported: 0,
@@ -380,10 +360,11 @@ export class CustomCardManager {
                 customFieldDefinitions: importData.customFieldDefinitions
                     ? Object.fromEntries(
                         Object.entries(importData.customFieldDefinitions)
-                            .filter(([, value]) => Array.isArray(value))
+                            .filter(([key, value]) => Array.isArray(value) && key !== 'variantTypes')
                             .map(([key, value]) => [key, value as string[]])
                     )
-                    : undefined // Store custom field definitions in BatchData, filtering out undefined values
+                    : undefined, // Store custom field definitions in BatchData, filtering out variantTypes
+                variantTypes: importData.customFieldDefinitions?.variantTypes || undefined // Store variant types separately
             };
 
             logDebug('importCards', {
@@ -403,13 +384,8 @@ export class CustomCardManager {
                     step: 'insufficient storage space',
                     requiredSize: dataSize
                 });
-                // 如果存储空间不足，清理临时保存的自定义字段定义和变体类型定义
-                if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // 存储空间不足时不需要清理，因为批次本身还未创建
                 const storageInfo = CustomCardStorage.getFormattedStorageInfo();
                 return {
                     success: false,
@@ -464,13 +440,8 @@ export class CustomCardManager {
                 CustomCardStorage.removeBatch(batchId);
             }
 
-            // 无论是否创建了批次，都要清理临时保存的自定义字段定义和变体类型定义
-            if (importData.customFieldDefinitions) {
-                CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                if (importData.customFieldDefinitions.variantTypes) {
-                    CustomCardStorage.removeVariantTypesForBatch(batchId);
-                }
-            }
+            // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+            // 导入失败时如果批次未创建，不需要清理临时数据
 
             console.error('[CustomCardManager] 导入失败:', error);
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -911,13 +882,8 @@ export class CustomCardManager {
             const formatValidation = this.validateImportDataFormat(jsonCardPack);
             if (!formatValidation.isValid) {
                 console.error('[CustomCardManager] 内置卡牌格式验证失败:', formatValidation.errors);
-                // 清理临时保存的数据
-                if (jsonCardPack.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // 格式验证失败时不需要清理，因为数据已经保存在批次中
                 return {
                     success: false,
                     imported: 0,
@@ -930,13 +896,8 @@ export class CustomCardManager {
             const convertResult = await this.convertImportData(jsonCardPack);
             if (!convertResult.success) {
                 console.error('[CustomCardManager] 内置卡牌转换失败:', convertResult.errors);
-                // 清理临时保存的数据
-                if (jsonCardPack.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // 转换失败时不需要清理，因为数据已经保存在批次中
                 return {
                     success: false,
                     imported: 0,
@@ -977,13 +938,8 @@ export class CustomCardManager {
             const dataSize = JSON.stringify(batchData).length * 2;
             if (!CustomCardStorage.checkStorageSpace(dataSize)) {
                 const storageInfo = CustomCardStorage.getFormattedStorageInfo();
-                // 清理临时保存的数据
-                if (jsonCardPack.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // 存储空间不足时不需要清理，因为批次本身还未创建
                 return {
                     success: false,
                     imported: 0,
@@ -1030,13 +986,8 @@ export class CustomCardManager {
                 CustomCardStorage.removeBatch(batchId);
             }
 
-            // 清理临时保存的数据
-            if (jsonCardPack.customFieldDefinitions) {
-                CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                    CustomCardStorage.removeVariantTypesForBatch(batchId);
-                }
-            }
+            // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+            // 导入失败时如果批次已删除，相关数据也会自动清理
 
             console.error('[CustomCardManager] 内置卡牌导入失败:', error);
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -1163,16 +1114,12 @@ export class CustomCardManager {
                 step: 'batch found, proceeding with deletion'
             });
 
-            // 删除批次数据
+            // 删除批次数据（包含自定义字段和变体类型定义）
             logDebug('removeBatch', { step: 'removing batch data' });
             CustomCardStorage.removeBatch(batchId);
 
-            // 删除批次对应的自定义字段和变体类型定义
-            logDebug('removeBatch', { step: 'removing custom fields for batch' });
-            CustomCardStorage.removeCustomFieldsForBatch(batchId);
-
-            logDebug('removeBatch', { step: 'removing variant types for batch' });
-            CustomCardStorage.removeVariantTypesForBatch(batchId);
+            // 注意：在新的存储架构中，自定义字段和变体类型定义已经包含在批次数据中，
+            // 因此删除批次时会自动删除相关定义，不需要单独调用删除方法
 
             // 更新索引
             logDebug('removeBatch', { step: 'updating index' });

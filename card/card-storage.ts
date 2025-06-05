@@ -129,13 +129,7 @@ export interface CleanupReport {
 export class CustomCardStorage {
     // 批次数据的内存缓存
     private static batchCache: Map<string, BatchData | null> = new Map();
-    
-    static removeCustomFieldsForBatch(batchId: string) {
-        throw new Error('Method not implemented.');
-    }
-    static removeVariantTypesForBatch(batchId: string) {
-        throw new Error('Method not implemented.');
-    }
+
 
     /**
      * 清除批次内存缓存

@@ -16,8 +16,9 @@ export const STORAGE_KEYS = {
     INDEX: 'daggerheart_custom_cards_index',
     BATCH_PREFIX: 'daggerheart_custom_cards_batch_',
     CONFIG: 'daggerheart_custom_cards_config',
-    CUSTOM_FIELDS_BY_BATCH: 'daggerheart_custom_fields_by_batch', // New key for batch-based custom fields
-    VARIANT_TYPES_BY_BATCH: 'daggerheart_variant_types_by_batch' // New key for batch-based variant type definitions
+    // 这两个键将被弃用，保留是为了向后兼容
+    CUSTOM_FIELDS_BY_BATCH: 'daggerheart_custom_fields_by_batch', // DEPRECATED: 自定义字段定义现在存储在各批次的数据中
+    VARIANT_TYPES_BY_BATCH: 'daggerheart_variant_types_by_batch' // DEPRECATED: 变体类型定义现在存储在各批次的数据中
 } as const;
 
 // 默认配置
@@ -60,7 +61,8 @@ export interface ImportBatch extends BatchBase {
 export interface BatchData {
     metadata: BatchBase; // Metadata for the batch
     cards: any[]; // StandardCard[] - 避免循环依赖，使用any
-    customFieldDefinitions?: CustomFieldsForBatch; // Add this field for custom field definitions
+    customFieldDefinitions?: CustomFieldsForBatch; // 自定义字段定义
+    variantTypes?: VariantTypesForBatch; // 变体类型定义
 }
 
 export interface StorageConfig {
@@ -282,46 +284,41 @@ export class CustomCardStorage {
     // ===== 新增：按批次的自定义字段名操作 =====
 
     /**
-     * 保存指定批次的自定义字段定义
+     * 保存指定批次的自定义字段定义（旧方法 - 兼容旧版本）
+     * @deprecated 使用 updateBatchCustomFields 代替
      */
     static saveCustomFieldsForBatch(batchId: string, definitions: CustomFieldsForBatch): void {
-        logDebug('saveCustomFieldsForBatch', { batchId, definitions });
-
-        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-            logDebug('saveCustomFieldsForBatch', 'localStorage unavailable');
-            return;
+        if (!batchId) {
+            console.error('[CustomCardStorage] 保存自定义字段失败: 批次ID无效');
+            throw new Error('保存自定义字段失败: 批次ID无效');
         }
 
+        logDebug('saveCustomFieldsForBatch', { batchId, definitions });
+        
+        // 直接操作旧存储，不再调用 updateBatchCustomFields 以避免循环调用
         try {
-            // 获取现有的所有批次自定义字段数据
             const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
             const allFields: AllCustomFieldsByBatch = stored ? JSON.parse(stored) : {};
+            
+            if (JSON.stringify(allFields[batchId]) === JSON.stringify(definitions)) {
+                logDebug('saveCustomFieldsForBatch', {
+                    message: 'definitions unchanged, skipping save to old storage',
+                    storageKey: STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH
+                });
+                return;
+            }
 
-            logDebug('saveCustomFieldsForBatch', {
-                beforeSave: allFields,
-                storageKey: STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH
-            });
-
-            // 设置此批次的自定义字段
             allFields[batchId] = definitions;
-
-            // 保存更新后的数据
             localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(allFields));
-
-            // 验证保存
+            
             const verification = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
-            const parsedVerification = verification ? JSON.parse(verification) : {};
-
             logDebug('saveCustomFieldsForBatch', {
-                afterSave: parsedVerification,
-                savedSuccessfully: JSON.stringify(allFields) === verification,
-                batchDefinitions: parsedVerification[batchId]
+                message: 'saved to old storage for compatibility',
+                verification: !!verification
             });
-
         } catch (error) {
-            logDebug('saveCustomFieldsForBatch', { error });
-            console.error(`[CustomCardStorage] 批次 ${batchId} 的自定义字段保存失败:`, error);
-            throw new Error(`无法保存批次 ${batchId} 的自定义字段`);
+            console.error('[CustomCardStorage] 保存自定义字段到旧存储失败:', error);
+            // 旧存储失败不会抛出异常，因为新的存储方式才是主要存储
         }
     }
 
@@ -381,6 +378,20 @@ export class CustomCardStorage {
         }
 
         try {
+            // 优先尝试从批次数据中读取（新版存储结构）
+            const fromBatches = this.getAggregatedCustomFieldNamesFromBatches();
+
+            // 检查是否有数据，如果有，则直接返回
+            const categoriesCount = Object.keys(fromBatches).length;
+            if (categoriesCount > 0) {
+                logDebug('getAggregatedCustomFieldNames', {
+                    source: 'from batches',
+                    categoriesCount
+                });
+                return fromBatches;
+            }
+
+            // 如果没有数据，尝试从旧版存储中读取
             // 加载所有批次的自定义字段
             const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
             if (!stored) {
@@ -389,7 +400,10 @@ export class CustomCardStorage {
             }
 
             const allFieldsByBatch: AllCustomFieldsByBatch = JSON.parse(stored);
-            logDebug('getAggregatedCustomFieldNames', { allFieldsByBatch });
+            logDebug('getAggregatedCustomFieldNames', {
+                source: 'legacy storage',
+                allFieldsByBatch
+            });
 
             // 加载主索引以检查批次状态
             const index = this.loadIndex();
@@ -463,8 +477,188 @@ export class CustomCardStorage {
         }
 
         try {
+            // 优先尝试从批次数据中读取（新版存储结构）
+            const fromBatches = this.getAggregatedCustomFieldNamesWithTempFromBatches(tempBatchId, tempDefinitions);
+
+            // 检查是否有数据，如果有，则直接返回
+            const categoriesCount = Object.keys(fromBatches).length;
+            if (categoriesCount > 0 || (tempDefinitions && Object.keys(tempDefinitions).length > 0)) {
+                logDebug('getAggregatedCustomFieldNamesWithTemp', {
+                    source: 'from batches',
+                    categoriesCount
+                });
+                return fromBatches;
+            }
+
+            // 如果没有数据且没有临时定义，尝试从旧版存储中读取
+            // 加载所有批次的自定义字段
+            const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+            if (!stored) {
+                logDebug('getAggregatedCustomFieldNamesWithTemp', 'no custom fields stored');
+                return {};
+            }
+
+            const allFieldsByBatch: AllCustomFieldsByBatch = JSON.parse(stored);
+            logDebug('getAggregatedCustomFieldNamesWithTemp', {
+                source: 'legacy storage',
+                allFieldsByBatch
+            });
+
+            // 加载主索引以检查批次状态
+            const index = this.loadIndex();
+            logDebug('getAggregatedCustomFieldNamesWithTemp', {
+                indexBatches: Object.keys(index.batches),
+                enabledBatches: Object.keys(index.batches).filter(batchId => !index.batches[batchId].disabled)
+            });
+
+            // 初始化聚合结果
+            const aggregatedFields: CustomFieldNamesStore = {};
+
+            // 遍历所有批次
+            for (const batchId in allFieldsByBatch) {
+                const batchInfo = index.batches[batchId];
+
+                // 只处理未被禁用的批次
+                if (!batchInfo || batchInfo.disabled) {
+                    logDebug('getAggregatedCustomFieldNamesWithTemp', {
+                        batchId,
+                        status: !batchInfo ? 'not found in index' : 'disabled',
+                        skipped: true
+                    });
+                    continue;
+                }
+
+                const batchFields = allFieldsByBatch[batchId];
+                logDebug('getAggregatedCustomFieldNamesWithTemp', {
+                    batchId,
+                    enabled: true,
+                    batchFields
+                });
+
+                // 遍历此批次的每个类别
+                for (const category in batchFields) {
+                    const namesArray = batchFields[category];
+
+                    // 确保聚合结果中存在此类别
+                    if (!aggregatedFields[category]) {
+                        aggregatedFields[category] = [];
+                    }
+
+                    // 添加此批次的字段名到聚合结果
+                    aggregatedFields[category].push(...namesArray);
+                }
+            }
+
+            // 对每个类别进行去重
+            for (const category in aggregatedFields) {
+                aggregatedFields[category] = [...new Set(aggregatedFields[category])];
+            }
+
+            logDebug('getAggregatedCustomFieldNamesWithTemp', { result: aggregatedFields });
+
+            return aggregatedFields;
+        } catch (error) {
+            console.error('[CustomCardStorage] 聚合自定义字段名加载失败:', error);
+            return {};
+        }
+    }
+
+
+    // ===== 新版：获取聚合的自定义字段名称（来自所有启用的批次） =====
+
+    /**
+     * 新版：获取聚合的自定义字段名称（来自所有启用的批次）
+     * 直接从批次数据中读取，而不是从独立存储中读取
+     */
+    static getAggregatedCustomFieldNamesFromBatches(): CustomFieldNamesStore {
+        logDebug('getAggregatedCustomFieldNamesFromBatches', 'starting aggregation');
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('getAggregatedCustomFieldNamesFromBatches', 'localStorage unavailable');
+            return {};
+        }
+
+        try {
+            // 加载索引以获取所有批次ID和状态
+            const index = this.loadIndex();
+            const enabledBatchIds = Object.keys(index.batches)
+                .filter(batchId => !index.batches[batchId].disabled);
+
+            logDebug('getAggregatedCustomFieldNamesFromBatches', {
+                totalBatches: Object.keys(index.batches).length,
+                enabledBatches: enabledBatchIds.length
+            });
+
+            // 初始化聚合结果
+            const aggregatedFields: CustomFieldNamesStore = {};
+
+            // 遍历所有启用的批次
+            for (const batchId of enabledBatchIds) {
+                // 加载批次数据
+                const batchData = this.loadBatch(batchId);
+                if (!batchData || !batchData.customFieldDefinitions) {
+                    logDebug('getAggregatedCustomFieldNamesFromBatches', {
+                        batchId,
+                        status: !batchData ? 'batch data not found' : 'no custom fields',
+                        skipped: true
+                    });
+                    continue;
+                }
+
+                const batchFields = batchData.customFieldDefinitions;
+                logDebug('getAggregatedCustomFieldNamesFromBatches', {
+                    batchId,
+                    enabled: true,
+                    batchFields
+                });
+
+                // 遍历此批次的每个类别
+                for (const category in batchFields) {
+                    const namesArray = batchFields[category];
+
+                    // 确保聚合结果中存在此类别
+                    if (!aggregatedFields[category]) {
+                        aggregatedFields[category] = [];
+                    }
+
+                    // 添加此批次的字段名到聚合结果
+                    aggregatedFields[category].push(...namesArray);
+                }
+            }
+
+            // 对每个类别进行去重
+            for (const category in aggregatedFields) {
+                aggregatedFields[category] = [...new Set(aggregatedFields[category])];
+            }
+
+            logDebug('getAggregatedCustomFieldNamesFromBatches', { result: aggregatedFields });
+
+            return aggregatedFields;
+        } catch (error) {
+            console.error('[CustomCardStorage] 聚合自定义字段名加载失败:', error);
+            return {};
+        }
+    }
+
+    /**
+     * 新版：获取聚合的自定义字段名称（包含临时批次定义，用于验证阶段）
+     * 直接从批次数据中读取，而不是从独立存储中读取
+     */
+    static getAggregatedCustomFieldNamesWithTempFromBatches(
+        tempBatchId?: string,
+        tempDefinitions?: CustomFieldsForBatch
+    ): CustomFieldNamesStore {
+        logDebug('getAggregatedCustomFieldNamesWithTempFromBatches', { tempBatchId, tempDefinitions });
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('getAggregatedCustomFieldNamesWithTempFromBatches', 'localStorage unavailable');
+            // 如果没有localStorage，至少返回临时定义
+            return tempDefinitions || {};
+        }
+
+        try {
             // 首先获取现有的聚合字段
-            const existingFields = this.getAggregatedCustomFieldNames();
+            const existingFields = this.getAggregatedCustomFieldNamesFromBatches();
 
             // 如果没有临时定义，直接返回现有字段
             if (!tempBatchId || !tempDefinitions) {
@@ -485,7 +679,7 @@ export class CustomCardStorage {
                 mergedFields[category] = [...new Set([...mergedFields[category], ...tempNames])];
             }
 
-            logDebug('getAggregatedCustomFieldNamesWithTemp', {
+            logDebug('getAggregatedCustomFieldNamesWithTempFromBatches', {
                 existingFields,
                 tempDefinitions,
                 mergedFields
@@ -493,7 +687,7 @@ export class CustomCardStorage {
 
             return mergedFields;
         } catch (error) {
-            logDebug('getAggregatedCustomFieldNamesWithTemp', { error });
+            logDebug('getAggregatedCustomFieldNamesWithTempFromBatches', { error });
             console.error('[CustomCardStorage] 聚合自定义字段名加载失败:', error);
             // 出错时至少返回临时定义
             return tempDefinitions || {};
@@ -504,46 +698,41 @@ export class CustomCardStorage {
     // ===== 新增：按批次的变体类型定义操作 =====
 
     /**
-     * 保存指定批次的变体类型定义
+     * 保存指定批次的变体类型定义（旧方法 - 兼容旧版本）
+     * @deprecated 使用 updateBatchVariantTypes 代替
      */
     static saveVariantTypesForBatch(batchId: string, variantTypes: VariantTypesForBatch): void {
-        logDebug('saveVariantTypesForBatch', { batchId, variantTypes });
-
-        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-            logDebug('saveVariantTypesForBatch', 'localStorage unavailable');
-            return;
+        if (!batchId) {
+            console.error('[CustomCardStorage] 保存变体类型定义失败: 批次ID无效');
+            throw new Error('保存变体类型定义失败: 批次ID无效');
         }
 
+        logDebug('saveVariantTypesForBatch', { batchId, variantTypes: Object.keys(variantTypes) });
+        
+        // 直接操作旧存储，不再调用 updateBatchVariantTypes 以避免循环调用
         try {
-            // 获取现有的所有批次变体类型数据
             const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
             const allVariantTypes: AllVariantTypesByBatch = stored ? JSON.parse(stored) : {};
+            
+            if (JSON.stringify(allVariantTypes[batchId]) === JSON.stringify(variantTypes)) {
+                logDebug('saveVariantTypesForBatch', {
+                    message: 'variant types unchanged, skipping save to old storage',
+                    storageKey: STORAGE_KEYS.VARIANT_TYPES_BY_BATCH
+                });
+                return;
+            }
 
-            logDebug('saveVariantTypesForBatch', {
-                beforeSave: allVariantTypes,
-                storageKey: STORAGE_KEYS.VARIANT_TYPES_BY_BATCH
-            });
-
-            // 设置此批次的变体类型定义
             allVariantTypes[batchId] = variantTypes;
-
-            // 保存更新后的数据
             localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(allVariantTypes));
-
-            // 验证保存
+            
             const verification = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
-            const parsedVerification = verification ? JSON.parse(verification) : {};
-
             logDebug('saveVariantTypesForBatch', {
-                afterSave: parsedVerification,
-                savedSuccessfully: JSON.stringify(allVariantTypes) === verification,
-                batchDefinitions: parsedVerification[batchId]
+                message: 'saved to old storage for compatibility',
+                verification: !!verification
             });
-
         } catch (error) {
-            logDebug('saveVariantTypesForBatch', { error });
-            console.error(`[CustomCardStorage] 批次 ${batchId} 的变体类型定义保存失败:`, error);
-            throw new Error(`无法保存批次 ${batchId} 的变体类型定义`);
+            console.error('[CustomCardStorage] 保存变体类型定义到旧存储失败:', error);
+            // 旧存储失败不会抛出异常，因为新的存储方式才是主要存储
         }
     }
 
@@ -603,6 +792,20 @@ export class CustomCardStorage {
         }
 
         try {
+            // 优先尝试从批次数据中读取（新版存储结构）
+            const fromBatches = this.getAggregatedVariantTypesFromBatches();
+
+            // 检查是否有数据，如果有，则直接返回
+            const typesCount = Object.keys(fromBatches).length;
+            if (typesCount > 0) {
+                logDebug('getAggregatedVariantTypes', {
+                    source: 'from batches',
+                    typesCount
+                });
+                return fromBatches;
+            }
+
+            // 如果没有数据，尝试从旧版存储中读取
             // 加载所有批次的变体类型定义
             const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
             if (!stored) {
@@ -611,7 +814,10 @@ export class CustomCardStorage {
             }
 
             const allVariantTypesByBatch: AllVariantTypesByBatch = JSON.parse(stored);
-            logDebug('getAggregatedVariantTypes', { allVariantTypesByBatch });
+            logDebug('getAggregatedVariantTypes', {
+                source: 'legacy storage',
+                allVariantTypesByBatch
+            });
 
             // 加载主索引以检查批次状态
             const index = this.loadIndex();
@@ -679,6 +885,20 @@ export class CustomCardStorage {
         }
 
         try {
+            // 优先尝试从批次数据中读取（新版存储结构）
+            const fromBatches = this.getAggregatedVariantTypesWithTempFromBatches(tempBatchId, tempDefinitions);
+
+            // 检查是否有数据，如果有，则直接返回
+            const typesCount = Object.keys(fromBatches).length;
+            if (typesCount > 0 || (tempDefinitions && Object.keys(tempDefinitions).length > 0)) {
+                logDebug('getAggregatedVariantTypesWithTemp', {
+                    source: 'from batches',
+                    typesCount
+                });
+                return fromBatches;
+            }
+
+            // 如果没有数据且没有临时定义，尝试从旧版存储中读取
             // 首先获取现有的聚合变体类型
             const existingTypes = this.getAggregatedVariantTypes();
 
@@ -702,14 +922,141 @@ export class CustomCardStorage {
             }
 
             logDebug('getAggregatedVariantTypesWithTemp', {
-                existingTypes,
-                tempDefinitions,
-                mergedTypes
+                existingTypes: Object.keys(existingTypes),
+                tempDefinitions: Object.keys(tempDefinitions || {}),
+                mergedTypes: Object.keys(mergedTypes)
             });
 
             return mergedTypes;
         } catch (error) {
             logDebug('getAggregatedVariantTypesWithTemp', { error });
+            console.error('[CustomCardStorage] 聚合变体类型定义加载失败:', error);
+            // 出错时至少返回临时定义
+            return tempDefinitions || {};
+        }
+    }
+
+
+    // ===== 新版：获取聚合的变体类型定义（来自所有启用的批次） =====
+
+    /**
+     * 新版：获取聚合的变体类型定义（来自所有启用的批次）
+     * 直接从批次数据中读取，而不是从独立存储中读取
+     */
+    static getAggregatedVariantTypesFromBatches(): VariantTypesForBatch {
+        logDebug('getAggregatedVariantTypesFromBatches', 'starting aggregation');
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('getAggregatedVariantTypesFromBatches', 'localStorage unavailable');
+            return {};
+        }
+
+        try {
+            // 加载索引以获取所有批次ID和状态
+            const index = this.loadIndex();
+            const enabledBatchIds = Object.keys(index.batches)
+                .filter(batchId => !index.batches[batchId].disabled);
+
+            logDebug('getAggregatedVariantTypesFromBatches', {
+                totalBatches: Object.keys(index.batches).length,
+                enabledBatches: enabledBatchIds.length
+            });
+
+            // 初始化聚合结果
+            const aggregatedTypes: VariantTypesForBatch = {};
+
+            // 遍历所有启用的批次
+            for (const batchId of enabledBatchIds) {
+                // 加载批次数据
+                const batchData = this.loadBatch(batchId);
+                if (!batchData || !batchData.variantTypes) {
+                    logDebug('getAggregatedVariantTypesFromBatches', {
+                        batchId,
+                        status: !batchData ? 'batch data not found' : 'no variant types',
+                        skipped: true
+                    });
+                    continue;
+                }
+
+                const batchTypes = batchData.variantTypes;
+                logDebug('getAggregatedVariantTypesFromBatches', {
+                    batchId,
+                    enabled: true,
+                    batchTypes: Object.keys(batchTypes)
+                });
+
+                // 遍历此批次的每个变体类型
+                for (const typeId in batchTypes) {
+                    const typeDef = batchTypes[typeId];
+
+                    // 如果类型ID已存在，发出警告但允许覆盖（后加载的批次优先）
+                    if (aggregatedTypes[typeId]) {
+                        console.warn(`[CustomCardStorage] 变体类型 "${typeId}" 在多个批次中定义，使用批次 "${batchId}" 的定义`);
+                    }
+
+                    aggregatedTypes[typeId] = typeDef;
+                }
+            }
+
+            logDebug('getAggregatedVariantTypesFromBatches', {
+                result: Object.keys(aggregatedTypes)
+            });
+
+            return aggregatedTypes;
+        } catch (error) {
+            console.error('[CustomCardStorage] 聚合变体类型定义加载失败:', error);
+            return {};
+        }
+    }
+
+    /**
+     * 新版：获取聚合的变体类型定义（包含临时批次定义，用于验证阶段）
+     * 直接从批次数据中读取，而不是从独立存储中读取
+     */
+    static getAggregatedVariantTypesWithTempFromBatches(
+        tempBatchId?: string,
+        tempDefinitions?: VariantTypesForBatch
+    ): VariantTypesForBatch {
+        logDebug('getAggregatedVariantTypesWithTempFromBatches', { tempBatchId, tempDefinitions });
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('getAggregatedVariantTypesWithTempFromBatches', 'localStorage unavailable');
+            // 如果没有localStorage，至少返回临时定义
+            return tempDefinitions || {};
+        }
+
+        try {
+            // 首先获取现有的聚合变体类型
+            const existingTypes = this.getAggregatedVariantTypesFromBatches();
+
+            // 如果没有临时定义，直接返回现有类型
+            if (!tempBatchId || !tempDefinitions) {
+                return existingTypes;
+            }
+
+            // 合并临时定义
+            const mergedTypes: VariantTypesForBatch = { ...existingTypes };
+
+            for (const typeId in tempDefinitions) {
+                const tempTypeDef = tempDefinitions[typeId];
+
+                // 如果类型ID已存在，临时定义优先
+                if (mergedTypes[typeId]) {
+                    console.warn(`[CustomCardStorage] 变体类型 "${typeId}" 已存在，临时定义将覆盖现有定义`);
+                }
+
+                mergedTypes[typeId] = tempTypeDef;
+            }
+
+            logDebug('getAggregatedVariantTypesWithTempFromBatches', {
+                existingTypes: Object.keys(existingTypes),
+                tempDefinitions: Object.keys(tempDefinitions || {}),
+                mergedTypes: Object.keys(mergedTypes)
+            });
+
+            return mergedTypes;
+        } catch (error) {
+            logDebug('getAggregatedVariantTypesWithTempFromBatches', { error });
             console.error('[CustomCardStorage] 聚合变体类型定义加载失败:', error);
             // 出错时至少返回临时定义
             return tempDefinitions || {};
@@ -867,10 +1214,50 @@ export class CustomCardStorage {
                     this.saveIndex(index);
                 }
             }
+
+            // 检查是否存在旧格式的数据，如果所有批次已迁移，则清理旧格式数据
+            const MIGRATION_MARKER = 'daggerheart_storage_migrated_v2_0';
+            const isMigrated = localStorage.getItem(MIGRATION_MARKER) === 'true';
+
+            if (isMigrated) {
+                // 检查旧的自定义字段存储
+                const oldCustomFields = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+                if (oldCustomFields) {
+                    try {
+                        freedSpace += oldCustomFields.length * 2;
+                        localStorage.removeItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+                        removedKeys.push(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+                        logDebug('cleanupOrphanedData', 'removed old custom fields storage');
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        errors.push(`清理旧自定义字段存储失败: ${errorMessage}`);
+                    }
+                }
+
+                // 检查旧的变体类型存储
+                const oldVariantTypes = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+                if (oldVariantTypes) {
+                    try {
+                        freedSpace += oldVariantTypes.length * 2;
+                        localStorage.removeItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+                        removedKeys.push(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+                        logDebug('cleanupOrphanedData', 'removed old variant types storage');
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        errors.push(`清理旧变体类型存储失败: ${errorMessage}`);
+                    }
+                }
+            }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             errors.push(`清理操作失败: ${errorMessage}`);
         }
+
+        return {
+            removedKeys,
+            freedSpace,
+            errors
+        };
 
         return {
             removedKeys,
@@ -970,7 +1357,8 @@ export class CustomCardStorage {
 
             this.saveIndex(newIndex);
 
-            // 清空批次自定义字段存储（只删除非系统批次）
+            // 清空批次自定义字段和变体类型存储（只删除非系统批次）
+            // 注意：这是为了兼容旧版存储结构，在迁移完成后，这部分代码可以移除
             if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
                 // 处理自定义字段存储
                 const storedCustomFields = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
@@ -1010,6 +1398,394 @@ export class CustomCardStorage {
         } catch (error) {
             console.error('[CustomCardStorage] 清空数据失败:', error);
             throw new Error('无法清空自定义卡牌数据');
+        }
+    }
+
+    /**
+     * 迁移数据到新的存储结构（v1.x -> v2.x）
+     * 将独立存储的自定义字段和变体类型数据合并到各批次的主数据中
+     */
+    static migrateToIntegratedStorage(): {
+        migrated: boolean;
+        batchesUpdated: string[];
+        errors: string[];
+    } {
+        logDebug('migrateToIntegratedStorage', 'starting migration');
+
+        const MIGRATION_MARKER = 'daggerheart_storage_migrated_v2_0';
+        const batchesUpdated: string[] = [];
+        const errors: string[] = [];
+
+        // 如果不在浏览器环境或已经迁移过，则跳过
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('migrateToIntegratedStorage', 'not in browser environment, skipping');
+            return { migrated: false, batchesUpdated: [], errors: ['Not in browser environment'] };
+        }
+
+        // 检查是否已经迁移过
+        if (localStorage.getItem(MIGRATION_MARKER)) {
+            logDebug('migrateToIntegratedStorage', 'already migrated, skipping');
+            return { migrated: false, batchesUpdated: [], errors: [] };
+        }
+
+        try {
+            // 检查是否存在旧的数据结构
+            const hasCustomFields = !!localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+            const hasVariantTypes = !!localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+
+            if (!hasCustomFields && !hasVariantTypes) {
+                logDebug('migrateToIntegratedStorage', 'no old data found, marking as migrated');
+                localStorage.setItem(MIGRATION_MARKER, 'true');
+                return { migrated: true, batchesUpdated: [], errors: [] };
+            }
+
+            // 加载旧数据
+            const allOldCustomFields: AllCustomFieldsByBatch =
+                hasCustomFields
+                    ? JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH) || '{}')
+                    : {};
+
+            const allOldVariantTypes: AllVariantTypesByBatch =
+                hasVariantTypes
+                    ? JSON.parse(localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH) || '{}')
+                    : {};
+
+            // 加载索引
+            const index = this.loadIndex();
+            const batchIds = Object.keys(index.batches);
+
+            logDebug('migrateToIntegratedStorage', {
+                customFieldBatchIds: Object.keys(allOldCustomFields),
+                variantTypeBatchIds: Object.keys(allOldVariantTypes),
+                indexBatchIds: batchIds
+            });
+
+            // 合并所有批次ID（索引中的和旧数据中的）
+            const allBatchIds = new Set([
+                ...batchIds,
+                ...Object.keys(allOldCustomFields),
+                ...Object.keys(allOldVariantTypes)
+            ]);
+
+            // 处理每个批次
+            for (const batchId of allBatchIds) {
+                try {
+                    // 加载批次数据
+                    const batchData = this.loadBatch(batchId);
+
+                    // 如果批次数据不存在，但存在旧的自定义字段或变体类型数据，则记录错误
+                    if (!batchData) {
+                        if (allOldCustomFields[batchId] || allOldVariantTypes[batchId]) {
+                            const errorMsg = `批次 ${batchId} 不存在，但有孤立的自定义字段或变体类型数据`;
+                            logDebug('migrateToIntegratedStorage', { error: errorMsg, batchId });
+                            errors.push(errorMsg);
+                        }
+                        continue;
+                    }
+
+                    let updated = false;
+
+                    // 合并自定义字段
+                    if (allOldCustomFields[batchId]) {
+                        batchData.customFieldDefinitions = allOldCustomFields[batchId];
+                        updated = true;
+                        logDebug('migrateToIntegratedStorage', {
+                            action: 'merged custom fields',
+                            batchId,
+                            fields: allOldCustomFields[batchId]
+                        });
+                    }
+
+                    // 合并变体类型
+                    if (allOldVariantTypes[batchId]) {
+                        batchData.variantTypes = allOldVariantTypes[batchId];
+                        updated = true;
+                        logDebug('migrateToIntegratedStorage', {
+                            action: 'merged variant types',
+                            batchId,
+                            types: Object.keys(allOldVariantTypes[batchId])
+                        });
+                    }
+
+                    // 如果有更新，保存批次数据
+                    if (updated) {
+                        this.saveBatch(batchId, batchData);
+                        batchesUpdated.push(batchId);
+                        logDebug('migrateToIntegratedStorage', {
+                            action: 'saved updated batch',
+                            batchId
+                        });
+                    }
+                } catch (error) {
+                    const errorMsg = `处理批次 ${batchId} 时出错: ${error instanceof Error ? error.message : String(error)}`;
+                    logDebug('migrateToIntegratedStorage', { error: errorMsg, batchId });
+                    errors.push(errorMsg);
+                }
+            }
+
+            // 如果没有错误，删除旧数据并标记为已迁移
+            if (errors.length === 0) {
+                if (hasCustomFields) {
+                    localStorage.removeItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+                    logDebug('migrateToIntegratedStorage', 'removed old custom fields storage');
+                }
+
+                if (hasVariantTypes) {
+                    localStorage.removeItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+                    logDebug('migrateToIntegratedStorage', 'removed old variant types storage');
+                }
+
+                localStorage.setItem(MIGRATION_MARKER, 'true');
+                logDebug('migrateToIntegratedStorage', 'migration completed successfully');
+            } else {
+                logDebug('migrateToIntegratedStorage', {
+                    warning: 'migration completed with errors, old data preserved',
+                    errors
+                });
+            }
+
+            return {
+                migrated: true,
+                batchesUpdated,
+                errors
+            };
+
+        } catch (error) {
+            const errorMsg = `迁移失败: ${error instanceof Error ? error.message : String(error)}`;
+            logDebug('migrateToIntegratedStorage', { error: errorMsg });
+            errors.push(errorMsg);
+            return {
+                migrated: false,
+                batchesUpdated,
+                errors
+            };
+        }
+    }
+
+    /**
+     * 初始化存储系统
+     * 在应用启动时调用，执行必要的迁移和清理操作
+     */
+    static initialize(): {
+        initialized: boolean;
+        migrationResult?: {
+            migrated: boolean;
+            batchesUpdated: string[];
+            errors: string[];
+        };
+        errors: string[];
+    } {
+        logDebug('initialize', 'starting initialization');
+        const errors: string[] = [];
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('initialize', 'not in browser environment, skipping');
+            return { initialized: false, errors: ['Not in browser environment'] };
+        }
+
+        try {
+            // 1. 执行数据迁移（从旧存储结构迁移到新存储结构）
+            const migrationResult = this.migrateToIntegratedStorage();
+
+            if (migrationResult.errors.length > 0) {
+                logDebug('initialize', {
+                    message: 'migration errors encountered',
+                    errors: migrationResult.errors
+                });
+                errors.push(...migrationResult.errors);
+            } else if (migrationResult.migrated) {
+                logDebug('initialize', {
+                    message: 'migration completed successfully',
+                    batchesUpdated: migrationResult.batchesUpdated
+                });
+            } else {
+                logDebug('initialize', 'migration skipped (already migrated or no data)');
+            }
+
+            // 2. 执行存储清理（清理孤立数据等）
+            const cleanupReport = this.cleanupOrphanedData();
+
+            if (cleanupReport.errors.length > 0) {
+                logDebug('initialize', {
+                    message: 'cleanup errors encountered',
+                    errors: cleanupReport.errors
+                });
+                errors.push(...cleanupReport.errors);
+            } else if (cleanupReport.removedKeys.length > 0) {
+                logDebug('initialize', {
+                    message: 'cleanup completed',
+                    removedKeys: cleanupReport.removedKeys,
+                    freedSpace: cleanupReport.freedSpace
+                });
+            } else {
+                logDebug('initialize', 'no orphaned data found');
+            }
+
+            // 3. 验证数据完整性
+            const integrityReport = this.validateIntegrity();
+
+            if (!integrityReport.isValid) {
+                logDebug('initialize', {
+                    message: 'integrity issues found',
+                    issues: integrityReport.issues
+                });
+                errors.push(...integrityReport.issues);
+            } else {
+                logDebug('initialize', 'data integrity verified');
+            }
+
+            return {
+                initialized: true,
+                migrationResult,
+                errors
+            };
+        } catch (error) {
+            const errorMsg = `初始化失败: ${error instanceof Error ? error.message : String(error)}`;
+            logDebug('initialize', { error: errorMsg });
+            errors.push(errorMsg);
+            return {
+                initialized: false,
+                errors
+            };
+        }
+    }
+
+    /**
+     * 更新批次的自定义字段定义（新版方法）
+     * 直接更新批次数据，而不是单独存储
+     */
+    static updateBatchCustomFields(batchId: string, definitions: CustomFieldsForBatch): void {
+        logDebug('updateBatchCustomFields', { batchId, definitions });
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('updateBatchCustomFields', 'localStorage unavailable');
+            return;
+        }
+
+        try {
+            // 加载批次数据
+            let batchData = this.loadBatch(batchId);
+            
+            // 如果批次不存在，创建一个新批次（这可能发生在种子化内置卡牌时）
+            if (!batchData) {
+                logDebug('updateBatchCustomFields', { message: 'batch not found, creating new', batchId });
+                batchData = {
+                    metadata: {
+                        id: batchId,
+                        fileName: `${batchId}.json`,
+                        importTime: new Date().toISOString()
+                    },
+                    cards: []
+                };
+            }
+
+            // 更新自定义字段定义
+            batchData.customFieldDefinitions = definitions;
+
+            // 保存批次数据
+            this.saveBatch(batchId, batchData);
+
+            logDebug('updateBatchCustomFields', {
+                action: 'updated batch custom fields',
+                batchId,
+                definitions
+            });
+
+            // 向后兼容：同时更新旧版存储中的数据
+            // 直接操作旧存储，而不是调用 saveCustomFieldsForBatch 以避免循环引用
+            try {
+                const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);
+                const allFields: AllCustomFieldsByBatch = stored ? JSON.parse(stored) : {};
+                
+                if (JSON.stringify(allFields[batchId]) !== JSON.stringify(definitions)) {
+                    allFields[batchId] = definitions;
+                    localStorage.setItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH, JSON.stringify(allFields));
+                    
+                    logDebug('updateBatchCustomFields', {
+                        message: 'also updated old storage for compatibility',
+                        storageKey: STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH
+                    });
+                } else {
+                    logDebug('updateBatchCustomFields', {
+                        message: 'definitions unchanged, skipping save to old storage',
+                        storageKey: STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH
+                    });
+                }
+            } catch (error) {
+                console.warn('[CustomCardStorage] 更新旧自定义字段存储失败 (非致命错误):', error);
+                // 旧存储更新失败不阻止主要存储的成功
+            }
+
+        } catch (error) {
+            logDebug('updateBatchCustomFields', { error });
+            console.error(`[CustomCardStorage] 批次 ${batchId} 的自定义字段更新失败:`, error);
+            throw new Error(`无法更新批次 ${batchId} 的自定义字段: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * 更新批次的变体类型定义（新版方法）
+     * 直接更新批次数据，而不是单独存储
+     */
+    static updateBatchVariantTypes(batchId: string, variantTypes: VariantTypesForBatch): void {
+        logDebug('updateBatchVariantTypes', { batchId, variantTypes: Object.keys(variantTypes) });
+
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+            logDebug('updateBatchVariantTypes', 'localStorage unavailable');
+            return;
+        }
+
+        try {
+            // 加载批次数据
+            let batchData = this.loadBatch(batchId);
+            
+            // 如果批次不存在，创建一个新批次（这可能发生在种子化内置卡牌时）
+            if (!batchData) {
+                logDebug('updateBatchVariantTypes', { message: 'batch not found, creating new', batchId });
+                batchData = {
+                    metadata: {
+                        id: batchId,
+                        fileName: `${batchId}.json`,
+                        importTime: new Date().toISOString()
+                    },
+                    cards: []
+                };
+            }
+
+            // 更新变体类型定义
+            batchData.variantTypes = variantTypes;
+
+            // 保存批次数据
+            this.saveBatch(batchId, batchData);
+
+            logDebug('updateBatchVariantTypes', {
+                action: 'updated batch variant types',
+                batchId,
+                variantTypesCount: Object.keys(variantTypes).length
+            });
+
+            // 向后兼容：同时更新旧版存储中的数据
+            // 直接操作旧存储，而不是调用 saveVariantTypesForBatch 以避免循环引用
+            try {
+                const stored = localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);
+                const allVariantTypes: AllVariantTypesByBatch = stored ? JSON.parse(stored) : {};
+                
+                allVariantTypes[batchId] = variantTypes;
+                localStorage.setItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH, JSON.stringify(allVariantTypes));
+                
+                logDebug('updateBatchVariantTypes', {
+                    message: 'also updated old storage for compatibility',
+                    storageKey: STORAGE_KEYS.VARIANT_TYPES_BY_BATCH
+                });
+            } catch (error) {
+                console.warn('[CustomCardStorage] 更新旧变体类型存储失败 (非致命错误):', error);
+                // 旧存储更新失败不阻止主要存储的成功
+            }
+
+        } catch (error) {
+            logDebug('updateBatchVariantTypes', { error });
+            console.error(`[CustomCardStorage] 批次 ${batchId} 的变体类型定义更新失败:`, error);
+            throw new Error(`无法更新批次 ${batchId} 的变体类型定义: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 }

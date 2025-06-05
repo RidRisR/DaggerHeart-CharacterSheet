@@ -1,285 +1,129 @@
-# 卡牌管理系统重构计划
+## CardStorage 重构：简化与数据一致性增强
 
-## 当前系统概述
+此部分重构专注于 `card/card-storage.ts` 文件，目标是简化 localStorage 的键结构，并将与特定批次相关的数据（自定义字段定义、变体类型定义）直接整合到该批次的主数据中，从而增强数据一致性。
 
-目前的卡牌管理系统分为两个部分：内置卡牌系统和自定义卡牌系统。
+### 当前 `CardStorage` 的问题点
 
-### 内置卡牌系统
-- 内置卡牌通过 TypeScript 文件（如 `profession-card/cards.ts`）定义并导入
-- 使用 `BuiltinCardManager` 类注册并转换不同类型的卡牌
-- 在运行时转换为标准化的 `StandardCard` 格式
-- 通过 `builtin-card-data.ts` 中的 `BUILTIN_CARDS_VERSION` 控制版本
-- 内置卡牌也会被写入 localStorage 作为特殊批次 `BUILTIN_BATCH_ID`
+1.  **过多的 localStorage 键**：
+    *   `STORAGE_KEYS.INDEX`: 存储卡牌批次的索引。
+    *   `STORAGE_KEYS.BATCH_PREFIX + batchId`: 每个批次的卡牌数据。
+    *   `STORAGE_KEYS.CONFIG`: 存储配置。
+    *   `STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH`: **独立存储**所有批次的自定义字段定义。
+    *   `STORAGE_KEYS.VARIANT_TYPES_BY_BATCH`: **独立存储**所有批次的变体类型定义。
+    这种分离存储批次数据、批次自定义字段、批次变体类型的方式，增加了数据管理的复杂性，并在删除批次时可能导致孤立数据。
 
-### 自定义卡牌系统
-- 自定义卡牌通过 JSON 文件导入
-- 使用 `CustomCardManager` 管理自定义卡牌
-- 卡牌数据存储在 localStorage 中，每个导入批次单独存储
-- 提供了卡牌的导入、删除、获取等功能
-- 支持自定义字段定义和变体类型
+2.  **数据一致性风险**：当一个批次被删除时，需要手动确保其对应的自定义字段和变体类型定义也从 `CUSTOM_FIELDS_BY_BATCH` 和 `VARIANT_TYPES_BY_BATCH` 中移除。如果操作不当，容易产生数据不一致。
 
-### 两者的关联
-- `CustomCardManager` 负责在启动时将内置卡牌写入 localStorage
-- 两个系统共享同一组卡牌转换器（如 `professionCardConverter`）
-- 卡牌检索接口 `getAllStandardCardsAsync` 等实际上是通过 `CustomCardManager` 访问统一存储的
+3.  **API 冗余**：`CustomCardStorage` 类中存在多套针对自定义字段和变体类型的保存、移除和聚合方法（如 `saveCustomFieldsForBatch`, `removeCustomFieldsForBatch`, `getAggregatedCustomFieldNames` 等），增加了类的复杂度和维护成本。
 
-## 重构目标
+### 重构目标
 
-统一内置和自定义卡牌系统，使用 JSON 文件作为内置卡牌的数据源，主要区别仅在于内置卡牌在系统启动时自动加载。这样可以让卡牌管理更加一致，并为将来添加更多内置卡牌包做准备。
+1.  **减少 localStorage 键的数量**：将 `CUSTOM_FIELDS_BY_BATCH` 和 `VARIANT_TYPES_BY_BATCH` 的内容合并到每个批次自身的数据中（即存储在 `STORAGE_KEYS.BATCH_PREFIX + batchId` 下的数据）。
+2.  **增强数据一致性**：确保与批次相关的所有数据（卡牌、自定义字段、变体类型）作为一个单元进行存储和删除。
+3.  **简化 `CustomCardStorage` API**：移除专门针对独立存储自定义字段和变体类型的 API，聚合逻辑直接从批次数据中读取。
+4.  **保持上层应用兼容性**：对外暴露的聚合接口（如 `getAggregatedCustomFieldNames`, `getAggregatedVariantTypes`）的签名和行为应保持不变，仅修改其内部实现以适应新的数据结构。
 
-## 数据流分析
+### 重构方案详述
 
-### 当前数据流
-1. **内置卡牌**:
-   - 来源：TypeScript 文件 (`*.ts`)
-   - 转换：`BuiltinCardManager` → `StandardCard`
-   - 存储：内存中 + localStorage (`BUILTIN_BATCH_ID`)
-   - 访问：`getBuiltinStandardCards()` 或 `getAllStandardCardsAsync()`
+#### 1. 更新数据接口 `BatchData`
 
-2. **自定义卡牌**:
-   - 来源：JSON 文件 (导入)
-   - 转换：`CustomCardManager` → 相应的转换器 → `StandardCard`
-   - 存储：localStorage (批次)
-   - 访问：`getCustomCards()` 或 `getAllStandardCardsAsync()`
-
-### 重构后的数据流
-1. **所有卡牌**:
-   - 来源：JSON 文件（内置卡牌包和用户导入）
-   - 转换：统一的转换器系统 → `StandardCard`
-   - 存储：localStorage (批次，内置卡牌有特殊标记)
-   - 访问：统一的 API
-
-## 重构方案
-
-### 1. 内置卡牌转换为 JSON
-
-将当前 TS 文件中的内置卡牌数据转换为标准 JSON 格式：
-
-```
-/public/
-  /card-packs/
-    builtin-base.json         # 基础内置卡牌（现有内容）
-    builtin-expansion-1.json  # 未来可能的扩展包
-    builtin-expansion-2.json  # 未来可能的扩展包
-```
-
-每个 JSON 文件结构与当前导入格式一致：
-
-```json
-{
-  "name": "基础内置卡牌",
-  "version": "VERSION_ID",
-  "description": "系统内置卡牌包，数据来自SRD",
-  "author": "RidRisR",
-  "profession": [ ... ],
-  "ancestry": [ ... ],
-  "community": [ ... ],
-  "subclass": [ ... ],
-  "domain": [ ... ]
-}
-```
-
-### 2. 重构卡牌管理系统
-
-#### 2.1 `CardManager` 统一类
-
-创建一个统一的 `CardManager` 类，取代现有的 `BuiltinCardManager` 和 `CustomCardManager`：
+修改 `card/card-storage.ts` 中的 `BatchData` 接口，使其直接包含自定义字段和变体类型定义：
 
 ```typescript
-export class CardManager {
-  private static instance: CardManager;
-  private cardConverters: Record<string, Function> = {};
-  private isInitialized = false;
-  
-  static getInstance(): CardManager { ... }
-  
-  // 注册转换器方法保持不变
-  registerConverter(type: string, converter: Function): void { ... }
-  
-  // 初始化系统
-  async initialize(): Promise<void> {
-    if (this.isInitialized) return;
+// card/card-storage.ts
+// ... 其他接口 ...
+
+export interface BatchData {
+    metadata: BatchBase; // 批次的元数据
+    cards: any[]; // StandardCard[] - 避免循环依赖，使用any
+    // 原有: customFieldDefinitions?: CustomFieldsForBatch; // 此字段在旧结构中可能在顶层导入数据中有，但未直接存入BatchData
     
-    // 加载内置卡牌包
-    await this.loadBuiltinCardPacks();
-    
-    // 加载用户自定义卡牌
-    this.loadCustomCards();
-    
-    this.isInitialized = true;
-  }
-  
-  // 加载内置卡牌包
-  private async loadBuiltinCardPacks(): Promise<void> {
-    // 从静态资源目录加载JSON文件
-    // 设置isSystemBatch=true并导入每个卡牌包
-  }
-  
-  // 其他方法保持与现有CustomCardManager一致
-  ...
+    // 新增: 直接在批次数据中存储这些信息
+    customFieldDefinitions?: CustomFieldsForBatch; 
+    variantTypes?: VariantTypesForBatch; 
 }
+
+// ... 其他接口 ...
 ```
 
-#### 2.2 卡牌存储系统
+#### 2. 修改 `CustomCardStorage` 类的方法
 
-保持现有的 `CardStorage` 类不变，它已经能够支持按批次存储卡牌。
+*   **`saveBatch(batchId: string, data: BatchData)`**:
+    *   在保存批次数据时，确保 `data` 参数中可以包含 `customFieldDefinitions` 和 `variantTypes`。
+    *   `JSON.stringify(data)` 时，这些信息会自然地随批次数据一同保存。
 
-### 3. 内置卡牌加载机制
+*   **`loadBatch(batchId: string): BatchData | null`**:
+    *   加载批次数据时，返回的 `BatchData` 对象将自然包含 `customFieldDefinitions` 和 `variantTypes`（如果存在）。
 
-实现从静态资源加载内置卡牌 JSON 文件的机制：
+*   **移除以下方法**:
+    *   `saveCustomFieldsForBatch(batchId: string, definitions: CustomFieldsForBatch)`
+    *   `removeCustomFieldsForBatch(batchId: string)`
+    *   `saveVariantTypesForBatch(batchId: string, variantTypes: VariantTypesForBatch)`
+    *   `removeVariantTypesForBatch(batchId: string)`
+    这些方法的功能将通过直接修改 `BatchData` 并调用 `saveBatch` 来实现，或者在删除批次时通过 `removeBatch` 自动完成。
 
-```typescript
-async function loadBuiltinCardPacks(): Promise<void> {
-  try {
-    // 内置卡牌包列表，可以扩展
-    const builtinPacks = [
-      { id: 'builtin-base', path: '/card-packs/builtin-base.json' }
-      // 未来可添加更多内置卡牌包
-    ];
-    
-    for (const pack of builtinPacks) {
-      const response = await fetch(pack.path);
-      const packData = await response.json();
-      
-      // 检查版本并更新
-      const existingPack = this.getBatchById(pack.id);
-      if (existingPack && existingPack.version === packData.version) {
-        continue; // 版本一致，无需更新
-      }
-      
-      // 导入卡牌包，设置为系统内置
-      await this.importCards(packData, {
-        id: pack.id,
-        isSystemBatch: true
-      });
-    }
-  } catch (error) {
-    console.error('加载内置卡牌包失败:', error);
-  }
-}
-```
+*   **修改聚合方法**:
+    *   `getAggregatedCustomFieldNames(): CustomFieldNamesStore`
+    *   `getAggregatedCustomFieldNamesWithTemp(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): CustomFieldNamesStore`
+    *   `getAggregatedVariantTypes(): VariantTypesForBatch`
+    *   `getAggregatedVariantTypesWithTemp(tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): VariantTypesForBatch`
 
-### 4. 导入导出接口优化
+    这些方法的逻辑需要调整：
+    1.  加载索引 `this.loadIndex()` 以获取所有批次ID和状态（是否启用）。
+    2.  对于每个启用的批次ID，调用 `this.loadBatch(batchId)` 来获取其 `BatchData`。
+    3.  从加载的 `BatchData` 中提取 `customFieldDefinitions` 或 `variantTypes`。
+    4.  进行聚合（合并、去重等）。
+    5.  对于 `WithTemp` 版本，按现有逻辑将临时数据合并到聚合结果中。
 
-扩展导入导出功能，以支持更多卡牌包格式：
+#### 3. 移除相关的 `STORAGE_KEYS`
 
-```typescript
-// 导入卡牌
-async importCards(
-  data: ImportData, 
-  options?: { 
-    id?: string,              // 自定义批次ID
-    name?: string,            // 自定义批次名称
-    isSystemBatch?: boolean   // 是否系统内置
-  }
-): Promise<ImportResult> { ... }
+从 `STORAGE_KEYS`常量中移除：
+*   `CUSTOM_FIELDS_BY_BATCH`
+*   `VARIANT_TYPES_BY_BATCH`
 
-// 导出卡牌包
-exportCardPack(batchId: string): ExportData { ... }
-```
+#### 4. 数据迁移策略 (关键步骤)
 
-## 实施步骤
+由于此重构改变了数据的存储方式，需要一个一次性的数据迁移过程，以确保现有用户的自定义字段和变体类型数据不会丢失。
 
-1. **创建 JSON 数据文件**
-   - 将 TypeScript 中的内置卡牌数据转换为 JSON 格式
-   - 放置到静态资源目录
+**迁移时机**：可以在应用启动时，`CustomCardStorage` 类初始化或首次被调用相关方法时执行。
 
-2. **重构管理系统**
-   - 创建统一的 `CardManager` 类
-   - 实现从 JSON 加载内置卡牌的功能
-   - 保留兼容性接口以避免中断现有功能
+**迁移步骤**:
 
-3. **更新初始化流程**
-   - 更新 `CardSystemInitializer` 组件以使用新的 `CardManager`
-   - 确保在客户端初始化时加载卡牌包
+1.  **检测旧数据**：检查 `localStorage` 中是否存在 `STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH` 和 `STORAGE_KEYS.VARIANT_TYPES_BY_BATCH`。
+2.  **加载旧数据**：如果存在，则加载它们的内容。
+    *   `const allOldCustomFields: AllCustomFieldsByBatch = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH) || '{}');`
+    *   `const allOldVariantTypes: AllVariantTypesByBatch = JSON.parse(localStorage.getItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH) || '{}');`
+3.  **遍历所有批次**：获取当前索引中的所有批次 `const index = this.loadIndex(); Object.keys(index.batches)`.
+4.  **合并数据到批次中**：
+    *   对于每个 `batchId`：
+        *   加载该批次的现有数据: `let batchData = this.loadBatch(batchId);`
+        *   如果批次数据存在：
+            *   从 `allOldCustomFields[batchId]` 获取该批次的自定义字段，并赋值给 `batchData.customFieldDefinitions`。
+            *   从 `allOldVariantTypes[batchId]` 获取该批次的变体类型，并赋值给 `batchData.variantTypes`。
+            *   重新保存批次数据: `this.saveBatch(batchId, batchData);`
+5.  **删除旧的存储键**：迁移完成后，从 `localStorage` 中删除 `STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH` 和 `STORAGE_KEYS.VARIANT_TYPES_BY_BATCH`。
+    *   `localStorage.removeItem(STORAGE_KEYS.CUSTOM_FIELDS_BY_BATCH);`
+    *   `localStorage.removeItem(STORAGE_KEYS.VARIANT_TYPES_BY_BATCH);`
+6.  **标记迁移完成**：可以使用一个新的 `localStorage` 键（例如 `daggerheart_storage_migrated_vX_Y_Z`）来标记此特定迁移已完成，避免重复执行。
 
-4. **测试与验证**
-   - 验证卡牌导入导出功能
-   - 验证内置卡牌自动加载功能
-   - 验证现有功能的正常工作
+**注意**：数据迁移逻辑应健壮，并包含充分的错误处理和日志记录。
 
-## 方案的优势
+### 影响分析
 
-1. **统一数据格式**：内置卡牌和自定义卡牌使用相同的 JSON 格式，简化了系统维护。
+*   **上层应用**：
+    *   直接调用已移除方法（如 `saveCustomFieldsForBatch`）的代码需要修改。这些通常在卡牌导入或编辑逻辑中。新的逻辑会是：先加载批次数据，修改其 `customFieldDefinitions` 或 `variantTypes` 属性，然后重新保存整个批次数据。
+    *   调用聚合方法（如 `getAggregatedCustomFieldNames`）的代码**不应受到影响**，因为这些方法的外部签名保持不变。
+*   **`CustomCardManager`**：
+    *   `CustomCardManager` 中处理导入JSON文件时，如果JSON文件包含顶层的自定义字段或变体类型定义，需要确保这些定义被正确地放入 `BatchData` 对象的相应属性中，然后传递给 `CustomCardStorage.saveBatch`。
+    *   删除批次时，由于所有数据都在一个条目下，`CustomCardStorage.removeBatch` 会自动移除所有相关数据，简化了 `CustomCardManager` 的逻辑。
 
-2. **模块化内置内容**：可以轻松添加更多内置卡牌包，无需修改代码。
+### 实施建议
 
-3. **版本控制**：每个卡牌包都有独立的版本号，便于更新管理。
+1.  **备份**：在实施前，强烈建议用户备份其 `localStorage` 数据（可以通过浏览器开发者工具导出）。
+2.  **逐步实施**：
+    *   首先修改接口和 `CustomCardStorage` 内部逻辑。
+    *   实现数据迁移逻辑，并进行充分测试（可以使用模拟的旧版 `localStorage` 数据）。
+    *   更新 `CustomCardManager` 和其他可能调用被移除方法的地方。
+3.  **版本控制**：如果应用有版本概念，可以将此重构与一个新版本关联，并在更新日志中说明存储结构的变化。
 
-4. **扩展性**：可以在未来轻松添加更多功能，如官方扩展包、社区精选包等。
-
-5. **简化开发流程**：不再需要在 TypeScript 和 JSON 之间转换，减少了维护成本。
-
-## 可能的挑战和解决方案
-
-1. **静态资源访问**：在 Next.js 环境中从公共目录加载 JSON 文件可能需要特殊处理。
-   - 解决方案：内置卡牌静态导入，外部卡包用户手动导入。
-
-3. **转换逻辑维护**：现有转换器仍然需要支持不同格式。
-   - 解决方案：保持现有转换器不变，只重构数据来源和存储部分。
-
-## 详细实施计划
-
-### 阶段一：准备工作
-
-1. **数据转换工具**
-   - 创建一个脚本工具，将现有 TS 格式的卡牌数据转换为 JSON 格式
-   - 确保转换过程中保留所有必要的数据和结构
-
-2. **测试数据验证**
-   - 创建验证工具，确认转换后的 JSON 数据可以被正确导入和解析
-   - 比较转换前后的卡牌数量和内容
-
-### 阶段二：核心重构
-
-1. **创建新的 `CardManager` 类**
-   ```typescript
-   // /data/card/card-manager.ts
-   export class CardManager {
-     // 实现统一的卡牌管理逻辑
-   }
-   ```
-
-2. **内置卡牌加载系统**
-   ```typescript
-   // /data/card/builtin-card-loader.ts
-   export async function loadBuiltinCardPacks(): Promise<ImportResult[]> {
-     // 实现从 public 目录加载 JSON 卡牌包
-   }
-   ```
-
-3. **更新 `CardSystemInitializer` 组件**
-   ```tsx
-   // /components/card-system-initializer.tsx
-   export function CardSystemInitializer() {
-     useEffect(() => {
-       // 使用新的 CardManager 初始化系统
-     }, []);
-     return null;
-   }
-   ```
-
-### 阶段三：兼容层和迁移
-
-1. **兼容层接口**
-   ```typescript
-   // /data/card/index.ts
-   // 保持现有导出接口不变，但内部实现重定向到新系统
-   ```
-
-2. **渐进式迁移**
-   - 先保留旧系统，同时实现新系统
-   - 在测试环境中验证新系统功能
-   - 确认无问题后切换到新系统
-
-### 阶段四：优化和扩展
-
-1. **卡牌包管理界面优化**
-   - 增加卡牌包启用/禁用功能
-   - 添加卡牌包分类和筛选功能
-
-## 总结
-
-该重构方案将统一内置和自定义卡牌系统，使用 JSON 作为所有卡牌的标准格式。系统的主要区别仅在于内置卡牌在启动时自动加载，并被标记为系统内置。
-
-这种方案的实施将简化卡牌管理，提高系统的可维护性和扩展性，同时为未来添加更多内置卡牌包做好准备。通过分阶段实施，可以确保系统平稳过渡，同时保持现有功能不受影响。
+通过以上方案，可以将 `card-storage.ts` 的存储结构变得更加内聚和一致，减少潜在的错误，并简化其API。

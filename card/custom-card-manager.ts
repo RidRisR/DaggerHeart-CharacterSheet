@@ -140,6 +140,17 @@ export class CustomCardManager {
         try {
             console.log('[CustomCardManager] 开始初始化系统...');
 
+            // 首先初始化存储系统，执行必要的迁移和清理
+            const storageInitResult = CustomCardStorage.initialize();
+            if (storageInitResult.initialized) {
+                console.log('[CustomCardManager] 存储系统初始化成功');
+                if (storageInitResult.migrationResult?.migrated) {
+                    console.log(`[CustomCardManager] 数据迁移成功，更新了 ${storageInitResult.migrationResult.batchesUpdated.length} 个批次`);
+                }
+            } else {
+                console.warn('[CustomCardManager] 存储系统初始化失败:', storageInitResult.errors);
+            }
+
             // 种子化内置卡牌
             await this._seedOrUpdateBuiltinCards();
             // 然后加载自定义卡牌
@@ -232,7 +243,7 @@ export class CustomCardManager {
                         filteredDefinitions
                     });
 
-                    CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
+                    CustomCardStorage.updateBatchCustomFields(batchId, filteredDefinitions);
 
                     // 验证保存是否成功
                     const savedFields = CustomCardStorage.getAggregatedCustomFieldNames();
@@ -250,7 +261,7 @@ export class CustomCardManager {
                         variantTypes: importData.customFieldDefinitions.variantTypes
                     });
 
-                    CustomCardStorage.saveVariantTypesForBatch(batchId, importData.customFieldDefinitions.variantTypes);
+                    CustomCardStorage.updateBatchVariantTypes(batchId, importData.customFieldDefinitions.variantTypes);
 
                     // 验证保存是否成功
                     const savedVariantTypes = CustomCardStorage.getAggregatedVariantTypes();
@@ -884,13 +895,13 @@ export class CustomCardManager {
 
                 if (Object.keys(filteredDefinitions).length > 0) {
                     console.log('[CustomCardManager] 保存内置卡牌的customFieldDefinitions:', filteredDefinitions);
-                    CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
+                    CustomCardStorage.updateBatchCustomFields(batchId, filteredDefinitions);
                 }
 
                 // 处理变体类型定义
                 if (jsonCardPack.customFieldDefinitions.variantTypes) {
                     console.log('[CustomCardManager] 保存内置卡牌的variantTypes:', jsonCardPack.customFieldDefinitions.variantTypes);
-                    CustomCardStorage.saveVariantTypesForBatch(batchId, jsonCardPack.customFieldDefinitions.variantTypes);
+                    CustomCardStorage.updateBatchVariantTypes(batchId, jsonCardPack.customFieldDefinitions.variantTypes);
                 }
             }
 
@@ -949,13 +960,16 @@ export class CustomCardManager {
                     author: jsonCardPack.author,
                 },
                 cards: builtinCards,
+                // 处理自定义字段定义
                 customFieldDefinitions: jsonCardPack.customFieldDefinitions
                     ? Object.fromEntries(
                         Object.entries(jsonCardPack.customFieldDefinitions)
-                            .filter(([, value]) => Array.isArray(value))
+                            .filter(([key, value]) => Array.isArray(value) && key !== 'variantTypes')
                             .map(([key, value]) => [key, value as string[]])
                     )
-                    : undefined
+                    : undefined,
+                // 处理变体类型定义
+                variantTypes: jsonCardPack.customFieldDefinitions?.variantTypes || undefined
             };
 
             // 第五步：检查存储空间

@@ -366,16 +366,16 @@ export class StorageAdapter {
     /**
      * 验证存储完整性
      */
-    async validateIntegrity(): Promise<IntegrityReport> {
+    validateIntegrity(): IntegrityReport {
         // 使用统一存储系统的完整性验证
         try {
-            const unifiedReport = await this.unifiedStorage.validateIntegrity();
+            const unifiedReport = this.unifiedStorage.validateIntegrity();
             return {
                 isValid: unifiedReport.isValid,
                 issues: unifiedReport.issues,
                 orphanedKeys: [],
-                missingBatches: unifiedReport.missingBatches,
-                corruptedBatches: []
+                missingBatches: [],
+                corruptedBatches: unifiedReport.corruptedBatches || []
             };
         } catch (error) {
             return {

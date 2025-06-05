@@ -18,13 +18,22 @@ export function CardSystemInitializer() {
                 console.log('[CardSystemInitializer] 开始初始化卡牌系统...')
                 if (!isMounted) return
 
-                // 第一步：检查并执行存储迁移
-                console.log('[CardSystemInitializer] 检查存储架构迁移需求...')
+                // 第一步：强制检查并执行存储迁移
+                console.log('[CardSystemInitializer] 强制检查存储架构迁移...')
+                
+                // 在强制模式下，即使已经迁移过也要重新验证
+                const hasValidMigration = StorageMigration.validateMigration()
                 const needsMigration = StorageMigration.needsMigration()
                 
+                console.log('[CardSystemInitializer] 迁移状态检查:', {
+                    hasValidMigration,
+                    needsMigration,
+                    forcingUnifiedStorage: true
+                })
+                
                 let migrationResult: MigrationResult | null = null
-                if (needsMigration) {
-                    console.log('[CardSystemInitializer] 执行存储迁移...')
+                if (needsMigration || !hasValidMigration) {
+                    console.log('[CardSystemInitializer] 执行存储迁移（强制模式）...')
                     migrationResult = await StorageMigration.migrate()
                     
                     if (!migrationResult.success) {
@@ -37,7 +46,7 @@ export function CardSystemInitializer() {
                         timeTaken: `${migrationResult.migrationTime}ms`
                     })
                 } else {
-                    console.log('[CardSystemInitializer] 无需执行迁移，使用现有数据结构')
+                    console.log('[CardSystemInitializer] 迁移验证通过，强制使用统一存储')
                 }
 
                 // 第二步：初始化新的统一存储系统

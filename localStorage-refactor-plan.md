@@ -57,48 +57,60 @@ interface UnifiedBatchData {
 
 ### 🔄 进行中的步骤
 
-#### 4. 兼容性适配器开发 (90% 完成)
+#### 4. 存储安全化 (✅ 已完成)
+- [x] **已完成**：创建安全存储工具 (`storage-utils.ts`)
+- [x] 实现 `safeJsonParse`, `safeGetItem`, `safeSetItem`, `safeRemoveItem` 函数
+- [x] 更新 `CustomCardStorage` 类使用安全存储函数
+- [x] 修复所有直接 localStorage 调用，防止 "Unexpected end of JSON input" 错误
+- [x] 更新测试页面的异步方法调用链
+
+#### 5. 兼容性适配器开发 (90% 完成)
 - [x] **已完成**：创建 `StorageAdapter` 兼容性层 (`storage-adapter.ts`)
 - [x] 实现所有 CustomCardStorage 方法的适配
 - [x] 保持现有API接口不变
 - [x] 添加完整的错误处理和日志记录
+- [x] **问题发现**：StorageAdapter 默认 `useUnifiedStorage = false`，仍使用旧存储
 
-#### 5. CustomCardManager 集成 (85% 完成)
+#### 6. CustomCardManager 集成 (85% 完成)
 - [x] **已大部分完成**：替换 `CustomCardManager` 中的 `CustomCardStorage.` 调用
 - [x] 更新 `importCards` 方法为异步并使用 `await storageAdapter.`
 - [x] 更新 `validateVariantTypeUniqueness` 方法为异步
 - [x] 更新 `reloadCustomCards` 和相关方法为异步
 - [x] 更新 `_seedOrUpdateBuiltinCards` 和 `importBuiltinCards` 方法
 - [x] 更新 `removeBatch` 方法为异步
-- [ ] **进行中**：替换剩余的 `CustomCardStorage` 调用（约12处）
-- [ ] 更新方法调用链的异步传播
-- [ ] 测试异步方法的调用兼容性
+- [ ] **待完成**：系统仍从旧存储结构读取数据
 
 ### ⏳ 待完成的步骤
 
-#### 6. 系统初始化集成 (待开始)
+#### 7. **关键问题**：存储迁移执行 (🚨 当前阻塞)
+- [ ] **问题描述**：系统仍在使用旧存储结构，StorageAdapter 的 `useUnifiedStorage = false`
+- [ ] **根本原因**：`StorageMigration.validateMigration()` 返回 `false`，迁移未执行
+- [ ] **现象**：清空 localStorage 后重新加载仍显示原版本数据（来自内置JSON文件）
+- [ ] **解决方案**：需要执行数据迁移并切换到新存储结构
+
+#### 8. 系统初始化集成 (待开始)
 - [ ] **下一步**：集成到现有的 `components/card-system-initializer.tsx`
 - [ ] 在现有初始化组件中添加存储迁移检查
 - [ ] 确保迁移过程不影响用户体验
 - [ ] 添加迁移进度反馈和错误处理
 
-#### 7. 现有代码全面适配 (待开始)
+#### 9. 现有代码全面适配 (待开始)
 - [ ] 检查并更新所有直接使用localStorage的地方
 - [ ] 更新 `hooks/use-cards.ts` 的数据获取逻辑
 - [ ] 确保所有异步方法调用正确await
 
-#### 8. API接口保持兼容 (待开始)
+#### 10. API接口保持兼容 (待开始)
 - [ ] 确保现有组件的调用接口不变
 - [ ] 提供过渡期的兼容性适配器（如需要）
 - [ ] 更新类型定义以支持新结构
 
-#### 9. 测试和验证 (待开始)
+#### 11. 测试和验证 (待开始)
 - [ ] 创建单元测试覆盖新存储逻辑
 - [ ] 测试数据迁移的各种场景
 - [ ] 性能测试（内存使用、读写速度）
 - [ ] 边界情况测试（大数据量、损坏数据等）
 
-#### 10. 文档和清理 (待开始)
+#### 12. 文档和清理 (待开始)
 - [ ] 更新用户文档和开发文档
 - [ ] 清理废弃的代码和注释
 - [ ] 添加新功能的使用示例
@@ -139,11 +151,42 @@ interface UnifiedBatchData {
 2. 从备份数据恢复用户数据
 3. 记录问题详情，制定修复计划
 
+## 当前状态分析 (2025-06-05)
+
+### 🚨 关键问题发现
+经过深入调试，发现了阻塞重构进展的核心问题：
+
+1. **数据流问题**：
+   - `CustomCardManager` 的 `getAllCards()` 返回 `this.customCards`
+   - `this.customCards` 通过 `reloadCustomCards()` 从 `storageAdapter` 加载
+   - `storageAdapter` 仍在使用旧的存储结构 (`useUnifiedStorage = false`)
+
+2. **迁移未执行**：
+   - `StorageAdapter.initialize()` 调用 `StorageMigration.validateMigration()` 
+   - 该方法返回 `false`，因为还没有迁移标记
+   - 导致系统继续使用旧的 `CustomCardStorage`
+
+3. **用户观察现象**：
+   - 清空 localStorage 后刷新页面
+   - 系统重新加载的仍是"原版本数据"
+   - 实际是从内置JSON文件加载，而非新的统一存储
+
+### 🎯 问题根源
+**缺少迁移触发机制**：重构了存储层但没有执行实际的数据迁移，系统仍在旧存储结构上运行。
+
+### 📋 解决方案
+需要立即执行以下步骤：
+1. **完善迁移逻辑**：确保 `StorageMigration.executeMigration()` 正常工作
+2. **触发迁移**：在系统初始化时自动执行迁移
+3. **切换存储**：迁移完成后让 `StorageAdapter` 使用新的统一存储
+4. **验证数据流**：确保数据从新存储结构正确读取
+
 ## 下一步行动
 
-### 立即执行
-1. **完成CustomCardManager适配**：替换剩余的12处 `CustomCardStorage` 调用
-2. **异步方法传播**：确保所有相关方法调用正确处理异步
+### 立即执行 (当前会话内)
+1. **检查并完善迁移逻辑**：确保 `StorageMigration` 可以正确执行
+2. **集成迁移到初始化**：在 `card-system-initializer.tsx` 中触发迁移
+3. **测试迁移流程**：验证从旧存储到新存储的完整迁移
 
 ### 短期目标（本次会话内）
 1. 完成 `CustomCardManager` 的所有 `CustomCardStorage` 调用替换

@@ -20,7 +20,7 @@ import {
 } from './card-storage';
 
 // 调试日志标记
-const DEBUG_ADAPTER = false;
+const DEBUG_ADAPTER = true;
 const logDebug = (operation: string, details: any) => {
     if (DEBUG_ADAPTER) {
         console.log(`[StorageAdapter:${operation}]`, details);

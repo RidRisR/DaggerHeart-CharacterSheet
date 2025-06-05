@@ -12,6 +12,7 @@ const logDebug = (operation: string, details: any) => {
 };
 
 import { CustomCardStorage, type BatchData, type ImportBatch } from './card-storage';
+import { CardStorageCache } from './card-storage-cache';
 import {
     StandardCard,
     ImportData,
@@ -1181,6 +1182,10 @@ export class CustomCardManager {
 
             CustomCardStorage.saveIndex(index);
 
+            // 批次删除时清除缓存
+            CardStorageCache.invalidateAll();
+            logDebug('removeBatch', { message: 'cache invalidated after batch removal', batchId });
+
             // 重新加载内存中的卡牌数据
             logDebug('removeBatch', { step: 'reloading custom cards' });
             this.reloadCustomCards();
@@ -1318,6 +1323,10 @@ export class CustomCardManager {
             batchInfo.disabled = !batchInfo.disabled;
             index.lastUpdate = new Date().toISOString();
             CustomCardStorage.saveIndex(index);
+
+            // 批次启用/禁用状态变更时清除缓存
+            CardStorageCache.invalidateAll();
+            console.log(`[CustomCardManager] 缓存已清除，因为批次 ${batchId} 的禁用状态已变更`);
 
             // 重新加载卡牌以反映更改
             this.reloadCustomCards();

@@ -3,6 +3,9 @@
  * 提供对localStorage的抽象操作，管理自定义卡牌的存储架构
  */
 
+// 导入缓存层
+import { CardStorageCache } from './card-storage-cache';
+
 // 调试日志标记
 const DEBUG_CARD_STORAGE = false;
 const logDebug = (operation: string, details: any) => {
@@ -204,6 +207,10 @@ export class CustomCardStorage {
             }
 
             localStorage.setItem(key, jsonData);
+            
+            // 批次数据变更时清除缓存
+            CardStorageCache.invalidateAll();
+            logDebug('saveBatch', { message: 'cache invalidated after batch save', batchId });
         } catch (error) {
             console.error(`[CustomCardStorage] 批次 ${batchId} 保存失败:`, error);
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -244,6 +251,10 @@ export class CustomCardStorage {
     static removeBatch(batchId: string): void {
         const key = this.getBatchStorageKey(batchId);
         localStorage.removeItem(key);
+        
+        // 批次删除时清除缓存
+        CardStorageCache.invalidateAll();
+        logDebug('removeBatch', { message: 'cache invalidated after batch removal', batchId });
     }
 
     /**
@@ -291,6 +302,7 @@ export class CustomCardStorage {
 
     /**
      * 获取聚合的自定义字段名称（来自所有启用的批次）
+     * 集成缓存层以提升性能
      */
     static getAggregatedCustomFieldNames(): CustomFieldNamesStore {
         logDebug('getAggregatedCustomFieldNames', 'starting aggregation');
@@ -300,17 +312,30 @@ export class CustomCardStorage {
             return {};
         }
 
+        // 尝试从缓存中获取数据
+        const cachedData = CardStorageCache.getCachedCustomFieldNames();
+        if (cachedData) {
+            logDebug('getAggregatedCustomFieldNames', {
+                source: 'cache hit',
+                categoriesCount: Object.keys(cachedData).length
+            });
+            return cachedData;
+        }
+
         try {
             // 优先尝试从批次数据中读取（新版存储结构）
             const fromBatches = this.getAggregatedCustomFieldNamesFromBatches();
 
-            // 检查是否有数据，如果有，则直接返回
+            // 检查是否有数据，如果有，则缓存并返回
             const categoriesCount = Object.keys(fromBatches).length;
             if (categoriesCount > 0) {
                 logDebug('getAggregatedCustomFieldNames', {
                     source: 'from batches',
                     categoriesCount
                 });
+                
+                // 缓存数据
+                CardStorageCache.setCachedCustomFieldNames(fromBatches);
                 return fromBatches;
             }
 
@@ -380,6 +405,8 @@ export class CustomCardStorage {
 
             logDebug('getAggregatedCustomFieldNames', { result: aggregatedFields });
 
+            // 缓存结果
+            CardStorageCache.setCachedCustomFieldNames(aggregatedFields);
             return aggregatedFields;
         } catch (error) {
             console.error('[CustomCardStorage] 聚合自定义字段名加载失败:', error);
@@ -622,6 +649,7 @@ export class CustomCardStorage {
 
     /**
      * 获取聚合的变体类型定义（来自所有启用的批次）
+     * 集成缓存层以提升性能
      */
     static getAggregatedVariantTypes(): VariantTypesForBatch {
         logDebug('getAggregatedVariantTypes', 'starting aggregation');
@@ -631,17 +659,30 @@ export class CustomCardStorage {
             return {};
         }
 
+        // 尝试从缓存中获取数据
+        const cachedData = CardStorageCache.getCachedVariantTypes();
+        if (cachedData) {
+            logDebug('getAggregatedVariantTypes', {
+                source: 'cache hit',
+                typesCount: Object.keys(cachedData).length
+            });
+            return cachedData;
+        }
+
         try {
             // 优先尝试从批次数据中读取（新版存储结构）
             const fromBatches = this.getAggregatedVariantTypesFromBatches();
 
-            // 检查是否有数据，如果有，则直接返回
+            // 检查是否有数据，如果有，则缓存并返回
             const typesCount = Object.keys(fromBatches).length;
             if (typesCount > 0) {
                 logDebug('getAggregatedVariantTypes', {
                     source: 'from batches',
                     typesCount
                 });
+                
+                // 缓存数据
+                CardStorageCache.setCachedVariantTypes(fromBatches);
                 return fromBatches;
             }
 
@@ -705,6 +746,8 @@ export class CustomCardStorage {
 
             logDebug('getAggregatedVariantTypes', { result: aggregatedTypes });
 
+            // 缓存结果
+            CardStorageCache.setCachedVariantTypes(aggregatedTypes);
             return aggregatedTypes;
         } catch (error) {
             console.error('[CustomCardStorage] 聚合变体类型定义加载失败:', error);

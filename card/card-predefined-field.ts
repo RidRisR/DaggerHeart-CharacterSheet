@@ -35,6 +35,7 @@ export type DomainClass = string;
 
 // Import storage functions
 import { CustomCardStorage, type CustomFieldsForBatch, type VariantTypesForBatch } from './card-storage';
+import { type ValidationContext } from './type-validators';
 
 // 调试日志标记
 const DEBUG_PREDEFINED_FIELDS = false;
@@ -214,3 +215,173 @@ export function getVariantTypeName(variantType: string, tempBatchId?: string, te
 }
 
 // (Optional) Functions to remove custom names can be added here if needed
+
+// ===== 新增：基于ValidationContext的字段获取函数 =====
+
+/**
+ * 基于ValidationContext获取职业卡牌名称
+ * 用于在验证过程中使用内存中的数据而不是localStorage
+ */
+export function getProfessionCardNamesFromContext(context: ValidationContext): string[] {
+    const defaultNames = [...PROFESSION_CARD_NAMES];
+    const customNames = context.customFields.professions || [];
+    const result = [...new Set([...defaultNames, ...customNames])];
+
+    logDebug('getProfessionCardNamesFromContext', {
+        defaultCount: defaultNames.length,
+        customCount: customNames.length,
+        totalCount: result.length,
+        customNames,
+        batchId: context.tempBatchId
+    });
+
+    return result;
+}
+
+/**
+ * 基于ValidationContext获取血统卡牌名称
+ */
+export function getAncestryCardNamesFromContext(context: ValidationContext): string[] {
+    const defaultNames = [...ANCESTRY_CARD_NAMES];
+    const customNames = context.customFields.ancestries || [];
+    const result = [...new Set([...defaultNames, ...customNames])];
+
+    logDebug('getAncestryCardNamesFromContext', {
+        defaultCount: defaultNames.length,
+        customCount: customNames.length,
+        totalCount: result.length,
+        customNames,
+        batchId: context.tempBatchId
+    });
+
+    return result;
+}
+
+/**
+ * 基于ValidationContext获取社区卡牌名称
+ */
+export function getCommunityCardNamesFromContext(context: ValidationContext): string[] {
+    const defaultNames = [...COMMUNITY_CARD_NAMES];
+    const customNames = context.customFields.communities || [];
+    const result = [...new Set([...defaultNames, ...customNames])];
+
+    logDebug('getCommunityCardNamesFromContext', {
+        defaultCount: defaultNames.length,
+        customCount: customNames.length,
+        totalCount: result.length,
+        customNames,
+        batchId: context.tempBatchId
+    });
+
+    return result;
+}
+
+/**
+ * 基于ValidationContext获取子职业卡牌名称
+ */
+export function getSubClassCardNamesFromContext(context: ValidationContext): string[] {
+    // 子职业名称直接从职业名称衍生
+    return getProfessionCardNamesFromContext(context);
+}
+
+/**
+ * 基于ValidationContext获取领域卡牌名称
+ */
+export function getDomainCardNamesFromContext(context: ValidationContext): string[] {
+    const defaultNames = [...DOMAIN_CARD_NAMES];
+    const customNames = context.customFields.domains || [];
+    const result = [...new Set([...defaultNames, ...customNames])];
+
+    logDebug('getDomainCardNamesFromContext', {
+        defaultCount: defaultNames.length,
+        customCount: customNames.length,
+        totalCount: result.length,
+        customNames,
+        batchId: context.tempBatchId
+    });
+
+    return result;
+}
+
+/**
+ * 基于ValidationContext获取所有可用的变体类型定义
+ */
+export function getVariantTypesFromContext(context: ValidationContext): Record<string, any> {
+    const aggregatedTypes = context.variantTypes;
+
+    logDebug('getVariantTypesFromContext', {
+        typeCount: Object.keys(aggregatedTypes).length,
+        typeIds: Object.keys(aggregatedTypes),
+        batchId: context.tempBatchId
+    });
+
+    return aggregatedTypes;
+}
+
+/**
+ * 基于ValidationContext获取指定变体类型的子类别选项
+ */
+export function getVariantSubclassesFromContext(variantType: string, context: ValidationContext): string[] {
+    const aggregatedTypes = context.variantTypes;
+    const typeDef = aggregatedTypes[variantType];
+
+    logDebug('getVariantSubclassesFromContext', {
+        variantType,
+        typeDef: !!typeDef,
+        subclasses: typeDef?.subclasses || [],
+        batchId: context.tempBatchId
+    });
+
+    return typeDef?.subclasses || [];
+}
+
+/**
+ * 基于ValidationContext获取所有变体类型的名称列表
+ */
+export function getVariantTypeNamesFromContext(context: ValidationContext): string[] {
+    const aggregatedTypes = context.variantTypes;
+    const typeNames = Object.keys(aggregatedTypes);
+
+    logDebug('getVariantTypeNamesFromContext', {
+        typeCount: typeNames.length,
+        typeNames,
+        batchId: context.tempBatchId
+    });
+
+    return typeNames;
+}
+
+/**
+ * 基于ValidationContext检查变体类型是否存在
+ */
+export function hasVariantTypeFromContext(variantType: string, context: ValidationContext): boolean {
+    const aggregatedTypes = context.variantTypes;
+    const exists = variantType in aggregatedTypes;
+
+    logDebug('hasVariantTypeFromContext', {
+        variantType,
+        exists,
+        batchId: context.tempBatchId
+    });
+
+    return exists;
+}
+
+/**
+ * 基于ValidationContext获取变体类型的显示名称
+ */
+export function getVariantTypeNameFromContext(variantType: string, context: ValidationContext): string {
+    const aggregatedTypes = context.variantTypes;
+    const typeDef = aggregatedTypes[variantType];
+
+    // 直接使用variantType作为显示名称，不再依赖name字段
+    const displayName = variantType;
+
+    logDebug('getVariantTypeNameFromContext', {
+        variantType,
+        displayName,
+        batchId: context.tempBatchId
+    });
+
+    return displayName;
+}

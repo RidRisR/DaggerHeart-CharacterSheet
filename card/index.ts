@@ -23,6 +23,7 @@ import { ALL_CARD_TYPES, CARD_CLASS_OPTIONS, CARD_LEVEL_OPTIONS, CardType, Stand
 import { convertToStandardCard } from "@/card/card-converter"
 // Import CardManager directly from the file
 import { CustomCardManager } from "./custom-card-manager"
+import { CustomCardStorage } from "./card-storage"
 
 // 导入CardManager
 // export { CardManager } from "@/card/card-manager"
@@ -189,6 +190,7 @@ export {
   customCardManager as builtinCardManager, // 向后兼容别名
   // Re-export CardManager and CustomCardManager
   CustomCardManager,
+  CustomCardStorage,
   // 类型定义
   CardType,
   CardSource,

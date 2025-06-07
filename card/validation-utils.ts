@@ -5,6 +5,7 @@
 
 import { CustomCardStorage, type CustomFieldsForBatch, type CustomFieldNamesStore, type VariantTypesForBatch } from './card-storage';
 import type { ValidationContext } from './type-validators';
+import builtinCardPackJson from '../data/cards/builtin-base.json';
 
 // 调试日志标记
 const DEBUG_VALIDATION_UTILS = false;
@@ -29,18 +30,48 @@ export class ValidationDataMerger {
         tempBatchId?: string,
         tempDefinitions?: CustomFieldsForBatch
     ): CustomFieldNamesStore {
+        logDebug('[DEBUG] mergeCustomFields 开始', []);
+        logDebug('[DEBUG] tempBatchId:', tempBatchId);
+        logDebug('[DEBUG] tempDefinitions:', tempDefinitions);
+        
         logDebug('mergeCustomFields', { tempBatchId, tempDefinitions });
 
         // 获取现有的自定义字段（不包含临时数据）
         const existing = CustomCardStorage.getAggregatedCustomFieldNamesFromBatches();
+        logDebug('[DEBUG] 现有的字段定义:', existing);
+
+        // 获取内置卡包的字段定义
+        const builtinFields: CustomFieldNamesStore = {};
+        const builtinCustomFields = (builtinCardPackJson as any).customFieldDefinitions;
+        logDebug('[DEBUG] 内置卡包原始customFieldDefinitions:', builtinCustomFields);
+        
+        if (builtinCustomFields) {
+            for (const [category, names] of Object.entries(builtinCustomFields)) {
+                if (Array.isArray(names) && category !== 'variantTypes') {
+                    builtinFields[category] = names as string[];
+                }
+            }
+        }
+        logDebug('[DEBUG] 提取的内置字段:', builtinFields);
+
+        // 首先合并内置字段和现有字段
+        const mergedWithBuiltin: CustomFieldNamesStore = { ...builtinFields };
+        for (const [category, names] of Object.entries(existing)) {
+            if (!mergedWithBuiltin[category]) {
+                mergedWithBuiltin[category] = [];
+            }
+            mergedWithBuiltin[category] = [...new Set([...mergedWithBuiltin[category], ...names])];
+        }
+        logDebug('[DEBUG] 内置+现有字段合并结果:', mergedWithBuiltin);
 
         if (!tempDefinitions) {
-            logDebug('mergeCustomFields', { result: 'no temp definitions, returning existing', existing });
-            return existing;
+            logDebug('[DEBUG] 没有临时定义，返回内置+现有的合并结果', []);
+            logDebug('mergeCustomFields', { result: 'no temp definitions, returning merged builtin+existing', merged: mergedWithBuiltin });
+            return mergedWithBuiltin;
         }
 
-        // 内存中合并，不写入存储
-        const merged: CustomFieldNamesStore = { ...existing };
+        // 内存中合并临时定义，不写入存储
+        const merged: CustomFieldNamesStore = { ...mergedWithBuiltin };
 
         for (const [category, names] of Object.entries(tempDefinitions)) {
             if (Array.isArray(names)) {
@@ -52,7 +83,10 @@ export class ValidationDataMerger {
             }
         }
 
+        logDebug('[DEBUG] 最终合并结果:', merged);
+
         logDebug('mergeCustomFields', {
+            builtinCategories: Object.keys(builtinFields),
             existingCategories: Object.keys(existing),
             tempCategories: Object.keys(tempDefinitions),
             mergedCategories: Object.keys(merged),
@@ -77,15 +111,26 @@ export class ValidationDataMerger {
         // 获取现有的变体类型定义（不包含临时数据）
         const existing = CustomCardStorage.getAggregatedVariantTypesFromBatches();
 
+        // 获取内置卡包的变体类型定义
+        const builtinVariantTypes: VariantTypesForBatch = {};
+        const builtinCustomFields = (builtinCardPackJson as any).customFieldDefinitions;
+        if (builtinCustomFields?.variantTypes) {
+            Object.assign(builtinVariantTypes, builtinCustomFields.variantTypes);
+        }
+
+        // 首先合并内置变体类型和现有变体类型
+        const mergedWithBuiltin = { ...builtinVariantTypes, ...existing };
+
         if (!tempDefinitions) {
-            logDebug('mergeVariantTypes', { result: 'no temp definitions, returning existing', existing });
-            return existing;
+            logDebug('mergeVariantTypes', { result: 'no temp definitions, returning merged builtin+existing', merged: mergedWithBuiltin });
+            return mergedWithBuiltin;
         }
 
         // 内存中合并，临时定义优先
-        const merged = { ...existing, ...tempDefinitions };
+        const merged = { ...mergedWithBuiltin, ...tempDefinitions };
 
         logDebug('mergeVariantTypes', {
+            builtinTypes: Object.keys(builtinVariantTypes),
             existingTypes: Object.keys(existing),
             tempTypes: Object.keys(tempDefinitions),
             mergedTypes: Object.keys(merged),
@@ -107,17 +152,32 @@ export class ValidationDataMerger {
         tempCustomFields?: CustomFieldsForBatch,
         tempVariantTypes?: VariantTypesForBatch
     ): ValidationContext {
+        logDebug('[DEBUG] createValidationContext 开始', []);
+        logDebug('[DEBUG] tempBatchId:', tempBatchId);
+        logDebug('[DEBUG] tempCustomFields:', tempCustomFields);
+        logDebug('[DEBUG] tempVariantTypes:', tempVariantTypes);
+        
         logDebug('createValidationContext', {
             tempBatchId,
             hasCustomFields: !!tempCustomFields,
             hasVariantTypes: !!tempVariantTypes
         });
 
+        logDebug('[DEBUG] 调用 mergeCustomFields...', []);
+        const mergedCustomFields = this.mergeCustomFields(tempBatchId, tempCustomFields);
+        logDebug('[DEBUG] mergeCustomFields 结果:', mergedCustomFields);
+        
+        logDebug('[DEBUG] 调用 mergeVariantTypes...', []);
+        const mergedVariantTypes = this.mergeVariantTypes(tempBatchId, tempVariantTypes);
+        logDebug('[DEBUG] mergeVariantTypes 结果:', mergedVariantTypes);
+
         const context: ValidationContext = {
-            customFields: this.mergeCustomFields(tempBatchId, tempCustomFields),
-            variantTypes: this.mergeVariantTypes(tempBatchId, tempVariantTypes),
+            customFields: mergedCustomFields,
+            variantTypes: mergedVariantTypes,
             tempBatchId
         };
+
+        logDebug('[DEBUG] 最终创建的 ValidationContext:', context);
 
         logDebug('createValidationContext', {
             result: {
@@ -140,6 +200,10 @@ export class ValidationDataMerger {
         importData: any,
         tempBatchId?: string
     ): ValidationContext {
+        logDebug('[DEBUG] createValidationContextFromImportData 开始', []);
+        logDebug('[DEBUG] importData.customFieldDefinitions:', importData.customFieldDefinitions);
+        logDebug('[DEBUG] tempBatchId:', tempBatchId);
+        
         logDebug('createValidationContextFromImportData', {
             tempBatchId,
             hasCustomFieldDefinitions: !!importData.customFieldDefinitions
@@ -152,9 +216,15 @@ export class ValidationDataMerger {
                 .map(([key, value]) => [key, value as string[]])
         ) : undefined;
 
+        logDebug('[DEBUG] 提取的tempCustomFields:', tempCustomFields);
+
         // 提取变体类型定义
         const tempVariantTypes = importData.customFieldDefinitions?.variantTypes;
+        logDebug('[DEBUG] 提取的tempVariantTypes:', tempVariantTypes);
 
-        return this.createValidationContext(tempBatchId, tempCustomFields, tempVariantTypes);
+        const result = this.createValidationContext(tempBatchId, tempCustomFields, tempVariantTypes);
+        logDebug('[DEBUG] createValidationContext 返回结果:', result);
+        
+        return result;
     }
 }

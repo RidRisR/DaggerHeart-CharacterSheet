@@ -27,6 +27,7 @@ import {
 // 移除对 builtin-card-data.ts 的依赖
 const BUILTIN_BATCH_ID = "SYSTEM_BUILTIN_CARDS";
 import { CardTypeValidator, type ValidationContext } from './type-validators';
+import { ValidationDataMerger } from './validation-utils';
 import { professionCardConverter } from './profession-card/convert';
 import { ancestryCardConverter } from './ancestry-card/convert';
 import { communityCardConverter } from './community-card/convert';
@@ -528,7 +529,10 @@ export class CustomCardManager {
             hasVariantTypes: !!(tempFields?.tempVariantTypes)
         });
 
-        const typeValidation = CardTypeValidator.validateImportData(importData, tempFields);
+        // 优先使用ValidationContext，否则使用tempFields
+        const typeValidation = validationContext 
+            ? CardTypeValidator.validateImportData(importData, validationContext)
+            : CardTypeValidator.validateImportData(importData, tempFields);
 
         if (!typeValidation.isValid) {
             const errorMessages = typeValidation.errors.map(err => `${err.path}: ${err.message}`);
@@ -930,7 +934,16 @@ export class CustomCardManager {
 
             // 第二步：验证导入数据格式
             console.log('[CustomCardManager] 验证内置卡牌数据格式');
-            const formatValidation = this.validateImportDataFormat(jsonCardPack);
+
+            // 为内置卡牌创建ValidationContext
+            logDebug('[DEBUG] 创建内置卡牌ValidationContext之前，jsonCardPack.customFieldDefinitions:', jsonCardPack.customFieldDefinitions);
+            const builtinValidationContext = ValidationDataMerger.createValidationContextFromImportData(
+                jsonCardPack,
+                'builtin_validation'
+            );
+            logDebug('[DEBUG] 创建的内置卡牌ValidationContext:', builtinValidationContext);
+
+            const formatValidation = this.validateImportDataFormat(jsonCardPack, builtinValidationContext);
             if (!formatValidation.isValid) {
                 console.error('[CustomCardManager] 内置卡牌格式验证失败:', formatValidation.errors);
                 // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，

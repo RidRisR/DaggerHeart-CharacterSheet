@@ -1,19 +1,3 @@
-export const PROFESSION_CARD_NAMES: string[] = [
-    "吟游诗人", "德鲁伊", "守护者", "游侠", "游荡者", "神使", "术士", "战士", "法师"
-];
-
-export const ANCESTRY_CARD_NAMES: string[] = [
-    "械灵", "魔裔", "龙人", "矮人", "精灵", "仙灵", "羊蹄人", "费尔博格", "孢菌人", "龟人", "巨人", "哥布林", "半身人", "人类", "猫族", "兽人", "蛙裔", "猿族"
-];
-
-export const COMMUNITY_CARD_NAMES: string[] = [
-    "高城之民", "博识之民", "结社之民", "山岭之民", "滨海之民", "法外之民", "地下之民", "漂泊之民", "荒野之民"
-];
-
-export const DOMAIN_CARD_NAMES: string[] = [
-    "奥术", "利刃", "骸骨", "典籍", "优雅", "午夜", "贤者", "辉耀", "勇气"
-];
-
 // 属性类别常量列表
 export const ATTRIBUTE_CLASS_NAMES: string[] = [
     "力量", "敏捷", "灵巧", "风度", "本能", "知识", "不可施法"
@@ -47,16 +31,13 @@ const logDebug = (operation: string, details: any) => {
 
 // Getter functions
 export function getProfessionCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
-    const defaultNames = [...PROFESSION_CARD_NAMES];
     const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
     const customNames = aggregatedCustomFields.professions || []; // Use 'professions' instead of 'profession'
-    const result = [...new Set([...defaultNames, ...customNames])];
+    const result = [...new Set([...customNames])];
     
     logDebug('getProfessionCardNames', {
-        defaultCount: defaultNames.length,
         customCount: customNames.length,
         totalCount: result.length,
-        defaultNames,
         customNames,
         result,
         tempBatchId,
@@ -67,13 +48,11 @@ export function getProfessionCardNames(tempBatchId?: string, tempDefinitions?: C
 }
 
 export function getAncestryCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
-    const defaultNames = [...ANCESTRY_CARD_NAMES];
     const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
     const customNames = aggregatedCustomFields.ancestries || []; // Use 'ancestries' instead of 'ancestry'
-    const result = [...new Set([...defaultNames, ...customNames])];
+    const result = [...new Set([...customNames])];
     
     logDebug('getAncestryCardNames', {
-        defaultCount: defaultNames.length,
         customCount: customNames.length,
         totalCount: result.length,
         tempBatchId,
@@ -84,13 +63,11 @@ export function getAncestryCardNames(tempBatchId?: string, tempDefinitions?: Cus
 }
 
 export function getCommunityCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
-    const defaultNames = [...COMMUNITY_CARD_NAMES];
     const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
     const customNames = aggregatedCustomFields.communities || []; // Use 'communities' instead of 'community'
-    const result = [...new Set([...defaultNames, ...customNames])];
+    const result = [...new Set([...customNames])];
     
     logDebug('getCommunityCardNames', {
-        defaultCount: defaultNames.length,
         customCount: customNames.length,
         totalCount: result.length,
         tempBatchId,
@@ -107,13 +84,11 @@ export function getSubClassCardNames(tempBatchId?: string, tempDefinitions?: Cus
 }
 
 export function getDomainCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
-    const defaultNames = [...DOMAIN_CARD_NAMES];
     const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
     const customNames = aggregatedCustomFields.domains || []; // Use 'domains' instead of 'domain'
-    const result = [...new Set([...defaultNames, ...customNames])];
+    const result = [...new Set([...customNames])];
     
     logDebug('getDomainCardNames', {
-        defaultCount: defaultNames.length,
         customCount: customNames.length,
         totalCount: result.length,
         tempBatchId,
@@ -223,12 +198,10 @@ export function getVariantTypeName(variantType: string, tempBatchId?: string, te
  * 用于在验证过程中使用内存中的数据而不是localStorage
  */
 export function getProfessionCardNamesFromContext(context: ValidationContext): string[] {
-    const defaultNames = [...PROFESSION_CARD_NAMES];
     const customNames = context.customFields.professions || [];
-    const result = [...new Set([...defaultNames, ...customNames])];
+    const result = [...new Set([...customNames])];
 
     logDebug('getProfessionCardNamesFromContext', {
-        defaultCount: defaultNames.length,
         customCount: customNames.length,
         totalCount: result.length,
         customNames,
@@ -242,12 +215,10 @@ export function getProfessionCardNamesFromContext(context: ValidationContext): s
  * 基于ValidationContext获取血统卡牌名称
  */
 export function getAncestryCardNamesFromContext(context: ValidationContext): string[] {
-    const defaultNames = [...ANCESTRY_CARD_NAMES];
     const customNames = context.customFields.ancestries || [];
-    const result = [...new Set([...defaultNames, ...customNames])];
+    const result = [...new Set([...customNames])];
 
     logDebug('getAncestryCardNamesFromContext', {
-        defaultCount: defaultNames.length,
         customCount: customNames.length,
         totalCount: result.length,
         customNames,
@@ -261,12 +232,10 @@ export function getAncestryCardNamesFromContext(context: ValidationContext): str
  * 基于ValidationContext获取社区卡牌名称
  */
 export function getCommunityCardNamesFromContext(context: ValidationContext): string[] {
-    const defaultNames = [...COMMUNITY_CARD_NAMES];
     const customNames = context.customFields.communities || [];
-    const result = [...new Set([...defaultNames, ...customNames])];
+    const result = [...new Set([...customNames])];
 
     logDebug('getCommunityCardNamesFromContext', {
-        defaultCount: defaultNames.length,
         customCount: customNames.length,
         totalCount: result.length,
         customNames,
@@ -288,12 +257,10 @@ export function getSubClassCardNamesFromContext(context: ValidationContext): str
  * 基于ValidationContext获取领域卡牌名称
  */
 export function getDomainCardNamesFromContext(context: ValidationContext): string[] {
-    const defaultNames = [...DOMAIN_CARD_NAMES];
     const customNames = context.customFields.domains || [];
-    const result = [...new Set([...defaultNames, ...customNames])];
+    const result = [...new Set([...customNames])];
 
     logDebug('getDomainCardNamesFromContext', {
-        defaultCount: defaultNames.length,
         customCount: customNames.length,
         totalCount: result.length,
         customNames,

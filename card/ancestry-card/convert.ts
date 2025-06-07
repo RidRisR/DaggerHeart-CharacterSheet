@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { CardType, type StandardCard } from "@/card/card-types";
+import { CardType, processCardDescription, type StandardCard } from "@/card/card-types";
 import { ANCESTRY_CARD_NAMES } from "@/card/card-predefined-field";
 
 // 血统卡牌类型
@@ -23,7 +23,7 @@ class AncestryCardConverter {
       id: rawCard.id || uuidv4(),
       name: rawCard.名称,
       type: CardType.Ancestry,
-      description: rawCard.效果,
+      description: processCardDescription(rawCard.效果) || "",
       hint: rawCard.简介,
       imageUrl: "",
       level: rawCard.类别,
@@ -37,4 +37,3 @@ class AncestryCardConverter {
 }
 
 export const ancestryCardConverter = new AncestryCardConverter();
-

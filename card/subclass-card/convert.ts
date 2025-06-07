@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import { CardType, type StandardCard } from "@/card/card-types"
+import { CardType, processCardDescription, type StandardCard } from "@/card/card-types"
 import { AttributeClass, SubClassClass, SubClassLevel } from "../card-predefined-field"
 // 领域卡牌数据结构
 export interface SubClassCard {
@@ -37,7 +37,7 @@ class SubClassCardConverter {
       id: card.id || uuidv4(),
       name: card.名称,
       type: CardType.Subclass,
-      description: card.描述,
+      description: processCardDescription(card.描述) || "",
       imageUrl: "",
       class: card.主职,
       level: levelNum,

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import { CardType, type StandardCard } from "@/card/card-types"
+import { CardType, processCardDescription, type StandardCard } from "@/card/card-types"
 import { DomainClass, ProfessionClass } from "@/card/card-predefined-field";
 
 // 职业卡牌数据结构
@@ -25,7 +25,7 @@ class ProfessionCardConverter {
       id: card.id || uuidv4(),
       name: card.名称,
       type: CardType.Profession,
-      description: card.职业特性,
+      description: processCardDescription(card.职业特性) || "",
       hint: card.简介,
       imageUrl: "",
       class: card.名称,

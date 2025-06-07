@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import { CardType, type StandardCard } from "@/card/card-types"
+import { CardType, processCardDescription, type StandardCard } from "@/card/card-types"
 import { CommunityClass } from "../card-predefined-field"
 
 
@@ -21,7 +21,7 @@ class CommunityCardConverter {
       id: card.id || uuidv4(),
       name: card.名称,
       type: CardType.Community,
-      description: card.描述,
+      description: processCardDescription(card.描述) || "",
       hint: card.简介,
       imageUrl: "",
       class: card.名称,

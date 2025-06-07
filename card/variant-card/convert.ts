@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
-import { CardType, type StandardCard } from "@/card/card-types";
+import { CardType, processCardDescription, type StandardCard } from "@/card/card-types";
 
 // 原始变体卡牌数据结构（用户导入的格式）
 export interface RawVariantCard {
@@ -38,7 +38,7 @@ export class VariantCardConverter {
       type: CardType.Variant,
       class: card.子类别 || "",              // 将 "子类别" 映射到 class 字段，确保为字符串
       level: card.等级,
-      description: card.效果,
+      description: processCardDescription(card.效果) || "",
       imageUrl: card.imageUrl || "",
       headerDisplay: card.名称,
       cardSelectDisplay: {

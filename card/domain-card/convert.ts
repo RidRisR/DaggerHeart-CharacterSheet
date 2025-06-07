@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuidv4 } from "uuid"
-import { CardType, type StandardCard } from "@/card/card-types"
+import { CardType, processCardDescription, type StandardCard } from "@/card/card-types"
 import { DomainClass } from "../card-predefined-field"
 
 
@@ -29,7 +29,7 @@ class DomainCardConverter {
       id: card.id || uuidv4(),
       name: card.名称 || "",
       type: CardType.Domain,
-      description: card.描述 || "",
+      description: processCardDescription(card.描述) || "",
       imageUrl: "",
       class: card.领域,
       level: card.等级,

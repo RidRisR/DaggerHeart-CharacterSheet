@@ -266,3 +266,16 @@ export function getEffectiveCardType(card: StandardCard): string {
 export function isCustomCard(card: StandardCard | ExtendedStandardCard): boolean {
   return (card as ExtendedStandardCard).source === CardSource.CUSTOM;
 }
+
+/**
+ * 统一的文本处理函数
+ * 对卡牌描述进行格式化处理
+ */
+export function processCardDescription(description: string): string {
+  if (!description) return description;
+
+  return description
+    .replace(/\n/g, '\n\n')           // 将所有单个换行符替换为双换行符
+    .replace(/\n{3,}/g, '\n\n\n\n')      // 将连续的多个换行符统一替换为双换行符
+    .replace(/(\n\n)(?=\s*[-*+] )/g, '\n'); // 在列表项前的双换行符替换为单换行符
+}

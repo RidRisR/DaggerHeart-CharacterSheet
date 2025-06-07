@@ -1354,14 +1354,6 @@ export class CustomCardManager {
                 var standCard = converter(card)
                 standCard.standarized = true
 
-                // 对 displayDescription 进行文本处理
-                if (standCard.description) {
-                    standCard.description = standCard.description
-                        .replace(/\n/g, '\n\n')
-                        .replace(/\n{3,}/g, '\n\n\n\n')
-                        .replace(/(\n\n)(?=\s*[-*+] )/g, '\n');
-                }
-
                 return standCard
             } catch (error) {
                 console.error(`使用${type}转换器转换卡牌失败:`, error, card)

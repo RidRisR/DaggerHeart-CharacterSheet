@@ -1358,7 +1358,7 @@ export class CustomCardManager {
                 if (standCard.description) {
                     standCard.description = standCard.description
                         .replace(/\n/g, '\n\n')
-                        .replace(/\n{2,}/g, '\n\n')
+                        .replace(/\n{3,}/g, '\n\n\n\n')
                         .replace(/(\n\n)(?=\s*[-*+] )/g, '\n');
                 }
 

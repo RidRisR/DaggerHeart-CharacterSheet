@@ -22,7 +22,7 @@ export interface SheetData {
   // 通用属性
   name: string
   characterImage?: string
-  level: number
+  level: string
   proficiency: number | boolean[]
   ancestry1?: string
   ancestry2?: string

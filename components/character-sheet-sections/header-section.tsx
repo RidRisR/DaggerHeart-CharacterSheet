@@ -99,6 +99,7 @@ export function HeaderSection({
               type="text"
               name="level"
               value={formData.level}
+              placeholder="1"
               onChange={handleInputChange}
               className="w-8 text-center border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
             />

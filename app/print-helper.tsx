@@ -4,7 +4,7 @@ import { useEffect } from "react"
 
 export default function PrintHelper() {
   useEffect(() => {
-    const placeholderTexts = ["选择武器", "选择护甲", "选择职业", "选择血统", "选择社群"];
+    const placeholderTexts = ["选择武器", "选择护甲", "选择职业", "选择子职业", "选择血统", "选择社群"];
 
     const handleBeforePrint = () => {
       // Process all input fields and textareas

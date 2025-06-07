@@ -54,7 +54,7 @@ export default function Home() {
     const professionClass = await getCardClass(formData.professionRef?.id, CardType.Profession); // Now with await
     const ancestry2Class = await getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry); // Now with await
     const communityClass = await getCardClass(formData.communityRef?.id, CardType.Community); // Now with await
-    const level = formData.level ? String(formData.level) : '()';
+    const level = formData.level || '()';
 
     document.title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
     setIsPrintingAll(true);

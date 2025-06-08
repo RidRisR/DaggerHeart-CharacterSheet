@@ -209,8 +209,7 @@ export default function Home() {
         </Button>
         <Button
           onClick={() => {
-            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-            window.location.href = `${basePath}/card-manager`;
+            window.location.href = `/DaggerHeart-CharacterSheet/card-manager`;
           }}
           className="bg-gray-800 hover:bg-gray-700"
         >

@@ -208,7 +208,10 @@ export default function Home() {
           存档与重置
         </Button>
         <Button
-          onClick={() => window.location.href = '/card-manager'}
+          onClick={() => {
+            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+            window.location.href = `${basePath}/card-manager`;
+          }}
           className="bg-gray-800 hover:bg-gray-700"
         >
           卡牌管理

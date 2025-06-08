@@ -133,7 +133,8 @@ export default function CardImportTestPage() {
   // 返回主站
   const goBackToMain = () => {
     refreshData()
-    window.location.href = '/'
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    window.location.href = `${basePath}/`;
   }
 
   // 查看卡牌

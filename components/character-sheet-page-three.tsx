@@ -61,8 +61,8 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
     const renderCompanionExperienceSection = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 mb-3 print:grid-cols-2 print:gap-x-8 print:mb-3">
             {/* 伙伴描述区：左半区，带边框 */}
-            <div className="flex flex-col justify-end w-full p-3 border border-transparent dark:border-transparent rounded-t-md rounded-b-md bg-white dark:bg-gray-900">
-                <h3 className="font-bold text-md mb-2 text-gray-800 dark:text-gray-200">伙伴描述</h3>
+            <div className="flex flex-col justify-end w-full p-3 border border-transparent rounded-t-md rounded-b-md bg-white">
+                <h3 className="font-bold text-md mb-2 text-gray-800">伙伴描述</h3>
                 <div className="flex flex-col items-center">
                     <div className="w-36 h-36 border-2 border-gray-800 flex items-center justify-center relative overflow-hidden bg-gray-100 dark:bg-gray-800 print:w-28 print:h-28 mb-2">
                         {safeFormData.companionImage ? (
@@ -263,9 +263,17 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
     const sectionBannerClass = "bg-gray-700 text-white font-bold py-1 px-3 text-center text-sm tracking-wider uppercase";
 
     return (
-        <div className="p-5 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 print-friendly-page-three ranger-companion-sheet leading-normal">
+        <>
+            {/* 固定位置的按钮 - 移除建卡指引按钮，因为已经移到父组件 */}
+            <div></div>
+
+            <div className="w-full max-w-[210mm] mx-auto my-4">
+                <div
+                    className="a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+                    style={{ width: "210mm" }}
+                >
             {/* Header Section - 黑色顶盖 */}
-            <div className="bg-gray-800 text-white p-5 flex items-center rounded-t-md mb-3">
+                    <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md mb-3">
                 <div className="flex flex-col">
                     <div className="text-[9px]">DAGGERHEART V20250520</div>
                 </div>
@@ -366,7 +374,9 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                     </div>
                 </div>
             </div>
-        </div>
+                </div>
+            </div>
+        </>
     );
 };
 

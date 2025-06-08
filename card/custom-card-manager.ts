@@ -12,6 +12,7 @@ const logDebug = (operation: string, details: any) => {
 };
 
 import { CustomCardStorage, type BatchData, type ImportBatch } from './card-storage';
+import { CardStorageCache } from './card-storage-cache';
 import {
     StandardCard,
     ImportData,
@@ -23,8 +24,10 @@ import {
     ExtendedStandardCard,
     CardType // Assuming CardType enum might be useful here or for keys
 } from './card-types';
-import { BUILTIN_BATCH_ID } from './builtin-card-data';
-import { CardTypeValidator } from './type-validators';
+// 移除对 builtin-card-data.ts 的依赖
+const BUILTIN_BATCH_ID = "SYSTEM_BUILTIN_CARDS";
+import { CardTypeValidator, type ValidationContext } from './type-validators';
+import { ValidationDataMerger } from './validation-utils';
 import { professionCardConverter } from './profession-card/convert';
 import { ancestryCardConverter } from './ancestry-card/convert';
 import { communityCardConverter } from './community-card/convert';
@@ -139,6 +142,17 @@ export class CustomCardManager {
         try {
             console.log('[CustomCardManager] 开始初始化系统...');
 
+            // 首先初始化存储系统，执行必要的迁移和清理
+            const storageInitResult = CustomCardStorage.initialize();
+            if (storageInitResult.initialized) {
+                console.log('[CustomCardManager] 存储系统初始化成功');
+                if (storageInitResult.migrationResult?.migrated) {
+                    console.log(`[CustomCardManager] 数据迁移成功，更新了 ${storageInitResult.migrationResult.batchesUpdated.length} 个批次`);
+                }
+            } else {
+                console.warn('[CustomCardManager] 存储系统初始化失败:', storageInitResult.errors);
+            }
+
             // 种子化内置卡牌
             await this._seedOrUpdateBuiltinCards();
             // 然后加载自定义卡牌
@@ -214,67 +228,45 @@ export class CustomCardManager {
         });
 
         try {
-            // 第一步：临时保存自定义字段定义和变体类型定义（在验证之前）
-            // 这样验证器就能访问到新的自定义字段定义和变体类型定义
+            // 第一步：准备验证上下文（不进行任何存储写入）
+            logDebug('importCards', { step: 'preparing validation context' });
+
+            // 创建验证上下文，包含当前存储的数据和导入数据的合并视图
+            let validationContext = undefined;
             if (importData.customFieldDefinitions) {
-                // 处理传统的自定义字段定义（字符串数组）
-                const filteredDefinitions = Object.fromEntries(
-                    Object.entries(importData.customFieldDefinitions)
-                        .filter(([, value]) => Array.isArray(value))
-                        .map(([key, value]) => [key, value as string[]])
+                // 导入验证工具模块
+                const { ValidationDataMerger } = await import('./validation-utils');
+
+                // 获取当前存储的数据
+                const currentCustomFields = CustomCardStorage.getAggregatedCustomFieldNames();
+                const currentVariantTypes = CustomCardStorage.getAggregatedVariantTypes();
+
+                // 创建验证上下文
+                validationContext = ValidationDataMerger.createValidationContext(
+                    batchId,
+                    importData.customFieldDefinitions ? Object.fromEntries(
+                        Object.entries(importData.customFieldDefinitions)
+                            .filter(([key, value]) => Array.isArray(value))
+                            .map(([key, value]) => [key, value as string[]])
+                    ) : undefined,
+                    importData.customFieldDefinitions?.variantTypes
                 );
 
-                if (Object.keys(filteredDefinitions).length > 0) {
-                    logDebug('importCards', {
-                        step: 'saving custom fields',
-                        batchId,
-                        filteredDefinitions
-                    });
-
-                    CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
-
-                    // 验证保存是否成功
-                    const savedFields = CustomCardStorage.getAggregatedCustomFieldNames();
-                    logDebug('importCards', {
-                        step: 'verification after custom fields save',
-                        savedFields
-                    });
-                }
-
-                // 处理变体类型定义
-                if (importData.customFieldDefinitions.variantTypes) {
-                    logDebug('importCards', {
-                        step: 'saving variant type definitions',
-                        batchId,
-                        variantTypes: importData.customFieldDefinitions.variantTypes
-                    });
-
-                    CustomCardStorage.saveVariantTypesForBatch(batchId, importData.customFieldDefinitions.variantTypes);
-
-                    // 验证保存是否成功
-                    const savedVariantTypes = CustomCardStorage.getAggregatedVariantTypes();
-                    logDebug('importCards', {
-                        step: 'verification after variant types save',
-                        savedVariantTypes: Object.keys(savedVariantTypes)
-                    });
-                }
+                logDebug('importCards', {
+                    step: 'validation context created',
+                    contextKeys: Object.keys(validationContext.customFields),
+                    variantTypeKeys: Object.keys(validationContext.variantTypes)
+                });
             }
 
-            // 第二步：验证导入数据格式
+            // 第二步：验证导入数据格式（使用验证上下文）
             logDebug('importCards', { step: 'format validation' });
-            const formatValidation = this.validateImportDataFormat(importData);
+            const formatValidation = this.validateImportDataFormat(importData, validationContext);
             if (!formatValidation.isValid) {
                 logDebug('importCards', {
                     step: 'format validation failed',
                     errors: formatValidation.errors
                 });
-                // 如果验证失败，清理临时保存的自定义字段定义和变体类型定义
-                if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
                 return {
                     success: false,
                     imported: 0,
@@ -291,13 +283,6 @@ export class CustomCardManager {
                     step: 'ID conflict detected',
                     duplicateIds: validation.duplicateIds
                 });
-                // 如果ID冲突，清理临时保存的自定义字段定义和变体类型定义
-                if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
                 return {
                     success: false,
                     imported: 0,
@@ -314,13 +299,6 @@ export class CustomCardManager {
                     step: 'variant type conflict detected',
                     conflictingTypes: variantTypeValidation.conflictingTypes
                 });
-                // 如果变体类型冲突，清理临时保存的自定义字段定义和变体类型定义
-                if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
                 return {
                     success: false,
                     imported: 0,
@@ -337,13 +315,6 @@ export class CustomCardManager {
                     step: 'conversion failed',
                     errors: convertResult.errors
                 });
-                // 如果转换失败，清理临时保存的自定义字段定义和变体类型定义
-                if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
                 return {
                     success: false,
                     imported: 0,
@@ -355,10 +326,10 @@ export class CustomCardManager {
             logDebug('importCards', { step: 'preparing batch data' });
             const batchData: BatchData = {
                 metadata: {
-                    id: batchId, // Ensure id is part of metadata, consistent with BatchBase
+                    id: batchId,
                     fileName: batchName || 'Unnamed Import',
                     importTime: new Date().toISOString(),
-                    name: importData.name, // This is optional in BatchBase, but good to have if available
+                    name: importData.name,
                     version: importData.version || 'NO VERSION PROVIDED',
                     description: importData.description,
                     author: importData.author
@@ -367,10 +338,11 @@ export class CustomCardManager {
                 customFieldDefinitions: importData.customFieldDefinitions
                     ? Object.fromEntries(
                         Object.entries(importData.customFieldDefinitions)
-                            .filter(([, value]) => Array.isArray(value))
+                            .filter(([key, value]) => Array.isArray(value) && key !== 'variantTypes')
                             .map(([key, value]) => [key, value as string[]])
                     )
-                    : undefined // Store custom field definitions in BatchData, filtering out undefined values
+                    : undefined,
+                variantTypes: importData.customFieldDefinitions?.variantTypes || undefined
             };
 
             logDebug('importCards', {
@@ -390,13 +362,6 @@ export class CustomCardManager {
                     step: 'insufficient storage space',
                     requiredSize: dataSize
                 });
-                // 如果存储空间不足，清理临时保存的自定义字段定义和变体类型定义
-                if (importData.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (importData.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
                 const storageInfo = CustomCardStorage.getFormattedStorageInfo();
                 return {
                     success: false,
@@ -405,38 +370,75 @@ export class CustomCardManager {
                 };
             }
 
-            // 第八步：存储操作（事务性）
-            logDebug('importCards', { step: 'saving batch' });
-            CustomCardStorage.saveBatch(batchId, batchData);
-            hasCreatedBatch = true;
+            // 第八步：存储操作（事务性 - 使用新的优化存储机制）
+            logDebug('importCards', { step: 'saving batch with optimized storage' });
 
-            // 注意：自定义字段定义和变体类型定义已经在第一步中保存了，这里不需要重复保存
+            try {
+                // 保存批次数据 - 这是关键的原子操作
+                CustomCardStorage.saveBatch(batchId, batchData);
+                hasCreatedBatch = true;
+
+                logDebug('importCards', {
+                    step: 'batch saved successfully',
+                    batchId,
+                    dataSize: dataSize,
+                    cardCount: convertResult.cards.length
+                });
+            } catch (storageError) {
+                logDebug('importCards', {
+                    step: 'batch save failed',
+                    error: storageError,
+                    batchId
+                });
+                throw new Error(`批次数据保存失败: ${storageError instanceof Error ? storageError.message : String(storageError)}`);
+            }
 
             // 第九步：更新索引
             logDebug('importCards', { step: 'updating index' });
             const index = CustomCardStorage.loadIndex();
-            const cardTypes = [...new Set(convertResult.cards.map(card => card.type))];
+            const cardTypes = [...new Set(convertResult.cards.map((card: any) => card.type))];
 
             // 优先使用 JSON 内的 name 字段，如果没有则使用文件名，最后使用默认名称
             const batchDisplayName = importData.name || batchName || `导入批次 ${new Date().toLocaleDateString()}`;
 
             index.batches[batchId] = {
                 id: batchId,
-                name: batchDisplayName, // This is required in ImportBatch
+                name: batchDisplayName,
                 fileName: batchName || 'imported.json',
                 importTime: batchData.metadata.importTime,
                 cardCount: convertResult.cards.length,
-                cardTypes,
+                cardTypes: cardTypes as string[],
                 size: dataSize,
-                disabled: false // 初始化为启用状态
+                disabled: false
             };
             index.totalCards += convertResult.cards.length;
             index.totalBatches++;
 
             CustomCardStorage.saveIndex(index);
 
-            // 第八步：更新内存缓存
+            // 第十步：优化内存缓存和数据一致性
+            logDebug('importCards', { step: 'optimizing caches and reloading' });
+
+            // 重新加载自定义卡牌到内存
             this.reloadCustomCards();
+
+            // 预热关键缓存以提升后续性能
+            // 这些操作会触发缓存的重新计算和存储
+            try {
+                CustomCardStorage.getAggregatedCustomFieldNames();
+                CustomCardStorage.getAggregatedVariantTypes();
+                logDebug('importCards', {
+                    step: 'cache prewarming completed',
+                    batchId
+                });
+            } catch (cacheError) {
+                // 缓存预热失败不应该影响导入成功
+                console.warn('[CustomCardManager] 缓存预热失败，但导入成功:', cacheError);
+                logDebug('importCards', {
+                    step: 'cache prewarming failed but import succeeded',
+                    error: cacheError
+                });
+            }
 
             return {
                 success: true,
@@ -446,17 +448,27 @@ export class CustomCardManager {
             };
 
         } catch (error) {
-            // 清理失败的操作
+            // 清理失败的操作 - 增强的清理逻辑
+            // 由于我们现在使用验证上下文而不是预写入，清理风险大大降低
+            // 但仍需要在批次已创建时进行清理
             if (hasCreatedBatch) {
-                CustomCardStorage.removeBatch(batchId);
-            }
-
-            // 无论是否创建了批次，都要清理临时保存的自定义字段定义和变体类型定义
-            if (importData.customFieldDefinitions) {
-                CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                if (importData.customFieldDefinitions.variantTypes) {
-                    CustomCardStorage.removeVariantTypesForBatch(batchId);
+                try {
+                    CustomCardStorage.removeBatch(batchId);
+                    logDebug('importCards', {
+                        step: 'cleanup completed',
+                        batchId,
+                        reason: 'import failed after batch creation'
+                    });
+                } catch (cleanupError) {
+                    console.error('[CustomCardManager] 清理失败的批次时发生错误:', cleanupError);
+                // 继续抛出原始错误，但记录清理失败
                 }
+            } else {
+                logDebug('importCards', {
+                    step: 'no cleanup needed',
+                    batchId,
+                    reason: 'batch was not created before failure'
+                });
             }
 
             console.error('[CustomCardManager] 导入失败:', error);
@@ -474,31 +486,53 @@ export class CustomCardManager {
     /**
      * 验证导入数据格式（支持新的类型化格式和传统格式）
      */
-    private validateImportDataFormat(importData: ImportData): { isValid: boolean; errors: string[] } {
+    private validateImportDataFormat(importData: ImportData, validationContext?: ValidationContext): { isValid: boolean; errors: string[] } {
         const errors: string[] = [];
 
-        logDebug('[DEBUG] 开始验证导入数据格式', {});
-        logDebug('[DEBUG] 导入数据:', JSON.stringify(importData, null, 2));
+        logDebug('validateImportDataFormat', {
+            hasContext: !!validationContext,
+            hasCustomFields: !!importData.customFieldDefinitions
+        });
 
         if (!importData || typeof importData !== 'object') {
             errors.push('导入数据格式无效：必须是JSON对象');
             return { isValid: false, errors };
         }
 
-        // 使用新的类型验证器，传递临时自定义字段定义
-        console.log('[DEBUG] 使用CardTypeValidator验证数据');
-        const tempFields = importData.customFieldDefinitions ? {
-            tempBatchId: 'temp_validation',
-            tempDefinitions: Object.fromEntries(
-                Object.entries(importData.customFieldDefinitions)
-                    .filter(([, value]) => Array.isArray(value))
-                    .map(([key, value]) => [key, value as string[]])
-            )
-        } : undefined;
+        // 使用验证上下文或创建临时字段定义
+        let tempFields;
+        if (validationContext) {
+            // 使用提供的验证上下文
+            tempFields = {
+                tempBatchId: validationContext.tempBatchId || 'temp_validation',
+                tempDefinitions: Object.fromEntries(
+                    Object.entries(validationContext.customFields)
+                        .filter(([, value]) => Array.isArray(value))
+                        .map(([key, value]) => [key, value as string[]])
+                ),
+                tempVariantTypes: validationContext.variantTypes
+            };
+        } else if (importData.customFieldDefinitions) {
+            // 回退到传统方式
+            tempFields = {
+                tempBatchId: 'temp_validation',
+                tempDefinitions: Object.fromEntries(
+                    Object.entries(importData.customFieldDefinitions)
+                        .filter(([, value]) => Array.isArray(value))
+                        .map(([key, value]) => [key, value as string[]])
+                )
+            };
+        }
 
-        console.log('[DEBUG] 临时字段定义传递给验证器:', tempFields);
-        const typeValidation = CardTypeValidator.validateImportData(importData, tempFields);
-        console.log('[DEBUG] 验证结果:', typeValidation);
+        logDebug('validateImportDataFormat', {
+            tempFieldsKeys: tempFields ? Object.keys(tempFields.tempDefinitions || {}) : [],
+            hasVariantTypes: !!(tempFields?.tempVariantTypes)
+        });
+
+        // 优先使用ValidationContext，否则使用tempFields
+        const typeValidation = validationContext 
+            ? CardTypeValidator.validateImportData(importData, validationContext)
+            : CardTypeValidator.validateImportData(importData, tempFields);
 
         if (!typeValidation.isValid) {
             const errorMessages = typeValidation.errors.map(err => `${err.path}: ${err.message}`);
@@ -510,7 +544,12 @@ export class CustomCardManager {
             errors.push('导入数据为空：没有找到任何卡牌数据');
         }
 
-        console.log('[DEBUG] 最终验证结果:', { isValid: errors.length === 0, errors });
+        logDebug('validateImportDataFormat', {
+            isValid: errors.length === 0,
+            errorCount: errors.length,
+            totalCards: typeValidation.totalCards
+        });
+
         return { isValid: errors.length === 0, errors };
     }
 
@@ -883,28 +922,32 @@ export class CustomCardManager {
 
                 if (Object.keys(filteredDefinitions).length > 0) {
                     console.log('[CustomCardManager] 保存内置卡牌的customFieldDefinitions:', filteredDefinitions);
-                    CustomCardStorage.saveCustomFieldsForBatch(batchId, filteredDefinitions);
+                    CustomCardStorage.updateBatchCustomFields(batchId, filteredDefinitions);
                 }
 
                 // 处理变体类型定义
                 if (jsonCardPack.customFieldDefinitions.variantTypes) {
                     console.log('[CustomCardManager] 保存内置卡牌的variantTypes:', jsonCardPack.customFieldDefinitions.variantTypes);
-                    CustomCardStorage.saveVariantTypesForBatch(batchId, jsonCardPack.customFieldDefinitions.variantTypes);
+                    CustomCardStorage.updateBatchVariantTypes(batchId, jsonCardPack.customFieldDefinitions.variantTypes);
                 }
             }
 
             // 第二步：验证导入数据格式
             console.log('[CustomCardManager] 验证内置卡牌数据格式');
-            const formatValidation = this.validateImportDataFormat(jsonCardPack);
+
+            // 为内置卡牌创建ValidationContext
+            logDebug('[DEBUG] 创建内置卡牌ValidationContext之前，jsonCardPack.customFieldDefinitions:', jsonCardPack.customFieldDefinitions);
+            const builtinValidationContext = ValidationDataMerger.createValidationContextFromImportData(
+                jsonCardPack,
+                'builtin_validation'
+            );
+            logDebug('[DEBUG] 创建的内置卡牌ValidationContext:', builtinValidationContext);
+
+            const formatValidation = this.validateImportDataFormat(jsonCardPack, builtinValidationContext);
             if (!formatValidation.isValid) {
                 console.error('[CustomCardManager] 内置卡牌格式验证失败:', formatValidation.errors);
-                // 清理临时保存的数据
-                if (jsonCardPack.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // 格式验证失败时不需要清理，因为数据已经保存在批次中
                 return {
                     success: false,
                     imported: 0,
@@ -917,13 +960,8 @@ export class CustomCardManager {
             const convertResult = await this.convertImportData(jsonCardPack);
             if (!convertResult.success) {
                 console.error('[CustomCardManager] 内置卡牌转换失败:', convertResult.errors);
-                // 清理临时保存的数据
-                if (jsonCardPack.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // 转换失败时不需要清理，因为数据已经保存在批次中
                 return {
                     success: false,
                     imported: 0,
@@ -948,26 +986,24 @@ export class CustomCardManager {
                     author: jsonCardPack.author,
                 },
                 cards: builtinCards,
+                // 处理自定义字段定义
                 customFieldDefinitions: jsonCardPack.customFieldDefinitions
                     ? Object.fromEntries(
                         Object.entries(jsonCardPack.customFieldDefinitions)
-                            .filter(([, value]) => Array.isArray(value))
+                            .filter(([key, value]) => Array.isArray(value) && key !== 'variantTypes')
                             .map(([key, value]) => [key, value as string[]])
                     )
-                    : undefined
+                    : undefined,
+                // 处理变体类型定义
+                variantTypes: jsonCardPack.customFieldDefinitions?.variantTypes || undefined
             };
 
             // 第五步：检查存储空间
             const dataSize = JSON.stringify(batchData).length * 2;
             if (!CustomCardStorage.checkStorageSpace(dataSize)) {
                 const storageInfo = CustomCardStorage.getFormattedStorageInfo();
-                // 清理临时保存的数据
-                if (jsonCardPack.customFieldDefinitions) {
-                    CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                    if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                        CustomCardStorage.removeVariantTypesForBatch(batchId);
-                    }
-                }
+                // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+                // 存储空间不足时不需要清理，因为批次本身还未创建
                 return {
                     success: false,
                     imported: 0,
@@ -975,9 +1011,15 @@ export class CustomCardManager {
                 };
             }
 
-            // 第六步：保存批次数据
-            CustomCardStorage.saveBatch(batchId, batchData);
-            hasCreatedBatch = true;
+            // 第六步：保存批次数据（使用优化的存储机制）
+            try {
+                CustomCardStorage.saveBatch(batchId, batchData);
+                hasCreatedBatch = true;
+                console.log('[CustomCardManager] 内置卡牌批次数据保存成功');
+            } catch (storageError) {
+                console.error('[CustomCardManager] 内置卡牌批次保存失败:', storageError);
+                throw new Error(`内置卡牌保存失败: ${storageError instanceof Error ? storageError.message : String(storageError)}`);
+            }
 
             // 第七步：更新索引
             const index = CustomCardStorage.loadIndex();
@@ -1001,6 +1043,15 @@ export class CustomCardManager {
 
             CustomCardStorage.saveIndex(index);
 
+            // 优化：预热缓存以提升性能
+            try {
+                CustomCardStorage.getAggregatedCustomFieldNames();
+                CustomCardStorage.getAggregatedVariantTypes();
+                console.log('[CustomCardManager] 内置卡牌导入后缓存预热完成');
+            } catch (cacheError) {
+                console.warn('[CustomCardManager] 内置卡牌缓存预热失败，但导入成功:', cacheError);
+            }
+
             return {
                 success: true,
                 imported: builtinCards.length,
@@ -1009,18 +1060,18 @@ export class CustomCardManager {
             };
 
         } catch (error) {
-            // 清理失败的操作
+            // 清理失败的操作 - 增强的清理逻辑
             if (hasCreatedBatch) {
-                CustomCardStorage.removeBatch(batchId);
-            }
-
-            // 清理临时保存的数据
-            if (jsonCardPack.customFieldDefinitions) {
-                CustomCardStorage.removeCustomFieldsForBatch(batchId);
-                if (jsonCardPack.customFieldDefinitions.variantTypes) {
-                    CustomCardStorage.removeVariantTypesForBatch(batchId);
+                try {
+                    CustomCardStorage.removeBatch(batchId);
+                    console.log('[CustomCardManager] 内置卡牌失败批次清理完成');
+                } catch (cleanupError) {
+                    console.error('[CustomCardManager] 清理失败的内置卡牌批次时发生错误:', cleanupError);
                 }
             }
+
+            // 注意：在新的存储架构中，自定义字段和变体类型定义存储在批次数据中，
+            // 导入失败时如果批次已删除，相关数据也会自动清理
 
             console.error('[CustomCardManager] 内置卡牌导入失败:', error);
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -1028,6 +1079,108 @@ export class CustomCardManager {
                 success: false,
                 imported: 0,
                 errors: [`内置卡牌导入失败: ${errorMessage}`]
+            };
+        }
+    }
+
+    /**
+     * 优化存储操作：检查和修复数据一致性
+     * 在Step 9中新增，确保所有方法与验证上下文方式协同工作
+     */
+    optimizeStorage(): {
+        performed: string[];
+        errors: string[];
+        cacheStatus: {
+            preWarmed: boolean;
+            customFieldsCached: boolean;
+            variantTypesCached: boolean;
+        };
+    } {
+        const performed: string[] = [];
+        const errors: string[] = [];
+
+        logDebug('optimizeStorage', { step: 'starting storage optimization' });
+
+        try {
+            // 1. 验证存储完整性
+            const integrityReport = CustomCardStorage.validateIntegrity();
+            if (integrityReport.orphanedKeys.length > 0 || integrityReport.missingBatches.length > 0) {
+                performed.push('integrity-check');
+                logDebug('optimizeStorage', {
+                    integrityIssues: {
+                        orphanedKeys: integrityReport.orphanedKeys.length,
+                        missingBatches: integrityReport.missingBatches.length
+                    }
+                });
+            }
+
+            // 2. 清理孤立数据
+            const cleanupReport = CustomCardStorage.cleanupOrphanedData();
+            if (cleanupReport.removedKeys.length > 0) {
+                performed.push('orphaned-data-cleanup');
+                logDebug('optimizeStorage', {
+                    cleanupStats: {
+                        removedKeys: cleanupReport.removedKeys.length,
+                        freedSpace: `${(cleanupReport.freedSpace / 1024).toFixed(2)}KB`
+                    }
+                });
+            }
+            if (cleanupReport.errors.length > 0) {
+                errors.push(...cleanupReport.errors);
+            }
+
+            // 3. 预热关键缓存
+            let customFieldsCached = false;
+            let variantTypesCached = false;
+            try {
+                CustomCardStorage.getAggregatedCustomFieldNames();
+                customFieldsCached = true;
+                performed.push('custom-fields-cache-prewarmed');
+            } catch (error) {
+                errors.push(`自定义字段缓存预热失败: ${error instanceof Error ? error.message : String(error)}`);
+            }
+
+            try {
+                CustomCardStorage.getAggregatedVariantTypes();
+                variantTypesCached = true;
+                performed.push('variant-types-cache-prewarmed');
+            } catch (error) {
+                errors.push(`变体类型缓存预热失败: ${error instanceof Error ? error.message : String(error)}`);
+            }
+
+            // 4. 确保内存数据与存储同步
+            this.reloadCustomCards();
+            performed.push('memory-sync');
+
+            logDebug('optimizeStorage', {
+                step: 'storage optimization completed',
+                performed,
+                errors: errors.length
+            });
+
+            return {
+                performed,
+                errors,
+                cacheStatus: {
+                    preWarmed: customFieldsCached && variantTypesCached,
+                    customFieldsCached,
+                    variantTypesCached
+                }
+            };
+
+        } catch (error) {
+            const errorMsg = `存储优化失败: ${error instanceof Error ? error.message : String(error)}`;
+            errors.push(errorMsg);
+            console.error('[CustomCardManager] Storage optimization failed:', error);
+
+            return {
+                performed,
+                errors,
+                cacheStatus: {
+                    preWarmed: false,
+                    customFieldsCached: false,
+                    variantTypesCached: false
+                }
             };
         }
     }
@@ -1147,16 +1300,12 @@ export class CustomCardManager {
                 step: 'batch found, proceeding with deletion'
             });
 
-            // 删除批次数据
+            // 删除批次数据（包含自定义字段和变体类型定义）
             logDebug('removeBatch', { step: 'removing batch data' });
             CustomCardStorage.removeBatch(batchId);
 
-            // 删除批次对应的自定义字段和变体类型定义
-            logDebug('removeBatch', { step: 'removing custom fields for batch' });
-            CustomCardStorage.removeCustomFieldsForBatch(batchId);
-
-            logDebug('removeBatch', { step: 'removing variant types for batch' });
-            CustomCardStorage.removeVariantTypesForBatch(batchId);
+            // 注意：在新的存储架构中，自定义字段和变体类型定义已经包含在批次数据中，
+            // 因此删除批次时会自动删除相关定义，不需要单独调用删除方法
 
             // 更新索引
             logDebug('removeBatch', { step: 'updating index' });
@@ -1165,6 +1314,10 @@ export class CustomCardManager {
             index.totalCards -= batch.cardCount;
 
             CustomCardStorage.saveIndex(index);
+
+            // 批次删除时清除缓存
+            CardStorageCache.invalidateAll();
+            logDebug('removeBatch', { message: 'cache invalidated after batch removal', batchId });
 
             // 重新加载内存中的卡牌数据
             logDebug('removeBatch', { step: 'reloading custom cards' });
@@ -1303,6 +1456,10 @@ export class CustomCardManager {
             batchInfo.disabled = !batchInfo.disabled;
             index.lastUpdate = new Date().toISOString();
             CustomCardStorage.saveIndex(index);
+
+            // 批次启用/禁用状态变更时清除缓存
+            CardStorageCache.invalidateAll();
+            console.log(`[CustomCardManager] 缓存已清除，因为批次 ${batchId} 的禁用状态已变更`);
 
             // 重新加载卡牌以反映更改
             this.reloadCustomCards();

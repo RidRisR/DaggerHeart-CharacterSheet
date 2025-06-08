@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { customCardManager } from '@/card'
+import { customCardManager, CustomCardManager } from '@/card'
+import { CustomCardStorage } from '@/card/card-storage'
 
 /**
  * 卡牌系统初始化组件
@@ -17,6 +18,15 @@ export function CardSystemInitializer() {
                 if (!isMounted) return
 
                 await customCardManager.ensureInitialized()
+                
+                // 暴露到全局 window 对象供测试使用
+                if (typeof window !== 'undefined') {
+                    (window as any).customCardManager = customCardManager;
+                    (window as any).CustomCardManager = CustomCardManager;
+                    (window as any).CustomCardStorage = CustomCardStorage;
+                    console.log('[CardSystemInitializer] 已将卡牌管理器暴露到全局对象');
+                }
+                
                 console.log('[CardSystemInitializer] 卡牌系统初始化完成')
             } catch (error) {
                 console.error('[CardSystemInitializer] 卡牌系统初始化失败:', error)

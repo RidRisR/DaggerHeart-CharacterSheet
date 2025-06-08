@@ -6,9 +6,9 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SelectableCard } from '@/components/ui/selectable-card'
 import { AlertCircle, Upload, FileText, CheckCircle, XCircle, Info, Eye, RefreshCw, Home, Power, PowerOff } from 'lucide-react'
-import { 
-  importCustomCards, 
-  getCustomCardBatches, 
+import {
+  importCustomCards,
+  getCustomCardBatches,
   getCustomCardStats,
   removeCustomCardBatch,
   clearAllCustomCards,
@@ -51,14 +51,14 @@ function ViewCardModal({ cards, isOpen, onClose }: ViewCardModalProps) {
             {gridCards.length === 0 ? (
               <div className="col-span-full text-center text-gray-500 py-8">没有找到任何卡牌</div>
             ) : (
-                gridCards.map((card, index) => (
-                  <SelectableCard
-                    key={`${card.id}-${index}`}
-                    card={card}
-                    onClick={() => { }}
-                    isSelected={false}
-                  />
-                ))
+              gridCards.map((card, index) => (
+                <SelectableCard
+                  key={`${card.id}-${index}`}
+                  card={card}
+                  onClick={() => { }}
+                  isSelected={false}
+                />
+              ))
             )}
           </div>
         </div>
@@ -130,16 +130,16 @@ export default function CardImportTestPage() {
     }
   }
 
-  // 刷新数据并重载页面
-  const refreshDataAndPage = () => {
+  // 返回主站
+  const goBackToMain = () => {
     refreshData()
-    window.location.reload()
+    window.location.href = '/'
   }
 
   // 查看卡牌
   const handleViewCards = (batchId?: string) => {
     const customCards = getCustomCards()
-    const cardsToView = batchId 
+    const cardsToView = batchId
       ? customCards.filter(card => card.batchId === batchId)
       : customCards
     setViewingCards(cardsToView)
@@ -234,7 +234,7 @@ export default function CardImportTestPage() {
       const text = await file.text()
       const importData: ImportData = JSON.parse(text)
       const result = await importCustomCards(importData, file.name)
-      
+
       setImportStatus({
         isImporting: false,
         result,
@@ -334,7 +334,7 @@ export default function CardImportTestPage() {
           <div>
             <h1 className="text-3xl font-bold mb-2">卡牌管理</h1>
             <p className="text-muted-foreground">
-              测试自定义卡牌导入功能，支持卡牌包管理和数据统计
+              自定义卡牌导入功能，支持卡牌包管理，所有的数据在您的本地保存
             </p>
           </div>
           <div className="flex gap-2">
@@ -350,15 +350,15 @@ export default function CardImportTestPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={refreshDataAndPage}
-              className="flex items-center gap-2"
+              onClick={goBackToMain}
+              className="flex items-center gap-2 bg-blue-700 hover:bg-blue-600 text-white border-green-700"
             >
-              <RefreshCw className="h-4 w-4" />
-              刷新页面
+              <Home className="h-4 w-4" />
+              返回主站
             </Button>
           </div>
         </div>
-        
+
         {/* 快速操作栏 */}
         <div className="flex flex-wrap gap-2 p-4 bg-muted/30 rounded-lg">
           <Button
@@ -408,21 +408,27 @@ export default function CardImportTestPage() {
               <CardDescription>
                 拖拽或选择 JSON 文件导入自定义卡牌数据<br />
                 <span className="text-xs text-muted-foreground mt-1 block">
-                  支持原始卡牌类型格式：profession (职业), ancestry (血统), community (社群), subclass (子职业), domain (领域)
+                  支持卡牌类型格式：profession (职业), ancestry (血统), community (社群), subclass (子职业), domain (领域)，variant（任意）
                 </span>
                 <span className="text-xs text-muted-foreground mt-1 block">
-                  请参考项目中的 sample-cards-new-format.json 文件作为格式示例
+                  <a
+                    href="https://github.com/RidRisR/DaggerHeart-CharacterSheet/blob/main/自定义卡包示例/用户指南.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    点击这里查看用户指南和示例卡牌包
+                  </a>
                 </span>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* 拖拽上传区域 */}
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragActive 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-                } ${importStatus.isImporting ? 'opacity-50 pointer-events-none' : ''}`}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+                  } ${importStatus.isImporting ? 'opacity-50 pointer-events-none' : ''}`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
@@ -526,44 +532,44 @@ export default function CardImportTestPage() {
                       ) : (
                         <XCircle className="h-4 w-4 text-red-600" />
                       )}
-                        <span className={`font-medium ${importStatus.result.success ? 'text-green-700' : 'text-red-700'
-                          }`}>
-                          {importStatus.result.success ? '导入成功' : '导入失败'}
-                        </span>
-                        {'fileName' in importStatus.result && (
-                          <span className="ml-2 text-xs text-muted-foreground">{(importStatus.result as any).fileName}</span>
-                        )}
-                      </div>
-                      {importStatus.result.success && (
-                        <p className="text-green-600 text-sm">
-                          成功导入 {importStatus.result.imported} 张卡牌
-                          {importStatus.result.batchId && ` (批次ID: ${importStatus.result.batchId})`}
-                        </p>
-                      )}
-                      {importStatus.result.errors.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-red-600 text-sm font-medium mb-1">错误信息：</p>
-                          <ul className="text-red-600 text-sm list-disc list-inside">
-                            {importStatus.result.errors.map((error, index) => (
-                              <li key={index}>{error}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {importStatus.result.duplicateIds && importStatus.result.duplicateIds.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-red-600 text-sm font-medium mb-1">重复的ID：</p>
-                          <div className="flex flex-wrap gap-1">
-                            {importStatus.result.duplicateIds.map((id, index) => (
-                              <Badge key={index} variant="destructive" className="text-xs">
-                                {id}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
+                      <span className={`font-medium ${importStatus.result.success ? 'text-green-700' : 'text-red-700'
+                        }`}>
+                        {importStatus.result.success ? '导入成功' : '导入失败'}
+                      </span>
+                      {'fileName' in importStatus.result && (
+                        <span className="ml-2 text-xs text-muted-foreground">{(importStatus.result as any).fileName}</span>
                       )}
                     </div>
-                  )
+                    {importStatus.result.success && (
+                      <p className="text-green-600 text-sm">
+                        成功导入 {importStatus.result.imported} 张卡牌
+                        {importStatus.result.batchId && ` (批次ID: ${importStatus.result.batchId})`}
+                      </p>
+                    )}
+                    {importStatus.result.errors.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-red-600 text-sm font-medium mb-1">错误信息：</p>
+                        <ul className="text-red-600 text-sm list-disc list-inside">
+                          {importStatus.result.errors.map((error, index) => (
+                            <li key={index}>{error}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {importStatus.result.duplicateIds && importStatus.result.duplicateIds.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-red-600 text-sm font-medium mb-1">重复的ID：</p>
+                        <div className="flex flex-wrap gap-1">
+                          {importStatus.result.duplicateIds.map((id, index) => (
+                            <Badge key={index} variant="destructive" className="text-xs">
+                              {id}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
               )}
 
               {/* 导入错误 */}
@@ -599,8 +605,8 @@ export default function CardImportTestPage() {
                   <span className="font-mono">{storageInfo.available}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full" 
+                  <div
+                    className="bg-blue-600 h-2 rounded-full"
                     style={{ width: `${storageInfo.usagePercent}%` }}
                   />
                 </div>
@@ -612,43 +618,8 @@ export default function CardImportTestPage() {
           </Card>
         </div>
 
-        {/* 右侧：统计和管理 */}
+        {/* 右侧：批次管理 */}
         <div className="space-y-6">
-          {/* 统计信息 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>统计信息</CardTitle>
-              <CardDescription>自定义卡牌的统计数据</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{stats.totalCards}</div>
-                  <div className="text-sm text-blue-600">总卡牌数</div>
-                </div>
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{stats.totalBatches}</div>
-                  <div className="text-sm text-green-600">卡牌包数量</div>
-                </div>
-              </div>
-
-              {/* 按类型统计 */}
-              {Object.keys(stats.cardsByType).length > 0 && (
-                <div className="mt-4">
-                  <h4 className="font-medium mb-2">按类型分布</h4>
-                  <div className="space-y-1">
-                    {Object.entries(stats.cardsByType).map(([type, count]: [string, number]) => (
-                      <div key={type} className="flex justify-between text-sm">
-                        <span className="capitalize">{type}</span>
-                        <Badge variant="secondary">{count}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           {/* 批次管理 */}
           <Card>
             <CardHeader>
@@ -723,7 +694,7 @@ export default function CardImportTestPage() {
                           <span className="font-medium">文件名:</span> {batch.fileName}
                         </div>
                         <div>
-                          <span className="font-medium">批次ID:</span> 
+                          <span className="font-medium">批次ID:</span>
                           <code className="ml-2 px-1 py-0.5 bg-muted rounded text-xs">{batch.id}</code>
                         </div>
                         {batch.cardTypes.length > 0 && (

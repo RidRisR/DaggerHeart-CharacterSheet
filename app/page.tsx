@@ -180,12 +180,6 @@ export default function Home() {
 
       {/* 固定位置的按钮 - 移到父组件 */}
       <div className="print:hidden fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        <Button onClick={openImportExportModal} className="bg-gray-800 hover:bg-gray-700">
-          存档与重置
-        </Button>
-        <Button onClick={() => handlePrintAll().catch(console.error)} className="bg-gray-800 hover:bg-gray-700"> {/* Changed Link to Button and handle async */}
-          导出PDF
-        </Button>
         <button
           onClick={toggleGuide}
           className="flex items-center gap-2 px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-md"
@@ -207,6 +201,18 @@ export default function Home() {
           </svg>
           建卡指引
         </button>
+        <Button onClick={() => handlePrintAll().catch(console.error)} className="bg-gray-800 hover:bg-gray-700"> {/* Changed Link to Button and handle async */}
+          导出PDF
+        </Button>
+        <Button onClick={openImportExportModal} className="bg-gray-800 hover:bg-gray-700">
+          存档与重置
+        </Button>
+        <Button
+          onClick={() => window.location.href = '/card-manager'}
+          className="bg-gray-800 hover:bg-gray-700"
+        >
+          卡牌管理
+        </Button>
       </div>
 
       {/* 建卡指引组件 - 移到父组件 */}

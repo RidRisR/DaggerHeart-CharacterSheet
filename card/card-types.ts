@@ -96,7 +96,7 @@ export const CARD_LEVEL_OPTIONS = {
   [CardType.Profession]: [],
   [CardType.Ancestry]: [],
   [CardType.Community]: ["特性一", "特性二"],
-  [CardType.Subclass]: ["基石", "专精", "大师"],
+  [CardType.Subclass]: ["基石", "进阶", "精通"],
   [CardType.Domain]: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
 };
 

@@ -16,16 +16,16 @@ export interface SubClassCard {
 class SubClassCardConverter {
   // 转换为标准格式
   toStandard(card: SubClassCard): StandardCard {
-    // 等级转换：基石=1，专精=2，精通=3
+    // 等级转换：基石=1，进阶=2，精通=3
     let levelNum: number
     switch (card.等级) {
       case "基石":
         levelNum = 1
         break
-      case "专精":
+      case "进阶":
         levelNum = 2
         break
-      case "大师":
+      case "精通":
         levelNum = 3
         break
       default:

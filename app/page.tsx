@@ -5,112 +5,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-three"; // Import the new page
-import CharacterSheetPageFour from "@/components/character-sheet-page-four"
-import { loadCharacterData, saveCharacterData, exportCharacterData } from "@/lib/storage"
-import { CardDisplaySection } from "@/components/card-display-section"
-import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
-import { Button } from "@/components/ui/button"
-import { ImportExportModal } from "@/components/modals/import-export-modal"
-import PrintHelper from "@/app/print-helper"
-import type { FormData } from "@/lib/form-data";
-import { createEmptyCard, StandardCard } from "@/data/card/card-types"
 import {
-  getStandardCardsByType,
+  getStandardCardsByTypeAsync,
   CardType, // Import CardType
-} from "@/data/card"
-
-// 默认表单数据
-const defaultFormData: FormData = {
-  name: "",
-  level: 1,
-  proficiency: Array(6).fill(false),
-  ancestry1: "",
-  ancestry2: "",
-  profession: "",
-  community: "",
-  agility: { checked: false, value: "" },
-  strength: { checked: false, value: "" },
-  finesse: { checked: false, value: "" },
-  instinct: { checked: false, value: "" },
-  presence: { checked: false, value: "" },
-  knowledge: { checked: false, value: "" },
-  gold: Array(20).fill(false),
-  experience: ["", "", "", "", ""],
-  experienceValues: ["", "", "", "", ""],
-  hope: Array(6).fill(false),
-  hp: Array(18).fill(false),
-  stress: Array(18).fill(false),
-  armorBoxes: Array(12).fill(false),
-  inventory: ["", "", "", "", ""],
-  characterBackground: "",
-  characterAppearance: "",
-  characterMotivation: "",
-  cards: Array(20).fill(0).map(() => createEmptyCard()),
-  checkedUpgrades: {
-    tier1: {},
-    tier2: {},
-    tier3: {},
-  },
-  minorThreshold: "",
-  majorThreshold: "",
-  armorValue: "",
-  armorBonus: "",
-  armorMax: 0,
-  hpMax: 0,
-  stressMax: 0,
-  primaryWeaponName: "",
-  primaryWeaponTrait: "",
-  primaryWeaponDamage: "",
-  primaryWeaponFeature: "",
-  secondaryWeaponName: "",
-  secondaryWeaponTrait: "",
-  secondaryWeaponDamage: "",
-  secondaryWeaponFeature: "",
-  armorName: "",
-  armorBaseScore: "",
-  armorThreshold: "",
-  armorFeature: "",
-  inventoryWeapon1Name: "",
-  inventoryWeapon1Trait: "",
-  inventoryWeapon1Damage: "",
-  inventoryWeapon1Feature: "",
-  inventoryWeapon1Primary: false,
-  inventoryWeapon1Secondary: false,
-  inventoryWeapon2Name: "",
-  inventoryWeapon2Trait: "",
-  inventoryWeapon2Damage: "",
-  inventoryWeapon2Feature: "",
-  inventoryWeapon2Primary: false,
-  inventoryWeapon2Secondary: false,
-  // 伙伴相关
-  companionImage: "",
-  companionDescription: "",
-  companionRange: "",
-  companionStress: Array(18).fill(false),
-  companionEvasion: "",
-  companionStressMax: 0,
-  evasion: "",
-  subclass: "",
-  companionName: "",
-  companionWeapon: "",
-  companionExperience: ["", "", "", "", ""],
-  companionExperienceValue: ["", "", "", "", ""],
-  // 伙伴训练
-  trainingOptions: {
-    intelligent: Array(3).fill(false),
-    radiantInDarkness: [false],
-    creatureComfort: [false],
-    armored: [false],
-    vicious: Array(3).fill(false),
-    resilient: Array(3).fill(false),
-    bonded: [false],
-    aware: Array(3).fill(false),
-  },
-}
+} from "@/card";
+import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
+import { CardDisplaySection } from "@/components/card-display-section"
+import CharacterSheetPageFour from "@/components/character-sheet-page-four"
+import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
+import { ImportExportModal } from "@/components/modals/import-export-modal"
+import { Button } from "@/components/ui/button"
+import { StandardCard } from "@/card/card-types"
+import { SheetData } from "@/lib/sheet-data"
+import { loadCharacterData, saveCharacterData, exportCharacterData } from "@/lib/storage"
+import PrintHelper from "./print-helper"
 
 export default function Home() {
   // 类型安全 useState
-  const [formData, setFormData] = useState<FormData>(defaultFormData);
+  const [formData, setFormData] = useState(defaultSheetData);
   const [isLoading, setIsLoading] = useState(true);
   const [isPrintingAll, setIsPrintingAll] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -124,20 +36,25 @@ export default function Home() {
     setImportExportModalOpen(false)
   }
 
-  const handlePrintAll = () => {
-    const getCardClass = (cardId: string | undefined, cardType: CardType): string => { // Changed cardType to CardType
+  const handlePrintAll = async () => {
+    const getCardClass = async (cardId: string | undefined, cardType: CardType): Promise<string> => { // Changed cardType to CardType and made async
       if (!cardId) return '()';
-      const cardsOfType: StandardCard[] = getStandardCardsByType(cardType); // Removed 'as CardType'
-      const card = cardsOfType.find((c: StandardCard) => c.id === cardId);
-      return card && card.class ? String(card.class) : '()';
+      try {
+        const cardsOfType: StandardCard[] = await getStandardCardsByTypeAsync(cardType); // Now async
+        const card = cardsOfType.find((c: StandardCard) => c.id === cardId);
+        return card && card.class ? String(card.class) : '()';
+      } catch (error) {
+        console.error('Error getting card class:', error);
+        return '()';
+      }
     };
 
     const name = formData.name || '()';
-    const ancestry1Class = getCardClass(formData.ancestry1, CardType.Ancestry); // Changed to CardType.Ancestry
-    const professionClass = getCardClass(formData.profession, CardType.Profession); // Changed to CardType.Profession
-    const ancestry2Class = getCardClass(formData.ancestry2, CardType.Ancestry); // Changed to CardType.Ancestry
-    const communityClass = getCardClass(formData.community, CardType.Community); // Changed to CardType.Community
-    const level = formData.level ? String(formData.level) : '()';
+    const ancestry1Class = await getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry); // Now with await
+    const professionClass = await getCardClass(formData.professionRef?.id, CardType.Profession); // Now with await
+    const ancestry2Class = await getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry); // Now with await
+    const communityClass = await getCardClass(formData.communityRef?.id, CardType.Community); // Now with await
+    const level = formData.level || '()';
 
     document.title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
     setIsPrintingAll(true);
@@ -163,11 +80,11 @@ export default function Home() {
       setIsLoading(true);
       const savedData = loadCharacterData();
       // 类型安全合并，优先以 defaultFormData 结构为准
-      const mergedData: FormData = { ...defaultFormData, ...(savedData || {}) };
+      const mergedData: SheetData = { ...defaultSheetData, ...(savedData || {}) };
       setFormData(mergedData);
     } catch (error) {
       console.error("Error loading character data:", error);
-      setFormData(defaultFormData);
+      setFormData(defaultSheetData);
     } finally {
       setIsLoading(false);
     }
@@ -263,12 +180,6 @@ export default function Home() {
 
       {/* 固定位置的按钮 - 移到父组件 */}
       <div className="print:hidden fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        <Button onClick={openImportExportModal} className="bg-gray-800 hover:bg-gray-700">
-          存档与重置
-        </Button>
-        <Button onClick={handlePrintAll} className="bg-gray-800 hover:bg-gray-700"> {/* Changed Link to Button */}
-          导出PDF
-        </Button>
         <button
           onClick={toggleGuide}
           className="flex items-center gap-2 px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-md"
@@ -290,6 +201,20 @@ export default function Home() {
           </svg>
           建卡指引
         </button>
+        <Button onClick={() => handlePrintAll().catch(console.error)} className="bg-gray-800 hover:bg-gray-700"> {/* Changed Link to Button and handle async */}
+          导出PDF
+        </Button>
+        <Button onClick={openImportExportModal} className="bg-gray-800 hover:bg-gray-700">
+          存档与重置
+        </Button>
+        <Button
+          onClick={() => {
+            window.location.href = `/DaggerHeart-CharacterSheet/card-manager`;
+          }}
+          className="bg-gray-800 hover:bg-gray-700"
+        >
+          卡牌管理
+        </Button>
       </div>
 
       {/* 建卡指引组件 - 移到父组件 */}
@@ -299,14 +224,14 @@ export default function Home() {
       <ImportExportModal
         isOpen={importExportModalOpen}
         onClose={closeImportExportModal}
-        onExport={() => exportCharacterData(formData)}
+        onExport={() => exportCharacterData(formData).catch(console.error)}
         onImport={(data) => {
-          setFormData({ ...defaultFormData, ...data })
+          setFormData({ ...defaultSheetData, ...data })
           closeImportExportModal()
         }}
         onReset={() => {
           if (confirm("确定要重置所有角色数据吗？此操作不可撤销。")) {
-            setFormData(defaultFormData)
+            setFormData(defaultSheetData)
             closeImportExportModal()
           }
         }}

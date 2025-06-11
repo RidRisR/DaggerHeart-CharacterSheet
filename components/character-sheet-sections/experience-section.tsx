@@ -1,11 +1,11 @@
 "use client"
 
 import type React from "react"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface ExperienceSectionProps {
-  formData: FormData
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+  formData: SheetData
+  setFormData: React.Dispatch<React.SetStateAction<SheetData>>
 }
 
 export function ExperienceSection({ formData, setFormData }: ExperienceSectionProps) {

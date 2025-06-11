@@ -1,24 +1,22 @@
 "use client"
 
 import type React from "react"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 import { useState, useEffect, useRef } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
 import { ArmorItem, armorItems } from "@/data/list/armor"
-import { ALL_STANDARD_CARDS } from "@/data/card"
 import {
-  getStandardCardsByType,
+  getAllStandardCardsAsync,
+  getStandardCardsByTypeAsync,
   CardType, // Import CardType
-} from "@/data/card"
+} from "@/card"
+import { useAllCards } from "@/hooks/use-cards"
 
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
 import { ArmorSelectionModal } from "@/components/modals/armor-selection-modal"
-import { ProfessionSelectionModal } from "@/components/modals/profession-selection-modal"
-import { AncestrySelectionModal } from "@/components/modals/ancestry-selection-modal"
-import { CommunitySelectionModal } from "@/components/modals/community-selection-modal"
 import { GenericCardSelectionModal } from "@/components/modals/generic-card-selection-modal"
 
 // Import sections
@@ -32,85 +30,63 @@ import { WeaponSection } from "@/components/character-sheet-sections/weapon-sect
 import { ArmorSection } from "@/components/character-sheet-sections/armor-section"
 import { InventorySection } from "@/components/character-sheet-sections/inventory-section"
 import { InventoryWeaponSection } from "@/components/character-sheet-sections/inventory-weapon-section"
-import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
-
-// 默认表单数据
-const defaultFormData: FormData = {
-  characterImage: "",
-  name: "",
-  ancestry1: "",
-  ancestry2: "",
-  community: "",
-  subclass: "",
-  level: 1,
-  profession: "",
-  agility: { checked: false, value: "" },
-  strength: { checked: false, value: "" },
-  finesse: { checked: false, value: "" },
-  instinct: { checked: false, value: "" },
-  presence: { checked: false, value: "" },
-  knowledge: { checked: false, value: "" },
-  proficiency: Array(6).fill(false),
-  evasion: "",
-  armorValue: "",
-  armorMax: 0, // 保留默认值
-  armorBoxes: Array(12).fill(false),
-  hpMax: 6, // 保留默认值
-  stressMax: 6, // 保留默认值
-  hp: Array(18).fill(false),
-  stress: Array(18).fill(false),
-  minorThreshold: "",
-  majorThreshold: "",
-  hope: Array(6).fill(false),
-  primaryWeaponName: "",
-  primaryWeaponTrait: "",
-  primaryWeaponDamage: "",
-  primaryWeaponFeature: "",
-  secondaryWeaponName: "",
-  secondaryWeaponTrait: "",
-  secondaryWeaponDamage: "",
-  secondaryWeaponFeature: "",
-  armorName: "",
-  armorBaseScore: "",
-  armorThreshold: "", // Added armorThreshold
-  armorFeature: "",
-  inventory: ["", "", "", "", ""], // 确保有5个空字符串
-  inventoryWeapon1Name: "",
-  inventoryWeapon1Trait: "",
-  inventoryWeapon1Damage: "",
-  inventoryWeapon1Feature: "",
-  inventoryWeapon1Primary: false,
-  inventoryWeapon1Secondary: false,
-  inventoryWeapon2Name: "",
-  inventoryWeapon2Trait: "",
-  inventoryWeapon2Damage: "",
-  inventoryWeapon2Feature: "",
-  inventoryWeapon2Primary: false,
-  inventoryWeapon2Secondary: false,
-  gold: Array(20).fill(false),
-  experience: ["", "", "", "", ""],
-  experienceValues: ["", "", "", "", ""],
-  cards: Array(20)
-    .fill(0)
-    .map(() => createEmptyCard()),
-}
+import { createEmptyCard, type StandardCard } from "@/card/card-types";
+import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
 
 interface CharacterSheetProps {
-  formData: FormData
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+  formData: SheetData
+  setFormData: React.Dispatch<React.SetStateAction<SheetData>>
 }
 
 export default function CharacterSheet({ formData, setFormData }: CharacterSheetProps) {
+  // 添加一个安全的表达式计算函数
+  const safeEvaluateExpression = (expression: string): number => {
+    if (!expression || typeof expression !== 'string') {
+      return 0;
+    }
+
+    // 移除空格
+    const cleanExpression = expression.replace(/\s/g, '');
+
+    // 只允许数字、+、-、*、/、()和小数点
+    if (!/^[0-9+\-*/().]+$/.test(cleanExpression)) {
+      // 如果包含非法字符，尝试解析为普通数字
+      const parsed = parseInt(cleanExpression, 10);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    try {
+      // 使用 Function 构造函数来安全地计算表达式
+      const result = new Function(`return ${cleanExpression}`)();
+
+      // 确保结果是有效数字
+      if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
+        return Math.ceil(result); // 向上取整，确保是整数
+      }
+
+      return 0;
+    } catch (error) {
+      // 如果计算失败，尝试解析为普通数字
+      const parsed = parseInt(expression, 10);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+  };
+
+  // 使用异步卡牌Hook
+  const { 
+    cards: allStandardCards, 
+    loading: cardsLoading, 
+    error: cardsError 
+  } = useAllCards({
+    enabled: true,
+    autoRefresh: false
+  });
+
   // 模态框状态
   const [weaponModalOpen, setWeaponModalOpen] = useState(false)
   const [currentWeaponField, setCurrentWeaponField] = useState("")
   const [currentWeaponSlotType, setCurrentWeaponSlotType] = useState<"primary" | "secondary" | "inventory">("primary") // Default to primary to avoid null
   const [armorModalOpen, setArmorModalOpen] = useState(false)
-  const [professionModalOpen, setProfessionModalOpen] = useState(false)
-  const [ancestryModalOpen, setAncestryModalOpen] = useState(false)
-  const [currentAncestryField, setCurrentAncestryField] = useState("")
-  const [communityModalOpen, setCommunityModalOpen] = useState(false)
-  const [importExportModalOpen, setImportExportModalOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [currentModal, setCurrentModal] = useState<{ type: "profession" | "ancestry" | "community" | "subclass"; field?: string; levelFilter?: number }>({ type: "profession" })
 
@@ -121,8 +97,15 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   // 确保 formData 和所有必要的子属性都存在
   // 适配 gold、experience、hope、hp、stress、armorBoxes 等字段为数组类型
   const safeFormData = {
-    ...defaultFormData,
+    ...defaultSheetData,
     ...(formData || {}),
+    // Ensure new Ref fields are initialized if not present in formData
+    professionRef: formData?.professionRef || { id: "", name: "" },
+    ancestry1Ref: formData?.ancestry1Ref || { id: "", name: "" },
+    ancestry2Ref: formData?.ancestry2Ref || { id: "", name: "" },
+    communityRef: formData?.communityRef || { id: "", name: "" },
+    subclassRef: formData?.subclassRef || { id: "", name: "" },
+
     gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
     experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
     hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),
@@ -150,6 +133,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   // 同步特殊卡牌与角色选择 - 不直接修改状态，而是返回新的卡牌数组
   const getUpdatedSpecialCards = () => {
+    console.log(`getUpdatedSpecialCards: Called. Profession ID: ${safeFormData.professionRef?.id}`);
     const newCards = [...safeFormData.cards];
 
     while (newCards.length < 5) {
@@ -157,48 +141,52 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     }
 
     // 同步职业卡（位置0）
-    if (safeFormData.profession) {
-      newCards[0] = getProfessionById(safeFormData.profession);
+    if (safeFormData.professionRef?.id) {
+      const professionCard = getProfessionById(safeFormData.professionRef.id);
+      newCards[0] = professionCard;
     } else {
       newCards[0] = createEmptyCard();
     }
 
     // 同步子职业卡（位置1）
-    if (safeFormData.subclass) {
-      newCards[1] = getSubclassById(safeFormData.subclass);
+    if (safeFormData.subclassRef?.id) {
+      const subclassCard = getSubclassById(safeFormData.subclassRef.id);
+      newCards[1] = subclassCard;
     } else {
       newCards[1] = createEmptyCard();
     }
 
     // 同步血统卡1（位置2）
-    if (safeFormData.ancestry1) {
-      const ancestry1 = getAncestryById(safeFormData.ancestry1);
-      newCards[2] = ancestry1;
+    if (safeFormData.ancestry1Ref?.id) {
+      const ancestry1Card = getAncestryById(safeFormData.ancestry1Ref.id);
+      newCards[2] = ancestry1Card;
     } else {
       newCards[2] = createEmptyCard();
     }
 
     // 同步血统卡2（位置3）
-    if (safeFormData.ancestry2) {
-      const ancestry2 = getAncestryById(safeFormData.ancestry2);
-      newCards[3] = ancestry2;
+    if (safeFormData.ancestry2Ref?.id) {
+      const ancestry2Card = getAncestryById(safeFormData.ancestry2Ref.id);
+      newCards[3] = ancestry2Card;
     } else {
       newCards[3] = createEmptyCard();
     }
 
     // 同步社群卡（位置4）
-    if (safeFormData.community) {
-      newCards[4] = getCommunityById(safeFormData.community);
+    if (safeFormData.communityRef?.id) {
+      const communityCard = getCommunityById(safeFormData.communityRef.id);
+      newCards[4] = communityCard;
     } else {
       newCards[4] = createEmptyCard();
     }
-
+    console.log(`getUpdatedSpecialCards: Returning newCards IDs: ${newCards.slice(0, 5).map(c => c.id)}`);
     return newCards;
   }
 
   // 同步特殊卡牌 - 仅在需要时更新状态
   const syncSpecialCardsWithCharacterChoices = () => {
     try {
+      console.log(`syncSpecialCardsWithCharacterChoices: Called. Profession ID: ${safeFormData.professionRef?.id}`);
       // 获取更新后的卡牌
       const updatedCards = getUpdatedSpecialCards()
 
@@ -225,7 +213,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           cards: updatedCards,
         }))
       } else {
-        console.log("No card updates needed")
+        // console.log("No card updates needed") // Kept commented out as per previous logic
       }
     } catch (error) {
       console.error("Error syncing special cards:", error)
@@ -234,29 +222,37 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   // 根据ID获取职业名称
   const getProfessionById = (id: string): StandardCard => {
-    const professionCards = getStandardCardsByType(CardType.Profession);
-    const profession = professionCards.find((card) => card.id === id);
+    if (cardsLoading || !allStandardCards.length) {
+      return createEmptyCard();
+    }
+    const profession = allStandardCards.find((card) => card.id === id && card.type === CardType.Profession);
     return profession ? profession : createEmptyCard();
   }
 
   // 根据ID获取血统名称
   const getAncestryById = (id: string): StandardCard => {
-    const ancestryCards = getStandardCardsByType(CardType.Ancestry);
-    const ancestry = ancestryCards.find((card) => card.id === id);
+    if (cardsLoading || !allStandardCards.length) {
+      return createEmptyCard();
+    }
+    const ancestry = allStandardCards.find((card) => card.id === id && card.type === CardType.Ancestry);
     return ancestry ? ancestry : createEmptyCard();
   }
 
   // 根据ID获取社群名称
   const getCommunityById = (id: string): StandardCard => {
-    const communityCards = getStandardCardsByType(CardType.Community);
-    const community = communityCards.find((card) => card.id === id);
+    if (cardsLoading || !allStandardCards.length) {
+      return createEmptyCard();
+    }
+    const community = allStandardCards.find((card) => card.id === id && card.type === CardType.Community);
     return community ? community : createEmptyCard();
   }
 
   // 根据ID获取子职业名称
   const getSubclassById = (id: string): StandardCard => {
-    const subclassCards = getStandardCardsByType(CardType.Subclass);
-    const subclass = subclassCards.find((card) => card.id === id);
+    if (cardsLoading || !allStandardCards.length) {
+      return createEmptyCard();
+    }
+    const subclass = allStandardCards.find((card) => card.id === id && card.type === CardType.Subclass);
     return subclass ? subclass : createEmptyCard();
   }
 
@@ -276,11 +272,10 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     });
   }
 
-  const handleAttributeValueChange = (attribute: keyof FormData, value: string) => {
-    console.log("Updating attribute:", attribute, "with value:", value);
+  const handleAttributeValueChange = (attribute: keyof SheetData, value: string) => {
+    // console.log("Updating attribute:", attribute, "with value:", value); // Removed this log
     setFormData((prev) => {
       const currentAttribute = prev[attribute]
-      console.log("Current attribute:", currentAttribute);
       if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
         return {
           ...prev,
@@ -291,7 +286,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     })
   }
 
-  const handleCheckboxChange = (field: keyof FormData, index: number) => {
+  const handleCheckboxChange = (field: keyof SheetData, index: number) => {
     setFormData((prev) => {
       let currentArray = prev[field] as boolean[] | undefined
       if (!Array.isArray(currentArray)) {
@@ -307,7 +302,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     })
   }
 
-  const handleBooleanChange = (field: keyof FormData) => {
+  const handleBooleanChange = (field: keyof SheetData) => {
     setFormData((prev) => {
       const currentAttribute = prev[field]
       if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
@@ -328,89 +323,130 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     })
   }
 
-  const handleMaxChange = (field: keyof FormData, value: string) => {
+  const handleMaxChange = (field: keyof SheetData, value: string) => {
     const numValue = Number.parseInt(value) || 0
     setFormData((prev) => ({ ...prev, [field]: numValue }))
   }
 
+  // Helper function to map modal string type to CardType enum
+  const getModalCardType = (modalType: "profession" | "ancestry" | "community" | "subclass"): Exclude<CardType, CardType.Domain> => {
+    switch (modalType) {
+      case "profession":
+        return CardType.Profession;
+      case "ancestry":
+        return CardType.Ancestry;
+      case "community":
+        return CardType.Community;
+      case "subclass":
+        return CardType.Subclass;
+      // No default needed as modalType is a constrained union type
+    }
+  };
+
   const handleProfessionChange = (value: string) => {
-    console.log("handleProfessionChange called with value:", value);
+    console.log(`handleProfessionChange called with ID: ${value}`);
 
     if (value === "none") {
-      console.log("Clearing profession selection");
-
-      // Clear profession and subclass selections
+      // console.log("Clearing profession selection"); // Removed this log
       setFormData((prev) => {
+        const updatedFormData = {
+          ...prev,
+          profession: "", 
+          professionRef: { id: "", name: "" },
+          subclass: "", 
+          subclassRef: { id: "", name: "" },
+        };
+        return updatedFormData;
+      });
+    } else {
+      if (cardsLoading || !allStandardCards.length) {
+        console.warn('handleProfessionChange: Cards not loaded yet');
+        return;
+      }
+      const professionCard = allStandardCards.find((p) => p.id === value && p.type === CardType.Profession);
+      if (professionCard) {
+        setFormData((prev) => {
           const updatedFormData = {
             ...prev,
-            profession: "",
-            subclass: "", // Clear subclass
-            cards: prev.cards.map((card, index) => (index === 1 ? createEmptyCard() : card)), // Clear subclass card on second page
+            profession: professionCard.id, 
+            professionRef: { id: professionCard.id, name: professionCard.name },
+            subclass: "", 
+            subclassRef: { id: "", name: "" },
           };
           return updatedFormData;
         });
-    } else {
-      // Select new profession
-      const profession = ALL_STANDARD_CARDS.find((p) => p.id === value);
-      if (profession) {
-          setFormData((prev) => {
-              const updatedFormData = {
-                ...prev,
-                profession: value,
-                subclass: "", // Clear subclass
-                cards: prev.cards.map((card, index) => (index === 1 ? createEmptyCard() : card)), // Clear subclass card on second page
-              };
-              return updatedFormData;
-            });
-        }
+      } else {
+        console.warn(`handleProfessionChange: Profession card not found for ID: ${value}`);
+      }
     }
-    // Mark cards for synchronization
     needsSyncRef.current = true;
   }
 
   const handleAncestryChange = (field: string, value: string) => {
+    console.log(`handleAncestryChange called for field: ${field}, ID: ${value}`);
+    const refField = field === "ancestry1" ? "ancestry1Ref" : "ancestry2Ref";
+
     if (value === "none" || !value) {
       setFormData((prev) => {
-        return {
+        const updatedFormData = {
           ...prev,
-          [field]: "",
-        }
+          [field]: "", 
+          [refField]: { id: "", name: "" },
+        };
+        return updatedFormData;
       })
     } else {
-      const ancestry = ALL_STANDARD_CARDS.find((a) => a.id === value)
-      if (ancestry) {
+      if (cardsLoading || !allStandardCards.length) {
+        console.warn('handleAncestryChange: Cards not loaded yet');
+        return;
+      }
+      const ancestryCard = allStandardCards.find((a) => a.id === value && a.type === CardType.Ancestry);
+      if (ancestryCard) {
         setFormData((prev) => {
-          return {
+          const updatedFormData = {
             ...prev,
-            [field]: value,
-          }
+            [field]: ancestryCard.id, 
+            [refField]: { id: ancestryCard.id, name: ancestryCard.name },
+          };
+          return updatedFormData;
         })
+      } else {
+        console.warn(`handleAncestryChange: Ancestry card not found for ID: ${value} in field: ${field}`);
       }
     }
-    // 标记需要同步卡牌
     needsSyncRef.current = true
   }
 
   const handleCommunityChange = (value: string) => {
+    console.log(`handleCommunityChange called with ID: ${value}`);
     if (value === "none" || !value) {
       setFormData((prev) => {
-        return {
+        const updatedFormData = {
           ...prev,
-          community: "",
-        }
+          community: "", 
+          communityRef: { id: "", name: "" },
+        };
+        return updatedFormData;
       })
     } else {
-      const community = ALL_STANDARD_CARDS.find((c) => c.id === value)
-      if (community) {
+      if (cardsLoading || !allStandardCards.length) {
+        console.warn('handleCommunityChange: Cards not loaded yet');
+        return;
+      }
+      const communityCard = allStandardCards.find((c) => c.id === value && c.type === CardType.Community);
+      if (communityCard) {
         setFormData((prev) => {
-          return {
+          const updatedFormData = {
             ...prev,
-            community: value,
-          }
+            community: communityCard.id, 
+            communityRef: { id: communityCard.id, name: communityCard.name },
+          };
+          return updatedFormData;
         })
+      } else {
+        console.warn(`handleCommunityChange: Community card not found for ID: ${value}`);
       }
     }
-    // 标记需要同步卡牌
     needsSyncRef.current = true
   }
 
@@ -563,7 +599,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }, [formData])
 
   // Generate boxes based on max values
-  const renderBoxes = (field: keyof FormData, max: number, total: number) => {
+  const renderBoxes = (field: keyof SheetData, max: number, total: number) => {
     return (
       <div className="flex gap-1 flex-wrap">
         {Array(total)
@@ -625,26 +661,36 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   }
 
   const handleSubclassChange = (value: string) => {
+    console.log(`handleSubclassChange called with ID: ${value}`);
     if (value === "none" || !value) {
       setFormData((prev) => {
-        return {
+        const updatedFormData = {
           ...prev,
-          subclass: "",
-        }
+          subclass: "", 
+          subclassRef: { id: "", name: "" },
+        };
+        return updatedFormData;
       })
     } else {
-      const subclass = ALL_STANDARD_CARDS.find((s) => s.id === value && s.type === "subclass")
-      if (subclass) {
+      if (cardsLoading || !allStandardCards.length) {
+        console.warn('handleSubclassChange: Cards not loaded yet');
+        return;
+      }
+      const subclassCard = allStandardCards.find((s) => s.id === value && (s.type === CardType.Subclass || s.type === CardType.Profession));
+      if (subclassCard) {
         setFormData((prev) => {
-          return {
+          const updatedFormData = {
             ...prev,
-            subclass: value,
-          }
+            subclass: subclassCard.id, 
+            subclassRef: { id: subclassCard.id, name: subclassCard.name },
+          };
+          return updatedFormData;
         })
+      } else {
+        console.warn(`handleSubclassChange: Subclass card not found for ID: ${value}`);
       }
     }
-    // 标记需要同步卡牌
-    needsSyncRef.current = true
+    needsSyncRef.current = true;
   }
 
   return (
@@ -713,13 +759,13 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 {/* Evasion Box */}
                 <div className="flex flex-col items-center justify-start">
                   <div className="w-24 h-24 border-2 border-gray-800 bg-gray-800 flex flex-col items-center justify-center text-white rounded-lg">
-                    <div className="text-ms font-bold">闪避</div>
+                    <div className="text-ms font-bold">闪避值</div>
                     <input
                       type="text"
                       name="evasion"
                       value={safeFormData.evasion}
                       onChange={handleInputChange}
-                      className="w-10 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
+                      className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
                     />
                   </div>
                 </div>
@@ -728,13 +774,13 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 <div className="flex flex-col">
                   <div className="flex gap-2">
                     <div className="w-24 h-24 border-2 border-gray-800 bg-gray-800 flex flex-col items-center justify-center text-white rounded-lg">
-                      <div className="text-ms font-bold">护甲</div>
+                      <div className="text-ms font-bold">护甲值</div>
                       <input
                         type="text"
                         name="armorValue"
                         value={safeFormData.armorValue}
                         onChange={handleInputChange}
-                        className="w-10 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
+                        className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
                       />
                     </div>
                     <div className="flex flex-col">
@@ -743,18 +789,21 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                       </div>
                       {/* Armor Boxes - 3 per row, 4 rows */}
                       <div className="grid grid-cols-3 gap-1">
-                        {Array(12)
-                          .fill(0)
-                          .map((_, i) => (
-                            <div
-                              key={`armor-box-${i}`}
-                              className={`w-4 h-4 border ${i < Number(safeFormData.armorValue)
-                                ? "border-gray-800 cursor-pointer"
-                                : "border-gray-400 border-dashed"
-                                } ${safeFormData.armorBoxes[i] && i < safeFormData.armorMax ? "bg-gray-800" : "bg-white"}`}
-                              onClick={() => i < safeFormData.armorMax && handleCheckboxChange("armorBoxes", i)}
-                            ></div>
-                          ))}
+                        {(() => {
+                          const calculatedArmorValue = safeEvaluateExpression(safeFormData.armorValue || "0");
+                          return Array(12)
+                            .fill(0)
+                            .map((_, i) => (
+                              <div
+                                key={`armor-box-${i}`}
+                                className={`w-4 h-4 border ${i < calculatedArmorValue
+                                  ? "border-gray-800 cursor-pointer"
+                                  : "border-gray-400 border-dashed"
+                                  } ${safeFormData.armorBoxes[i] && i < calculatedArmorValue ? "bg-gray-800" : "bg-white"}`}
+                                onClick={() => i < calculatedArmorValue && handleCheckboxChange("armorBoxes", i)}
+                              ></div>
+                            ));
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -906,82 +955,21 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         title="选择护甲"
       />
 
-      <ProfessionSelectionModal
-        isOpen={professionModalOpen}
-        onClose={closeGenericModal}
-        onSelect={(professionId) => {
-          handleProfessionChange(professionId)
-          closeGenericModal()
-        }}
-        title="选择职业"
-      />
-
-      <AncestrySelectionModal
-        isOpen={ancestryModalOpen}
-        onClose={() => setAncestryModalOpen(false)}
-        field={currentAncestryField}
-        title={currentAncestryField === "ancestry1" ? "选择血统一" : "选择血统二"}
-        onSelect={(ancestryId, field) => {
-          if (ancestryId === "none") {
-            handleAncestryChange(field, "")
-          } else {
-            handleAncestryChange(field, ancestryId)
-          }
-          setAncestryModalOpen(false)
-        }}
-      />
-
-      <CommunitySelectionModal
-        isOpen={communityModalOpen}
-        onClose={closeGenericModal}
-        onSelect={(communityId) => {
-          if (communityId === "none") {
-            handleCommunityChange("")
-          } else {
-            handleCommunityChange(communityId)
-          }
-          closeGenericModal()
-        }}
-        title="选择社群"
-      />
-
       {modalOpen && (
         <GenericCardSelectionModal
           isOpen={modalOpen}
           onClose={closeGenericModal}
           onSelect={(cardId, field) => {
-            if (cardId === "none") {
-              switch (currentModal.type) {
-                case "profession":
-                  handleProfessionChange("none")
-                  break
-                case "ancestry":
-                  handleAncestryChange(field || "ancestry1", "none")
-                  break
-                case "community":
-                  handleCommunityChange("none")
-                  break
-                case "subclass":
-                  handleSubclassChange("none")
-                  break
-              }
-            } else {
-              switch (currentModal.type) {
-                case "profession":
-                  handleProfessionChange(cardId)
-                  break
-                case "ancestry":
-                  handleAncestryChange(field || "ancestry1", cardId)
-                  break
-                case "community":
-                  handleCommunityChange(cardId)
-                  break
-                case "subclass":
-                  handleSubclassChange(cardId)
-                  break
-              }
+            console.log(`GenericModal onSelect: Type: ${currentModal.type}, ID: ${cardId}, Field: ${field}`);
+            if (currentModal.type === "profession") {
+              handleProfessionChange(cardId)
+            } else if (currentModal.type === "ancestry" && field) {
+              handleAncestryChange(field, cardId)
+            } else if (currentModal.type === "community") {
+              handleCommunityChange(cardId)
+            } else if (currentModal.type === "subclass") {
+              handleSubclassChange(cardId)
             }
-            needsSyncRef.current = true
             closeGenericModal()
           }}
           title={
@@ -993,10 +981,10 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                   ? "选择社群"
                   : "选择子职业"
           }
-          cardType={currentModal.type}
+          cardType={getModalCardType(currentModal.type)} // Use the helper function here
           field={currentModal.field}
           levelFilter={currentModal.levelFilter}
-          formData={safeFormData}
+          formData={safeFormData} // Pass safeFormData here
         />
       )}
     </>

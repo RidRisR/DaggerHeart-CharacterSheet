@@ -1,15 +1,15 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface CharacterSheetPageThreeProps {
-    formData: FormData
-    onFormDataChange: (data: FormData) => void
+    formData: SheetData
+    onFormDataChange: (data: SheetData) => void
     allCards?: any[];
 }
 
-const MAX_STRESS = (formData: FormData) => Number(formData.companionStressMax) || 3;
+const MAX_STRESS = (formData: SheetData) => Number(formData.companionStressMax) || 3;
 const TOTAL_STRESS = 6;
 
 // 通用渲染小方格（与第一页一致）
@@ -61,8 +61,8 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
     const renderCompanionExperienceSection = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 mb-3 print:grid-cols-2 print:gap-x-8 print:mb-3">
             {/* 伙伴描述区：左半区，带边框 */}
-            <div className="flex flex-col justify-end w-full p-3 border border-transparent dark:border-transparent rounded-t-md rounded-b-md bg-white dark:bg-gray-900">
-                <h3 className="font-bold text-md mb-2 text-gray-800 dark:text-gray-200">伙伴描述</h3>
+            <div className="flex flex-col justify-end w-full p-3 border border-transparent rounded-t-md rounded-b-md bg-white">
+                <h3 className="font-bold text-md mb-2 text-gray-800">伙伴描述</h3>
                 <div className="flex flex-col items-center">
                     <div className="w-36 h-36 border-2 border-gray-800 flex items-center justify-center relative overflow-hidden bg-gray-100 dark:bg-gray-800 print:w-28 print:h-28 mb-2">
                         {safeFormData.companionImage ? (
@@ -112,7 +112,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
             </div>
             {/* 伙伴经验区：右半区，带边框 */}
             <div className="flex flex-col justify-end w-full p-3 border border-transparent dark:border-transparent rounded-t-md rounded-b-md bg-white dark:bg-gray-900">
-                <h3 className="font-bold text-md mb-2 text-gray-800 dark:text-gray-200">伙伴经验</h3>
+                <h3 className="font-bold text-md mb-2 text-gray-800 dark:text-gray-200">伙伴经历</h3>
                 <div className="flex flex-col gap-2">
                     {(safeFormData.companionExperience || ["", "", "", "", ""]).map((exp, i) => (
                         <div key={`companion-exp-${i}`} className="flex items-center gap-2 mb-1">
@@ -126,7 +126,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                                     onFormDataChange({ ...formData, companionExperience: newArr })
                                 }}
                                 className="w-full border-b-2 border-gray-400 rounded-none text-base print-empty-hide bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150"
-                                placeholder="经验描述"
+                                placeholder="经历描述"
                                 style={{ minHeight: '2.5rem' }}
                             />
                             <input
@@ -263,9 +263,17 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
     const sectionBannerClass = "bg-gray-700 text-white font-bold py-1 px-3 text-center text-sm tracking-wider uppercase";
 
     return (
-        <div className="p-5 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 print-friendly-page-three ranger-companion-sheet leading-normal">
+        <>
+            {/* 固定位置的按钮 - 移除建卡指引按钮，因为已经移到父组件 */}
+            <div></div>
+
+            <div className="w-full max-w-[210mm] mx-auto my-4">
+                <div
+                    className="a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+                    style={{ width: "210mm" }}
+                >
             {/* Header Section - 黑色顶盖 */}
-            <div className="bg-gray-800 text-white p-5 flex items-center rounded-t-md mb-3">
+                    <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md mb-3">
                 <div className="flex flex-col">
                     <div className="text-[9px]">DAGGERHEART V20250520</div>
                 </div>
@@ -294,7 +302,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
             {/* 伙伴经验区块（右侧为图片+描述，无经验示例） */}
             {renderCompanionExperienceSection()}
             {/* Spellcast Roll Info */}
-            <p className="text-xs mb-4 text-gray-600 dark:text-gray-400 leading-snug">你可以进行一次施法检定来与你的伙伴建立连接并命令他们行动。当你这样做时，你可以花费希望（Hope）将一个适用的伙伴经验加入到检定中。在花费希望并成功时，如果你的下一个动作建立在其成功之上，你的动作掷骰获得优势。</p>
+            <p className="text-xs mb-4 text-gray-600 dark:text-gray-400 leading-snug">你可以进行一次施法检定来与你的伙伴建立连接并命令他们行动。当你这样做时，你可以花费希望（Hope）将一个适用的伙伴经历加入到检定中。在花费希望并成功时，如果你的下一个动作建立在其成功之上，你的动作掷骰获得优势。</p>
             {/* 新的两栏布局：左-攻击与伤害/压力，右-训练 */}
             <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-5 mb-3">
                 {/* 攻击与伤害/压力 - 左侧 */}
@@ -353,11 +361,11 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                         <div className="p-2 border border-gray-300 dark:border-gray-700 border-t-0">
                             <p className="text-xs mb-2 text-gray-600 dark:text-gray-400">每当你的角色升级时，也从下面的列表中为你的伙伴选择一个选项并标记它。</p>
                             <div className="space-y-1">
-                                {renderTrainingOption("聪慧：一项经验+1。", "intelligent", 3)}
+                                {renderTrainingOption("聪慧：一项经历获得 +1。", "intelligent", 3)}
                                 {renderTrainingOption("黑暗中的光芒：你的角色获得额外一个希望槽。", "radiantInDarkness", 1)}
                                 {renderTrainingOption("生物慰藉：每次短休一次，当你花时间在一个安静的时刻给予你的伙伴爱和关注时，你们都可以清除一点压力或获得一点希望。", "creatureComfort", 1)}
-                                {renderTrainingOption("装甲：当你的伙伴受到伤害时，你可以标记1护甲槽以代替其标记1压力点。", "armored", 1)}
-                                {renderTrainingOption("凶猛：增加你伙伴的伤害骰（d6到d8等）或范围（近战到极近等）。", "vicious", 3)}
+                                {renderTrainingOption("装甲：当你的伙伴受到伤害时，你可以自己标记一格护甲槽代替伙伴标记一点压力。", "armored", 1)}
+                                {renderTrainingOption("凶猛：增加你伙伴的伤害骰（如d6到d8）或范围（如近战到临近）一个等级。", "vicious", 3)}
                                 {renderTrainingOption("坚韧：增加一个额外的压力槽。", "resilient", 3)}
                                 {renderTrainingOption("羁绊：当你标记最后一个生命点时，你的伙伴会冲到你身边安慰你。掷出等同于他们可用压力槽数量的d6，并标记这些压力。如果掷出6，他们会让你振作起来。清除你的最后一个生命点并返回场景。", "bonded", 1)}
                                 {renderTrainingOption("警觉：伙伴的闪避+2。", "aware", 3)}
@@ -366,7 +374,9 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                     </div>
                 </div>
             </div>
-        </div>
+                </div>
+            </div>
+        </>
     );
 };
 

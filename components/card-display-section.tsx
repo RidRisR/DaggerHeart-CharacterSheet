@@ -23,11 +23,13 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { CardType, StandardCard } from "@/data/card/card-types"
+import { CardType, StandardCard } from "@/card/card-types"
 import { loadFocusedCardIds } from "@/lib/storage"
-import { ALL_STANDARD_CARDS, getCardTypeName } from "@/data/card"
+import { getCardTypeName } from "@/card"
+import { isVariantCard, getVariantRealType } from "@/card/card-types"
+import { useAllCards } from "@/hooks/use-cards"
 import ReactMarkdown from "react-markdown"
-import React, { useRef } from "react"
+import React, { useRef, useCallback } from "react"
 
 interface CardDisplaySectionProps {
   cards: Array<StandardCard>
@@ -48,6 +50,17 @@ function SortableCard({
     getBadgeVariant: (type: string) => "default" | "secondary" | "outline" | "destructive" | null | undefined
 }) {
   const cardId = `${card.type}-${card.name}-${index}`
+
+  // Enhanced card type name display for variants
+  const displayTypeName = (() => {
+    if (isVariantCard(card)) {
+      const realType = getVariantRealType(card);
+      if (realType) {
+        return getCardTypeName(realType);
+      }
+    }
+    return getCardTypeName(card.type);
+  })();
 
   // 新增：获取item1~item4
   const displayItem1 = card.cardSelectDisplay?.item1 || "";
@@ -85,7 +98,7 @@ function SortableCard({
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={getBadgeVariant(card.type)} className="text-xs">
-                {getCardTypeName(card.type as CardType) || "未知"}
+                {displayTypeName || "未知"}
               </Badge>
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4 text-gray-500" />
@@ -133,15 +146,47 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   // 触发rerender的state
   const [, forceUpdate] = useState(0)
 
+  // 使用异步Hook获取所有卡牌数据用于聚焦功能
+  const { 
+    cards: allStandardCards, 
+    loading: cardsLoading, 
+    error: cardsError 
+  } = useAllCards({
+    enabled: true,
+    autoRefresh: false
+  });
+
   // 存储当前显示的卡牌列表
   const [allCards, setAllCards] = useState(cards.filter((card) => card && card.name))
   const [professionCards, setProfessionCards] = useState<typeof cards>([])
   const [backgroundCards, setBackgroundCards] = useState<typeof cards>([])
   const [domainCards, setDomainCards] = useState<typeof cards>([])
+  const [variantCards, setVariantCards] = useState<typeof cards>([])
   const [focusedCards, setFocusedCards] = useState<typeof cards>([])
 
   // 当前选中的标签
   const [activeTab, setActiveTab] = useState("all")
+
+  // 异步加载聚焦卡牌的函数
+  const loadAndSetFocusedCards = useCallback(async () => {
+    if (cardsLoading || !allStandardCards.length) {
+      console.log('[CardDisplaySection] 等待卡牌数据加载...');
+      return;
+    }
+
+    try {
+      const focusedCardIds = loadFocusedCardIds();
+      const newFocusedCards = allStandardCards.filter(card => {
+        const cardId = card.id;
+        return cardId !== undefined && focusedCardIds.includes(cardId);
+      });
+      
+      console.log(`[CardDisplaySection] 更新聚焦卡牌，共 ${newFocusedCards.length} 张`);
+      setFocusedCards(newFocusedCards);
+    } catch (error) {
+      console.error('[CardDisplaySection] 加载聚焦卡牌失败:', error);
+    }
+  }, [allStandardCards, cardsLoading]);
 
   // 更新卡牌分类和聚焦卡牌
   useEffect(() => {
@@ -150,27 +195,27 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     setProfessionCards(validCards.filter((card) => card.type === "profession" || card.type === "subclass"))
     setBackgroundCards(validCards.filter((card) => card.type === "ancestry" || card.type === "community"))
     setDomainCards(validCards.filter((card) => card.type === "domain"))
+    setVariantCards(validCards.filter((card) => isVariantCard(card)))
 
-    const loadAndSetFocusedCards = () => {
-      const focusedCardIds = loadFocusedCardIds()
-      const newFocusedCards = ALL_STANDARD_CARDS.filter(card => {
-        const cardId = card.id;
-        return cardId !== undefined && focusedCardIds.includes(cardId);
-      });
-      setFocusedCards(newFocusedCards);
-    }
-
-    loadAndSetFocusedCards();
-
-    const handleFocusedCardsChange = () => {
+    // 只有当卡牌数据可用时才加载聚焦卡牌
+    if (!cardsLoading && allStandardCards.length > 0) {
       loadAndSetFocusedCards();
+    }
+  }, [cards, loadAndSetFocusedCards, cardsLoading, allStandardCards.length])
+
+  // 监听 focusedCardsChanged 事件
+  useEffect(() => {
+    const handleFocusedCardsChange = () => {
+      if (!cardsLoading && allStandardCards.length > 0) {
+        loadAndSetFocusedCards();
+      }
     };
 
     window.addEventListener('focusedCardsChanged', handleFocusedCardsChange);
     return () => {
       window.removeEventListener('focusedCardsChanged', handleFocusedCardsChange);
     };
-  }, [cards])
+  }, [loadAndSetFocusedCards, cardsLoading, allStandardCards.length])
 
   // 切换卡片展开状态
   const toggleCard = (cardId: string) => {
@@ -236,6 +281,13 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
           break
         case "domain":
           setDomainCards((cards) => {
+            const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
+            const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
+            return arrayMove(cards, oldIndex, newIndex)
+          })
+          break
+        case "variant":
+          setVariantCards((cards) => {
             const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
             const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
             return arrayMove(cards, oldIndex, newIndex)
@@ -314,6 +366,9 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
       case "domain":
         numCards = domainCards.length
         break
+      case "variant":
+        numCards = variantCards.length
+        break
       case "focused":
         numCards = focusedCards.length
         break
@@ -330,12 +385,13 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     <div className="border rounded-lg bg-gray-50 shadow-sm flex flex-col" style={{ height: containerHeightRef.current }}>
       <div className="p-2 flex-grow overflow-hidden">
         <Tabs defaultValue="all" className="w-full h-full flex flex-col" onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-6 mb-2">
-            <TabsTrigger value="all">全部</TabsTrigger>
-            <TabsTrigger value="profession">职业</TabsTrigger>
-            <TabsTrigger value="background">背景</TabsTrigger>
-            <TabsTrigger value="domain">领域</TabsTrigger>
-            <TabsTrigger value="focused">聚焦</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-6 mb-2">
+            <TabsTrigger value="all" className="text-s">全部</TabsTrigger>
+            <TabsTrigger value="profession" className="text-s">职业</TabsTrigger>
+            <TabsTrigger value="background" className="text-s">背景</TabsTrigger>
+            <TabsTrigger value="domain" className="text-s">领域</TabsTrigger>
+            <TabsTrigger value="variant" className="text-s">扩展</TabsTrigger>
+            <TabsTrigger value="focused" className="text-s">聚焦</TabsTrigger>
           </TabsList>
           <div className="flex-grow overflow-hidden">
             <TabsContent value="all" className="h-full m-0">
@@ -353,6 +409,9 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
             </TabsContent>
             <TabsContent value="domain" className="h-full m-0">
               {renderCardList(domainCards)}
+            </TabsContent>
+            <TabsContent value="variant" className="h-full m-0">
+              {renderCardList(variantCards)}
             </TabsContent>
             <TabsContent value="focused" className="h-full m-0">
               {renderCardList(focusedCards)}

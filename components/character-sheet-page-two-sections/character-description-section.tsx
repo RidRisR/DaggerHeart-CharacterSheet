@@ -2,10 +2,10 @@
 
 import type React from "react"
 import { Textarea } from "@/components/ui/textarea"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface CharacterDescriptionSectionProps {
-  formData: FormData
+  formData: SheetData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
 }
 

@@ -1,12 +1,12 @@
 "use client"
 import React from "react"
-import { CardType, isEmptyCard, StandardCard } from "@/data/card/card-types"
-import { getCardTypeName } from "@/data/card/card-ui-config"
+import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
+import { getCardTypeName } from "@/card/card-ui-config"
 import ReactMarkdown from "react-markdown"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface CharacterSheetPageFourProps {
-    formData: FormData
+    formData: SheetData
 }
 
 // 打印专用页面，展示所有已加入卡组的卡牌信息

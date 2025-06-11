@@ -5,10 +5,12 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 import {
   CARD_CLASS_OPTIONS_BY_TYPE,
   getLevelOptions,
-} from "@/data/card/card-ui-config"
-import { getStandardCardsByType, CardType } from "@/data/card"; // Add this import
-import { StandardCard, ALL_CARD_TYPES } from "@/data/card/card-types"
-import { createEmptyCard } from "@/data/card/card-types"
+  getVariantSubclassOptions,
+  getCardTypeName,
+} from "@/card/card-ui-config"
+import { CardType } from "@/card"; // Add this import
+import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType } from "@/card/card-types"
+import { createEmptyCard } from "@/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -20,13 +22,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce";
+import { useCardsByType } from "@/hooks/use-cards";
 
 const ITEMS_PER_PAGE = 30;
 
 interface CardSelectionModalProps {
   isOpen: boolean
   onClose: () => void
-  onSelect: (card: any) => void
+  onSelect: (card: StandardCard) => void
   selectedCardIndex: number
   // Add the lifted state and setters as props
   activeTab: string;
@@ -61,40 +64,77 @@ export function CardSelectionModal({
   const [classDropdownOpen, setClassDropdownOpen] = useState(false); // Add state for class dropdown
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false); // Add state for level dropdown
 
+  // Add category state management
+  const [expandedCategories, setExpandedCategories] = useState(new Set(['standard'])); // Default: standard expanded
+
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
-  // Update availableCardTypes to adapt to Map structure
-  const availableCardTypes = Array.from(ALL_CARD_TYPES.entries()).map(([id, name]) => ({ id, name }));
+  // Group card types by category
+  const cardTypesByCategory = useMemo(() => {
+    const standard = getCardTypesByCategory(CardCategory.Standard);
+    const extended = getCardTypesByCategory(CardCategory.Extended);
+    return { standard, extended };
+  }, []);
 
   // Effect to set a default active tab when the modal opens and no tab is active
   useEffect(() => {
-    if (isOpen && !activeTab && availableCardTypes.length > 0) {
-      setActiveTab(availableCardTypes[0].id); // Set to the first available type
+    if (isOpen && !activeTab) {
+      // Default to the first standard card type
+      const standardTypes = cardTypesByCategory.standard;
+      if (standardTypes.length > 0) {
+        setActiveTab(standardTypes[0]);
+      }
     }
-  }, [isOpen, activeTab, setActiveTab, availableCardTypes]);
+  }, [isOpen, activeTab, setActiveTab, cardTypesByCategory.standard]);
 
   const classOptions = useMemo(() => {
     if (!activeTab) return []
+    
+    // 如果是变体类型，返回该类型的子类别作为class选项
+    if (isVariantType(activeTab)) {
+      return getVariantSubclassOptions(activeTab);
+    }
+    
+    // 否则返回标准卡牌类型的class选项
     return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
   }, [activeTab]);
 
   const levelOptions = useMemo(() => {
+    // 如果是变体类型，返回该变体类型的等级选项
+    if (isVariantType(activeTab)) {
+      return getLevelOptions(activeTab);
+    }
+    
+    // 否则返回标准卡牌类型的等级选项
     return getLevelOptions(activeTab as CardType)
   }, [activeTab]);
 
-  const cardsForActiveTab = useMemo(() => {
-    if (!activeTab) return [];
-    // Use getStandardCardsByType for efficiency.
-    // Assumes activeTab is a clean type ID like "profession", "domain", etc.
-    // and card.type is also a clean type ID.
-    return getStandardCardsByType(activeTab as CardType); // Cast activeTab to CardType
-  }, [activeTab]);
+  // 使用新的Hook获取卡牌数据
+  const {
+    cards: cardsForActiveTab,
+    loading: cardsLoading,
+    error: cardsError
+  } = useCardsByType(
+    isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType), 
+    {
+      enabled: isOpen && !!activeTab
+    }
+  );
 
   const fullyFilteredCards = useMemo(() => {
-    if (!activeTab || !isOpen) {
+    if (!activeTab || !isOpen || cardsLoading || !cardsForActiveTab.length) {
       return [];
     }
     let filtered = cardsForActiveTab;
+
+    // 如果当前选中的是variant类型，需要按照真实的variant类型过滤
+    if (isVariantType(activeTab)) {
+      // 只显示匹配当前variant类型的卡牌
+      filtered = filtered.filter(card => {
+        // 对于variant卡牌，检查variantSpecial.realType是否匹配当前选中的variant类型
+        return card.variantSpecial?.realType === activeTab;
+      });
+    }
 
     if (debouncedSearchTerm) {
       const term = debouncedSearchTerm.toLowerCase();
@@ -110,7 +150,14 @@ export function CardSelectionModal({
 
     if (classOptions.length > 0) {
       if (selectedClasses.length > 0) {
-        filtered = filtered.filter((card) => card.class && selectedClasses.includes(card.class));
+        // 对于variant类型，class实际上是子类别
+        if (isVariantType(activeTab)) {
+          filtered = filtered.filter((card) => 
+            card.variantSpecial?.subCategory && selectedClasses.includes(card.variantSpecial.subCategory)
+          );
+        } else {
+          filtered = filtered.filter((card) => card.class && selectedClasses.includes(card.class));
+        }
       }
     }
 
@@ -184,6 +231,19 @@ export function CardSelectionModal({
     setSelectedLevels(prev => allLevelValues.filter(val => !prev.includes(val)));
   };
 
+  // Add category toggle function
+  const toggleCategoryExpansion = (category: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
+  };
+
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     // Reset filters when tab changes
@@ -195,6 +255,9 @@ export function CardSelectionModal({
   };
 
   const positionTitle = `选择卡牌 #${selectedCardIndex + 1}`
+
+  // 如果正在加载，显示加载状态
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -218,15 +281,57 @@ export function CardSelectionModal({
         <div className="flex-1 flex overflow-hidden">
           <div className="w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto">
             <div className="flex flex-col p-2">
-              {availableCardTypes.map((type) => (
+              {/* Standard Category */}
+              <div className="mb-2">
                 <button
-                  key={type.id}
-                  onClick={() => handleTabChange(type.id)}
-                  className={`text-left px-4 py-2 rounded ${activeTab === type.id ? "bg-gray-200" : "hover:bg-gray-100"}`}
+                  onClick={() => toggleCategoryExpansion('standard')}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded"
                 >
-                  {type.name}
+                  <span>标准卡牌</span>
+                  <span className={`transform transition-transform ${expandedCategories.has('standard') ? 'rotate-90' : ''}`}>
+                    ▶
+                  </span>
                 </button>
-              ))}
+                {expandedCategories.has('standard') && (
+                  <div className="ml-2 mt-1 space-y-1">
+                    {cardTypesByCategory.standard.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => handleTabChange(type)}
+                        className={`w-full text-left px-4 py-2 text-sm rounded ${activeTab === type ? "bg-blue-100 text-blue-700 font-medium" : "hover:bg-gray-100 text-gray-600"}`}
+                      >
+                        {ALL_CARD_TYPES.get(type) || type}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Extended Category */}
+              <div className="mb-2">
+                <button
+                  onClick={() => toggleCategoryExpansion('extended')}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded"
+                >
+                  <span>扩展卡牌</span>
+                  <span className={`transform transition-transform ${expandedCategories.has('extended') ? 'rotate-90' : ''}`}>
+                    ▶
+                  </span>
+                </button>
+                {expandedCategories.has('extended') && (
+                  <div className="ml-2 mt-1 space-y-1">
+                    {cardTypesByCategory.extended.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => handleTabChange(type)}
+                        className={`w-full text-left px-4 py-2 text-sm rounded ${activeTab === type ? "bg-blue-100 text-blue-700 font-medium" : "hover:bg-gray-100 text-gray-600"}`}
+                      >
+                        {getCardTypeName(type)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -352,7 +457,29 @@ export function CardSelectionModal({
             </div>
 
             <div id="scrollableDiv" ref={scrollableContainerRef} className="flex-1 overflow-y-auto p-4">
-              <InfiniteScroll
+              {/* 显示加载状态 */}
+              {cardsLoading && (
+                <div className="flex items-center justify-center h-32">
+                  <div className="text-center">
+                    <div className="text-lg">加载卡牌中...</div>
+                    <div className="text-sm text-gray-500">请稍候</div>
+                  </div>
+                </div>
+              )}
+
+              {/* 显示错误状态 */}
+              {cardsError && !cardsLoading && (
+                <div className="flex items-center justify-center h-32">
+                  <div className="text-center text-red-600">
+                    <div className="text-lg">加载失败</div>
+                    <div className="text-sm">{cardsError}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* 显示卡牌内容 */}
+              {!cardsLoading && !cardsError && (
+                <InfiniteScroll
                 dataLength={displayedCards.length}
                 next={fetchMoreData}
                 hasMore={hasMore}
@@ -376,6 +503,7 @@ export function CardSelectionModal({
                   ))}
                 </div>
               </InfiniteScroll>
+              )}
             </div>
           </div>
         </div>

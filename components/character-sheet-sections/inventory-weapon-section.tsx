@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface InventoryWeaponSectionProps {
-  formData: FormData
+  formData: SheetData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   openWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void
-  handleBooleanChange: (field: keyof FormData) => void
+  handleBooleanChange: (field: keyof SheetData) => void
   index: number
 }
 
@@ -79,7 +79,7 @@ export function InventoryWeaponSection({
             type="checkbox"
             id={primaryField}
             checked={!!(formData as any)[primaryField]} // Ensure value is boolean
-            onChange={() => handleBooleanChange(primaryField as keyof FormData)}
+            onChange={() => handleBooleanChange(primaryField as keyof SheetData)}
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={primaryField} className="text-[8px]">
@@ -91,7 +91,7 @@ export function InventoryWeaponSection({
             type="checkbox"
             id={secondaryField}
             checked={!!(formData as any)[secondaryField]} // Ensure value is boolean
-            onChange={() => handleBooleanChange(secondaryField as keyof FormData)}
+            onChange={() => handleBooleanChange(secondaryField as keyof SheetData)}
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={secondaryField} className="text-[8px]">

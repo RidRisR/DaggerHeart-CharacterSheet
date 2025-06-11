@@ -1,11 +1,11 @@
-import type { FormData, AttributeValue } from "@/lib/form-data"
+import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 
 "use client"
 
 interface AttributesSectionProps {
-  formData: FormData
-  handleAttributeValueChange: (attribute: keyof FormData, value: string) => void
-  handleBooleanChange: (field: keyof FormData) => void
+  formData: SheetData
+  handleAttributeValueChange: (attribute: keyof SheetData, value: string) => void
+  handleBooleanChange: (field: keyof SheetData) => void
 }
 
 export function AttributesSection({
@@ -22,8 +22,8 @@ export function AttributesSection({
       <div className="grid grid-cols-3 gap-x-2 gap-y-2">
         {[
           { name: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },
-          { name: "力量", key: "strength", skills: ["举起", "猛击", "摔倒"] },
-          { name: "灵巧", key: "finesse", skills: ["控制", "藏匿", "修理"] },
+          { name: "力量", key: "strength", skills: ["举起", "猛击", "擒抱"] },
+          { name: "灵巧", key: "finesse", skills: ["控制", "隐藏", "巧手"] },
           { name: "本能", key: "instinct", skills: ["感知", "察觉", "导航"] },
           { name: "风度", key: "presence", skills: ["魅力", "表演", "欺骗"] },
           { name: "知识", key: "knowledge", skills: ["回忆", "分析", "理解"] },
@@ -41,7 +41,7 @@ export function AttributesSection({
                   <div
                     className={`w-3 h-3 rounded-full border border-gray-800 flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-gray-800" : "bg-white"
                       }`}
-                    onClick={() => handleBooleanChange(attr.key as keyof FormData)}
+                    onClick={() => handleBooleanChange(attr.key as keyof SheetData)}
                   >
                     {isAttributeValue(attrValue) && attrValue.checked && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
                   </div>
@@ -59,8 +59,8 @@ export function AttributesSection({
                     }
                     return isAttributeValue(attrValue) ? attrValue.value : "";
                   })()}
-                  onChange={(e) => handleAttributeValueChange(attr.key as keyof FormData, e.target.value)}
-                  className="w-6 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
+                  onChange={(e) => handleAttributeValueChange(attr.key as keyof SheetData, e.target.value)}
+                  className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
                   placeholder="#"
                 />
                 <div className="text-[10px] text-center mt-0.5">{attr.skills.join(", ")}</div>

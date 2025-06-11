@@ -3,8 +3,8 @@
 import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
-import type { FormData } from "@/lib/form-data"
-import { createEmptyCard, type StandardCard } from "@/data/card/card-types"
+import type { SheetData } from "@/lib/sheet-data"
+import { createEmptyCard, type StandardCard } from "@/card/card-types"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -12,8 +12,8 @@ import { CardDeckSection } from "@/components/character-sheet-page-two-sections/
 import { UpgradeSection } from "@/components/character-sheet-page-two-sections/upgrade-section"
 
 interface CharacterSheetPageTwoProps {
-  formData: FormData
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+  formData: SheetData
+  setFormData: React.Dispatch<React.SetStateAction<SheetData>>
 }
 
 export default function CharacterSheetPageTwo({ formData, setFormData }: CharacterSheetPageTwoProps) {
@@ -24,7 +24,6 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
       ? formData.cards
       : Array(20).fill(0).map(() => createEmptyCard()),
     checkedUpgrades: formData?.checkedUpgrades || { tier1: {}, tier2: {}, tier3: {} },
-    profession: formData?.profession || "",
     gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
     experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
     hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),
@@ -113,7 +112,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
   }
 
   // 更新 getUpgradeOptions 函数以移除职业相关逻辑，并确保其与新的升级选项系统一致
-  const getUpgradeOptions = (_profession: string, tier: number) => {
+  const getUpgradeOptions = (tier: number) => {
     // 获取基础升级选项
     const baseUpgrades = [...upgradeOptionsData.baseUpgrades]
 
@@ -163,7 +162,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
             <UpgradeSection
               tier={1}
             title="T2 等级 2-4"
-            description="当你到达 2 级时：获得一项额外+2经2经历，熟练值标记+1。"
+            description="当你到达 2 级时：获得一项额外+2经历，熟练值标记+1。"
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}

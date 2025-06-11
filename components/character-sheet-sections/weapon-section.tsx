@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface WeaponSectionProps {
-  formData: FormData
+  formData: SheetData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   openWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void
   isPrimary?: boolean

@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface HitPointsSectionProps {
-  formData: FormData
+  formData: SheetData
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  handleMaxChange: (field: keyof FormData, value: string) => void
-  renderBoxes: (field: keyof FormData, max: number, total: number) => React.ReactElement
+  handleMaxChange: (field: keyof SheetData, value: string) => void
+  renderBoxes: (field: keyof SheetData, max: number, total: number) => React.ReactElement
 }
 
 export function HitPointsSection({ formData, handleInputChange, handleMaxChange, renderBoxes }: HitPointsSectionProps) {
@@ -54,12 +54,12 @@ export function HitPointsSection({ formData, handleInputChange, handleMaxChange,
               min="1"
               max="18"
               value={formData.hpMax || 6} // 默认值为6
-              onChange={(e) => handleMaxChange("hpMax" as keyof FormData, e.target.value)}
+              onChange={(e) => handleMaxChange("hpMax" as keyof SheetData, e.target.value)}
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>
         </div>
-        {renderBoxes("hp" as keyof FormData, Number(formData.hpMax || 6), 18)}
+        {renderBoxes("hp" as keyof SheetData, Number(formData.hpMax || 6), 18)}
 
         <div className="flex items-center justify-between mt-1">
           <span className="font-bold mr-2 text-xs">压力</span>
@@ -70,12 +70,12 @@ export function HitPointsSection({ formData, handleInputChange, handleMaxChange,
               min="1"
               max="12"
               value={formData.stressMax || 6} // 默认值为6
-              onChange={(e) => handleMaxChange("stressMax" as keyof FormData, e.target.value)}
+              onChange={(e) => handleMaxChange("stressMax" as keyof SheetData, e.target.value)}
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>
         </div>
-        {renderBoxes("stress" as keyof FormData, Number(formData.stressMax || 6), 18)}
+        {renderBoxes("stress" as keyof SheetData, Number(formData.stressMax || 6), 18)}
       </div>
     </div>
   )

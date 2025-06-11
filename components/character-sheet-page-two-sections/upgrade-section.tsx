@@ -1,14 +1,14 @@
 "use client"
-import type { FormData } from "@/lib/form-data"
+import type { SheetData } from "@/lib/sheet-data"
 
 interface UpgradeSectionProps {
   tier: number
   title: string
   description: string
-  formData: FormData
+  formData: SheetData
   isUpgradeChecked: (tier: string, index: number) => boolean
   handleUpgradeCheck: (tier: string, index: number) => void
-  getUpgradeOptions: (profession: string, tier: number) => any[]
+  getUpgradeOptions: (tier: number) => any[] // Removed profession from parameters
 }
 
 export function UpgradeSection({
@@ -34,7 +34,7 @@ export function UpgradeSection({
         </p>
 
         <div className="space-y-1">
-          {getUpgradeOptions(formData.profession, tier).map((option, index) => (
+          {getUpgradeOptions(tier).map((option, index) => (
             <div key={`${tierKey}-${index}`} className="flex items-start text-[10px] leading-[1.6]">
               <span className="flex flex-shrink-0 items-center justify-end mt-px" style={{ minWidth: '3.2em' }}>
                 {Array(option.boxCount).fill(null).map((_, i) => (

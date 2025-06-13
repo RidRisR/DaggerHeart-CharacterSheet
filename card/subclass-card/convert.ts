@@ -25,7 +25,13 @@ class SubClassCardConverter {
       case "进阶":
         levelNum = 2
         break
+      case "专精":
+        levelNum = 2
+        break
       case "精通":
+        levelNum = 3
+        break
+      case "大师":
         levelNum = 3
         break
       default:

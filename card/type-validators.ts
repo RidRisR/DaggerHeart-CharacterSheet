@@ -255,6 +255,12 @@ export function validateSubClassCard(card: any, index: number, tempFields?: Temp
     if (!card.名称 || typeof card.名称 !== 'string') {
         errors.push({ path: `${prefix}.名称`, message: '名称字段是必需的，且必须是字符串' });
     }
+    // 如果名称的最后两个字是“专精”，则将其转换为“进阶”，如果是“大师”，则转换为“精通”
+    if (card.名称.endsWith('专精')) {
+        card.名称 = card.名称.slice(0, -2) + '进阶'; // 转换为进阶
+    } else if (card.名称.endsWith('大师')) {
+        card.名称 = card.名称.slice(0, -2) + '精通'; // 转换为精通
+    }
 
     if (!card.描述 || typeof card.描述 !== 'string') {
         errors.push({ path: `${prefix}.描述`, message: '描述字段是必需的，且必须是字符串' });
@@ -272,6 +278,14 @@ export function validateSubClassCard(card: any, index: number, tempFields?: Temp
         errors.push({ path: `${prefix}.子职业`, message: '子职业字段是必需的，且必须是字符串' });
     }
 
+    // 如果等级为“专精”，则转换为“进阶”， 如果等级为“大师”，则转换为“精通”
+    if (typeof card.等级 !== 'string' || !SUBCLASS_LEVEL_NAMES.includes(card.等级)) {
+        if (card.等级 === '专精') {
+            card.等级 = '进阶'; // 转换为进阶
+        } else if (card.等级 === '大师') {
+            card.等级 = '精通'; // 转换为精通
+        }
+    }
     // 等级验证 - 使用 SubClassLevel 类型约束
     if (!card.等级 || !SUBCLASS_LEVEL_NAMES.includes(card.等级)) {
         errors.push({

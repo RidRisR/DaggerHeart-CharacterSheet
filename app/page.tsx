@@ -4,29 +4,48 @@ import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
-import CharacterSheetPageThree from "@/components/character-sheet-page-three"; // Import the new page
+import CharacterSheetPageThree from "@/components/character-sheet-page-three"
 import {
   getStandardCardsByTypeAsync,
-  CardType, // Import CardType
-} from "@/card";
-import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
+  CardType,
+} from "@/card"
+import { defaultSheetData } from "@/lib/default-sheet-data"
 import { CardDisplaySection } from "@/components/card-display-section"
 import CharacterSheetPageFour from "@/components/character-sheet-page-four"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { ImportExportModal } from "@/components/modals/import-export-modal"
 import { Button } from "@/components/ui/button"
 import { StandardCard } from "@/card/card-types"
-import { SheetData } from "@/lib/sheet-data"
-import { loadCharacterData, saveCharacterData, exportCharacterData } from "@/lib/storage"
+import { SheetData, CharacterMetadata } from "@/lib/sheet-data"
+import { exportCharacterData, importCharacterDataForMultiCharacter } from "@/lib/storage"
+import {
+  migrateToMultiCharacterStorage,
+  loadCharacterList,
+  loadCharacterById,
+  saveCharacterById,
+  getActiveCharacterId,
+  setActiveCharacterId,
+  createNewCharacter,
+  addCharacterToMetadataList,
+  removeCharacterFromMetadataList,
+  deleteCharacterById,
+  duplicateCharacter,
+  MAX_CHARACTERS
+} from "@/lib/multi-character-storage"
 import PrintHelper from "./print-helper"
 
 export default function Home() {
-  // 类型安全 useState
-  const [formData, setFormData] = useState(defaultSheetData);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPrintingAll, setIsPrintingAll] = useState(false);
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const [importExportModalOpen, setImportExportModalOpen] = useState(false);
+  // 多角色系统状态
+  const [formData, setFormData] = useState(defaultSheetData)
+  const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null)
+  const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isMigrationCompleted, setIsMigrationCompleted] = useState(false)
+  
+  // UI状态
+  const [isPrintingAll, setIsPrintingAll] = useState(false)
+  const [isGuideOpen, setIsGuideOpen] = useState(false)
+  const [importExportModalOpen, setImportExportModalOpen] = useState(false)
 
   const openImportExportModal = () => {
     setImportExportModalOpen(true)
@@ -36,11 +55,233 @@ export default function Home() {
     setImportExportModalOpen(false)
   }
 
+  // 数据迁移处理
+  useEffect(() => {
+    const performMigration = async () => {
+      try {
+        console.log('[App] Starting data migration check...')
+        migrateToMultiCharacterStorage()
+        setIsMigrationCompleted(true)
+        console.log('[App] Migration completed successfully')
+      } catch (error) {
+        console.error('[App] Migration failed:', error)
+        // 迁移失败时保持在加载状态，显示错误
+        return
+      }
+    }
+
+    performMigration()
+  }, [])
+
+  // 加载角色列表和活动角色
+  useEffect(() => {
+    if (!isMigrationCompleted) return
+
+    const loadInitialData = () => {
+      try {
+        console.log('[App] Loading initial character data...')
+        
+        // 加载角色列表
+        const list = loadCharacterList()
+        setCharacterList(list.characters)
+        
+        // 获取活动角色ID
+        const activeId = getActiveCharacterId()
+        
+        if (activeId && list.characters.some(char => char.id === activeId)) {
+          // 加载活动角色数据
+          const characterData = loadCharacterById(activeId)
+          if (characterData) {
+            setCurrentCharacterId(activeId)
+            setFormData(characterData)
+            console.log(`[App] Loaded active character: ${activeId}`)
+          } else {
+            console.warn(`[App] Active character data not found: ${activeId}`)
+            // 如果活动角色数据不存在，创建新角色
+            createFirstCharacter()
+          }
+        } else if (list.characters.length > 0) {
+          // 如果没有活动角色但有角色列表，选择第一个
+          const firstCharacter = list.characters[0]
+          const characterData = loadCharacterById(firstCharacter.id)
+          if (characterData) {
+            setCurrentCharacterId(firstCharacter.id)
+            setActiveCharacterId(firstCharacter.id)
+            setFormData(characterData)
+            console.log(`[App] Set first character as active: ${firstCharacter.id}`)
+          }
+        } else {
+          // 没有任何角色，创建第一个
+          createFirstCharacter()
+        }
+      } catch (error) {
+        console.error('[App] Error loading initial data:', error)
+        createFirstCharacter()
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadInitialData()
+  }, [isMigrationCompleted])
+
+  const createFirstCharacter = () => {
+    try {
+      console.log('[App] Creating first character...')
+      const newCharacterData = createNewCharacter("我的角色")
+      const metadata = addCharacterToMetadataList(newCharacterData)
+      
+      if (metadata) {
+        saveCharacterById(metadata.id, newCharacterData)
+        setActiveCharacterId(metadata.id)
+        setCurrentCharacterId(metadata.id)
+        setFormData(newCharacterData)
+        setCharacterList([metadata])
+        console.log(`[App] Created first character: ${metadata.id}`)
+      }
+    } catch (error) {
+      console.error('[App] Error creating first character:', error)
+      // 最后的退路：使用默认数据
+      setFormData(defaultSheetData)
+    }
+  }
+
+  // 自动保存当前角色数据
+  useEffect(() => {
+    if (!isLoading && !isMigrationCompleted && currentCharacterId && formData) {
+      try {
+        saveCharacterById(currentCharacterId, formData)
+        console.log(`[App] Auto-saved character: ${currentCharacterId}`)
+      } catch (error) {
+        console.error(`[App] Error auto-saving character ${currentCharacterId}:`, error)
+      }
+    }
+  }, [formData, currentCharacterId, isLoading, isMigrationCompleted])
+
+  // 切换角色
+  const switchToCharacter = (characterId: string) => {
+    try {
+      console.log(`[App] Switching to character: ${characterId}`)
+      const characterData = loadCharacterById(characterId)
+      
+      if (characterData) {
+        setCurrentCharacterId(characterId)
+        setActiveCharacterId(characterId)
+        setFormData(characterData)
+        console.log(`[App] Successfully switched to character: ${characterId}`)
+      } else {
+        console.error(`[App] Character data not found: ${characterId}`)
+        alert('角色数据加载失败')
+      }
+    } catch (error) {
+      console.error(`[App] Error switching to character ${characterId}:`, error)
+      alert('切换角色失败')
+    }
+  }
+
+  // 创建新角色
+  const createNewCharacterHandler = (name: string) => {
+    try {
+      if (characterList.length >= MAX_CHARACTERS) {
+        alert(`最多只能创建${MAX_CHARACTERS}个角色`)
+        return false
+      }
+
+      console.log(`[App] Creating new character: ${name}`)
+      const newCharacterData = createNewCharacter(name)
+      const metadata = addCharacterToMetadataList(newCharacterData)
+      
+      if (metadata) {
+        saveCharacterById(metadata.id, newCharacterData)
+        setCharacterList(prev => [...prev, metadata])
+        switchToCharacter(metadata.id)
+        console.log(`[App] Successfully created new character: ${metadata.id}`)
+        return true
+      } else {
+        console.error('[App] Failed to create character metadata')
+        alert('创建角色失败')
+        return false
+      }
+    } catch (error) {
+      console.error(`[App] Error creating new character:`, error)
+      alert('创建角色失败')
+      return false
+    }
+  }
+
+  // 删除角色
+  const deleteCharacterHandler = (characterId: string) => {
+    try {
+      if (characterList.length <= 1) {
+        alert('至少需要保留一个角色')
+        return false
+      }
+
+      if (!confirm('确定要删除这个角色吗？此操作不可撤销。')) {
+        return false
+      }
+
+      console.log(`[App] Deleting character: ${characterId}`)
+      
+      // 删除数据
+      deleteCharacterById(characterId)
+      removeCharacterFromMetadataList(characterId)
+      
+      // 更新状态
+      const updatedList = characterList.filter(char => char.id !== characterId)
+      setCharacterList(updatedList)
+      
+      // 如果删除的是当前角色，切换到第一个
+      if (currentCharacterId === characterId && updatedList.length > 0) {
+        switchToCharacter(updatedList[0].id)
+      }
+      
+      console.log(`[App] Successfully deleted character: ${characterId}`)
+      return true
+    } catch (error) {
+      console.error(`[App] Error deleting character ${characterId}:`, error)
+      alert('删除角色失败')
+      return false
+    }
+  }
+
+  // 复制角色
+  const duplicateCharacterHandler = (characterId: string, newName: string) => {
+    try {
+      if (characterList.length >= MAX_CHARACTERS) {
+        alert(`最多只能创建${MAX_CHARACTERS}个角色`)
+        return false
+      }
+
+      console.log(`[App] Duplicating character: ${characterId}`)
+      const duplicatedData = duplicateCharacter(characterId, newName)
+      
+      if (duplicatedData) {
+        const metadata = addCharacterToMetadataList(duplicatedData)
+        if (metadata) {
+          saveCharacterById(metadata.id, duplicatedData)
+          setCharacterList(prev => [...prev, metadata])
+          switchToCharacter(metadata.id)
+          console.log(`[App] Successfully duplicated character: ${metadata.id}`)
+          return true
+        }
+      }
+      
+      console.error('[App] Failed to duplicate character')
+      alert('复制角色失败')
+      return false
+    } catch (error) {
+      console.error(`[App] Error duplicating character ${characterId}:`, error)
+      alert('复制角色失败')
+      return false
+    }
+  }
+
   const handlePrintAll = async () => {
-    const getCardClass = async (cardId: string | undefined, cardType: CardType): Promise<string> => { // Changed cardType to CardType and made async
+    const getCardClass = async (cardId: string | undefined, cardType: CardType): Promise<string> => {
       if (!cardId) return '()';
       try {
-        const cardsOfType: StandardCard[] = await getStandardCardsByTypeAsync(cardType); // Now async
+        const cardsOfType: StandardCard[] = await getStandardCardsByTypeAsync(cardType);
         const card = cardsOfType.find((c: StandardCard) => c.id === cardId);
         return card && card.class ? String(card.class) : '()';
       } catch (error) {
@@ -50,10 +291,10 @@ export default function Home() {
     };
 
     const name = formData.name || '()';
-    const ancestry1Class = await getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry); // Now with await
-    const professionClass = await getCardClass(formData.professionRef?.id, CardType.Profession); // Now with await
-    const ancestry2Class = await getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry); // Now with await
-    const communityClass = await getCardClass(formData.communityRef?.id, CardType.Community); // Now with await
+    const ancestry1Class = await getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry);
+    const professionClass = await getCardClass(formData.professionRef?.id, CardType.Profession);
+    const ancestry2Class = await getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry);
+    const communityClass = await getCardClass(formData.communityRef?.id, CardType.Community);
     const level = formData.level || '()';
 
     document.title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
@@ -65,8 +306,8 @@ export default function Home() {
     if (isPrintingAll) {
       const printTimeout = setTimeout(() => {
         window.print();
-        setIsPrintingAll(false); // Automatically exit print mode after printing
-      }, 500); // Delay to allow rendering of print content
+        setIsPrintingAll(false);
+      }, 500);
 
       return () => {
         clearTimeout(printTimeout);
@@ -74,40 +315,31 @@ export default function Home() {
     }
   }, [isPrintingAll])
 
-  // 从 localStorage 加载数据
-  useEffect(() => {
-    try {
-      setIsLoading(true);
-      const savedData = loadCharacterData();
-      // 类型安全合并，优先以 defaultFormData 结构为准
-      const mergedData: SheetData = { ...defaultSheetData, ...(savedData || {}) };
-      setFormData(mergedData);
-    } catch (error) {
-      console.error("Error loading character data:", error);
-      setFormData(defaultSheetData);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [])
-
-  // 当表单数据变化时自动保存
-  useEffect(() => {
-    if (!isLoading && formData) {
-      try {
-        saveCharacterData(formData)
-      } catch (error) {
-        console.error("Error saving character data:", error)
-      }
-    }
-  }, [formData, isLoading])
-
   // 切换建卡指引显示状态
   const toggleGuide = () => {
     setIsGuideOpen(!isGuideOpen)
   }
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">加载中...</div>
+  // 处理聚焦卡牌变更
+  const handleFocusedCardsChange = (focusedCardIds: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      focused_card_ids: focusedCardIds
+    }))
+  }
+
+  if (!isMigrationCompleted || isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+        <div className="text-lg">
+          {!isMigrationCompleted ? '正在迁移数据...' : '加载中...'}
+        </div>
+        <div className="text-sm text-gray-500 mt-2">
+          {!isMigrationCompleted ? '首次运行需要迁移存储格式，请稍候' : '正在加载角色数据'}
+        </div>
+      </div>
+    )
   }
 
   if (isPrintingAll) {
@@ -154,24 +386,142 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* 左侧卡牌展示区域 - 打印时隐藏 */}
         <div className="lg:w-1/4 print:hidden">
-          <CardDisplaySection cards={formData.cards} />
+          <CardDisplaySection 
+            cards={formData.cards} 
+            focusedCardIds={formData.focused_card_ids || []} 
+          />
         </div>
 
         {/* 右侧角色卡区域 */}
         <div className="lg:w-3/4">
           <Tabs defaultValue="page1" className="w-full max-w-[210mm]">
-            <TabsList className="grid w-full max-w-[210mm] grid-cols-3"> {/* Changed grid-cols-2 to grid-cols-3 */}
-              <TabsTrigger value="page1">角色卡 - 第一页</TabsTrigger>
-              <TabsTrigger value="page2">角色卡 - 第二页</TabsTrigger>
-              <TabsTrigger value="page3">角色卡 - 第三页</TabsTrigger> {/* Added trigger for page 3 */}
+            <TabsList className="grid w-full max-w-[210mm] grid-cols-4">
+              {/* 角色选择器作为第一个Tab */}
+              <TabsTrigger value="characters" className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+                角色管理
+              </TabsTrigger>
+              <TabsTrigger value="page1">第一页</TabsTrigger>
+              <TabsTrigger value="page2">第二页</TabsTrigger>
+              <TabsTrigger value="page3">第三页</TabsTrigger>
             </TabsList>
+            
+            {/* 角色管理标签页 */}
+            <TabsContent value="characters" className="mt-4">
+              <div className="bg-white p-6 rounded-lg border">
+                <h2 className="text-xl font-semibold mb-4">角色管理</h2>
+                
+                {/* 当前角色信息 */}
+                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                  <h3 className="font-medium text-blue-900 mb-2">当前角色</h3>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-semibold text-blue-800">
+                      {formData.name || "未命名角色"}
+                    </span>
+                    <span className="text-sm text-blue-600">
+                      {characterList.find(c => c.id === currentCharacterId)?.lastModified 
+                        ? new Date(characterList.find(c => c.id === currentCharacterId)!.lastModified).toLocaleString()
+                        : ''}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 角色列表 */}
+                <div className="mb-6">
+                  <h3 className="font-medium mb-3">所有角色 ({characterList.length}/{MAX_CHARACTERS})</h3>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {characterList.map((character) => (
+                      <div
+                        key={character.id}
+                        className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                          currentCharacterId === character.id
+                            ? 'bg-blue-100 border-blue-300'
+                            : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <div className="font-medium">{character.name}</div>
+                          <div className="text-sm text-gray-500">
+                            创建：{new Date(character.createdAt).toLocaleDateString()}
+                            {character.lastModified && (
+                              <span className="ml-2">
+                                修改：{new Date(character.lastModified).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          {currentCharacterId !== character.id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => switchToCharacter(character.id)}
+                            >
+                              切换
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newName = prompt('请输入复制角色的名称:', `${character.name} (副本)`)
+                              if (newName) {
+                                duplicateCharacterHandler(character.id, newName)
+                              }
+                            }}
+                            disabled={characterList.length >= MAX_CHARACTERS}
+                          >
+                            复制
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => deleteCharacterHandler(character.id)}
+                            disabled={characterList.length <= 1}
+                          >
+                            删除
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 新建角色 */}
+                <div className="border-t pt-4">
+                  <Button
+                    onClick={() => {
+                      const name = prompt('请输入新角色的名称:', '新角色')
+                      if (name) {
+                        createNewCharacterHandler(name)
+                      }
+                    }}
+                    disabled={characterList.length >= MAX_CHARACTERS}
+                    className="w-full"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    新建角色 ({characterList.length}/{MAX_CHARACTERS})
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+            
             <TabsContent value="page1">
               <CharacterSheet formData={formData} setFormData={setFormData} />
             </TabsContent>
             <TabsContent value="page2">
-              <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
+              <CharacterSheetPageTwo 
+                formData={formData} 
+                setFormData={setFormData}
+                onFocusedCardsChange={handleFocusedCardsChange}
+              />
             </TabsContent>
-            <TabsContent value="page3"> {/* Added content for page 3 */}
+            <TabsContent value="page3">
               <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
             </TabsContent>
           </Tabs>
@@ -201,7 +551,7 @@ export default function Home() {
           </svg>
           建卡指引
         </button>
-        <Button onClick={() => handlePrintAll().catch(console.error)} className="bg-gray-800 hover:bg-gray-700"> {/* Changed Link to Button and handle async */}
+        <Button onClick={() => handlePrintAll().catch(console.error)} className="bg-gray-800 hover:bg-gray-700">
           导出PDF
         </Button>
         <Button onClick={openImportExportModal} className="bg-gray-800 hover:bg-gray-700">
@@ -226,11 +576,13 @@ export default function Home() {
         onClose={closeImportExportModal}
         onExport={() => exportCharacterData(formData).catch(console.error)}
         onImport={(data) => {
-          setFormData({ ...defaultSheetData, ...data })
+          // 导入数据到当前角色
+          const mergedData = { ...defaultSheetData, ...data, focused_card_ids: data.focused_card_ids || [] }
+          setFormData(mergedData)
           closeImportExportModal()
         }}
         onReset={() => {
-          if (confirm("确定要重置所有角色数据吗？此操作不可撤销。")) {
+          if (confirm("确定要重置当前角色数据吗？此操作不可撤销。")) {
             setFormData(defaultSheetData)
             closeImportExportModal()
           }

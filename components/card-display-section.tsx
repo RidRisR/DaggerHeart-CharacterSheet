@@ -24,7 +24,6 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { CardType, StandardCard } from "@/card/card-types"
-import { loadFocusedCardIds } from "@/lib/storage"
 import { getCardTypeName } from "@/card"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { useAllCards } from "@/hooks/use-cards"
@@ -33,6 +32,7 @@ import React, { useRef, useCallback } from "react"
 
 interface CardDisplaySectionProps {
   cards: Array<StandardCard>
+  focusedCardIds?: string[] // 新增：聚焦卡牌ID列表
 }
 
 // 可排序的卡牌组件
@@ -139,7 +139,7 @@ function SortableCard({
 }
 
 // 状态提升：用useRef持久化containerHeight和expandedCards
-export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
+export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySectionProps) {
   // 用useRef持久化高度和展开状态
   const containerHeightRef = useRef<number>(400)
   const expandedCardsRef = useRef<Record<string, boolean>>({})
@@ -167,7 +167,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   // 当前选中的标签
   const [activeTab, setActiveTab] = useState("all")
 
-  // 异步加载聚焦卡牌的函数
+  // 异步加载聚焦卡牌的函数 (从props读取，不再从localStorage)
   const loadAndSetFocusedCards = useCallback(async () => {
     if (cardsLoading || !allStandardCards.length) {
       console.log('[CardDisplaySection] 等待卡牌数据加载...');
@@ -175,7 +175,6 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     }
 
     try {
-      const focusedCardIds = loadFocusedCardIds();
       const newFocusedCards = allStandardCards.filter(card => {
         const cardId = card.id;
         return cardId !== undefined && focusedCardIds.includes(cardId);
@@ -186,7 +185,7 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     } catch (error) {
       console.error('[CardDisplaySection] 加载聚焦卡牌失败:', error);
     }
-  }, [allStandardCards, cardsLoading]);
+  }, [allStandardCards, cardsLoading, focusedCardIds]);
 
   // 更新卡牌分类和聚焦卡牌
   useEffect(() => {

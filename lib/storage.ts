@@ -173,3 +173,52 @@ export function generatePrintableName(formData: SheetData): string {
 
   return `DH_${characterName}_${professionName}_${dateStr}.pdf`
 }
+
+// ===== 多角色系统导入导出兼容函数 =====
+// 这些函数与原有函数保持相同的API，但用于多角色系统
+
+export function exportCharacterDataForMultiCharacter(data: SheetData): void {
+  const jsonString = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonString], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${data.name || "character"}_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  URL.revokeObjectURL(url);
+}
+
+export function importCharacterDataForMultiCharacter(file: File): Promise<SheetData> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const data = JSON.parse(content);
+        
+        // 基本验证
+        if (!data || typeof data !== 'object') {
+          throw new Error('无效的角色数据格式');
+        }
+        
+        // 确保导入的数据有focused_card_ids字段（向后兼容）
+        if (!data.focused_card_ids) {
+          data.focused_card_ids = [];
+        }
+        
+        resolve(data);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '文件解析失败';
+        reject(new Error(`导入失败：${errorMessage}`));
+      }
+    };
+    
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsText(file);
+  });
+}

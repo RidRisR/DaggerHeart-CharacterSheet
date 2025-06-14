@@ -6,7 +6,6 @@ import { getCardTypeName, convertToStandardCard } from "@/card"
 import { CardType, createEmptyCard, StandardCard } from "@/card/card-types"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
-import { saveFocusedCardIds, loadFocusedCardIds } from "@/lib/storage" // Import storage functions
 import { SelectableCard } from "@/components/ui/selectable-card"
 import type { SheetData } from "@/lib/sheet-data"
 import type { CSSProperties, MouseEvent } from "react";
@@ -14,6 +13,7 @@ import type { CSSProperties, MouseEvent } from "react";
 interface CardDeckSectionProps {
   formData: SheetData
   onCardChange: (index: number, card: StandardCard) => void
+  onFocusedCardsChange: (focusedCardIds: string[]) => void // 新增：聚焦卡牌变更回调
   cardModalActiveTab: string;
   setCardModalActiveTab: React.Dispatch<React.SetStateAction<string>>;
   cardModalSearchTerm: string;
@@ -161,6 +161,7 @@ const MemoizedCard = memo(Card);
 export function CardDeckSection({
   formData,
   onCardChange,
+  onFocusedCardsChange, // 新增参数
   cardModalActiveTab,
   setCardModalActiveTab,
   cardModalSearchTerm,
@@ -182,24 +183,24 @@ export function CardDeckSection({
     formData?.cards ||
     Array(20).fill(createEmptyCard())
 
-  // Initialize selected cards from localStorage or default to first four
+  // Initialize selected cards from formData.focused_card_ids (多角色系统)
   useEffect(() => {
-    const loadedFocusedCardIds = loadFocusedCardIds()
+    const focusedCardIds = formData.focused_card_ids || [];
     const initialSelectedIndices = cards.map((card: StandardCard, index: number) => {
       // Ensure card and card.id are valid before using them
-      return card && card.id && loadedFocusedCardIds.includes(card.id) ? index : -1
+      return card && card.id && focusedCardIds.includes(card.id) ? index : -1
     }).filter((index: number) => index !== -1)
 
-    if (initialSelectedIndices.length > 0) {
-      setSelectedCards(initialSelectedIndices)
-    }
-  }, [cards]) // Rerun when cards data changes
+    setSelectedCards(initialSelectedIndices)
+  }, [cards, formData.focused_card_ids]) // 依赖于cards和focused_card_ids
 
-  // Save selected card IDs to localStorage whenever selectedCards changes
+  // 当选中的卡牌变化时，通知父组件更新 formData.focused_card_ids
   useEffect(() => {
     const idsToSave = selectedCards.map((index: number) => cards[index]?.id).filter(id => id != null) as string[]
-    saveFocusedCardIds(idsToSave)
-  }, [selectedCards, cards])
+    if (onFocusedCardsChange) {
+      onFocusedCardsChange(idsToSave)
+    }
+  }, [selectedCards, cards, onFocusedCardsChange])
 
   // 监听Alt键
   useEffect(() => {

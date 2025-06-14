@@ -108,4 +108,7 @@ export const defaultSheetData: SheetData = {
         bonded: [false],
         aware: Array(3).fill(false),
     },
+
+    // 多角色系统字段
+    focused_card_ids: [], // 聚焦卡牌ID，从全局迁移到角色独立
 };

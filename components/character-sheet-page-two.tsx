@@ -14,9 +14,10 @@ import { UpgradeSection } from "@/components/character-sheet-page-two-sections/u
 interface CharacterSheetPageTwoProps {
   formData: SheetData
   setFormData: React.Dispatch<React.SetStateAction<SheetData>>
+  onFocusedCardsChange?: (focusedCardIds: string[]) => void
 }
 
-export default function CharacterSheetPageTwo({ formData, setFormData }: CharacterSheetPageTwoProps) {
+export default function CharacterSheetPageTwo({ formData, setFormData, onFocusedCardsChange }: CharacterSheetPageTwoProps) {
   // 确保 formData 存在并有默认值
   const safeFormData = {
     ...formData,
@@ -77,6 +78,17 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
     setTimeout(() => {
       isUpdatingRef.current = false
     }, 0)
+  }
+
+  // 处理聚焦卡牌变更 (多角色系统)
+  const handleFocusedCardsChange = (focusedCardIds: string[]) => {
+    setFormData((prev) => ({ 
+      ...prev, 
+      focused_card_ids: focusedCardIds 
+    }))
+    
+    // 通知父组件
+    onFocusedCardsChange?.(focusedCardIds)
   }
 
   // Update form data when input changes
@@ -146,6 +158,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
         <CardDeckSection
           formData={safeFormData}
           onCardChange={handleCardChange}
+          onFocusedCardsChange={handleFocusedCardsChange}
           cardModalActiveTab={cardModalActiveTab}
           setCardModalActiveTab={setCardModalActiveTab}
           cardModalSearchTerm={cardModalSearchTerm}

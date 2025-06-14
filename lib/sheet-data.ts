@@ -2,6 +2,41 @@
 
 import { StandardCard } from "@/card/card-types"
 
+// ===== 多角色系统数据结构 =====
+export interface CharacterMetadata {
+  id: string          // 唯一ID
+  name: string        // 角色名（从SheetData.name同步）
+  customName: string  // 用户给角色卡的命名
+  lastModified: string // ISO 日期字符串
+  createdAt: string   // ISO 日期字符串
+  order: number       // 用于排序
+}
+
+export interface CharacterList {
+  characters: CharacterMetadata[]  // 最多20个
+  activeCharacterId: string | null // 当前活动角色ID
+  lastUpdated: string             // ISO 日期字符串
+}
+
+// ===== 原有数据结构 =====
+
+// ===== 多角色系统数据结构 =====
+export interface CharacterMetadata {
+  id: string          // 唯一ID
+  name: string        // 角色名（从SheetData.name同步）
+  customName: string  // 用户给角色卡的命名
+  lastModified: string // ISO 日期字符串
+  createdAt: string   // ISO 日期字符串
+  order: number       // 用于排序
+}
+
+export interface CharacterList {
+  characters: CharacterMetadata[]  // 最多20个
+  activeCharacterId: string | null // 当前活动角色ID
+  lastUpdated: string             // ISO 日期字符串
+}
+
+// ===== 原有数据结构 =====
 export interface SheetCardReference {
   id: string
   name: string
@@ -113,6 +148,9 @@ export interface SheetData {
     bonded: boolean[]
     aware: boolean[]
   }
+  // ===== 多角色系统新增字段 =====
+  focused_card_ids?: string[] // 每个角色独立存储其聚焦卡牌ID，向后兼容
+  
   // ===== 临时索引签名，兼容动态key访问，后续逐步收敛类型安全 =====
   // [key: string]: any // 已废弃，彻底类型安全后移除
 }

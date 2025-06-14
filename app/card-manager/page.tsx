@@ -301,7 +301,7 @@ export default function CardImportTestPage() {
 
   // 清空所有localStorage数据
   const handleClearAllLocalStorage = async () => {
-    if (confirm('确定要清空所有本地存储数据吗？这将删除所有自定义卡牌、内置卡牌缓存和其他本地数据。此操作不可恢复！')) {
+    if (confirm('⚠️ 危险操作确认 ⚠️\n\n确定要清空所有本地存储数据吗？\n\n这将删除：\n• 所有自定义卡牌\n• 内置卡牌缓存\n• 所有角色数据和角色卡\n• 其他所有本地数据\n\n此操作不可恢复！请确保您已备份重要数据。')) {
       try {
         // 清空所有localStorage数据
         localStorage.clear()

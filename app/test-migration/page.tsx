@@ -34,7 +34,8 @@ export default function MigrationTestPage() {
         clearResults()
 
         try {
-            log('开始多角色存储系统迁移测试')
+            log('开始数据迁移场景测试（会清空现有数据！）')
+            log('⚠️  警告：此测试会删除当前所有角色数据，仅用于测试迁移逻辑')
 
             // 1. 安全清理：只清理角色系统相关数据
             safeCleanupForTesting()
@@ -116,6 +117,64 @@ export default function MigrationTestPage() {
 
         } catch (error) {
             log(`测试失败：${error instanceof Error ? error.message : '未知错误'}`, 'error')
+        } finally {
+            setIsRunning(false)
+        }
+    }
+
+    const testMigrationProtection = async () => {
+        setIsRunning(true)
+        clearResults()
+
+        try {
+            log('开始迁移保护机制测试')
+
+            // 检查当前是否有角色数据
+            const currentList = loadCharacterList()
+            if (currentList.characters.length === 0) {
+                log('⚠️  没有现有角色数据，无法测试保护机制')
+                log('请先创建一些角色，然后再测试此功能')
+                return
+            }
+
+            log(`当前有 ${currentList.characters.length} 个角色`)
+            const beforeCharacters = currentList.characters.map(c => ({ id: c.id, name: c.name }))
+            log('迁移前角色列表：')
+            beforeCharacters.forEach(char => log(`  - ${char.name} (${char.id})`))
+
+            // 尝试执行迁移（应该被跳过）
+            log('尝试执行迁移...')
+            migrateToMultiCharacterStorage()
+
+            // 验证数据没有被删除
+            const afterList = loadCharacterList()
+            const afterCharacters = afterList.characters.map(c => ({ id: c.id, name: c.name }))
+
+            log(`迁移后有 ${afterList.characters.length} 个角色`)
+            log('迁移后角色列表：')
+            afterCharacters.forEach(char => log(`  - ${char.name} (${char.id})`))
+
+            // 验证角色数量没有变化
+            if (beforeCharacters.length !== afterCharacters.length) {
+                log(`❌ 角色数量发生变化！之前：${beforeCharacters.length}，之后：${afterCharacters.length}`, 'error')
+                return
+            }
+
+            // 验证每个角色都还存在
+            const missingCharacters = beforeCharacters.filter(
+                before => !afterCharacters.some(after => after.id === before.id)
+            )
+
+            if (missingCharacters.length > 0) {
+                log(`❌ 发现丢失的角色：`, 'error')
+                missingCharacters.forEach(char => log(`  - ${char.name} (${char.id})`))
+                return
+            }
+
+            log('✅ 迁移保护机制正常工作：现有数据未被删除', 'success')
+
+        } catch (error) {
+            log(`迁移保护测试失败：${error instanceof Error ? error.message : '未知错误'}`, 'error')
         } finally {
             setIsRunning(false)
         }
@@ -208,13 +267,31 @@ export default function MigrationTestPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    {/* 测试说明 */}
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <h3 className="font-semibold text-blue-900 mb-2">测试说明</h3>
+                        <div className="text-sm text-blue-800 space-y-1">
+                            <p><strong>迁移保护机制测试：</strong>验证已有角色数据时，迁移函数不会删除现有数据（推荐使用）</p>
+                            <p><strong>完整迁移测试：</strong>模拟首次安装时的迁移场景，会先清空数据再测试（⚠️ 会删除所有角色！）</p>
+                            <p><strong>新角色创建测试：</strong>验证角色创建和数据存储功能</p>
+                        </div>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                         <Button
-                            onClick={testMigration}
+                            onClick={testMigrationProtection}
                             disabled={isRunning}
                             variant="default"
                         >
-                            {isRunning ? '运行中...' : '测试数据迁移'}
+                            {isRunning ? '运行中...' : '测试迁移保护机制'}
+                        </Button>
+
+                        <Button
+                            onClick={testMigration}
+                            disabled={isRunning}
+                            variant="outline"
+                            className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                        >
+                            {isRunning ? '运行中...' : '⚠️ 测试完整迁移（会清空数据）'}
                         </Button>
 
                         <Button
@@ -239,17 +316,21 @@ export default function MigrationTestPage() {
                             variant="ghost"
                         >
                             清除结果
-                        </Button>                            <Button
-                                onClick={() => {
+                        </Button>
+
+                        <Button
+                            onClick={() => {
+                                if (confirm('确定要清空所有角色数据吗？此操作不可撤销！')) {
                                     safeCleanupForTesting()
                                     log('角色相关数据已清空（其他应用数据保留）', 'info')
-                                }}
-                                disabled={isRunning}
-                                variant="destructive"
-                                size="sm"
-                            >
-                                清空角色数据
-                            </Button>
+                                }
+                            }}
+                            disabled={isRunning}
+                            variant="destructive"
+                            size="sm"
+                        >
+                            清空角色数据
+                        </Button>
                     </div>
 
                     <div className="border rounded-lg p-4 bg-slate-50 max-h-96 overflow-y-auto">

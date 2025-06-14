@@ -133,31 +133,6 @@ export function importCharacterData(file: File): Promise<SheetData> {
   })
 }
 
-const SELECTED_CARDS_KEY = "selected_card_ids";
-
-export function saveSelectedCardIds(cardIds: string[]): void {
-  try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      localStorage.setItem(SELECTED_CARDS_KEY, JSON.stringify(cardIds));
-    }
-  } catch (error) {
-    console.error("保存选中卡牌ID失败:", error);
-  }
-}
-
-export function loadSelectedCardIds(): string[] {
-  try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      const savedData = localStorage.getItem(SELECTED_CARDS_KEY);
-      return savedData ? JSON.parse(savedData) : [];
-    }
-    return [];
-  } catch (error) {
-    console.error("读取选中卡牌ID失败:", error);
-    return [];
-  }
-}
-
 const FOCUSED_CARDS_KEY = "focused_card_ids";
 
 // Save focused card IDs to localStorage
@@ -185,31 +160,6 @@ export function loadFocusedCardIds(): string[] {
     console.error("读取聚焦卡牌ID失败:", error);
     return [];
   }
-}
-
-export function loadPersistentFormData(): SheetData | null {
-  if (typeof window !== "undefined") {
-    const savedData = localStorage.getItem("persistentFormData")
-    if (savedData) {
-      try {
-        const parsedData = JSON.parse(savedData) as SheetData;
-        // Ensure all ...Ref fields are initialized after loading
-        return {
-          ...defaultSheetData, // Start with defaults
-          ...parsedData,      // Override with saved data
-          professionRef: parsedData.professionRef || defaultSheetData.professionRef,
-          ancestry1Ref: parsedData.ancestry1Ref || defaultSheetData.ancestry1Ref,
-          ancestry2Ref: parsedData.ancestry2Ref || defaultSheetData.ancestry2Ref,
-          communityRef: parsedData.communityRef || defaultSheetData.communityRef,
-          subclassRef: parsedData.subclassRef || defaultSheetData.subclassRef,
-        };
-      } catch (error) {
-        console.error("Error parsing persistent form data from localStorage:", error)
-        return null
-      }
-    }
-  }
-  return null
 }
 
 // Function to generate a printable name for the PDF

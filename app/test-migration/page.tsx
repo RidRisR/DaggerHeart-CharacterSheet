@@ -138,9 +138,9 @@ export default function MigrationTestPage() {
             }
 
             log(`当前有 ${currentList.characters.length} 个角色`)
-            const beforeCharacters = currentList.characters.map(c => ({ id: c.id, name: c.name }))
+            const beforeCharacters = currentList.characters.map(c => ({ id: c.id, saveName: c.saveName }))
             log('迁移前角色列表：')
-            beforeCharacters.forEach(char => log(`  - ${char.name} (${char.id})`))
+            beforeCharacters.forEach(char => log(`  - ${char.saveName} (${char.id})`))
 
             // 尝试执行迁移（应该被跳过）
             log('尝试执行迁移...')
@@ -148,11 +148,11 @@ export default function MigrationTestPage() {
 
             // 验证数据没有被删除
             const afterList = loadCharacterList()
-            const afterCharacters = afterList.characters.map(c => ({ id: c.id, name: c.name }))
+            const afterCharacters = afterList.characters.map(c => ({ id: c.id, saveName: c.saveName }))
 
             log(`迁移后有 ${afterList.characters.length} 个角色`)
             log('迁移后角色列表：')
-            afterCharacters.forEach(char => log(`  - ${char.name} (${char.id})`))
+            afterCharacters.forEach(char => log(`  - ${char.saveName} (${char.id})`))
 
             // 验证角色数量没有变化
             if (beforeCharacters.length !== afterCharacters.length) {
@@ -167,7 +167,7 @@ export default function MigrationTestPage() {
 
             if (missingCharacters.length > 0) {
                 log(`❌ 发现丢失的角色：`, 'error')
-                missingCharacters.forEach(char => log(`  - ${char.name} (${char.id})`))
+                missingCharacters.forEach(char => log(`  - ${char.saveName} (${char.id})`))
                 return
             }
 

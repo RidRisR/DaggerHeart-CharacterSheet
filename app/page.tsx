@@ -128,8 +128,8 @@ export default function Home() {
   const createFirstCharacter = () => {
     try {
       console.log('[App] Creating first character...')
-      const newCharacterData = createNewCharacter("我的角色")
-      const metadata = addCharacterToMetadataList(newCharacterData)
+      const newCharacterData = createNewCharacter("") // 空白角色名，用户后续填写
+      const metadata = addCharacterToMetadataList("我的存档") // 默认存档名
       
       if (metadata) {
         saveCharacterById(metadata.id, newCharacterData)
@@ -180,31 +180,31 @@ export default function Home() {
   }
 
   // 创建新角色
-  const createNewCharacterHandler = (name: string) => {
+  const createNewCharacterHandler = (saveName: string) => {
     try {
       if (characterList.length >= MAX_CHARACTERS) {
         alert(`最多只能创建${MAX_CHARACTERS}个角色`)
         return false
       }
 
-      console.log(`[App] Creating new character: ${name}`)
-      const newCharacterData = createNewCharacter(name)
-      const metadata = addCharacterToMetadataList(newCharacterData)
+      console.log(`[App] Creating new save: ${saveName}`)
+      const newCharacterData = createNewCharacter("") // 空白角色名，用户后续填写
+      const metadata = addCharacterToMetadataList(saveName) // 使用存档名
       
       if (metadata) {
         saveCharacterById(metadata.id, newCharacterData)
         setCharacterList(prev => [...prev, metadata])
         switchToCharacter(metadata.id)
-        console.log(`[App] Successfully created new character: ${metadata.id}`)
+        console.log(`[App] Successfully created new save: ${metadata.id}`)
         return true
       } else {
         console.error('[App] Failed to create character metadata')
-        alert('创建角色失败')
+        alert('创建存档失败')
         return false
       }
     } catch (error) {
-      console.error(`[App] Error creating new character:`, error)
-      alert('创建角色失败')
+      console.error(`[App] Error creating new save:`, error)
+      alert('创建存档失败')
       return false
     }
   }
@@ -246,7 +246,7 @@ export default function Home() {
   }
 
   // 复制角色
-  const duplicateCharacterHandler = (characterId: string, newName: string) => {
+  const duplicateCharacterHandler = (characterId: string, newSaveName: string) => {
     try {
       if (characterList.length >= MAX_CHARACTERS) {
         alert(`最多只能创建${MAX_CHARACTERS}个角色`)
@@ -254,10 +254,10 @@ export default function Home() {
       }
 
       console.log(`[App] Duplicating character: ${characterId}`)
-      const duplicatedData = duplicateCharacter(characterId, newName)
+      const duplicatedData = duplicateCharacter(characterId, "") // 复制角色数据，但角色名清空
       
       if (duplicatedData) {
-        const metadata = addCharacterToMetadataList(duplicatedData)
+        const metadata = addCharacterToMetadataList(newSaveName) // 使用新的存档名
         if (metadata) {
           saveCharacterById(metadata.id, duplicatedData)
           setCharacterList(prev => [...prev, metadata])
@@ -411,15 +411,20 @@ export default function Home() {
             {/* 角色管理标签页 */}
             <TabsContent value="characters" className="mt-4">
               <div className="bg-white p-6 rounded-lg border">
-                <h2 className="text-xl font-semibold mb-4">角色管理</h2>
+                <h2 className="text-xl font-semibold mb-4">存档管理</h2>
                 
-                {/* 当前角色信息 */}
+                {/* 当前存档信息 */}
                 <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-medium text-blue-900 mb-2">当前角色</h3>
+                  <h3 className="font-medium text-blue-900 mb-2">当前存档</h3>
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold text-blue-800">
-                      {formData.name || "未命名角色"}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-lg font-semibold text-blue-800">
+                        {characterList.find(c => c.id === currentCharacterId)?.saveName || "未命名存档"}
+                      </span>
+                      <span className="text-sm text-blue-700 mt-1">
+                        角色名称: {formData.name || "未填写"}
+                      </span>
+                    </div>
                     <span className="text-sm text-blue-600">
                       {characterList.find(c => c.id === currentCharacterId)?.lastModified 
                         ? new Date(characterList.find(c => c.id === currentCharacterId)!.lastModified).toLocaleString()
@@ -428,75 +433,79 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* 角色列表 */}
+                {/* 存档列表 */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-3">所有角色 ({characterList.length}/{MAX_CHARACTERS})</h3>
+                  <h3 className="font-medium mb-3">所有存档 ({characterList.length}/{MAX_CHARACTERS})</h3>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {characterList.map((character) => (
-                      <div
-                        key={character.id}
-                        className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
-                          currentCharacterId === character.id
-                            ? 'bg-blue-100 border-blue-300'
-                            : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                        }`}
-                      >
-                        <div className="flex-1">
-                          <div className="font-medium">{character.name}</div>
-                          <div className="text-sm text-gray-500">
-                            创建：{new Date(character.createdAt).toLocaleDateString()}
-                            {character.lastModified && (
-                              <span className="ml-2">
-                                修改：{new Date(character.lastModified).toLocaleDateString()}
-                              </span>
-                            )}
+                    {characterList.map((character) => {
+                      // 获取角色数据以显示角色名
+                      const characterData = loadCharacterById(character.id);
+                      return (
+                        <div
+                          key={character.id}
+                          className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${currentCharacterId === character.id
+                              ? 'bg-blue-100 border-blue-300'
+                              : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                            }`}
+                        >
+                          <div className="flex-1">
+                            <div className="font-medium">{character.saveName}</div>
+                            <div className="text-sm text-gray-500">
+                              角色: {characterData?.name || "未填写"} | 
+                              创建：{new Date(character.createdAt).toLocaleDateString()}
+                              {character.lastModified && (
+                                <span className="ml-2">
+                                  修改：{new Date(character.lastModified).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex gap-2">
-                          {currentCharacterId !== character.id && (
+                          <div className="flex gap-2">
+                            {currentCharacterId !== character.id && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => switchToCharacter(character.id)}
+                              >
+                                切换
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => switchToCharacter(character.id)}
+                              onClick={() => {
+                                const newSaveName = prompt('请输入复制存档的名称:', `${character.saveName} (副本)`)
+                                if (newSaveName) {
+                                  duplicateCharacterHandler(character.id, newSaveName)
+                                }
+                              }}
+                              disabled={characterList.length >= MAX_CHARACTERS}
                             >
-                              切换
+                              复制
                             </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const newName = prompt('请输入复制角色的名称:', `${character.name} (副本)`)
-                              if (newName) {
-                                duplicateCharacterHandler(character.id, newName)
-                              }
-                            }}
-                            disabled={characterList.length >= MAX_CHARACTERS}
-                          >
-                            复制
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 hover:text-red-700"
-                            onClick={() => deleteCharacterHandler(character.id)}
-                            disabled={characterList.length <= 1}
-                          >
-                            删除
-                          </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() => deleteCharacterHandler(character.id)}
+                              disabled={characterList.length <= 1}
+                            >
+                              删除
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* 新建角色 */}
+                {/* 新建存档 */}
                 <div className="border-t pt-4">
                   <Button
                     onClick={() => {
-                      const name = prompt('请输入新角色的名称:', '新角色')
-                      if (name) {
-                        createNewCharacterHandler(name)
+                      const saveName = prompt('请输入新存档的名称:', '我的存档')
+                      if (saveName) {
+                        createNewCharacterHandler(saveName)
                       }
                     }}
                     disabled={characterList.length >= MAX_CHARACTERS}
@@ -505,7 +514,7 @@ export default function Home() {
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    新建角色 ({characterList.length}/{MAX_CHARACTERS})
+                    新建存档 ({characterList.length}/{MAX_CHARACTERS})
                   </Button>
                 </div>
               </div>

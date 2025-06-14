@@ -148,7 +148,7 @@ export default function Home() {
 
   // 自动保存当前角色数据
   useEffect(() => {
-    if (!isLoading && !isMigrationCompleted && currentCharacterId && formData) {
+    if (!isLoading && isMigrationCompleted && currentCharacterId && formData) {
       try {
         saveCharacterById(currentCharacterId, formData)
         console.log(`[App] Auto-saved character: ${currentCharacterId}`)

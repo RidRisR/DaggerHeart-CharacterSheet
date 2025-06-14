@@ -63,10 +63,35 @@ export default function Home() {
   // Effect for handling "Print All Pages"
   useEffect(() => {
     if (isPrintingAll) {
+      // 检测是否为移动设备
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        window.innerWidth <= 768;
+
+      // 移动设备需要更长的延迟来确保所有内容渲染完成
+      const delay = isMobile ? 1500 : 500;
+
       const printTimeout = setTimeout(() => {
-        window.print();
-        setIsPrintingAll(false); // Automatically exit print mode after printing
-      }, 500); // Delay to allow rendering of print content
+        // 移动设备上的额外处理
+        if (isMobile) {
+          // 强制显示所有页面（包括多个卡牌页面）
+          const allPages = document.querySelectorAll('.page-one, .page-two, .page-three, .page-four, [class^="page-four-"]');
+          allPages.forEach((page) => {
+            const el = page as HTMLElement;
+            el.style.display = 'block';
+            el.style.visibility = 'visible';
+            el.style.opacity = '1';
+          });
+
+          // 添加一个短暂的延迟确保样式应用
+          setTimeout(() => {
+            window.print();
+            setIsPrintingAll(false);
+          }, 200);
+        } else {
+          window.print();
+          setIsPrintingAll(false);
+        }
+      }, delay);
 
       return () => {
         clearTimeout(printTimeout);

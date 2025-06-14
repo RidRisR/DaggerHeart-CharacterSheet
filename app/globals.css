@@ -9,16 +9,28 @@ body {
 /* 打印所有页面的特殊样式 */
 .print-all-pages .page-one,
 .print-all-pages .page-two,
-.print-all-pages .page-three {
+.print-all-pages .page-three,
+.print-all-pages .page-four,
+.print-all-pages [class^="page-four-"] {
   page-break-after: always;
 }
 
+/* 最后一页不需要分页 */
+.print-all-pages .page-four:last-child,
+.print-all-pages [class^="page-four-"]:last-child {
+  page-break-after: auto;
+}
 /* 在打印预览中隐藏固定位置的按钮 */
 .print-all-pages .fixed.bottom-4.right-4 {
   display: none;
 }
 
 @media print {
+  /* 强制所有浏览器使用正确的打印样式 */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
   body {
     margin: 0;
     padding: 0;
@@ -32,6 +44,26 @@ body {
     scale: 0.9;
   }
 
+    /* 确保所有页面都能显示 */
+    .print-all-pages .page-one,
+    .print-all-pages .page-two,
+    .print-all-pages .page-three,
+    .print-all-pages .page-four,
+    .print-all-pages [class^="page-four-"] {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      height: auto !important;
+      min-height: 100vh !important;
+      page-break-after: always;
+      page-break-inside: avoid;
+    }
+  
+    /* 最后一页不需要强制分页 */
+    .print-all-pages .page-four:last-of-type,
+    .print-all-pages [class^="page-four-"]:last-of-type {
+      page-break-after: auto;
+    }
   .a4-page {
     width: 210mm;
     margin: 0;
@@ -40,6 +72,21 @@ body {
     font-size: 0.85em;
   }
 
+    /* 强制显示隐藏的元素在打印模式下 */
+    .print\:block {
+      display: block !important;
+    }
+  
+    .hidden {
+      display: block !important;
+    }
+  
+    /* 特别针对所有卡牌页面的显示设置 */
+    .page-four.print\:block.hidden,
+    [class^="page-four-"].print\:block.hidden {
+      display: block !important;
+      visibility: visible !important;
+    }
   /* 在打印时隐藏所有固定位置的按钮 */
   .fixed {
     display: none !important;
@@ -126,6 +173,103 @@ body {
 /* } */
 }
 
+/* 移动设备打印兼容性 */
+@media print and (max-width: 768px) {
+
+  /* 移动设备上的打印优化 */
+  body {
+    font-size: 12px !important;
+  }
+
+  .print-all-pages .page-one,
+  .print-all-pages .page-two,
+  .print-all-pages .page-three,
+  .print-all-pages .page-four {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 90vh !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    -webkit-region-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .print-all-pages .page-four {
+    page-break-after: auto !important;
+    -webkit-region-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .page-four {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* 强制显示所有页面内容 */
+  .hidden.print\:block {
+    display: block !important;
+  }
+
+  /* 确保卡组页面能正确显示 */
+  .a4-page.page-four.print\:block.hidden {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+/* 通用的强制打印样式，覆盖可能的隐藏规则 */
+@media screen {
+
+  .print-all-pages .page-four,
+  .print-all-pages [class^="page-four-"] {
+    display: block !important;
+    visibility: visible !important;
+  }
+}
+
+/* 额外的移动设备兼容性 - 使用更通用的方法 */
+@media print {
+
+  /* 所有隐藏元素在打印时强制显示 */
+  .hidden {
+    display: block !important;
+  }
+
+  /* 确保Tailwind的print:block类生效 */
+  .print\:block {
+    display: block !important;
+  }
+
+  .print\:visible {
+    visibility: visible !important;
+  }
+
+  .print\:opacity-100 {
+    opacity: 1 !important;
+  }
+
+  /* 移动浏览器兼容性 */
+  .page-four[style*="display: block"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* WebKit引擎特殊处理 */
+  @supports (-webkit-appearance: none) {
+
+    .print-all-pages .page-four,
+    .print-all-pages [class^="page-four-"] {
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      display: block !important;
+      visibility: visible !important;
+    }
+  }
+}
 .shield-shape {
   clip-path: polygon(0% 0%, 100% 0%, 100% 75%, 50% 100%, 0% 75%);
 }

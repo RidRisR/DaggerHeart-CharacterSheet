@@ -6,7 +6,42 @@ export default function PrintHelper() {
   useEffect(() => {
     const placeholderTexts = ["选择武器", "选择护甲", "选择职业", "选择子职业", "选择血统", "选择社群"];
 
+    // 检测是否为移动设备
+    const isMobile = () => {
+      return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        window.innerWidth <= 768;
+    };
+
     const handleBeforePrint = () => {
+      // 移动设备特殊处理
+      if (isMobile()) {
+        // 强制显示所有页面（包括多个卡牌页面）
+        document.querySelectorAll('.page-four, [class^="page-four-"]').forEach((element) => {
+          const el = element as HTMLElement;
+          el.style.display = 'block';
+          el.style.visibility = 'visible';
+          el.style.opacity = '1';
+          el.classList.remove('hidden');
+        });
+
+        // 确保打印模式下所有页面都可见
+        document.querySelectorAll('.print-all-pages .page-one, .print-all-pages .page-two, .print-all-pages .page-three, .print-all-pages .page-four, .print-all-pages [class^="page-four-"]').forEach((element) => {
+          const el = element as HTMLElement;
+          el.style.display = 'block';
+          el.style.visibility = 'visible';
+          el.style.opacity = '1';
+          el.style.pageBreakAfter = 'always';
+          el.style.minHeight = '100vh';
+        });
+
+        // 最后一页不需要分页
+        const allCardPages = document.querySelectorAll('.print-all-pages .page-four, .print-all-pages [class^="page-four-"]');
+        if (allCardPages.length > 0) {
+          const lastCardPage = allCardPages[allCardPages.length - 1] as HTMLElement;
+          lastCardPage.style.pageBreakAfter = 'auto';
+        }
+      }
+
       // Process all input fields and textareas
       document.querySelectorAll("input, textarea").forEach((element) => {
         const input = element as HTMLInputElement | HTMLTextAreaElement;

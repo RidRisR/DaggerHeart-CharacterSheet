@@ -5,26 +5,7 @@ import { StandardCard } from "@/card/card-types"
 // ===== 多角色系统数据结构 =====
 export interface CharacterMetadata {
   id: string          // 唯一ID
-  name: string        // 角色名（从SheetData.name同步）
-  customName: string  // 用户给角色卡的命名
-  lastModified: string // ISO 日期字符串
-  createdAt: string   // ISO 日期字符串
-  order: number       // 用于排序
-}
-
-export interface CharacterList {
-  characters: CharacterMetadata[]  // 最多20个
-  activeCharacterId: string | null // 当前活动角色ID
-  lastUpdated: string             // ISO 日期字符串
-}
-
-// ===== 原有数据结构 =====
-
-// ===== 多角色系统数据结构 =====
-export interface CharacterMetadata {
-  id: string          // 唯一ID
-  name: string        // 角色名（从SheetData.name同步）
-  customName: string  // 用户给角色卡的命名
+  saveName: string    // 存档名称（用户为这个存档起的名字）
   lastModified: string // ISO 日期字符串
   createdAt: string   // ISO 日期字符串
   order: number       // 用于排序

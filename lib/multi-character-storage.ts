@@ -67,7 +67,7 @@ export function saveCharacterList(list: CharacterList): void {
   }
 }
 
-export function addCharacterToMetadataList(characterData: SheetData): CharacterMetadata | null {
+export function addCharacterToMetadataList(saveName: string): CharacterMetadata | null {
   const list = loadCharacterList();
   
   // 检查数量限制
@@ -81,8 +81,7 @@ export function addCharacterToMetadataList(characterData: SheetData): CharacterM
   
   const metadata: CharacterMetadata = {
     id,
-    name: characterData.name || "未命名角色",
-    customName: characterData.name || "未命名角色",
+      saveName: saveName || "未命名存档",
     lastModified: now,
     createdAt: now,
     order: list.characters.length
@@ -96,7 +95,7 @@ export function addCharacterToMetadataList(characterData: SheetData): CharacterM
 
 export function updateCharacterInMetadataList(
   characterId: string, 
-  updates: Partial<Pick<CharacterMetadata, 'name' | 'customName'>>
+    updates: Partial<Pick<CharacterMetadata, 'saveName'>>
 ): void {
   const list = loadCharacterList();
   const index = list.characters.findIndex(char => char.id === characterId);
@@ -106,11 +105,8 @@ export function updateCharacterInMetadataList(
     return;
   }
   
-  if (updates.name !== undefined) {
-    list.characters[index].name = updates.name;
-  }
-  if (updates.customName !== undefined) {
-    list.characters[index].customName = updates.customName;
+    if (updates.saveName !== undefined) {
+        list.characters[index].saveName = updates.saveName;
   }
   
   list.characters[index].lastModified = new Date().toISOString();
@@ -135,10 +131,14 @@ export function saveCharacterById(id: string, data: SheetData): void {
     const key = CHARACTER_DATA_PREFIX + id;
     localStorage.setItem(key, JSON.stringify(data));
     
-    // 同步更新元数据
-    updateCharacterInMetadataList(id, { 
-      name: data.name || "未命名角色"
-    });
+      // 不再同步更新元数据中的角色名称
+      // 只更新最后修改时间
+      const list = loadCharacterList();
+      const index = list.characters.findIndex(char => char.id === id);
+      if (index !== -1) {
+          list.characters[index].lastModified = new Date().toISOString();
+          saveCharacterList(list);
+      }
   } catch (error) {
     console.error(`[Character] Save failed for ${id} (Fast Fail):`, error);
     throw error; // 快速失败
@@ -293,8 +293,7 @@ export function migrateToMultiCharacterStorage(): void {
     // 创建角色元数据
     const metadata: CharacterMetadata = {
       id: newCharacterId,
-      name: migratedCharacterData.name || "我的角色",
-      customName: migratedCharacterData.name || "我的角色",
+        saveName: "迁移的存档", // 迁移时使用默认存档名
       lastModified: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       order: 0

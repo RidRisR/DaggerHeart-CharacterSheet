@@ -133,8 +133,7 @@ export default function CardImportTestPage() {
   // 返回主站
   const goBackToMain = () => {
     refreshData()
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-    window.location.href = `${basePath}/`;
+    window.location.href = `../车卡器入口.html`;
   }
 
   // 查看卡牌

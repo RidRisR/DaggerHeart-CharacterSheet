@@ -209,7 +209,7 @@ export default function Home() {
         </Button>
         <Button
           onClick={() => {
-            window.location.href = `/DaggerHeart-CharacterSheet/card-manager`;
+            window.location.href = `./card-manager/index.html`;
           }}
           className="bg-gray-800 hover:bg-gray-700"
         >

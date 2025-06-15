@@ -18,7 +18,7 @@
 
 *   **获取稳定版本:** 你也可以直接从 [GitHub Releases](https://github.com/RidRisR/DaggerHeart-CharacterSheet/releases) 下载最新的稳定版本文件。
 
-### 💻 本地部署（开发者模式）
+## 💻 本地部署（开发者模式）
 
 如果你希望在本地运行此项目（例如进行开发、测试或离线使用），请按照以下步骤操作：
 

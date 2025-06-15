@@ -133,7 +133,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
           style={{ width: "210mm", height: "297mm" }}
         >
           {/* Header - 调整职业名称显示框的大小 */}
-          <div className="bg-gray-800 text-white p-5 flex items-center rounded-t-md">
+        <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md">
             <div className="flex flex-col">
             <div className="text-[9px]">DAGGERHEART V20250520</div>
             </div>

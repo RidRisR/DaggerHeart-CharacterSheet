@@ -29,11 +29,11 @@
     ```
 2.  **安装依赖:**
     ```bash
-    npm install
+    pnpm install
     ```
 3.  **运行开发服务器:**
     ```bash
-    npm run dev
+    pnpm dev
     ```
     项目将在本地启动，通常通过 `http://localhost:XXXX` (具体端口请查看命令行输出) 访问。
 
@@ -41,8 +41,8 @@
 
 *   [▲ RidRisR](https://github.com/RidRisR) (项目发起人 & 主要开发者)
 *   [▣ PolearmMaster](https://github.com/PolearmMaster) (翻译及校对)
-*   [▣ 末楔](https://github.com/LiyuNodream) (翻译及校对)
-*   [▣ 里予](https://github.com/CissyOliviaCat) (翻译及校对)
+*   [▣ 末楔](https://github.com/CissyOliviaCat) (翻译及校对)
+*   [▣ 里予](https://github.com/LiyuNodream) (翻译及校对)
 *   [▣ 一得](https://github.com/Milkyomeda) (翻译及校对)
 
 我们欢迎任何形式的贡献，包括但不限于提交Bug报告、功能建议、代码改进或文档编写。

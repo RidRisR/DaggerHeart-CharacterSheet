@@ -13,11 +13,11 @@ import { defaultSheetData } from "@/lib/default-sheet-data"
 import { CardDisplaySection } from "@/components/card-display-section"
 import CharacterSheetPageFour from "@/components/character-sheet-page-four"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
-import { ImportExportModal } from "@/components/modals/import-export-modal"
+import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
 import { StandardCard } from "@/card/card-types"
 import { SheetData, CharacterMetadata } from "@/lib/sheet-data"
-import { exportCharacterData, importCharacterDataForMultiCharacter } from "@/lib/storage"
+import { exportCharacterData } from "@/lib/storage"
 import {
   migrateToMultiCharacterStorage,
   loadCharacterList,
@@ -41,18 +41,18 @@ export default function Home() {
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isMigrationCompleted, setIsMigrationCompleted] = useState(false)
-  
+
   // UI状态
   const [isPrintingAll, setIsPrintingAll] = useState(false)
   const [isGuideOpen, setIsGuideOpen] = useState(false)
-  const [importExportModalOpen, setImportExportModalOpen] = useState(false)
+  const [characterManagementModalOpen, setCharacterManagementModalOpen] = useState(false)
 
-  const openImportExportModal = () => {
-    setImportExportModalOpen(true)
+  const openCharacterManagementModal = () => {
+    setCharacterManagementModalOpen(true)
   }
 
-  const closeImportExportModal = () => {
-    setImportExportModalOpen(false)
+  const closeCharacterManagementModal = () => {
+    setCharacterManagementModalOpen(false)
   }
 
   // 数据迁移处理
@@ -80,14 +80,14 @@ export default function Home() {
     const loadInitialData = () => {
       try {
         console.log('[App] Loading initial character data...')
-        
+
         // 加载角色列表
         const list = loadCharacterList()
         setCharacterList(list.characters)
-        
+
         // 获取活动角色ID
         const activeId = getActiveCharacterId()
-        
+
         if (activeId && list.characters.some(char => char.id === activeId)) {
           // 加载活动角色数据
           const characterData = loadCharacterById(activeId)
@@ -130,7 +130,7 @@ export default function Home() {
       console.log('[App] Creating first character...')
       const newCharacterData = createNewCharacter("") // 空白角色名，用户后续填写
       const metadata = addCharacterToMetadataList("我的存档") // 默认存档名
-      
+
       if (metadata) {
         saveCharacterById(metadata.id, newCharacterData)
         setActiveCharacterId(metadata.id)
@@ -174,7 +174,7 @@ export default function Home() {
     try {
       console.log(`[App] Switching to character: ${characterId}`)
       const characterData = loadCharacterById(characterId)
-      
+
       if (characterData) {
         setCurrentCharacterId(characterId)
         setActiveCharacterId(characterId)
@@ -201,7 +201,7 @@ export default function Home() {
       console.log(`[App] Creating new save: ${saveName}`)
       const newCharacterData = createNewCharacter("") // 空白角色名，用户后续填写
       const metadata = addCharacterToMetadataList(saveName) // 使用存档名
-      
+
       if (metadata) {
         saveCharacterById(metadata.id, newCharacterData)
         setCharacterList(prev => [...prev, metadata])
@@ -233,20 +233,20 @@ export default function Home() {
       }
 
       console.log(`[App] Deleting character: ${characterId}`)
-      
+
       // 删除数据
       deleteCharacterById(characterId)
       removeCharacterFromMetadataList(characterId)
-      
+
       // 更新状态
       const updatedList = characterList.filter(char => char.id !== characterId)
       setCharacterList(updatedList)
-      
+
       // 如果删除的是当前角色，切换到第一个
       if (currentCharacterId === characterId && updatedList.length > 0) {
         switchToCharacter(updatedList[0].id)
       }
-      
+
       console.log(`[App] Successfully deleted character: ${characterId}`)
       return true
     } catch (error) {
@@ -266,7 +266,7 @@ export default function Home() {
 
       console.log(`[App] Duplicating character: ${characterId}`)
       const duplicatedData = duplicateCharacter(characterId, "") // 复制角色数据，但角色名清空
-      
+
       if (duplicatedData) {
         const metadata = addCharacterToMetadataList(newSaveName) // 使用新的存档名
         if (metadata) {
@@ -277,7 +277,7 @@ export default function Home() {
           return true
         }
       }
-      
+
       console.error('[App] Failed to duplicate character')
       alert('复制角色失败')
       return false
@@ -406,146 +406,27 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* 左侧卡牌展示区域 - 打印时隐藏 */}
         <div className="lg:w-1/4 print:hidden">
-          <CardDisplaySection 
-            cards={formData.cards} 
-            focusedCardIds={formData.focused_card_ids || []} 
+          <CardDisplaySection
+            cards={formData.cards}
+            focusedCardIds={formData.focused_card_ids || []}
           />
         </div>
 
         {/* 右侧角色卡区域 */}
         <div className="lg:w-3/4">
           <Tabs defaultValue="page1" className="w-full max-w-[210mm]">
-            <TabsList className="grid w-full max-w-[210mm] grid-cols-4">
-              {/* 角色选择器作为第一个Tab */}
-              <TabsTrigger value="characters" className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
-                角色管理
-              </TabsTrigger>
+            <TabsList className="grid w-full max-w-[210mm] grid-cols-3">
               <TabsTrigger value="page1">第一页</TabsTrigger>
               <TabsTrigger value="page2">第二页</TabsTrigger>
               <TabsTrigger value="page3">第三页</TabsTrigger>
             </TabsList>
-            
-            {/* 角色管理标签页 */}
-            <TabsContent value="characters" className="mt-4">
-              <div className="bg-white p-6 rounded-lg border">
-                <h2 className="text-xl font-semibold mb-4">存档管理</h2>
-                
-                {/* 当前存档信息 */}
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-medium text-blue-900 mb-2">当前存档</h3>
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-lg font-semibold text-blue-800">
-                        {characterList.find(c => c.id === currentCharacterId)?.saveName || "未命名存档"}
-                      </span>
-                      <span className="text-sm text-blue-700 mt-1">
-                        角色名称: {formData.name || "未填写"}
-                      </span>
-                    </div>
-                    <span className="text-sm text-blue-600">
-                      {characterList.find(c => c.id === currentCharacterId)?.lastModified 
-                        ? new Date(characterList.find(c => c.id === currentCharacterId)!.lastModified).toLocaleString()
-                        : ''}
-                    </span>
-                  </div>
-                </div>
 
-                {/* 存档列表 */}
-                <div className="mb-6">
-                  <h3 className="font-medium mb-3">所有存档 ({characterList.length}/{MAX_CHARACTERS})</h3>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {characterList.map((character) => {
-                      // 获取角色数据以显示角色名
-                      const characterData = loadCharacterById(character.id);
-                      return (
-                        <div
-                          key={character.id}
-                          className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${currentCharacterId === character.id
-                              ? 'bg-blue-100 border-blue-300'
-                              : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                            }`}
-                        >
-                          <div className="flex-1">
-                            <div className="font-medium">{character.saveName}</div>
-                            <div className="text-sm text-gray-500">
-                              角色: {characterData?.name || "未填写"} | 
-                              创建：{new Date(character.createdAt).toLocaleDateString()}
-                              {character.lastModified && (
-                                <span className="ml-2">
-                                  修改：{new Date(character.lastModified).toLocaleDateString()}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            {currentCharacterId !== character.id && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => switchToCharacter(character.id)}
-                              >
-                                切换
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                const newSaveName = prompt('请输入复制存档的名称:', `${character.saveName} (副本)`)
-                                if (newSaveName) {
-                                  duplicateCharacterHandler(character.id, newSaveName)
-                                }
-                              }}
-                              disabled={characterList.length >= MAX_CHARACTERS}
-                            >
-                              复制
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => deleteCharacterHandler(character.id)}
-                              disabled={characterList.length <= 1}
-                            >
-                              删除
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 新建存档 */}
-                <div className="border-t pt-4">
-                  <Button
-                    onClick={() => {
-                      const saveName = prompt('请输入新存档的名称:', '我的存档')
-                      if (saveName) {
-                        createNewCharacterHandler(saveName)
-                      }
-                    }}
-                    disabled={characterList.length >= MAX_CHARACTERS}
-                    className="w-full"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    新建存档 ({characterList.length}/{MAX_CHARACTERS})
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-            
             <TabsContent value="page1">
               <CharacterSheet formData={formData} setFormData={setFormData} />
             </TabsContent>
             <TabsContent value="page2">
-              <CharacterSheetPageTwo 
-                formData={formData} 
+              <CharacterSheetPageTwo
+                formData={formData}
                 setFormData={setFormData}
                 onFocusedCardsChange={handleFocusedCardsChange}
               />
@@ -583,8 +464,8 @@ export default function Home() {
         <Button onClick={() => handlePrintAll().catch(console.error)} className="bg-gray-800 hover:bg-gray-700">
           导出PDF
         </Button>
-        <Button onClick={openImportExportModal} className="bg-gray-800 hover:bg-gray-700">
-          存档与重置
+        <Button onClick={openCharacterManagementModal} className="bg-gray-800 hover:bg-gray-700">
+          存档管理
         </Button>
         <Button
           onClick={() => {
@@ -599,22 +480,23 @@ export default function Home() {
       {/* 建卡指引组件 - 移到父组件 */}
       <CharacterCreationGuide isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} formData={formData} />
 
-      {/* 导入/导出模态框 */}
-      <ImportExportModal
-        isOpen={importExportModalOpen}
-        onClose={closeImportExportModal}
-        onExport={() => exportCharacterData(formData).catch(console.error)}
-        onImport={(data) => {
-          // 导入数据到当前角色
+      {/* 存档管理模态框 */}
+      <CharacterManagementModal
+        isOpen={characterManagementModalOpen}
+        onClose={closeCharacterManagementModal}
+        characterList={characterList}
+        currentCharacterId={currentCharacterId}
+        formData={formData}
+        onSwitchCharacter={switchToCharacter}
+        onCreateCharacter={createNewCharacterHandler}
+        onDeleteCharacter={deleteCharacterHandler}
+        onDuplicateCharacter={duplicateCharacterHandler}
+        onImportData={(data: any) => {
           const mergedData = { ...defaultSheetData, ...data, focused_card_ids: data.focused_card_ids || [] }
           setFormData(mergedData)
-          closeImportExportModal()
         }}
-        onReset={() => {
-          if (confirm("确定要重置当前角色数据吗？此操作不可撤销。")) {
-            setFormData(defaultSheetData)
-            closeImportExportModal()
-          }
+        onResetData={() => {
+          setFormData(defaultSheetData)
         }}
       />
     </main>

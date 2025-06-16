@@ -163,7 +163,7 @@ export default function Home() {
         } catch (error) {
           console.error(`[App] Error auto-saving character ${currentCharacterId}:`, error)
         }
-      }, 1000) // 增加防抖时间到1秒
+      }, 300)
 
       return () => clearTimeout(saveTimeout)
     }

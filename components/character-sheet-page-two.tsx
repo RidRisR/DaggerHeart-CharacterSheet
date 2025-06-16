@@ -43,9 +43,6 @@ export default function CharacterSheetPageTwo({ formData, setFormData, onFocused
     proficiency: Array.isArray(formData?.proficiency) ? formData.proficiency : Array(6).fill(false),
   }
 
-  // 模态框状态
-  const [importExportModalOpen, setImportExportModalOpen] = useState(false)
-
   // State for CardSelectionModal filters, lifted to this component
   const [cardModalActiveTab, setCardModalActiveTab] = useState<string>("");
   const [cardModalSearchTerm, setCardModalSearchTerm] = useState<string>("");

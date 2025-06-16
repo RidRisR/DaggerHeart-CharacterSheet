@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CharacterMetadata } from "@/lib/sheet-data"
 import { loadCharacterById, MAX_CHARACTERS } from "@/lib/multi-character-storage"
@@ -33,6 +34,23 @@ export function CharacterManagementModal({
     onImportData
 }: CharacterManagementModalProps) {
     if (!isOpen) return null
+
+    // 监听ESC键关闭模态框
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                onClose()
+            }
+        }
+
+        if (isOpen) {
+            document.addEventListener('keydown', handleKeyDown)
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [isOpen, onClose])
 
     const handleExport = async () => {
         try {
@@ -69,8 +87,14 @@ export function CharacterManagementModal({
     }
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+        <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={onClose}
+        >
+            <div 
+                className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-semibold">存档管理</h2>
                     <button
@@ -117,7 +141,12 @@ export function CharacterManagementModal({
 
                 {/* 存档列表 */}
                 <div className="mb-6">
-                    <h3 className="font-medium mb-3">所有存档 ({characterList.length}/{MAX_CHARACTERS})</h3>
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-medium">所有存档 ({characterList.length}/{MAX_CHARACTERS})</h3>
+                        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            💡 快捷键：Ctrl + 数字键快速切换存档
+                        </div>
+                    </div>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                         {characterList.map((character, index) => {
                             const characterData = loadCharacterById(character.id);

@@ -34,7 +34,6 @@ interface ViewCardModalProps {
 
 function ViewCardModal({ cards, isOpen, onClose }: ViewCardModalProps) {
   if (!isOpen) return null
-  // 只在本测试页面使用 card-selection-modal 风格的网格展示
   const gridCards = useMemo(() => cards || [], [cards])
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>无限循环修复验证</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+        .code {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 DaggerHeart 无限循环修复验证</h1>
+    
+    <div class="status info">
+        <strong>修复总结:</strong><br>
+        已识别并修复了导致 "Maximum update depth exceeded" 错误的无限循环问题。
+    </div>
+
+    <div class="step">
+        <h3>🐛 原问题分析</h3>
+        <p><strong>问题根源:</strong> 聚焦卡牌状态在多个组件间形成循环更新：</p>
+        <div class="code">
+CardDeckSection (选择卡牌) 
+  ↓ onFocusedCardsChange
+CharacterSheetPageTwo (处理变更) 
+  ↓ 调用父组件回调
+App.tsx (更新formData) 
+  ↓ formData.focused_card_ids变更
+CardDisplaySection (响应变更) 
+  ↓ props变化触发重新渲染
+CardDeckSection (重新初始化选择) 
+  ↓ 形成无限循环...
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>🛠️ 修复措施</h3>
+        <h4>1. App.tsx 主组件修复</h4>
+        <ul>
+            <li><strong>深度比较:</strong> 在 handleFocusedCardsChange 中添加深度比较，避免相同数据的重复更新</li>
+            <li><strong>优化自动保存:</strong> 增加保存前的数据对比，只有真正变更时才保存</li>
+            <li><strong>增加防抖时间:</strong> 从500ms增加到1000ms，减少频繁保存</li>
+        </ul>
+
+        <h4>2. CharacterSheetPageTwo 修复</h4>
+        <ul>
+            <li><strong>移除双重更新:</strong> handleFocusedCardsChange 只通知父组件，不直接更新 formData</li>
+        </ul>
+
+        <h4>3. CardDisplaySection 修复</h4>
+        <ul>
+            <li><strong>使用 useRef 防循环:</strong> 使用 lastFocusedCardIdsRef 记录上次的状态</li>
+            <li><strong>精确变更检测:</strong> 只有在 focusedCardIds 真正变化时才更新</li>
+            <li><strong>移除事件监听器:</strong> 不再使用全局 focusedCardsChanged 事件</li>
+        </ul>
+
+        <h4>4. CardDeckSection 修复</h4>
+        <ul>
+            <li><strong>循环检测标志:</strong> 使用 isUpdatingFromPropsRef 防止 props → state → props 循环</li>
+            <li><strong>精确状态比较:</strong> 深度比较 selectedCards 和 focusedCardIds，避免不必要的更新</li>
+        </ul>
+    </div>
+
+    <div class="step">
+        <h3>🧪 验证步骤</h3>
+        <p>请按以下步骤验证修复效果：</p>
+        
+        <div class="status warning">
+            <strong>重要:</strong> 在测试前请先清理浏览器缓存和 localStorage 数据以确保干净的测试环境。
+        </div>
+
+        <ol>
+            <li>
+                <strong>清理测试环境</strong>
+                <div class="code">
+// 在浏览器开发者工具 Console 中执行：
+localStorage.clear();
+location.reload();
+                </div>
+            </li>
+            
+            <li>
+                <strong>启动开发服务器</strong>
+                <button class="btn" onclick="window.open('http://localhost:3001', '_blank')">
+                    打开应用 (localhost:3001)
+                </button>
+            </li>
+            
+            <li>
+                <strong>测试聚焦卡牌功能</strong>
+                <ul>
+                    <li>进入"第二页"标签</li>
+                    <li>在卡牌组区域按住 Alt 键并点击一些卡牌</li>
+                    <li>观察左侧卡牌展示区的"聚焦"标签页</li>
+                    <li>检查浏览器控制台是否有重复的日志输出</li>
+                </ul>
+            </li>
+            
+            <li>
+                <strong>测试角色切换功能</strong>
+                <ul>
+                    <li>进入"角色管理"标签</li>
+                    <li>创建新存档</li>
+                    <li>在不同存档间切换</li>
+                    <li>验证聚焦卡牌状态是否正确保存和恢复</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>✅ 期望结果</h3>
+        <div class="status success">
+            <strong>成功标志:</strong>
+            <ul>
+                <li>不再出现 "Maximum update depth exceeded" 错误</li>
+                <li>控制台日志不再重复输出相同内容</li>
+                <li>聚焦卡牌功能正常工作</li>
+                <li>角色切换功能正常工作</li>
+                <li>自动保存功能正常工作且不频繁触发</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>🔍 监控指标</h3>
+        <p>测试时请关注以下控制台输出模式：</p>
+        
+        <h4>正常模式 (修复后):</h4>
+        <div class="code">
+[App] 聚焦卡牌变更: 0 -> 2
+[CardDisplaySection] 更新聚焦卡牌，共 2 张
+[App] Auto-saved character: xxx-xxx-xxx
+        </div>
+
+        <h4>异常模式 (需要继续修复):</h4>
+        <div class="code">
+[App] 聚焦卡牌变更: 0 -> 2
+[App] 聚焦卡牌变更: 0 -> 2
+[CardDisplaySection] 更新聚焦卡牌，共 2 张
+[App] 聚焦卡牌变更: 2 -> 0
+[App] 聚焦卡牌变更: 2 -> 0
+... (无限重复)
+        </div>
+    </div>
+
+    <div class="status info">
+        <strong>注意:</strong> 如果问题仍然存在，可能需要进一步检查 React Strict Mode 或其他组件的状态管理逻辑。
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <button class="btn" onclick="window.location.reload()">刷新页面</button>
+        <button class="btn btn-danger" onclick="if(confirm('确定要清理所有 localStorage 数据吗？')) { localStorage.clear(); alert('已清理'); }">
+            清理 localStorage
+        </button>
+    </div>
+</body>
+</html>

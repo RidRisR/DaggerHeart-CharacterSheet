@@ -27,6 +27,7 @@ import {
   setActiveCharacterId,
   createNewCharacter,
   addCharacterToMetadataList,
+  updateCharacterInMetadataList,
   removeCharacterFromMetadataList,
   deleteCharacterById,
   duplicateCharacter,
@@ -288,6 +289,32 @@ export default function Home() {
     }
   }
 
+  // 重命名角色
+  const renameCharacterHandler = (characterId: string, newSaveName: string) => {
+    try {
+      console.log(`[App] Renaming character: ${characterId} to "${newSaveName}"`)
+
+      // 更新存档名称
+      updateCharacterInMetadataList(characterId, { saveName: newSaveName })
+
+      // 更新本地状态
+      setCharacterList(prev =>
+        prev.map(char =>
+          char.id === characterId
+            ? { ...char, saveName: newSaveName, lastModified: new Date().toISOString() }
+            : char
+        )
+      )
+
+      console.log(`[App] Successfully renamed character: ${characterId}`)
+      return true
+    } catch (error) {
+      console.error(`[App] Error renaming character ${characterId}:`, error)
+      alert('重命名存档失败')
+      return false
+    }
+  }
+
   const handlePrintAll = async () => {
     const getCardClass = async (cardId: string | undefined, cardType: CardType): Promise<string> => {
       if (!cardId) return '()';
@@ -526,6 +553,7 @@ export default function Home() {
         onCreateCharacter={createNewCharacterHandler}
         onDeleteCharacter={deleteCharacterHandler}
         onDuplicateCharacter={duplicateCharacterHandler}
+        onRenameCharacter={renameCharacterHandler}
         onImportData={(data: any) => {
           const mergedData = { ...defaultSheetData, ...data, focused_card_ids: data.focused_card_ids || [] }
           setFormData(mergedData)

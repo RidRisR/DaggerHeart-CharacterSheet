@@ -17,6 +17,7 @@ interface CharacterManagementModalProps {
     onCreateCharacter: (saveName: string) => boolean
     onDeleteCharacter: (characterId: string) => boolean
     onDuplicateCharacter: (characterId: string, newSaveName: string) => boolean
+    onRenameCharacter: (characterId: string, newSaveName: string) => boolean
     onImportData: (data: any) => void
     onResetData: () => void
 }
@@ -31,6 +32,7 @@ export function CharacterManagementModal({
     onCreateCharacter,
     onDeleteCharacter,
     onDuplicateCharacter,
+    onRenameCharacter,
     onImportData
 }: CharacterManagementModalProps) {
     if (!isOpen) return null
@@ -185,6 +187,18 @@ export function CharacterManagementModal({
                                                 切换
                                             </Button>
                                         )}
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => {
+                                                const newSaveName = prompt('请输入新的存档名称:', character.saveName)
+                                                if (newSaveName && newSaveName !== character.saveName) {
+                                                    onRenameCharacter(character.id, newSaveName)
+                                                }
+                                            }}
+                                        >
+                                            重命名
+                                        </Button>
                                         <Button
                                             size="sm"
                                             variant="outline"

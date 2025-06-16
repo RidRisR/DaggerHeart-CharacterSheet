@@ -143,6 +143,8 @@ export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySe
   // 用useRef持久化高度和展开状态
   const containerHeightRef = useRef<number>(400)
   const expandedCardsRef = useRef<Record<string, boolean>>({})
+  // 使用ref来跟踪最后的focusedCardIds，避免无限循环
+  const lastFocusedCardIdsRef = useRef<string[]>([])
   // 触发rerender的state
   const [, forceUpdate] = useState(0)
 
@@ -174,21 +176,30 @@ export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySe
       return;
     }
 
+    // 检查focusedCardIds是否真的发生了变化
+    const currentFocusedIdsStr = JSON.stringify([...focusedCardIds].sort())
+    const lastFocusedIdsStr = JSON.stringify([...lastFocusedCardIdsRef.current].sort())
+    
+    if (currentFocusedIdsStr === lastFocusedIdsStr) {
+      // 没有变化，不需要更新
+      return
+    }
+
     try {
       const newFocusedCards = allStandardCards.filter(card => {
         const cardId = card.id;
         return cardId !== undefined && focusedCardIds.includes(cardId);
       });
       
-      // 只有在卡牌数量确实发生变化时才更新状态和打印日志
-      if (newFocusedCards.length !== focusedCards.length) {
-        console.log(`[CardDisplaySection] 更新聚焦卡牌，共 ${newFocusedCards.length} 张`);
-        setFocusedCards(newFocusedCards);
-      }
+      console.log(`[CardDisplaySection] 更新聚焦卡牌，共 ${newFocusedCards.length} 张`);
+      setFocusedCards(newFocusedCards);
+      
+      // 更新ref记录
+      lastFocusedCardIdsRef.current = [...focusedCardIds]
     } catch (error) {
       console.error('[CardDisplaySection] 加载聚焦卡牌失败:', error);
     }
-  }, [allStandardCards, cardsLoading, focusedCardIds, focusedCards.length]);
+  }, [allStandardCards, cardsLoading, focusedCardIds]); // 移除 focusedCards.length 依赖
 
   // 更新卡牌分类和聚焦卡牌
   useEffect(() => {

@@ -177,6 +177,9 @@ export function CardDeckSection({
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [cardSelectionModalOpen, setCardSelectionModalOpen] = useState(false)
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
+  
+  // 添加一个ref来防止循环更新
+  const isUpdatingFromPropsRef = useRef(false)
 
   // 确保 formData 和 formData.cards 存在
   const cards: StandardCard[] =
@@ -185,22 +188,42 @@ export function CardDeckSection({
 
   // Initialize selected cards from formData.focused_card_ids (多角色系统)
   useEffect(() => {
+    if (isUpdatingFromPropsRef.current) return // 防止循环更新
+    
     const focusedCardIds = formData.focused_card_ids || [];
     const initialSelectedIndices = cards.map((card: StandardCard, index: number) => {
       // Ensure card and card.id are valid before using them
       return card && card.id && focusedCardIds.includes(card.id) ? index : -1
     }).filter((index: number) => index !== -1)
 
-    setSelectedCards(initialSelectedIndices)
+    // 只有在真正不同时才更新
+    const currentSelectedStr = JSON.stringify([...selectedCards].sort())
+    const newSelectedStr = JSON.stringify([...initialSelectedIndices].sort())
+    
+    if (currentSelectedStr !== newSelectedStr) {
+      setSelectedCards(initialSelectedIndices)
+    }
   }, [cards, formData.focused_card_ids]) // 依赖于cards和focused_card_ids
 
   // 当选中的卡牌变化时，通知父组件更新 formData.focused_card_ids
   useEffect(() => {
     const idsToSave = selectedCards.map((index: number) => cards[index]?.id).filter(id => id != null) as string[]
-    if (onFocusedCardsChange) {
+    
+    // 检查是否真的需要更新
+    const currentFocusedIds = formData.focused_card_ids || []
+    const currentIdsStr = JSON.stringify([...currentFocusedIds].sort())
+    const newIdsStr = JSON.stringify([...idsToSave].sort())
+    
+    if (currentIdsStr !== newIdsStr && onFocusedCardsChange) {
+      isUpdatingFromPropsRef.current = true // 设置标志位
       onFocusedCardsChange(idsToSave)
+      
+      // 重置标志位
+      setTimeout(() => {
+        isUpdatingFromPropsRef.current = false
+      }, 0)
     }
-  }, [selectedCards, cards, onFocusedCardsChange])
+  }, [selectedCards, cards, onFocusedCardsChange, formData.focused_card_ids])
 
   // 监听Alt键
   useEffect(() => {

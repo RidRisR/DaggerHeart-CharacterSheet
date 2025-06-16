@@ -80,14 +80,9 @@ export default function CharacterSheetPageTwo({ formData, setFormData, onFocused
     }, 0)
   }
 
-  // 处理聚焦卡牌变更 (多角色系统)
+  // 处理聚焦卡牌变更 (多角色系统) - 防止双重更新
   const handleFocusedCardsChange = (focusedCardIds: string[]) => {
-    setFormData((prev) => ({ 
-      ...prev, 
-      focused_card_ids: focusedCardIds 
-    }))
-    
-    // 通知父组件
+    // 只通知父组件，不直接更新formData，避免双重更新
     onFocusedCardsChange?.(focusedCardIds)
   }
 

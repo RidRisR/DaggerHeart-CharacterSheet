@@ -146,15 +146,26 @@ export default function Home() {
     }
   }
 
-  // 自动保存当前角色数据
+  // 自动保存当前角色数据（带防抖和更深层的变更检测）
   useEffect(() => {
     if (!isLoading && isMigrationCompleted && currentCharacterId && formData) {
-      try {
-        saveCharacterById(currentCharacterId, formData)
-        console.log(`[App] Auto-saved character: ${currentCharacterId}`)
-      } catch (error) {
-        console.error(`[App] Error auto-saving character ${currentCharacterId}:`, error)
-      }
+      const saveTimeout = setTimeout(() => {
+        try {
+          // 检查是否真的需要保存 - 与localStorage中的数据比较
+          const existingData = loadCharacterById(currentCharacterId)
+          const formDataStr = JSON.stringify(formData)
+          const existingDataStr = JSON.stringify(existingData)
+
+          if (existingDataStr !== formDataStr) {
+            saveCharacterById(currentCharacterId, formData)
+            console.log(`[App] Auto-saved character: ${currentCharacterId}`)
+          }
+        } catch (error) {
+          console.error(`[App] Error auto-saving character ${currentCharacterId}:`, error)
+        }
+      }, 1000) // 增加防抖时间到1秒
+
+      return () => clearTimeout(saveTimeout)
     }
   }, [formData, currentCharacterId, isLoading, isMigrationCompleted])
 
@@ -320,12 +331,21 @@ export default function Home() {
     setIsGuideOpen(!isGuideOpen)
   }
 
-  // 处理聚焦卡牌变更
+  // 处理聚焦卡牌变更（带深度比较防止循环）
   const handleFocusedCardsChange = (focusedCardIds: string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      focused_card_ids: focusedCardIds
-    }))
+    setFormData(prev => {
+      // 深度比较，避免不必要的更新
+      const currentIds = prev.focused_card_ids || []
+      if (JSON.stringify(currentIds.sort()) === JSON.stringify(focusedCardIds.sort())) {
+        return prev // 没有变化，直接返回原对象
+      }
+
+      console.log(`[App] 聚焦卡牌变更: ${currentIds.length} -> ${focusedCardIds.length}`)
+      return {
+        ...prev,
+        focused_card_ids: focusedCardIds
+      }
+    })
   }
 
   if (!isMigrationCompleted || isLoading) {

@@ -180,12 +180,15 @@ export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySe
         return cardId !== undefined && focusedCardIds.includes(cardId);
       });
       
-      console.log(`[CardDisplaySection] 更新聚焦卡牌，共 ${newFocusedCards.length} 张`);
-      setFocusedCards(newFocusedCards);
+      // 只有在卡牌数量确实发生变化时才更新状态和打印日志
+      if (newFocusedCards.length !== focusedCards.length) {
+        console.log(`[CardDisplaySection] 更新聚焦卡牌，共 ${newFocusedCards.length} 张`);
+        setFocusedCards(newFocusedCards);
+      }
     } catch (error) {
       console.error('[CardDisplaySection] 加载聚焦卡牌失败:', error);
     }
-  }, [allStandardCards, cardsLoading, focusedCardIds]);
+  }, [allStandardCards, cardsLoading, focusedCardIds, focusedCards.length]);
 
   // 更新卡牌分类和聚焦卡牌
   useEffect(() => {
@@ -202,19 +205,19 @@ export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySe
     }
   }, [cards, loadAndSetFocusedCards, cardsLoading, allStandardCards.length])
 
-  // 监听 focusedCardsChanged 事件
-  useEffect(() => {
-    const handleFocusedCardsChange = () => {
-      if (!cardsLoading && allStandardCards.length > 0) {
-        loadAndSetFocusedCards();
-      }
-    };
+  // 监听 focusedCardsChanged 事件 - 移除，因为现在使用props传递
+  // useEffect(() => {
+  //   const handleFocusedCardsChange = () => {
+  //     if (!cardsLoading && allStandardCards.length > 0) {
+  //       loadAndSetFocusedCards();
+  //     }
+  //   };
 
-    window.addEventListener('focusedCardsChanged', handleFocusedCardsChange);
-    return () => {
-      window.removeEventListener('focusedCardsChanged', handleFocusedCardsChange);
-    };
-  }, [loadAndSetFocusedCards, cardsLoading, allStandardCards.length])
+  //   window.addEventListener('focusedCardsChanged', handleFocusedCardsChange);
+  //   return () => {
+  //     window.removeEventListener('focusedCardsChanged', handleFocusedCardsChange);
+  //   };
+  // }, [loadAndSetFocusedCards, cardsLoading, allStandardCards.length])
 
   // 切换卡片展开状态
   const toggleCard = (cardId: string) => {

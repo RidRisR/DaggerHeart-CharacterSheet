@@ -2,6 +2,7 @@
 
 import type React from "react"
 import type { SheetData } from "@/lib/sheet-data"
+import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 
 interface InventoryWeaponSectionProps {
   formData: SheetData
@@ -18,6 +19,11 @@ export function InventoryWeaponSection({
   handleBooleanChange,
   index,
 }: InventoryWeaponSectionProps) {
+  const { getElementProps } = useAutoResizeFont({
+    maxFontSize: 14,
+    minFontSize: 10
+  })
+
   const nameField = `inventoryWeapon${index}Name`
   const traitField = `inventoryWeapon${index}Trait`
   const damageField = `inventoryWeapon${index}Damage`
@@ -47,7 +53,8 @@ export function InventoryWeaponSection({
             name={traitField}
             value={(formData as any)[traitField]}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide" // Changed text-[10px] to text-sm
+            {...getElementProps((formData as any)[traitField] || "", `inventory-weapon-${index}-trait`)}
+            className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
           />
         </div>
         <div className="col-span-1">
@@ -57,7 +64,8 @@ export function InventoryWeaponSection({
             name={damageField}
             value={(formData as any)[damageField]}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide" // Changed text-[10px] to text-sm
+            {...getElementProps((formData as any)[damageField] || "", `inventory-weapon-${index}-damage`)}
+            className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
           />
         </div>
       </div>
@@ -69,7 +77,8 @@ export function InventoryWeaponSection({
           name={featureField}
           value={(formData as any)[featureField]}
           onChange={handleInputChange}
-          className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide" // Changed text-[10px] to text-sm
+          {...getElementProps((formData as any)[featureField] || "", `inventory-weapon-${index}-feature`)}
+          className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
         />
       </div>
 

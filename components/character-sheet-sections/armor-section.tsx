@@ -2,6 +2,7 @@
 
 import type React from "react"
 import type { SheetData } from "@/lib/sheet-data"
+import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 
 interface ArmorSectionProps {
   formData: SheetData
@@ -10,6 +11,11 @@ interface ArmorSectionProps {
 }
 
 export function ArmorSection({ formData, handleInputChange, openArmorModal }: ArmorSectionProps) {
+  const { getElementProps } = useAutoResizeFont({
+    maxFontSize: 14,
+    minFontSize: 10
+  })
+
   return (
     <div className="mb-2">
       <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-md">护甲</h4>
@@ -31,7 +37,8 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
             name="armorBaseScore"
             value={formData.armorBaseScore}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
+            {...getElementProps(formData.armorBaseScore || "", "armor-base-score")}
+            className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
           />
         </div>
         <div className="col-span-1">
@@ -41,7 +48,8 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
             name="armorThreshold"
             value={formData.armorThreshold}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
+            {...getElementProps(formData.armorThreshold || "", "armor-threshold")}
+            className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
           />
         </div>
       </div>
@@ -52,7 +60,8 @@ export function ArmorSection({ formData, handleInputChange, openArmorModal }: Ar
           name="armorFeature"
           value={formData.armorFeature}
           onChange={handleInputChange}
-          className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
+          {...getElementProps(formData.armorFeature || "", "armor-feature")}
+          className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
         />
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import type React from "react"
 import type { SheetData } from "@/lib/sheet-data"
+import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 
 interface HeaderSectionProps {
   formData: SheetData
@@ -20,6 +21,10 @@ export function HeaderSection({
   openCommunityModal,
   openSubclassModal,
 }: HeaderSectionProps) {
+  const { getElementProps } = useAutoResizeFont({
+    maxFontSize: 14,
+    minFontSize: 10
+  })
   return (
     <div className="bg-gray-800 text-white p-2 flex justify-between items-center rounded-t-md">
       <div className="flex flex-col">
@@ -44,7 +49,8 @@ export function HeaderSection({
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className="bg-white text-gray-800 border border-gray-400 rounded p-1 focus:outline-none w-40 text-sm print-empty-hide"
+              {...getElementProps(formData.name, 'character-name')}
+              className="bg-white text-gray-800 border border-gray-400 rounded p-1 focus:outline-none w-40 print-empty-hide"
             />
           </div>
           <div className="flex flex-col">

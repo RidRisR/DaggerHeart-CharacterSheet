@@ -2,6 +2,7 @@
 
 import type React from "react"
 import type { SheetData } from "@/lib/sheet-data"
+import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 
 interface InventorySectionProps {
   formData: SheetData
@@ -9,6 +10,11 @@ interface InventorySectionProps {
 }
 
 export function InventorySection({ formData, setFormData }: InventorySectionProps) {
+  const { getElementProps } = useAutoResizeFont({
+    maxFontSize: 14,
+    minFontSize: 10
+  })
+
   // 确保 inventory 是一个包含5个元素的数组
   const safeInventory =
     Array.isArray(formData.inventory) && formData.inventory.length >= 5 ? formData.inventory : ["", "", "", "", ""]
@@ -28,7 +34,8 @@ export function InventorySection({ formData, setFormData }: InventorySectionProp
               newInventory[i] = e.target.value
               setFormData((prev) => ({ ...prev, inventory: newInventory }))
             }}
-            className="w-full border-b border-gray-400 p-0.5 focus:outline-none text-sm print-empty-hide"
+            {...getElementProps(item || "", `inventory-${i}`)}
+            className="w-full border-b border-gray-400 p-0.5 focus:outline-none print-empty-hide"
           />
         ))}
       </div>

@@ -384,14 +384,14 @@ export default function Home() {
     }
 
     // 只在非模态框状态下监听快捷键
-    if (!characterManagementModalOpen && !isGuideOpen) {
+    if (!characterManagementModalOpen) {
       document.addEventListener('keydown', handleKeyDown)
     }
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [characterList, currentCharacterId, characterManagementModalOpen, isGuideOpen])
+  }, [characterList, currentCharacterId, characterManagementModalOpen])
 
   // 处理聚焦卡牌变更（带深度比较防止循环）
   const handleFocusedCardsChange = (focusedCardIds: string[]) => {

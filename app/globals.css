@@ -6,6 +6,21 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* 自动调整字体的打印样式 */
+@media print {
+  .auto-resize-font {
+    font-size: var(--print-font-size, 14px) !important;
+  }
+
+  /* 确保所有有 data-min-font 属性的元素在打印时使用计算的字体大小 */
+  input[data-min-font] {
+    font-size: var(--print-font-size, 14px) !important;
+  }
+
+  textarea[data-min-font] {
+    font-size: var(--print-font-size, 14px) !important;
+  }
+}
 /* 打印所有页面的特殊样式 */
 .print-all-pages .page-one,
 .print-all-pages .page-two,

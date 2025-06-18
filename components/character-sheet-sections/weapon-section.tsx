@@ -2,6 +2,7 @@
 
 import type React from "react"
 import type { SheetData } from "@/lib/sheet-data"
+import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 
 interface WeaponSectionProps {
   formData: SheetData
@@ -18,6 +19,11 @@ export function WeaponSection({
   isPrimary = false,
   fieldPrefix,
 }: WeaponSectionProps) {
+  const { getElementProps } = useAutoResizeFont({
+    maxFontSize: 14,
+    minFontSize: 10
+  })
+
   const nameField = `${fieldPrefix}Name`
   const traitField = `${fieldPrefix}Trait`
   const damageField = `${fieldPrefix}Damage`
@@ -46,7 +52,8 @@ export function WeaponSection({
             name={traitField}
             value={(formData as any)[traitField]}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
+            {...getElementProps((formData as any)[traitField] || "", `${fieldPrefix}-trait`)}
+            className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
           />
         </div>
         <div className="col-span-1">
@@ -56,7 +63,8 @@ export function WeaponSection({
             name={damageField}
             value={(formData as any)[damageField]}
             onChange={handleInputChange}
-            className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
+            {...getElementProps((formData as any)[damageField] || "", `${fieldPrefix}-damage`)}
+            className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
           />
         </div>
       </div>
@@ -67,7 +75,8 @@ export function WeaponSection({
           name={featureField}
           value={(formData as any)[featureField]}
           onChange={handleInputChange}
-          className="w-full border-b border-gray-400 focus:outline-none text-sm print-empty-hide"
+          {...getElementProps((formData as any)[featureField] || "", `${fieldPrefix}-feature`)}
+          className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
         />
       </div>
     </div>

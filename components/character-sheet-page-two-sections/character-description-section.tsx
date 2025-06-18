@@ -18,7 +18,7 @@ export function CharacterDescriptionSection({ formData, handleInputChange }: Cha
           name="characterBackground"
           value={formData.characterBackground}
           onChange={handleInputChange}
-          className="flex-grow min-h-[190px] text-[8px] border-gray-400 print-empty-hide"
+          className="flex-grow min-h-[190px] text-[10px] border-gray-400 print-empty-hide"
           placeholder="写下对您的角色的概括性介绍，包括他们的过去、经历和个性特征。请注意，角色真正的性格和背景特质应当在游戏中体现出来，这里只是简短的概括和提示。"
         />
       </div>
@@ -29,7 +29,7 @@ export function CharacterDescriptionSection({ formData, handleInputChange }: Cha
           name="characterAppearance"
           value={formData.characterAppearance}
           onChange={handleInputChange}
-          className="flex-grow min-h-[190px] text-[8px] border-gray-400 print-empty-hide"
+          className="flex-grow min-h-[190px] text-[10px] border-gray-400 print-empty-hide"
           placeholder="写下您的角色的性别、年龄、外貌和服装等外观特征。如果您的角色有什么特殊的形态或外观特征，也可以记录在这里。"
         />
       </div>
@@ -40,7 +40,7 @@ export function CharacterDescriptionSection({ formData, handleInputChange }: Cha
           name="characterMotivation"
           value={formData.characterMotivation}
           onChange={handleInputChange}
-          className="flex-grow min-h-[190px] text-[8px] border-gray-400 print-empty-hide"
+          className="flex-grow min-h-[190px] text-[10px] border-gray-400 print-empty-hide"
           placeholder="写下您的角色的动机、目标和愿望。描述角色参与冒险的原因和主要驱动力。请注意，角色在游戏中随时可能成长和改变，随着故事发展，他们的动机可以发生转变。"
         />
       </div>

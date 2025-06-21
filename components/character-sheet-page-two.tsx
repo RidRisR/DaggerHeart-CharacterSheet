@@ -178,7 +178,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData, onFocused
             <UpgradeSection
               tier={2}
             title="T3 等级 5-7"
-            description="当你到达 5 级时：获得一项额外+2经历，清除所有角色属性上的升级标记，熟练值标记+1。"
+            description="当你到达 5 级时：获得一项额外+2经历，清除所有属性升级标记，熟练值标记+1。"
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
@@ -189,7 +189,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData, onFocused
             <UpgradeSection
               tier={3}
             title="T4 等级 8-10"
-            description="当你到达 8 级时：获得一项额外+2经历，清除所有角色属性上的升级标记，熟练值标记+1。"
+            description="当你到达 8 级时：获得一项额外+2经历，清除所有属性升级标记，熟练值标记+1。"
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}

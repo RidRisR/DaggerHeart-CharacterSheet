@@ -62,21 +62,16 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 mb-3 print:grid-cols-2 print:gap-x-8 print:mb-3">
             {/* 伙伴描述区：左半区，带边框 */}
             <div className="flex flex-col justify-end w-full p-3 border border-transparent rounded-t-md rounded-b-md bg-white">
-                <h3 className="font-bold text-md mb-2 text-gray-800">伙伴描述</h3>
+                <h3 className="font-bold text-md mb-2">伙伴描述</h3>
                 <div className="flex flex-col items-center">
-                    <div className="w-36 h-36 border-2 border-gray-800 flex items-center justify-center relative overflow-hidden bg-gray-100 dark:bg-gray-800 print:w-28 print:h-28 mb-2">
+                    <div className="w-36 h-36 border-2 border-gray-800 flex items-center justify-center relative overflow-hidden bg-gray-100 dark:bg-gray-800 print:bg-white print:w-28 print:h-28 mb-2">
                         {safeFormData.companionImage ? (
                             <img
                                 src={safeFormData.companionImage}
                                 alt="伙伴图片"
                                 className="w-full h-full object-cover"
                             />
-                        ) : (
-                            <svg viewBox="0 0 48 48" fill="none" className="w-14 h-14 text-gray-300" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="48" height="48" rx="8" fill="currentColor" />
-                                <path d="M24 14a6 6 0 100 12 6 6 0 000-12zm0 16c-5.33 0-16 2.67-16 8v2h32v-2c0-5.33-10.67-8-16-8z" fill="#fff" />
-                            </svg>
-                        )}
+                        ) : null}
                         <input
                             type="file"
                             accept="image/*"
@@ -103,7 +98,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                         name="companionDescription"
                         value={safeFormData.companionDescription || ''}
                         onChange={e => onFormDataChange({ ...formData, companionDescription: e.target.value })}
-                        className="block w-full text-xs border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 resize-none shadow-inner min-h-[7rem] max-h-[10rem] print:min-h-[5rem] print:max-h-[8rem]"
+                        className="block w-full text-xs border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-gray-50 dark:bg-gray-900 print:bg-white print:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 resize-none shadow-inner min-h-[7rem] max-h-[10rem] print:min-h-[5rem] print:max-h-[8rem]"
                         placeholder="伙伴描述（如性格、外貌等）"
                         maxLength={180}
                         style={{ minHeight: '6rem', maxHeight: '9rem' }}
@@ -302,7 +297,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
             {/* 伙伴经验区块（右侧为图片+描述，无经验示例） */}
             {renderCompanionExperienceSection()}
             {/* Spellcast Roll Info */}
-            <p className="text-xs mb-4 text-gray-600 dark:text-gray-400 leading-snug">你可以进行一次施法检定来与你的伙伴建立连接并命令他们行动。当你这样做时，你可以花费希望（Hope）将一个适用的伙伴经历加入到检定中。在花费希望并成功时，如果你的下一个动作建立在其成功之上，你的动作掷骰获得优势。</p>
+                    <p className="text-xs mb-4 text-gray-600 dark:text-gray-400 leading-snug">你可以进行一次施法检定来与你的伙伴建立连接并命令他们行动。当你这样做时，你可以花费希望将一个适用的伙伴经历加入到检定中。在花费希望并成功时，如果你的下一个动作建立在其成功之上，你的动作掷骰获得优势。</p>
             {/* 新的两栏布局：左-攻击与伤害/压力，右-训练 */}
             <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-5 mb-3">
                 {/* 攻击与伤害/压力 - 左侧 */}
@@ -349,7 +344,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                                     style={{ width: '2.5rem' }}
                                 />
                             </div>
-                            <p className="text-2xs text-gray-600 dark:text-gray-400 mb-1 leading-snug">每当你的伙伴将要受到伤害时，他们标记一点压力。当他们的压力槽满时，他们会脱离场景（躲藏、逃跑等）。他们对你不可用，并将在你下一次长休时返回，并清除一点压力。</p>
+                                    <p className="text-2xs text-gray-600 dark:text-gray-400 mb-1 leading-snug">每当你的伙伴将要受到伤害时，他们标记一点压力。当他们的压力槽满时，他们会脱离场景（躲藏、逃跑等）。动物伙伴暂时不可用，它将在下一次长休时返回，并清除一点压力。</p>
                             <p className="text-2xs text-gray-600 dark:text-gray-400 mb-1 leading-snug">每当你对自己使用“清除压力”的休整动作时，也会自动为你的伙伴清除同样多的压力。</p>
                         </div>
                     </div>
@@ -367,7 +362,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
                                 {renderTrainingOption("装甲：当你的伙伴受到伤害时，你可以自己标记一格护甲槽代替伙伴标记一点压力。", "armored", 1)}
                                 {renderTrainingOption("凶猛：增加你伙伴的伤害骰（如d6到d8）或范围（如近战到临近）一个等级。", "vicious", 3)}
                                 {renderTrainingOption("坚韧：增加一个额外的压力槽。", "resilient", 3)}
-                                {renderTrainingOption("羁绊：当你标记最后一个生命点时，你的伙伴会冲到你身边安慰你。掷出等同于他们可用压力槽数量的d6，并标记这些压力。如果掷出6，他们会让你振作起来。清除你的最后一个生命点并返回场景。", "bonded", 1)}
+                                        {renderTrainingOption("羁绊：当你标记最后一个生命槽时，你的伙伴会冲到你身边安慰你。掷出等同于他们可用压力槽数量的d6，并标记这些压力。如果掷出6，他们会让你振作起来。清除你的最后一个生命槽并返回场景。", "bonded", 1)}
                                 {renderTrainingOption("警觉：伙伴的闪避+2。", "aware", 3)}
                             </div>
                         </div>

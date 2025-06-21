@@ -730,8 +730,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                       />
                     ) : (
                       <div className="text-center">
-                        <div className="text-[10px] font-bold mb-1">角色图像</div>
-                        <div className="text-[8px]">点击上传</div>
+                          <div className="text-[10px] font-bold mb-1 print:hidden">角色图像</div>
+                          <div className="text-[8px] print:hidden">点击上传</div>
                       </div>
                     )}
                     <input

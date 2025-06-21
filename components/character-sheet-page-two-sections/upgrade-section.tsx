@@ -36,18 +36,27 @@ export function UpgradeSection({
         <div className="space-y-1">
           {getUpgradeOptions(tier).map((option, index) => (
             <div key={`${tierKey}-${index}`} className="flex items-start text-[10px] leading-[1.6]">
-              <span className="flex flex-shrink-0 items-center justify-end mt-px" style={{ minWidth: '3.2em' }}>
+              <span className={`flex flex-shrink-0 items-center justify-end mt-px ${option.doubleBox && option.boxCount === 2 ? '' : 'gap-px'}`} style={{ minWidth: '3.2em' }}>
                 {Array(option.boxCount).fill(null).map((_, i) => (
                   <div
                     key={i}
-                    className={`w-3 h-3 border border-gray-800 cursor-pointer ${
-                      option.doubleBox
-                        ? isUpgradeChecked(`${tierKey}-${index}`, index)
+                    className={`w-3 h-3 cursor-pointer ${option.doubleBox && option.boxCount === 2
+                      ? `${i === 0
+                        ? 'border-l-2 border-t-2 border-b-2 border-r border-gray-800'
+                        : 'border-r-2 border-t-2 border-b-2 border-l border-gray-800'
+                      } ${isUpgradeChecked(`${tierKey}-${index}`, index)
                           ? "bg-gray-800"
                           : "bg-white"
-                        : isUpgradeChecked(`${tierKey}-${index}-${i}`, index)
+                      }`
+                      : option.doubleBox
+                        ? `border-2 border-gray-800 ${isUpgradeChecked(`${tierKey}-${index}`, index)
                           ? "bg-gray-800"
                           : "bg-white"
+                        }`
+                        : `border border-gray-800 ${isUpgradeChecked(`${tierKey}-${index}-${i}`, index)
+                          ? "bg-gray-800"
+                          : "bg-white"
+                        }`
                     }`}
                     onClick={() => {
                       if (option.doubleBox) {

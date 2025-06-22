@@ -66,7 +66,7 @@ export default function Home() {
   // 数据迁移处理 - 只在客户端执行
   useEffect(() => {
     if (!isClient) return
-    
+
     const performMigration = async () => {
       try {
         console.log('[App] Starting data migration check...')
@@ -404,27 +404,15 @@ export default function Home() {
 
   // 已移除聚焦卡牌变更处理函数 - 功能由双卡组系统取代
 
-  // 允许页面在客户端初始化的同时显示加载状态
-  if (!isClient) {
-    return (
-      <div className="flex flex-col justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-        <div className="text-lg">初始化中...</div>
-        <div className="text-sm text-gray-500 mt-2">正在启动客户端...</div>
-      </div>
-    )
-  }
-
-  // 客户端已挂载，但数据还在加载
-  if (!isMigrationCompleted || isLoading) {
+  if (!isClient || !isMigrationCompleted || isLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
         <div className="text-lg">
-          {!isMigrationCompleted ? '正在迁移数据...' : '加载中...'}
+          {!isClient ? '初始化中...' : (!isMigrationCompleted ? '正在迁移数据...' : '加载中...')}
         </div>
         <div className="text-sm text-gray-500 mt-2">
-          {!isMigrationCompleted ? '首次运行需要迁移存储格式，请稍候' : '正在加载角色数据'}
+          {!isClient ? '正在启动客户端...' : (!isMigrationCompleted ? '首次运行需要迁移存储格式，请稍候' : '正在加载角色数据')}
         </div>
       </div>
     )
@@ -550,7 +538,7 @@ export default function Home() {
               // 本地版本：跳转到资产目录下的卡牌管理页面
               window.location.href = './资产/card-manager.html';
             } else {
-            // 在线版本：使用原有路径
+              // 在线版本：使用原有路径
               window.location.href = `/DaggerHeart-CharacterSheet/card-manager`;
             }
           }}

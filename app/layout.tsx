@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CardSystemInitializer } from "@/components/card-system-initializer"
+import { Toaster } from "@/components/ui/toaster"
 import PrintHelper from "./print-helper"
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({
           <CardSystemInitializer />
           <PrintHelper />
           {children}
+          <Toaster />
           {/* 水印 */}
           <div className="fixed bottom-2 left-2 text-gray-500 text-xs opacity-75 pointer-events-none">
             本作品完全开源且免费

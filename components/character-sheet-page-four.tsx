@@ -11,13 +11,23 @@ interface CharacterSheetPageFourProps {
 
 // 打印专用页面，展示所有已加入卡组的卡牌信息
 const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formData }) => {
-    // 只展示有效且唯一的卡牌（按 id 去重）
+    // 合并聚焦卡组和库存卡组，只展示有效且唯一的卡牌（按 id 去重）
     const uniqueCardsMap = new Map<string, StandardCard>();
+
+    // 添加聚焦卡组的卡牌
     (formData?.cards || []).forEach((card: StandardCard) => {
         if (!isEmptyCard(card) && card.id && !uniqueCardsMap.has(card.id)) {
             uniqueCardsMap.set(card.id, card);
         }
     });
+
+    // 添加库存卡组的卡牌
+    (formData?.inventory_cards || []).forEach((card: StandardCard) => {
+        if (!isEmptyCard(card) && card.id && !uniqueCardsMap.has(card.id)) {
+            uniqueCardsMap.set(card.id, card);
+        }
+    });
+
     const cards: StandardCard[] = Array.from(uniqueCardsMap.values());
 
     if (!cards.length) {
@@ -26,7 +36,7 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
 
     return (
         <div className="a4-page page-four print:block hidden px-8 py-10 print:px-8 print:py-10">
-            <h2 className="text-xl font-bold mb-4 text-center">卡组总览</h2>
+            <h2 className="text-xl font-bold mb-4 text-center">卡组总览（聚焦 + 库存）</h2>
             <div className="grid grid-cols-3 gap-4">
                 {cards.map((card, idx) => (
                     <div key={card.id || idx} className="border rounded p-3 bg-white flex flex-col gap-1 break-inside-avoid shadow-sm">

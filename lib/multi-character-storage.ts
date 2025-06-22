@@ -1,5 +1,6 @@
 import { SheetData, CharacterMetadata, CharacterList } from "./sheet-data";
 import { defaultSheetData } from "./default-sheet-data";
+import { createEmptyCard } from "@/card/card-types";
 
 // ===== 多角色系统存储键 =====
 export const CHARACTER_LIST_KEY = "dh_character_list";       // 角色元数据列表
@@ -168,6 +169,14 @@ export function loadCharacterById(id: string): SheetData | null {
       parsed.focused_card_ids = [];
     }
     
+    // 兼容性迁移：为旧角色添加 inventory_cards 字段
+    if (!parsed.inventory_cards) {
+      console.log(`[Migration] Adding inventory_cards to character ${id}`);
+      parsed.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
+      // 立即保存迁移后的数据
+      saveCharacterById(id, parsed);
+    }
+
     return parsed;
   } catch (error) {
     console.error(`[Character] Load failed for ${id} (Fast Fail):`, error);

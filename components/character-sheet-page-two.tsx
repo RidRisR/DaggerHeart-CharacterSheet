@@ -24,6 +24,9 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
     cards: Array.isArray(formData?.cards)
       ? formData.cards
       : Array(20).fill(0).map(() => createEmptyCard()),
+    inventory_cards: Array.isArray(formData?.inventory_cards)
+      ? formData.inventory_cards
+      : Array(20).fill(0).map(() => createEmptyCard()),
     checkedUpgrades: formData?.checkedUpgrades || { tier1: {}, tier2: {}, tier3: {} },
     gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
     experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
@@ -60,7 +63,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
     const isEmptyCard = !card || (!card.name && (!card.type || card.type === "unknown"))
 
     if (!isEmptyCard) {
-      console.log(`[handleCardChange] 更新卡牌 #${index}:`, card)
+      console.log(`[handleCardChange] 更新聚焦卡牌 #${index}:`, card)
     }
 
     isUpdatingRef.current = true
@@ -69,6 +72,31 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
       const newCards = [...prev.cards]
       newCards[index] = card
       return { ...prev, cards: newCards }
+    })
+
+    // 重置标志
+    setTimeout(() => {
+      isUpdatingRef.current = false
+    }, 0)
+  }
+
+  // Handle inventory card changes
+  const handleInventoryCardChange = (index: number, card: StandardCard) => {
+    if (isUpdatingRef.current) return
+
+    // 检查是否是空卡牌，如果是则不记录日志
+    const isEmptyCard = !card || (!card.name && (!card.type || card.type === "unknown"))
+
+    if (!isEmptyCard) {
+      console.log(`[handleInventoryCardChange] 更新库存卡牌 #${index}:`, card)
+    }
+
+    isUpdatingRef.current = true
+
+    setFormData((prev) => {
+      const newInventoryCards = [...(prev.inventory_cards || Array(20).fill(0).map(() => createEmptyCard()))]
+      newInventoryCards[index] = card
+      return { ...prev, inventory_cards: newInventoryCards }
     })
 
     // 重置标志
@@ -146,6 +174,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
         <CardDeckSection
           formData={safeFormData}
           onCardChange={handleCardChange}
+          onInventoryCardChange={handleInventoryCardChange}
           cardModalActiveTab={cardModalActiveTab}
           setCardModalActiveTab={setCardModalActiveTab}
           cardModalSearchTerm={cardModalSearchTerm}

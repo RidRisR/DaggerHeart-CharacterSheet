@@ -3,16 +3,18 @@
 import type React from "react"
 import { useState, useEffect, useRef, memo } from "react"
 import { getCardTypeName, convertToStandardCard } from "@/card"
-import { CardType, createEmptyCard, StandardCard } from "@/card/card-types"
+import { CardType, createEmptyCard, StandardCard, isEmptyCard } from "@/card/card-types"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { SelectableCard } from "@/components/ui/selectable-card"
+import { toast } from "@/hooks/use-toast"
 import type { SheetData } from "@/lib/sheet-data"
 import type { CSSProperties, MouseEvent } from "react";
 
 interface CardDeckSectionProps {
   formData: SheetData
   onCardChange: (index: number, card: StandardCard) => void
+  onInventoryCardChange: (index: number, card: StandardCard) => void // 新增：库存卡组修改函数
   // 移除：onFocusedCardsChange 功能由双卡组系统取代
   cardModalActiveTab: string;
   setCardModalActiveTab: React.Dispatch<React.SetStateAction<string>>;
@@ -161,6 +163,7 @@ const MemoizedCard = memo(Card);
 export function CardDeckSection({
   formData,
   onCardChange,
+  onInventoryCardChange, // 新增参数
   // 移除：onFocusedCardsChange 参数
   cardModalActiveTab,
   setCardModalActiveTab,
@@ -171,6 +174,9 @@ export function CardDeckSection({
   cardModalSelectedLevels,
   setCardModalSelectedLevels,
 }: CardDeckSectionProps) {
+  // 卡组视图状态
+  const [activeDeck, setActiveDeck] = useState<'focused' | 'inventory'>('focused');
+
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
   // 移除：selectedCards 状态和聚焦逻辑
   const [isAltPressed, setIsAltPressed] = useState(false)
@@ -180,10 +186,17 @@ export function CardDeckSection({
   
   // 移除：防止循环更新的ref，因为已不需要聚焦功能
 
-  // 确保 formData 和 formData.cards 存在
-  const cards: StandardCard[] =
-    formData?.cards ||
-    Array(20).fill(createEmptyCard())
+  // 获取当前卡组数据的辅助函数
+  const getCurrentDeckCards = (deckType: 'focused' | 'inventory'): StandardCard[] => {
+    if (deckType === 'focused') {
+      return formData?.cards || Array(20).fill(0).map(() => createEmptyCard());
+    } else {
+      return formData?.inventory_cards || Array(20).fill(0).map(() => createEmptyCard());
+    }
+  };
+
+  // 确保 formData 和当前卡组存在
+  const cards: StandardCard[] = getCurrentDeckCards(activeDeck);
 
   // 移除：所有与 selectedCards 和 focused_card_ids 相关的逻辑
 
@@ -210,17 +223,71 @@ export function CardDeckSection({
     }
   }, [])
 
-  // 检查是否是特殊卡位（前四个位置）
+  // 检查是否是特殊卡位（聚焦卡组的前五个位置）
   const isSpecialSlot = (index: number): boolean => {
-    return index < 5; // 更新逻辑支持前五个位置
+    return activeDeck === 'focused' && index < 5;
   }
 
-  // 处理卡牌右键点击事件 - 预留给双卡组系统
+  // 处理卡牌右键点击事件 - 实现双卡组移动逻辑
   const handleCardRightClick = (index: number, e: React.MouseEvent) => {
-    e.preventDefault() // 阻止默认右键菜单
+    e.preventDefault(); // 阻止默认右键菜单
 
-    // TODO: 实现双卡组移动逻辑
-    console.log(`右键点击卡牌 ${index}，将在双卡组系统中实现移动功能`);
+    const isFromFocused = activeDeck === 'focused';
+    const sourceCards = getCurrentDeckCards(activeDeck);
+    const targetDeckType = isFromFocused ? 'inventory' : 'focused';
+    const targetCards = getCurrentDeckCards(targetDeckType);
+
+    // 特殊卡位保护：聚焦卡组的前5位不能移动到库存
+    if (isFromFocused && index < 5) {
+      toast({
+        title: "无法移动",
+        description: "特殊卡位（前5张）不能移动到库存卡组",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 检查源卡牌是否为空
+    const sourceCard = sourceCards[index];
+    if (isEmptyCard(sourceCard)) {
+      toast({
+        title: "无法移动",
+        description: "空卡位无法移动",
+        variant: "default",
+      });
+      return;
+    }
+
+    // 查找目标卡组的空位
+    const emptyTargetIndex = targetCards.findIndex(isEmptyCard);
+    if (emptyTargetIndex === -1) {
+      toast({
+        title: "无法移动",
+        description: `${isFromFocused ? '库存' : '聚焦'}卡组已满，无法移动`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 执行移动
+    if (isFromFocused) {
+      // 从聚焦卡组移动到库存卡组
+      onCardChange(index, createEmptyCard()); // 清空源位置
+      onInventoryCardChange(emptyTargetIndex, sourceCard); // 添加到目标位置
+    } else {
+      // 从库存卡组移动到聚焦卡组
+      onInventoryCardChange(index, createEmptyCard()); // 清空源位置
+      onCardChange(emptyTargetIndex, sourceCard); // 添加到目标位置
+    }
+
+    // 成功移动提示
+    toast({
+      title: "移动成功",
+      description: `卡牌已移动到${isFromFocused ? '库存' : '聚焦'}卡组`,
+      variant: "default",
+    });
+
+    console.log(`卡牌已从${isFromFocused ? '聚焦' : '库存'}卡组移动到${isFromFocused ? '库存' : '聚焦'}卡组`);
   }
 
   // 处理卡牌点击事件
@@ -235,10 +302,14 @@ export function CardDeckSection({
 
   // 处理卡牌选择
   const handleCardSelect = (card: StandardCard) => {
-    if (selectedCardIndex !== null && onCardChange) {
-      onCardChange(selectedCardIndex, card)
-      setCardSelectionModalOpen(false)
-      setSelectedCardIndex(null)
+    if (selectedCardIndex !== null) {
+      if (activeDeck === 'focused') {
+        onCardChange(selectedCardIndex, card);
+      } else {
+        onInventoryCardChange(selectedCardIndex, card);
+      }
+      setCardSelectionModalOpen(false);
+      setSelectedCardIndex(null);
     }
   }
 
@@ -271,6 +342,28 @@ export function CardDeckSection({
         <div className="h-px bg-gray-800 flex-grow"></div>
       </div>
 
+      {/* 卡组切换标签 */}
+      <div className="flex mb-4 border-b border-gray-200">
+        <button
+          className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeDeck === 'focused'
+              ? 'border-blue-500 text-blue-600 bg-blue-50'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          onClick={() => setActiveDeck('focused')}
+        >
+          聚焦卡组 ({getCurrentDeckCards('focused').filter(card => !isEmptyCard(card)).length}/20)
+        </button>
+        <button
+          className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeDeck === 'inventory'
+              ? 'border-green-500 text-green-600 bg-green-50'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          onClick={() => setActiveDeck('inventory')}
+        >
+          库存卡组 ({getCurrentDeckCards('inventory').filter(card => !isEmptyCard(card)).length}/20)
+        </button>
+      </div>
+
       <div className="grid grid-cols-4 gap-1">
         {cards &&
           Array.isArray(cards) &&
@@ -279,12 +372,12 @@ export function CardDeckSection({
               card = createEmptyCard();
             }
 
-            const isSpecial = index < 5;
+            const isSpecial = isSpecialSlot(index);
             const isSelected = false; // 移除选中状态，双卡组系统不需要此功能
 
             return (
               <MemoizedCard
-                key={`card-${index}`}
+                key={`card-${activeDeck}-${index}`} // 更新key以区分不同卡组
                 card={card}
                 index={index}
                 isSelected={isSelected}

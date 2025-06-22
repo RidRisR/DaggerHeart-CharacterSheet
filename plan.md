@@ -10,21 +10,33 @@
 - ✅ **UI清理**：移除聚焦标签页、相关分类、异步加载逻辑
 - ✅ **编译测试**：确保应用可以正常编译和运行，无错误和警告
 
-### 清理范围总结
-- `lib/sheet-data.ts`：移除 `focused_card_ids` 字段，新增 `inventory_cards` 字段
-- `lib/storage.ts`：移除 `saveFocusedCardIds`、`loadFocusedCardIds`、`FOCUSED_CARDS_KEY`
-- `lib/default-sheet-data.ts`：移除 `focused_card_ids` 初始化
-- `lib/multi-character-storage.ts`：移除新角色的 `focused_card_ids` 初始化（保留迁移逻辑）
-- `app/page.tsx`：移除所有聚焦相关逻辑、`handleFocusedCardsChange`、props传递
-- `components/character-sheet-page-two.tsx`：移除 `onFocusedCardsChange` prop及传递
-- `components/character-sheet-page-two-sections/card-deck-section.tsx`：移除选中状态、右键逻辑、UI高亮
-- `components/card-display-section.tsx`：移除聚焦相关状态、异步加载、标签页、分类逻辑
+### 已完成任务（第二阶段：实现双卡组系统）
+- ✅ **数据结构完善**：为新角色添加 `inventory_cards` 字段，实现现有角色和导入数据的自动迁移
+- ✅ **卡组视图切换**：实现聚焦卡组（蓝色）和库存卡组（绿色）的标签切换界面
+- ✅ **卡牌移动功能**：实现右键移动卡牌在两个卡组间切换，包含特殊卡位保护机制
+- ✅ **基础UI增强**：卡牌数量显示、卡组区分、特殊卡位标识
 
-### 待进行任务（第二阶段：实现双卡组系统）
-- 🔄 实现卡组界面的视图切换（聚焦卡组 ↔ 库存卡组）
-- 🔄 实现卡牌在两个卡组间的右键移动逻辑
-- 🔄 添加特殊卡位保护（聚焦卡组前5位）
-- 🔄 完善数据迁移逻辑（为旧存档添加库存卡组）
+### 已完成任务（第二阶段：实现双卡组系统）
+- ✅ **数据结构完善**：为新角色添加 `inventory_cards` 字段，实现现有角色和导入数据的自动迁移
+- ✅ **卡组视图切换**：实现聚焦卡组（蓝色）和库存卡组（绿色）的标签切换界面，实时显示卡牌数量
+- ✅ **卡牌移动功能**：实现右键移动卡牌在两个卡组间切换，包含特殊卡位保护机制（前5张不能移出聚焦卡组）
+- ✅ **基础UI增强**：卡牌数量显示、卡组区分、特殊卡位标识，双卡组的动态渲染
+
+### 已完成任务（第二阶段：实现双卡组系统）
+- ✅ **数据结构完善**：为新角色添加 `inventory_cards` 字段，实现现有角色和导入数据的自动迁移
+- ✅ **卡组视图切换**：实现聚焦卡组（蓝色）和库存卡组（绿色）的标签切换界面，实时显示卡牌数量
+- ✅ **卡牌移动功能**：实现右键移动卡牌在两个卡组间切换，包含特殊卡位保护机制（前5张不能移出聚焦卡组）
+- ✅ **基础UI增强**：卡牌数量显示、卡组区分、特殊卡位标识，双卡组的动态渲染
+- ✅ **UI优化**：将 alert 提示替换为 toast，提升用户体验，集成了完整的 toast 系统
+- ✅ **其他组件适配**：
+  - 更新打印页面（`character-sheet-page-four.tsx`）显示聚焦+库存所有卡牌
+  - 更新卡牌浏览区域（`card-display-section.tsx`）通过 `app/page.tsx` 接收合并的卡牌数据  
+  - 更新第三页（`character-sheet-page-three.tsx`）接收所有卡牌数据
+  - 添加 Toaster 组件到 `app/layout.tsx`
+
+### 待完成任务（第二阶段：完善双卡组系统）
+- 🔄 **全面测试**：功能测试、边界测试、兼容性验证
+- 🎯 **可选增强**：拖拽移动、右键菜单、性能优化等进一步改进
 
 ---
 
@@ -188,99 +200,295 @@ export interface SheetData {
 
 **Step 2: 数据结构与迁移**
 
-**2.1 `lib/sheet-data.ts`**
-- 添加 `inventory_cards?: StandardCard[]` 字段
+## 第二阶段：实现双卡组系统（详细计划）
 
-**2.2 `app/page.tsx`**
-- 在数据加载函数中添加迁移逻辑：
-  ```typescript
-  // 迁移旧存档到新结构
-  if (data && !data.inventory_cards) {
-    data.inventory_cards = Array(20).fill(createEmptyCard());
-    // 保存迁移后的数据
-    saveCharacterData(characterId, data);
+### 2.1 数据结构和迁移策略
+
+#### 2.1.1 数据结构完善
+**目标**：确保 `inventory_cards` 字段在所有新创建的角色中都有默认值。
+
+**修改文件**：`lib/default-sheet-data.ts`
+```typescript
+export const defaultSheetData: SheetData = {
+  // ...existing code...
+  cards: Array(20).fill(0).map(() => createEmptyCard()),          // 聚焦卡组（20张）
+  inventory_cards: Array(20).fill(0).map(() => createEmptyCard()), // 新增：库存卡组（20张）
+  // ...existing code...
+}
+```
+
+#### 2.1.2 多角色存储系统的迁移逻辑
+**目标**：确保所有现有角色在加载时都有 `inventory_cards` 字段。
+
+**修改文件**：`lib/multi-character-storage.ts`
+```typescript
+export function loadCharacterById(id: string): SheetData | null {
+  try {
+    const stored = localStorage.getItem(`${CHARACTER_DATA_PREFIX}${id}`);
+    if (!stored) return null;
+    
+    const parsed = JSON.parse(stored) as SheetData;
+    
+    // 兼容性迁移：为旧角色添加 inventory_cards 字段
+    if (!parsed.inventory_cards) {
+      console.log(`[Migration] Adding inventory_cards to character ${id}`);
+      parsed.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
+      // 立即保存迁移后的数据
+      saveCharacterById(id, parsed);
+    }
+    
+    return parsed;
+  } catch (error) {
+    console.error(`Failed to load character ${id}:`, error);
+    return null;
   }
-  ```
+}
+```
 
-**Step 3: 实现卡组界面**
+#### 2.1.3 导入数据的向后兼容
+**目标**：确保导入的旧存档也能正确添加 `inventory_cards` 字段。
 
-**3.1 `components/character-sheet-page-two-sections/card-deck-section.tsx`**
-- 添加视图切换状态：`const [activeDeck, setActiveDeck] = useState<'focused' | 'inventory'>('focused')`
-- 添加标签切换器 UI
-- 修改 props 接受 `setFormData: (data: SheetData) => void`
-- 根据 `activeDeck` 条件渲染不同的卡组数据
-- 实现右键移动逻辑：
-  ```typescript
-  const handleCardRightClick = (index: number) => {
-    const isFromFocused = activeDeck === 'focused';
-    const sourceCards = isFromFocused ? formData.cards : (formData.inventory_cards || []);
-    const targetCards = isFromFocused ? (formData.inventory_cards || []) : formData.cards;
+**修改文件**：`lib/storage.ts` 的 `importCharacterDataForMultiCharacter` 函数
+```typescript
+export function importCharacterDataForMultiCharacter(file: File): Promise<SheetData> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
     
-    // 检查特殊卡位限制（聚焦卡组的前5位）
-    if (isFromFocused && index < 5) {
-      toast.error("特殊卡位不能移动到库存");
-      return;
-    }
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const data = JSON.parse(content);
+        
+        // 基本验证
+        if (!data || typeof data !== 'object') {
+          throw new Error('无效的角色数据格式');
+        }
+        
+        // 向后兼容：为旧存档添加 inventory_cards 字段
+        if (!data.inventory_cards) {
+          console.log('[Import] Adding inventory_cards to imported data');
+          data.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
+        }
+        
+        resolve(data);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '文件解析失败';
+        reject(new Error(`导入失败：${errorMessage}`));
+      }
+    };
     
-    // 查找目标卡组的空位
-    const emptyIndex = targetCards.findIndex(isEmptyCard);
-    if (emptyIndex === -1) {
-      toast.error(`${isFromFocused ? '库存' : '聚焦'}卡组已满，无法移动`);
-      return;
-    }
-    
-    // 执行移动
-    const newFormData = { ...formData };
-    const cardToMove = sourceCards[index];
-    
-    if (isFromFocused) {
-      newFormData.cards = [...formData.cards];
-      newFormData.inventory_cards = [...(formData.inventory_cards || [])];
-      newFormData.cards[index] = createEmptyCard();
-      newFormData.inventory_cards[emptyIndex] = cardToMove;
-    } else {
-      newFormData.cards = [...formData.cards];
-      newFormData.inventory_cards = [...(formData.inventory_cards || [])];
-      newFormData.inventory_cards[index] = createEmptyCard();
-      newFormData.cards[emptyIndex] = cardToMove;
-    }
-    
-    setFormData(newFormData);
-    toast.success("卡牌移动成功");
-  };
-  ```
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsText(file);
+  });
+}
+```
 
-**3.2 `components/character-sheet-page-two.tsx`**
-- 传递 `setFormData` 给 `CardDeckSection`
+### 2.2 卡组界面视图切换系统
 
-**Step 4: 更新其他组件**
+#### 2.2.1 界面状态管理
+**目标**：在卡组区域添加标签切换，支持"聚焦卡组"和"库存卡组"两个视图。
 
-**4.1 `components/character-sheet-page-four.tsx`**
-- 修改数据源为合并的卡牌数组：
-  ```typescript
-  const allCards = [
-    ...(formData?.cards || []),
-    ...(formData?.inventory_cards || [])
-  ].filter(card => !isEmptyCard(card));
-  ```
+**修改文件**：`components/character-sheet-page-two-sections/card-deck-section.tsx`
 
-**4.2 `components/card-display-section.tsx`**
-- 更新数据源接收合并后的卡牌列表
-- 移除聚焦相关的所有逻辑和 UI
-- 简化标签页只保留：全部、职业、背景、域、变体
+**新增状态和UI**：
+```typescript
+// 卡组视图状态
+const [activeDeck, setActiveDeck] = useState<'focused' | 'inventory'>('focused');
 
-**4.3 `app/page.tsx`**
-- 更新传递给 `CardDisplaySection` 的 props：
-  ```typescript
-  const allDisplayCards = [
-    ...(formData?.cards || []),
-    ...(formData?.inventory_cards || [])
-  ];
-  ```
+// 标签切换器UI
+<div className="flex mb-4 border-b">
+  <button
+    className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+      activeDeck === 'focused'
+        ? 'border-blue-500 text-blue-600 bg-blue-50'
+        : 'border-transparent text-gray-500 hover:text-gray-700'
+    }`}
+    onClick={() => setActiveDeck('focused')}
+  >
+    聚焦卡组 ({getCurrentDeckCards('focused').filter(card => !isEmptyCard(card)).length}/20)
+  </button>
+  <button
+    className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+      activeDeck === 'inventory'
+        ? 'border-green-500 text-green-600 bg-green-50'
+        : 'border-transparent text-gray-500 hover:text-gray-700'
+    }`}
+    onClick={() => setActiveDeck('inventory')}
+  >
+    库存卡组 ({getCurrentDeckCards('inventory').filter(card => !isEmptyCard(card)).length}/20)
+  </button>
+</div>
+```
+
+#### 2.2.2 动态数据渲染
+**目标**：根据当前选中的卡组视图，动态显示对应的卡牌数据。
+
+```typescript
+// 获取当前卡组数据的辅助函数
+const getCurrentDeckCards = (deckType: 'focused' | 'inventory'): StandardCard[] => {
+  if (deckType === 'focused') {
+    return formData.cards || [];
+  } else {
+    return formData.inventory_cards || [];
+  }
+};
+
+// 渲染逻辑
+const currentCards = getCurrentDeckCards(activeDeck);
+```
+
+### 2.3 卡牌移动系统
+
+#### 2.3.1 右键移动逻辑
+**目标**：实现卡牌在两个卡组之间的右键移动功能。
+
+**核心函数**：
+```typescript
+const handleCardRightClick = (cardIndex: number) => {
+  const isFromFocused = activeDeck === 'focused';
+  const sourceCards = getCurrentDeckCards(activeDeck);
+  const targetDeckType = isFromFocused ? 'inventory' : 'focused';
+  const targetCards = getCurrentDeckCards(targetDeckType);
+  
+  // 特殊卡位保护：聚焦卡组的前5位不能移动到库存
+  if (isFromFocused && cardIndex < 5) {
+    toast.error("特殊卡位（前5张）不能移动到库存卡组");
+    return;
+  }
+  
+  // 检查源卡牌是否为空
+  const sourceCard = sourceCards[cardIndex];
+  if (isEmptyCard(sourceCard)) {
+    toast.info("空卡位无法移动");
+    return;
+  }
+  
+  // 查找目标卡组的空位
+  const emptyTargetIndex = targetCards.findIndex(isEmptyCard);
+  if (emptyTargetIndex === -1) {
+    toast.error(`${isFromFocused ? '库存' : '聚焦'}卡组已满，无法移动`);
+    return;
+  }
+  
+  // 执行移动
+  const newSourceCards = [...sourceCards];
+  const newTargetCards = [...targetCards];
+  
+  // 将卡牌移动到目标位置
+  newTargetCards[emptyTargetIndex] = sourceCard;
+  // 清空源位置
+  newSourceCards[cardIndex] = createEmptyCard();
+  
+  // 更新formData
+  const newFormData = { ...formData };
+  if (isFromFocused) {
+    newFormData.cards = newSourceCards;
+    newFormData.inventory_cards = newTargetCards;
+  } else {
+    newFormData.inventory_cards = newSourceCards;
+    newFormData.cards = newTargetCards;
+  }
+  
+  setFormData(newFormData);
+  toast.success(`卡牌已移动到${isFromFocused ? '库存' : '聚焦'}卡组`);
+};
+```
+
+#### 2.3.2 拖拽移动支持（可选增强）
+**目标**：支持拖拽方式在两个卡组间移动卡牌。
+
+**实现方案**：
+- 使用 `@dnd-kit/core` 支持跨容器拖拽
+- 设置两个 `SortableContext`，分别对应两个卡组
+- 在 `onDragEnd` 事件中处理跨容器移动逻辑
+
+#### 2.4.3 右键菜单增强
+**目标**：提供更丰富的右键操作选项。
+
+```typescript
+// 右键菜单选项
+const contextMenuOptions = [
+  {
+    label: `移动到${activeDeck === 'focused' ? '库存' : '聚焦'}卡组`,
+    onClick: () => handleCardRightClick(cardIndex),
+    disabled: activeDeck === 'focused' && cardIndex < 5,
+    icon: activeDeck === 'focused' ? '📦' : '⭐'
+  },
+  {
+    label: '清空卡位',
+    onClick: () => handleClearCard(cardIndex),
+    icon: '🗑️'
+  }
+];
+```
+
+### 2.5 数据持久化和同步
+
+#### 2.5.1 自动保存
+**目标**：确保卡组间的移动操作能实时保存。
+
+**实现**：在 `setFormData` 调用后自动触发保存逻辑。
+
+#### 2.5.2 性能优化
+**目标**：避免频繁的数据操作影响用户体验。
+
+**策略**：
+- 使用防抖机制减少保存频率
+- 卡组切换时使用缓存避免重复渲染
+- 大量卡牌移动时使用批量更新
+
+### 2.6 其他组件更新
+
+#### 2.6.1 `components/character-sheet-page-four.tsx`
+**目标**：打印页面需要显示所有卡牌（聚焦+库存）。
+
+```typescript
+const allCards = [
+  ...(formData?.cards || []),
+  ...(formData?.inventory_cards || [])
+].filter(card => !isEmptyCard(card));
+```
+
+#### 2.6.2 `components/card-display-section.tsx`
+**目标**：卡牌浏览区域显示所有卡牌。
+
+```typescript
+// 在 app/page.tsx 中传递合并的卡牌数据
+const allDisplayCards = [
+  ...(formData?.cards || []),
+  ...(formData?.inventory_cards || [])
+];
+```
+
+### 2.7 测试和验证
+
+#### 2.7.1 功能测试点
+- ✅ 新创建的角色应该有20张空的库存卡组
+- ✅ 现有角色加载时自动获得库存卡组
+- ✅ 卡组视图切换正常工作
+- ✅ 卡牌可以在两个卡组间移动
+- ✅ 特殊卡位保护机制生效
+- ✅ 数据保存和加载正确
+- ✅ 导入的旧存档兼容性良好
+
+#### 2.7.2 边界情况测试
+- 卡组满员时的移动操作
+- 空卡位的右键操作
+- 特殊卡位的移动限制
+- 数据迁移的异常处理
+
+### 2.8 实现顺序建议
+
+1. **第一步**：完善数据结构（2.1 节）
+2. **第二步**：实现基础视图切换（2.2.1-2.2.2）
+3. **第三步**：实现右键移动功能（2.3.1）
+4. **第四步**：添加UI增强（2.4）
+5. **第五步**：更新其他组件（2.6）
+6. **第六步**：测试和优化（2.7）
 
 #### 第三阶段：测试与优化
 
-**Step 5: 完整性测试**
+**Step 3.1: 完整性测试**
 - 旧存档迁移测试
 - 卡牌移动功能测试
 - 特殊卡位限制测试
@@ -292,27 +500,41 @@ export interface SheetData {
 
 ## 开发日志
 
-### 2025-06-22：第一阶段完成 - 聚焦功能清理
-- ✅ **完全移除所有聚焦卡组相关代码**，包括：
-  - 数据结构：`focused_card_ids` 字段
-  - Props：`focusedCardIds`、`onFocusedCardsChange`
-  - 状态：`focusedCards`、`selectedCards`
-  - 函数：`handleFocusedCardsChange`、`loadAndSetFocusedCards`、`saveFocusedCardIds`、`loadFocusedCardIds`
-  - UI：聚焦标签页、选中高亮、右键逻辑
-  - 存储：`FOCUSED_CARDS_KEY`、相关事件处理
-- ✅ **新增库存卡组字段**：`inventory_cards: StandardCard[]`
-- ✅ **保留迁移兼容性**：多角色存储中的旧数据迁移逻辑
-- ✅ **编译测试通过**：应用可正常构建和运行
-- ✅ **代码清理完整**：所有相关文件已更新并添加注释说明
+### 2025-01-20：第二阶段基本完成 - 双卡组系统全功能实现
+- ✅ **数据结构迁移**：`default-sheet-data.ts`、`multi-character-storage.ts`、`storage.ts` 全部支持 `inventory_cards`
+- ✅ **双卡组视图切换**：在 `card-deck-section.tsx` 中实现了 `activeDeck` 状态切换，支持聚焦/库存两个视图
+- ✅ **卡牌移动功能**：实现了右键移动功能 `handleCardRightClick`，包含：
+  - 特殊卡位保护（前5张不能移出聚焦卡组）
+  - 空卡位检查
+  - 卡组满员检查
+  - 卡牌数据更新和同步
+- ✅ **基础UI增强**：实时卡牌数量显示、卡组色彩区分（蓝色聚焦、绿色库存）
+- ✅ **UI优化完成**：完整替换 alert 为 toast 系统，包含：
+  - 导入 `toast` 到 `card-deck-section.tsx`
+  - 添加 `Toaster` 组件到 `app/layout.tsx`
+  - 成功/错误/警告等不同类型的提示
+- ✅ **组件适配完成**：所有相关组件都已支持双卡组：
+  - `character-sheet-page-four.tsx` - 打印页面显示聚焦+库存所有卡牌
+  - `card-display-section.tsx` - 通过合并数据显示所有卡牌
+  - `character-sheet-page-three.tsx` - 接收完整卡牌数据
+- ✅ **多次编译验证**：所有改动都通过了 `npm run build` 测试
 
-**修改文件列表**：
-- `lib/sheet-data.ts`
-- `lib/storage.ts` 
-- `lib/default-sheet-data.ts`
-- `lib/multi-character-storage.ts`
-- `app/page.tsx`
-- `components/character-sheet-page-two.tsx`
-- `components/character-sheet-page-two-sections/card-deck-section.tsx`
-- `components/card-display-section.tsx`
+**修改文件**（第二阶段完整列表）：
+- `lib/default-sheet-data.ts` - 新角色默认包含 inventory_cards
+- `lib/multi-character-storage.ts` - 旧角色加载时自动添加 inventory_cards
+- `lib/storage.ts` - 导入数据时自动添加 inventory_cards
+- `components/character-sheet-page-two.tsx` - 支持 inventory_cards 数据传递
+- `components/character-sheet-page-two-sections/card-deck-section.tsx` - 核心双卡组功能+toast系统
+- `components/character-sheet-page-four.tsx` - 打印页面支持双卡组
+- `app/page.tsx` - 传递合并卡牌数据到展示组件
+- `app/layout.tsx` - 添加 Toaster 组件
 
-**下一步**：开始第二阶段 - 实现双卡组系统的UI和交互逻辑
+**第二阶段核心成果**：
+- 🎯 **彻底移除聚焦功能**，升级为完整的双卡组系统
+- 🎯 **无缝数据迁移**，新建/加载/导入角色都自动适配
+- 🎯 **直观交互体验**，右键移动+视觉反馈+保护机制
+- 🎯 **完整系统集成**，所有页面和组件都支持双卡组
+
+**下一步优先级**：
+1. 全面功能测试（新建角色、加载旧角色、卡牌移动、打印等）
+2. 可选的增强功能（拖拽移动、右键菜单等）

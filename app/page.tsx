@@ -454,7 +454,10 @@ export default function Home() {
         {/* 左侧卡牌展示区域 - 打印时隐藏 */}
         <div className="lg:w-1/4 print:hidden">
           <CardDisplaySection
-            cards={formData.cards}
+            cards={[
+              ...(formData.cards || []),
+              ...(formData.inventory_cards || [])
+            ]}
           />
         </div>
 
@@ -477,7 +480,14 @@ export default function Home() {
               />
             </TabsContent>
             <TabsContent value="page3">
-              <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
+              <CharacterSheetPageThree
+                formData={formData}
+                onFormDataChange={setFormData}
+                allCards={[
+                  ...(formData.cards || []),
+                  ...(formData.inventory_cards || [])
+                ]}
+              />
             </TabsContent>
           </Tabs>
         </div>

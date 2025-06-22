@@ -2,6 +2,7 @@ import {
   getStandardCardsByTypeAsync,
   CardType, // Import CardType
 } from "@/card";
+import { createEmptyCard } from "@/card/card-types"; // Import createEmptyCard
 import type { SheetData, SheetCardReference } from "./sheet-data"; // Ensure SheetCardReference is imported if not already
 import { defaultSheetData } from "./default-sheet-data";
 
@@ -180,7 +181,11 @@ export function importCharacterDataForMultiCharacter(file: File): Promise<SheetD
           throw new Error('无效的角色数据格式');
         }
         
-        // 注释：移除了 focused_card_ids 字段的向后兼容初始化，聚焦功能由双卡组系统取代
+        // 向后兼容：为旧存档添加 inventory_cards 字段
+        if (!data.inventory_cards) {
+          console.log('[Import] Adding inventory_cards to imported data');
+          data.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
+        }
         
         resolve(data);
       } catch (error) {

@@ -17,6 +17,12 @@ export const MAX_CHARACTERS = 10;
 
 // ===== UUID生成器 =====
 export function generateCharacterId(): string {
+  // 使用时间戳和随机数的组合，但只在客户端调用
+  if (typeof window === 'undefined') {
+    // 如果在服务器端（虽然这是静态导出，但为了安全起见），返回一个基于时间的ID
+    return `char-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  }
+  
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0;
     const v = c == 'x' ? r : (r & 0x3 | 0x8);

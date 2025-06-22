@@ -2,6 +2,40 @@ import type { StandardCard } from "@/card/card-types";
 import { isEmptyCard } from "@/card/card-types"; // Import isEmptyCard
 import { CardType } from "@/card"; // Only import CardType since we no longer use getStandardCardsByTypeAsync
 
+// 工具函数：将简单的Markdown格式转换为HTML或移除格式
+function convertMarkdownToHtml(text: string): string {
+    if (!text) return text;
+    
+    // 转换 **粗体** 为 <strong>粗体</strong>
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // 转换 *斜体* 为 <em>斜体</em>
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // 转换换行符
+    text = text.replace(/\n/g, '<br>');
+    
+    return text;
+}
+
+// 工具函数：移除Markdown格式符号，只保留纯文本
+function stripMarkdown(text: string): string {
+    if (!text) return text;
+    
+    // 移除 **粗体** 标记，保留内容
+    text = text.replace(/\*\*(.*?)\*\*/g, '$1');
+    
+    // 移除 *斜体* 标记，保留内容
+    text = text.replace(/\*(.*?)\*/g, '$1');
+    
+    // 移除其他常见的Markdown符号
+    text = text.replace(/`(.*?)`/g, '$1'); // 代码标记
+    text = text.replace(/_{2}(.*?)_{2}/g, '$1'); // __粗体__
+    text = text.replace(/_(.*?)_/g, '$1'); // _斜体_
+    
+    return text;
+}
+
 // 引导内容数据结构
 export interface GuideStep {
     id: string
@@ -193,8 +227,9 @@ export const guideSteps: GuideStep[] = [
                 if (professionCard) {
                     professionName = professionCard.name || "未知职业";
                     if (professionCard.professionSpecial) {
-                        hopeFeature = professionCard.professionSpecial["希望特性"]
-                            ? String(professionCard.professionSpecial["希望特性"])
+                        const rawHopeFeature = professionCard.professionSpecial["希望特性"];
+                        hopeFeature = rawHopeFeature 
+                            ? convertMarkdownToHtml(String(rawHopeFeature))
                             : "无特殊希望特性";
                     }
                 }
@@ -260,13 +295,14 @@ export const guideSteps: GuideStep[] = [
                     (card) => card.id === professionId
                 );
                 if (professionCard && professionCard.professionSpecial) {
-                    startingItems = professionCard.professionSpecial["起始物品"]
-                        ? String(professionCard.professionSpecial["起始物品"])
+                    const rawStartingItems = professionCard.professionSpecial["起始物品"];
+                    startingItems = rawStartingItems
+                        ? convertMarkdownToHtml(String(rawStartingItems))
                         : "无特殊起始物品";
                 }
             }
 
-            return `将以下物品添加到角色表的\"物品栏\"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（清除 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡左下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
+            return `将以下物品添加到角色表的\"物品栏\"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（回复 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡左下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
         },
         validation: () => true,
     },

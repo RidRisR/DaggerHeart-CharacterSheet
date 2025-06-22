@@ -98,7 +98,14 @@ function updateHtmlPaths(filePath, basePath = './资产') {
             .replace(/window\.location\.href\s*=\s*[`"']\/DaggerHeart-CharacterSheet\/card-manager[`"']/g,
                 'window.location.href = "./card-manager.html"')
             // 修复其他内部链接
-            .replace(/href="\/DaggerHeart-CharacterSheet\/([^"]+)"/g, 'href="./$1.html"');
+            .replace(/href="\/DaggerHeart-CharacterSheet\/([^"]+)"/g, 'href="./$1.html"')
+            // 修复内联JavaScript中的静态资源路径引用
+            .replace(/"static\/chunks\//g, '"./_next/static/chunks/')
+            .replace(/'static\/chunks\//g, "'./_next/static/chunks/")
+            .replace(/`static\/chunks\//g, '`./_next/static/chunks/')
+            .replace(/"static\/css\//g, '"./_next/static/css/')
+            .replace(/'static\/css\//g, "'./_next/static/css/")
+            .replace(/`static\/css\//g, '`./_next/static/css/');
     } else {
         // 对于外部文件（如主入口），使用原有逻辑
         content = content
@@ -116,7 +123,14 @@ function updateHtmlPaths(filePath, basePath = './资产') {
             // 更新其他可能的内部链接
             .replace(/href="\/DaggerHeart-CharacterSheet\/([^"]+)"/g, `href="${basePath}/$1.html"`)
             // 确保 JavaScript 中动态生成的链接也能正确处理
-            .replace(/\$\{basePath\}\/card-manager/g, `${basePath}/card-manager.html`);
+            .replace(/\$\{basePath\}\/card-manager/g, `${basePath}/card-manager.html`)
+            // 修复主入口文件中的内联JavaScript静态资源路径引用
+            .replace(/"static\/chunks\//g, `"${basePath}/_next/static/chunks/`)
+            .replace(/'static\/chunks\//g, `'${basePath}/_next/static/chunks/`)
+            .replace(/`static\/chunks\//g, `\`${basePath}/_next/static/chunks/`)
+            .replace(/"static\/css\//g, `"${basePath}/_next/static/css/`)
+            .replace(/'static\/css\//g, `'${basePath}/_next/static/css/`)
+            .replace(/`static\/css\//g, `\`${basePath}/_next/static/css/`);
     }
 
     // 通用的路径修复

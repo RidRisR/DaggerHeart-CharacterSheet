@@ -42,11 +42,18 @@ export default function Home() {
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isMigrationCompleted, setIsMigrationCompleted] = useState(false)
+  // 添加客户端挂载状态
+  const [isClient, setIsClient] = useState(false)
 
   // UI状态
   const [isPrintingAll, setIsPrintingAll] = useState(false)
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [characterManagementModalOpen, setCharacterManagementModalOpen] = useState(false)
+
+  // 客户端挂载检测
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const openCharacterManagementModal = () => {
     setCharacterManagementModalOpen(true)
@@ -56,8 +63,10 @@ export default function Home() {
     setCharacterManagementModalOpen(false)
   }
 
-  // 数据迁移处理
+  // 数据迁移处理 - 只在客户端执行
   useEffect(() => {
+    if (!isClient) return
+    
     const performMigration = async () => {
       try {
         console.log('[App] Starting data migration check...')
@@ -72,11 +81,11 @@ export default function Home() {
     }
 
     performMigration()
-  }, [])
+  }, [isClient])
 
-  // 加载角色列表和活动角色
+  // 加载角色列表和活动角色 - 只在迁移完成且在客户端时执行
   useEffect(() => {
-    if (!isMigrationCompleted) return
+    if (!isMigrationCompleted || !isClient) return
 
     const loadInitialData = () => {
       try {
@@ -124,7 +133,7 @@ export default function Home() {
     }
 
     loadInitialData()
-  }, [isMigrationCompleted])
+  }, [isMigrationCompleted, isClient])
 
   const createFirstCharacter = () => {
     try {
@@ -395,15 +404,15 @@ export default function Home() {
 
   // 已移除聚焦卡牌变更处理函数 - 功能由双卡组系统取代
 
-  if (!isMigrationCompleted || isLoading) {
+  if (!isClient || !isMigrationCompleted || isLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
         <div className="text-lg">
-          {!isMigrationCompleted ? '正在迁移数据...' : '加载中...'}
+          {!isClient ? '初始化中...' : (!isMigrationCompleted ? '正在迁移数据...' : '加载中...')}
         </div>
         <div className="text-sm text-gray-500 mt-2">
-          {!isMigrationCompleted ? '首次运行需要迁移存储格式，请稍候' : '正在加载角色数据'}
+          {!isClient ? '正在启动客户端...' : (!isMigrationCompleted ? '首次运行需要迁移存储格式，请稍候' : '正在加载角色数据')}
         </div>
       </div>
     )

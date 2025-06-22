@@ -133,15 +133,19 @@ function Card({
       {!isSpecial && card?.name && standardCard?.type && (
         <div className="absolute -top-4 left-0 right-0 text-center">
           <span
-            className={`text-[10px] font-medium px-1 py-0 rounded-t-sm border border-b-0 ${standardCard.type.includes("ancestry")
-              ? "bg-gray-100 border-gray-300"
-              : standardCard.type.includes("community")
-                ? "bg-teal-100 border-teal-300"
-                : standardCard.type.includes("profession")
-                  ? "bg-blue-100 border-blue-300"
-                  : standardCard.type.includes("subclass")
-                    ? "bg-purple-100 border-purple-300"
-                    : "bg-red-100 border-red-300"
+            className={`text-[10px] font-medium px-1 py-0 rounded-t-sm border border-b-0 ${isVariantCard(standardCard)
+              ? "bg-green-100 border-green-300"
+              : standardCard.type.includes("ancestry")
+                ? "bg-gray-100 border-gray-300"
+                : standardCard.type.includes("community")
+                  ? "bg-teal-100 border-teal-300"
+                  : standardCard.type.includes("profession")
+                    ? "bg-blue-100 border-blue-300"
+                    : standardCard.type.includes("subclass")
+                      ? "bg-purple-100 border-purple-300"
+                      : standardCard.type.includes("domain")
+                        ? "bg-red-100 border-red-300"
+                        : "bg-gray-100 border-gray-300"
               }`}
           >
             {displayTypeName}

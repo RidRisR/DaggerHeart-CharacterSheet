@@ -66,7 +66,6 @@ export default function Home() {
   // 数据迁移处理 - 只在客户端执行
   useEffect(() => {
     if (!isClient) return
-
     const performMigration = async () => {
       try {
         console.log('[App] Starting data migration check...')
@@ -421,10 +420,10 @@ export default function Home() {
       <div className="flex flex-col justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
         <div className="text-lg">
-          {!isMigrationCompleted ? '正在迁移数据...' : '加载中...'}
+          {!isClient ? '初始化中...' : (!isMigrationCompleted ? '正在迁移数据...' : '加载中...')}
         </div>
         <div className="text-sm text-gray-500 mt-2">
-          {!isMigrationCompleted ? '首次运行需要迁移存储格式，请稍候' : '正在加载角色数据'}
+          {!isClient ? '正在启动客户端...' : (!isMigrationCompleted ? '首次运行需要迁移存储格式，请稍候' : '正在加载角色数据')}
         </div>
       </div>
     )

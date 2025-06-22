@@ -1,3 +1,33 @@
+# 双卡组系统重构计划
+
+## 项目状态：第一阶段已完成 ✅
+
+### 已完成任务（第一阶段：清理聚焦功能）
+- ✅ **完全移除聚焦卡组功能**：包括数据结构、props、状态、逻辑、UI等所有相关代码
+- ✅ **数据结构清理**：移除 `focused_card_ids` 字段，新增 `inventory_cards` 字段
+- ✅ **组件清理**：移除所有聚焦相关的 props、状态、useEffect、右键逻辑、UI高亮
+- ✅ **存储清理**：移除聚焦卡牌的本地存储函数和事件处理
+- ✅ **UI清理**：移除聚焦标签页、相关分类、异步加载逻辑
+- ✅ **编译测试**：确保应用可以正常编译和运行，无错误和警告
+
+### 清理范围总结
+- `lib/sheet-data.ts`：移除 `focused_card_ids` 字段，新增 `inventory_cards` 字段
+- `lib/storage.ts`：移除 `saveFocusedCardIds`、`loadFocusedCardIds`、`FOCUSED_CARDS_KEY`
+- `lib/default-sheet-data.ts`：移除 `focused_card_ids` 初始化
+- `lib/multi-character-storage.ts`：移除新角色的 `focused_card_ids` 初始化（保留迁移逻辑）
+- `app/page.tsx`：移除所有聚焦相关逻辑、`handleFocusedCardsChange`、props传递
+- `components/character-sheet-page-two.tsx`：移除 `onFocusedCardsChange` prop及传递
+- `components/character-sheet-page-two-sections/card-deck-section.tsx`：移除选中状态、右键逻辑、UI高亮
+- `components/card-display-section.tsx`：移除聚焦相关状态、异步加载、标签页、分类逻辑
+
+### 待进行任务（第二阶段：实现双卡组系统）
+- 🔄 实现卡组界面的视图切换（聚焦卡组 ↔ 库存卡组）
+- 🔄 实现卡牌在两个卡组间的右键移动逻辑
+- 🔄 添加特殊卡位保护（聚焦卡组前5位）
+- 🔄 完善数据迁移逻辑（为旧存档添加库存卡组）
+
+---
+
 # 卡组系统改造方案 - 聚焦/库存双卡池系统
 
 ## 改造计划分析与评估
@@ -258,23 +288,31 @@ export interface SheetData {
 - 打印功能测试
 - UI 响应性测试
 
-### 5. 潜在风险与注意事项
+---
 
-**A. 数据迁移风险**
-- 确保迁移逻辑在所有存档加载路径中都能执行
-- 添加迁移日志以便调试
+## 开发日志
 
-**B. UI 一致性**
-- 确保两个卡组的视觉样式保持一致
-- Toast 提示信息需要清晰易懂
-- 特殊卡位的限制需要有视觉反馈
+### 2025-06-22：第一阶段完成 - 聚焦功能清理
+- ✅ **完全移除所有聚焦卡组相关代码**，包括：
+  - 数据结构：`focused_card_ids` 字段
+  - Props：`focusedCardIds`、`onFocusedCardsChange`
+  - 状态：`focusedCards`、`selectedCards`
+  - 函数：`handleFocusedCardsChange`、`loadAndSetFocusedCards`、`saveFocusedCardIds`、`loadFocusedCardIds`
+  - UI：聚焦标签页、选中高亮、右键逻辑
+  - 存储：`FOCUSED_CARDS_KEY`、相关事件处理
+- ✅ **新增库存卡组字段**：`inventory_cards: StandardCard[]`
+- ✅ **保留迁移兼容性**：多角色存储中的旧数据迁移逻辑
+- ✅ **编译测试通过**：应用可正常构建和运行
+- ✅ **代码清理完整**：所有相关文件已更新并添加注释说明
 
-**C. 性能考虑**
-- 卡牌移动操作会触发整个 formData 的更新，需要确保性能
-- 考虑是否需要防抖处理频繁的移动操作
+**修改文件列表**：
+- `lib/sheet-data.ts`
+- `lib/storage.ts` 
+- `lib/default-sheet-data.ts`
+- `lib/multi-character-storage.ts`
+- `app/page.tsx`
+- `components/character-sheet-page-two.tsx`
+- `components/character-sheet-page-two-sections/card-deck-section.tsx`
+- `components/card-display-section.tsx`
 
-**D. 兼容性测试重点**
-- 多角色系统的存档切换
-- 打印功能的完整性
-- 卡牌选择模态框的正常工作
-- 特殊卡位功能的保持
+**下一步**：开始第二阶段 - 实现双卡组系统的UI和交互逻辑

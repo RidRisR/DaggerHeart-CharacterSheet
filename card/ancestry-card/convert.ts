@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from "uuid";
 import { CardType, processCardDescription, type StandardCard } from "@/card/card-types";
-import { ANCESTRY_CARD_NAMES } from "@/card/card-predefined-field";
+import { getAncestryCardNames } from "@/card/card-predefined-field";
 
 // 血统卡牌类型
-export type AncestryCardClass = typeof ANCESTRY_CARD_NAMES[number];
+export type AncestryCardClass = string;
 
 export interface AncestryCard {
   id: string;

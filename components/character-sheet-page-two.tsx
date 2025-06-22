@@ -14,10 +14,10 @@ import { UpgradeSection } from "@/components/character-sheet-page-two-sections/u
 interface CharacterSheetPageTwoProps {
   formData: SheetData
   setFormData: React.Dispatch<React.SetStateAction<SheetData>>
-  onFocusedCardsChange?: (focusedCardIds: string[]) => void
+  // 移除：onFocusedCardsChange 功能由双卡组系统取代
 }
 
-export default function CharacterSheetPageTwo({ formData, setFormData, onFocusedCardsChange }: CharacterSheetPageTwoProps) {
+export default function CharacterSheetPageTwo({ formData, setFormData }: CharacterSheetPageTwoProps) {
   // 确保 formData 存在并有默认值
   const safeFormData = {
     ...formData,
@@ -77,11 +77,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData, onFocused
     }, 0)
   }
 
-  // 处理聚焦卡牌变更 (多角色系统) - 防止双重更新
-  const handleFocusedCardsChange = (focusedCardIds: string[]) => {
-    // 只通知父组件，不直接更新formData，避免双重更新
-    onFocusedCardsChange?.(focusedCardIds)
-  }
+  // 已移除聚焦卡牌变更处理函数 - 功能由双卡组系统取代
 
   // Update form data when input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -150,7 +146,6 @@ export default function CharacterSheetPageTwo({ formData, setFormData, onFocused
         <CardDeckSection
           formData={safeFormData}
           onCardChange={handleCardChange}
-          onFocusedCardsChange={handleFocusedCardsChange}
           cardModalActiveTab={cardModalActiveTab}
           setCardModalActiveTab={setCardModalActiveTab}
           cardModalSearchTerm={cardModalSearchTerm}

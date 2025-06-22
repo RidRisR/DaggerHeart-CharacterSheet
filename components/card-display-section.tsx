@@ -26,13 +26,12 @@ import { CSS } from "@dnd-kit/utilities"
 import { CardType, StandardCard } from "@/card/card-types"
 import { getCardTypeName } from "@/card"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
-import { useAllCards } from "@/hooks/use-cards"
 import ReactMarkdown from "react-markdown"
-import React, { useRef, useCallback } from "react"
+import React, { useRef } from "react"
 
 interface CardDisplaySectionProps {
   cards: Array<StandardCard>
-  focusedCardIds?: string[] // 新增：聚焦卡牌ID列表
+  // 注释：移除了 focusedCardIds prop，聚焦功能已由双卡组系统取代
 }
 
 // 可排序的卡牌组件
@@ -139,24 +138,12 @@ function SortableCard({
 }
 
 // 状态提升：用useRef持久化containerHeight和expandedCards
-export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySectionProps) {
+export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   // 用useRef持久化高度和展开状态
   const containerHeightRef = useRef<number>(400)
   const expandedCardsRef = useRef<Record<string, boolean>>({})
-  // 使用ref来跟踪最后的focusedCardIds，避免无限循环
-  const lastFocusedCardIdsRef = useRef<string[]>([])
   // 触发rerender的state
   const [, forceUpdate] = useState(0)
-
-  // 使用异步Hook获取所有卡牌数据用于聚焦功能
-  const { 
-    cards: allStandardCards, 
-    loading: cardsLoading, 
-    error: cardsError 
-  } = useAllCards({
-    enabled: true,
-    autoRefresh: false
-  });
 
   // 存储当前显示的卡牌列表
   const [allCards, setAllCards] = useState(cards.filter((card) => card && card.name))
@@ -164,44 +151,14 @@ export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySe
   const [backgroundCards, setBackgroundCards] = useState<typeof cards>([])
   const [domainCards, setDomainCards] = useState<typeof cards>([])
   const [variantCards, setVariantCards] = useState<typeof cards>([])
-  const [focusedCards, setFocusedCards] = useState<typeof cards>([])
+  // 注释：移除了 focusedCards 状态，由双卡组系统取代
 
-  // 当前选中的标签
+  // 当前选中的标签，移除了 focused 标签
   const [activeTab, setActiveTab] = useState("all")
 
-  // 异步加载聚焦卡牌的函数 (从props读取，不再从localStorage)
-  const loadAndSetFocusedCards = useCallback(async () => {
-    if (cardsLoading || !allStandardCards.length) {
-      console.log('[CardDisplaySection] 等待卡牌数据加载...');
-      return;
-    }
+  // 注释：移除了异步加载聚焦卡牌的逻辑，由双卡组系统取代
 
-    // 检查focusedCardIds是否真的发生了变化
-    const currentFocusedIdsStr = JSON.stringify([...focusedCardIds].sort())
-    const lastFocusedIdsStr = JSON.stringify([...lastFocusedCardIdsRef.current].sort())
-    
-    if (currentFocusedIdsStr === lastFocusedIdsStr) {
-      // 没有变化，不需要更新
-      return
-    }
-
-    try {
-      const newFocusedCards = allStandardCards.filter(card => {
-        const cardId = card.id;
-        return cardId !== undefined && focusedCardIds.includes(cardId);
-      });
-      
-      console.log(`[CardDisplaySection] 更新聚焦卡牌，共 ${newFocusedCards.length} 张`);
-      setFocusedCards(newFocusedCards);
-      
-      // 更新ref记录
-      lastFocusedCardIdsRef.current = [...focusedCardIds]
-    } catch (error) {
-      console.error('[CardDisplaySection] 加载聚焦卡牌失败:', error);
-    }
-  }, [allStandardCards, cardsLoading, focusedCardIds]); // 移除 focusedCards.length 依赖
-
-  // 更新卡牌分类和聚焦卡牌
+  // 更新卡牌分类
   useEffect(() => {
     const validCards = cards.filter((card) => card && card.name)
     setAllCards(validCards)
@@ -209,12 +166,7 @@ export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySe
     setBackgroundCards(validCards.filter((card) => card.type === "ancestry" || card.type === "community"))
     setDomainCards(validCards.filter((card) => card.type === "domain"))
     setVariantCards(validCards.filter((card) => isVariantCard(card)))
-
-    // 只有当卡牌数据可用时才加载聚焦卡牌
-    if (!cardsLoading && allStandardCards.length > 0) {
-      loadAndSetFocusedCards();
-    }
-  }, [cards, loadAndSetFocusedCards, cardsLoading, allStandardCards.length])
+  }, [cards])
 
   // 监听 focusedCardsChanged 事件 - 移除，因为现在使用props传递
   // useEffect(() => {
@@ -306,13 +258,7 @@ export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySe
             return arrayMove(cards, oldIndex, newIndex)
           })
           break
-        case "focused":
-          setFocusedCards((cards) => {
-            const oldIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === active.id)
-            const newIndex = cards.findIndex((card) => `${card.type}-${card.name}-${cards.indexOf(card)}` === over.id)
-            return arrayMove(cards, oldIndex, newIndex)
-          })
-          break
+        // 注释：移除了 focused case，由双卡组系统取代
       }
     }
   }
@@ -382,9 +328,7 @@ export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySe
       case "variant":
         numCards = variantCards.length
         break
-      case "focused":
-        numCards = focusedCards.length
-        break
+      // 注释：移除了 focused case，由双卡组系统取代
       default:
         numCards = allCards.length
     }
@@ -398,13 +342,13 @@ export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySe
     <div className="border rounded-lg bg-gray-50 shadow-sm flex flex-col" style={{ height: containerHeightRef.current }}>
       <div className="p-2 flex-grow overflow-hidden">
         <Tabs defaultValue="all" className="w-full h-full flex flex-col" onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-6 mb-2">
+          <TabsList className="w-full grid grid-cols-5 mb-2">
             <TabsTrigger value="all" className="text-s">全部</TabsTrigger>
             <TabsTrigger value="profession" className="text-s">职业</TabsTrigger>
             <TabsTrigger value="background" className="text-s">背景</TabsTrigger>
             <TabsTrigger value="domain" className="text-s">领域</TabsTrigger>
             <TabsTrigger value="variant" className="text-s">扩展</TabsTrigger>
-            <TabsTrigger value="focused" className="text-s">聚焦</TabsTrigger>
+            {/* 注释：移除了聚焦标签，由双卡组系统取代 */}
           </TabsList>
           <div className="flex-grow overflow-hidden">
             <TabsContent value="all" className="h-full m-0">
@@ -426,9 +370,7 @@ export function CardDisplaySection({ cards, focusedCardIds = [] }: CardDisplaySe
             <TabsContent value="variant" className="h-full m-0">
               {renderCardList(variantCards)}
             </TabsContent>
-            <TabsContent value="focused" className="h-full m-0">
-              {renderCardList(focusedCards)}
-            </TabsContent>
+            {/* 注释：移除了聚焦标签页内容，由双卡组系统取代 */}
           </div>
         </Tabs>
       </div>

@@ -219,7 +219,7 @@ export function createNewCharacter(name: string, order?: number): SheetData {
   const newCharacter: SheetData = {
     ...defaultSheetData,
     name: name || "新角色",
-    focused_card_ids: [] // 确保新角色有独立的聚焦卡牌状态
+    // 注释：移除了 focused_card_ids 初始化，聚焦功能由双卡组系统取代
   };
   
   return newCharacter;
@@ -235,8 +235,7 @@ export function duplicateCharacter(originalId: string, newName: string): SheetDa
   const duplicatedData: SheetData = {
     ...originalData,
     name: newName || `${originalData.name} (副本)`,
-    // 保持独立的聚焦卡牌状态
-    focused_card_ids: [...(originalData.focused_card_ids || [])]
+    // 注释：移除了 focused_card_ids 复制，聚焦功能由双卡组系统取代
   };
   
   return duplicatedData;

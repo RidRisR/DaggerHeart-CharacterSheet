@@ -393,22 +393,7 @@ export default function Home() {
     }
   }, [characterList, currentCharacterId, characterManagementModalOpen])
 
-  // 处理聚焦卡牌变更（带深度比较防止循环）
-  const handleFocusedCardsChange = (focusedCardIds: string[]) => {
-    setFormData(prev => {
-      // 深度比较，避免不必要的更新
-      const currentIds = prev.focused_card_ids || []
-      if (JSON.stringify(currentIds.sort()) === JSON.stringify(focusedCardIds.sort())) {
-        return prev // 没有变化，直接返回原对象
-      }
-
-      console.log(`[App] 聚焦卡牌变更: ${currentIds.length} -> ${focusedCardIds.length}`)
-      return {
-        ...prev,
-        focused_card_ids: focusedCardIds
-      }
-    })
-  }
+  // 已移除聚焦卡牌变更处理函数 - 功能由双卡组系统取代
 
   if (!isMigrationCompleted || isLoading) {
     return (
@@ -470,7 +455,6 @@ export default function Home() {
         <div className="lg:w-1/4 print:hidden">
           <CardDisplaySection
             cards={formData.cards}
-            focusedCardIds={formData.focused_card_ids || []}
           />
         </div>
 
@@ -490,7 +474,6 @@ export default function Home() {
               <CharacterSheetPageTwo
                 formData={formData}
                 setFormData={setFormData}
-                onFocusedCardsChange={handleFocusedCardsChange}
               />
             </TabsContent>
             <TabsContent value="page3">
@@ -555,7 +538,12 @@ export default function Home() {
         onDuplicateCharacter={duplicateCharacterHandler}
         onRenameCharacter={renameCharacterHandler}
         onImportData={(data: any) => {
-          const mergedData = { ...defaultSheetData, ...data, focused_card_ids: data.focused_card_ids || [] }
+          // 数据迁移：为旧存档添加 inventory_cards 字段
+          const mergedData = {
+            ...defaultSheetData,
+            ...data,
+            inventory_cards: data.inventory_cards || Array(20).fill({ id: '', name: '', type: 'unknown', description: '' })
+          }
           setFormData(mergedData)
         }}
         onResetData={() => {

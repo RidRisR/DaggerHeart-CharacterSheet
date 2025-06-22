@@ -109,6 +109,5 @@ export const defaultSheetData: SheetData = {
         aware: Array(3).fill(false),
     },
 
-    // 多角色系统字段
-    focused_card_ids: [], // 聚焦卡牌ID，从全局迁移到角色独立
+    // 注释：移除了 focused_card_ids 字段，聚焦功能由双卡组系统取代
 };

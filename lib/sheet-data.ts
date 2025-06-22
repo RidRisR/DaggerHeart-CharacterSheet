@@ -76,6 +76,7 @@ export interface SheetData {
   characterAppearance?: string
   characterMotivation?: string
   cards: StandardCard[]
+  inventory_cards?: StandardCard[] // 新增：库存卡组
   checkedUpgrades?: CheckedUpgrades
   minorThreshold?: string
   majorThreshold?: string
@@ -129,8 +130,8 @@ export interface SheetData {
     bonded: boolean[]
     aware: boolean[]
   }
-  // ===== 多角色系统新增字段 =====
-  focused_card_ids?: string[] // 每个角色独立存储其聚焦卡牌ID，向后兼容
+  // ===== 多角色系统新增字段已移除 focused_card_ids =====
+  // focused_card_ids 字段已被移除，聚焦功能由 cards 数组直接表示
   
   // ===== 临时索引签名，兼容动态key访问，后续逐步收敛类型安全 =====
   // [key: string]: any // 已废弃，彻底类型安全后移除

@@ -13,7 +13,7 @@ import type { CSSProperties, MouseEvent } from "react";
 interface CardDeckSectionProps {
   formData: SheetData
   onCardChange: (index: number, card: StandardCard) => void
-  onFocusedCardsChange: (focusedCardIds: string[]) => void // 新增：聚焦卡牌变更回调
+  // 移除：onFocusedCardsChange 功能由双卡组系统取代
   cardModalActiveTab: string;
   setCardModalActiveTab: React.Dispatch<React.SetStateAction<string>>;
   cardModalSearchTerm: string;
@@ -161,7 +161,7 @@ const MemoizedCard = memo(Card);
 export function CardDeckSection({
   formData,
   onCardChange,
-  onFocusedCardsChange, // 新增参数
+  // 移除：onFocusedCardsChange 参数
   cardModalActiveTab,
   setCardModalActiveTab,
   cardModalSearchTerm,
@@ -172,58 +172,20 @@ export function CardDeckSection({
   setCardModalSelectedLevels,
 }: CardDeckSectionProps) {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
-  const [selectedCards, setSelectedCards] = useState<number[]>([])
+  // 移除：selectedCards 状态和聚焦逻辑
   const [isAltPressed, setIsAltPressed] = useState(false)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [cardSelectionModalOpen, setCardSelectionModalOpen] = useState(false)
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
   
-  // 添加一个ref来防止循环更新
-  const isUpdatingFromPropsRef = useRef(false)
+  // 移除：防止循环更新的ref，因为已不需要聚焦功能
 
   // 确保 formData 和 formData.cards 存在
   const cards: StandardCard[] =
     formData?.cards ||
     Array(20).fill(createEmptyCard())
 
-  // Initialize selected cards from formData.focused_card_ids (多角色系统)
-  useEffect(() => {
-    if (isUpdatingFromPropsRef.current) return // 防止循环更新
-    
-    const focusedCardIds = formData.focused_card_ids || [];
-    const initialSelectedIndices = cards.map((card: StandardCard, index: number) => {
-      // Ensure card and card.id are valid before using them
-      return card && card.id && focusedCardIds.includes(card.id) ? index : -1
-    }).filter((index: number) => index !== -1)
-
-    // 只有在真正不同时才更新
-    const currentSelectedStr = JSON.stringify([...selectedCards].sort())
-    const newSelectedStr = JSON.stringify([...initialSelectedIndices].sort())
-    
-    if (currentSelectedStr !== newSelectedStr) {
-      setSelectedCards(initialSelectedIndices)
-    }
-  }, [cards, formData.focused_card_ids]) // 依赖于cards和focused_card_ids
-
-  // 当选中的卡牌变化时，通知父组件更新 formData.focused_card_ids
-  useEffect(() => {
-    const idsToSave = selectedCards.map((index: number) => cards[index]?.id).filter(id => id != null) as string[]
-    
-    // 检查是否真的需要更新
-    const currentFocusedIds = formData.focused_card_ids || []
-    const currentIdsStr = JSON.stringify([...currentFocusedIds].sort())
-    const newIdsStr = JSON.stringify([...idsToSave].sort())
-    
-    if (currentIdsStr !== newIdsStr && onFocusedCardsChange) {
-      isUpdatingFromPropsRef.current = true // 设置标志位
-      onFocusedCardsChange(idsToSave)
-      
-      // 重置标志位
-      setTimeout(() => {
-        isUpdatingFromPropsRef.current = false
-      }, 0)
-    }
-  }, [selectedCards, cards, onFocusedCardsChange, formData.focused_card_ids])
+  // 移除：所有与 selectedCards 和 focused_card_ids 相关的逻辑
 
   // 监听Alt键
   useEffect(() => {
@@ -253,23 +215,12 @@ export function CardDeckSection({
     return index < 5; // 更新逻辑支持前五个位置
   }
 
-  // 处理卡牌右键点击事件
+  // 处理卡牌右键点击事件 - 预留给双卡组系统
   const handleCardRightClick = (index: number, e: React.MouseEvent) => {
     e.preventDefault() // 阻止默认右键菜单
 
-    // 特殊卡位不允许取消选中
-    // if (isSpecialSlot(index)) return
-
-    // 确保 selectedCards 存在
-    setSelectedCards((prev) => {
-      if (!prev) return [index]
-
-      if (prev.includes(index)) {
-        return prev.filter((i) => i !== index)
-      } else {
-        return [...prev, index]
-      }
-    })
+    // TODO: 实现双卡组移动逻辑
+    console.log(`右键点击卡牌 ${index}，将在双卡组系统中实现移动功能`);
   }
 
   // 处理卡牌点击事件
@@ -329,7 +280,7 @@ export function CardDeckSection({
             }
 
             const isSpecial = index < 5;
-            const isSelected = selectedCards.includes(index);
+            const isSelected = false; // 移除选中状态，双卡组系统不需要此功能
 
             return (
               <MemoizedCard

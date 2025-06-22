@@ -133,34 +133,8 @@ export function importCharacterData(file: File): Promise<SheetData> {
   })
 }
 
-const FOCUSED_CARDS_KEY = "focused_card_ids";
-
-// Save focused card IDs to localStorage
-export function saveFocusedCardIds(cardIds: string[]): void {
-  try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      localStorage.setItem(FOCUSED_CARDS_KEY, JSON.stringify(cardIds));
-      // Dispatch a custom event to notify other components of the change
-      window.dispatchEvent(new CustomEvent('focusedCardsChanged'));
-    }
-  } catch (error) {
-    console.error("保存聚焦卡牌ID失败:", error);
-  }
-}
-
-// Load focused card IDs from localStorage
-export function loadFocusedCardIds(): string[] {
-  try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      const savedData = localStorage.getItem(FOCUSED_CARDS_KEY);
-      return savedData ? JSON.parse(savedData) : [];
-    }
-    return [];
-  } catch (error) {
-    console.error("读取聚焦卡牌ID失败:", error);
-    return [];
-  }
-}
+// 已移除 FOCUSED_CARDS_KEY 和相关的聚焦卡牌函数
+// 聚焦功能现在由双卡组系统直接管理
 
 // Function to generate a printable name for the PDF
 export function generatePrintableName(formData: SheetData): string {
@@ -206,10 +180,7 @@ export function importCharacterDataForMultiCharacter(file: File): Promise<SheetD
           throw new Error('无效的角色数据格式');
         }
         
-        // 确保导入的数据有focused_card_ids字段（向后兼容）
-        if (!data.focused_card_ids) {
-          data.focused_card_ids = [];
-        }
+        // 注释：移除了 focused_card_ids 字段的向后兼容初始化，聚焦功能由双卡组系统取代
         
         resolve(data);
       } catch (error) {

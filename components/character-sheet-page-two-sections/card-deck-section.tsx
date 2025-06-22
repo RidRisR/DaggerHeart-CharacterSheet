@@ -8,6 +8,7 @@ import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { toast } from "@/hooks/use-toast"
+import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { SheetData } from "@/lib/sheet-data"
 import type { CSSProperties, MouseEvent } from "react";
 
@@ -15,6 +16,7 @@ interface CardDeckSectionProps {
   formData: SheetData
   onCardChange: (index: number, card: StandardCard) => void
   onInventoryCardChange: (index: number, card: StandardCard) => void // 新增：库存卡组修改函数
+  onCardMove: (fromDeck: 'focused' | 'inventory', fromIndex: number, toDeck: 'focused' | 'inventory', toIndex: number, card: StandardCard) => void // 新增：卡牌移动函数
   // 移除：onFocusedCardsChange 功能由双卡组系统取代
   cardModalActiveTab: string;
   setCardModalActiveTab: React.Dispatch<React.SetStateAction<string>>;
@@ -126,14 +128,14 @@ function Card({
         <div className="absolute -top-4 left-0 right-0 text-center">
           <span
             className={`text-[10px] font-medium px-1 py-0 rounded-t-sm border border-b-0 ${standardCard.type.includes("ancestry")
-                ? "bg-gray-100 border-gray-300"
-                : standardCard.type.includes("community")
-                  ? "bg-teal-100 border-teal-300"
-                  : standardCard.type.includes("profession")
-                    ? "bg-blue-100 border-blue-300"
-                    : standardCard.type.includes("subclass")
-                      ? "bg-purple-100 border-purple-300"
-                      : "bg-red-100 border-red-300"
+              ? "bg-gray-100 border-gray-300"
+              : standardCard.type.includes("community")
+                ? "bg-teal-100 border-teal-300"
+                : standardCard.type.includes("profession")
+                  ? "bg-blue-100 border-blue-300"
+                  : standardCard.type.includes("subclass")
+                    ? "bg-purple-100 border-purple-300"
+                    : "bg-red-100 border-red-300"
               }`}
           >
             {displayTypeName}
@@ -164,6 +166,7 @@ export function CardDeckSection({
   formData,
   onCardChange,
   onInventoryCardChange, // 新增参数
+  onCardMove, // 新增：卡牌移动函数
   // 移除：onFocusedCardsChange 参数
   cardModalActiveTab,
   setCardModalActiveTab,
@@ -183,7 +186,7 @@ export function CardDeckSection({
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [cardSelectionModalOpen, setCardSelectionModalOpen] = useState(false)
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
-  
+
   // 移除：防止循环更新的ref，因为已不需要聚焦功能
 
   // 获取当前卡组数据的辅助函数
@@ -239,10 +242,9 @@ export function CardDeckSection({
 
     // 特殊卡位保护：聚焦卡组的前5位不能移动到库存
     if (isFromFocused && index < 5) {
-      toast({
-        title: "无法移动",
-        description: "特殊卡位（前5张）不能移动到库存卡组",
-        variant: "destructive",
+      showFadeNotification({
+        message: "特殊卡位不能移动到库存卡组",
+        type: "error"
       });
       return;
     }
@@ -250,41 +252,42 @@ export function CardDeckSection({
     // 检查源卡牌是否为空
     const sourceCard = sourceCards[index];
     if (isEmptyCard(sourceCard)) {
-      toast({
-        title: "无法移动",
-        description: "空卡位无法移动",
-        variant: "default",
+      showFadeNotification({
+        message: "空卡位无法移动",
+        type: "info"
       });
       return;
     }
 
     // 查找目标卡组的空位
-    const emptyTargetIndex = targetCards.findIndex(isEmptyCard);
+    let emptyTargetIndex = -1;
+
+    if (isFromFocused) {
+      // 从聚焦卡组移动到库存卡组：可以移动到任何空位
+      emptyTargetIndex = targetCards.findIndex(isEmptyCard);
+    } else {
+      // 从库存卡组移动到聚焦卡组：只能移动到普通卡位（索引 5-19）
+      emptyTargetIndex = targetCards.findIndex((card, index) => index >= 5 && isEmptyCard(card));
+    }
+
     if (emptyTargetIndex === -1) {
-      toast({
-        title: "无法移动",
-        description: `${isFromFocused ? '库存' : '聚焦'}卡组已满，无法移动`,
-        variant: "destructive",
+      const errorMessage = isFromFocused
+        ? `库存卡组已满，无法移动`
+        : `聚焦卡组的普通卡位已满，无法移动`;
+      showFadeNotification({
+        message: errorMessage,
+        type: "error"
       });
       return;
-    }
-
-    // 执行移动
-    if (isFromFocused) {
-      // 从聚焦卡组移动到库存卡组
-      onCardChange(index, createEmptyCard()); // 清空源位置
-      onInventoryCardChange(emptyTargetIndex, sourceCard); // 添加到目标位置
-    } else {
-      // 从库存卡组移动到聚焦卡组
-      onInventoryCardChange(index, createEmptyCard()); // 清空源位置
-      onCardChange(emptyTargetIndex, sourceCard); // 添加到目标位置
-    }
+    }    // 执行移动 - 使用新的原子性移动函数
+    const fromDeck = activeDeck;
+    const toDeck = isFromFocused ? 'inventory' : 'focused';
+    onCardMove(fromDeck, index, toDeck, emptyTargetIndex, sourceCard);
 
     // 成功移动提示
-    toast({
-      title: "移动成功",
-      description: `卡牌已移动到${isFromFocused ? '库存' : '聚焦'}卡组`,
-      variant: "default",
+    showFadeNotification({
+      message: `卡牌已移动到${isFromFocused ? '库存' : '聚焦'}卡组`,
+      type: "success"
     });
 
     console.log(`卡牌已从${isFromFocused ? '聚焦' : '库存'}卡组移动到${isFromFocused ? '库存' : '聚焦'}卡组`);
@@ -346,8 +349,8 @@ export function CardDeckSection({
       <div className="flex mb-4 border-b border-gray-200">
         <button
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeDeck === 'focused'
-              ? 'border-blue-500 text-blue-600 bg-blue-50'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+            ? 'border-blue-500 text-blue-600 bg-blue-50'
+            : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           onClick={() => setActiveDeck('focused')}
         >
@@ -355,8 +358,8 @@ export function CardDeckSection({
         </button>
         <button
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeDeck === 'inventory'
-              ? 'border-green-500 text-green-600 bg-green-50'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+            ? 'border-green-500 text-green-600 bg-green-50'
+            : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           onClick={() => setActiveDeck('inventory')}
         >

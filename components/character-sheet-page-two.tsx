@@ -150,6 +150,50 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
 
     return [...baseUpgrades, ...tierSpecificUpgrades]
   }
+
+  // Handle card move between decks (atomic operation)
+  const handleCardMove = (
+    fromDeck: 'focused' | 'inventory',
+    fromIndex: number,
+    toDeck: 'focused' | 'inventory',
+    toIndex: number,
+    card: StandardCard
+  ) => {
+    console.log(`[handleCardMove] 移动卡牌从 ${fromDeck}[${fromIndex}] 到 ${toDeck}[${toIndex}]:`, card)
+
+    setFormData((prev) => {
+      const newFormData = { ...prev }
+
+      // 确保 inventory_cards 存在
+      if (!newFormData.inventory_cards) {
+        newFormData.inventory_cards = Array(20).fill(0).map(() => createEmptyCard())
+      }
+
+      // 创建新的卡组数组
+      const newFocusedCards = [...newFormData.cards]
+      const newInventoryCards = [...newFormData.inventory_cards]
+
+      // 执行移动操作
+      if (fromDeck === 'focused') {
+        newFocusedCards[fromIndex] = createEmptyCard() // 清空源位置
+      } else {
+        newInventoryCards[fromIndex] = createEmptyCard() // 清空源位置
+      }
+
+      if (toDeck === 'focused') {
+        newFocusedCards[toIndex] = card // 添加到目标位置
+      } else {
+        newInventoryCards[toIndex] = card // 添加到目标位置
+      }
+
+      return {
+        ...newFormData,
+        cards: newFocusedCards,
+        inventory_cards: newInventoryCards
+      }
+    })
+  }
+
   return (
     <>
       {/* 固定位置的按钮 - 移除建卡指引按钮，因为已经移到父组件 */}
@@ -175,6 +219,7 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
           formData={safeFormData}
           onCardChange={handleCardChange}
           onInventoryCardChange={handleInventoryCardChange}
+          onCardMove={handleCardMove}
           cardModalActiveTab={cardModalActiveTab}
           setCardModalActiveTab={setCardModalActiveTab}
           cardModalSearchTerm={cardModalSearchTerm}

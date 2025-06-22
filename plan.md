@@ -28,11 +28,22 @@
 - ✅ **卡牌移动功能**：实现右键移动卡牌在两个卡组间切换，包含特殊卡位保护机制（前5张不能移出聚焦卡组）
 - ✅ **基础UI增强**：卡牌数量显示、卡组区分、特殊卡位标识，双卡组的动态渲染
 - ✅ **UI优化**：将 alert 提示替换为 toast，提升用户体验，集成了完整的 toast 系统
+  - 位置优化：从屏幕底部改为屏幕中央偏上位置（`top-20 left-1/2`）
+  - 样式优化：更紧凑的设计、圆角边框、优化的动画效果
+  - 时间优化：自动关闭时间从16分钟调整为3秒
+  - 视觉优化：淡入淡出效果，从顶部滑入和向顶部滑出
 - ✅ **其他组件适配**：
   - 更新打印页面（`character-sheet-page-four.tsx`）显示聚焦+库存所有卡牌
   - 更新卡牌浏览区域（`card-display-section.tsx`）通过 `app/page.tsx` 接收合并的卡牌数据  
   - 更新第三页（`character-sheet-page-three.tsx`）接收所有卡牌数据
   - 添加 Toaster 组件到 `app/layout.tsx`
+- ✅ **Bug修复**：修复右键移动卡牌的关键问题
+  - **Bug 1**：卡牌从源卡组消失但不会出现在目标卡组
+    - 原因：防重复更新机制导致第二个函数调用被阻止
+    - 解决：实现 `onCardMove` 原子性移动函数，一次性更新完整的 formData
+  - **Bug 2**：从库存卡组可以移动到聚焦卡组的特殊卡位
+    - 原因：查找空位时没有区分特殊卡位和普通卡位
+    - 解决：限制移动到聚焦卡组时只能使用普通卡位（索引 5-19）
 
 ### 待完成任务（第二阶段：完善双卡组系统）
 - 🔄 **全面测试**：功能测试、边界测试、兼容性验证
@@ -500,41 +511,84 @@ const allDisplayCards = [
 
 ## 开发日志
 
-### 2025-01-20：第二阶段基本完成 - 双卡组系统全功能实现
-- ✅ **数据结构迁移**：`default-sheet-data.ts`、`multi-character-storage.ts`、`storage.ts` 全部支持 `inventory_cards`
-- ✅ **双卡组视图切换**：在 `card-deck-section.tsx` 中实现了 `activeDeck` 状态切换，支持聚焦/库存两个视图
-- ✅ **卡牌移动功能**：实现了右键移动功能 `handleCardRightClick`，包含：
-  - 特殊卡位保护（前5张不能移出聚焦卡组）
-  - 空卡位检查
-  - 卡组满员检查
-  - 卡牌数据更新和同步
-- ✅ **基础UI增强**：实时卡牌数量显示、卡组色彩区分（蓝色聚焦、绿色库存）
-- ✅ **UI优化完成**：完整替换 alert 为 toast 系统，包含：
-  - 导入 `toast` 到 `card-deck-section.tsx`
-  - 添加 `Toaster` 组件到 `app/layout.tsx`
-  - 成功/错误/警告等不同类型的提示
-- ✅ **组件适配完成**：所有相关组件都已支持双卡组：
-  - `character-sheet-page-four.tsx` - 打印页面显示聚焦+库存所有卡牌
-  - `card-display-section.tsx` - 通过合并数据显示所有卡牌
-  - `character-sheet-page-three.tsx` - 接收完整卡牌数据
-- ✅ **多次编译验证**：所有改动都通过了 `npm run build` 测试
+### 2025-01-20：第二阶段完成 + Bug修复 - 双卡组系统全功能实现
+- ✅ **核心功能完成**：数据结构迁移、双卡组视图切换、卡牌移动、UI优化、组件适配
+- ✅ **关键Bug修复**：修复右键移动卡牌的两个重要问题
+  - **Bug 1 - 原子性问题**：右键点击卡牌后，卡牌从当前卡组消失，但不会加入另一个卡组
+    - **原因**：`handleCardChange` 和 `handleInventoryCardChange` 都有防重复更新机制，连续调用时第二个函数被阻止执行
+    - **解决**：实现 `onCardMove` 原子性移动函数，一次性更新完整的 formData，避免状态竞争
+  - **Bug 2 - 特殊卡位保护**：从库存卡组可以移动到聚焦卡组的特殊卡位（前5个位置）
+    - **原因**：查找空位时使用 `findIndex(isEmptyCard)` 没有区分特殊卡位和普通卡位
+    - **解决**：限制移动到聚焦卡组时只能使用普通卡位（索引 5-19），特殊卡位完全受保护
+  - **实现细节**：
+    - 在 `CardDeckSectionProps` 中添加 `onCardMove` prop
+    - 在 `character-sheet-page-two.tsx` 中实现 `handleCardMove` 函数
+    - 在 `card-deck-section.tsx` 中调用 `onCardMove` 替代连续调用两个单独函数
+- ✅ **编译验证**：修复后代码通过编译测试
 
-**修改文件**（第二阶段完整列表）：
-- `lib/default-sheet-data.ts` - 新角色默认包含 inventory_cards
-- `lib/multi-character-storage.ts` - 旧角色加载时自动添加 inventory_cards
-- `lib/storage.ts` - 导入数据时自动添加 inventory_cards
-- `components/character-sheet-page-two.tsx` - 支持 inventory_cards 数据传递
-- `components/character-sheet-page-two-sections/card-deck-section.tsx` - 核心双卡组功能+toast系统
-- `components/character-sheet-page-four.tsx` - 打印页面支持双卡组
-- `app/page.tsx` - 传递合并卡牌数据到展示组件
-- `app/layout.tsx` - 添加 Toaster 组件
+**技术要点**：
+- 原子性操作确保数据一致性
+- 避免 React 状态更新竞争
+- 完整的特殊卡位保护机制（双向保护）
+- 保持了现有的防重复更新机制对其他操作的保护
 
-**第二阶段核心成果**：
-- 🎯 **彻底移除聚焦功能**，升级为完整的双卡组系统
-- 🎯 **无缝数据迁移**，新建/加载/导入角色都自动适配
-- 🎯 **直观交互体验**，右键移动+视觉反馈+保护机制
-- 🎯 **完整系统集成**，所有页面和组件都支持双卡组
+**修改文件**（Bug修复）：
+- `components/character-sheet-page-two-sections/card-deck-section.tsx` - 添加 onCardMove prop，修改右键移动逻辑
+- `components/character-sheet-page-two.tsx` - 实现 handleCardMove 函数并传递给子组件
 
-**下一步优先级**：
-1. 全面功能测试（新建角色、加载旧角色、卡牌移动、打印等）
-2. 可选的增强功能（拖拽移动、右键菜单等）
+**第二阶段最终状态**：
+🎯 **双卡组系统完全就绪**，包括数据迁移、视图切换、卡牌移动、错误处理、UI反馈和全组件支持。右键移动功能已经过bug修复，可以正常工作。
+
+### 2025-01-20：UI优化 - Toast通知系统美化
+- ✅ **Toast位置优化**：从屏幕底部移动到中央偏上位置
+  - 修改 `ToastViewport` 使用 `top-20 left-1/2 -translate-x-1/2`
+  - 更好的视觉体验，不遮挡重要内容
+- ✅ **Toast样式优化**：
+  - 更紧凑的设计：减少 padding (`px-4 py-3`)，更小的关闭按钮
+  - 优化动画：从顶部滑入，向顶部滑出，添加淡入效果
+  - 圆角设计：使用 `rounded-lg` 替代 `rounded-md`
+- ✅ **Toast行为优化**：
+  - 自动关闭时间从16分钟优化为3秒
+  - 字体大小优化：标题使用 `text-sm font-medium`，描述使用 `text-xs`
+
+**修改文件**（UI优化）：
+- `components/ui/toast.tsx` - Toast位置、样式和动画优化
+- `hooks/use-toast.ts` - 自动关闭时间优化
+
+**改进效果**：
+- 🎨 **视觉改进**：通知出现在屏幕中央偏上，更加醒目且美观
+- ⏱️ **体验改进**：3秒自动消失，不会长时间干扰用户操作
+- 🎬 **动画改进**：平滑的淡入淡出和滑动效果
+
+### 2025-01-20：通知系统重构 - 简单淡化通知
+- ✅ **创建新的淡化通知系统**：
+  - 新建 `components/ui/fade-notification.tsx`
+  - 一出现就开始逐渐淡化消失的效果
+  - 无需用户交互，自动淡出
+- ✅ **通知特性**：
+  - 位置：屏幕中央偏上（`top-20 left-1/2`）
+  - 持续时间：2秒总时长，最后500ms淡出
+  - 类型支持：success（绿色）、error（红色）、info（蓝色）
+  - 多通知堆叠：每个通知间距60px
+- ✅ **替换现有通知**：
+  - 卡牌移动成功：`卡牌已移动到X卡组`（绿色）
+  - 特殊卡位保护：`特殊卡位不能移动到库存卡组`（红色）
+  - 空卡位提示：`空卡位无法移动`（蓝色）
+  - 卡组满员：`X卡组已满，无法移动`（红色）
+- ✅ **技术实现**：
+  - 全局状态管理，无需 Context
+  - Portal 渲染，避免层级问题
+  - CSS 过渡动画，平滑视觉效果
+  - 自动清理机制，防止内存泄漏
+
+**修改文件**（通知系统重构）：
+- `components/ui/fade-notification.tsx` - 新的淡化通知组件
+- `app/layout.tsx` - 添加 FadeNotificationContainer
+- `components/character-sheet-page-two-sections/card-deck-section.tsx` - 替换所有 toast 为 showFadeNotification
+
+**最终效果**：
+- 🌟 **极简体验**：一出现就开始淡化，无需任何用户操作
+- 🎯 **精准反馈**：不同颜色表示不同类型的操作结果
+- ⚡ **零干扰**：2秒内自动消失，不阻塞用户操作流程
+
+**下一步**：建议进行全面的功能测试来验证系统的稳定性。

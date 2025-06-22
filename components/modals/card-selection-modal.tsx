@@ -13,6 +13,7 @@ import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isV
 import { createEmptyCard } from "@/card/card-types"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -65,7 +66,7 @@ export function CardSelectionModal({
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false); // Add state for level dropdown
 
   // Add category state management
-  const [expandedCategories, setExpandedCategories] = useState(new Set(['standard'])); // Default: standard expanded
+  const [expandedCategories, setExpandedCategories] = useState(new Set(['standard', 'extended'])); // Default: both expanded
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
@@ -86,6 +87,22 @@ export function CardSelectionModal({
       }
     }
   }, [isOpen, activeTab, setActiveTab, cardTypesByCategory.standard]);
+
+  // ESC键关闭模态框
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isOpen, onClose]);
 
   const classOptions = useMemo(() => {
     if (!activeTab) return []
@@ -378,24 +395,26 @@ export function CardSelectionModal({
                       <Button onClick={handleClassInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    {classOptions.map((option) => (
-                      <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()}>
-                        <Checkbox
-                          id={`class-${option.value}`}
-                          checked={selectedClasses.includes(option.value)}
-                          onCheckedChange={(checked) => {
-                            setSelectedClasses(prev => {
-                              return checked
-                                ? [...prev, option.value]
-                                : prev.filter(v => v !== option.value);
-                            });
-                          }}
-                        />
-                        <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer select-none">
-                          {option.label}
-                        </label>
-                      </DropdownMenuItem>
-                    ))}
+                    <ScrollArea className="h-64">
+                      {classOptions.map((option) => (
+                        <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()}>
+                          <Checkbox
+                            id={`class-${option.value}`}
+                            checked={selectedClasses.includes(option.value)}
+                            onCheckedChange={(checked) => {
+                              setSelectedClasses(prev => {
+                                return checked
+                                  ? [...prev, option.value]
+                                  : prev.filter(v => v !== option.value);
+                              });
+                            }}
+                          />
+                          <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer select-none">
+                            {option.label}
+                          </label>
+                        </DropdownMenuItem>
+                      ))}
+                    </ScrollArea>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <span className="text-sm font-medium">等级:</span>
@@ -426,24 +445,26 @@ export function CardSelectionModal({
                       <Button onClick={handleLevelInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    {levelOptions.map((option) => (
-                      <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()}>
-                        <Checkbox
-                          id={`level-${option.value}`}
-                          checked={selectedLevels.includes(option.value)}
-                          onCheckedChange={(checked) => {
-                            setSelectedLevels(prev => {
-                              return checked
-                                ? [...prev, option.value]
-                                : prev.filter(v => v !== option.value);
-                            });
-                          }}
-                        />
-                        <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer select-none">
-                          {option.label}
-                        </label>
-                      </DropdownMenuItem>
-                    ))}
+                    <ScrollArea className="h-48">
+                      {levelOptions.map((option) => (
+                        <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()}>
+                          <Checkbox
+                            id={`level-${option.value}`}
+                            checked={selectedLevels.includes(option.value)}
+                            onCheckedChange={(checked) => {
+                              setSelectedLevels(prev => {
+                                return checked
+                                  ? [...prev, option.value]
+                                  : prev.filter(v => v !== option.value);
+                              });
+                            }}
+                          />
+                          <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer select-none">
+                            {option.label}
+                          </label>
+                        </DropdownMenuItem>
+                      ))}
+                    </ScrollArea>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

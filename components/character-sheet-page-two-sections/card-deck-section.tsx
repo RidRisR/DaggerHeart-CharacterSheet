@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef, memo } from "react"
+import { useState, useEffect, useRef, memo, useCallback } from "react"
 import { getCardTypeName, convertToStandardCard } from "@/card"
 import { CardType, createEmptyCard, StandardCard, isEmptyCard } from "@/card/card-types"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
@@ -94,8 +94,14 @@ function Card({
         } ${getBorderColor(standardCard?.type, isSpecial)}`}
       onClick={() => onCardClick(index)}
       onContextMenu={(e) => onCardRightClick(index, e)}
-      onMouseEnter={() => card?.name && onHover(index)}
-      onMouseLeave={() => onHover(null)}
+      onMouseEnter={() => {
+        if (card?.name) {
+          onHover(index);
+        }
+      }}
+      onMouseLeave={() => {
+        onHover(null);
+      }}
     >
       {/* 卡牌标题 */}
       {card?.name && <div className="text-sm font-medium">{standardCard?.name || card.name}</div>}
@@ -146,7 +152,7 @@ function Card({
       {/* Hover preview */}
       {hoveredCard === index && card?.name && (
         <div
-          className="absolute z-50"
+          className="absolute z-50 pointer-events-none"
           style={getPreviewPosition(index)}
         >
           <SelectableCard
@@ -181,6 +187,12 @@ export function CardDeckSection({
   const [activeDeck, setActiveDeck] = useState<'focused' | 'inventory'>('focused');
 
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
+
+  // 优化的hover处理函数，确保立即响应
+  const handleCardHover = useCallback((cardIndex: number | null) => {
+    setHoveredCard(cardIndex);
+  }, []);
+
   // 移除：selectedCards 状态和聚焦逻辑
   const [isAltPressed, setIsAltPressed] = useState(false)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -345,26 +357,33 @@ export function CardDeckSection({
         <div className="h-px bg-gray-800 flex-grow"></div>
       </div>
 
-      {/* 卡组切换标签 */}
-      <div className="flex mb-4 border-b border-gray-200">
-        <button
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeDeck === 'focused'
-            ? 'border-blue-500 text-blue-600 bg-blue-50'
-            : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          onClick={() => setActiveDeck('focused')}
-        >
-          聚焦卡组 ({getCurrentDeckCards('focused').filter(card => !isEmptyCard(card)).length}/20)
-        </button>
-        <button
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeDeck === 'inventory'
-            ? 'border-green-500 text-green-600 bg-green-50'
-            : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          onClick={() => setActiveDeck('inventory')}
-        >
-          库存卡组 ({getCurrentDeckCards('inventory').filter(card => !isEmptyCard(card)).length}/20)
-        </button>
+      {/* 卡组切换标签和操作提示 - 打印时隐藏 */}
+      <div className="flex items-center justify-between mb-4 border-b border-gray-200 print:hidden">
+        <div className="flex">
+          <button
+            className={`px-3 py-1.5 text-sm font-medium border-b-2 transition-colors ${activeDeck === 'focused'
+              ? 'border-blue-500 text-blue-600 bg-blue-50'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            onClick={() => setActiveDeck('focused')}
+          >
+            聚焦卡组 ({getCurrentDeckCards('focused').filter(card => !isEmptyCard(card)).length}/20)
+          </button>
+          <button
+            className={`px-3 py-1.5 text-sm font-medium border-b-2 transition-colors ${activeDeck === 'inventory'
+              ? 'border-green-500 text-green-600 bg-green-50'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            onClick={() => setActiveDeck('inventory')}
+          >
+            库存卡组 ({getCurrentDeckCards('inventory').filter(card => !isEmptyCard(card)).length}/20)
+          </button>
+        </div>
+
+        {/* 操作提示 */}
+        <div className="text-xs text-gray-500">
+          💡 左键进入卡牌选择，右键移动卡牌到其他卡组
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-1">
@@ -387,7 +406,7 @@ export function CardDeckSection({
                 isSpecial={isSpecial}
                 onCardClick={handleCardClick}
                 onCardRightClick={handleCardRightClick}
-                onHover={setHoveredCard}
+                onHover={handleCardHover}
                 getPreviewPosition={getPreviewPosition}
                 hoveredCard={hoveredCard}
               />

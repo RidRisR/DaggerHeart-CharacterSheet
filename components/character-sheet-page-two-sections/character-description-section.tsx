@@ -47,7 +47,7 @@ export function CharacterDescriptionSection({ formData, handleInputChange }: Cha
     return actualLines
   }
 
-  // 限制textarea最多22行和250字符的处理函数
+  // 限制textarea最多20行和250字符的处理函数
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target
     const newValue = e.target.value
@@ -69,10 +69,10 @@ export function CharacterDescriptionSection({ formData, handleInputChange }: Cha
     // 计算新文本的实际行数
     const actualLines = calculateActualLines(textarea, newValue)
 
-    if (actualLines <= 22) {
+    if (actualLines <= 20) {
       handleInputChange(e)
     } else {
-      // 如果超过22行，需要截断文本
+      // 如果超过20行，需要截断文本
       // 二分查找找到合适的文本长度
       let left = 0
       let right = Math.min(newValue.length, 250) // 确保不超过250字符
@@ -83,7 +83,7 @@ export function CharacterDescriptionSection({ formData, handleInputChange }: Cha
         const testText = newValue.substring(0, mid)
         const testLines = calculateActualLines(textarea, testText)
 
-        if (testLines <= 22 && testText.length <= 250) {
+        if (testLines <= 20 && testText.length <= 250) {
           validText = testText
           left = mid + 1
         } else {
@@ -111,7 +111,7 @@ export function CharacterDescriptionSection({ formData, handleInputChange }: Cha
           value={formData.characterBackground}
           onChange={handleTextareaChange}
           className="flex-grow h-[190px] text-[10px] border-gray-400 print-empty-hide"
-          placeholder="写下对您的角色的概括性介绍，包括他们的过去、经历和个性特征。请注意，角色真正的性格和背景特质应当在游戏中体现出来，这里只是简短的概括和提示。（最多22行，250字）"
+          placeholder="写下对您的角色的概括性介绍，包括他们的过去、经历和个性特征。请注意，角色真正的性格和背景特质应当在游戏中体现出来，这里只是简短的概括和提示。（最多20行，250字）"
         />
       </div>
 
@@ -122,7 +122,7 @@ export function CharacterDescriptionSection({ formData, handleInputChange }: Cha
           value={formData.characterAppearance}
           onChange={handleTextareaChange}
           className="flex-grow h-[190px] text-[10px] border-gray-400 print-empty-hide"
-          placeholder="写下您的角色的性别、年龄、外貌和服装等外观特征。如果您的角色有什么特殊的形态或外观特征，也可以记录在这里。（最多22行，250字）"
+          placeholder="写下您的角色的性别、年龄、外貌和服装等外观特征。如果您的角色有什么特殊的形态或外观特征，也可以记录在这里。（最多20行，250字）"
         />
       </div>
 
@@ -133,7 +133,7 @@ export function CharacterDescriptionSection({ formData, handleInputChange }: Cha
           value={formData.characterMotivation}
           onChange={handleTextareaChange}
           className="flex-grow h-[190px] text-[10px] border-gray-400 print-empty-hide"
-          placeholder="写下您的角色的动机、目标和愿望。描述角色参与冒险的原因和主要驱动力。请注意，角色在游戏中随时可能成长和改变，随着故事发展，他们的动机可以发生转变。（最多22行，250字）"
+          placeholder="写下您的角色的动机、目标和愿望。描述角色参与冒险的原因和主要驱动力。请注意，角色在游戏中随时可能成长和改变，随着故事发展，他们的动机可以发生转变。（最多20行，250字）"
         />
       </div>
     </div>

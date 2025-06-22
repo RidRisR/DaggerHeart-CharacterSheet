@@ -13,6 +13,12 @@ export function CardSystemInitializer() {
         let isMounted = true
 
         const initializeCardSystem = async () => {
+            // 检查是否在客户端环境
+            if (typeof window === 'undefined') {
+                console.log('[CardSystemInitializer] 跳过服务端初始化')
+                return
+            }
+
             try {
                 console.log('[CardSystemInitializer] 开始初始化卡牌系统...')
                 if (!isMounted) return
@@ -33,10 +39,16 @@ export function CardSystemInitializer() {
             }
         }
 
-        initializeCardSystem()
+        // 延迟执行，确保页面已经完全挂载
+        const timeoutId = setTimeout(() => {
+            if (isMounted) {
+                initializeCardSystem()
+            }
+        }, 100) // 延迟100ms执行
 
         return () => {
             isMounted = false
+            clearTimeout(timeoutId)
         }
     }, [])
 

@@ -31,6 +31,7 @@ import React, { useRef } from "react"
 
 interface CardDisplaySectionProps {
   cards: Array<StandardCard>
+  inventoryCards: Array<StandardCard>
   // 注释：移除了 focusedCardIds prop，聚焦功能已由双卡组系统取代
 }
 
@@ -138,7 +139,7 @@ function SortableCard({
 }
 
 // 状态提升：用useRef持久化containerHeight和expandedCards
-export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
+export function CardDisplaySection({ cards, inventoryCards }: CardDisplaySectionProps) {
   // 用useRef持久化高度和展开状态
   const containerHeightRef = useRef<number>(400)
   const expandedCardsRef = useRef<Record<string, boolean>>({})
@@ -151,10 +152,11 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   const [backgroundCards, setBackgroundCards] = useState<typeof cards>([])
   const [domainCards, setDomainCards] = useState<typeof cards>([])
   const [variantCards, setVariantCards] = useState<typeof cards>([])
-  // 注释：移除了 focusedCards 状态，由双卡组系统取代
+  const [focusedCards, setFocusedCards] = useState<typeof cards>([])
+  const [inventoryOnlyCards, setInventoryOnlyCards] = useState<typeof inventoryCards>([])
 
-  // 当前选中的标签，移除了 focused 标签
-  const [activeTab, setActiveTab] = useState("all")
+  // 当前选中的标签，默认选择聚焦
+  const [activeTab, setActiveTab] = useState("focused")
 
   // 注释：移除了异步加载聚焦卡牌的逻辑，由双卡组系统取代
 
@@ -166,7 +168,14 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
     setBackgroundCards(validCards.filter((card) => card.type === "ancestry" || card.type === "community"))
     setDomainCards(validCards.filter((card) => card.type === "domain"))
     setVariantCards(validCards.filter((card) => isVariantCard(card)))
-  }, [cards])
+
+    // 设置聚焦卡组（从cards中获取）
+    setFocusedCards(validCards)
+
+    // 设置库存卡组
+    const validInventoryCards = inventoryCards.filter((card) => card && card.name)
+    setInventoryOnlyCards(validInventoryCards)
+  }, [cards, inventoryCards])
 
   // 监听 focusedCardsChanged 事件 - 移除，因为现在使用props传递
   // useEffect(() => {
@@ -201,8 +210,10 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
         return "secondary"
       case "domain":
         return "destructive"
+      case "variant":
+        return "outline" // 扩展卡牌使用 outline 样式，区别于领域卡的 destructive
       default:
-        return "outline"
+        return "secondary" // 其他未知类型使用 secondary
     }
   }
 
@@ -341,21 +352,21 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
   return (
     <div className="border rounded-lg bg-gray-50 shadow-sm flex flex-col" style={{ height: containerHeightRef.current }}>
       <div className="p-2 flex-grow overflow-hidden">
-        <Tabs defaultValue="all" className="w-full h-full flex flex-col" onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-5 mb-2">
-            <TabsTrigger value="all" className="text-s">全部</TabsTrigger>
+        <Tabs defaultValue="focused" className="w-full h-full flex flex-col" onValueChange={setActiveTab}>
+          <TabsList className="w-full grid grid-cols-6 mb-2">
+            <TabsTrigger value="focused" className="text-s">聚焦</TabsTrigger>
             <TabsTrigger value="profession" className="text-s">职业</TabsTrigger>
             <TabsTrigger value="background" className="text-s">背景</TabsTrigger>
             <TabsTrigger value="domain" className="text-s">领域</TabsTrigger>
             <TabsTrigger value="variant" className="text-s">扩展</TabsTrigger>
-            {/* 注释：移除了聚焦标签，由双卡组系统取代 */}
+            <TabsTrigger value="inventory" className="text-s">库存</TabsTrigger>
           </TabsList>
           <div className="flex-grow overflow-hidden">
-            <TabsContent value="all" className="h-full m-0">
-              {allCards.length > 0 ? (
-                renderCardList(allCards)
+            <TabsContent value="focused" className="h-full m-0">
+              {focusedCards.length > 0 ? (
+                renderCardList(focusedCards)
               ) : (
-                <p className="text-center text-gray-500 py-4">尚未选择任何卡牌</p>
+                  <p className="text-center text-gray-500 py-4">聚焦卡组暂无卡牌</p>
               )}
             </TabsContent>
             <TabsContent value="profession" className="h-full m-0">
@@ -370,7 +381,13 @@ export function CardDisplaySection({ cards }: CardDisplaySectionProps) {
             <TabsContent value="variant" className="h-full m-0">
               {renderCardList(variantCards)}
             </TabsContent>
-            {/* 注释：移除了聚焦标签页内容，由双卡组系统取代 */}
+            <TabsContent value="inventory" className="h-full m-0">
+              {inventoryOnlyCards.length > 0 ? (
+                renderCardList(inventoryOnlyCards)
+              ) : (
+                <p className="text-center text-gray-500 py-4">库存卡组暂无卡牌</p>
+              )}
+            </TabsContent>
           </div>
         </Tabs>
       </div>

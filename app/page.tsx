@@ -454,10 +454,8 @@ export default function Home() {
         {/* 左侧卡牌展示区域 - 打印时隐藏 */}
         <div className="lg:w-1/4 print:hidden">
           <CardDisplaySection
-            cards={[
-              ...(formData.cards || []),
-              ...(formData.inventory_cards || [])
-            ]}
+            cards={formData.cards || []}
+            inventoryCards={formData.inventory_cards || []}
           />
         </div>
 

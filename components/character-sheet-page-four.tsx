@@ -67,14 +67,7 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     }, [cards]);
 
     if (cards.length === 0) {
-        return (
-            <div className="print-deck-section">
-                <div className="print-deck-header mb-6">
-                    <h2 className="text-xl font-bold text-center">{title}</h2>
-                    <div className="text-sm text-gray-600 text-center mt-1">暂无卡牌</div>
-                </div>
-            </div>
-        );
+        return null; // 空卡组不渲染任何内容
     }
 
     return (
@@ -126,23 +119,32 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
         return (formData?.inventory_cards || []).filter((card: StandardCard) => !isEmptyCard(card));
     }, [formData?.inventory_cards]);
 
+    // 如果两个卡组都是空的，不渲染第四页
+    if (focusedCards.length === 0 && inventoryCards.length === 0) {
+        return null;
+    }
+
     return (
         <div className="character-sheet-page-four a4-page px-8 py-10 print:px-8 print:py-10">
-            {/* 聚焦卡组 */}
-            <CardDeckPrintSection
-                cards={focusedCards}
-                title="聚焦卡组"
-                deckType="focused"
-            />
-
-            {/* 库存卡组 - 强制分页 */}
-            <div className="print-page-break">
+            {/* 聚焦卡组 - 只有当有卡牌时才显示 */}
+            {focusedCards.length > 0 && (
                 <CardDeckPrintSection
-                    cards={inventoryCards}
-                    title="库存卡组"
-                    deckType="inventory"
+                    cards={focusedCards}
+                    title="聚焦卡组"
+                    deckType="focused"
                 />
-            </div>
+            )}
+
+            {/* 库存卡组 - 只有当有卡牌时才显示，如果聚焦卡组也有内容则强制分页 */}
+            {inventoryCards.length > 0 && (
+                <div className={focusedCards.length > 0 ? "print-page-break" : ""}>
+                    <CardDeckPrintSection
+                        cards={inventoryCards}
+                        title="库存卡组"
+                        deckType="inventory"
+                    />
+                </div>
+            )}
         </div>
     )
 }

@@ -522,7 +522,16 @@ export default function Home() {
         </Button>
         <Button
           onClick={() => {
-            window.location.href = `/DaggerHeart-CharacterSheet/card-manager`;
+            // 检测是否为本地构建版本
+            const isLocalBuild = window.location.protocol === 'file:';
+
+            if (isLocalBuild) {
+              // 本地版本：跳转到资产目录下的卡牌管理页面
+              window.location.href = './资产/card-manager.html';
+            } else {
+            // 在线版本：使用原有路径
+              window.location.href = `/DaggerHeart-CharacterSheet/card-manager`;
+            }
           }}
           className="bg-gray-800 hover:bg-gray-700 focus:outline-none"
         >

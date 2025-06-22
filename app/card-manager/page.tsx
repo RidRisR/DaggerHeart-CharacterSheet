@@ -132,8 +132,18 @@ export default function CardImportTestPage() {
   // 返回主站
   const goBackToMain = () => {
     refreshData()
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-    window.location.href = `${basePath}/`;
+
+    // 检测是否为本地构建版本
+    const isLocalBuild = window.location.protocol === 'file:';
+
+    if (isLocalBuild) {
+      // 本地版本：返回上级目录的入口文件
+      window.location.href = '../车卡器入口.html';
+    } else {
+    // 在线版本：使用原有路径
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+      window.location.href = `${basePath}/`;
+    }
   }
 
   // 查看卡牌

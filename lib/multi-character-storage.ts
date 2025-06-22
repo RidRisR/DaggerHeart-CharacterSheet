@@ -17,12 +17,14 @@ export const MAX_CHARACTERS = 10;
 
 // ===== UUID生成器 =====
 export function generateCharacterId(): string {
-  // 使用时间戳和随机数的组合，但只在客户端调用
+  // 只在客户端生成ID，避免服务端/客户端不一致
   if (typeof window === 'undefined') {
-    // 如果在服务器端（虽然这是静态导出，但为了安全起见），返回一个基于时间的ID
-    return `char-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    // 服务器端返回一个临时占位符，实际调用应该在客户端
+    console.warn('[generateCharacterId] Called on server side, returning placeholder');
+    return 'temp-server-id';
   }
   
+  // 客户端使用UUID v4算法
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0;
     const v = c == 'x' ? r : (r & 0x3 | 0x8);

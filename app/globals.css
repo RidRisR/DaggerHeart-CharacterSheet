@@ -195,6 +195,20 @@ body {
   page-break-after: always;
 }
 
+/* 卡组区域样式 */
+.print-deck-section {
+  margin-bottom: 2rem;
+}
+
+.print-deck-header {
+  page-break-after: avoid;
+  /* 标题不单独分页 */
+}
+
+/* 强制分页 - 在聚焦卡组和库存卡组之间 */
+.print-page-break {
+  page-break-before: always;
+}
 .card-row:last-child {
   margin-bottom: 0;
 }
@@ -294,11 +308,41 @@ body {
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+/* 第四页打印专用样式 - 确保自动分页后有合适的边距 */
+@media print {
+  /* 针对第四页的分页规则 */
+  .character-sheet-page-four {
+    page-break-before: always;
+    /* 为第四页添加顶部填充，确保内容不会紧贴页面顶部 */
+    padding-top: 1rem;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  /* 确保第四页内的卡牌行在分页后有合适的上边距 */
+  .character-sheet-page-four .card-row {
+    page-break-inside: avoid;
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* 第一行不需要额外的上边距 */
+  .character-sheet-page-four .print-deck-section .card-row:first-child {
+    margin-top: 0 !important;
+  }
+
+  /* 确保卡组标题后有足够间距 */
+  .character-sheet-page-four .print-deck-header {
+    margin-bottom: 1.5rem !important;
+    page-break-after: avoid;
+  }
+
+  /* 强制为打印页面的内容添加顶部边距 */
+  .character-sheet-page-four .print-card-grid {
+    padding-top: 0.5rem;
+  }
+  
+  /* 在打印时为自动分页的内容添加顶部边距 */
+  .character-sheet-page-four .print-card-grid > .card-row {
+    orphans: 2;
+    widows: 2;
   }
 }

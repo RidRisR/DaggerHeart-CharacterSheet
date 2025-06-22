@@ -451,7 +451,7 @@ const contextMenuOptions = [
 ### 2.6 其他组件更新
 
 #### 2.6.1 `components/character-sheet-page-four.tsx`
-**目标**：打印页面需要显示所有卡牌（聚焦+库存）。
+**目标**：打印页面需要显示所有卡牌。
 
 ```typescript
 const allCards = [
@@ -547,8 +547,9 @@ const allDisplayCards = [
   - 更紧凑的设计：减少 padding (`px-4 py-3`)，更小的关闭按钮
   - 优化动画：从顶部滑入，向顶部滑出，添加淡入效果
   - 圆角设计：使用 `rounded-lg` 替代 `rounded-md`
+  - 时间优化：自动关闭时间从16分钟优化为3秒
 - ✅ **Toast行为优化**：
-  - 自动关闭时间从16分钟优化为3秒
+  - 自动关闭时间从16分钟调整为3秒
   - 字体大小优化：标题使用 `text-sm font-medium`，描述使用 `text-xs`
 
 **修改文件**（UI优化）：
@@ -703,7 +704,7 @@ const allDisplayCards = [
   - 支持换行符 `\n` → `<br>`
 
 - ✅ **新增纯文本清理函数**：
-  - 新增 `stripMarkdown()` 函数，移除Markdown格式符号保留纯文本
+  - 新增 `stripMarkdown()` 函 数，移除Markdown格式符号保留纯文本
   - 可根据需要选择转换为HTML或清理为纯文本
 
 - ✅ **应用到职业特殊字段**：
@@ -823,8 +824,8 @@ const organizeCardsIntoPages = (cards) => {
 };
 ```
 
-**CSS自适应策略**：
 ```css
+/* 高度对齐 + 安全边距 */
 .card-row {
   align-items: flex-start; /* 不强制等高 */
   display: grid;
@@ -930,3 +931,21 @@ const cardsPerPage = maxRowsPerPage * cardsPerRow; // 最多9张
 - 但完全避免了内容截断的问题
 
 **验证状态**：安全分页方案已通过构建测试，解决截断问题，同时保持美观的视觉效果。
+
+## 最新优化记录
+
+### 2024-12-19 第四页打印美观性优化（移除卡牌阴影）✅
+
+#### 目标
+- 移除卡牌的阴影效果，使打印效果更加清爽
+
+#### 实现
+- 移除 `character-sheet-page-four.tsx` 中卡牌 div 的 `shadow-sm` 类
+- 确保卡牌在打印时呈现更干净的视觉效果
+
+#### 验证
+- ✅ 成功移除卡牌阴影
+- ✅ pnpm build 无编译错误
+- ✅ 打印效果更加清爽
+
+---

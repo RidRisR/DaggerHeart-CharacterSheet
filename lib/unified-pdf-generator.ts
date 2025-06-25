@@ -4,65 +4,103 @@ async function createPageCanvas(
     scale: number, 
     html2canvas: any
 ): Promise<HTMLCanvasElement> {
-    // 创建一个独立的渲染容器
-    const tempContainer = document.createElement('div')
-    tempContainer.style.cssText = `
-        position: absolute;
-        top: -10000px;
-        left: -10000px;
-        width: 210mm;
-        height: 297mm;
-        visibility: visible !important;
-        opacity: 1 !important;
-        z-index: -1;
-        background: white;
-        overflow: hidden;
-    `
-
-    // 克隆页面元素到临时容器
-    const clonedElement = pageElement.cloneNode(true) as HTMLElement
-    clonedElement.style.cssText = `
-        width: 100% !important;
-        height: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-sizing: border-box !important;
-        overflow: visible !important;
-        position: relative !important;
+    // 保存原始页面状态
+    const originalDisplay = pageElement.style.display
+    const originalPosition = pageElement.style.position
+    const originalZIndex = pageElement.style.zIndex
+    const originalTop = pageElement.style.top
+    const originalLeft = pageElement.style.left
+    const originalTransform = pageElement.style.transform
+    const originalVisibility = pageElement.style.visibility
+    
+    // 临时修改页面元素样式，使其完全可见且独立渲染
+    pageElement.style.cssText = `
+        position: fixed !important;
         top: 0 !important;
         left: 0 !important;
-        transform: none !important;
+        width: 794px !important;
+        height: 1123px !important;
+        z-index: 9999 !important;
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        transform: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
     `
 
-    tempContainer.appendChild(clonedElement)
-    document.body.appendChild(tempContainer)
-
     try {
-        // 等待一个渲染周期，确保样式生效
+        // 等待多个渲染周期，确保样式完全生效和字体加载完成
         await new Promise(resolve => requestAnimationFrame(resolve))
+        await new Promise(resolve => requestAnimationFrame(resolve))
+        await new Promise(resolve => setTimeout(resolve, 100)) // 额外等待字体渲染
 
-        // 使用html2canvas捕获临时容器
-        const canvas = await html2canvas(tempContainer, {
+        // 检查是否有自定义字体需要加载
+        if (document.fonts && document.fonts.ready) {
+            await document.fonts.ready
+        }
+
+        // 使用html2canvas捕获页面元素
+        const canvas = await html2canvas(pageElement, {
             scale: scale,
             useCORS: true,
             allowTaint: false,
             backgroundColor: '#ffffff',
-            width: Math.round(210 * 3.779527559), // 210mm转px (96DPI)
-            height: Math.round(297 * 3.779527559), // 297mm转px (96DPI)
+            width: 794,  // A4页面宽度 (210mm * 96dpi / 25.4)
+            height: 1123, // A4页面高度 (297mm * 96dpi / 25.4)
             scrollX: 0,
             scrollY: 0,
-            windowWidth: Math.round(210 * 3.779527559),
-            windowHeight: Math.round(297 * 3.779527559),
-            logging: false
+            windowWidth: 794,
+            windowHeight: 1123,
+            logging: false,
+            removeContainer: false,
+            foreignObjectRendering: true, // 启用外部对象渲染
+            imageTimeout: 0,
+            onclone: (clonedDoc: Document) => {
+                // 在克隆文档中应用所有样式
+                const clonedElement = clonedDoc.body.querySelector('.a4-page') as HTMLElement
+                if (clonedElement) {
+                    clonedElement.style.cssText = pageElement.style.cssText
+                }
+                
+                // 确保克隆文档中的字体样式正确
+                const style = clonedDoc.createElement('style')
+                style.textContent = `
+                    * {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
+                        font-synthesis: none;
+                        text-rendering: optimizeLegibility;
+                        -webkit-font-smoothing: antialiased;
+                        -moz-osx-font-smoothing: grayscale;
+                    }
+                    .a4-page {
+                        width: 794px !important;
+                        height: 1123px !important;
+                        background: white !important;
+                        position: relative !important;
+                        overflow: visible !important;
+                    }
+                `
+                clonedDoc.head.appendChild(style)
+            }
         })
 
         return canvas
     } finally {
-        // 清理临时容器
-        document.body.removeChild(tempContainer)
+        // 恢复原始样式
+        pageElement.style.display = originalDisplay
+        pageElement.style.position = originalPosition
+        pageElement.style.zIndex = originalZIndex
+        pageElement.style.top = originalTop
+        pageElement.style.left = originalLeft
+        pageElement.style.transform = originalTransform
+        pageElement.style.visibility = originalVisibility
+        
+        // 等待一个渲染周期让页面恢复正常显示
+        await new Promise(resolve => requestAnimationFrame(resolve))
     }
 }
 
@@ -196,6 +234,7 @@ export async function generateUnifiedPDF(): Promise<void> {
             // 检查元素是否有内容
             if (element.offsetWidth === 0 || element.offsetHeight === 0) {
                 console.warn(`第 ${i + 1} 页元素没有可见内容`)
+                continue // 跳过空页面
             }
 
             // 创建独立的渲染容器，确保页面内容可见
@@ -206,7 +245,27 @@ export async function generateUnifiedPDF(): Promise<void> {
             const imgData = canvas.toDataURL('image/png', options.quality)
             console.log(`第 ${i + 1} 页图片数据长度: ${imgData.length}`)
             
-            pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST')
+            // 计算合适的图片尺寸，保持宽高比
+            const canvasAspectRatio = canvas.width / canvas.height
+            const pdfAspectRatio = 210 / 297
+            
+            let imgWidth = 210
+            let imgHeight = 297
+            
+            if (canvasAspectRatio > pdfAspectRatio) {
+                // Canvas比较宽，以宽度为准
+                imgHeight = 210 / canvasAspectRatio
+            } else {
+                // Canvas比较高，以高度为准
+                imgWidth = 297 * canvasAspectRatio
+            }
+            
+            // 居中放置
+            const x = (210 - imgWidth) / 2
+            const y = (297 - imgHeight) / 2
+            
+            pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight, undefined, 'FAST')
+            console.log(`第 ${i + 1} 页添加到PDF，位置: (${x}, ${y}), 尺寸: ${imgWidth} x ${imgHeight}`)
         }
 
         updateProgress('正在保存文件...')

@@ -12,6 +12,11 @@ async function createPageCanvas(
     const originalLeft = pageElement.style.left
     const originalTransform = pageElement.style.transform
     const originalVisibility = pageElement.style.visibility
+    const originalId = pageElement.id; // 保存原始ID
+
+    // 为当前处理的元素设置一个唯一的ID
+    const tempId = `pdf-render-target-${Date.now()}`;
+    pageElement.id = tempId;
     
     // 临时修改页面元素样式，使其完全可见且独立渲染
     pageElement.style.cssText = `
@@ -33,15 +38,19 @@ async function createPageCanvas(
     `
 
     try {
-        // 等待多个渲染周期，确保样式完全生效和字体加载完成
+        // 智能等待，确保元素内容渲染稳定
+        await waitForElementReady(pageElement)
+        // 额外等待一个渲染帧，确保样式应用
         await new Promise(resolve => requestAnimationFrame(resolve))
-        await new Promise(resolve => requestAnimationFrame(resolve))
-        await new Promise(resolve => setTimeout(resolve, 100)) // 额外等待字体渲染
 
         // 检查是否有自定义字体需要加载
         if (document.fonts && document.fonts.ready) {
             await document.fonts.ready
         }
+
+        // 再次检查元素内容
+        console.log(`渲染前检查 - 元素内容长度: ${pageElement.innerText.length}, 子元素数量: ${pageElement.children.length}`)
+        console.log(`渲染前检查 - 元素尺寸: ${pageElement.offsetWidth}x${pageElement.offsetHeight}`)
 
         // 使用html2canvas捕获页面元素
         const canvas = await html2canvas(pageElement, {
@@ -59,9 +68,15 @@ async function createPageCanvas(
             removeContainer: false,
             foreignObjectRendering: true, // 启用外部对象渲染
             imageTimeout: 0,
+            ignoreElements: (element: Element) => {
+                // 忽略可能导致问题的元素，但保留主要内容
+                return element.tagName === 'SCRIPT' ||
+                    element.tagName === 'NOSCRIPT' ||
+                    (element instanceof HTMLElement && element.style && element.style.display === 'none')
+            },
             onclone: (clonedDoc: Document) => {
-                // 在克隆文档中应用所有样式
-                const clonedElement = clonedDoc.body.querySelector('.a4-page') as HTMLElement
+                // 在克隆文档中通过唯一ID精确查找元素
+                const clonedElement = clonedDoc.getElementById(tempId) as HTMLElement
                 if (clonedElement) {
                     clonedElement.style.cssText = pageElement.style.cssText
                 }
@@ -85,6 +100,8 @@ async function createPageCanvas(
                     }
                 `
                 clonedDoc.head.appendChild(style)
+
+                console.log(`克隆文档中的元素内容长度: ${clonedElement?.innerText?.length || 0}`)
             }
         })
 
@@ -98,6 +115,7 @@ async function createPageCanvas(
         pageElement.style.left = originalLeft
         pageElement.style.transform = originalTransform
         pageElement.style.visibility = originalVisibility
+        pageElement.id = originalId; // 恢复原始ID
         
         // 等待一个渲染周期让页面恢复正常显示
         await new Promise(resolve => requestAnimationFrame(resolve))
@@ -201,6 +219,9 @@ export async function generateUnifiedPDF(): Promise<void> {
 
         console.log(`找到 ${printElements.length} 个可打印页面元素`)
 
+        // 等待所有页面内容基本加载完成
+        await waitForPagesReady(printElements)
+
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
@@ -231,10 +252,16 @@ export async function generateUnifiedPDF(): Promise<void> {
             console.log(`第 ${i + 1} 页内容预览:`, element.innerText.substring(0, 200) + '...')
             console.log(`第 ${i + 1} 页子元素数量:`, element.children.length)
             
-            // 检查元素是否有内容
+            // 检查元素是否有内容，但不跳过任何页面
             if (element.offsetWidth === 0 || element.offsetHeight === 0) {
-                console.warn(`第 ${i + 1} 页元素没有可见内容`)
-                continue // 跳过空页面
+                console.warn(`第 ${i + 1} 页元素没有可见内容，但仍然尝试渲染`)
+                // 尝试强制设置元素可见性以进行渲染
+                const rect = element.getBoundingClientRect()
+                console.log(`第 ${i + 1} 页 getBoundingClientRect:`, rect)
+                console.log(`第 ${i + 1} 页 scrollHeight/Width:`, element.scrollHeight, element.scrollWidth)
+                console.log(`第 ${i + 1} 页 clientHeight/Width:`, element.clientHeight, element.clientWidth)
+
+                // 不跳过！这是关键修复
             }
 
             // 创建独立的渲染容器，确保页面内容可见

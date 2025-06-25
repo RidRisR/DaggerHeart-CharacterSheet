@@ -1,7 +1,7 @@
 // 为每个页面创建独立的Canvas渲染上下文
 async function createPageCanvas(
-    pageElement: HTMLElement, 
-    scale: number, 
+    pageElement: HTMLElement,
+    scale: number,
     html2canvas: any
 ): Promise<HTMLCanvasElement> {
     // 保存原始页面状态
@@ -17,7 +17,7 @@ async function createPageCanvas(
     // 为当前处理的元素设置一个唯一的ID
     const tempId = `pdf-render-target-${Date.now()}`;
     pageElement.id = tempId;
-    
+
     // 临时修改页面元素样式，使其完全可见且独立渲染
     pageElement.style.cssText = `
         position: fixed !important;
@@ -31,7 +31,6 @@ async function createPageCanvas(
         opacity: 1 !important;
         transform: none !important;
         margin: 0 !important;
-        padding: 0 !important;
         background: white !important;
         overflow: visible !important;
         box-sizing: border-box !important;
@@ -80,23 +79,36 @@ async function createPageCanvas(
                 if (clonedElement) {
                     clonedElement.style.cssText = pageElement.style.cssText
                 }
-                
+
                 // 确保克隆文档中的字体样式正确
                 const style = clonedDoc.createElement('style')
                 style.textContent = `
+                    /* Universal reset for the cloned document */
                     * {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        box-sizing: border-box !important;
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
-                        font-synthesis: none;
                         text-rendering: optimizeLegibility;
                         -webkit-font-smoothing: antialiased;
                         -moz-osx-font-smoothing: grayscale;
                     }
+
+                    /* Reset body styles */
+                    body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: none !important;
+                    }
+
+                    /* Define the page container with symmetrical padding */
                     .a4-page {
                         width: 794px !important;
                         height: 1123px !important;
                         background: white !important;
-                        position: relative !important;
+                        padding: 30px !important; /* Symmetrical padding */
                         overflow: visible !important;
+                        position: relative !important;
                     }
                 `
                 clonedDoc.head.appendChild(style)
@@ -116,7 +128,7 @@ async function createPageCanvas(
         pageElement.style.transform = originalTransform
         pageElement.style.visibility = originalVisibility
         pageElement.id = originalId; // 恢复原始ID
-        
+
         // 等待一个渲染周期让页面恢复正常显示
         await new Promise(resolve => requestAnimationFrame(resolve))
     }
@@ -238,7 +250,7 @@ export async function generateUnifiedPDF(): Promise<void> {
             dpi: hasHighDPI ? 300 : 250,         // 高DPI设备使用300DPI
             quality: 1.0                        // 最高质量
         }
-        
+
         updateProgress('正在渲染页面...')
 
         // 采用新的策略：为每个页面创建独立的渲染上下文
@@ -246,12 +258,12 @@ export async function generateUnifiedPDF(): Promise<void> {
             if (i > 0) pdf.addPage()
 
             updateProgress(`正在处理第 ${i + 1}/${printElements.length} 页...`)
-            
+
             const element = printElements[i] as HTMLElement
             console.log(`处理第 ${i + 1} 页，元素尺寸:`, element.offsetWidth, 'x', element.offsetHeight)
             console.log(`第 ${i + 1} 页内容预览:`, element.innerText.substring(0, 200) + '...')
             console.log(`第 ${i + 1} 页子元素数量:`, element.children.length)
-            
+
             // 检查元素是否有内容，但不跳过任何页面
             if (element.offsetWidth === 0 || element.offsetHeight === 0) {
                 console.warn(`第 ${i + 1} 页元素没有可见内容，但仍然尝试渲染`)
@@ -266,19 +278,19 @@ export async function generateUnifiedPDF(): Promise<void> {
 
             // 创建独立的渲染容器，确保页面内容可见
             const canvas = await createPageCanvas(element, options.scale, html2canvas)
-            
+
             console.log(`第 ${i + 1} 页Canvas尺寸: ${canvas.width} x ${canvas.height}`)
 
             const imgData = canvas.toDataURL('image/png', options.quality)
             console.log(`第 ${i + 1} 页图片数据长度: ${imgData.length}`)
-            
+
             // 计算合适的图片尺寸，保持宽高比
             const canvasAspectRatio = canvas.width / canvas.height
             const pdfAspectRatio = 210 / 297
-            
+
             let imgWidth = 210
             let imgHeight = 297
-            
+
             if (canvasAspectRatio > pdfAspectRatio) {
                 // Canvas比较宽，以宽度为准
                 imgHeight = 210 / canvasAspectRatio
@@ -286,11 +298,11 @@ export async function generateUnifiedPDF(): Promise<void> {
                 // Canvas比较高，以高度为准
                 imgWidth = 297 * canvasAspectRatio
             }
-            
+
             // 居中放置
             const x = (210 - imgWidth) / 2
             const y = (297 - imgHeight) / 2
-            
+
             pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight, undefined, 'FAST')
             console.log(`第 ${i + 1} 页添加到PDF，位置: (${x}, ${y}), 尺寸: ${imgWidth} x ${imgHeight}`)
         }

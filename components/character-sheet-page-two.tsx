@@ -200,9 +200,10 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
       {/* 固定位置的按钮已移至父组件 */}
       <div></div>
 
+      <div className="w-full max-w-[210mm] mx-auto my-4">
         <div
-          className="h-full p-1 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
-          style={{ width: "100%", height: "100%" }}
+          className="a4-page p-1 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+          style={{ width: "210mm", height: "297mm" }}
         >
           {/* Header - 调整职业名称显示框的大小 */}
         <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md">
@@ -265,9 +266,10 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
               getUpgradeOptions={getUpgradeOptions}
           />
         </div>
-      </div>
 
       {/* Modals */}
+        </div>
+      </div>
     </>
   )
 }

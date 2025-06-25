@@ -262,10 +262,10 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
             {/* 固定位置的按钮 - 移除建卡指引按钮，因为已经移到父组件 */}
             <div></div>
 
-            <div className="w-full h-full">
+            <div className="w-full max-w-[210mm] mx-auto my-4">
                 <div
-                    className="h-full p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
-                    style={{ width: "100%", height: "100%" }}
+                    className="a4-page p-1 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+                    style={{ width: "210mm" }}
                 >
             {/* Header Section - 黑色顶盖 */}
                     <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md mb-3">

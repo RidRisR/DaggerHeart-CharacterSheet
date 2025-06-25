@@ -456,22 +456,22 @@ export default function Home() {
         </div>
 
         {/* 第一页 */}
-        <div className="page-one a4-page">
+        <div className="page-one">
           <CharacterSheet formData={formData} setFormData={setFormData} />
         </div>
 
         {/* 第二页 */}
-        <div className="page-two a4-page">
+        <div className="page-two">
           <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
         </div>
 
         {/* 第三页 */}
-        <div className="page-three a4-page">
+        <div className="page-three">
           <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
         </div>
 
         {/* 第四页（仅打印时显示） */}
-        <div className="page-four a4-page">
+        <div className="page-four">
           <CharacterSheetPageFour formData={formData} />
         </div>
       </div>

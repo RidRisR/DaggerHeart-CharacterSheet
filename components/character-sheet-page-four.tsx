@@ -120,16 +120,21 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
     }, [formData?.inventory_cards]);
 
     return (
-        <div
-            className="h-full bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
-            style={{ width: "100%", height: "100%", padding: "8mm" }}
-        >
-            {/* Header */}
-            <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md mb-4">
-                <div className="flex flex-col">
-                    <div className="text-[9px]">DAGGERHEART V20250520</div>
-                </div>
-            </div>
+        <>
+            {/* 固定位置的按钮 - 移除建卡指引按钮，因为已经移到父组件 */}
+            <div></div>
+
+            <div className="w-full max-w-[210mm] mx-auto my-4">
+                <div
+                    className="a4-page p-1 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+                    style={{ width: "210mm" }}
+                >
+                    {/* Header */}
+                    <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md mb-4">
+                        <div className="flex flex-col">
+                            <div className="text-[9px]">DAGGERHEART V20250520</div>
+                        </div>
+                    </div>
 
             {/* 聚焦卡组 - 只有当有卡牌时才显示 */}
             {focusedCards.length > 0 && (
@@ -151,7 +156,7 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
                 </div>
             )}
 
-            {/* 如果两个卡组都是空的，显示占位符内容 */}
+            {/* 如果两个卡组都是空的，不渲染第四页 */}
             {focusedCards.length === 0 && inventoryCards.length === 0 && (
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center text-gray-500">
@@ -160,7 +165,9 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
                     </div>
                 </div>
             )}
-        </div>
+                </div>
+            </div>
+        </>
     )
 }
 

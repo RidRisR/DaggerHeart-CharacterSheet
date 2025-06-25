@@ -22,10 +22,34 @@ body {
   }
 }
 /* 打印所有页面的特殊样式 */
+.print-all-pages {
+  position: relative !important;
+  width: 210mm !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 .print-all-pages .page-one,
 .print-all-pages .page-two,
-.print-all-pages .page-three {
+.print-all-pages .page-three,
+.print-all-pages .page-four {
+  position: relative !important;
+  display: block !important;
+  width: 210mm !important;
+  height: 297mm !important;
+  margin: 0 !important;
+  margin-bottom: 20mm !important;
+  padding: 0 !important;
   page-break-after: always;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  background: white !important;
+  border: 1px solid #ccc;
+}
+
+/* 确保最后一页没有下边距 */
+.print-all-pages .page-four {
+  margin-bottom: 0 !important;
 }
 
 /* 在打印预览中隐藏固定位置的按钮 */
@@ -44,15 +68,29 @@ body {
   @page {
     size: A4;
     margin: 0;
-    scale: 0.9;
+  }
+
+  .print-all-pages {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 210mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .a4-page {
-    width: 210mm;
-    margin: 0;
-    padding: 5mm;
-    page-break-after: always;
-    font-size: 0.85em;
+    width: 210mm !important;
+    height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    page-break-after: always !important;
+    font-size: 0.85em !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    position: relative !important;
+    overflow: hidden !important;
   }
 
   /* 在打印时隐藏所有固定位置的按钮 */

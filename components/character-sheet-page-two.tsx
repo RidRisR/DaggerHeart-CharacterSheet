@@ -201,8 +201,8 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
       <div></div>
 
         <div
-          className="a4-page p-1 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
-          style={{ width: "210mm", height: "297mm" }}
+          className="h-full p-1 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+          style={{ width: "100%", height: "100%" }}
         >
           {/* Header - 调整职业名称显示框的大小 */}
         <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md">

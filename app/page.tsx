@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { StandardCard } from "@/card/card-types"
 import { SheetData, CharacterMetadata } from "@/lib/sheet-data"
 import { exportCharacterData } from "@/lib/storage"
+import { generateUnifiedPDF } from "@/lib/unified-pdf-generator"
 import {
   migrateToMultiCharacterStorage,
   loadCharacterList,
@@ -66,7 +67,7 @@ export default function Home() {
   // 数据迁移处理 - 只在客户端执行
   useEffect(() => {
     if (!isClient) return
-    
+
     const performMigration = async () => {
       try {
         console.log('[App] Starting data migration check...')
@@ -325,42 +326,52 @@ export default function Home() {
   }
 
   const handlePrintAll = async () => {
+    // 设置文档标题（用于文件名生成）
     const getCardClass = async (cardId: string | undefined, cardType: CardType): Promise<string> => {
-      if (!cardId) return '()';
+      if (!cardId) return '()'
       try {
-        const cardsOfType: StandardCard[] = await getStandardCardsByTypeAsync(cardType);
-        const card = cardsOfType.find((c: StandardCard) => c.id === cardId);
-        return card && card.class ? String(card.class) : '()';
+        const cardsOfType: StandardCard[] = await getStandardCardsByTypeAsync(cardType)
+        const card = cardsOfType.find((c: StandardCard) => c.id === cardId)
+        return card && card.class ? String(card.class) : '()'
       } catch (error) {
-        console.error('Error getting card class:', error);
-        return '()';
+        console.error('Error getting card class:', error)
+        return '()'
       }
-    };
-
-    const name = formData.name || '()';
-    const ancestry1Class = await getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry);
-    const professionClass = await getCardClass(formData.professionRef?.id, CardType.Profession);
-    const ancestry2Class = await getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry);
-    const communityClass = await getCardClass(formData.communityRef?.id, CardType.Community);
-    const level = formData.level || '()';
-
-    document.title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
-    setIsPrintingAll(true);
-  }
-
-  // Effect for handling "Print All Pages"
-  useEffect(() => {
-    if (isPrintingAll) {
-      const printTimeout = setTimeout(() => {
-        window.print();
-        setIsPrintingAll(false);
-      }, 500);
-
-      return () => {
-        clearTimeout(printTimeout);
-      };
     }
-  }, [isPrintingAll])
+
+    const name = formData.name || '()'
+    const ancestry1Class = await getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry)
+    const professionClass = await getCardClass(formData.professionRef?.id, CardType.Profession)
+    const ancestry2Class = await getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry)
+    const communityClass = await getCardClass(formData.communityRef?.id, CardType.Community)
+    const level = formData.level || '()'
+
+    document.title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`    // 切换到打印视图
+    setIsPrintingAll(true)
+
+    // 等待渲染完成后生成PDF，使用智能等待而不是固定时间
+    setTimeout(async () => {
+      try {
+        // 确保页面元素已经渲染
+        console.log('开始查找页面元素...')
+        const elements = document.querySelectorAll('.a4-page')
+        console.log(`找到 ${elements.length} 个 .a4-page 元素`)
+
+        if (elements.length === 0) {
+          alert('页面还未完全加载，请稍后重试')
+          return
+        }
+
+        await generateUnifiedPDF()
+      } catch (error) {
+        console.error('PDF生成失败:', error)
+        const errorMessage = error instanceof Error ? error.message : '未知错误'
+        alert(`PDF生成失败: ${errorMessage}`)
+      } finally {
+        setIsPrintingAll(false)
+      }
+    }, 800) // 减少到800ms，让智能等待来处理具体的渲染检测
+  }
 
   // 切换建卡指引显示状态
   const toggleGuide = () => {
@@ -445,22 +456,22 @@ export default function Home() {
         </div>
 
         {/* 第一页 */}
-        <div className="page-one">
+        <div className="page-one a4-page">
           <CharacterSheet formData={formData} setFormData={setFormData} />
         </div>
 
         {/* 第二页 */}
-        <div className="page-two">
+        <div className="page-two a4-page">
           <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
         </div>
 
         {/* 第三页 */}
-        <div className="page-three">
+        <div className="page-three a4-page">
           <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
         </div>
 
         {/* 第四页（仅打印时显示） */}
-        <div className="page-four">
+        <div className="page-four a4-page">
           <CharacterSheetPageFour formData={formData} />
         </div>
       </div>

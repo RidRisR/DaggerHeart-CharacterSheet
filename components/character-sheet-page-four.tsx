@@ -119,13 +119,18 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
         return (formData?.inventory_cards || []).filter((card: StandardCard) => !isEmptyCard(card));
     }, [formData?.inventory_cards]);
 
-    // 如果两个卡组都是空的，不渲染第四页
-    if (focusedCards.length === 0 && inventoryCards.length === 0) {
-        return null;
-    }
-
     return (
-        <div className="character-sheet-page-four a4-page px-8 py-10 print:px-8 print:py-10">
+        <div
+            className="h-full bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+            style={{ width: "100%", height: "100%", padding: "8mm" }}
+        >
+            {/* Header */}
+            <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md mb-4">
+                <div className="flex flex-col">
+                    <div className="text-[9px]">DAGGERHEART V20250520</div>
+                </div>
+            </div>
+
             {/* 聚焦卡组 - 只有当有卡牌时才显示 */}
             {focusedCards.length > 0 && (
                 <CardDeckPrintSection
@@ -143,6 +148,16 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
                         title="库存卡组"
                         deckType="inventory"
                     />
+                </div>
+            )}
+
+            {/* 如果两个卡组都是空的，显示占位符内容 */}
+            {focusedCards.length === 0 && inventoryCards.length === 0 && (
+                <div className="flex items-center justify-center h-full">
+                    <div className="text-center text-gray-500">
+                        <h3 className="text-xl font-semibold mb-2">卡组页面</h3>
+                        <p className="text-sm">当您有聚焦卡组或库存卡组时，内容将显示在此页面</p>
+                    </div>
                 </div>
             )}
         </div>

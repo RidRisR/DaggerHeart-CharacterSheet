@@ -527,3 +527,22 @@ body {
 .pdf-exporting input[type="number"] {
   color: transparent !important;
 }
+/* 确保角色简介等特定区域的小字体样式在正常视图和打印/PDF中都生效 */
+.character-description-textarea {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+}
+
+/* 打印和PDF导出时也要确保字体大小 */
+@media print {
+  .character-description-textarea {
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+  }
+}
+
+.print-all-pages .character-description-textarea,
+.pdf-exporting .character-description-textarea {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+}

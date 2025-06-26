@@ -199,10 +199,16 @@ async function waitForPagesReady(elements: NodeListOf<Element>): Promise<void> {
 }
 
 export async function generateUnifiedPDF(): Promise<void> {
-    // 显示生成进度
-    showProgress('正在生成高清PDF...')
+    // 添加PDF导出专用样式类
+    document.body.classList.add('pdf-exporting')
 
     try {
+        // 显示生成进度
+        showProgress('正在生成高清PDF...')
+
+        // 等待样式应用完成
+        await new Promise(resolve => setTimeout(resolve, 100))
+
         // 动态导入
         const [
             { default: html2canvas },
@@ -319,6 +325,9 @@ export async function generateUnifiedPDF(): Promise<void> {
         console.error('PDF生成失败:', error)
         hideProgress()
         alert('PDF生成失败，请重试')
+    } finally {
+        // 无论成功或失败，都要移除PDF导出样式类
+        document.body.classList.remove('pdf-exporting')
     }
 }
 

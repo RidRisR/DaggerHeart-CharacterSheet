@@ -8,48 +8,59 @@ export interface PDFGenerationOptions {
 }
 
 export async function generateHighQualityPDF(options: PDFGenerationOptions): Promise<void> {
-    // 动态导入以减少打包体积
-    const [
-        { default: html2canvas },
-        { default: jsPDF }
-    ] = await Promise.all([
-        import('html2canvas'),
-        import('jspdf')
-    ])
+    // 添加PDF导出专用样式类
+    document.body.classList.add('pdf-exporting')
 
-    // 类型声明
-    type Html2Canvas = typeof html2canvas
-    type JsPDF = InstanceType<typeof jsPDF>
+    try {
+        // 等待样式应用完成
+        await new Promise(resolve => setTimeout(resolve, 100))
 
-    const printElements = document.querySelectorAll('.a4-page')
-    if (printElements.length === 0) {
-        throw new Error('No printable content found')
-    }
+        // 动态导入以减少打包体积
+        const [
+            { default: html2canvas },
+            { default: jsPDF }
+        ] = await Promise.all([
+            import('html2canvas'),
+            import('jspdf')
+        ])
 
-    const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: options.quality !== 'raster-hd' // 高清模式不压缩
-    })
+        // 类型声明
+        type Html2Canvas = typeof html2canvas
+        type JsPDF = InstanceType<typeof jsPDF>
 
-    for (let i = 0; i < printElements.length; i++) {
-        if (i > 0) pdf.addPage()
-
-        const element = printElements[i] as HTMLElement
-
-        if (options.quality === 'vector') {
-            // 尝试保持矢量特性（实验性）
-            await renderVectorContent(pdf, element, options)
-        } else {
-            // 高清栅格化
-            await renderRasterContent(pdf, element, options)
+        const printElements = document.querySelectorAll('.a4-page')
+        if (printElements.length === 0) {
+            throw new Error('No printable content found')
         }
-    }
 
-    // 生成有意义的文件名
-    const fileName = generatePrintableName()
-    pdf.save(fileName)
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4',
+            compress: options.quality !== 'raster-hd' // 高清模式不压缩
+        })
+
+        for (let i = 0; i < printElements.length; i++) {
+            if (i > 0) pdf.addPage()
+
+            const element = printElements[i] as HTMLElement
+
+            if (options.quality === 'vector') {
+                // 尝试保持矢量特性（实验性）
+                await renderVectorContent(pdf, element, options)
+            } else {
+                // 高清栅格化
+                await renderRasterContent(pdf, element, options)
+            }
+        }
+
+        // 生成有意义的文件名
+        const fileName = generatePrintableName()
+        pdf.save(fileName)
+    } finally {
+        // 无论成功或失败，都要移除PDF导出样式类
+        document.body.classList.remove('pdf-exporting')
+    }
 }
 
 async function renderRasterContent(

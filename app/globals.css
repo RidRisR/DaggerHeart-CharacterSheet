@@ -84,8 +84,8 @@ body {
     width: 210mm !important;
     height: 297mm !important;
     margin: 0 !important;
-    padding: 0 !important;
-    page-break-after: always !important;
+    padding: 7.5mm !important;
+      /* 保持合适的页面边距 - 相当于30px */
     font-size: 0.85em !important;
     box-sizing: border-box !important;
     display: block !important;
@@ -383,4 +383,113 @@ body {
     orphans: 2;
     widows: 2;
   }
+}
+
+/* PDF导出专用样式 - 模拟@media print的效果 */
+.pdf-exporting {
+  margin: 0;
+  padding: 0;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* PDF导出时隐藏所有固定位置的按钮和UI元素 */
+.pdf-exporting .fixed {
+  display: none !important;
+}
+
+.pdf-exporting .print-hidden,
+.pdf-exporting .print\:hidden {
+  display: none !important;
+}
+
+/* PDF导出时显示仅打印内容 */
+.pdf-exporting .print-only {
+  display: block !important;
+}
+
+/* PDF导出时的表单元素样式 */
+.pdf-exporting input,
+.pdf-exporting textarea,
+.pdf-exporting select {
+  border-color: #999 !important;
+}
+
+/* PDF导出时隐藏占位符文本 */
+.pdf-exporting input::placeholder,
+.pdf-exporting textarea::placeholder {
+  color: transparent !important;
+}
+
+/* PDF导出时隐藏数字输入框的值（如果需要） */
+.pdf-exporting input[type="number"] {
+  color: transparent !important;
+}
+
+/* PDF导出时隐藏选择按钮文本 */
+.pdf-exporting .print-empty-button {
+  color: transparent !important;
+}
+
+/* PDF导出时确保背景色正确 */
+.pdf-exporting .bg-white {
+  background-color: white !important;
+}
+
+.pdf-exporting .text-gray-800 {
+  color: #333333 !important;
+}
+
+/* PDF导出时确保黑色背景区域中的下拉框显示为白色背景 */
+.pdf-exporting .bg-gray-800 .bg-white,
+.pdf-exporting .bg-gray-800 [class*="bg-white"] {
+  background-color: white !important;
+  color: black !important;
+}
+
+.pdf-exporting .bg-gray-800 select,
+.pdf-exporting .bg-gray-800 .select-trigger,
+.pdf-exporting .bg-gray-800 .select-content {
+  background-color: white !important;
+  color: black !important;
+}
+
+/* PDF导出时的自动调整字体样式 */
+.pdf-exporting .auto-resize-font {
+  font-size: var(--print-font-size, 14px) !important;
+}
+
+.pdf-exporting input[data-min-font] {
+  font-size: var(--print-font-size, 14px) !important;
+}
+
+.pdf-exporting textarea[data-min-font] {
+  font-size: var(--print-font-size, 14px) !important;
+}
+
+/* PDF导出时的第四页样式 */
+.pdf-exporting .character-sheet-page-four {
+  padding-top: 1rem;
+}
+
+.pdf-exporting .character-sheet-page-four .card-row {
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.pdf-exporting .character-sheet-page-four .print-deck-section .card-row:first-child {
+  margin-top: 0 !important;
+}
+
+.pdf-exporting .character-sheet-page-four .print-deck-header {
+  margin-bottom: 1.5rem !important;
+}
+
+/* PDF导出时的print-all-pages页面样式 - 恢复边距 */
+.pdf-exporting .print-all-pages .page-one,
+.pdf-exporting .print-all-pages .page-two,
+.pdf-exporting .print-all-pages .page-three,
+.pdf-exporting .print-all-pages .page-four {
+  padding: 8mm !important;
+  /* 保持合适的页面边距 */
 }

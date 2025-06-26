@@ -6,12 +6,14 @@ interface AttributesSectionProps {
   formData: SheetData
   handleAttributeValueChange: (attribute: keyof SheetData, value: string) => void
   handleBooleanChange: (field: keyof SheetData) => void
+  handleSpellcastingAttrChange?: (attribute: keyof SheetData) => void
 }
 
 export function AttributesSection({
   formData,
   handleAttributeValueChange,
   handleBooleanChange,
+  handleSpellcastingAttrChange,
 }: AttributesSectionProps) {
   return (
     <div className="space-y-2">
@@ -30,7 +32,32 @@ export function AttributesSection({
         ].map((attr) => (
           <div key={attr.name} className="flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-0.5">
-              <div className="text-[12px] font-bold">{attr.name}</div>
+              <div className="flex items-center gap-1">
+                <div className="text-[12px] font-bold">{attr.name}</div>
+                {/* 施法属性图标 */}
+                {(() => {
+                  const attrValue = formData[attr.key as keyof typeof formData];
+                  function isAttributeValue(val: unknown): val is AttributeValue {
+                    return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
+                  }
+
+                  const isSpellcasting = isAttributeValue(attrValue) && attrValue.isSpellcastingAttr;
+
+                  return (
+                    <div
+                      className={`w-4 h-4 flex items-center justify-center cursor-pointer transition-colors ${
+                        isSpellcasting 
+                          ? "text-blue-600" 
+                          : "text-gray-300 hover:text-gray-500 print-hide-unselected-star"
+                      }`}
+                      onClick={() => handleSpellcastingAttrChange?.(attr.key as keyof SheetData)}
+                      title={isSpellcasting ? "施法属性" : "点击设为施法属性"}
+                    >
+                      <span className="text-[14px]">✦</span>
+                    </div>
+                  );
+                })()}
+              </div>
               {(() => {
                 const attrValue = formData[attr.key as keyof typeof formData];
                 function isAttributeValue(val: unknown): val is AttributeValue {

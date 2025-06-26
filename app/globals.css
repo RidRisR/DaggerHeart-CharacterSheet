@@ -559,3 +559,15 @@ body {
 .pdf-exporting .print-force-two-cols {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
+
+/* 打印时隐藏未选中的施法属性星星 */
+@media print {
+  .print-hide-unselected-star {
+    display: none !important;
+  }
+}
+
+.print-all-pages .print-hide-unselected-star,
+.pdf-exporting .print-hide-unselected-star {
+  display: none !important;
+}

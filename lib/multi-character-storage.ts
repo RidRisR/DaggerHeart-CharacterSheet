@@ -171,11 +171,7 @@ export function loadCharacterById(id: string): SheetData | null {
       console.error(`[Character] Invalid data structure for ${id}`);
       return null;
     }
-    
-    // 确保具有focused_card_ids字段（向后兼容）
-    if (!parsed.focused_card_ids) {
-      parsed.focused_card_ids = [];
-    }
+
     
     // 兼容性迁移：为旧角色添加 inventory_cards 字段
     if (!parsed.inventory_cards) {
@@ -183,6 +179,30 @@ export function loadCharacterById(id: string): SheetData | null {
       parsed.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
       // 立即保存迁移后的数据
       saveCharacterById(id, parsed);
+    }
+
+    // 兼容性迁移：为旧角色添加施法属性标识
+    const attributes = ['agility', 'strength', 'finesse', 'instinct', 'presence', 'knowledge'];
+    const needsSpellcastingMigration = attributes.some(attr => {
+      const attrValue = parsed[attr];
+      return attrValue && typeof attrValue === 'object' && typeof attrValue.isSpellcastingAttr === 'undefined';
+    });
+
+    if (needsSpellcastingMigration) {
+      console.log(`[Migration] Adding spellcasting attribute flags to character ${id}`);
+      let migrationApplied = false;
+
+      attributes.forEach(attr => {
+        if (parsed[attr] && typeof parsed[attr] === 'object') {
+          parsed[attr].isSpellcastingAttr = false; // 默认都不是施法属性
+          migrationApplied = true;
+        }
+      });
+
+      if (migrationApplied) {
+        // 立即保存迁移后的数据
+        saveCharacterById(id, parsed);
+      }
     }
 
     return parsed;

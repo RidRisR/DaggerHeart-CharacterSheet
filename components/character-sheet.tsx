@@ -323,6 +323,22 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     })
   }
 
+  const handleSpellcastingAttrChange = (field: keyof SheetData) => {
+    setFormData((prev) => {
+      const currentAttribute = prev[field]
+      if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute && "value" in currentAttribute) {
+        return {
+          ...prev,
+          [field]: {
+            ...currentAttribute,
+            isSpellcastingAttr: !currentAttribute.isSpellcastingAttr,
+          },
+        }
+      }
+      return prev
+    })
+  }
+
   const handleMaxChange = (field: keyof SheetData, value: string) => {
     const numValue = Number.parseInt(value) || 0
     setFormData((prev) => ({ ...prev, [field]: numValue }))
@@ -815,6 +831,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 formData={safeFormData}
                 handleAttributeValueChange={handleAttributeValueChange}
                 handleBooleanChange={handleBooleanChange}
+                handleSpellcastingAttrChange={handleSpellcastingAttrChange}
               />
 
               {/* Hit Points & Stress */}

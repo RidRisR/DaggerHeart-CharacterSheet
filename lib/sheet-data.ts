@@ -32,6 +32,7 @@ interface CheckedUpgrades {
 export interface AttributeValue {
   checked: boolean
   value: string
+  isSpellcastingAttr?: boolean  // 新增：是否为施法属性（可选字段）
 }
 
 export interface SheetData {

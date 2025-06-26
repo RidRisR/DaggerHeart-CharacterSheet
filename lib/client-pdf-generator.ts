@@ -12,8 +12,8 @@ export async function generateHighQualityPDF(options: PDFGenerationOptions): Pro
     document.body.classList.add('pdf-exporting')
 
     try {
-        // 等待样式应用完成
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // 简短等待确保样式应用
+        await new Promise(resolve => setTimeout(resolve, 50))
 
         // 动态导入以减少打包体积
         const [
@@ -82,7 +82,41 @@ async function renderRasterContent(
         windowHeight: 1123,
         foreignObjectRendering: true, // 更好的文本渲染
         scrollX: 0,
-        scrollY: 0
+        scrollY: 0,
+        onclone: (clonedDoc: Document) => {
+            // 确保克隆文档的body也有pdf-exporting类
+            clonedDoc.body.classList.add('pdf-exporting')
+            
+            // 直接移除所有输入框的placeholder属性 - 最直接的方法
+            clonedDoc.querySelectorAll('input, textarea').forEach((element) => {
+                const input = element as HTMLInputElement | HTMLTextAreaElement
+                if (input.hasAttribute('placeholder')) {
+                    input.removeAttribute('placeholder')
+                }
+                // 对于数字输入框，如果没有值就设为透明
+                if (input.type === 'number' && !input.value.trim()) {
+                    (input as HTMLElement).style.color = 'transparent'
+                }
+            })
+            
+            // 添加PDF导出样式到克隆文档
+            const style = clonedDoc.createElement('style')
+            style.textContent = `
+                .pdf-exporting input::placeholder,
+                .pdf-exporting textarea::placeholder {
+                    color: transparent !important;
+                }
+                
+                .pdf-exporting input[type="number"] {
+                    color: transparent !important;
+                }
+                
+                .pdf-exporting .print-placeholder-cleared {
+                    color: transparent !important;
+                }
+            `
+            clonedDoc.head.appendChild(style)
+        }
         // 移除了 pixelRatio 属性，因为它不在 html2canvas 的类型定义中
     })
 

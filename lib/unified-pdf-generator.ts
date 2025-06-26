@@ -74,13 +74,28 @@ async function createPageCanvas(
                     (element instanceof HTMLElement && element.style && element.style.display === 'none')
             },
             onclone: (clonedDoc: Document) => {
+                // 确保克隆文档的body也有pdf-exporting类
+                clonedDoc.body.classList.add('pdf-exporting')
+                
                 // 在克隆文档中通过唯一ID精确查找元素
                 const clonedElement = clonedDoc.getElementById(tempId) as HTMLElement
                 if (clonedElement) {
                     clonedElement.style.cssText = pageElement.style.cssText
+                    
+                    // 直接移除所有输入框的placeholder属性 - 最直接的方法
+                    clonedElement.querySelectorAll('input, textarea').forEach((element) => {
+                        const input = element as HTMLInputElement | HTMLTextAreaElement
+                        if (input.hasAttribute('placeholder')) {
+                            input.removeAttribute('placeholder')
+                        }
+                        // 对于数字输入框，如果没有值就设为透明
+                        if (input.type === 'number' && !input.value.trim()) {
+                            (input as HTMLElement).style.color = 'transparent'
+                        }
+                    })
                 }
 
-                // 确保克隆文档中的字体样式正确
+                // 确保克隆文档中的字体样式和PDF导出样式正确
                 const style = clonedDoc.createElement('style')
                 style.textContent = `
                     /* Universal reset for the cloned document */
@@ -99,6 +114,20 @@ async function createPageCanvas(
                         margin: 0 !important;
                         padding: 0 !important;
                         background: none !important;
+                    }
+
+                    /* PDF导出样式 - 确保在克隆文档中生效 */
+                    .pdf-exporting input::placeholder,
+                    .pdf-exporting textarea::placeholder {
+                        color: transparent !important;
+                    }
+                    
+                    .pdf-exporting input[type="number"] {
+                        color: transparent !important;
+                    }
+                    
+                    .pdf-exporting .print-placeholder-cleared {
+                        color: transparent !important;
                     }
 
                     /* Define the page container with symmetrical padding */
@@ -202,12 +231,25 @@ export async function generateUnifiedPDF(): Promise<void> {
     // 添加PDF导出专用样式类
     document.body.classList.add('pdf-exporting')
 
+    // 预处理：直接移除所有placeholder属性
+    const originalPlaceholders: Array<{element: HTMLInputElement | HTMLTextAreaElement, placeholder: string}> = []
+    document.querySelectorAll('input, textarea').forEach((element) => {
+        const input = element as HTMLInputElement | HTMLTextAreaElement
+        if (input.hasAttribute('placeholder')) {
+            originalPlaceholders.push({
+                element: input,
+                placeholder: input.getAttribute('placeholder') || ''
+            })
+            input.removeAttribute('placeholder')
+        }
+    })
+
     try {
         // 显示生成进度
         showProgress('正在生成高清PDF...')
 
-        // 等待样式应用完成
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // 简短等待确保样式应用
+        await new Promise(resolve => setTimeout(resolve, 50))
 
         // 动态导入
         const [
@@ -326,6 +368,11 @@ export async function generateUnifiedPDF(): Promise<void> {
         hideProgress()
         alert('PDF生成失败，请重试')
     } finally {
+        // 恢复所有placeholder属性
+        originalPlaceholders.forEach(({ element, placeholder }) => {
+            element.setAttribute('placeholder', placeholder)
+        })
+        
         // 无论成功或失败，都要移除PDF导出样式类
         document.body.classList.remove('pdf-exporting')
     }

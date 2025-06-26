@@ -11,7 +11,13 @@
 - 在PDF导出完成（成功或失败）后，移除 `.pdf-exporting` CSS类
 - 通过CSS选择器 `.pdf-exporting` 来模拟原本 `@media print` 下的所有样式
 
-### 2. 修改的文件
+### 2. 打印助手集成
+- 修改了 `print-helper.tsx`，使其不仅监听原生打印事件，还监听PDF导出时的样式类变化
+- 通过 `MutationObserver` 监听 `document.body` 的 `class` 属性变化
+- 当检测到 `.pdf-exporting` 类被添加时，自动执行打印前处理逻辑
+- 当检测到 `.pdf-exporting` 类被移除时，自动执行打印后恢复逻辑
+
+### 3. 修改的文件
 
 #### `/lib/client-pdf-generator.ts`
 ```typescript
@@ -51,11 +57,17 @@ export async function generateUnifiedPDF(): Promise<void> {
 }
 ```
 
+#### `/app/print-helper.tsx`
+- 添加了 `MutationObserver` 来监听 `.pdf-exporting` 类的变化
+- 当PDF导出开始时，自动执行按钮文本处理、表单元素处理等逻辑
+- 当PDF导出结束时，自动恢复所有元素的原始状态
+
 #### `/app/globals.css`
 添加了完整的 `.pdf-exporting` 样式规则，包括：
-- 页面布局和尺寸设置
+- 页面布局和尺寸设置（包含正确的8mm边距）
 - 元素显示/隐藏控制
 - 表单元素样式
+- 按钮占位符文本隐藏
 - 背景色和文字颜色
 - 字体大小调整
 - 分页和边距设置
@@ -65,11 +77,14 @@ export async function generateUnifiedPDF(): Promise<void> {
 ### 原有问题
 - html2canvas 只渲染屏幕上可见的内容，不会应用 `@media print` 样式
 - 原本的"仅打印显示/隐藏"效果失效
+- 按钮占位符文本不会自动隐藏
 - A4页面尺寸、边距、分页等打印特性无法正确应用
 
 ### 解决后效果
 - PDF导出时会临时应用"打印样式"
 - 所有原本的打印效果都能正确体现在导出的PDF中
+- 按钮占位符文本在PDF导出时正确隐藏
+- 页面边距恢复为合适的8mm
 - 导出完成后页面恢复正常显示状态
 
 ## 样式映射示例
@@ -78,7 +93,18 @@ export async function generateUnifiedPDF(): Promise<void> {
 |-----------|------------|
 | `@media print { .print-hidden { display: none; } }` | `.pdf-exporting .print-hidden { display: none !important; }` |
 | `@media print { .print-only { display: block; } }` | `.pdf-exporting .print-only { display: block !important; }` |
-| `@media print { .a4-page { width: 210mm; } }` | `.pdf-exporting .a4-page { width: 210mm !important; }` |
+| `@media print { .a4-page { width: 210mm; padding: 0; } }` | `.pdf-exporting .a4-page { width: 210mm !important; padding: 8mm !important; }` |
+| `@media print { .print-empty-button { color: transparent; } }` | `.pdf-exporting .print-empty-button { color: transparent !important; }` |
+
+## 按钮处理逻辑
+
+### 占位符按钮
+- 检测包含"选择武器"、"选择护甲"等占位符文本的按钮
+- 在PDF导出时清空按钮文本，导出后恢复
+
+### 已选择内容的按钮
+- 对于已选择内容的按钮，确保文本在PDF中可见
+- 特别处理 `header-selection-button` 类的按钮，强制文本为黑色
 
 ## 调试建议
 
@@ -89,12 +115,26 @@ export async function generateUnifiedPDF(): Promise<void> {
    document.body.classList.add('pdf-exporting')
    ```
 
-2. 观察页面效果是否符合预期
+2. 观察页面效果是否符合预期（包括按钮文本隐藏、边距等）
 
 3. 手动移除类恢复正常：
    ```javascript
    document.body.classList.remove('pdf-exporting')
    ```
+
+## 自动化流程
+
+整个PDF导出过程现在是完全自动化的：
+
+1. 用户点击"导出PDF"按钮
+2. 系统添加 `.pdf-exporting` 类到 body
+3. `print-helper.tsx` 自动检测到类变化，执行打印前处理
+4. CSS样式自动切换为"打印模式"
+5. html2canvas 渲染带有完整打印效果的页面
+6. jsPDF 生成高质量PDF文件
+7. 系统移除 `.pdf-exporting` 类
+8. `print-helper.tsx` 自动恢复所有元素的原始状态
+9. 页面恢复正常显示
 
 ## 扩展使用
 
@@ -106,4 +146,4 @@ export async function generateUnifiedPDF(): Promise<void> {
 }
 ```
 
-这样就能确保该样式只在PDF导出时生效，而不影响正常的页面显示。
+如果需要添加新的按钮处理逻辑，可以在 `print-helper.tsx` 中的 `handleBeforePrint` 函数里添加相应的处理代码。

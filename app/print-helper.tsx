@@ -7,17 +7,7 @@ export default function PrintHelper() {
     const placeholderTexts = ["选择武器", "选择护甲", "选择职业", "选择子职业", "选择血统", "选择社群"];
 
     const handleBeforePrint = () => {
-      // Process all input fields and textareas
-      document.querySelectorAll("input, textarea").forEach((element) => {
-        const input = element as HTMLInputElement | HTMLTextAreaElement;
-        if (input.value === "") {
-          input.classList.add("print-empty");
-          input.style.borderColor = "transparent";
-        }
-        if (input.type === "number") {
-          input.classList.add("print-empty-text");
-        }
-      });
+      // 主要处理按钮的占位符文本，输入框占位符由CSS处理
 
       // Process all selection buttons with the common class
       document.querySelectorAll("button.printable-selection-button").forEach((button) => {
@@ -78,9 +68,7 @@ export default function PrintHelper() {
           element.style.borderColor = "";
         }
       });
-      document.querySelectorAll(".print-empty-text").forEach((element) => {
-        element.classList.remove("print-empty-text");
-      });
+      // Note: No need to remove print-empty-text class since we don't add it anymore
 
       // Restore selection buttons
       document.querySelectorAll("button.printable-selection-button").forEach((button) => {
@@ -110,12 +98,50 @@ export default function PrintHelper() {
       });
     };
 
+    // PDF导出样式切换监听器
+    const handlePDFExportStart = () => {
+      if (document.body.classList.contains('pdf-exporting')) {
+        handleBeforePrint();
+      }
+    };
+
+    const handlePDFExportEnd = () => {
+      if (!document.body.classList.contains('pdf-exporting')) {
+        handleAfterPrint();
+      }
+    };
+
+    // 监听原生打印事件
     window.addEventListener("beforeprint", handleBeforePrint);
     window.addEventListener("afterprint", handleAfterPrint);
+
+    // 监听PDF导出样式类的变化
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const target = mutation.target as HTMLElement;
+          if (target === document.body) {
+            if (target.classList.contains('pdf-exporting')) {
+              // PDF导出开始 - 立即执行，不需要延迟
+              handleBeforePrint();
+            } else {
+              // PDF导出结束
+              handleAfterPrint();
+            }
+          }
+        }
+      });
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
 
     return () => {
       window.removeEventListener("beforeprint", handleBeforePrint);
       window.removeEventListener("afterprint", handleAfterPrint);
+      observer.disconnect();
     };
   }, []);
 

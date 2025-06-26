@@ -421,7 +421,7 @@ body {
   color: transparent !important;
 }
 
-/* PDF导出时隐藏数字输入框的值（如果需要） */
+/* PDF导出时隐藏所有数字输入框的值（与原打印规则一致） */
 .pdf-exporting input[type="number"] {
   color: transparent !important;
 }
@@ -477,7 +477,7 @@ body {
   margin-bottom: 1rem !important;
 }
 
-.pdf-exporting .character-sheet-page-four .print-deck-section .card-row:first-child {
+.pdf_exporting .character-sheet-page-four .print-deck-section .card-row:first-child {
   margin-top: 0 !important;
 }
 
@@ -492,4 +492,38 @@ body {
 .pdf-exporting .print-all-pages .page-four {
   padding: 8mm !important;
   /* 保持合适的页面边距 */
+}
+/* PDF导出时的按钮样式处理 - 模拟print-helper的效果 */
+
+
+/* 只对被print-helper标记为占位符已清除的按钮应用透明 */
+.pdf-exporting .print-placeholder-cleared {
+  color: transparent !important;
+}
+
+/* PDF导出时的选择按钮处理 */
+.pdf-exporting .printable-selection-button.print-placeholder-text-hidden {
+  color: transparent !important;
+}
+
+.pdf-exporting .printable-selection-button.print-selected-text-visible {
+  color: black !important;
+}
+
+/* PDF导出时隐藏空元素 */
+.pdf-exporting .print-hidden {
+  display: none !important;
+}
+/* 在打印预览页面和PDF导出时隐藏占位符 - 最佳实践 */
+.print-all-pages input::placeholder,
+.print-all-pages textarea::placeholder,
+.pdf-exporting input::placeholder,
+.pdf-exporting textarea::placeholder {
+  color: transparent !important;
+}
+
+/* 在打印预览页面和PDF导出时隐藏数字输入框内容 */
+.print-all-pages input[type="number"],
+.pdf-exporting input[type="number"] {
+  color: transparent !important;
 }

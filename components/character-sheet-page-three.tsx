@@ -59,7 +59,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
 
     // 伙伴经验区块（右侧为图片+描述，无经验示例）
     const renderCompanionExperienceSection = () => (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 mb-3 print:grid-cols-2 print:gap-x-8 print:mb-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 print-force-two-cols gap-x-8 mb-3 print:gap-x-8 print:mb-3">
             {/* 伙伴描述区：左半区，带边框 */}
             <div className="flex flex-col justify-end w-full p-3 border border-transparent rounded-t-md rounded-b-md bg-white">
                 <h3 className="font-bold text-md mb-2">伙伴描述</h3>
@@ -299,7 +299,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
             {/* Spellcast Roll Info */}
                     <p className="text-xs mb-4 text-gray-600 dark:text-gray-400 leading-snug">你可以进行一次施法检定来与你的伙伴建立连接并命令他们行动。当你这样做时，你可以花费希望将一个适用的伙伴经历加入到检定中。在花费希望并成功时，如果你的下一个动作建立在其成功之上，你的动作掷骰获得优势。</p>
             {/* 新的两栏布局：左-攻击与伤害/压力，右-训练 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-5 mb-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 print-force-two-cols gap-x-5 mb-3">
                 {/* 攻击与伤害/压力 - 左侧 */}
                 <div className="order-1 md:order-1 print:order-1 space-y-3">
                     {/* Attack & Damage */}

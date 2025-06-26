@@ -546,3 +546,16 @@ body {
   font-size: 10px !important;
   line-height: 1.2 !important;
 }
+/* 确保第三页的网格布局在打印时保持双栏 */
+@media print {
+
+  /* 强制标记为print-force-two-cols的网格在打印时显示为双栏 */
+  .print-force-two-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+.print-all-pages .print-force-two-cols,
+.pdf-exporting .print-force-two-cols {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}

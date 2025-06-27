@@ -24,15 +24,39 @@ body {
 /* 打印所有页面的特殊样式 */
 .print-all-pages .page-one,
 .print-all-pages .page-two,
-.print-all-pages .page-three {
+.print-all-pages .page-three,
+.print-all-pages .page-four {
   page-break-after: always;
 }
 
+/* 在打印预览模式下确保每个页面居中 */
+.print-all-pages .page-one,
+.print-all-pages .page-two,
+.print-all-pages .page-three,
+.print-all-pages .page-four {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px 0;
+}
 /* 在打印预览中隐藏固定位置的按钮 */
 .print-all-pages .fixed.bottom-4.right-4 {
   display: none;
 }
 
+/* 在实际打印时移除居中样式，保持原始布局 */
+@media print {
+
+  .print-all-pages .page-one,
+  .print-all-pages .page-two,
+  .print-all-pages .page-three,
+  .print-all-pages .page-four {
+    display: block;
+    padding: 0;
+    min-height: auto;
+  }
+}
 @media print {
   body {
     margin: 0;
@@ -55,6 +79,45 @@ body {
     font-size: 0.85em;
   }
 
+    /* 第二页特殊打印样式 - 控制内容密度和布局 */
+    .print-all-pages .page-two .a4-page {
+      font-size: 0.75em;
+      /* 进一步缩小字体 */
+      padding: 3mm;
+      /* 减少内边距 */
+    }
+  
+    /* 第二页的升级区域样式调整 */
+    .print-all-pages .page-two .mt-3.grid.grid-cols-3 {
+      gap: 0.4rem !important;
+      /* 减少网格间距 */
+      margin-top: 0.5rem !important;
+      /* 减少顶部边距 */
+      font-size: 0.9em;
+      /* 升级区域字体进一步缩小 */
+    }
+  
+    /* 第二页卡组区域的紧凑布局 */
+    .print-all-pages .page-two .mt-2 {
+      margin-top: 0.25rem !important;
+      /* 减少卡组区域的上边距 */
+    }
+  
+    /* 第二页所有区域间距缩小 */
+    .print-all-pages .page-two .space-y-4>*+* {
+      margin-top: 0.5rem !important;
+    }
+  
+    /* 第二页卡组标题区域缩小间距 */
+    .print-all-pages .page-two h3 {
+      margin-bottom: 0.25rem !important;
+      font-size: 0.9em;
+    }
+  
+    /* 第二页具体的升级选项文本缩小 */
+    .print-all-pages .page-two .text-m {
+      font-size: 0.7rem !important;
+    }
   /* 在打印时隐藏所有固定位置的按钮 */
   .fixed {
     display: none !important;
@@ -139,6 +202,37 @@ body {
 /* .header-selection-button.print-force-visible-text { */
 /* color: inherit !important; */
 /* } */
+/* 第二页在实际打印时的样式优化 */
+.page-two .a4-page {
+  font-size: 0.72em !important;
+  /* 第二页内容整体缩小 */
+  padding: 2mm !important;
+  /* 进一步减少内边距 */
+}
+
+/* 第二页升级区域在实际打印时的样式 */
+.page-two .mt-3.grid.grid-cols-3 {
+  gap: 0.3rem !important;
+  margin-top: 0.3rem !important;
+  font-size: 0.85em !important;
+}
+
+/* 第二页卡组区域在实际打印时紧凑布局 */
+.page-two .mt-2 {
+  margin-top: 0.2rem !important;
+}
+
+/* 第二页所有内容间距在实际打印时缩小 */
+.page-two h3 {
+  margin-bottom: 0.2rem !important;
+  margin-top: 0.2rem !important;
+}
+
+/* 第二页文本区域在实际打印时的优化 */
+.page-two .text-m {
+  font-size: 0.65rem !important;
+  line-height: 1.2 !important;
+}
 }
 
 /* 打印页面样式 */

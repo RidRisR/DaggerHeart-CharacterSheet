@@ -125,7 +125,8 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
     }
 
     return (
-        <div className="character-sheet-page-four a4-page px-8 py-10 print:px-8 print:py-10">
+        <div className="w-full max-w-[210mm] mx-auto my-4">
+            <div className="character-sheet-page-four a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md" style={{ width: "210mm" }}>
             {/* 聚焦卡组 - 只有当有卡牌时才显示 */}
             {focusedCards.length > 0 && (
                 <CardDeckPrintSection
@@ -145,6 +146,7 @@ const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formDat
                     />
                 </div>
             )}
+            </div>
         </div>
     )
 }

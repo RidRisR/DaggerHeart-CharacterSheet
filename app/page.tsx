@@ -347,19 +347,19 @@ export default function Home() {
     setIsPrintingAll(true);
   }
 
-  // Effect for handling "Print All Pages"
-  useEffect(() => {
-    if (isPrintingAll) {
-      const printTimeout = setTimeout(() => {
-        window.print();
-        setIsPrintingAll(false);
-      }, 500);
+  // Effect for handling "Print All Pages" - 移除自动打印功能
+  // useEffect(() => {
+  //   if (isPrintingAll) {
+  //     const printTimeout = setTimeout(() => {
+  //       window.print();
+  //       setIsPrintingAll(false);
+  //     }, 500);
 
-      return () => {
-        clearTimeout(printTimeout);
-      };
-    }
-  }, [isPrintingAll])
+  //     return () => {
+  //       clearTimeout(printTimeout);
+  //     };
+  //   }
+  // }, [isPrintingAll])
 
   // 切换建卡指引显示状态
   const toggleGuide = () => {
@@ -433,33 +433,41 @@ export default function Home() {
     return (
       <div className="print-all-pages">
         <PrintHelper />
-        {/* 打印时的返回按钮，只在屏幕上显示，打印时隐藏 */}
+        {/* 打印预览控制按钮，只在屏幕上显示，打印时隐藏 */}
         <div className="fixed top-4 left-4 z-50 print:hidden">
-          <button
-            onClick={() => setIsPrintingAll(false)} // Allows user to cancel print mode
-            className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700"
-          >
-            返回
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsPrintingAll(false)}
+              className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700"
+            >
+              返回
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500"
+            >
+              打印/保存PDF
+            </button>
+          </div>
         </div>
 
         {/* 第一页 */}
-        <div className="page-one">
+        <div className="page-one flex justify-center items-start min-h-screen">
           <CharacterSheet formData={formData} setFormData={setFormData} />
         </div>
 
         {/* 第二页 */}
-        <div className="page-two">
+        <div className="page-two flex justify-center items-start min-h-screen">
           <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
         </div>
 
         {/* 第三页 */}
-        <div className="page-three">
+        <div className="page-three flex justify-center items-start min-h-screen">
           <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
         </div>
 
         {/* 第四页（仅打印时显示） */}
-        <div className="page-four">
+        <div className="page-four flex justify-center items-start min-h-screen">
           <CharacterSheetPageFour formData={formData} />
         </div>
       </div>
@@ -535,7 +543,7 @@ export default function Home() {
           建卡指引
         </button>
         <Button onClick={() => handlePrintAll().catch(console.error)} className="bg-gray-800 hover:bg-gray-700 focus:outline-none">
-          导出PDF
+          打印预览
         </Button>
         <Button onClick={openCharacterManagementModal} className="bg-gray-800 hover:bg-gray-700 focus:outline-none">
           存档管理

@@ -34,6 +34,7 @@ import {
   MAX_CHARACTERS
 } from "@/lib/multi-character-storage"
 import PrintHelper from "./print-helper"
+import { exportToHTML, previewHTML } from "@/lib/html-exporter"
 
 export default function Home() {
   // 多角色系统状态
@@ -348,6 +349,28 @@ export default function Home() {
     setIsPrintingAll(true);
   }
 
+  // HTML导出功能
+  const handleExportHTML = async () => {
+    try {
+      await exportToHTML(formData)
+      console.log('[App] HTML导出完成')
+    } catch (error) {
+      console.error('[App] HTML导出失败:', error)
+      alert('HTML导出失败: ' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
+
+  // HTML预览功能
+  const handlePreviewHTML = async () => {
+    try {
+      await previewHTML(formData)
+      console.log('[App] HTML预览打开')
+    } catch (error) {
+      console.error('[App] HTML预览失败:', error)
+      alert('HTML预览失败: ' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
+
   // Effect for handling "Print All Pages" - 移除自动打印功能
   // useEffect(() => {
   //   if (isPrintingAll) {
@@ -448,6 +471,18 @@ export default function Home() {
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500"
             >
               打印/保存PDF
+            </button>
+            <button
+              onClick={handleExportHTML}
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500"
+            >
+              导出HTML
+            </button>
+            <button
+              onClick={handlePreviewHTML}
+              className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-500"
+            >
+              HTML预览
             </button>
           </div>
         </div>

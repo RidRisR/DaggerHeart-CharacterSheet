@@ -40,8 +40,8 @@ body {
   min-height: 100vh;
   padding: 20px 0;
 }
-/* 在打印预览中隐藏固定位置的按钮 */
-.print-all-pages .fixed.bottom-4.right-4 {
+/* 在打印预览中隐藏主界面的固定位置按钮，但保留打印预览控制按钮 */
+.print-all-pages .fixed.bottom-4.right-4:not(.print-control-buttons) {
   display: none;
 }
 

@@ -469,38 +469,32 @@ export default function Home() {
       <div className="print-all-pages">
         <PrintHelper />
         {/* 打印预览控制按钮，只在屏幕上显示，打印时隐藏 */}
-        <div className="fixed top-4 left-4 z-50 print:hidden">
-          <div className="flex gap-2">
-            <button
+        <div className="fixed bottom-4 right-4 z-[60] print:hidden print-control-buttons">
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={() => window.print()}
+              className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+            >
+              导出为PDF
+            </Button>
+            <Button
+              onClick={handleExportHTML}
+              className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+            >
+              导出为HTML
+            </Button>
+            <Button
+              onClick={handleExportJSON}
+              className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+            >
+              导出为JSON
+            </Button>
+            <Button
               onClick={() => setIsPrintingAll(false)}
-              className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700"
+              className="bg-red-600 text-white hover:bg-red-700 focus:outline-none whitespace-nowrap"
             >
               返回
-            </button>
-            <button
-              onClick={() => window.print()}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500"
-            >
-              打印/保存PDF
-            </button>
-            <button
-              onClick={handleExportHTML}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500"
-            >
-              导出HTML
-            </button>
-            <button
-              onClick={handleExportJSON}
-              className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-500"
-            >
-              导出JSON
-            </button>
-            <button
-              onClick={handlePreviewHTML}
-              className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-500"
-            >
-              HTML预览
-            </button>
+            </Button>
           </div>
         </div>
 

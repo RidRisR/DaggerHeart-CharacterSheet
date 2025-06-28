@@ -300,3 +300,67 @@ const handleHTMLImportAndCreate = () => {
 2. **备份恢复**：从HTML备份文件恢复角色到新存档
 3. **角色收集**：收集多个不同来源的角色数据
 4. **实验测试**：导入示例角色进行功能测试
+
+## 🎨 打印预览界面优化 (2025年6月28日)
+
+### 按钮样式和布局重构
+
+对打印预览界面的控制按钮进行了全面的样式和布局优化：
+
+#### 📍 位置调整
+
+**之前：** 固定在屏幕左上角 (`fixed top-4 left-4`)
+**现在：** 固定在屏幕右下角 (`fixed bottom-4 right-4`)
+
+#### 🔄 布局变更
+
+**之前：** 水平排列 (`flex gap-2`)
+**现在：** 垂直排列 (`flex flex-col gap-2`)
+
+#### 🎨 按钮顺序和样式
+
+**新的按钮布局（从上到下）：**
+1. **导出为PDF** - 黑色背景 (`bg-black hover:bg-gray-800`)
+2. **导出为HTML** - 黑色背景 (`bg-black hover:bg-gray-800`)  
+3. **导出为JSON** - 黑色背景 (`bg-black hover:bg-gray-800`)
+4. **返回** - 红色背景 (`bg-red-600 hover:bg-red-700`)
+
+#### 💻 技术改进
+
+```typescript
+// 新的按钮容器样式
+<div className="fixed bottom-4 right-4 z-50 print:hidden">
+  <div className="flex flex-col gap-2">
+    {/* 统一的黑色样式 */}
+    className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 whitespace-nowrap"
+    
+    {/* 返回按钮特殊的红色样式 */}
+    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 whitespace-nowrap"
+  </div>
+</div>
+```
+
+#### 🔧 功能优化
+
+**移除功能：**
+- ❌ 移除了"HTML预览"按钮（简化功能）
+
+**保留核心功能：**
+- ✅ 导出为PDF（打印功能）
+- ✅ 导出为HTML文件  
+- ✅ 导出为JSON文件
+- ✅ 返回主界面
+
+#### 🎯 用户体验改进
+
+**视觉优势：**
+- ✅ **位置优化**：右下角位置更符合用户习惯
+- ✅ **垂直布局**：节省水平空间，避免遮挡内容
+- ✅ **统一样式**：黑色主题保持专业感
+- ✅ **色彩区分**：红色返回按钮突出退出功能
+- ✅ **文本清晰**：`whitespace-nowrap`防止按钮文字换行
+
+**操作体验：**
+- 🎯 按钮位置不干扰内容查看
+- 🎯 垂直布局更适合移动端操作
+- 🎯 色彩编码帮助用户快速识别功能

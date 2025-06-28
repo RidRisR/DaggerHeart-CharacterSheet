@@ -370,6 +370,17 @@ export default function Home() {
     }
   }
 
+  // JSON导出功能
+  const handleExportJSON = () => {
+    try {
+      exportCharacterData(formData)
+      console.log('[App] JSON导出完成')
+    } catch (error) {
+      console.error('[App] JSON导出失败:', error)
+      alert('JSON导出失败: ' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
+
   // Effect for handling "Print All Pages" - 移除自动打印功能
   // useEffect(() => {
   //   if (isPrintingAll) {
@@ -476,6 +487,12 @@ export default function Home() {
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500"
             >
               导出HTML
+            </button>
+            <button
+              onClick={handleExportJSON}
+              className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-500"
+            >
+              导出JSON
             </button>
             <button
               onClick={handlePreviewHTML}

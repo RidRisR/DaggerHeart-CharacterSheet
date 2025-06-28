@@ -12,6 +12,7 @@ import {
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { CardDisplaySection } from "@/components/card-display-section"
 import CharacterSheetPageFour from "@/components/character-sheet-page-four"
+import CharacterSheetPageFive from "@/components/character-sheet-page-five"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
@@ -517,6 +518,11 @@ export default function Home() {
         <div className="page-four flex justify-center items-start min-h-screen">
           <CharacterSheetPageFour formData={formData} />
         </div>
+
+        {/* 第五页（仅打印时显示） */}
+        <div className="page-five flex justify-center items-start min-h-screen">
+          <CharacterSheetPageFive formData={formData} />
+        </div>
       </div>
     )
   }
@@ -590,7 +596,7 @@ export default function Home() {
           建卡指引
         </button>
         <Button onClick={() => handlePrintAll().catch(console.error)} className="bg-gray-800 hover:bg-gray-700 focus:outline-none">
-          打印预览
+          导出预览
         </Button>
         <Button onClick={openCharacterManagementModal} className="bg-gray-800 hover:bg-gray-700 focus:outline-none">
           存档管理

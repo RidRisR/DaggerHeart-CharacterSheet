@@ -21,11 +21,13 @@ body {
     font-size: var(--print-font-size, 14px) !important;
   }
 }
+
 /* 打印所有页面的特殊样式 */
 .print-all-pages .page-one,
 .print-all-pages .page-two,
 .print-all-pages .page-three,
-.print-all-pages .page-four {
+.print-all-pages .page-four,
+.print-all-pages .page-five {
   page-break-after: always;
 }
 
@@ -33,13 +35,15 @@ body {
 .print-all-pages .page-one,
 .print-all-pages .page-two,
 .print-all-pages .page-three,
-.print-all-pages .page-four {
+.print-all-pages .page-four,
+.print-all-pages .page-five {
   display: flex;
   justify-content: center;
   align-items: flex-start;
   min-height: 100vh;
   padding: 20px 0;
 }
+
 /* 在打印预览中隐藏主界面的固定位置按钮，但保留打印预览控制按钮 */
 .print-all-pages .fixed.bottom-4.right-4:not(.print-control-buttons) {
   display: none;
@@ -51,12 +55,14 @@ body {
   .print-all-pages .page-one,
   .print-all-pages .page-two,
   .print-all-pages .page-three,
-  .print-all-pages .page-four {
+  .print-all-pages .page-four,
+  .print-all-pages .page-five {
     display: block;
     padding: 0;
     min-height: auto;
   }
 }
+
 @media print {
   body {
     margin: 0;
@@ -79,45 +85,46 @@ body {
     font-size: 0.85em;
   }
 
-    /* 第二页特殊打印样式 - 控制内容密度和布局 */
-    .print-all-pages .page-two .a4-page {
-      font-size: 0.75em;
-      /* 进一步缩小字体 */
-      padding: 3mm;
-      /* 减少内边距 */
-    }
-  
-    /* 第二页的升级区域样式调整 */
-    .print-all-pages .page-two .mt-3.grid.grid-cols-3 {
-      gap: 0.4rem !important;
-      /* 减少网格间距 */
-      margin-top: 0.5rem !important;
-      /* 减少顶部边距 */
-      font-size: 0.9em;
-      /* 升级区域字体进一步缩小 */
-    }
-  
-    /* 第二页卡组区域的紧凑布局 */
-    .print-all-pages .page-two .mt-2 {
-      margin-top: 0.25rem !important;
-      /* 减少卡组区域的上边距 */
-    }
-  
-    /* 第二页所有区域间距缩小 */
-    .print-all-pages .page-two .space-y-4>*+* {
-      margin-top: 0.5rem !important;
-    }
-  
-    /* 第二页卡组标题区域缩小间距 */
-    .print-all-pages .page-two h3 {
-      margin-bottom: 0.25rem !important;
-      font-size: 0.9em;
-    }
-  
-    /* 第二页具体的升级选项文本缩小 */
-    .print-all-pages .page-two .text-m {
-      font-size: 0.7rem !important;
-    }
+  /* 第二页特殊打印样式 - 控制内容密度和布局 */
+  .print-all-pages .page-two .a4-page {
+    font-size: 0.75em;
+    /* 进一步缩小字体 */
+    padding: 3mm;
+    /* 减少内边距 */
+  }
+
+  /* 第二页的升级区域样式调整 */
+  .print-all-pages .page-two .mt-3.grid.grid-cols-3 {
+    gap: 0.4rem !important;
+    /* 减少网格间距 */
+    margin-top: 0.5rem !important;
+    /* 减少顶部边距 */
+    font-size: 0.9em;
+    /* 升级区域字体进一步缩小 */
+  }
+
+  /* 第二页卡组区域的紧凑布局 */
+  .print-all-pages .page-two .mt-2 {
+    margin-top: 0.25rem !important;
+    /* 减少卡组区域的上边距 */
+  }
+
+  /* 第二页所有区域间距缩小 */
+  .print-all-pages .page-two .space-y-4>*+* {
+    margin-top: 0.5rem !important;
+  }
+
+  /* 第二页卡组标题区域缩小间距 */
+  .print-all-pages .page-two h3 {
+    margin-bottom: 0.25rem !important;
+    font-size: 0.9em;
+  }
+
+  /* 第二页具体的升级选项文本缩小 */
+  .print-all-pages .page-two .text-m {
+    font-size: 0.7rem !important;
+  }
+
   /* 在打印时隐藏所有固定位置的按钮 */
   .fixed {
     display: none !important;
@@ -182,57 +189,58 @@ body {
   .bg-gray-800 .select-value {
     color: black !important;
   }
-/* .header-selection-button { */
-/* color: transparent !important; */
-/* Intentionally commented out */
-/* } */
 
-/* New general rules for printable selection buttons */
-.printable-selection-button.print-placeholder-text-hidden {
-  color: transparent !important;
-  /* Hide placeholder text */
-}
+  /* .header-selection-button { */
+  /* color: transparent !important; */
+  /* Intentionally commented out */
+  /* } */
 
-.printable-selection-button.print-selected-text-visible {
-  color: black !important;
-  /* Ensure selected text is black and visible */
-}
+  /* New general rules for printable selection buttons */
+  .printable-selection-button.print-placeholder-text-hidden {
+    color: transparent !important;
+    /* Hide placeholder text */
+  }
 
-/* Remove the specific override for print-force-visible-text as it's replaced by the above */
-/* .header-selection-button.print-force-visible-text { */
-/* color: inherit !important; */
-/* } */
-/* 第二页在实际打印时的样式优化 */
-.page-two .a4-page {
-  font-size: 0.72em !important;
-  /* 第二页内容整体缩小 */
-  padding: 2mm !important;
-  /* 进一步减少内边距 */
-}
+  .printable-selection-button.print-selected-text-visible {
+    color: black !important;
+    /* Ensure selected text is black and visible */
+  }
 
-/* 第二页升级区域在实际打印时的样式 */
-.page-two .mt-3.grid.grid-cols-3 {
-  gap: 0.3rem !important;
-  margin-top: 0.3rem !important;
-  font-size: 0.85em !important;
-}
+  /* Remove the specific override for print-force-visible-text as it's replaced by the above */
+  /* .header-selection-button.print-force-visible-text { */
+  /* color: inherit !important; */
+  /* } */
+  /* 第二页在实际打印时的样式优化 */
+  .page-two .a4-page {
+    font-size: 0.72em !important;
+    /* 第二页内容整体缩小 */
+    padding: 2mm !important;
+    /* 进一步减少内边距 */
+  }
 
-/* 第二页卡组区域在实际打印时紧凑布局 */
-.page-two .mt-2 {
-  margin-top: 0.2rem !important;
-}
+  /* 第二页升级区域在实际打印时的样式 */
+  .page-two .mt-3.grid.grid-cols-3 {
+    gap: 0.3rem !important;
+    margin-top: 0.3rem !important;
+    font-size: 0.85em !important;
+  }
 
-/* 第二页所有内容间距在实际打印时缩小 */
-.page-two h3 {
-  margin-bottom: 0.2rem !important;
-  margin-top: 0.2rem !important;
-}
+  /* 第二页卡组区域在实际打印时紧凑布局 */
+  .page-two .mt-2 {
+    margin-top: 0.2rem !important;
+  }
 
-/* 第二页文本区域在实际打印时的优化 */
-.page-two .text-m {
-  font-size: 0.65rem !important;
-  line-height: 1.2 !important;
-}
+  /* 第二页所有内容间距在实际打印时缩小 */
+  .page-two h3 {
+    margin-bottom: 0.2rem !important;
+    margin-top: 0.2rem !important;
+  }
+
+  /* 第二页文本区域在实际打印时的优化 */
+  .page-two .text-m {
+    font-size: 0.65rem !important;
+    line-height: 1.2 !important;
+  }
 }
 
 /* 打印页面样式 */
@@ -253,18 +261,23 @@ body {
 
 /* 卡牌行样式 - 同行高度对齐 */
 .card-row {
-  page-break-inside: avoid; /* 防止行被页面切断 */
-  align-items: stretch; /* 同一行卡牌高度对齐 */
+  page-break-inside: avoid;
+  /* 防止行被页面切断 */
+  align-items: stretch;
+  /* 同一行卡牌高度对齐 */
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
-  margin-bottom: 1.5rem; /* 增加行间距，给内容更多空间 */
+  margin-bottom: 1.5rem;
+  /* 增加行间距，给内容更多空间 */
 }
 
 .card-item {
   break-inside: avoid;
-  height: 100%; /* 填满行高，确保同行等高 */
-  min-height: 120px; /* 增加最小高度 */
+  height: 100%;
+  /* 填满行高，确保同行等高 */
+  min-height: 120px;
+  /* 增加最小高度 */
   display: flex;
   flex-direction: column;
 }
@@ -277,11 +290,14 @@ body {
 
 /* 卡牌描述区域 - 完全自适应 */
 .card-item .card-description {
-  flex: 1; /* 描述区域自动扩展 */
-  overflow: visible; /* 显示完整内容，不截断 */
+  flex: 1;
+  /* 描述区域自动扩展 */
+  overflow: visible;
+  /* 显示完整内容，不截断 */
   font-size: 0.75rem;
   line-height: 1.3;
-  height: auto; /* 自适应内容高度 */
+  height: auto;
+  /* 自适应内容高度 */
 }
 
 /* 确保打印时的分页 */
@@ -303,9 +319,11 @@ body {
 .print-page-break {
   page-break-before: always;
 }
+
 .card-row:last-child {
   margin-bottom: 0;
 }
+
 .shield-shape {
   clip-path: polygon(0% 0%, 100% 0%, 100% 75%, 50% 100%, 0% 75%);
 }
@@ -366,6 +384,7 @@ body {
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -404,6 +423,7 @@ body {
 
 /* 第四页打印专用样式 - 确保自动分页后有合适的边距 */
 @media print {
+
   /* 针对第四页的分页规则 */
   .character-sheet-page-four {
     page-break-before: always;
@@ -433,9 +453,49 @@ body {
   .character-sheet-page-four .print-card-grid {
     padding-top: 0.5rem;
   }
-  
+
   /* 在打印时为自动分页的内容添加顶部边距 */
-  .character-sheet-page-four .print-card-grid > .card-row {
+  .character-sheet-page-four .print-card-grid>.card-row {
+    orphans: 2;
+    widows: 2;
+  }
+}
+
+/* 第五页打印专用样式 - 确保自动分页后有合适的边距 */
+@media print {
+
+  /* 针对第五页的分页规则 */
+  .character-sheet-page-five {
+    page-break-before: always;
+    /* 为第五页添加顶部填充，确保内容不会紧贴页面顶部 */
+    padding-top: 1rem;
+  }
+
+  /* 确保第五页内的卡牌行在分页后有合适的上边距 */
+  .character-sheet-page-five .card-row {
+    page-break-inside: avoid;
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* 第一行不需要额外的上边距 */
+  .character-sheet-page-five .print-deck-section .card-row:first-child {
+    margin-top: 0 !important;
+  }
+
+  /* 确保卡组标题后有足够间距 */
+  .character-sheet-page-five .print-deck-header {
+    margin-bottom: 1.5rem !important;
+    page-break-after: avoid;
+  }
+
+  /* 强制为打印页面的内容添加顶部边距 */
+  .character-sheet-page-five .print-card-grid {
+    padding-top: 0.5rem;
+  }
+
+  /* 在打印时为自动分页的内容添加顶部边距 */
+  .character-sheet-page-five .print-card-grid>.card-row {
     orphans: 2;
     widows: 2;
   }

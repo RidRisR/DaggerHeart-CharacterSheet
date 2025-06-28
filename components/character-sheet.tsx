@@ -515,30 +515,51 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         }))
       }
     } else if (weaponId) { // 处理自定义武器
+      let weaponDetails;
+
+      // 尝试解析JSON格式的自定义武器数据
+      try {
+        const customWeaponData = JSON.parse(weaponId);
+        weaponDetails = {
+          name: customWeaponData.名称 || weaponId,
+          trait: `${customWeaponData.属性 || ""}/${customWeaponData.负荷 || ""}/${customWeaponData.范围 || ""}`.replace(/\/+$/, '').replace(/^\/+/, ''),
+          damage: customWeaponData.检定 && customWeaponData.伤害 ? `${customWeaponData.检定}: ${customWeaponData.伤害}` : (customWeaponData.伤害 || ""),
+          feature: `${customWeaponData.特性名称 ? customWeaponData.特性名称 + ': ' : ''}${customWeaponData.描述 || ''}`.trim(),
+        };
+      } catch (e) {
+        // 如果不是JSON格式，按旧方式处理（只有名称）
+        weaponDetails = {
+          name: weaponId,
+          trait: "",
+          damage: "",
+          feature: "",
+        };
+      }
+
       if (field === "primaryWeaponName") {
         setFormData((prev) => ({
           ...prev,
-          primaryWeaponName: weaponId,
-          primaryWeaponTrait: "",
-          primaryWeaponDamage: "",
-          primaryWeaponFeature: "",
+          primaryWeaponName: weaponDetails.name,
+          primaryWeaponTrait: weaponDetails.trait,
+          primaryWeaponDamage: weaponDetails.damage,
+          primaryWeaponFeature: weaponDetails.feature,
         }))
       } else if (field === "secondaryWeaponName") {
         setFormData((prev) => ({
           ...prev,
-          secondaryWeaponName: weaponId,
-          secondaryWeaponTrait: "",
-          secondaryWeaponDamage: "",
-          secondaryWeaponFeature: "",
+          secondaryWeaponName: weaponDetails.name,
+          secondaryWeaponTrait: weaponDetails.trait,
+          secondaryWeaponDamage: weaponDetails.damage,
+          secondaryWeaponFeature: weaponDetails.feature,
         }))
       } else if (field.startsWith("inventoryWeapon")) {
         const prefix = field.replace("Name", "")
         setFormData((prev) => ({
           ...prev,
-          [`${prefix}Name`]: weaponId,
-          [`${prefix}Trait`]: "",
-          [`${prefix}Damage`]: "",
-          [`${prefix}Feature`]: "",
+          [`${prefix}Name`]: weaponDetails.name,
+          [`${prefix}Trait`]: weaponDetails.trait,
+          [`${prefix}Damage`]: weaponDetails.damage,
+          [`${prefix}Feature`]: weaponDetails.feature,
         }))
       }
     }
@@ -563,12 +584,33 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         armorFeature: "",
       }))
     } else if (value) { // 处理自定义护甲
+      let armorDetails;
+
+      // 尝试解析JSON格式的自定义护甲数据
+      try {
+        const customArmorData = JSON.parse(value);
+        armorDetails = {
+          name: customArmorData.名称 || value,
+          baseScore: String(customArmorData.护甲值 || ""),
+          threshold: customArmorData.伤害阈值 || "",
+          feature: `${customArmorData.特性名称 ? customArmorData.特性名称 + ': ' : ''}${customArmorData.描述 || ''}`.trim(),
+        };
+      } catch (e) {
+        // 如果不是JSON格式，按旧方式处理（只有名称）
+        armorDetails = {
+          name: value,
+          baseScore: "",
+          threshold: "",
+          feature: "",
+        };
+      }
+
       setFormData((prev) => ({
         ...prev,
-        armorName: value,
-        armorBaseScore: "",
-        armorThreshold: "",
-        armorFeature: "",
+        armorName: armorDetails.name,
+        armorBaseScore: armorDetails.baseScore,
+        armorThreshold: armorDetails.threshold,
+        armorFeature: armorDetails.feature,
       }))
     }
   }

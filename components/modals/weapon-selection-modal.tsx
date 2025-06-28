@@ -210,7 +210,24 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
           <Button
             size="sm"
             variant={isCustom ? "default" : "outline"}
-            onClick={() => setIsCustom(true)}
+            onClick={() => {
+              if (isCustom) {
+                // 如果当前是自定义模式，关闭并清空所有字段
+                setIsCustom(false);
+                setCustomName("");
+                setCustomLevel("");
+                setCustomCheck("");
+                setCustomAttribute("");
+                setCustomRange("");
+                setCustomDamage("");
+                setCustomLoad("");
+                setCustomFeatureName("");
+                setCustomDescription("");
+              } else {
+                // 如果当前不是自定义模式，打开自定义
+                setIsCustom(true);
+              }
+            }}
             className={`${isCustom ? "bg-blue-500 text-white" : "text-blue-500 border-blue-500"}`}
           >
             {customName || "自定义武器"}

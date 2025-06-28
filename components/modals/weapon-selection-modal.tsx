@@ -10,11 +10,13 @@ const LEVELS = ["T1", "T2", "T3", "T4"] as const;
 const CHECKS = ["敏捷", "灵巧", "知识", "力量", "本能", "风度"] as const;
 const ATTRIBUTES = ["物理", "魔法"] as const;
 const RANGES = ["近战", "邻近", "近距离", "远距离", "极远"] as const;
+const LOADS = ["单手", "双手"] as const;
 
 type Level = typeof LEVELS[number];
 type Check = typeof CHECKS[number];
 type Attribute = typeof ATTRIBUTES[number];
 type Range = typeof RANGES[number];
+type Load = typeof LOADS[number];
 
 interface WeaponModalProps {
   isOpen: boolean;
@@ -40,6 +42,14 @@ interface Weapon {
 
 export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponSlotType }: WeaponModalProps) {
   const [customName, setCustomName] = useState("");
+  const [customLevel, setCustomLevel] = useState<Level | "">("");
+  const [customCheck, setCustomCheck] = useState<Check | "">("");
+  const [customAttribute, setCustomAttribute] = useState<Attribute | "">("");
+  const [customRange, setCustomRange] = useState<Range | "">("");
+  const [customDamage, setCustomDamage] = useState("");
+  const [customLoad, setCustomLoad] = useState<Load | "">("");
+  const [customFeatureName, setCustomFeatureName] = useState("");
+  const [customDescription, setCustomDescription] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   // 新增筛选状态
   const [levelFilter, setLevelFilter] = useState<Level | "">("");
@@ -60,7 +70,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
       return allWeapons; // Use allWeapons directly
     }
     return allWeapons.filter(w => w.weaponType === weaponSlotType);
-  }, [weaponSlotType]); 
+  }, [weaponSlotType]);
 
   // 组合筛选逻辑
   const filteredWeapons = useMemo(() => {
@@ -106,6 +116,14 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
       setWeaponTypeFilter("");
       setIsCustom(false);
       setCustomName("");
+      setCustomLevel("");
+      setCustomCheck("");
+      setCustomAttribute("");
+      setCustomRange("");
+      setCustomDamage("");
+      setCustomLoad("");
+      setCustomFeatureName("");
+      setCustomDescription("");
     }
 
     return () => {
@@ -140,7 +158,19 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
           <h2 className="text-xl font-bold">{title}</h2>
           <Button
             variant="destructive"
-            onClick={() => { setIsCustom(false); setCustomName(""); onSelect("none", customWeaponType); }}
+            onClick={() => {
+              setIsCustom(false);
+              setCustomName("");
+              setCustomLevel("");
+              setCustomCheck("");
+              setCustomAttribute("");
+              setCustomRange("");
+              setCustomDamage("");
+              setCustomLoad("");
+              setCustomFeatureName("");
+              setCustomDescription("");
+              onSelect("none", customWeaponType);
+            }}
             className="bg-red-500 hover:bg-red-600 text-white ml-2"
           >
             清除选择
@@ -188,26 +218,167 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
         </div>
         {/* 自定义武器输入区域，移到筛选区下方，仅在 isCustom 时显示 */}
         {isCustom && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border-b border-blue-200">
-            <input
-              className="border rounded px-2 py-1 text-sm flex-1"
-              placeholder="自定义名称"
-              value={customName}
-              onChange={e => setCustomName(e.target.value)}
-              onClick={e => e.stopPropagation()}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && customName) {
-                  e.stopPropagation();
-                  onSelect(customName, customWeaponType);
+          <div className="px-4 py-3 bg-blue-50 border-b border-blue-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">名称</label>
+                <input
+                  className="w-full border rounded px-2 py-1 text-sm"
+                  placeholder="自定义武器名称"
+                  value={customName}
+                  onChange={e => setCustomName(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">等级</label>
+                <select
+                  className="w-full border rounded px-2 py-1 text-sm"
+                  value={customLevel}
+                  onChange={e => setCustomLevel(e.target.value as Level | "")}
+                >
+                  <option value="">选择等级</option>
+                  {LEVELS.map(level => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">检定</label>
+                <select
+                  className="w-full border rounded px-2 py-1 text-sm"
+                  value={customCheck}
+                  onChange={e => setCustomCheck(e.target.value as Check | "")}
+                >
+                  <option value="">选择检定</option>
+                  {CHECKS.map(check => (
+                    <option key={check} value={check}>{check}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">属性</label>
+                <select
+                  className="w-full border rounded px-2 py-1 text-sm"
+                  value={customAttribute}
+                  onChange={e => setCustomAttribute(e.target.value as Attribute | "")}
+                >
+                  <option value="">选择属性</option>
+                  {ATTRIBUTES.map(attr => (
+                    <option key={attr} value={attr}>{attr}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">范围</label>
+                <select
+                  className="w-full border rounded px-2 py-1 text-sm"
+                  value={customRange}
+                  onChange={e => setCustomRange(e.target.value as Range | "")}
+                >
+                  <option value="">选择范围</option>
+                  {RANGES.map(range => (
+                    <option key={range} value={range}>{range}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">伤害</label>
+                <input
+                  className="w-full border rounded px-2 py-1 text-sm"
+                  placeholder="例如: d6"
+                  value={customDamage}
+                  onChange={e => setCustomDamage(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">负荷</label>
+                <select
+                  className="w-full border rounded px-2 py-1 text-sm"
+                  value={customLoad}
+                  onChange={e => setCustomLoad(e.target.value as Load | "")}
+                >
+                  <option value="">选择负荷</option>
+                  {LOADS.map(load => (
+                    <option key={load} value={load}>{load}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">特性名称</label>
+                <input
+                  className="w-full border rounded px-2 py-1 text-sm"
+                  placeholder="特性名称"
+                  value={customFeatureName}
+                  onChange={e => setCustomFeatureName(e.target.value)}
+                />
+              </div>
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                <textarea
+                  className="w-full border rounded px-2 py-1 text-sm"
+                  placeholder="武器描述"
+                  rows={2}
+                  value={customDescription}
+                  onChange={e => setCustomDescription(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-3">
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (customName) {
+                    const customWeaponData = {
+                      名称: customName,
+                      等级: customLevel || "",
+                      检定: customCheck || "",
+                      属性: customAttribute || "",
+                      范围: customRange || "",
+                      伤害: customDamage,
+                      负荷: customLoad,
+                      特性名称: customFeatureName,
+                      描述: customDescription,
+                      weaponType: customWeaponType
+                    };
+                    onSelect(JSON.stringify(customWeaponData), customWeaponType);
+                    setIsCustom(false);
+                    setCustomName("");
+                    setCustomLevel("");
+                    setCustomCheck("");
+                    setCustomAttribute("");
+                    setCustomRange("");
+                    setCustomDamage("");
+                    setCustomLoad("");
+                    setCustomFeatureName("");
+                    setCustomDescription("");
+                  }
+                }}
+                disabled={!customName}
+              >
+                确认添加
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => {
                   setIsCustom(false);
                   setCustomName("");
-                }
-              }}
-              autoFocus
-            />
-            <Button size="sm" onClick={e => { e.stopPropagation(); if (customName) { onSelect(customName, customWeaponType); setIsCustom(false); setCustomName(""); } }} disabled={!customName}>
-              确认
-            </Button>
+                  setCustomLevel("");
+                  setCustomCheck("");
+                  setCustomAttribute("");
+                  setCustomRange("");
+                  setCustomDamage("");
+                  setCustomLoad("");
+                  setCustomFeatureName("");
+                  setCustomDescription("");
+                  onSelect("none", customWeaponType);
+                }}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                取消
+              </Button>
+            </div>
           </div>
         )}
         <div className="p-4">
@@ -235,16 +406,16 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
                 <tbody>
                   {isCustom && customName && (
                     <tr className="bg-blue-50">
-                      <td className="p-2 whitespace-nowrap"></td>
+                      <td className="p-2 whitespace-nowrap">{customLevel}</td>
                       <td className="p-2 whitespace-nowrap">{customName}</td>
                       <td className="p-2 whitespace-nowrap">{customWeaponType === 'primary' ? '主武器' : '副武器'}</td>
-                      <td className="p-2 whitespace-nowrap"></td>
-                      <td className="p-2 whitespace-nowrap"></td>
-                      <td className="p-2 whitespace-nowrap"></td>
-                      <td className="p-2 whitespace-nowrap"></td>
-                      <td className="p-2 whitespace-nowrap"></td>
-                      <td className="p-2 whitespace-nowrap"></td>
-                      <td className="p-2 whitespace-nowrap"></td>
+                      <td className="p-2 whitespace-nowrap">{customAttribute}</td>
+                      <td className="p-2 whitespace-nowrap">{customLoad}</td>
+                      <td className="p-2 whitespace-nowrap">{customRange}</td>
+                      <td className="p-2 whitespace-nowrap">{customCheck}</td>
+                      <td className="p-2 whitespace-nowrap">{customDamage}</td>
+                      <td className="p-2 whitespace-nowrap">{customFeatureName}</td>
+                      <td className="p-2 whitespace-nowrap">{customDescription}</td>
                     </tr>
                   )}
                   {/* Map over displayedWeapons instead of filteredWeapons */}
@@ -252,7 +423,19 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
                     <tr
                       key={weapon.id}
                       className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => { setIsCustom(false); setCustomName(""); onSelect(weapon.id, weapon.weaponType); }}
+                      onClick={() => {
+                        setIsCustom(false);
+                        setCustomName("");
+                        setCustomLevel("");
+                        setCustomCheck("");
+                        setCustomAttribute("");
+                        setCustomRange("");
+                        setCustomDamage("");
+                        setCustomLoad("");
+                        setCustomFeatureName("");
+                        setCustomDescription("");
+                        onSelect(weapon.id, weapon.weaponType);
+                      }}
                     ><td className="p-2 whitespace-nowrap">{weapon.等级}</td><td className="p-2 whitespace-nowrap">{weapon.名称}</td><td className="p-2 whitespace-nowrap">{weapon.weaponType === "primary" ? "主武器" : "副武器"}</td><td className="p-2 whitespace-nowrap">{weapon.属性}</td><td className="p-2 whitespace-nowrap">{weapon.负荷}</td><td className="p-2 whitespace-nowrap">{weapon.范围}</td><td className="p-2 whitespace-nowrap">{weapon.检定}</td><td className="p-2 whitespace-nowrap">{weapon.伤害}</td><td className="p-2 whitespace-nowrap">{weapon.特性名称}</td><td className="p-2 whitespace-nowrap">{weapon.描述}</td></tr>
                   ))}
                 </tbody>

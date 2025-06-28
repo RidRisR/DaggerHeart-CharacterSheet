@@ -89,7 +89,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
             size="sm"
             variant={isCustom ? "default" : "outline"}
             onClick={() => setIsCustom(true)}
-            className={`ml-auto ${isCustom ? "bg-blue-500 text-white" : "text-blue-500 border-blue-500"}`}
+            className={`${isCustom ? "bg-blue-500 text-white" : "text-blue-500 border-blue-500"}`}
           >
             {customName || "自定义护甲"}
           </Button>

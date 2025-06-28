@@ -5,7 +5,7 @@ import { getCardTypeName } from "@/card/card-ui-config"
 import ReactMarkdown from "react-markdown"
 import type { SheetData } from "@/lib/sheet-data"
 
-interface CharacterSheetPageFourProps {
+interface CharacterSheetPageFiveProps {
     formData: SheetData
 }
 
@@ -107,29 +107,29 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     );
 };
 
-// 打印专用页面，专门展示聚焦卡组
-const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formData }) => {
-    // 获取聚焦卡组的有效卡牌
-    const focusedCards = useMemo(() => {
-        return (formData?.cards || []).filter((card: StandardCard) => !isEmptyCard(card));
-    }, [formData?.cards]);
+// 打印专用页面，专门展示库存卡组
+const CharacterSheetPageFive: React.FC<CharacterSheetPageFiveProps> = ({ formData }) => {
+    // 获取库存卡组的有效卡牌
+    const inventoryCards = useMemo(() => {
+        return (formData?.inventory_cards || []).filter((card: StandardCard) => !isEmptyCard(card));
+    }, [formData?.inventory_cards]);
 
-    // 如果聚焦卡组是空的，不渲染第四页
-    if (focusedCards.length === 0) {
+    // 如果库存卡组是空的，不渲染第五页
+    if (inventoryCards.length === 0) {
         return null;
     }
 
     return (
         <div className="w-full max-w-[210mm] mx-auto my-4">
-            <div className="character-sheet-page-four a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md" style={{ width: "210mm" }}>
+            <div className="character-sheet-page-five a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md" style={{ width: "210mm" }}>
                 <CardDeckPrintSection
-                    cards={focusedCards}
-                    title="聚焦卡组"
-                    deckType="focused"
+                    cards={inventoryCards}
+                    title="库存卡组"
+                    deckType="inventory"
                 />
             </div>
         </div>
     )
 }
 
-export default CharacterSheetPageFour
+export default CharacterSheetPageFive

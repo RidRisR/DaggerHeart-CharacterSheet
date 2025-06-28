@@ -520,7 +520,7 @@ async function generateFullHTML(formData: SheetData, options: HTMLExportOptions 
       
       // 添加打印按钮
       const printButton = document.createElement('button');
-      printButton.textContent = '🖨️ 打印角色卡';
+      printButton.textContent = '导出PDF';
       printButton.style.cssText = 'padding: 12px 20px; background: #007cba; color: white; border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: background-color 0.2s ease;';
       printButton.onmouseover = function() { this.style.backgroundColor = '#005a8b'; };
       printButton.onmouseout = function() { this.style.backgroundColor = '#007cba'; };
@@ -588,8 +588,7 @@ async function generateFileName(formData: SheetData, options: HTMLExportOptions 
   }
 
   const title = await generateDocumentTitle(formData)
-  const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')
-  return `${title}-${timestamp}.html`
+  return `${title}.html`
 }
 
 /**

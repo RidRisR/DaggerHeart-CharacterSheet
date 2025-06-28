@@ -302,34 +302,36 @@ export function CharacterManagementModal({
                 </div>
 
                 {/* 新建存档 */}
-                <div className="border-t pt-4 space-y-2">
-                    <Button
-                        onClick={() => {
-                            const saveName = prompt('请输入新存档的名称:', '我的存档')
-                            if (saveName) {
-                                onCreateCharacter(saveName)
-                            }
-                        }}
-                        disabled={characterList.length >= MAX_CHARACTERS}
-                        variant="outline"
-                        className="w-full border-gray-600 text-gray-600 hover:bg-gray-50"
-                    >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        新建存档 ({characterList.length}/{MAX_CHARACTERS})
-                    </Button>
-                    <Button
-                        onClick={handleHTMLImportAndCreate}
-                        disabled={characterList.length >= MAX_CHARACTERS}
-                        variant="outline"
-                        className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
-                    >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                        </svg>
-                        从HTML新建存档 ({characterList.length}/{MAX_CHARACTERS})
-                    </Button>
+                <div className="border-t pt-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <Button
+                            onClick={() => {
+                                const saveName = prompt('请输入新存档的名称:', '我的存档')
+                                if (saveName) {
+                                    onCreateCharacter(saveName)
+                                }
+                            }}
+                            disabled={characterList.length >= MAX_CHARACTERS}
+                            variant="outline"
+                            className="w-full text-gray-600 hover:bg-gray-50"
+                        >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            新建存档 ({characterList.length}/{MAX_CHARACTERS})
+                        </Button>
+                        <Button
+                            onClick={handleHTMLImportAndCreate}
+                            disabled={characterList.length >= MAX_CHARACTERS}
+                            variant="outline"
+                            className="w-full text-blue-600 hover:bg-blue-50"
+                        >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                            </svg>
+                            从HTML新建存档 ({characterList.length}/{MAX_CHARACTERS})
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

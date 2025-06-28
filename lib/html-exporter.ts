@@ -274,10 +274,11 @@ async function generateFullHTML(formData: SheetData, options: HTMLExportOptions 
         const styles = options.includeStyles !== false ? extractPageStyles() : ''
 
         const html = `<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-version="1.0" data-exporter="daggerheart-character-sheet">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Daggerheart Character Sheet Exporter v1.0">
   <title>${title}</title>
   <style>
     /* 重置样式 */

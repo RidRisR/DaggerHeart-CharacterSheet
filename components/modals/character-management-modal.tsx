@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { CharacterMetadata } from "@/lib/sheet-data"
 import { loadCharacterById, MAX_CHARACTERS } from "@/lib/multi-character-storage"
-import { exportCharacterData } from "@/lib/storage"
-import { defaultSheetData } from "@/lib/default-sheet-data"
+import { importCharacterFromHTMLFile } from "@/lib/html-importer"
+import { validateJSONCharacterData } from "@/lib/character-data-validator"
 
 interface CharacterManagementModalProps {
     isOpen: boolean
@@ -35,8 +35,6 @@ export function CharacterManagementModal({
     onRenameCharacter,
     onImportData
 }: CharacterManagementModalProps) {
-    if (!isOpen) return null
-
     // 监听ESC键关闭模态框
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -54,14 +52,8 @@ export function CharacterManagementModal({
         }
     }, [isOpen, onClose])
 
-    const handleExport = async () => {
-        try {
-            await exportCharacterData(formData)
-        } catch (error) {
-            console.error('Export failed:', error)
-            alert('导出失败')
-        }
-    }
+    // 如果模态框没有打开，不渲染任何内容
+    if (!isOpen) return null
 
     const handleImport = () => {
         const input = document.createElement('input')
@@ -73,13 +65,22 @@ export function CharacterManagementModal({
                 const reader = new FileReader()
                 reader.onload = (e: ProgressEvent<FileReader>) => {
                     try {
-                        const data = JSON.parse(e.target?.result as string)
-                        const mergedData = { ...defaultSheetData, ...data, focused_card_ids: data.focused_card_ids || [] }
-                        onImportData(mergedData)
-                        alert('导入成功')
+                        const jsonString = e.target?.result as string
+                        const validation = validateJSONCharacterData(jsonString)
+                        
+                        if (validation.valid && validation.data) {
+                            onImportData(validation.data)
+                            if (validation.warnings && validation.warnings.length > 0) {
+                                alert(`导入成功，但有以下警告：\n${validation.warnings.join('\n')}`)
+                            } else {
+                                alert('导入成功')
+                            }
+                        } else {
+                            alert(`导入失败：${validation.error}`)
+                        }
                     } catch (error) {
                         console.error('Import failed:', error)
-                        alert('导入失败：文件格式不正确')
+                        alert('导入失败：文件处理出错')
                     }
                 }
                 reader.readAsText(file)
@@ -88,12 +89,83 @@ export function CharacterManagementModal({
         input.click()
     }
 
+    const handleHTMLImport = () => {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = '.html'
+        input.onchange = async (e: Event) => {
+            const file = (e.target as HTMLInputElement).files?.[0]
+            if (file) {
+                try {
+                    const result = await importCharacterFromHTMLFile(file)
+                    if (result.success && result.data) {
+                        onImportData(result.data)
+                        if (result.warnings && result.warnings.length > 0) {
+                            alert(`HTML导入成功，但有以下警告：\n${result.warnings.join('\n')}`)
+                        } else {
+                            alert('HTML导入成功')
+                        }
+                    } else {
+                        alert(`HTML导入失败：${result.error}`)
+                    }
+                } catch (error) {
+                    console.error('HTML Import failed:', error)
+                    alert('HTML导入失败：文件处理出错')
+                }
+            }
+        }
+        input.click()
+    }
+
+    const handleHTMLImportAndCreate = () => {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = '.html'
+        input.onchange = async (e: Event) => {
+            const file = (e.target as HTMLInputElement).files?.[0]
+            if (file) {
+                try {
+                    const result = await importCharacterFromHTMLFile(file)
+                    if (result.success && result.data) {
+                        // 从导入的数据中提取角色名称作为默认存档名
+                        const characterName = result.data.name || "未命名角色"
+                        const defaultSaveName = `${characterName} (导入)`
+                        
+                        // 提示用户输入存档名称
+                        const saveName = prompt('请输入新存档的名称:', defaultSaveName)
+                        if (saveName) {
+                            // 先创建新存档
+                            const success = onCreateCharacter(saveName)
+                            if (success) {
+                                // 创建成功后导入数据
+                                onImportData(result.data)
+                                if (result.warnings && result.warnings.length > 0) {
+                                    alert(`HTML导入成功并创建新存档"${saveName}"，但有以下警告：\n${result.warnings.join('\n')}`)
+                                } else {
+                                    alert(`HTML导入成功并创建新存档"${saveName}"`)
+                                }
+                            } else {
+                                alert('创建新存档失败，可能已达到存档数量上限')
+                            }
+                        }
+                    } else {
+                        alert(`HTML导入失败：${result.error}`)
+                    }
+                } catch (error) {
+                    console.error('HTML Import and Create failed:', error)
+                    alert('HTML导入失败：文件处理出错')
+                }
+            }
+        }
+        input.click()
+    }
+
     return (
-        <div 
+        <div
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
             onClick={onClose}
         >
-            <div 
+            <div
                 className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
             >
@@ -124,18 +196,19 @@ export function CharacterManagementModal({
                         <div className="flex gap-2">
                             <Button
                                 size="sm"
-                                onClick={handleExport}
-                                className="bg-green-600 hover:bg-green-700"
-                            >
-                                导出
-                            </Button>
-                            <Button
-                                size="sm"
                                 onClick={handleImport}
                                 variant="outline"
                                 className="border-green-600 text-green-600 hover:bg-green-50"
                             >
-                                导入
+                                从JSON导入
+                            </Button>
+                            <Button
+                                size="sm"
+                                onClick={handleHTMLImport}
+                                variant="outline"
+                                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                            >
+                                从HTML导入
                             </Button>
                         </div>
                     </div>
@@ -229,7 +302,7 @@ export function CharacterManagementModal({
                 </div>
 
                 {/* 新建存档 */}
-                <div className="border-t pt-4">
+                <div className="border-t pt-4 space-y-2">
                     <Button
                         onClick={() => {
                             const saveName = prompt('请输入新存档的名称:', '我的存档')
@@ -238,12 +311,24 @@ export function CharacterManagementModal({
                             }
                         }}
                         disabled={characterList.length >= MAX_CHARACTERS}
-                        className="w-full"
+                        variant="outline"
+                        className="w-full border-gray-600 text-gray-600 hover:bg-gray-50"
                     >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
                         新建存档 ({characterList.length}/{MAX_CHARACTERS})
+                    </Button>
+                    <Button
+                        onClick={handleHTMLImportAndCreate}
+                        disabled={characterList.length >= MAX_CHARACTERS}
+                        variant="outline"
+                        className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+                    >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                        </svg>
+                        从HTML新建存档 ({characterList.length}/{MAX_CHARACTERS})
                     </Button>
                 </div>
             </div>

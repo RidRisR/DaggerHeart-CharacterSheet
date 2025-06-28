@@ -79,7 +79,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
             }}
         >
             <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-base truncate max-w-[60%]" title={displayName}>{displayName}</span>
+                <span className="font-semibold text-base truncate max-w-[60%] text-gray-800" title={displayName}>{displayName}</span>
                 <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-gray-100">{displayTypeName}</span>
             </div>
             {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (

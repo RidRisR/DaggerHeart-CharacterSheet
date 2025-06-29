@@ -32,6 +32,7 @@ interface CheckedUpgrades {
 export interface AttributeValue {
   checked: boolean
   value: string
+  spellcasting?: boolean  // 施法属性标记，可选字段确保向后兼容
 }
 
 export interface SheetData {

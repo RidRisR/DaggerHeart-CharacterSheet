@@ -735,6 +735,22 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     needsSyncRef.current = true;
   }
 
+  const handleSpellcastingToggle = (attribute: keyof SheetData) => {
+    setFormData((prev) => {
+      const currentAttribute = prev[attribute]
+      if (typeof currentAttribute === "object" && currentAttribute !== null && "spellcasting" in currentAttribute) {
+        return {
+          ...prev,
+          [attribute]: {
+            ...currentAttribute,
+            spellcasting: !currentAttribute.spellcasting,
+          },
+        }
+      }
+      return prev
+    })
+  }
+
   return (
     <>
       {/* 固定位置的按钮 - 移除建卡指引按钮，因为已经移到父组件 */}
@@ -857,6 +873,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 formData={safeFormData}
                 handleAttributeValueChange={handleAttributeValueChange}
                 handleBooleanChange={handleBooleanChange}
+                handleSpellcastingToggle={handleSpellcastingToggle}
               />
 
               {/* Hit Points & Stress */}

@@ -185,14 +185,16 @@ export function GenericCardSelectionModal({
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 auto-rows-min">
                                 {finalFilteredCards.map((card) => (
-                                    <SelectableCard
-                                        key={card.id}
-                                        card={card}
-                                        onClick={() => onSelect(card.id, field)}
-                                        isSelected={false}
-                                    />
+                                    <div className="w-full min-w-0 flex">
+                                        <SelectableCard
+                                            key={card.id}
+                                            card={card}
+                                            onClick={() => onSelect(card.id, field)}
+                                            isSelected={false}
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         )}

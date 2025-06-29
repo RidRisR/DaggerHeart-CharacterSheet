@@ -70,7 +70,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
         <div
             ref={cardRef}
             key={cardId}
-            className={`border rounded p-3 bg-white flex flex-col gap-1 break-inside-avoid shadow-sm relative cursor-pointer w-60 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+            className={`border rounded p-2 sm:p-3 bg-white flex flex-col gap-1 break-inside-avoid shadow-sm relative cursor-pointer w-full h-full min-h-[180px] sm:min-h-[200px] ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
             onClick={() => onClick(cardId)}
             onMouseEnter={() => setIsHovered(false)}
             onMouseLeave={() => {
@@ -79,18 +79,18 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
             }}
         >
             <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-base truncate max-w-[60%] text-gray-800" title={displayName}>{displayName}</span>
-                <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-gray-100">{displayTypeName}</span>
+                <span className="font-semibold text-sm sm:text-base truncate max-w-[60%] text-gray-800" title={displayName}>{displayName}</span>
+                <span className="text-xs text-gray-500 px-1 sm:px-2 py-0.5 rounded bg-gray-100 shrink-0">{displayTypeName}</span>
             </div>
             {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
-                <div className="flex flex-row gap-2 text-xs font-mono mb-2 pb-2 border-b border-dashed border-gray-300">
-                    {displayItem1 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem1}</div>}
-                    {displayItem2 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem2}</div>}
-                    {displayItem3 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem3}</div>}
-                    {displayItem4 && <div className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm">{displayItem4}</div>}
+                <div className="flex flex-row gap-1 sm:gap-2 text-xs font-mono mb-2 pb-2 border-b border-dashed border-gray-300 flex-wrap">
+                    {displayItem1 && <div className="px-1 sm:px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm text-xs">{displayItem1}</div>}
+                    {displayItem2 && <div className="px-1 sm:px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm text-xs">{displayItem2}</div>}
+                    {displayItem3 && <div className="px-1 sm:px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm text-xs">{displayItem3}</div>}
+                    {displayItem4 && <div className="px-1 sm:px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm text-xs">{displayItem4}</div>}
                 </div>
             )}
-            <div className="text-xs text-gray-600 leading-snug mb-1">
+            <div className="text-xs text-gray-600 leading-snug mb-1 flex-1 overflow-hidden">{/*注意添加了flex-1和overflow-hidden*/}
                 <ReactMarkdown skipHtml
                     components={{
                         ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,

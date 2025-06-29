@@ -70,7 +70,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
         <div
             ref={cardRef}
             key={cardId}
-            className={`border rounded p-2 sm:p-3 bg-white flex flex-col gap-1 break-inside-avoid shadow-sm relative cursor-pointer w-full h-full min-h-[180px] sm:min-h-[200px] ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+            className={`border rounded p-2 sm:p-3 bg-white flex flex-col gap-1 break-inside-avoid shadow-sm relative cursor-pointer w-full max-w-60 h-full min-h-[180px] sm:min-h-[200px] ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
             onClick={() => onClick(cardId)}
             onMouseEnter={() => setIsHovered(false)}
             onMouseLeave={() => {

@@ -513,14 +513,16 @@ export function CardSelectionModal({
                 scrollableTarget="scrollableDiv"
                 scrollThreshold="800px"
               >
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 auto-rows-min">
                   {displayedCards.map((card: StandardCard, index: number) => ( // Added types for card and index
-                    <SelectableCard
-                      key={`${card.id}-${index}`}
-                      card={card}
-                      onClick={() => handleSelectCard(card)} // Changed onSelect to onClick
-                      isSelected={false} // Assuming a default or placeholder for isSelected
-                    />
+                    <div className="w-full min-w-0 flex">
+                      <SelectableCard
+                        key={`${card.id}-${index}`}
+                        card={card}
+                        onClick={() => handleSelectCard(card)} // Changed onSelect to onClick
+                        isSelected={false} // Assuming a default or placeholder for isSelected
+                      />
+                    </div>
                   ))}
                 </div>
               </InfiniteScroll>

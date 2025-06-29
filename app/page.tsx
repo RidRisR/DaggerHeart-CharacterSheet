@@ -402,9 +402,17 @@ export default function Home() {
     setIsGuideOpen(!isGuideOpen)
   }
 
-  // 键盘快捷键 - Ctrl+数字键快速切换存档
+  // 键盘快捷键 - Ctrl+数字键快速切换存档 + ESC退出预览
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // ESC键退出导出预览
+      if (event.key === 'Escape' && isPrintingAll) {
+        event.preventDefault()
+        setIsPrintingAll(false)
+        console.log('[App] ESC键退出导出预览')
+        return
+      }
+
       // 检查是否按下Ctrl键和数字键（1-9, 0）
       if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey) {
         const key = event.key
@@ -427,15 +435,15 @@ export default function Home() {
       }
     }
 
-    // 只在非模态框状态下监听快捷键
-    if (!characterManagementModalOpen) {
+    // 在导出预览模式下总是监听ESC键，在非模态框状态下监听其他快捷键
+    if (isPrintingAll || !characterManagementModalOpen) {
       document.addEventListener('keydown', handleKeyDown)
     }
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [characterList, currentCharacterId, characterManagementModalOpen])
+  }, [characterList, currentCharacterId, characterManagementModalOpen, isPrintingAll])
 
   // 已移除聚焦卡牌变更处理函数 - 功能由双卡组系统取代
 
@@ -469,6 +477,35 @@ export default function Home() {
     return (
       <div className="print-all-pages">
         <PrintHelper />
+
+        {/* 顶部提示横条 - 只在屏幕上显示，打印时隐藏 */}
+        <div className="fixed top-0 left-0 right-0 z-[70] print:hidden">
+          <div
+            className="bg-black bg-opacity-50 text-white px-6 py-3 text-center cursor-pointer hover:bg-opacity-70 transition-all duration-200"
+            onClick={() => setIsPrintingAll(false)}
+          >
+            <div className="flex items-center justify-center gap-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 14l6-6" />
+                <path d="M15 14l-6-6" />
+              </svg>
+              <span className="text-sm">
+                按 <kbd className="px-2 py-1 bg-gray-700 rounded text-xs mx-1">ESC</kbd> 键或点击此处退出预览
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* 打印预览控制按钮，只在屏幕上显示，打印时隐藏 */}
         <div className="fixed bottom-4 right-4 z-[60] print:hidden print-control-buttons">
           <div className="flex flex-col gap-2">

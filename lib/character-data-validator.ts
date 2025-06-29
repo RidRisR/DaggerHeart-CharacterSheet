@@ -11,6 +11,7 @@
 import { SheetData } from './sheet-data'
 import { StandardCard } from '@/card/card-types'
 import { defaultSheetData } from './default-sheet-data'
+import type { AttributeValue } from './sheet-data'
 
 export interface ValidationResult {
   valid: boolean
@@ -92,14 +93,14 @@ export function cleanAndNormalizeData(data: any): SheetData {
     communityRef: data.communityRef || undefined,
     subclassRef: data.subclassRef || undefined,
 
-    // 属性值
+    // 属性值 - 添加施法标记迁移逻辑
     evasion: data.evasion ? String(data.evasion) : undefined,
-    agility: data.agility || undefined,
-    strength: data.strength || undefined,
-    finesse: data.finesse || undefined,
-    instinct: data.instinct || undefined,
-    presence: data.presence || undefined,
-    knowledge: data.knowledge || undefined,
+    agility: migrateAttributeValue(data.agility),
+    strength: migrateAttributeValue(data.strength),
+    finesse: migrateAttributeValue(data.finesse),
+    instinct: migrateAttributeValue(data.instinct),
+    presence: migrateAttributeValue(data.presence),
+    knowledge: migrateAttributeValue(data.knowledge),
 
     // 数组字段 - 确保都是数组
     gold: Array.isArray(data.gold) ? data.gold : [],
@@ -307,4 +308,25 @@ export function validateJSONCharacterData(jsonString: string): ValidationResult 
       warnings: []
     }
   }
+}
+
+/**
+ * 迁移单个属性值，确保包含施法标记字段
+ */
+function migrateAttributeValue(attrValue: any): AttributeValue | undefined {
+  if (!attrValue || typeof attrValue !== 'object') {
+    return undefined
+  }
+  
+  // 检查是否是有效的AttributeValue格式
+  if ('checked' in attrValue && 'value' in attrValue) {
+    // 如果缺少spellcasting字段，则添加默认值
+    return {
+      checked: Boolean(attrValue.checked),
+      value: String(attrValue.value || ''),
+      spellcasting: Boolean(attrValue.spellcasting || false)
+    }
+  }
+  
+  return undefined
 }

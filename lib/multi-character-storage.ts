@@ -172,16 +172,31 @@ export function loadCharacterById(id: string): SheetData | null {
       return null;
     }
 
-    // 确保具有focused_card_ids字段（向后兼容）
-    if (!parsed.focused_card_ids) {
-      parsed.focused_card_ids = [];
-    }
-
     // 兼容性迁移：为旧角色添加 inventory_cards 字段
     if (!parsed.inventory_cards) {
       console.log(`[Migration] Adding inventory_cards to character ${id}`);
       parsed.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
       // 立即保存迁移后的数据
+      saveCharacterById(id, parsed);
+    }
+
+    // 兼容性迁移：为旧属性数据添加施法标记字段
+    let needsSave = false;
+    const attributeKeys = ['agility', 'strength', 'finesse', 'instinct', 'presence', 'knowledge'] as const;
+
+    attributeKeys.forEach(key => {
+      const attrValue = parsed[key];
+      if (attrValue && typeof attrValue === 'object' && 'checked' in attrValue && 'value' in attrValue) {
+        // 如果是有效的AttributeValue但缺少spellcasting字段，则添加默认值
+        if (!('spellcasting' in attrValue)) {
+          attrValue.spellcasting = false;
+          needsSave = true;
+        }
+      }
+    });
+
+    if (needsSave) {
+      console.log(`[Migration] Adding spellcasting flags to character ${id}`);
       saveCharacterById(id, parsed);
     }
 

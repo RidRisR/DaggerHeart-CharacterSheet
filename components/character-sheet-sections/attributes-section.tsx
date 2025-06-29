@@ -6,12 +6,14 @@ interface AttributesSectionProps {
   formData: SheetData
   handleAttributeValueChange: (attribute: keyof SheetData, value: string) => void
   handleBooleanChange: (field: keyof SheetData) => void
+  handleSpellcastingToggle: (attribute: keyof SheetData) => void
 }
 
 export function AttributesSection({
   formData,
   handleAttributeValueChange,
   handleBooleanChange,
+  handleSpellcastingToggle,
 }: AttributesSectionProps) {
   return (
     <div className="space-y-2">
@@ -30,7 +32,29 @@ export function AttributesSection({
         ].map((attr) => (
           <div key={attr.name} className="flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-0.5">
-              <div className="text-[12px] font-bold">{attr.name}</div>
+              <div className="flex items-center">
+                <div className="text-[12px] font-bold">{attr.name}</div>
+                {(() => {
+                  const attrValue = formData[attr.key as keyof typeof formData];
+                  function isAttributeValue(val: unknown): val is AttributeValue {
+                    return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
+                  }
+                  const isSpellcasting = isAttributeValue(attrValue) && attrValue.spellcasting;
+
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => handleSpellcastingToggle(attr.key as keyof SheetData)}
+                      className={`ml-1 text-[14px] font-bold cursor-pointer transition-colors hover:scale-110 ${isSpellcasting ? "text-purple-600" : "text-gray-300"
+                        }`}
+                      title="施法属性标记"
+                      aria-label="施法属性标记"
+                    >
+                      ✦
+                    </button>
+                  );
+                })()}
+              </div>
               {(() => {
                 const attrValue = formData[attr.key as keyof typeof formData];
                 function isAttributeValue(val: unknown): val is AttributeValue {

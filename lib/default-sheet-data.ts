@@ -20,12 +20,12 @@ export const defaultSheetData: SheetData = {
 
     evasion: "",
 
-    agility: { checked: false, value: "" },
-    strength: { checked: false, value: "" },
-    finesse: { checked: false, value: "" },
-    instinct: { checked: false, value: "" },
-    presence: { checked: false, value: "" },
-    knowledge: { checked: false, value: "" },
+    agility: { checked: false, value: "", spellcasting: false },
+    strength: { checked: false, value: "", spellcasting: false },
+    finesse: { checked: false, value: "", spellcasting: false },
+    instinct: { checked: false, value: "", spellcasting: false },
+    presence: { checked: false, value: "", spellcasting: false },
+    knowledge: { checked: false, value: "", spellcasting: false },
 
     gold: Array(20).fill(false),
     experience: ["", "", "", "", ""],

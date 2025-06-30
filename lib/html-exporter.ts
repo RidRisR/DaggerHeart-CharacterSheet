@@ -189,6 +189,45 @@ function transformHTMLContent(htmlContent: string): string {
     }
   );
 
+  // 4d. 处理希望点的交互（钻石形状的checkbox）
+  // 更准确地匹配希望点容器的HTML结构
+  transformed = transformed.replace(
+    /<div([^>]*?key="hope-\d+"[^>]*?className="relative"[^>]*?)>/g,
+    (match, attributes) => {
+      const divId = `hope_${Math.random().toString(36).substr(2, 9)}`;
+      // 移除原有的onClick属性，添加我们的自定义onclick
+      const cleanedAttributes = attributes.replace(/onClick[^=]*?(?:handleCheckboxChange\([^)]*\)[^"]*?"|[^"]*?")/g, '');
+      return `<div id="${divId}" ${cleanedAttributes} onclick="toggleHopePoint('${divId}')">`;
+    }
+  );
+
+  // 也处理class="relative"的情况（防止属性顺序不同）
+  transformed = transformed.replace(
+    /<div([^>]*?className="relative"[^>]*?key="hope-\d+"[^>]*?)>/g,
+    (match, attributes) => {
+      const divId = `hope_${Math.random().toString(36).substr(2, 9)}`;
+      const cleanedAttributes = attributes.replace(/onClick[^=]*?(?:handleCheckboxChange\([^)]*\)[^"]*?"|[^"]*?")/g, '');
+      return `<div id="${divId}" ${cleanedAttributes} onclick="toggleHopePoint('${divId}')">`;
+    }
+  );
+
+  // 通用的希望点处理（匹配包含w-5 h-5的钻石形状元素的父容器）
+  transformed = transformed.replace(
+    /<div([^>]*?)>\s*<div[^>]*?w-5[^>]*?h-5[^>]*?border-2[^>]*?border-gray-800[^>]*?transform[^>]*?rotate-45[^>]*?>/g,
+    (match, attributes) => {
+      // 检查父容器是否已经有onclick，如果没有就添加
+      if (!attributes.includes('onclick') && !attributes.includes('id=')) {
+        const divId = `hope_${Math.random().toString(36).substr(2, 9)}`;
+        const cleanedAttributes = attributes.replace(/onClick[^=]*="[^"]*"/g, '');
+        return match.replace(`<div${attributes}>`, `<div id="${divId}" ${cleanedAttributes} onclick="toggleHopePoint('${divId}')">`);
+      }
+      return match;
+    }
+  );
+
+  // 移除所有剩余的React onClick属性
+  transformed = transformed.replace(/onClick[^=]*="[^"]*"/g, '');
+
   return transformed;
 }
 
@@ -483,6 +522,40 @@ async function generateFullHTML(formData: SheetData, options: HTMLExportOptions 
     }, 100);
   }
   
+  // 希望点切换功能
+  function toggleHopePoint(elementId) {
+    const container = document.getElementById(elementId);
+    if (!container) return;
+    
+    // 查找容器内的填充元素（内部的黑色钻石）
+    const innerDiamond = container.querySelector('.absolute');
+    
+    if (innerDiamond) {
+      // 当前是选中状态，移除内部钻石
+      innerDiamond.remove();
+    } else {
+      // 当前是未选中状态，添加内部钻石
+      const outerDiamond = container.querySelector('.w-5');
+      if (outerDiamond) {
+        const innerContainer = document.createElement('div');
+        innerContainer.className = 'absolute inset-0 flex items-center justify-center';
+        
+        const innerDiamond = document.createElement('div');
+        innerDiamond.className = 'w-3 h-3 bg-gray-800 transform rotate-45';
+        
+        innerContainer.appendChild(innerDiamond);
+        container.appendChild(innerContainer);
+      }
+    }
+    
+    // 触发视觉反馈
+    container.style.transition = 'all 0.1s ease';
+    container.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      container.style.transform = 'scale(1)';
+    }, 100);
+  }
+  
   // 页面加载完成后初始化
   document.addEventListener('DOMContentLoaded', function() {
     console.log('角色卡HTML已加载，checkbox功能已启用');
@@ -492,6 +565,14 @@ async function generateFullHTML(formData: SheetData, options: HTMLExportOptions 
     checkboxes.forEach(checkbox => {
       if (!checkbox.style.cursor) {
         checkbox.style.cursor = 'pointer';
+      }
+    });
+    
+    // 确保所有希望点都有正确的cursor样式
+    const hopePoints = document.querySelectorAll('[onclick*="toggleHopePoint"]');
+    hopePoints.forEach(hopePoint => {
+      if (!hopePoint.style.cursor) {
+        hopePoint.style.cursor = 'pointer';
       }
     });
   });
@@ -554,9 +635,9 @@ async function generateFullHTML(formData: SheetData, options: HTMLExportOptions 
   </script>
   
   <!-- 版权信息 -->
-  <div class="no-print" style="position: fixed; bottom: 10px; left: 10px; font-size: 10px; color: #666; pointer-events: auto; z-index: 1000; line-height: 1.4;">
-    <div>本页面生成自 <a href="https://ridrisr.github.io/DaggerHeart-CharacterSheet" target="_blank" style="color: #007cba; text-decoration: underline;">https://ridrisr.github.io/DaggerHeart-CharacterSheet</a></div>
-    <div>仅用于展示和分享，所有修改都不会被保存</div>
+  <div class="no-print" style="position: fixed; bottom: 10px; left: 10px; font-size: 12px; color: #999; pointer-events: auto; z-index: 1000; line-height: 1.4;">
+    <div>页面生成自 <a href="https://ridrisr.github.io/DaggerHeart-CharacterSheet" target="_blank" style="color: #007cba; text-decoration: underline;">https://ridrisr.github.io/DaggerHeart-CharacterSheet</a></div>
+    <div>仅用于展示和分享，没有任何数据绑定，所有修改都不会被保存</div>
   </div>
 </body>
 </html>`

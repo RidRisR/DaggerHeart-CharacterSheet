@@ -45,7 +45,7 @@ export function AttributesSection({
                     <button
                       type="button"
                       onClick={() => handleSpellcastingToggle(attr.key as keyof SheetData)}
-                      className={`ml-1 text-[14px] font-bold cursor-pointer transition-colors hover:scale-110 ${isSpellcasting ? "text-purple-600" : "text-gray-300"
+                      className={`ml-1 text-[14px] font-bold cursor-pointer transition-colors hover:scale-110 ${isSpellcasting ? "text-gray-800" : "text-gray-200"
                         }`}
                       title="施法属性标记"
                       aria-label="施法属性标记"

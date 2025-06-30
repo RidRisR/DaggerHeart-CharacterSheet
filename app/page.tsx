@@ -484,20 +484,6 @@ export default function Home() {
             onClick={() => setIsPrintingAll(false)}
           >
             <div className="flex items-center justify-center gap-3">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 14l6-6" />
-                <path d="M15 14l-6-6" />
-              </svg>
               <span className="text-sm">
                 按 <kbd className="px-2 py-1 bg-gray-700 rounded text-xs mx-1">ESC</kbd> 键或点击此处退出预览
               </span>

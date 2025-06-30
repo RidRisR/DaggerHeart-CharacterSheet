@@ -98,6 +98,23 @@ function cleanupExtractedHTML(htmlContent: string): string {
     .replace(/\s*on[a-z]+="[^"]*"/g, '')
     // 移除空的class属性
     .replace(/\s*class=""\s*/g, ' ')
+    // 彻底移除所有script标签
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    // 移除noscript标签
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+    // 移除Next.js相关的数据
+    .replace(/<div[^>]*id="__next"[^>]*>[\s\S]*?<\/div>/gi, '')
+    .replace(/<script[^>]*id="__NEXT_DATA__"[^>]*>[\s\S]*?<\/script>/gi, '')
+    // 移除localStorage相关的任何引用
+    .replace(/localStorage[^;]*;?/gi, '')
+    .replace(/window\.localStorage[^;]*;?/gi, '')
+    // 移除包含存储数据的变量赋值
+    .replace(/window\.(characterList|sheetData|focusedCards|characterData)\s*=[\s\S]*?[;}]/gi, '')
+    // 移除React state相关内容
+    .replace(/useState\([^)]*\)/gi, '')
+    .replace(/useEffect\([^)]*\)/gi, '')
+    // 移除注释中的localStorage引用
+    .replace(/<!--[\s\S]*?localStorage[\s\S]*?-->/gi, '')
     // 移除多余的空白
     .replace(/\s+/g, ' ')
     .replace(/>\s+</g, '><')
@@ -255,6 +272,26 @@ function extractPrintPreviewHTML(): Promise<string> {
       const controlButtons = clonedContainer.querySelectorAll('.fixed.top-4.left-4')
       controlButtons.forEach(btn => btn.remove())
 
+      // 彻底移除所有script标签，防止包含localStorage数据
+      const allScripts = clonedContainer.querySelectorAll('script')
+      allScripts.forEach(script => script.remove());
+
+      // 移除所有可能包含存储数据的元素
+      const hiddenElements = clonedContainer.querySelectorAll('[style*="display: none"], .hidden')
+      hiddenElements.forEach(elem => elem.remove());
+
+      // 移除所有包含React组件状态的元素
+      const reactElements = clonedContainer.querySelectorAll('[data-reactroot], [data-react-helmet]')
+      reactElements.forEach(elem => elem.remove());
+
+      // 移除所有可能的Next.js相关元素
+      const nextElements = clonedContainer.querySelectorAll('#__next, #__NEXT_DATA__')
+      nextElements.forEach(elem => elem.remove());
+
+      // 移除所有noscript标签
+      const noscripts = clonedContainer.querySelectorAll('noscript')
+      noscripts.forEach(elem => elem.remove());
+
       // 保持表单元素的交互性            // 移除所有input/textarea的readonly属性，让用户可以编辑
             const allInputs = clonedContainer.querySelectorAll('input, textarea')
             allInputs.forEach(input => {
@@ -322,6 +359,7 @@ async function generateFullHTML(formData: SheetData, options: HTMLExportOptions 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Daggerheart Character Sheet Exporter v1.0">
+  <meta name="description" content="纯净的角色卡导出版本，仅包含当前角色数据，不包含localStorage或其他存档信息">
   <title>${title}</title>
   <style>
     /* 重置样式 */
@@ -580,8 +618,86 @@ async function generateFullHTML(formData: SheetData, options: HTMLExportOptions 
   
   <!-- 角色数据（嵌入式JSON） -->
   <script>
-    // 角色数据（只读）
+    // 在页面最开始就禁用localStorage访问
+    (function() {
+      // 完全禁用localStorage
+      if (typeof Storage !== 'undefined') {
+        try {
+          Object.defineProperty(window, 'localStorage', {
+            value: {
+              getItem: function(key) { 
+                console.warn('localStorage.getItem已被禁用:', key);
+                return null;
+              },
+              setItem: function(key, value) { 
+                console.warn('localStorage.setItem已被禁用:', key);
+              },
+              removeItem: function(key) { 
+                console.warn('localStorage.removeItem已被禁用:', key);
+              },
+              clear: function() { 
+                console.warn('localStorage.clear已被禁用');
+              },
+              key: function(index) { 
+                console.warn('localStorage.key已被禁用:', index);
+                return null;
+              },
+              length: 0
+            },
+            writable: false,
+            configurable: false
+          });
+        } catch (e) {
+          console.log('localStorage禁用设置完成');
+        }
+      }
+      
+      // 也禁用sessionStorage
+      if (typeof sessionStorage !== 'undefined') {
+        try {
+          Object.defineProperty(window, 'sessionStorage', {
+            value: {
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+              clear: () => {},
+              key: () => null,
+              length: 0
+            },
+            writable: false,
+            configurable: false
+          });
+        } catch (e) {
+          console.log('sessionStorage禁用设置完成');
+        }
+      }
+    })();
+    
+    // 只包含当前角色数据（只读）
     window.characterData = ${JSON.stringify(formData, null, 2)};
+    
+    // 清理函数，确保没有多余的数据
+    window.cleanData = function() {
+      // 删除可能存在的其他数据
+      delete window.characterList;
+      delete window.sheetData;
+      delete window.focusedCards;
+      delete window.__NEXT_DATA__;
+      
+      // 确保只保留characterData
+      const allowedKeys = ['characterData', 'cleanData', 'printCharacterSheet', 'toggleCustomCheckbox', 'toggleHopePoint'];
+      Object.keys(window).forEach(key => {
+        if (!allowedKeys.includes(key) && 
+            typeof window[key] === 'object' && 
+            key.includes('character') || key.includes('storage') || key.includes('Data')) {
+          try {
+            delete window[key];
+          } catch (e) {
+            // 忽略删除失败
+          }
+        }
+      });
+    };
     
     // 打印功能
     function printCharacterSheet() {
@@ -590,9 +706,15 @@ async function generateFullHTML(formData: SheetData, options: HTMLExportOptions 
     
     // 页面加载完成后的初始化
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Daggerheart 角色卡已加载');
+      // 首先清理数据
+      if (typeof window.cleanData === 'function') {
+        window.cleanData();
+      }
+      
+      console.log('Daggerheart 角色卡已加载（纯净版本）');
       console.log('角色名称:', window.characterData.name || '未命名');
       console.log('等级:', window.characterData.level || 1);
+      console.log('localStorage已禁用，仅包含当前角色数据');
       
       // 添加按钮组容器
       const buttonGroup = document.createElement('div');

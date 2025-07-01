@@ -36,6 +36,8 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
   const [customDescription, setCustomDescription] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [levelFilter, setLevelFilter] = useState<Level | "">("");
+  // 新增搜索状态
+  const [searchTerm, setSearchTerm] = useState("");
 
   // 处理数据和筛选都放在组件体内，保证 Hook 顺序
   const processedArmorItems: Armor[] = useMemo(() => armorItems.map((armor: ArmorItem) => ({
@@ -46,9 +48,19 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
   const filteredArmorItems = useMemo(() => {
     return processedArmorItems.filter(a => {
       if (levelFilter && a.等级 !== levelFilter) return false;
+      if (searchTerm) {
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        if (
+          !a.名称.toLowerCase().includes(lowerCaseSearchTerm) &&
+          !a.描述.toLowerCase().includes(lowerCaseSearchTerm) &&
+          !a.特性名称.toLowerCase().includes(lowerCaseSearchTerm)
+        ) {
+          return false;
+        }
+      }
       return true;
     });
-  }, [processedArmorItems, levelFilter]);
+  }, [processedArmorItems, levelFilter, searchTerm]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -71,6 +83,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
       setCustomDescription("");
       setIsCustom(false);
       setLevelFilter("");
+      setSearchTerm(""); // 清空搜索词
     }
 
     return () => {
@@ -117,7 +130,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setLevelFilter("")}
+            onClick={() => { setLevelFilter(""); setSearchTerm(""); }}
             className="px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base"
           >
             重置筛选
@@ -145,6 +158,14 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
           >
             {customName || "自定义护甲"}
           </Button>
+          {/* 搜索栏放最右侧 */}
+          <input
+            type="text"
+            placeholder="搜索护甲..."
+            className="border rounded px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem] flex-1 ml-2"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
         </div>
         {/* 自定义护甲输入区域，移到筛选区下方，仅在 isCustom 时显示 */}
         {isCustom && (

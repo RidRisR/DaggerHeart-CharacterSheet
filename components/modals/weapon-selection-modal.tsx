@@ -51,6 +51,8 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
   const [customFeatureName, setCustomFeatureName] = useState("");
   const [customDescription, setCustomDescription] = useState("");
   const [isCustom, setIsCustom] = useState(false);
+  // 新增搜索状态
+  const [searchTerm, setSearchTerm] = useState("");
   // 新增筛选状态
   const [levelFilter, setLevelFilter] = useState<Level | "">("");
   const [checkFilter, setCheckFilter] = useState<Check | "">("");
@@ -80,9 +82,19 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
       if (attributeFilter && w.属性 !== attributeFilter) return false;
       if (rangeFilter && w.范围 !== rangeFilter) return false;
       if (weaponTypeFilter && w.weaponType !== weaponTypeFilter) return false;
+      if (searchTerm) {
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        if (
+          !w.名称.toLowerCase().includes(lowerCaseSearchTerm) &&
+          !w.描述.toLowerCase().includes(lowerCaseSearchTerm) &&
+          !w.特性名称.toLowerCase().includes(lowerCaseSearchTerm)
+        ) {
+          return false;
+        }
+      }
       return true;
     });
-  }, [availableWeapons, levelFilter, checkFilter, attributeFilter, rangeFilter, weaponTypeFilter]);
+  }, [availableWeapons, levelFilter, checkFilter, attributeFilter, rangeFilter, weaponTypeFilter, searchTerm]);
 
   // Effect to update displayed weapons when filters change or modal opens
   useEffect(() => {
@@ -115,6 +127,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
       setRangeFilter("");
       setWeaponTypeFilter("");
       setIsCustom(false);
+      setSearchTerm(""); // 清空搜索词
       setCustomName("");
       setCustomLevel("");
       setCustomCheck("");
@@ -180,34 +193,34 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
         {/* 筛选区域 */}
         <div className="flex flex-wrap gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-gray-50 border-b border-gray-200 items-center">
           {/* 等级 */}
-          <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={levelFilter} onChange={e => setLevelFilter(e.target.value as Level | "")}>
+          <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={levelFilter} onChange={e => setLevelFilter(e.target.value as Level | "")}> 
             <option value="">等级(全部)</option>
             {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
           {/* 类型 - Conditionally render this filter */}
           {weaponSlotType === "inventory" && (
-            <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={weaponTypeFilter} onChange={e => setWeaponTypeFilter(e.target.value as "" | "primary" | "secondary")}>
+            <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={weaponTypeFilter} onChange={e => setWeaponTypeFilter(e.target.value as "" | "primary" | "secondary")}> 
               <option value="">类型(全部)</option>
               <option value="primary">主武器</option>
               <option value="secondary">副武器</option>
             </select>
           )}
           {/* 属性 */}
-          <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={attributeFilter} onChange={e => setAttributeFilter(e.target.value as Attribute | "")}>
+          <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={attributeFilter} onChange={e => setAttributeFilter(e.target.value as Attribute | "")}> 
             <option value="">属性(全部)</option>
             {ATTRIBUTES.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
           {/* 范围 */}
-          <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={rangeFilter} onChange={e => setRangeFilter(e.target.value as Range | "")}>
+          <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={rangeFilter} onChange={e => setRangeFilter(e.target.value as Range | "")}> 
             <option value="">范围(全部)</option>
             {RANGES.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
           {/* 检定 */}
-          <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={checkFilter} onChange={e => setCheckFilter(e.target.value as Check | "")}>
+          <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={checkFilter} onChange={e => setCheckFilter(e.target.value as Check | "")}> 
             <option value="">检定(全部)</option>
             {CHECKS.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-          <Button size="sm" variant="outline" onClick={() => { setLevelFilter(""); setCheckFilter(""); setAttributeFilter(""); setRangeFilter(""); setWeaponTypeFilter(""); }} className="text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem] px-2 sm:px-3">重置筛选</Button>
+          <Button size="sm" variant="outline" onClick={() => { setLevelFilter(""); setCheckFilter(""); setAttributeFilter(""); setRangeFilter(""); setWeaponTypeFilter(""); setSearchTerm(""); }} className="text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem] px-2 sm:px-3">重置筛选</Button>
           <Button
             size="sm"
             variant={isCustom ? "default" : "outline"}
@@ -233,6 +246,14 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
           >
             {customName || "自定义武器"}
           </Button>
+          {/* 搜索栏放最右侧 */}
+          <input
+            type="text"
+            placeholder="搜索武器..."
+            className="border rounded px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem] flex-1 ml-2"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
         </div>
         {/* 自定义武器输入区域，移到筛选区下方，仅在 isCustom 时显示 */}
         {isCustom && (

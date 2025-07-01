@@ -735,6 +735,59 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     needsSyncRef.current = true;
   }
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 检查文件大小 (例如，限制为 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("图片文件过大，请选择小于5MB的图片。");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 300;
+        const MAX_HEIGHT = 300;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // 使用 JPEG 进行压缩, 质量为 80%
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+        setFormData((prev) => ({
+          ...prev,
+          characterImage: dataUrl,
+        }));
+      };
+      if (event.target?.result) {
+        img.src = event.target.result as string;
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSpellcastingToggle = (attribute: keyof SheetData) => {
     setFormData((prev) => {
       const currentAttribute = prev[attribute]
@@ -796,20 +849,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                       type="file"
                       accept="image/*"
                       className="opacity-0 absolute inset-0 cursor-pointer"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          const reader = new FileReader()
-                          reader.onload = (event) => {
-                            if (event.target) {
-                              setFormData((prev) => ({
-                                ...prev,
-                                characterImage: event.target?.result as string,
-                              }))
-                            }
-                          }
-                          reader.readAsDataURL(e.target.files[0])
-                        }
-                      }}
+                      onChange={handleImageUpload}
                     />
                   </div>
                 </div>

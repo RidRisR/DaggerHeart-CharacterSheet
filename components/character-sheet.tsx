@@ -788,6 +788,14 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     reader.readAsDataURL(file);
   };
 
+  const handleDeleteImage = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation(); // 阻止事件冒泡，防止触发文件上传
+    setFormData((prev) => ({
+      ...prev,
+      characterImage: "",
+    }));
+  };
+
   const handleSpellcastingToggle = (attribute: keyof SheetData) => {
     setFormData((prev) => {
       const currentAttribute = prev[attribute]
@@ -832,23 +840,33 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
               <div className="flex gap-4 mb-4">
                 {/* Character Image Upload */}
                 <div className="flex flex-col items-center">
-                  <div className="w-24 h-24 border-2 border-gray-800 flex flex-col items-center justify-center relative overflow-hidden">
+                  <div className="w-24 h-24 border-2 border-gray-800 flex flex-col items-center justify-center relative overflow-hidden group">
                     {safeFormData.characterImage ? (
-                      <img
-                        src={safeFormData.characterImage || "/placeholder.svg"}
-                        alt="Character Portrait"
-                        className="w-full h-full object-cover"
-                      />
+                      <>
+                        <img
+                          src={safeFormData.characterImage}
+                          alt="Character Portrait"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          onClick={handleDeleteImage}
+                          className="absolute top-0 right-0 w-6 h-6 bg-black bg-opacity-50 text-white flex items-center justify-center rounded-bl-lg hover:bg-opacity-75 print:hidden invisible group-hover:visible z-20"
+                          aria-label="Remove image"
+                        >
+                          &#x2715;
+                        </button>
+                      </>
                     ) : (
                       <div className="text-center">
                           <div className="text-[10px] font-bold mb-1 print:hidden">角色图像</div>
                           <div className="text-[8px] print:hidden">点击上传</div>
                       </div>
                     )}
+                    {/* 始终渲染文件输入框，允许替换图片 */}
                     <input
                       type="file"
                       accept="image/*"
-                      className="opacity-0 absolute inset-0 cursor-pointer"
+                      className="opacity-0 absolute inset-0 cursor-pointer z-10"
                       onChange={handleImageUpload}
                     />
                   </div>

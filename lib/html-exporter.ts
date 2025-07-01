@@ -125,7 +125,7 @@ function getBasicFallbackStyles(): string {
  */
 function cleanupExtractedHTML(htmlContent: string): string {
   return htmlContent
-  // 移除data属性（保留字体调整相关的）
+    // 移除data属性（保留字体调整相关的）
     .replace(/\s*data-(?!text|max-font|min-font)[^=]*="[^"]*"/g, '')
     // 移除React和Next.js相关属性
     .replace(/\s*data-react[^=]*="[^"]*"/g, '')
@@ -177,7 +177,7 @@ function enableFormElements(html: string): string {
         const attributes = (before + after).replace(/\s*disabled\s*=?\s*["']?[^"'\s]*["']?\s*/g, '');
         return `<input${attributes} type="checkbox">`;
       }
-  )
+    )
     // 启用radio按钮
     .replace(
       /<input([^>]*?)type=["']radio["']([^>]*?)>/g,
@@ -276,7 +276,7 @@ function transformHTMLContent(htmlContent: string): string {
   transformed = addCustomCheckboxInteraction(transformed);
   transformed = addHopePointInteraction(transformed);
 
-// 最后清理React onClick属性
+  // 最后清理React onClick属性
   transformed = transformed.replace(/onClick[^=]*="[^"]*"/g, '');
 
   return transformed;
@@ -310,36 +310,30 @@ function extractPrintPreviewHTML(): Promise<string> {
         clonedContainer.querySelectorAll(selector).forEach(elem => elem.remove())
       })
 
-      // 启用表单元素
-      const allInputs = clonedContainer.querySelectorAll('input, textarea')
-      allInputs.forEach(input => {
-        const type = input.getAttribute('type')
-        if (type === 'text' || type === 'number' || input.tagName === 'TEXTAREA') {
-          input.removeAttribute('readonly')
-        }
-        if (type === 'checkbox' || type === 'radio') {
-          input.removeAttribute('disabled')
-        }
-      })
+      // 保留所有现有的样式和属性，包括字体调整相关的CSS变量
+      const styleAttr = input.getAttribute('style')
+      if (styleAttr && styleAttr.includes('--print-font-size')) {
+      }
+    })
 
-      // 处理按钮
-      const allButtons = clonedContainer.querySelectorAll('button')
-      allButtons.forEach(btn => {
-        btn.removeAttribute('onclick')
-        const buttonText = btn.textContent?.trim() || ''
-        if (!/选择(武器|护甲|职业|子职业|血统|社群)/.test(buttonText)) {
-          btn.removeAttribute('disabled')
-        }
-      })
-
-      // 转换HTML内容
-      let extractedHTML = cleanupExtractedHTML(clonedContainer.outerHTML)
-      extractedHTML = transformHTMLContent(extractedHTML)
-
-      resolve(extractedHTML)
-    } catch (error) {
-      reject(error)
+  // 处理按钮
+  const allButtons = clonedContainer.querySelectorAll('button')
+  allButtons.forEach(btn => {
+    btn.removeAttribute('onclick')
+    const buttonText = btn.textContent?.trim() || ''
+    if (!/选择(武器|护甲|职业|子职业|血统|社群)/.test(buttonText)) {
+      btn.removeAttribute('disabled')
     }
+  })
+
+  // 转换HTML内容
+  let extractedHTML = cleanupExtractedHTML(clonedContainer.outerHTML)
+  extractedHTML = transformHTMLContent(extractedHTML)
+
+  resolve(extractedHTML)
+} catch (error) {
+  reject(error)
+}
   })
 }
 

@@ -341,16 +341,6 @@ function extractPrintPreviewHTML(): Promise<string> {
       reject(error)
     }
   })
-
-  // 转换HTML内容
-  let extractedHTML = cleanupExtractedHTML(clonedContainer.outerHTML)
-  extractedHTML = transformHTMLContent(extractedHTML)
-
-  resolve(extractedHTML)
-} catch (error) {
-  reject(error)
-}
-  })
 }
 
 /**

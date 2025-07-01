@@ -68,6 +68,7 @@ export default function Home() {
   // 数据迁移处理 - 只在客户端执行
   useEffect(() => {
     if (!isClient) return
+
     const performMigration = async () => {
       try {
         console.log('[App] Starting data migration check...')

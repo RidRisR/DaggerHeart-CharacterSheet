@@ -307,7 +307,6 @@ function extractPrintPreviewHTML(): Promise<string> {
               // 保留所有现有的样式和属性，包括字体调整相关的CSS变量
               const styleAttr = input.getAttribute('style')
               if (styleAttr && styleAttr.includes('--print-font-size')) {
-                console.log('[HTML Extract] 保留字体调整CSS变量:', styleAttr)
               }
             })
 

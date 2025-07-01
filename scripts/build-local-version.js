@@ -147,6 +147,57 @@ function updateHtmlPaths(filePath, basePath = './资产') {
     fs.writeFileSync(filePath, content, 'utf8');
 }
 
+/**
+ * 将CSS样式内联到HTML文件中
+ * @param {string} htmlFilePath HTML文件的路径
+ */
+function inlineCss(htmlFilePath) {
+    if (!fs.existsSync(htmlFilePath)) {
+        console.warn(`HTML file not found for CSS inlining: ${htmlFilePath}`);
+        return;
+    }
+
+    console.log(`  Inlining CSS for: ${path.basename(htmlFilePath)}`);
+    let content = fs.readFileSync(htmlFilePath, 'utf8');
+    const htmlDir = path.dirname(htmlFilePath);
+
+    // 正则表达式，用于查找所有<link rel="stylesheet">标签
+    const linkTagRegex = /<link[^>]*?rel="stylesheet"[^>]*?>/g;
+    const hrefRegex = /href="([^"]+)"/;
+    const linkTags = content.match(linkTagRegex);
+
+    if (linkTags) {
+        for (const linkTag of linkTags) {
+            const hrefMatch = linkTag.match(hrefRegex);
+            if (hrefMatch && hrefMatch[1]) {
+                const cssRelativePath = hrefMatch[1];
+                // 解析CSS文件的绝对路径
+                const cssFullPath = path.resolve(htmlDir, cssRelativePath);
+
+                if (fs.existsSync(cssFullPath)) {
+                    try {
+                        const cssContent = fs.readFileSync(cssFullPath, 'utf8');
+                        // 创建<style>标签并替换<link>标签
+                        const styleTag = `<style>
+/* Inlined from ${cssRelativePath.split('/').pop()} */
+${cssContent}
+</style>`;
+                        content = content.replace(linkTag, styleTag);
+                        console.log(`    - Inlined: ${path.basename(cssRelativePath)}`);
+                    } catch (error) {
+                        console.error(`    - Error reading CSS file ${cssFullPath}:`, error);
+                    }
+                } else {
+                    console.warn(`    - CSS file not found, skipping: ${cssFullPath}`);
+                }
+            }
+        }
+        fs.writeFileSync(htmlFilePath, content, 'utf8');
+    } else {
+        console.log(`    - No external CSS links found.`);
+    }
+}
+
 function main() {
     console.log('开始构建本地友好版本...');
 
@@ -214,6 +265,16 @@ function main() {
     const nextDir = path.join(assetsDir, '_next');
     if (fs.existsSync(nextDir)) {
         updateJavaScriptPaths(nextDir);
+    }
+
+    // 新增：将CSS内联到HTML文件中
+    console.log('\n内联CSS样式...');
+    inlineCss(entryPath);
+    for (const htmlFile of htmlFiles) {
+        const filePath = path.join(assetsDir, htmlFile);
+        if (fs.existsSync(filePath)) {
+            inlineCss(filePath);
+        }
     }
 
     // 创建说明文件

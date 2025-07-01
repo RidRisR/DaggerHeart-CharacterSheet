@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { JSDOM } = require('jsdom');
 
 /**
  * 构建本地友好版本的脚本
@@ -198,8 +199,8 @@ ${cssContent}
     }
 }
 
-function main() {
-    console.log('开始构建本地友好版本...');
+async function build() {
+    console.log('开始构建本地版本...');
 
     // 检查 out 目录是否存在
     if (!fs.existsSync(outDir)) {
@@ -312,7 +313,7 @@ function main() {
 }
 
 if (require.main === module) {
-    main();
+    build();
 }
 
-module.exports = { main };
+module.exports = { build };

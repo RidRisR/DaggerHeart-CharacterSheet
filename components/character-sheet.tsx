@@ -740,7 +740,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     if (!file) return;
 
     // 检查文件大小 (例如，限制为 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 20 * 1024 * 1024) {
       alert("图片文件过大，请选择小于5MB的图片。");
       return;
     }
@@ -750,8 +750,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 300;
-        const MAX_HEIGHT = 300;
+        const MAX_WIDTH = 500;
+        const MAX_HEIGHT = 500;
         let width = img.width;
         let height = img.height;
 
@@ -773,8 +773,8 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
         ctx.drawImage(img, 0, 0, width, height);
 
-        // 使用 JPEG 进行压缩, 质量为 80%
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        // 使用 JPEG 进行压缩, 质量为 0.8
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
 
         setFormData((prev) => ({
           ...prev,
@@ -786,6 +786,9 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       }
     };
     reader.readAsDataURL(file);
+
+    // 清空文件输入框的值，以便可以再次选择相同的文件
+    e.target.value = "";
   };
 
   const handleDeleteImage = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -794,6 +797,11 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       ...prev,
       characterImage: "",
     }));
+    // 同样清空文件输入框的值
+    const input = document.getElementById('character-image-upload') as HTMLInputElement;
+    if (input) {
+      input.value = "";
+    }
   };
 
   const handleSpellcastingToggle = (attribute: keyof SheetData) => {
@@ -864,6 +872,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                     )}
                     {/* 始终渲染文件输入框，允许替换图片 */}
                     <input
+                      id="character-image-upload" // 添加ID以便在删除时引用
                       type="file"
                       accept="image/*"
                       className="opacity-0 absolute inset-0 cursor-pointer z-10"

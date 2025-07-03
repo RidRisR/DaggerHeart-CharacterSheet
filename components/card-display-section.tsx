@@ -276,7 +276,7 @@ export function CardDisplaySection({ cards, inventoryCards }: CardDisplaySection
 
   // 处理高度变化
   const handleHeightChange = (height: number) => {
-    const constrainedHeight = Math.max(200, Math.min(800, height))
+    const constrainedHeight = Math.max(120, Math.min(800, height))
     containerHeightRef.current = constrainedHeight
     forceUpdate(x => x + 1)
   }
@@ -393,7 +393,7 @@ export function CardDisplaySection({ cards, inventoryCards }: CardDisplaySection
       </div>
       {/* 底部调整大小的手柄 */}
       <div
-        className="h-2 bg-gray-200 hover:bg-gray-300 cursor-ns-resize flex items-center justify-center border-t border-gray-300"
+        className="h-4 md:h-2 bg-gray-200 hover:bg-gray-300 cursor-ns-resize flex items-center justify-center border-t border-gray-300"
         onMouseDown={(e) => {
           e.preventDefault()
           const startY = e.clientY
@@ -408,6 +408,20 @@ export function CardDisplaySection({ cards, inventoryCards }: CardDisplaySection
           }
           document.addEventListener("mousemove", handleMouseMove)
           document.addEventListener("mouseup", handleMouseUp)
+        }}
+        onTouchStart={(e) => {
+          const startY = e.touches[0].clientY
+          const startHeight = containerHeightRef.current
+          const handleTouchMove = (moveEvent: TouchEvent) => {
+            const deltaY = moveEvent.touches[0].clientY - startY
+            handleHeightChange(startHeight + deltaY)
+          }
+          const handleTouchEnd = () => {
+            document.removeEventListener("touchmove", handleTouchMove)
+            document.removeEventListener("touchend", handleTouchEnd)
+          }
+          document.addEventListener("touchmove", handleTouchMove)
+          document.addEventListener("touchend", handleTouchEnd)
         }}
       >
         <div className="w-16 h-1 bg-gray-400 rounded-full"></div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { ImageUploadCrop } from '@/components/ui/image-upload-crop';
 import type { SheetData } from "@/lib/sheet-data"
 
 interface CharacterSheetPageThreeProps {
@@ -64,34 +65,17 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
             <div className="flex flex-col justify-end w-full p-3 border border-transparent rounded-t-md rounded-b-md bg-white">
                 <h3 className="font-bold text-md mb-2">伙伴描述</h3>
                 <div className="flex flex-col items-center">
-                    <div className="w-36 h-36 border-2 border-gray-800 flex items-center justify-center relative overflow-hidden bg-gray-100 dark:bg-gray-800 print:bg-white print:w-28 print:h-28 mb-2">
-                        {safeFormData.companionImage ? (
-                            <img
-                                src={safeFormData.companionImage}
-                                alt="伙伴图片"
-                                className="w-full h-full object-cover"
-                            />
-                        ) : null}
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={e => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                    const reader = new FileReader();
-                                    reader.onload = ev => {
-                                        const result = ev.target?.result;
-                                        if (typeof result === 'string') {
-                                            onFormDataChange({ ...formData, companionImage: result });
-                                        }
-                                    };
-                                    reader.readAsDataURL(file);
-                                }
-                            }}
-                            className="opacity-0 absolute inset-0 cursor-pointer"
-                            tabIndex={-1}
-                        />
-                    </div>
+                    <ImageUploadCrop
+                        currentImage={safeFormData.companionImage}
+                        onImageChange={(imageBase64) =>
+                            onFormDataChange({ ...formData, companionImage: imageBase64 })
+                        }
+                        width="9rem"
+                        height="9rem"
+                        placeholder={{ title: "伙伴图像", subtitle: "点击上传" }}
+                        inputId="companion-image-upload"
+                        className="mb-2 print:w-28 print:h-28"
+                    />
                     <textarea
                         rows={6}
                         id="companionDescription"

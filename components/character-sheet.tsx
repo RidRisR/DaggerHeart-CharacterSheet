@@ -619,28 +619,25 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
   // 使用useEffect监听特殊字段的变化，并在需要时同步卡牌
   useEffect(() => {
-    // 跳过初始渲染
-    if (initialRenderRef.current) {
-      initialRenderRef.current = false
-      return
+    // 关键修复：如果卡牌数据仍在加载，则直接返回，不执行任何同步操作。
+    // 这可以防止在卡牌列表（allStandardCards）准备好之前就尝试去查找卡牌，从而避免了将卡牌替换为空白卡的问题。
+    if (cardsLoading) {
+      return;
     }
 
-    // 检查是否需要同步
-    if (needsSyncRef.current && formData) {
-      // 重置标记
-      needsSyncRef.current = false
-      // 执行同步
-      syncSpecialCardsWithCharacterChoices()
-    }
-  }, [formData])
+    // 只有在首次渲染完成且卡牌加载完毕后，或者在角色选择（如职业）发生变化需要同步时，才执行同步。
+    if (initialRenderRef.current || needsSyncRef.current) {
+      syncSpecialCardsWithCharacterChoices();
 
-  // 在组件挂载时执行一次同步
-  useEffect(() => {
-    if (initialRenderRef.current && formData) {
-      console.log("Initial card sync")
-      syncSpecialCardsWithCharacterChoices()
+      // 同步后重置标记，避免不必要的重复执行。
+      if (initialRenderRef.current) {
+        initialRenderRef.current = false;
+      }
+      if (needsSyncRef.current) {
+        needsSyncRef.current = false;
+      }
     }
-  }, [formData])
+  }, [formData, cardsLoading]); // 添加 cardsLoading 作为依赖项
 
   // Generate boxes based on max values
   const renderBoxes = (field: keyof SheetData, max: number, total: number) => {

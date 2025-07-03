@@ -34,8 +34,7 @@ import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import ReactCrop, { centerCrop, makeAspectCrop, type Crop } from "react-image-crop"
-import "react-image-crop/dist/ReactCrop.css"
+import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 
 interface CharacterSheetProps {
   formData: SheetData
@@ -93,13 +92,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   const [armorModalOpen, setArmorModalOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [currentModal, setCurrentModal] = useState<{ type: "profession" | "ancestry" | "community" | "subclass"; field?: string; levelFilter?: number }>({ type: "profession" })
-
-  // 状态管理图片裁剪
-  const [sourceImage, setSourceImage] = useState<string | null>(null);
-  const [isCropModalOpen, setIsCropModalOpen] = useState(false)
-  const [crop, setCrop] = useState<Crop>()
-  const [completedCrop, setCompletedCrop] = useState<Crop | null>(null)
-  const imgRef = useRef<HTMLImageElement>(null)
 
   const needsSyncRef = useRef(true)
   const initialRenderRef = useRef(true)
@@ -745,143 +737,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     needsSyncRef.current = true;
   }
 
-  // 处理ESC键关闭模态框
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsCropModalOpen(false)
-      }
-    }
-
-    if (isCropModalOpen) {
-      document.addEventListener("keydown", handleKeyDown)
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [isCropModalOpen])
-
-  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    if (imgRef.current) {
-      const { width, height } = e.currentTarget
-      const newCrop = centerCrop(
-        makeAspectCrop(
-          {
-            unit: "%",
-            width: 90,
-          },
-          1,
-          width,
-          height,
-        ),
-        width,
-        height,
-      )
-      setCrop(newCrop)
-    }
-  }
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      if (file.size > 10 * 1024 * 1024) {
-        alert("图片文件过大，请选择小于10MB的图片。");
-        return;
-      }
-
-      // 立即显示模态框，提供即时反馈
-      setIsCropModalOpen(true)
-      setSourceImage(null) // 先清空图片，显示加载状态
-      setCrop(undefined) // 重置裁剪状态
-
-      // 在后台异步加载图片
-      const reader = new FileReader();
-      reader.addEventListener("load", () => {
-        setSourceImage(reader.result as string)
-      })
-      reader.readAsDataURL(file)
-      e.target.value = "" // 重置输入框
-    }
-  };
-
-  const getCroppedImg = (
-    image: HTMLImageElement,
-    crop: Crop,
-    maxSize: number = 500, // 新增最大尺寸参数
-  ): Promise<string> => {
-    const canvas = document.createElement("canvas")
-    const scaleX = image.naturalWidth / image.width
-    const scaleY = image.naturalHeight / image.height
-
-    // 原始裁剪区域的尺寸
-    const cropWidth = crop.width * scaleX
-    const cropHeight = crop.height * scaleY
-
-    // 计算缩放比例
-    let targetWidth = cropWidth
-    let targetHeight = cropHeight
-    if (targetWidth > maxSize || targetHeight > maxSize) {
-      if (targetWidth > targetHeight) {
-        targetHeight = (maxSize / targetWidth) * targetHeight
-        targetWidth = maxSize
-      } else {
-        targetWidth = (maxSize / targetHeight) * targetWidth
-        targetHeight = maxSize
-      }
-    }
-
-    canvas.width = targetWidth
-    canvas.height = targetHeight
-    const ctx = canvas.getContext("2d")
-
-    if (!ctx) {
-      return Promise.reject("Could not get canvas context")
-    }
-
-    ctx.imageSmoothingQuality = "high"
-
-    ctx.drawImage(
-      image,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      cropWidth,
-      cropHeight,
-      0,
-      0,
-      targetWidth,
-      targetHeight,
-    )
-
-    return new Promise((resolve) => {
-      // 压缩为JPEG，质量为0.7
-      resolve(canvas.toDataURL("image/jpeg", 0.9))
-    })
-  }
-
-  const onCropComplete = async (crop: Crop) => {
-    if (imgRef.current && crop.width && crop.height) {
-      const croppedImageUrl = await getCroppedImg(imgRef.current, crop) // 默认使用300px
-      setFormData((prev) => ({ ...prev, characterImage: croppedImageUrl }))
-      setIsCropModalOpen(false);
-      setSourceImage(null);
-    }
-  };
-
-
-  const handleDeleteImage = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation(); // 阻止事件冒泡，防止触发文件上传
-    setFormData((prev) => ({
-      ...prev,
-      characterImage: "",
-    }));
-    // 同样清空文件输入框的值
-    const input = document.getElementById('character-image-upload') as HTMLInputElement;
-    if (input) {
-      input.value = "";
-    }
-  };
-
   const handleSpellcastingToggle = (attribute: keyof SheetData) => {
     setFormData((prev) => {
       const currentAttribute = prev[attribute]
@@ -926,41 +781,16 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
               <div className="flex gap-4 mb-4">
                 {/* Character Image Upload */}
                 <div className="flex flex-col items-center">
-                  <div className="w-24 h-24 border-2 border-gray-800 flex flex-col items-center justify-center relative group">
-                    <label
-                      htmlFor="character-image-upload"
-                      className="w-full h-full flex flex-col items-center justify-center cursor-pointer"
-                    >
-                      {safeFormData.characterImage ? (
-                        <img
-                          src={safeFormData.characterImage}
-                          alt="Character Portrait"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="text-center">
-                          <div className="text-[10px] font-bold mb-1 print:hidden">角色图像</div>
-                          <div className="text-[8px] print:hidden">点击上传</div>
-                        </div>
-                      )}
-                    </label>
-                    <input
-                      id="character-image-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden" // 使用 label 后，input 可以完全隐藏
-                      onChange={handleImageUpload}
-                    />
-                    {safeFormData.characterImage && (
-                      <button
-                        onClick={handleDeleteImage}
-                        className="absolute top-0 right-0 w-6 h-6 bg-black bg-opacity-50 text-white flex items-center justify-center rounded-bl-lg hover:bg-opacity-75 print:hidden invisible group-hover:visible z-20"
-                        aria-label="Remove image"
-                      >
-                        &#x2715;
-                      </button>
-                    )}
-                  </div>
+                  <ImageUploadCrop
+                    currentImage={safeFormData.characterImage}
+                    onImageChange={(imageBase64) =>
+                      setFormData((prev) => ({ ...prev, characterImage: imageBase64 }))
+                    }
+                    width="6rem"
+                    height="6rem"
+                    placeholder={{ title: "角色图像", subtitle: "点击上传" }}
+                    inputId="character-image-upload"
+                  />
                 </div>
 
                 {/* Evasion Box */}
@@ -1194,51 +1024,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           levelFilter={currentModal.levelFilter}
           formData={safeFormData} // Pass safeFormData here
         />
-      )}
-
-      {/* 图片裁剪模态框 */}
-      {isCropModalOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50"
-          onClick={() => setIsCropModalOpen(false)} // 点击蒙版关闭
-        >
-          <div className="bg-white p-4 rounded-lg max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold mb-4">裁剪图片</h2>
-            {sourceImage ? (
-              <ReactCrop
-                crop={crop}
-                onChange={(c) => setCrop(c)}
-                onComplete={(c) => setCompletedCrop(c)}
-                aspect={1}
-              >
-                <img
-                  ref={imgRef}
-                  src={sourceImage}
-                  alt="Source"
-                  style={{ maxHeight: "70vh" }}
-                  onLoad={onImageLoad}
-                />
-              </ReactCrop>
-            ) : (
-              // 显示加载状态
-              <div className="flex justify-center items-center h-64">
-                <div className="text-gray-500">正在加载图片...</div>
-              </div>
-            )}
-            <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => setIsCropModalOpen(false)} className="px-4 py-2 rounded bg-gray-300">
-                取消
-              </button>
-              <button
-                onClick={() => onCropComplete(completedCrop!)}
-                disabled={!completedCrop?.width || !completedCrop?.height}
-                className="px-4 py-2 rounded bg-blue-500 text-white disabled:bg-gray-400"
-              >
-                确定
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </>
   )

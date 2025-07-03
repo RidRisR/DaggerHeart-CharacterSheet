@@ -16,6 +16,43 @@ import CharacterSheetPageFive from "@/components/character-sheet-page-five"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
+
+// 内联图标组件
+const EyeIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  </svg>
+)
+
+const EyeOffIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 11 8 11 8a13.16 13.16 0 0 1-1.67 2.68"></path>
+    <path d="M6.61 6.61A13.526 13.526 0 0 0 1 12s4 8 11 8a9.74 9.74 0 0 0 5.39-1.61"></path>
+    <line x1="2" y1="2" x2="22" y2="22"></line>
+  </svg>
+)
 import { StandardCard } from "@/card/card-types"
 import { SheetData, CharacterMetadata } from "@/lib/sheet-data"
 import { exportCharacterData } from "@/lib/storage"
@@ -63,6 +100,14 @@ export default function Home() {
 
   const closeCharacterManagementModal = () => {
     setCharacterManagementModalOpen(false)
+  }
+
+  // 第三页导出控制
+  const toggleIncludePageThreeInExport = () => {
+    setFormData(prev => ({
+      ...prev,
+      includePageThreeInExport: !prev.includePageThreeInExport,
+    }))
   }
 
   // 数据迁移处理 - 只在客户端执行
@@ -532,10 +577,12 @@ export default function Home() {
           <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
         </div>
 
-        {/* 第三页 */}
-        <div className="page-three flex justify-center items-start min-h-screen">
-          <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
-        </div>
+        {/* 第三页 - 条件渲染 */}
+        {formData.includePageThreeInExport && (
+          <div className="page-three flex justify-center items-start min-h-screen">
+            <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
+          </div>
+        )}
 
         {/* 第四页（仅打印时显示） */}
         <div className="page-four flex justify-center items-start min-h-screen">
@@ -566,10 +613,32 @@ export default function Home() {
         {/* 右侧角色卡区域 */}
         <div className="lg:w-3/4">
           <Tabs defaultValue="page1" className="w-full max-w-[210mm]">
-            <TabsList className="grid w-full max-w-[210mm] grid-cols-3">
+            <TabsList className={`grid w-full max-w-[210mm] transition-all duration-200 ${!formData.includePageThreeInExport
+                ? 'grid-cols-[1fr_1fr_auto]'
+                : 'grid-cols-3'
+              }`}>
               <TabsTrigger value="page1">第一页</TabsTrigger>
               <TabsTrigger value="page2">第二页</TabsTrigger>
-              <TabsTrigger value="page3">第三页</TabsTrigger>
+              <TabsTrigger 
+                value="page3" 
+                className={`flex items-center justify-center transition-all duration-200 ${
+                  !formData.includePageThreeInExport 
+                  ? 'w-12 min-w-12 px-1'
+                  : 'px-4'
+                }`}
+              >
+                {formData.includePageThreeInExport && <span className="flex-grow text-center">第三页</span>}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleIncludePageThreeInExport()
+                  }}
+                  className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  title={formData.includePageThreeInExport ? "点击关闭第三页导出" : "点击开启第三页导出"}
+                >
+                  {formData.includePageThreeInExport ? <EyeIcon /> : <EyeOffIcon />}
+                </button>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="page1">

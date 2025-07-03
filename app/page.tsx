@@ -650,11 +650,12 @@ export default function Home() {
         onDuplicateCharacter={duplicateCharacterHandler}
         onRenameCharacter={renameCharacterHandler}
         onImportData={(data: any) => {
-          // 数据迁移：为旧存档添加 inventory_cards 字段
+          // 数据迁移：为旧存档添加缺失字段
           const mergedData = {
             ...defaultSheetData,
             ...data,
-            inventory_cards: data.inventory_cards || Array(20).fill({ id: '', name: '', type: 'unknown', description: '' })
+            inventory_cards: data.inventory_cards || Array(20).fill({ id: '', name: '', type: 'unknown', description: '' }),
+            includePageThreeInExport: data.includePageThreeInExport ?? true // 确保第三页导出字段存在
           }
           setFormData(mergedData)
         }}

@@ -134,6 +134,9 @@ export interface SheetData {
   // ===== 多角色系统新增字段已移除 focused_card_ids =====
   // focused_card_ids 字段已被移除，聚焦功能由 cards 数组直接表示
   
+  // ===== 第三页导出控制 =====
+  includePageThreeInExport?: boolean // 控制第三页是否包含在导出中，默认为true
+
   // ===== 临时索引签名，兼容动态key访问，后续逐步收敛类型安全 =====
   // [key: string]: any // 已废弃，彻底类型安全后移除
 }

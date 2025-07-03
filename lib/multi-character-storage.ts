@@ -180,8 +180,15 @@ export function loadCharacterById(id: string): SheetData | null {
       saveCharacterById(id, parsed);
     }
 
-    // 兼容性迁移：为旧属性数据添加施法标记字段
+    // 兼容性迁移：为旧属性数据添加施法标记字段和第三页导出控制字段
     let needsSave = false;
+
+    // 兼容性迁移：为旧角色添加第三页导出控制字段
+    if (parsed.includePageThreeInExport === undefined) {
+      console.log(`[Migration] Adding includePageThreeInExport to character ${id}`);
+      parsed.includePageThreeInExport = true;
+      needsSave = true;
+    }
     const attributeKeys = ['agility', 'strength', 'finesse', 'instinct', 'presence', 'knowledge'] as const;
 
     attributeKeys.forEach(key => {
@@ -267,6 +274,8 @@ export function duplicateCharacter(originalId: string, newName: string): SheetDa
   const duplicatedData: SheetData = {
     ...originalData,
     name: newName || `${originalData.name} (副本)`,
+    // 确保第三页导出字段存在
+    includePageThreeInExport: originalData.includePageThreeInExport ?? true,
     // 注释：移除了 focused_card_ids 复制，聚焦功能由双卡组系统取代
   };
 
@@ -301,7 +310,9 @@ export function migrateToMultiCharacterStorage(): void {
         migratedCharacterData = {
           ...parsed,
           // 合并旧的全局聚焦卡牌ID到角色数据中
-          focused_card_ids: legacyFocusedCards ? JSON.parse(legacyFocusedCards) : []
+          focused_card_ids: legacyFocusedCards ? JSON.parse(legacyFocusedCards) : [],
+          // 为旧数据添加第三页导出控制字段
+          includePageThreeInExport: parsed.includePageThreeInExport ?? true
         };
 
         console.log('[Migration] Legacy data parsed successfully');

@@ -111,4 +111,7 @@ export const defaultSheetData: SheetData = {
     },
 
     // 注释：移除了 focused_card_ids 字段，聚焦功能由双卡组系统取代
+
+    // 第三页导出控制
+    includePageThreeInExport: true, // 默认包含第三页在导出中
 };

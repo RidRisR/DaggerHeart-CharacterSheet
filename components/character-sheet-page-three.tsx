@@ -2,37 +2,14 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ImageUploadCrop } from '@/components/ui/image-upload-crop';
-import type { SheetData } from "@/lib/sheet-data"
+import { useSheetStore } from '@/lib/sheet-store';
 
-interface CharacterSheetPageThreeProps {
-    formData: SheetData
-    onFormDataChange: (data: SheetData) => void
-    allCards?: any[];
-}
-
-const MAX_STRESS = (formData: SheetData) => Number(formData.companionStressMax) || 3;
+const MAX_STRESS = (formData: any) => Number(formData.companionStressMax) || 3;
 const TOTAL_STRESS = 6;
 
-// 通用渲染小方格（与第一页一致）
-const renderBox = (checked: boolean, dashed: boolean, onClick: () => void, key: string | number) => (
-    <div
-        key={key}
-        className={`w-3 h-3 border ${dashed ? 'border-dashed border-gray-400' : 'border-2 border-gray-800'} rounded cursor-pointer flex items-center justify-center transition-colors duration-100 select-none ${checked ? 'bg-gray-800' : 'bg-white'} hover:border-blue-500 active:scale-95`}
-        style={{ minWidth: '0.75rem', minHeight: '0.75rem' }}
-        onClick={onClick}
-        tabIndex={0}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
-        aria-pressed={checked}
-        role="checkbox"
-    >
-        {checked && <div className="w-2 h-2 bg-white rounded" />}
-    </div>
-);
+const CharacterSheetPageThree: React.FC = () => {
+    const { sheetData: formData, setSheetData: onFormDataChange } = useSheetStore();
 
-const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({
-    formData,
-    onFormDataChange,
-}) => {
     const safeFormData = {
         ...formData,
         companionExperience: Array.isArray(formData?.companionExperience) ? formData.companionExperience : ["", "", "", "", ""],

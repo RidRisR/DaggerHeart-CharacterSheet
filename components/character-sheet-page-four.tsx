@@ -3,11 +3,7 @@ import React, { useMemo } from "react"
 import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
 import { getCardTypeName } from "@/card/card-ui-config"
 import ReactMarkdown from "react-markdown"
-import type { SheetData } from "@/lib/sheet-data"
-
-interface CharacterSheetPageFourProps {
-    formData: SheetData
-}
+import { useSheetStore } from '@/lib/sheet-store';
 
 // 卡牌内容渲染组件
 const CardContent: React.FC<{ card: StandardCard }> = ({ card }) => {
@@ -108,7 +104,9 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 };
 
 // 打印专用页面，专门展示聚焦卡组
-const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formData }) => {
+const CharacterSheetPageFour: React.FC = () => {
+    const { sheetData: formData } = useSheetStore();
+
     // 获取聚焦卡组的有效卡牌
     const focusedCards = useMemo(() => {
         return (formData?.cards || []).filter((card: StandardCard) => !isEmptyCard(card));

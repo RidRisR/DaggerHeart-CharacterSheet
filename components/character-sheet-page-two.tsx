@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
-import type { SheetData } from "@/lib/sheet-data"
+import { useSheetStore } from "@/lib/sheet-store";
 import { createEmptyCard, type StandardCard } from "@/card/card-types"
 
 // Import sections
@@ -11,13 +11,9 @@ import { CharacterDescriptionSection } from "@/components/character-sheet-page-t
 import { CardDeckSection } from "@/components/character-sheet-page-two-sections/card-deck-section"
 import { UpgradeSection } from "@/components/character-sheet-page-two-sections/upgrade-section"
 
-interface CharacterSheetPageTwoProps {
-  formData: SheetData
-  setFormData: React.Dispatch<React.SetStateAction<SheetData>>
-  // 移除：onFocusedCardsChange 功能由双卡组系统取代
-}
+export default function CharacterSheetPageTwo() {
+  const { sheetData: formData, setSheetData: setFormData } = useSheetStore();
 
-export default function CharacterSheetPageTwo({ formData, setFormData }: CharacterSheetPageTwoProps) {
   // 确保 formData 存在并有默认值
   const safeFormData = {
     ...formData,

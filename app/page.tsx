@@ -17,6 +17,7 @@ import { CharacterCreationGuide } from "@/components/guide/character-creation-gu
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
 import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
+import { useSheetStore } from "@/lib/sheet-store"
 
 // 内联图标组件
 const EyeIcon = () => (
@@ -77,7 +78,11 @@ import { exportToHTML, previewHTML } from "@/lib/html-exporter"
 
 export default function Home() {
   // 多角色系统状态
-  const [formData, setFormData] = useState(defaultSheetData)
+  const {
+    sheetData: formData,
+    setSheetData: setFormData,
+    replaceSheetData
+  } = useSheetStore();
   const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null)
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -114,7 +119,7 @@ export default function Home() {
   // 数据迁移处理 - 只在客户端执行
   useEffect(() => {
     if (!isClient) return
-    
+
     const performMigration = async () => {
       try {
         console.log('[App] Starting data migration check...')
@@ -151,7 +156,7 @@ export default function Home() {
           const characterData = loadCharacterById(activeId)
           if (characterData) {
             setCurrentCharacterId(activeId)
-            setFormData(characterData)
+            replaceSheetData(characterData)
             console.log(`[App] Loaded active character: ${activeId}`)
           } else {
             console.warn(`[App] Active character data not found: ${activeId}`)
@@ -165,7 +170,7 @@ export default function Home() {
           if (characterData) {
             setCurrentCharacterId(firstCharacter.id)
             setActiveCharacterId(firstCharacter.id)
-            setFormData(characterData)
+            replaceSheetData(characterData)
             console.log(`[App] Set first character as active: ${firstCharacter.id}`)
           }
         } else {
@@ -193,7 +198,7 @@ export default function Home() {
         saveCharacterById(metadata.id, newCharacterData)
         setActiveCharacterId(metadata.id)
         setCurrentCharacterId(metadata.id)
-        setFormData(newCharacterData)
+        replaceSheetData(newCharacterData)
         setCharacterList([metadata])
         console.log(`[App] Created first character: ${metadata.id}`)
       }
@@ -236,7 +241,7 @@ export default function Home() {
       if (characterData) {
         setCurrentCharacterId(characterId)
         setActiveCharacterId(characterId)
-        setFormData(characterData)
+        replaceSheetData(characterData)
         console.log(`[App] Successfully switched to character: ${characterId}`)
       } else {
         console.error(`[App] Character data not found: ${characterId}`)
@@ -520,12 +525,12 @@ export default function Home() {
         try {
           const { importCharacterFromHTMLFile } = await import('@/lib/html-importer')
           const result = await importCharacterFromHTMLFile(file)
-          
+
           if (result.success && result.data) {
             // 从导入的数据中提取角色名称作为默认存档名
             const characterName = result.data.name || "未命名角色"
             const defaultSaveName = `${characterName} (HTML导入)`
-            
+
             // 提示用户输入存档名称
             const saveName = prompt('请输入新存档的名称:', defaultSaveName)
             if (saveName && saveName.trim()) {
@@ -722,18 +727,17 @@ export default function Home() {
         <div className="lg:w-3/4">
           <Tabs defaultValue="page1" className="w-full max-w-[210mm]">
             <TabsList className={`grid w-full max-w-[210mm] transition-all duration-200 ${!formData.includePageThreeInExport
-                ? 'grid-cols-[1fr_1fr_auto]'
-                : 'grid-cols-3'
+              ? 'grid-cols-[1fr_1fr_auto]'
+              : 'grid-cols-3'
               }`}>
               <TabsTrigger value="page1">第一页</TabsTrigger>
               <TabsTrigger value="page2">第二页</TabsTrigger>
-              <TabsTrigger 
-                value="page3" 
-                className={`flex items-center justify-center transition-all duration-200 ${
-                  !formData.includePageThreeInExport 
+              <TabsTrigger
+                value="page3"
+                className={`flex items-center justify-center transition-all duration-200 ${!formData.includePageThreeInExport
                   ? 'w-12 min-w-12 px-1'
                   : 'px-4'
-                }`}
+                  }`}
               >
                 {formData.includePageThreeInExport && <span className="flex-grow text-center">第三页</span>}
                 <button

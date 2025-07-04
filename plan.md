@@ -1,59 +1,70 @@
-# Zustand 卡牌管理改造计划
+# `sheet-data` to Zustand Migration Plan
 
-## 一、 核心目标
+This document outlines the phased migration of the character sheet's state (`sheet-data`) from React's `useState` to a global Zustand store. The primary goals are to eliminate prop-drilling, improve performance, and centralize state logic.
 
-将应用内的卡牌数据（`allCards`）从组件级状态（`useAllCards` Hook）提升为全局状态（`Zustand` store），实现**一次加载，全局共享**，解决跨页面导航时的重复加载问题，并为后续性能优化和功能扩展打下基础。
+---
 
-## 二、 影响范围分析
+## Phase 1: Store Creation and Root Integration (The Foundation)
 
-- **数据入口**：`hooks/use-cards.ts` (将被改造), `card/index.ts` (将被调用).
-- **数据出口**：`components/character-sheet.tsx` (主要消费方), `components/modals/generic-card-selection-modal.tsx` (次要消费方).
+**Objective:** Set up the store and integrate it at the highest level without breaking the existing prop-based architecture.
 
-## 三、 行动步骤
+*   [ ] **1. Create `sheet-store.ts`:**
+    *   Create a new file at `lib/sheet-store.ts`.
+    *   Define a Zustand store that holds the `sheetData` object and a generic `setSheetData` action.
+    *   The initial state should be loaded from `defaultSheetData`.
 
-1.  **✅ 安装 `Zustand`**:
-    -   [x] 在终端中执行 `pnpm add zustand`。
+*   [ ] **2. Integrate Store in `CharacterSheet` Component:**
+    *   In `components/character-sheet.tsx`, replace the `useState<SheetData>(...)` hook with the new `useSheetStore` hook.
+    *   The component will now source `sheetData` and `setSheetData` from the global store.
+    *   **Crucially, continue passing `sheetData` and `setSheetData` as props to all direct child components.** This is the key to this phase's safety, as the rest of the application remains unaware of the change.
 
-2.  **✅ 创建卡牌状态仓库 (`Card Store`)**:
-    -   [x] 在 `card/` 目录下创建新文件 `card-store.ts`。
-    -   [x] 定义 store，包含 `cards`, `loading`, `error`, `isInitialized` 状态和 `fetchAllCards` 动作。
+*   **Verification for Phase 1:** The application should look and function exactly as it did before. No functionality change is expected.
 
-3.  **✅ 改造 `CharacterSheet` 组件以使用 Store**:
-    -   [x] 打开 `components/character-sheet.tsx`。
-    -   [x] 移除 `useAllCards` Hook 的调用。
-    -   [x] 引入并调用 `useCardStore`。
-    -   [x] 使用 `useEffect` 在组件加载时调用 `fetchAllCards()`。
+---
 
-4.  **✅ 改造依赖卡牌数据的子组件**:
-    -   [x] 检查 `GenericCardSelectionModal` 等模态框组件，确保数据传递正常。
-    -   [x] 改造 `CardSelectionModal` 组件使用新的 store。
-    -   [x] 修复 React key 属性警告问题。
+## Phase 2: Incremental Component Refactoring (Top-Down Removal of Prop-Drilling)
 
-5.  **✅ 清理和收尾**:
-    -   [x] 确认功能正常后，删除 `hooks/use-cards.ts` 文件。
+**Objective:** Systematically work down the component tree, connecting components to the store directly and removing the now-redundant props.
 
-## 四、 测试验证
+*   [ ] **3. Refactor Page-Level Components:**
+    *   **Target:** `character-sheet-page-two.tsx`, `character-sheet-page-three.tsx`, `character-sheet-page-four.tsx`, `character-sheet-page-five.tsx`.
+    *   For each page component:
+        *   Import and use the `useSheetStore` hook to get `sheetData` and `setSheetData`.
+        *   Remove `sheetData` and `setSheetData` from its props interface.
+        *   Update `character-sheet.tsx` to no longer pass these props to the refactored page components.
 
-- [x] 测试角色表单页面，确保卡牌数据正常加载和显示
-- [x] 测试页面间切换，确认卡牌数据不会重复加载
-- [x] 测试各种模态框的卡牌选择功能
-- [x] 确认控制台不再出现重复的卡牌加载日志
+*   [ ] **4. Refactor Section-Level Components:**
+    *   **Target:** All section components (e.g., `header-section.tsx`, `attributes-section.tsx`, `armor-section.tsx`, `card-deck-section.tsx`, etc.).
+    *   For each section component:
+        *   Connect it directly to the `useSheetStore` hook.
+        *   Remove the `sheetData`/`setSheetData` props.
+        *   Update its parent page component to stop passing the props.
 
-## 五、 改造结果
+*   [ ] **5. Refactor Modal Components:**
+    *   **Target:** All modals that read or modify `sheetData` (e.g., `armor-selection-modal.tsx`, `weapon-selection-modal.tsx`, `character-management-modal.tsx`).
+    *   Apply the same refactoring pattern: use the store, remove the props, and update the component that invokes the modal.
 
-✅ **成功完成 Zustand 卡牌管理改造**
+*   **Verification for Phase 2:** After each step, perform a quick functional test of the refactored component to ensure it still reads and updates data correctly.
 
-### 改造效果：
-- ✅ 卡牌数据现在存储在全局 Zustand store 中
-- ✅ 页面切换时不再重复加载卡牌数据（321张卡牌）
-- ✅ 特殊卡牌同步逻辑正常工作
-- ✅ 所有模态框正常使用新的数据源
-- ✅ 解决了 React key 属性警告
+---
 
-### 保留的正常日志：
-- `syncSpecialCardsWithCharacterChoices: Called` - 正常，用于同步角色选择与卡牌
-- `getUpdatedSpecialCards: Called` - 正常，确保特殊卡牌槽的一致性
+## Phase 3: Optimization and Cleanup (Unlocking Performance)
 
-### 消失的重复日志：
-- `[useAllCards] 开始加载所有卡牌...` - 不再重复出现
-- `[useAllCards] 成功加载 321 张卡牌` - 不再重复出现
+**Objective:** Transition from a generic `setSheetData` to granular actions and selectors to prevent unnecessary re-renders and centralize business logic.
+
+*   [ ] **6. Implement Granular Selectors:**
+    *   In components that only need a small part of `sheetData` (e.g., `GoldSection` only needs `gold`), modify the `useSheetStore` call to use a selector function (e.g., `useSheetStore(state => state.sheetData.gold)`).
+    *   This is a critical performance optimization.
+
+*   [ ] **7. Implement Granular Actions:**
+    *   Create specific, named actions in the store for common updates (e.g., `updateAttribute(attr, value)`, `addInventoryItem(item)`, `setHope(newHope)`).
+    *   Refactor components to call these specific actions instead of the generic `setSheetData`. This makes the intent of the update clearer and centralizes the modification logic.
+
+*   [ ] **8. Final Review and Thorough Testing:**
+    *   Perform a full code review of all changed files for consistency and correctness.
+    *   Conduct comprehensive end-to-end testing of all character sheet functionality:
+        *   Editing every field.
+        *   Updating attributes, HP, stress, hope, and experience.
+        *   Managing inventory, gold, and armor.
+        *   Selecting and changing all card types.
+        *   Verifying data persistence (saving and loading).

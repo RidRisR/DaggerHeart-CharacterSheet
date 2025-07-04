@@ -4,16 +4,16 @@ This document outlines the phased migration of the character sheet's state (`she
 
 ---
 
-## Phase 1: Store Creation and Root Integration (The Foundation)
+## Phase 1: Store Creation and Root Integration (The Foundation) ✅
 
 **Objective:** Set up the store and integrate it at the highest level without breaking the existing prop-based architecture.
 
-*   [ ] **1. Create `sheet-store.ts`:**
+*   [x] **1. Create `sheet-store.ts`:**
     *   Create a new file at `lib/sheet-store.ts`.
     *   Define a Zustand store that holds the `sheetData` object and a generic `setSheetData` action.
     *   The initial state should be loaded from `defaultSheetData`.
 
-*   [ ] **2. Integrate Store in `CharacterSheet` Component:**
+*   [x] **2. Integrate Store in `CharacterSheet` Component:**
     *   In `components/character-sheet.tsx`, replace the `useState<SheetData>(...)` hook with the new `useSheetStore` hook.
     *   The component will now source `sheetData` and `setSheetData` from the global store.
     *   **Crucially, continue passing `sheetData` and `setSheetData` as props to all direct child components.** This is the key to this phase's safety, as the rest of the application remains unaware of the change.
@@ -26,12 +26,12 @@ This document outlines the phased migration of the character sheet's state (`she
 
 **Objective:** Systematically work down the component tree, connecting components to the store directly and removing the now-redundant props.
 
-*   [ ] **3. Refactor Page-Level Components:**
+*   [x] **3. Refactor Page-Level Components:**
     *   **Target:** `character-sheet-page-two.tsx`, `character-sheet-page-three.tsx`, `character-sheet-page-four.tsx`, `character-sheet-page-five.tsx`.
     *   For each page component:
         *   Import and use the `useSheetStore` hook to get `sheetData` and `setSheetData`.
         *   Remove `sheetData` and `setSheetData` from its props interface.
-        *   Update `character-sheet.tsx` to no longer pass these props to the refactored page components.
+        *   Update `app/page.tsx` to no longer pass these props to the refactored page components.
 
 *   [ ] **4. Refactor Section-Level Components:**
     *   **Target:** All section components (e.g., `header-section.tsx`, `attributes-section.tsx`, `armor-section.tsx`, `card-deck-section.tsx`, etc.).

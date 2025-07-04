@@ -1,12 +1,8 @@
 "use client"
 import React, { useMemo } from "react"
-import { isEmptyCard, StandardCard } from "@/card/card-types"
+import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
+import { useSheetStore } from '@/lib/sheet-store';
 import { CardContent } from "@/components/ui/card-content"
-import type { SheetData } from "@/lib/sheet-data"
-
-interface CharacterSheetPageFourProps {
-    formData: SheetData
-}
 
 // 卡组打印区域组件
 interface CardDeckPrintSectionProps {
@@ -71,7 +67,9 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 };
 
 // 打印专用页面，专门展示聚焦卡组
-const CharacterSheetPageFour: React.FC<CharacterSheetPageFourProps> = ({ formData }) => {
+const CharacterSheetPageFour: React.FC = () => {
+    const { sheetData: formData } = useSheetStore();
+
     // 获取聚焦卡组的有效卡牌
     const focusedCards = useMemo(() => {
         return (formData?.cards || []).filter((card: StandardCard) => !isEmptyCard(card));

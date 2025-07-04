@@ -682,29 +682,29 @@ export default function Home() {
 
         {/* 第一页 */}
         <div className="page-one flex justify-center items-start min-h-screen">
-          <CharacterSheet formData={formData} setFormData={setFormData} />
+          <CharacterSheet />
         </div>
 
         {/* 第二页 */}
         <div className="page-two flex justify-center items-start min-h-screen">
-          <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
+          <CharacterSheetPageTwo />
         </div>
 
         {/* 第三页 - 条件渲染 */}
         {formData.includePageThreeInExport && (
           <div className="page-three flex justify-center items-start min-h-screen">
-            <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
+            <CharacterSheetPageThree />
           </div>
         )}
 
         {/* 第四页（仅打印时显示） */}
         <div className="page-four flex justify-center items-start min-h-screen">
-          <CharacterSheetPageFour formData={formData} />
+          <CharacterSheetPageFour />
         </div>
 
         {/* 第五页（仅打印时显示） */}
         <div className="page-five flex justify-center items-start min-h-screen">
-          <CharacterSheetPageFive formData={formData} />
+          <CharacterSheetPageFive />
         </div>
       </div>
     )
@@ -754,23 +754,13 @@ export default function Home() {
             </TabsList>
 
             <TabsContent value="page1">
-              <CharacterSheet formData={formData} setFormData={setFormData} />
+              <CharacterSheet />
             </TabsContent>
             <TabsContent value="page2">
-              <CharacterSheetPageTwo
-                formData={formData}
-                setFormData={setFormData}
-              />
+              <CharacterSheetPageTwo />
             </TabsContent>
             <TabsContent value="page3">
-              <CharacterSheetPageThree
-                formData={formData}
-                onFormDataChange={setFormData}
-                allCards={[
-                  ...(formData.cards || []),
-                  ...(formData.inventory_cards || [])
-                ]}
-              />
+              <CharacterSheetPageThree />
             </TabsContent>
           </Tabs>
         </div>

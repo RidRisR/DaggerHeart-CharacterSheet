@@ -1,12 +1,8 @@
 "use client"
 import React, { useMemo } from "react"
-import { isEmptyCard, StandardCard } from "@/card/card-types"
+import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
+import { useSheetStore } from '@/lib/sheet-store';
 import { CardContent } from "@/components/ui/card-content"
-import type { SheetData } from "@/lib/sheet-data"
-
-interface CharacterSheetPageFiveProps {
-    formData: SheetData
-}
 
 // 卡组打印区域组件
 interface CardDeckPrintSectionProps {
@@ -71,7 +67,9 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 };
 
 // 打印专用页面，专门展示库存卡组
-const CharacterSheetPageFive: React.FC<CharacterSheetPageFiveProps> = ({ formData }) => {
+const CharacterSheetPageFive: React.FC = () => {
+    const { sheetData: formData } = useSheetStore();
+
     // 获取库存卡组的有效卡牌
     const inventoryCards = useMemo(() => {
         return (formData?.inventory_cards || []).filter((card: StandardCard) => !isEmptyCard(card));

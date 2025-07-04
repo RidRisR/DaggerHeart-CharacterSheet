@@ -18,6 +18,7 @@ import { useAllCards } from "@/hooks/use-cards"
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
 import { ArmorSelectionModal } from "@/components/modals/armor-selection-modal"
 import { GenericCardSelectionModal } from "@/components/modals/generic-card-selection-modal"
+import { CustomCardCreationModal } from "@/components/modals/custom-card-creation-modal"
 
 // Import sections
 import { HeaderSection } from "@/components/character-sheet-sections/header-section"
@@ -92,6 +93,10 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
   const [armorModalOpen, setArmorModalOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [currentModal, setCurrentModal] = useState<{ type: "profession" | "ancestry" | "community" | "subclass"; field?: string; levelFilter?: number }>({ type: "profession" })
+
+  // 自定义卡牌创建状态
+  const [customCardModalOpen, setCustomCardModalOpen] = useState(false)
+  const [customCardContext, setCustomCardContext] = useState<{ cardType: CardType; field?: string } | null>(null)
 
   const needsSyncRef = useRef(true)
   const initialRenderRef = useRef(true)
@@ -692,6 +697,54 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     setModalOpen(false)
   }
 
+  // 处理自定义卡牌创建请求
+  const handleCustomCardCreate = (cardType: CardType, field?: string) => {
+    setCustomCardContext({ cardType, field });
+    setCustomCardModalOpen(true);
+  }
+
+  // 处理自定义卡牌直接保存到 sheet-data
+  const handleCustomCardDirectSave = (card: StandardCard, field: string) => {
+    console.log(`直接保存自定义卡牌: ${card.name} 到字段: ${field}`);
+
+    // 根据字段类型保存卡牌
+    if (field === 'profession') {
+      setFormData(prev => ({
+        ...prev,
+        professionRef: { id: card.id, name: card.name }
+      }));
+    } else if (field === 'ancestry1') {
+      setFormData(prev => ({
+        ...prev,
+        ancestry1Ref: { id: card.id, name: card.name }
+      }));
+    } else if (field === 'ancestry2') {
+      setFormData(prev => ({
+        ...prev,
+        ancestry2Ref: { id: card.id, name: card.name }
+      }));
+    } else if (field === 'community') {
+      setFormData(prev => ({
+        ...prev,
+        communityRef: { id: card.id, name: card.name }
+      }));
+    } else if (field === 'subclass') {
+      setFormData(prev => ({
+        ...prev,
+        subclassRef: { id: card.id, name: card.name }
+      }));
+    }
+
+    // 将完整的卡牌数据也保存到 cards 数组中，以供后续使用
+    setFormData(prev => ({
+      ...prev,
+      cards: [...(prev.cards || []), card]
+    }));
+
+    setCustomCardModalOpen(false);
+    setCustomCardContext(null);
+  }
+
   const openProfessionModal = () => openGenericModal("profession")
   const openAncestryModal = (field: string) => openGenericModal("ancestry", field, field === "ancestry1" ? 1 : 2)
   const openCommunityModal = () => openGenericModal("community")
@@ -994,6 +1047,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         <GenericCardSelectionModal
           isOpen={modalOpen}
           onClose={closeGenericModal}
+          onCustomCardCreate={handleCustomCardCreate}
           onSelect={(cardId, field) => {
             console.log(`GenericModal onSelect: Type: ${currentModal.type}, ID: ${cardId}, Field: ${field}`);
             if (currentModal.type === "profession") {
@@ -1022,6 +1076,19 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           formData={safeFormData} // Pass safeFormData here
         />
       )}
+
+      {/* 自定义卡牌创建模态框 */}
+      <CustomCardCreationModal
+        open={customCardModalOpen}
+        onClose={() => {
+          setCustomCardModalOpen(false);
+          setCustomCardContext(null);
+        }}
+        onSave={() => { }} // 不使用这个回调，因为我们使用 onDirectSave
+        initialCardType={customCardContext?.cardType}
+        field={customCardContext?.field}
+        onDirectSave={handleCustomCardDirectSave}
+      />
     </>
   )
 }

@@ -44,6 +44,12 @@ interface CustomCardCreationModalProps {
     onSave: (card: StandardCard) => void;
     /** 初始卡牌类型（可选） */
     initialCardType?: CardType;
+    /** 允许的卡牌类型列表（可选，如果不提供则显示所有类型） */
+    allowedCardTypes?: CardType[];
+    /** 字段名（用于直接保存到 sheet-data） */
+    field?: string;
+    /** 直接保存到 sheet-data 的回调 */
+    onDirectSave?: (card: StandardCard, field: string) => void;
 }
 
 /**
@@ -53,8 +59,15 @@ export const CustomCardCreationModal: React.FC<CustomCardCreationModalProps> = (
     open,
     onClose,
     onSave,
-    initialCardType
+    initialCardType,
+    allowedCardTypes,
+    field,
+    onDirectSave
 }) => {
+    // 根据允许的卡牌类型过滤选项
+    const filteredCardTypeOptions = allowedCardTypes
+        ? CARD_TYPE_OPTIONS.filter(option => allowedCardTypes.includes(option.value as CardType))
+        : CARD_TYPE_OPTIONS;
     // 状态管理
     const [selectedCardType, setSelectedCardType] = useState<CardType | null>(initialCardType || null);
     const [formData, setFormData] = useState<FormData>({});
@@ -124,11 +137,21 @@ export const CustomCardCreationModal: React.FC<CustomCardCreationModalProps> = (
         }
 
         if (validateForm() && previewCard) {
-            onSave(previewCard);
-            showFadeNotification({
-                message: "自定义卡牌创建成功",
-                type: "success"
-            });
+            if (onDirectSave && field) {
+                // 直接保存到 sheet-data
+                onDirectSave(previewCard, field);
+                showFadeNotification({
+                    message: "自定义卡牌创建并应用成功",
+                    type: "success"
+                });
+            } else {
+            // 使用普通的 onSave 回调
+                onSave(previewCard);
+                showFadeNotification({
+                    message: "自定义卡牌创建成功",
+                    type: "success"
+                });
+            }
             onClose();
         } else {
             showFadeNotification({
@@ -136,7 +159,7 @@ export const CustomCardCreationModal: React.FC<CustomCardCreationModalProps> = (
                 type: "error"
             });
         }
-    }, [selectedCardType, validateForm, previewCard, onSave, onClose]);
+    }, [selectedCardType, validateForm, previewCard, onDirectSave, field, onSave, onClose]);
 
     // 关闭模态框
     const handleClose = useCallback(() => {

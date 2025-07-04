@@ -47,6 +47,7 @@ interface GenericCardSelectionModalProps {
     field?: string // Optional field for ancestry
     levelFilter?: number // Optional level filter for ancestry
     formData: SafeFormData // Use the defined type for safeFormData
+    onCustomCardCreate?: (cardType: CardType, field?: string) => void // 新增：自定义卡牌创建回调
 }
 
 export function GenericCardSelectionModal({
@@ -58,6 +59,7 @@ export function GenericCardSelectionModal({
     field,
     levelFilter,
     formData,
+    onCustomCardCreate
 }: GenericCardSelectionModalProps) {
     const [selectedClass, setSelectedClass] = useState<string>("All")
     const [isCustomCardModalOpen, setIsCustomCardModalOpen] = useState(false);
@@ -134,10 +136,17 @@ export function GenericCardSelectionModal({
 
     // 处理自定义卡牌创建
     const handleCustomCardCreate = () => {
-        setIsCustomCardModalOpen(true);
+        if (onCustomCardCreate) {
+            // 关闭当前模态框，让父组件处理自定义卡牌创建
+            onClose();
+            onCustomCardCreate(cardType as CardType, field);
+        } else {
+        // 回退到旧的行为（如果没有提供回调）
+            setIsCustomCardModalOpen(true);
+        }
     };
 
-    // 处理自定义卡牌保存
+    // 处理自定义卡牌保存（仅在内部模态框使用时）
     const handleCustomCardSave = (card: StandardCard) => {
         onSelect(card.id, field);
         setIsCustomCardModalOpen(false);
@@ -230,13 +239,15 @@ export function GenericCardSelectionModal({
                 </div>
             </div>
 
-            {/* 自定义卡牌创建模态框 */}
-            <CustomCardCreationModal
-                open={isCustomCardModalOpen}
-                onClose={handleCustomCardCancel}
-                onSave={handleCustomCardSave}
-                initialCardType={cardType as CardType}
-            />
+            {/* 自定义卡牌创建模态框 - 仅在没有外部回调时显示 */}
+            {!onCustomCardCreate && (
+                <CustomCardCreationModal
+                    open={isCustomCardModalOpen}
+                    onClose={handleCustomCardCancel}
+                    onSave={handleCustomCardSave}
+                    initialCardType={cardType as CardType}
+                />
+            )}
         </div>
     )
 }

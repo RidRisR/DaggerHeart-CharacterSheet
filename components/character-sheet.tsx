@@ -861,29 +861,19 @@ export default function CharacterSheet() {
               </div>
 
               {/* Attributes Section */}
-              <AttributesSection
-                formData={safeFormData}
-                handleAttributeValueChange={handleAttributeValueChange}
-                handleBooleanChange={handleBooleanChange}
-                handleSpellcastingToggle={handleSpellcastingToggle}
-              />
+              <AttributesSection />
 
               {/* Hit Points & Stress */}
-              <HitPointsSection
-                formData={safeFormData}
-                handleInputChange={handleInputChange}
-                handleMaxChange={handleMaxChange}
-                renderBoxes={renderBoxes}
-              />
+              <HitPointsSection />
 
               {/* Hope */}
-              <HopeSection formData={safeFormData} handleCheckboxChange={handleCheckboxChange} />
+              <HopeSection />
 
               {/* Experience */}
-              <ExperienceSection formData={safeFormData} setFormData={setFormData} />
+              <ExperienceSection />
 
               {/* Gold */}
-              <GoldSection formData={safeFormData} handleCheckboxChange={handleCheckboxChange} />
+              <GoldSection />
             </div>
 
             {/* Right Column */}
@@ -931,7 +921,7 @@ export default function CharacterSheet() {
               />
 
               {/* Inventory */}
-              <InventorySection formData={safeFormData} setFormData={setFormData} />
+              <InventorySection />
 
               {/* Inventory Weapons */}
               <InventoryWeaponSection

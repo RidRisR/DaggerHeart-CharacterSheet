@@ -740,16 +740,16 @@ export default function Home() {
                   }`}
               >
                 {formData.includePageThreeInExport && <span className="flex-grow text-center">第三页</span>}
-                <button
+                <span
                   onClick={(e) => {
                     e.stopPropagation()
                     toggleIncludePageThreeInExport()
                   }}
-                  className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                   title={formData.includePageThreeInExport ? "点击关闭第三页导出" : "点击开启第三页导出"}
                 >
                   {formData.includePageThreeInExport ? <EyeIcon /> : <EyeOffIcon />}
-                </button>
+                </span>
               </TabsTrigger>
             </TabsList>
 

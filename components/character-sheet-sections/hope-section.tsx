@@ -1,14 +1,20 @@
 "use client"
+
+import { useSheetStore } from "@/lib/sheet-store";
 import { StandardCard } from "@/card/card-types";
-import type { SheetData } from "@/lib/sheet-data"
 import ReactMarkdown from 'react-markdown';
 
-interface HopeSectionProps {
-  formData: SheetData
-  handleCheckboxChange: (field: keyof SheetData, index: number) => void
-}
+export function HopeSection() {
+  const { sheetData: formData, setSheetData } = useSheetStore();
+  
+  const handleCheckboxChange = (index: number) => {
+    setSheetData((prev) => {
+      const newHope = [...prev.hope];
+      newHope[index] = !newHope[index];
+      return { ...prev, hope: newHope };
+    });
+  };
 
-export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps) {
   let hopeTrait = ""
   // Ensure formData, profession, and cards are defined and cards is an array
   if (formData && formData.professionRef?.id && formData.cards && Array.isArray(formData.cards)) {
@@ -27,7 +33,7 @@ export function HopeSection({ formData, handleCheckboxChange }: HopeSectionProps
 
       <div className="flex justify-center gap-2 mb-2">
         {formData.hope.map((checked: boolean, i: number) => (
-          <div key={`hope-${i}`} className="relative" onClick={() => handleCheckboxChange("hope", i)}>
+          <div key={`hope-${i}`} className="relative" onClick={() => handleCheckboxChange(i)}>
             <div className="w-5 h-5 border-2 border-gray-800 transform rotate-45 cursor-pointer"></div>
             {checked && (
               <div className="absolute inset-0 flex items-center justify-center">

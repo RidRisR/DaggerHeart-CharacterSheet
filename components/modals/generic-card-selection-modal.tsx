@@ -12,7 +12,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { SheetCardReference } from "@/lib/sheet-data";
-import { useCardsByType } from "@/hooks/use-cards"
+import { useCardsByType } from "@/card/card-store";
 
 // Extend SafeFormData to include missing properties
 interface SafeFormData {
@@ -63,19 +63,27 @@ export function GenericCardSelectionModal({
     const { 
         cards: baseCards, 
         loading: cardsLoading, 
-        error: cardsError 
-    } = useCardsByType(cardType as CardType, {
-        enabled: isOpen
-    });
+        error: cardsError,
+        fetchCardsByType: fetchBaseCards
+    } = useCardsByType(cardType as CardType);
 
     // For subclass cards, we also need profession cards to determine the filter
     const { 
         cards: professionCards, 
         loading: professionLoading, 
-        error: professionError 
-    } = useCardsByType(CardType.Profession, {
-        enabled: isOpen && cardType === "subclass"
-    });
+        error: professionError,
+        fetchCardsByType: fetchProfessionCards
+    } = useCardsByType(CardType.Profession);
+
+    // 当模态框打开时，触发数据加载
+    useEffect(() => {
+        if (isOpen) {
+            fetchBaseCards();
+            if (cardType === "subclass") {
+                fetchProfessionCards();
+            }
+        }
+    }, [isOpen, cardType, fetchBaseCards, fetchProfessionCards]);
 
     // Calculate filtered cards based on card type and level filter
     const filteredInitialCards = useMemo(() => {
@@ -187,9 +195,8 @@ export function GenericCardSelectionModal({
                         ) : (
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 auto-rows-min">
                                 {finalFilteredCards.map((card) => (
-                                    <div className="w-full min-w-0 flex">
+                                    <div key={card.id} className="w-full min-w-0 flex">
                                         <SelectableCard
-                                            key={card.id}
                                             card={card}
                                             onClick={() => onSelect(card.id, field)}
                                             isSelected={false}

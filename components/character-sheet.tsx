@@ -12,7 +12,7 @@ import {
   getStandardCardsByTypeAsync,
   CardType, // Import CardType
 } from "@/card"
-import { useAllCards } from "@/hooks/use-cards"
+import { useAllCards } from "@/card/card-store"
 
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
@@ -75,15 +75,18 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     }
   };
 
-  // 使用异步卡牌Hook
+  // 使用全局卡牌Store
   const { 
     cards: allStandardCards, 
     loading: cardsLoading, 
-    error: cardsError 
-  } = useAllCards({
-    enabled: true,
-    autoRefresh: false
-  });
+    error: cardsError,
+    fetchAllCards
+  } = useAllCards();
+
+  // 在组件加载时触发卡牌数据加载
+  useEffect(() => {
+    fetchAllCards();
+  }, [fetchAllCards]);
 
   // 模态框状态
   const [weaponModalOpen, setWeaponModalOpen] = useState(false)

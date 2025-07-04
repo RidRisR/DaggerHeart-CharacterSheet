@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce";
-import { useCardsByType } from "@/hooks/use-cards";
+import { useCardsByType } from "@/card/card-store";
 
 const ITEMS_PER_PAGE = 30;
 
@@ -130,13 +130,18 @@ export function CardSelectionModal({
   const {
     cards: cardsForActiveTab,
     loading: cardsLoading,
-    error: cardsError
+    error: cardsError,
+    fetchCardsByType
   } = useCardsByType(
-    isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType), 
-    {
-      enabled: isOpen && !!activeTab
-    }
+    isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType)
   );
+
+  // 当模态框打开且有活动标签时，触发数据加载
+  useEffect(() => {
+    if (isOpen && activeTab) {
+      fetchCardsByType();
+    }
+  }, [isOpen, activeTab, fetchCardsByType]);
 
   const fullyFilteredCards = useMemo(() => {
     if (!activeTab || !isOpen || cardsLoading || !cardsForActiveTab.length) {

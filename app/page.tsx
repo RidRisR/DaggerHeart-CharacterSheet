@@ -16,6 +16,7 @@ import CharacterSheetPageFive from "@/components/character-sheet-page-five"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
+import { useSheetStore } from "@/lib/sheet-store"
 
 // 内联图标组件
 const EyeIcon = () => (
@@ -76,7 +77,11 @@ import { exportToHTML, previewHTML } from "@/lib/html-exporter"
 
 export default function Home() {
   // 多角色系统状态
-  const [formData, setFormData] = useState(defaultSheetData)
+  const {
+    sheetData: formData,
+    setSheetData: setFormData,
+    replaceSheetData
+  } = useSheetStore();
   const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null)
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -150,7 +155,7 @@ export default function Home() {
           const characterData = loadCharacterById(activeId)
           if (characterData) {
             setCurrentCharacterId(activeId)
-            setFormData(characterData)
+            replaceSheetData(characterData)
             console.log(`[App] Loaded active character: ${activeId}`)
           } else {
             console.warn(`[App] Active character data not found: ${activeId}`)
@@ -164,7 +169,7 @@ export default function Home() {
           if (characterData) {
             setCurrentCharacterId(firstCharacter.id)
             setActiveCharacterId(firstCharacter.id)
-            setFormData(characterData)
+            replaceSheetData(characterData)
             console.log(`[App] Set first character as active: ${firstCharacter.id}`)
           }
         } else {
@@ -192,7 +197,7 @@ export default function Home() {
         saveCharacterById(metadata.id, newCharacterData)
         setActiveCharacterId(metadata.id)
         setCurrentCharacterId(metadata.id)
-        setFormData(newCharacterData)
+        replaceSheetData(newCharacterData)
         setCharacterList([metadata])
         console.log(`[App] Created first character: ${metadata.id}`)
       }
@@ -235,7 +240,7 @@ export default function Home() {
       if (characterData) {
         setCurrentCharacterId(characterId)
         setActiveCharacterId(characterId)
-        setFormData(characterData)
+        replaceSheetData(characterData)
         console.log(`[App] Successfully switched to character: ${characterId}`)
       } else {
         console.error(`[App] Character data not found: ${characterId}`)

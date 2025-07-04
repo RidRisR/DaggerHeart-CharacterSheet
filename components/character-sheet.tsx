@@ -13,6 +13,7 @@ import {
   CardType, // Import CardType
 } from "@/card"
 import { useAllCards } from "@/card/card-store"
+import { useSheetStore } from "@/lib/sheet-store"
 
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
@@ -36,12 +37,9 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 
-interface CharacterSheetProps {
-  formData: SheetData
-  setFormData: React.Dispatch<React.SetStateAction<SheetData>>
-}
+export default function CharacterSheet() {
+  const { sheetData: formData, setSheetData: setFormData } = useSheetStore();
 
-export default function CharacterSheet({ formData, setFormData }: CharacterSheetProps) {
   // 添加一个安全的表达式计算函数
   const safeEvaluateExpression = (expression: string): number => {
     if (!expression || typeof expression !== 'string') {

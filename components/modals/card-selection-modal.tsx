@@ -24,6 +24,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce";
 import { useCardsByType } from "@/hooks/use-cards";
+import { CustomCardCreationModal } from "./custom-card-creation-modal";
+import { Plus } from "lucide-react";
 
 const ITEMS_PER_PAGE = 30;
 
@@ -64,6 +66,9 @@ export function CardSelectionModal({
   const scrollableContainerRef = useRef<HTMLDivElement>(null)
   const [classDropdownOpen, setClassDropdownOpen] = useState(false); // Add state for class dropdown
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false); // Add state for level dropdown
+
+  // 自定义卡牌创建相关状态
+  const [showCustomCardModal, setShowCustomCardModal] = useState(false);
 
   // Add category state management
   const [expandedCategories, setExpandedCategories] = useState(new Set(['standard', 'extended'])); // Default: both expanded
@@ -271,6 +276,20 @@ export function CardSelectionModal({
     setLevelDropdownOpen(false);
   };
 
+  // 处理自定义卡牌创建
+  const handleCustomCardCreate = () => {
+    setShowCustomCardModal(true);
+  };
+
+  const handleCustomCardSave = (card: StandardCard) => {
+    onSelect(card);
+    setShowCustomCardModal(false);
+  };
+
+  const handleCustomCardCancel = () => {
+    setShowCustomCardModal(false);
+  };
+
   const positionTitle = `选择卡牌 #${selectedCardIndex + 1}`
 
   // 如果正在加载，显示加载状态
@@ -288,6 +307,13 @@ export function CardSelectionModal({
               className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
             >
               清除选择
+            </button>
+            <button
+              onClick={handleCustomCardCreate}
+              className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 flex items-center gap-2"
+            >
+              <Plus size={16} />
+              创建自定义卡牌
             </button>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -531,6 +557,14 @@ export function CardSelectionModal({
           </div>
         </div>
       </div>
+
+      {/* 自定义卡牌创建模态框 */}
+      <CustomCardCreationModal
+        open={showCustomCardModal}
+        onClose={handleCustomCardCancel}
+        onSave={handleCustomCardSave}
+        initialCardType={activeTab as CardType}
+      />
     </div>
   )
 }

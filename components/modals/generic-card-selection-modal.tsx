@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select"
 import { SheetCardReference } from "@/lib/sheet-data";
 import { useCardsByType } from "@/hooks/use-cards"
+import { CustomCardCreationModal } from "./custom-card-creation-modal";
+import { Plus } from "lucide-react";
 
 // Extend SafeFormData to include missing properties
 interface SafeFormData {
@@ -58,6 +60,7 @@ export function GenericCardSelectionModal({
     formData,
 }: GenericCardSelectionModalProps) {
     const [selectedClass, setSelectedClass] = useState<string>("All")
+    const [isCustomCardModalOpen, setIsCustomCardModalOpen] = useState(false);
 
     // Use hooks to fetch cards based on card type
     const { 
@@ -129,6 +132,22 @@ export function GenericCardSelectionModal({
         }
     }, [isOpen, onClose])
 
+    // 处理自定义卡牌创建
+    const handleCustomCardCreate = () => {
+        setIsCustomCardModalOpen(true);
+    };
+
+    // 处理自定义卡牌保存
+    const handleCustomCardSave = (card: StandardCard) => {
+        onSelect(card.id, field);
+        setIsCustomCardModalOpen(false);
+    };
+
+    // 处理自定义卡牌创建取消
+    const handleCustomCardCancel = () => {
+        setIsCustomCardModalOpen(false);
+    };
+
     if (!isOpen) return null
 
     // Calculate final filtered cards based on class selection
@@ -166,6 +185,15 @@ export function GenericCardSelectionModal({
                         >
                             清除选择
                         </Button>
+                        <Button
+                            variant="outline"
+                            onClick={handleCustomCardCreate}
+                            className="bg-green-50 hover:bg-green-100 text-green-700 border-green-300"
+                            disabled={isLoading}
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            创建自定义卡牌
+                        </Button>
                     </div>
                     <h2 className="text-xl font-bold">{title}</h2>
                 </div>
@@ -201,6 +229,14 @@ export function GenericCardSelectionModal({
                     </div>
                 </div>
             </div>
+
+            {/* 自定义卡牌创建模态框 */}
+            <CustomCardCreationModal
+                open={isCustomCardModalOpen}
+                onClose={handleCustomCardCancel}
+                onSave={handleCustomCardSave}
+                initialCardType={cardType as CardType}
+            />
         </div>
     )
 }

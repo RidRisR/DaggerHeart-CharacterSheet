@@ -1,20 +1,61 @@
-import type { SheetData, AttributeValue } from "@/lib/sheet-data"
-
 "use client"
 
-interface AttributesSectionProps {
-  formData: SheetData
-  handleAttributeValueChange: (attribute: keyof SheetData, value: string) => void
-  handleBooleanChange: (field: keyof SheetData) => void
-  handleSpellcastingToggle: (attribute: keyof SheetData) => void
-}
+import type { SheetData, AttributeValue } from "@/lib/sheet-data"
+import { useSheetStore } from "@/lib/sheet-store";
 
-export function AttributesSection({
-  formData,
-  handleAttributeValueChange,
-  handleBooleanChange,
-  handleSpellcastingToggle,
-}: AttributesSectionProps) {
+export function AttributesSection() {
+  const { sheetData: formData, setSheetData } = useSheetStore();
+  
+  const handleAttributeValueChange = (attribute: keyof SheetData, value: string) => {
+    setSheetData((prev) => {
+      const currentAttribute = prev[attribute]
+      if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
+        return {
+          ...prev,
+          [attribute]: { ...currentAttribute, value },
+        }
+      }
+      return prev
+    })
+  }
+
+  const handleBooleanChange = (field: keyof SheetData) => {
+    setSheetData((prev) => {
+      const currentAttribute = prev[field]
+      if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
+        return {
+          ...prev,
+          [field]: {
+            ...currentAttribute,
+            checked: !currentAttribute.checked,
+          },
+        }
+      } else if (typeof currentAttribute === "boolean") {
+        return {
+          ...prev,
+          [field]: !currentAttribute,
+        }
+      }
+      return prev
+    })
+  }
+
+  const handleSpellcastingToggle = (attribute: keyof SheetData) => {
+    setSheetData((prev) => {
+      const currentAttribute = prev[attribute]
+      if (typeof currentAttribute === "object" && currentAttribute !== null && "spellcasting" in currentAttribute) {
+        return {
+          ...prev,
+          [attribute]: {
+            ...currentAttribute,
+            spellcasting: !currentAttribute.spellcasting,
+          },
+        }
+      }
+      return prev
+    })
+  }
+
   return (
     <div className="space-y-2">
       <div className="mb-2">

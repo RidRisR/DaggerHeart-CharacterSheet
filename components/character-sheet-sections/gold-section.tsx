@@ -1,13 +1,18 @@
-import type { SheetData } from "@/lib/sheet-data"
-
 "use client"
 
-interface GoldSectionProps {
-  formData: SheetData
-  handleCheckboxChange: (field: keyof SheetData, index: number) => void
-}
+import { useSheetStore } from "@/lib/sheet-store";
 
-export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps) {
+export function GoldSection() {
+  const { sheetData: formData, setSheetData } = useSheetStore()
+
+  const handleCheckboxChange = (index: number) => {
+    setSheetData((prev) => {
+      const newGold = [...prev.gold]
+      newGold[index] = !newGold[index]
+      return { ...prev, gold: newGold }
+    })
+  }
+
   return (
     <div className="py-1 mb-2">
       <h3 className="text-xs font-bold text-center mb-1">金币</h3>
@@ -20,8 +25,9 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
               {formData.gold.slice(0, 5).map((checked: boolean, i: number) => (
                 <div
                   key={`gold-handful-${i}`}
-                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer rounded-full ${checked ? "bg-gray-800" : "bg-white"}`}
-                  onClick={() => handleCheckboxChange("gold", i)}
+                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer rounded-full ${checked ? "bg-gray-800" : "bg-white"
+                    }`}
+                  onClick={() => handleCheckboxChange(i)}
                 ></div>
               ))}
             </div>
@@ -29,8 +35,9 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
               {formData.gold.slice(5, 10).map((checked: boolean, i: number) => (
                 <div
                   key={`gold-handful-${i + 5}`}
-                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer rounded-full ${checked ? "bg-gray-800" : "bg-white"}`}
-                  onClick={() => handleCheckboxChange("gold", i + 5)}
+                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer rounded-full ${checked ? "bg-gray-800" : "bg-white"
+                    }`}
+                  onClick={() => handleCheckboxChange(i + 5)}
                 ></div>
               ))}
             </div>
@@ -44,8 +51,9 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
               {formData.gold.slice(10, 15).map((checked: boolean, i: number) => (
                 <div
                   key={`gold-bag-${i + 10}`}
-                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer ${checked ? "bg-gray-800" : "bg-white"}`}
-                  onClick={() => handleCheckboxChange("gold", i + 10)}
+                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer ${checked ? "bg-gray-800" : "bg-white"
+                    }`}
+                  onClick={() => handleCheckboxChange(i + 10)}
                 ></div>
               ))}
             </div>
@@ -53,8 +61,9 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
               {formData.gold.slice(15, 20).map((checked: boolean, i: number) => (
                 <div
                   key={`gold-bag-${i + 15}`}
-                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer ${checked ? "bg-gray-800" : "bg-white"}`}
-                  onClick={() => handleCheckboxChange("gold", i + 15)}
+                  className={`w-4 h-4 border-2 border-gray-800 cursor-pointer ${checked ? "bg-gray-800" : "bg-white"
+                    }`}
+                  onClick={() => handleCheckboxChange(i + 15)}
                 ></div>
               ))}
             </div>
@@ -64,8 +73,9 @@ export function GoldSection({ formData, handleCheckboxChange }: GoldSectionProps
         <div className="flex flex-col items-center">
           <div className="text-[9px] mb-1">箱</div>
           <div
-            className={`w-8 h-8 border-2 border-gray-800 cursor-pointer flex items-center justify-center ${formData.gold[20] ? "bg-gray-800" : "bg-white"}`}
-            onClick={() => handleCheckboxChange("gold", 20)}
+            className={`w-8 h-8 border-2 border-gray-800 cursor-pointer flex items-center justify-center ${formData.gold[20] ? "bg-gray-800" : "bg-white"
+              }`}
+            onClick={() => handleCheckboxChange(20)}
           >
             {/* 可选：可加个小图标或文字 */}
           </div>

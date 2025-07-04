@@ -1,15 +1,11 @@
 "use client"
 
-import type React from "react"
-import type { SheetData } from "@/lib/sheet-data"
+import { useSheetStore } from "@/lib/sheet-store";
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 
-interface ExperienceSectionProps {
-  formData: SheetData
-  setFormData: React.Dispatch<React.SetStateAction<SheetData>>
-}
-
-export function ExperienceSection({ formData, setFormData }: ExperienceSectionProps) {
+export function ExperienceSection() {
+  const { sheetData: formData, setSheetData } = useSheetStore();
+  
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
     minFontSize: 10,
@@ -31,7 +27,7 @@ export function ExperienceSection({ formData, setFormData }: ExperienceSectionPr
               onChange={(e) => {
                 const newExp = [...experienceTexts]
                 newExp[i] = e.target.value
-                setFormData((prev) => ({ ...prev, experience: newExp }))
+                setSheetData((prev) => ({ ...prev, experience: newExp }))
               }}
               {...getElementProps(exp, `exp-${i}`, "flex-grow border-b border-gray-400 p-1 focus:outline-none print-empty-hide")}
               placeholder="Experience description"
@@ -42,7 +38,7 @@ export function ExperienceSection({ formData, setFormData }: ExperienceSectionPr
               onChange={(e) => {
                 const newValues = [...experienceValues]
                 newValues[i] = e.target.value
-                setFormData((prev) => ({ ...prev, experienceValues: newValues }))
+                setSheetData((prev) => ({ ...prev, experienceValues: newValues }))
               }}
               {...getElementProps(experienceValues[i], `exp-value-${i}`, "w-8 border border-gray-400 rounded ml-1 text-center print-empty-hide")}
               placeholder="#"

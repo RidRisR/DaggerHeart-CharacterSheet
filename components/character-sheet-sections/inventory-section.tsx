@@ -1,15 +1,11 @@
 "use client"
 
-import type React from "react"
-import type { SheetData } from "@/lib/sheet-data"
+import { useSheetStore } from "@/lib/sheet-store";
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 
-interface InventorySectionProps {
-  formData: SheetData
-  setFormData: React.Dispatch<React.SetStateAction<SheetData>>
-}
-
-export function InventorySection({ formData, setFormData }: InventorySectionProps) {
+export function InventorySection() {
+  const { sheetData: formData, setSheetData } = useSheetStore();
+  
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
     minFontSize: 10
@@ -32,7 +28,7 @@ export function InventorySection({ formData, setFormData }: InventorySectionProp
             onChange={(e) => {
               const newInventory = [...safeInventory]
               newInventory[i] = e.target.value
-              setFormData((prev) => ({ ...prev, inventory: newInventory }))
+              setSheetData((prev) => ({ ...prev, inventory: newInventory }))
             }}
             {...getElementProps(item || "", `inventory-${i}`)}
             className="w-full border-b border-gray-400 p-0.5 focus:outline-none print-empty-hide"

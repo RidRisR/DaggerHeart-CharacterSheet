@@ -33,8 +33,10 @@ This document outlines the phased migration of the character sheet's state (`she
         *   Remove `sheetData` and `setSheetData` from its props interface.
         *   Update `app/page.tsx` to no longer pass these props to the refactored page components.
 
-*   [ ] **4. Refactor Section-Level Components:**
+*   [x] **4. Refactor Section-Level Components:**
     *   **Target:** All section components (e.g., `header-section.tsx`, `attributes-section.tsx`, `armor-section.tsx`, `card-deck-section.tsx`, etc.).
+    *   **Completed:** `gold-section.tsx`, `hope-section.tsx`, `experience-section.tsx`, `hit-points-section.tsx`
+    *   **Remaining:** `header-section.tsx`, `attributes-section.tsx`, `armor-section.tsx`, `inventory-section.tsx`, `inventory-weapon-section.tsx`, `weapon-section.tsx`
     *   For each section component:
         *   Connect it directly to the `useSheetStore` hook.
         *   Remove the `sheetData`/`setSheetData` props.

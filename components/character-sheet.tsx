@@ -777,14 +777,7 @@ export default function CharacterSheet() {
           style={{ width: "210mm" }}
         >
           {/* Header Section */}
-          <HeaderSection
-            formData={safeFormData}
-            handleInputChange={handleInputChange}
-            openProfessionModal={openProfessionModal}
-            openAncestryModal={openAncestryModal}
-            openCommunityModal={openCommunityModal}
-            openSubclassModal={() => openGenericModal("subclass")}
-          />
+          <HeaderSection />
 
           {/* Main Content - Two Column Layout */}
           <div className="grid grid-cols-2 gap-2 mt-2">
@@ -897,46 +890,28 @@ export default function CharacterSheet() {
                 </div>
 
                 <WeaponSection
-                  formData={safeFormData}
-                  handleInputChange={handleInputChange}
-                  openWeaponModal={openWeaponModal}
                   isPrimary={true}
                   fieldPrefix="primaryWeapon"
                 />
 
                 <WeaponSection
-                  formData={safeFormData}
-                  handleInputChange={handleInputChange}
-                  openWeaponModal={openWeaponModal}
                   isPrimary={false}
                   fieldPrefix="secondaryWeapon"
                 />
               </div>
 
               {/* Active Armor */}
-              <ArmorSection
-                formData={safeFormData}
-                handleInputChange={handleInputChange}
-                openArmorModal={openArmorModal}
-              />
+              <ArmorSection />
 
               {/* Inventory */}
               <InventorySection />
 
               {/* Inventory Weapons */}
               <InventoryWeaponSection
-                formData={safeFormData}
-                handleInputChange={handleInputChange}
-                openWeaponModal={openWeaponModal}
-                handleBooleanChange={handleBooleanChange}
                 index={1}
               />
 
               <InventoryWeaponSection
-                formData={safeFormData}
-                handleInputChange={handleInputChange}
-                openWeaponModal={openWeaponModal}
-                handleBooleanChange={handleBooleanChange}
                 index={2}
               />
             </div>

@@ -1,16 +1,23 @@
 "use client"
 
 import type React from "react"
-import type { SheetData } from "@/lib/sheet-data"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
+import { useSheetStore } from "@/lib/sheet-store"
 
-interface ArmorSectionProps {
-  formData: SheetData
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  openArmorModal: () => void
-}
+export function ArmorSection() {
+  const { sheetData: formData, setSheetData } = useSheetStore()
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setSheetData((prev) => ({ ...prev, [name]: value }))
+  }
 
-export function ArmorSection({ formData, handleInputChange, openArmorModal }: ArmorSectionProps) {
+  const openArmorModal = () => {
+    // TODO: 这里需要实现护甲选择模态框的逻辑
+    // 暂时留空，等待后续模态框组件的迁移
+    console.log("Open armor modal")
+  }
+
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
     minFontSize: 10

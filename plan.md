@@ -35,8 +35,8 @@ This document outlines the phased migration of the character sheet's state (`she
 
 *   [x] **4. Refactor Section-Level Components:**
     *   **Target:** All section components (e.g., `header-section.tsx`, `attributes-section.tsx`, `armor-section.tsx`, `card-deck-section.tsx`, etc.).
-    *   **Completed:** `gold-section.tsx`, `hope-section.tsx`, `experience-section.tsx`, `hit-points-section.tsx`
-    *   **Remaining:** `header-section.tsx`, `attributes-section.tsx`, `armor-section.tsx`, `inventory-section.tsx`, `inventory-weapon-section.tsx`, `weapon-section.tsx`
+    *   **Completed:** `gold-section.tsx`, `hope-section.tsx`, `experience-section.tsx`, `hit-points-section.tsx`, `attributes-section.tsx`, `inventory-section.tsx`, `header-section.tsx`, `armor-section.tsx`, `inventory-weapon-section.tsx`, `weapon-section.tsx`
+    *   **Status:** ✅ All section components have been successfully migrated to Zustand!
     *   For each section component:
         *   Connect it directly to the `useSheetStore` hook.
         *   Remove the `sheetData`/`setSheetData` props.

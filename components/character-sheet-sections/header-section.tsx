@@ -2,29 +2,44 @@
 
 import type React from "react"
 import { useRef } from "react"
-import type { SheetData } from "@/lib/sheet-data"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useCardPreview } from "@/hooks/use-card-preview"
 import { SelectableCard } from "@/components/ui/selectable-card"
+import { useSheetStore } from "@/lib/sheet-store"
 
-interface HeaderSectionProps {
-  formData: SheetData
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  openProfessionModal: () => void
-  openAncestryModal: (field: string) => void
-  openCommunityModal: () => void
-  openSubclassModal: () => void
-}
-
-export function HeaderSection({
-  formData,
-  handleInputChange,
-  openProfessionModal,
-  openAncestryModal,
-  openCommunityModal,
-  openSubclassModal,
-}: HeaderSectionProps) {
+export function HeaderSection() {
+  const { sheetData: formData, setSheetData } = useSheetStore()
   const containerRef = useRef<HTMLDivElement>(null)
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setSheetData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const openProfessionModal = () => {
+    // TODO: 这里需要实现职业选择模态框的逻辑
+    // 暂时留空，等待后续模态框组件的迁移
+    console.log("Open profession modal")
+  }
+
+  const openAncestryModal = (field: string) => {
+    // TODO: 这里需要实现血统选择模态框的逻辑
+    // 暂时留空，等待后续模态框组件的迁移
+    console.log("Open ancestry modal:", field)
+  }
+
+  const openCommunityModal = () => {
+    // TODO: 这里需要实现社群选择模态框的逻辑
+    // 暂时留空，等待后续模态框组件的迁移
+    console.log("Open community modal")
+  }
+
+  const openSubclassModal = () => {
+    // TODO: 这里需要实现子职业选择模态框的逻辑
+    // 暂时留空，等待后续模态框组件的迁移
+    console.log("Open subclass modal")
+  }
+
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
     minFontSize: 10

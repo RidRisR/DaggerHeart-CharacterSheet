@@ -1,24 +1,36 @@
 "use client"
 
 import type React from "react"
-import type { SheetData } from "@/lib/sheet-data"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
+import { useSheetStore } from "@/lib/sheet-store"
 
 interface InventoryWeaponSectionProps {
-  formData: SheetData
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  openWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void
-  handleBooleanChange: (field: keyof SheetData) => void
   index: number
 }
 
 export function InventoryWeaponSection({
-  formData,
-  handleInputChange,
-  openWeaponModal,
-  handleBooleanChange,
   index,
 }: InventoryWeaponSectionProps) {
+  const { sheetData: formData, setSheetData } = useSheetStore()
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setSheetData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const openWeaponModal = (fieldName: string, slotType: "primary" | "secondary" | "inventory") => {
+    // TODO: 这里需要实现武器选择模态框的逻辑
+    // 暂时留空，等待后续模态框组件的迁移
+    console.log("Open weapon modal:", fieldName, slotType)
+  }
+
+  const handleBooleanChange = (field: string) => {
+    setSheetData((prev) => ({
+      ...prev,
+      [field]: !((prev as any)[field])
+    }))
+  }
+
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
     minFontSize: 10
@@ -88,7 +100,7 @@ export function InventoryWeaponSection({
             type="checkbox"
             id={primaryField}
             checked={!!(formData as any)[primaryField]} // Ensure value is boolean
-            onChange={() => handleBooleanChange(primaryField as keyof SheetData)}
+            onChange={() => handleBooleanChange(primaryField)}
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={primaryField} className="text-[8px]">
@@ -100,7 +112,7 @@ export function InventoryWeaponSection({
             type="checkbox"
             id={secondaryField}
             checked={!!(formData as any)[secondaryField]} // Ensure value is boolean
-            onChange={() => handleBooleanChange(secondaryField as keyof SheetData)}
+            onChange={() => handleBooleanChange(secondaryField)}
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={secondaryField} className="text-[8px]">

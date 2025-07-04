@@ -1,24 +1,31 @@
 "use client"
 
 import type React from "react"
-import type { SheetData } from "@/lib/sheet-data"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
+import { useSheetStore } from "@/lib/sheet-store"
 
 interface WeaponSectionProps {
-  formData: SheetData
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  openWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void
   isPrimary?: boolean
   fieldPrefix: string
 }
 
 export function WeaponSection({
-  formData,
-  handleInputChange,
-  openWeaponModal,
   isPrimary = false,
   fieldPrefix,
 }: WeaponSectionProps) {
+  const { sheetData: formData, setSheetData } = useSheetStore()
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setSheetData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const openWeaponModal = (fieldName: string, slotType: "primary" | "secondary" | "inventory") => {
+    // TODO: 这里需要实现武器选择模态框的逻辑
+    // 暂时留空，等待后续模态框组件的迁移
+    console.log("Open weapon modal:", fieldName, slotType)
+  }
+
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
     minFontSize: 10

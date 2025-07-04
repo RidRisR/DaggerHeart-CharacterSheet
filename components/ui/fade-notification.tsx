@@ -98,8 +98,11 @@ function FadeNotificationItem({ notification }: { notification: NotificationStat
 // 通知容器组件
 export function FadeNotificationContainer() {
   const [notificationList, setNotificationList] = useState<NotificationState[]>([])
-  
+  const [isMounted, setIsMounted] = useState(false)
+
   useEffect(() => {
+    setIsMounted(true)
+
     listeners.push(setNotificationList)
     return () => {
       const index = listeners.indexOf(setNotificationList)
@@ -108,9 +111,11 @@ export function FadeNotificationContainer() {
       }
     }
   }, [])
-  
-  if (typeof window === 'undefined') return null
-  
+
+  if (!isMounted) {
+    return null
+  }
+
   return createPortal(
     <div className="pointer-events-none">
       {notificationList.map(notification => (

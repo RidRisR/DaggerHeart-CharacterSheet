@@ -119,7 +119,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                     {displayDescription}
                 </ReactMarkdown>
             </div>
-            <div className="text-xs text-gray-400 text-right mt-2">
+            <div className="text-[8px] text-gray-400 text-right mt-2">
                 {getCardSourceDisplayName(card)}
             </div>
         </div>

@@ -215,6 +215,7 @@ export enum CardSource {
 export interface ExtendedStandardCard extends StandardCard {
   source?: CardSource;
   batchId?: string; // 自定义卡牌的批次ID
+  batchName?: string; // 自定义卡牌的批次名称
 }
 
 // Helper: 判断给定的类型ID是否是变体类型

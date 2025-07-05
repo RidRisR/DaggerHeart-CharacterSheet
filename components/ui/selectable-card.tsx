@@ -1,6 +1,7 @@
 "use client"
 
-import type { CardType, StandardCard } from "@/card/card-types"
+import type { CardType, StandardCard, ExtendedStandardCard } from "@/card/card-types"
+import { CardSource } from "@/card/card-types"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { CardContent } from "@/components/ui/card-content"
@@ -20,8 +21,19 @@ const getDisplayTypeName = (card: StandardCard) => {
     return getCardTypeName(card.type);
 };
 
+// Helper function to get card source display name
+const getCardSourceDisplayName = (card: ExtendedStandardCard): string => {
+    if (card.source === CardSource.BUILTIN) {
+        return "内置卡包";
+    }
+    if (card.source === CardSource.CUSTOM) {
+        return card.batchName || card.batchId || "自定义卡包";
+    }
+    return "内置卡包"; // 向后兼容
+};
+
 interface SelectableCardProps {
-    card: StandardCard
+    card: ExtendedStandardCard
     onClick: (cardId: string) => void; // Added onClick prop
     isSelected: boolean; // Added isSelected prop
 }
@@ -106,6 +118,9 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                 >
                     {displayDescription}
                 </ReactMarkdown>
+            </div>
+            <div className="text-xs text-gray-400 text-right mt-2">
+                {getCardSourceDisplayName(card)}
             </div>
         </div>
     )

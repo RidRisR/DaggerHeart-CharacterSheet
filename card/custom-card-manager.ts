@@ -1279,6 +1279,14 @@ export class CustomCardManager {
     }
 
     /**
+     * 获取批次名称
+     */
+    getBatchName(batchId: string): string | null {
+        const batch = this.getBatchById(batchId);
+        return batch?.name || null;
+    }
+
+    /**
      * 删除批次
      */
     removeBatch(batchId: string): boolean {

@@ -280,36 +280,45 @@ export function processCardDescription(description: string): string {
   const matches = Array.from(description.matchAll(featurePattern));
 
   if (matches.length === 0) {
-    // 如果没有特性标题，直接规范化换行符
-    return description.replace(/\n+/g, '\n');
+    // 如果没有特性标题，直接规范化换行符并清理多余的空白
+    return description.replace(/\n+/g, '\n').trim();
   }
 
   // 2. 分段处理文本
   let processed = '';
   let lastIndex = 0;
-  let isFirstFeature = true;
 
-  for (const match of matches) {
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
     const matchStart = match.index!;
     const matchEnd = matchStart + match[0].length;
 
     // 处理特性标题之前的文本
     let beforeText = description.substring(lastIndex, matchStart);
-    beforeText = beforeText.replace(/\n+/g, '\n');
 
-    // 如果不是第一个特性，在特性标题前添加段落分隔
-    if (!isFirstFeature) {
-      // 确保前面有两个换行符来分隔段落
-      if (beforeText.endsWith('\n')) {
-        beforeText = beforeText.slice(0, -1) + '\n\n';
-      } else {
-        beforeText += '\n\n';
+    // 检查特性标题是否在列表项中（包括可能的换行符）
+    const isInListItem = beforeText.match(/- \s*\n?$/);
+
+    if (isInListItem) {
+      // 如果在列表项中，移除特性标题前的换行符，保持紧凑格式
+      beforeText = beforeText.replace(/- \s*\n?$/, '- ');
+    } else {
+    // 如果不在列表项中，按原逻辑处理
+      beforeText = beforeText.replace(/\n+/g, '\n');
+
+      // 如果不是第一个特性，在特性标题前添加段落分隔
+      if (i > 0) {
+        // 确保前面有两个换行符来分隔段落
+        if (beforeText.endsWith('\n')) {
+          beforeText = beforeText.slice(0, -1) + '\n\n';
+        } else {
+          beforeText += '\n\n';
+        }
       }
     }
 
     processed += beforeText + match[0];
     lastIndex = matchEnd;
-    isFirstFeature = false;
   }
 
   // 处理最后一个特性标题之后的文本
@@ -317,5 +326,5 @@ export function processCardDescription(description: string): string {
   afterText = afterText.replace(/\n+/g, '\n');
   processed += afterText;
 
-  return processed;
+  return processed.trim();
 }

@@ -4,6 +4,7 @@
  */
 
 import type { StandardCard } from "@/card/card-types"
+import { processCardDescription } from "@/card/card-types"
 import { CustomCardManager } from "@/card/custom-card-manager"
 
 
@@ -35,7 +36,12 @@ export function convertToStandardCard(card: any): StandardCard {
     }
 
     if (card.standarized) {
-      return card as StandardCard
+      // 即使是已经标准化的卡牌，也要确保描述经过处理
+      const processedCard = { ...card } as StandardCard
+      if (processedCard.description) {
+        processedCard.description = processCardDescription(processedCard.description)
+      }
+      return processedCard
     }
 
     if (!card.id || card.id === "" || typeof card.id !== "string") {

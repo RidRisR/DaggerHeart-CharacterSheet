@@ -7,6 +7,7 @@ import { CardContent } from "@/components/ui/card-content"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import remarkBreaks from "remark-breaks"
 
 // Helper function to get display type name, moved outside of the component
 const getDisplayTypeName = (card: StandardCard) => {
@@ -101,7 +102,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                         ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
                         li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
                     }}
-                    remarkPlugins={[remarkGfm]}
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
                 >
                     {displayDescription}
                 </ReactMarkdown>

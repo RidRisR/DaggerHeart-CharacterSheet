@@ -274,11 +274,47 @@ export function isCustomCard(card: StandardCard | ExtendedStandardCard): boolean
 export function processCardDescription(description: string): string {
   if (!description) return description;
 
-  return description
-    // 首先处理四个或更多连续换行符为四个换行符（产生空行效果）
-    .replace(/\n{3,}/g, '\n\n\n\n')
-    // 然后将单个换行符替换为双换行符，但要避免影响已有的多个换行符
-    .replace(/([^\n])\n([^\n])/g, '$1\n\n$2')
-    // 在列表项前的双换行符替换为单换行符
-    .replace(/(\n\n)(?=\s*[-*+] )/g, '\n');
+  // 1. 先找到所有特性标题的位置
+  const featurePattern = /\*__.*?__\*/g;
+  const matches = Array.from(description.matchAll(featurePattern));
+
+  if (matches.length === 0) {
+    // 如果没有特性标题，直接规范化换行符
+    return description.replace(/\n+/g, '\n');
+  }
+
+  // 2. 分段处理文本
+  let processed = '';
+  let lastIndex = 0;
+  let isFirstFeature = true;
+
+  for (const match of matches) {
+    const matchStart = match.index!;
+    const matchEnd = matchStart + match[0].length;
+
+    // 处理特性标题之前的文本
+    let beforeText = description.substring(lastIndex, matchStart);
+    beforeText = beforeText.replace(/\n+/g, '\n');
+
+    // 如果不是第一个特性，在特性标题前添加段落分隔
+    if (!isFirstFeature) {
+      // 确保前面有两个换行符来分隔段落
+      if (beforeText.endsWith('\n')) {
+        beforeText = beforeText.slice(0, -1) + '\n\n';
+      } else {
+        beforeText += '\n\n';
+      }
+    }
+
+    processed += beforeText + match[0];
+    lastIndex = matchEnd;
+    isFirstFeature = false;
+  }
+
+  // 处理最后一个特性标题之后的文本
+  let afterText = description.substring(lastIndex);
+  afterText = afterText.replace(/\n+/g, '\n');
+  processed += afterText;
+
+  return processed;
 }

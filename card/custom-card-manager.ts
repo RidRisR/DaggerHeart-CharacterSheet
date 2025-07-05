@@ -22,7 +22,8 @@ import {
     BatchStats,
     CardSource,
     ExtendedStandardCard,
-    CardType // Assuming CardType enum might be useful here or for keys
+    CardType, // Assuming CardType enum might be useful here or for keys
+    processCardDescription
 } from './card-types';
 // 移除对 builtin-card-data.ts 的依赖
 const BUILTIN_BATCH_ID = "SYSTEM_BUILTIN_CARDS";
@@ -837,11 +838,21 @@ export class CustomCardManager {
             if (batchData && batchData.cards) {
                 const isSystemBatch = batchInfo.isSystemBatch === true;
 
-                const cardsWithBatchId = batchData.cards.map(card => ({
-                    ...card,
-                    source: isSystemBatch ? CardSource.BUILTIN : CardSource.CUSTOM,
-                    batchId
-                }));
+                const cardsWithBatchId = batchData.cards.map(card => {
+                    // 确保每张卡牌的描述都经过 processCardDescription 处理
+                    const processedCard = {
+                        ...card,
+                        source: isSystemBatch ? CardSource.BUILTIN : CardSource.CUSTOM,
+                        batchId
+                    };
+
+                    // 应用文本处理函数到描述字段
+                    if (processedCard.description) {
+                        processedCard.description = processCardDescription(processedCard.description);
+                    }
+
+                    return processedCard;
+                });
                 this.customCards.push(...cardsWithBatchId);
                 console.log(`[CustomCardManager] 从批次 ${batchId} (${isSystemBatch ? '系统' : '自定义'}) 加载了 ${cardsWithBatchId.length} 张卡牌`);
             } else {

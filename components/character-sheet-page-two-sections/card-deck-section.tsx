@@ -156,7 +156,7 @@ function Card({
       {/* Hover preview */}
       {hoveredCard === index && card?.name && (
         <div
-          className="absolute z-50 pointer-events-none"
+          className="absolute z-50 pointer-events-none w-96"
           style={getPreviewPosition(index)}
         >
           <SelectableCard

@@ -275,7 +275,10 @@ export function processCardDescription(description: string): string {
   if (!description) return description;
 
   return description
-    .replace(/\n/g, '\n\n')           // 将所有单个换行符替换为双换行符
-    .replace(/\n{3,}/g, '\n\n\n\n')      // 将连续的多个换行符统一替换为双换行符
-    .replace(/(\n\n)(?=\s*[-*+] )/g, '\n'); // 在列表项前的双换行符替换为单换行符
+    // 首先处理四个或更多连续换行符为四个换行符（产生空行效果）
+    .replace(/\n{3,}/g, '\n\n\n\n')
+    // 然后将单个换行符替换为双换行符，但要避免影响已有的多个换行符
+    .replace(/([^\n])\n([^\n])/g, '$1\n\n$2')
+    // 在列表项前的双换行符替换为单换行符
+    .replace(/(\n\n)(?=\s*[-*+] )/g, '\n');
 }

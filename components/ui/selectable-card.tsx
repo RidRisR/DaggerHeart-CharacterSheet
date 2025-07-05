@@ -3,8 +3,21 @@
 import type { CardType, StandardCard } from "@/card/card-types"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
+import { CardContent } from "@/components/ui/card-content"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+
+// Helper function to get display type name, moved outside of the component
+const getDisplayTypeName = (card: StandardCard) => {
+    if (isVariantCard(card)) {
+        const realType = getVariantRealType(card);
+        if (realType) {
+            return getCardTypeName(realType);
+        }
+    }
+    return getCardTypeName(card.type);
+};
 
 interface SelectableCardProps {
     card: StandardCard
@@ -49,17 +62,6 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
     const displayName = card.name || "未命名卡牌";
     const displayDescription = card.description || "无描述。";
 
-    // Enhanced card type name display for variants
-    const displayTypeName = (() => {
-        if (isVariantCard(card)) {
-            const realType = getVariantRealType(card);
-            if (realType) {
-                return getCardTypeName(realType);
-            }
-        }
-        return getCardTypeName(card.type);
-    })();
-
     // Get display items, providing empty strings as fallbacks
     const displayItem1 = card.cardSelectDisplay?.item1 || "";
     const displayItem2 = card.cardSelectDisplay?.item2 || "";
@@ -80,7 +82,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
         >
             <div className="flex items-center justify-between mb-1">
                 <span className="font-semibold text-sm sm:text-base truncate max-w-[60%] text-gray-800" title={displayName}>{displayName}</span>
-                <span className="text-xs text-gray-500 px-1 sm:px-2 py-0.5 rounded bg-gray-100 shrink-0">{displayTypeName}</span>
+                <span className="text-xs text-gray-500 px-1 sm:px-2 py-0.5 rounded bg-gray-100 shrink-0">{getDisplayTypeName(card)}</span>
             </div>
             {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
                 <div className="flex flex-row gap-1 sm:gap-2 text-xs font-mono mb-2 pb-2 border-b border-dashed border-gray-300 flex-wrap">
@@ -90,13 +92,16 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                     {displayItem4 && <div className="px-1 sm:px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm text-xs">{displayItem4}</div>}
                 </div>
             )}
-            <div className="text-xs text-gray-600 leading-snug mb-1 flex-1 overflow-hidden">{/*注意添加了flex-1和overflow-hidden*/}
+            <div className="text-xs text-gray-600 leading-snug mb-1 flex-1 overflow-hidden">
+                {card.type !== 'profession' && card.hint && <p className="italic text-gray-400 mb-4">{card.hint}</p>}
                 <ReactMarkdown skipHtml
                     components={{
+                        p: ({ children }) => <p className="mb-2">{children}</p>,
                         ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
                         ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
                         li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
                     }}
+                    remarkPlugins={[remarkGfm]}
                 >
                     {displayDescription}
                 </ReactMarkdown>

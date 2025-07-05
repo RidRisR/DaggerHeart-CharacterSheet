@@ -192,7 +192,7 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
                 </ReactMarkdown>
             </div>
             {showSource && (
-                <div className="text-xs text-gray-400 text-right mt-2">
+                <div className="text-[10px] text-gray-400 text-right mt-2">
                     {cardSource}
                 </div>
             )}

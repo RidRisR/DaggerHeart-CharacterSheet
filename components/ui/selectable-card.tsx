@@ -30,7 +30,6 @@ const getCardSourceDisplayName = async (card: StandardCard | ExtendedStandardCar
             return "内置卡包";
         }
         if (card.source === CardSource.CUSTOM) {
-            console.log("[SelectableCard] 使用自定义卡牌来源信息", card);
             // 如果已经有 batchName，直接使用
             if (card.batchName) {
                 return card.batchName;

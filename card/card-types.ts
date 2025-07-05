@@ -280,8 +280,8 @@ export function processCardDescription(description: string): string {
   const matches = Array.from(description.matchAll(featurePattern));
 
   if (matches.length === 0) {
-    // 如果没有特性标题，直接规范化换行符并清理多余的空白
-    return description.replace(/\n+/g, '\n').trim();
+    // 如果没有特性标题，处理列表项后的段落分隔
+    return processListItemParagraphs(description);
   }
 
   // 2. 分段处理文本
@@ -303,7 +303,7 @@ export function processCardDescription(description: string): string {
       // 如果在列表项中，移除特性标题前的换行符，保持紧凑格式
       beforeText = beforeText.replace(/- \s*\n?$/, '- ');
     } else {
-    // 如果不在列表项中，按原逻辑处理
+      // 如果不在列表项中，按原逻辑处理
       beforeText = beforeText.replace(/\n+/g, '\n');
 
       // 如果不是第一个特性，在特性标题前添加段落分隔
@@ -326,5 +326,20 @@ export function processCardDescription(description: string): string {
   afterText = afterText.replace(/\n+/g, '\n');
   processed += afterText;
 
-  return processed.trim();
+  // 最后处理列表项后的段落分隔
+  return processListItemParagraphs(processed.trim());
+}
+
+/**
+ * 处理列表项后的段落分隔
+ * 确保列表项结束后的新段落有适当的分隔
+ */
+function processListItemParagraphs(text: string): string {
+  if (!text) return text;
+
+  // 匹配列表项结束后直接跟着的文本段落
+  // 列表项模式：以 "- " 开始的行，结束后换行跟着非列表项文本
+  const listItemEndPattern = /(-\s[^\n]+)\n([^\n-][^\n]*)/g;
+
+  return text.replace(listItemEndPattern, '$1\n\n$2');
 }

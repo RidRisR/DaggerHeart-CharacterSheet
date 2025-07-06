@@ -177,7 +177,6 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
                 </div>
             )}
             <div className="text-xs text-gray-600 leading-snug mb-1 flex-1 overflow-hidden">
-                {card.type !== 'profession' && card.hint && <p className="italic text-gray-400 mb-4">{card.hint}</p>}
                 <ReactMarkdown skipHtml
                     components={{
                         p: ({ children }) => <p className="first:mt-0 mb-0 mt-3">{children}</p>,
@@ -190,11 +189,12 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
                     {displayDescription}
                 </ReactMarkdown>
             </div>
-            {showSource && (
-                <div className="text-[10px] text-gray-400 text-right mt-2">
-                    {cardSource}
+            {(card.type !== 'profession' && card.hint) || showSource ? (
+                <div className="text-[10px] text-gray-400 mt-2">
+                    {card.type !== 'profession' && card.hint && <div className="italic text-left">{card.hint}</div>}
+                    {showSource && <div className="text-right">{cardSource}</div>}
                 </div>
-            )}
+            ) : null}
         </div>
     )
 }

@@ -31,7 +31,6 @@ export const CardContent: React.FC<CardContentProps> = ({ card, className = "" }
             )}
             {card.description && (
                 <div className="card-description text-xs text-gray-800 leading-snug flex-1">
-                    {card.type !== 'profession' && card.hint && <p className="italic text-gray-400 mb-4">{card.hint}</p>}
                     <ReactMarkdown
                         skipHtml
                         remarkPlugins={[remarkGfm]}
@@ -44,6 +43,11 @@ export const CardContent: React.FC<CardContentProps> = ({ card, className = "" }
                     >
                         {card.description}
                     </ReactMarkdown>
+                    {(card.type !== 'profession' && card.hint) && (
+                        <div className="text-[10px] text-gray-400 mt-2">
+                            <div className="italic text-left">{card.hint}</div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

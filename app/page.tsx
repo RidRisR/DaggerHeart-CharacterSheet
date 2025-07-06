@@ -16,6 +16,7 @@ import CharacterSheetPageFive from "@/components/character-sheet-page-five"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
+import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
 
 // 内联图标组件
 const EyeIcon = () => (
@@ -428,6 +429,58 @@ export default function Home() {
     }
   }
 
+  // 快速导出功能 - 通过切换到预览页面实现
+  const handleQuickExportPDF = async () => {
+    try {
+      console.log('[App] 快速PDF导出 - 进入预览页面')
+      // 设置标题
+      await handlePrintAll()
+      // 短暂延迟后自动触发打印
+      setTimeout(() => {
+        window.print()
+        // 打印完成后自动返回主页面
+        setTimeout(() => {
+          setIsPrintingAll(false)
+        }, 500)
+      }, 500)
+    } catch (error) {
+      console.error('[App] 快速PDF导出失败:', error)
+      alert('PDF导出失败: ' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
+
+  const handleQuickExportHTML = async () => {
+    try {
+      console.log('[App] 快速HTML导出 - 进入预览页面')
+      // 进入预览页面
+      await handlePrintAll()
+      // 短暂延迟后调用HTML导出并返回
+      setTimeout(async () => {
+        await handleExportHTML()
+        setIsPrintingAll(false) // 返回主页面
+      }, 500)
+    } catch (error) {
+      console.error('[App] 快速HTML导出失败:', error)
+      alert('HTML导出失败: ' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
+
+  const handleQuickExportJSON = async () => {
+    try {
+      console.log('[App] 快速JSON导出 - 进入预览页面')
+      // 进入预览页面
+      await handlePrintAll()
+      // 短暂延迟后调用JSON导出并返回
+      setTimeout(() => {
+        handleExportJSON()
+        setIsPrintingAll(false) // 返回主页面
+      }, 500)
+    } catch (error) {
+      console.error('[App] 快速JSON导出失败:', error)
+      alert('JSON导出失败: ' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
+
   // Effect for handling "Print All Pages" - 移除自动打印功能
   // useEffect(() => {
   //   if (isPrintingAll) {
@@ -445,6 +498,61 @@ export default function Home() {
   // 切换建卡指引显示状态
   const toggleGuide = () => {
     setIsGuideOpen(!isGuideOpen)
+  }
+
+  // 快速新建存档
+  const handleQuickCreateArchive = () => {
+    const saveName = prompt('请输入存档名称:')
+    if (saveName && saveName.trim()) {
+      createNewCharacterHandler(saveName.trim())
+    }
+  }
+
+  // 从HTML导入新建存档
+  const handleQuickImportFromHTML = () => {
+    // 创建文件输入元素
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.html'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (file) {
+        try {
+          const { importCharacterFromHTMLFile } = await import('@/lib/html-importer')
+          const result = await importCharacterFromHTMLFile(file)
+          
+          if (result.success && result.data) {
+            // 从导入的数据中提取角色名称作为默认存档名
+            const characterName = result.data.name || "未命名角色"
+            const defaultSaveName = `${characterName} (HTML导入)`
+            
+            // 提示用户输入存档名称
+            const saveName = prompt('请输入新存档的名称:', defaultSaveName)
+            if (saveName && saveName.trim()) {
+              // 先创建新存档
+              const success = createNewCharacterHandler(saveName.trim())
+              if (success) {
+                // 创建成功后导入数据
+                setFormData(result.data)
+                if (result.warnings && result.warnings.length > 0) {
+                  alert(`HTML导入成功并创建新存档"${saveName}"，但有以下警告：\n${result.warnings.join('\n')}`)
+                } else {
+                  alert(`HTML导入成功并创建新存档"${saveName}"`)
+                }
+              } else {
+                alert('创建新存档失败，可能已达到存档数量上限')
+              }
+            }
+          } else {
+            alert(`HTML导入失败：${result.error}`)
+          }
+        } catch (error) {
+          console.error('HTML导入失败:', error)
+          alert('HTML导入失败: ' + (error instanceof Error ? error.message : '未知错误'))
+        }
+      }
+    }
+    input.click()
   }
 
   // 键盘快捷键 - Ctrl+数字键快速切换存档 + ESC退出预览
@@ -687,12 +795,54 @@ export default function Home() {
           </svg>
           建卡指引
         </button>
-        <Button onClick={() => handlePrintAll().catch(console.error)} className="bg-gray-800 hover:bg-gray-700 focus:outline-none">
-          导出预览
-        </Button>
-        <Button onClick={openCharacterManagementModal} className="bg-gray-800 hover:bg-gray-700 focus:outline-none">
-          存档管理
-        </Button>
+
+        {/* 导出预览按钮 - 带悬浮菜单 */}
+        <HoverMenu
+          trigger={
+            <Button
+              onClick={() => handlePrintAll().catch(console.error)}
+              className="bg-gray-800 hover:bg-gray-700 focus:outline-none w-full"
+            >
+              导出页面
+            </Button>
+          }
+        >
+          <HoverMenuItem onClick={handleQuickExportPDF}>
+            导出为PDF
+          </HoverMenuItem>
+          <HoverMenuItem onClick={handleQuickExportHTML}>
+            导出为HTML
+          </HoverMenuItem>
+          <HoverMenuItem onClick={handleQuickExportJSON}>
+            导出为JSON
+          </HoverMenuItem>
+        </HoverMenu>
+
+        {/* 存档管理按钮 - 带悬浮菜单 */}
+        <HoverMenu
+          trigger={
+            <Button
+              onClick={openCharacterManagementModal}
+              className="bg-gray-800 hover:bg-gray-700 focus:outline-none w-full"
+            >
+              存档管理
+            </Button>
+          }
+        >
+          <HoverMenuItem
+            onClick={handleQuickCreateArchive}
+            disabled={characterList.length >= MAX_CHARACTERS}
+          >
+            新建存档
+          </HoverMenuItem>
+          <HoverMenuItem
+            onClick={handleQuickImportFromHTML}
+            disabled={characterList.length >= MAX_CHARACTERS}
+          >
+            从HTML新建
+          </HoverMenuItem>
+        </HoverMenu>
+
         <Button
           onClick={() => {
             window.location.href = `/DaggerHeart-CharacterSheet/card-manager`;

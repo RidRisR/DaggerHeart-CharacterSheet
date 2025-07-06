@@ -36,9 +36,9 @@ export const CardContent: React.FC<CardContentProps> = ({ card, className = "" }
                         skipHtml
                         remarkPlugins={[remarkGfm]}
                         components={{
-                            p: ({ children }) => <p className="mb-2">{children}</p>,
+                            p: ({ children }) => <p className="first:mt-0 mb-0 mt-3">{children}</p>,
                             ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
-                            ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
+                            ol: ({ children }) => <ol className="list-decimal pl-4 mb-0">{children}</ol>,
                             li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
                         }}
                     >

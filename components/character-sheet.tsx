@@ -144,40 +144,55 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
     // 同步职业卡（位置0）
     if (safeFormData.professionRef?.id) {
-      const professionCard = getProfessionById(safeFormData.professionRef.id);
-      newCards[0] = professionCard;
+      // 仅在ID不匹配时才更新
+      if (newCards[0]?.id !== safeFormData.professionRef.id) {
+        const professionCard = getProfessionById(safeFormData.professionRef.id);
+        newCards[0] = professionCard;
+      }
     } else {
       newCards[0] = createEmptyCard();
     }
 
     // 同步子职业卡（位置1）
     if (safeFormData.subclassRef?.id) {
-      const subclassCard = getSubclassById(safeFormData.subclassRef.id);
-      newCards[1] = subclassCard;
+      // 仅在ID不匹配时才更新
+      if (newCards[1]?.id !== safeFormData.subclassRef.id) {
+        const subclassCard = getSubclassById(safeFormData.subclassRef.id);
+        newCards[1] = subclassCard;
+      }
     } else {
       newCards[1] = createEmptyCard();
     }
 
     // 同步血统卡1（位置2）
     if (safeFormData.ancestry1Ref?.id) {
-      const ancestry1Card = getAncestryById(safeFormData.ancestry1Ref.id);
-      newCards[2] = ancestry1Card;
+      // 仅在ID不匹配时才更新
+      if (newCards[2]?.id !== safeFormData.ancestry1Ref.id) {
+        const ancestry1Card = getAncestryById(safeFormData.ancestry1Ref.id);
+        newCards[2] = ancestry1Card;
+      }
     } else {
       newCards[2] = createEmptyCard();
     }
 
     // 同步血统卡2（位置3）
     if (safeFormData.ancestry2Ref?.id) {
-      const ancestry2Card = getAncestryById(safeFormData.ancestry2Ref.id);
-      newCards[3] = ancestry2Card;
+      // 仅在ID不匹配时才更新
+      if (newCards[3]?.id !== safeFormData.ancestry2Ref.id) {
+        const ancestry2Card = getAncestryById(safeFormData.ancestry2Ref.id);
+        newCards[3] = ancestry2Card;
+      }
     } else {
       newCards[3] = createEmptyCard();
     }
 
     // 同步社群卡（位置4）
     if (safeFormData.communityRef?.id) {
-      const communityCard = getCommunityById(safeFormData.communityRef.id);
-      newCards[4] = communityCard;
+      // 仅在ID不匹配时才更新
+      if (newCards[4]?.id !== safeFormData.communityRef.id) {
+        const communityCard = getCommunityById(safeFormData.communityRef.id);
+        newCards[4] = communityCard;
+      }
     } else {
       newCards[4] = createEmptyCard();
     }

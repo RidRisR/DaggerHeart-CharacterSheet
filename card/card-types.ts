@@ -215,6 +215,7 @@ export enum CardSource {
 export interface ExtendedStandardCard extends StandardCard {
   source?: CardSource;
   batchId?: string; // 自定义卡牌的批次ID
+  batchName?: string; // 自定义卡牌的批次名称
 }
 
 // Helper: 判断给定的类型ID是否是变体类型
@@ -274,8 +275,71 @@ export function isCustomCard(card: StandardCard | ExtendedStandardCard): boolean
 export function processCardDescription(description: string): string {
   if (!description) return description;
 
-  return description
-    .replace(/\n/g, '\n\n')           // 将所有单个换行符替换为双换行符
-    .replace(/\n{3,}/g, '\n\n\n\n')      // 将连续的多个换行符统一替换为双换行符
-    .replace(/(\n\n)(?=\s*[-*+] )/g, '\n'); // 在列表项前的双换行符替换为单换行符
+  // 1. 先找到所有特性标题的位置
+  const featurePattern = /\*__.*?__\*/g;
+  const matches = Array.from(description.matchAll(featurePattern));
+
+  if (matches.length === 0) {
+    // 如果没有特性标题，处理列表项后的段落分隔
+    return processListItemParagraphs(description);
+  }
+
+  // 2. 分段处理文本
+  let processed = '';
+  let lastIndex = 0;
+
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
+    const matchStart = match.index!;
+    const matchEnd = matchStart + match[0].length;
+
+    // 处理特性标题之前的文本
+    let beforeText = description.substring(lastIndex, matchStart);
+
+    // 检查特性标题是否在列表项中（包括可能的换行符）
+    const isInListItem = beforeText.match(/- \s*\n?$/);
+
+    if (isInListItem) {
+      // 如果在列表项中，移除特性标题前的换行符，保持紧凑格式
+      beforeText = beforeText.replace(/- \s*\n?$/, '- ');
+    } else {
+      // 如果不在列表项中，按原逻辑处理
+      beforeText = beforeText.replace(/\n+/g, '\n');
+
+      // 如果不是第一个特性，在特性标题前添加段落分隔
+      if (i > 0) {
+        // 确保前面有两个换行符来分隔段落
+        if (beforeText.endsWith('\n')) {
+          beforeText = beforeText.slice(0, -1) + '\n\n';
+        } else {
+          beforeText += '\n\n';
+        }
+      }
+    }
+
+    processed += beforeText + match[0];
+    lastIndex = matchEnd;
+  }
+
+  // 处理最后一个特性标题之后的文本
+  let afterText = description.substring(lastIndex);
+  afterText = afterText.replace(/\n+/g, '\n');
+  processed += afterText;
+
+  // 最后处理列表项后的段落分隔
+  return processListItemParagraphs(processed.trim());
+}
+
+/**
+ * 处理列表项后的段落分隔
+ * 确保列表项结束后的新段落有适当的分隔
+ */
+function processListItemParagraphs(text: string): string {
+  if (!text) return text;
+
+  // 匹配列表项结束后直接跟着的文本段落
+  // 列表项模式：以 "- " 开始的行，结束后换行跟着非列表项文本
+  const listItemEndPattern = /(-\s[^\n]+)\n([^\n-][^\n]*)/g;
+
+  return text.replace(listItemEndPattern, '$1\n\n$2');
 }

@@ -96,7 +96,17 @@ export async function getAllStandardCardsAsync(): Promise<ExtendedStandardCard[]
       const unifiedCards = customCardManager.getAllCards();
       if (unifiedCards.length > 0) {
         console.log(`[getAllStandardCardsAsync] 使用统一系统，卡牌数量: ${unifiedCards.length}`);
-        return unifiedCards;
+        
+        // 为自定义卡牌添加 batchName 字段
+        const cardsWithBatchNames = unifiedCards.map(card => {
+          if (card.source === CardSource.CUSTOM && card.batchId) {
+            const batchName = customCardManager.getBatchName(card.batchId);
+            return { ...card, batchName: batchName || undefined };
+          }
+          return card;
+        });
+        
+        return cardsWithBatchNames;
       }
     } catch (error) {
       console.warn('[getAllStandardCardsAsync] 统一系统初始化失败', error);
@@ -114,7 +124,17 @@ export async function getStandardCardsByTypeAsync(typeId: CardType): Promise<Ext
       await customCardManager.ensureInitialized();
       const unifiedCards = customCardManager.getAllCardsByType(typeId);
       console.log(`[getStandardCardsByTypeAsync] 使用统一系统，${typeId}类型卡牌数量: ${unifiedCards.length}`);
-      return unifiedCards;
+      
+      // 为自定义卡牌添加 batchName 字段
+      const cardsWithBatchNames = unifiedCards.map(card => {
+        if (card.source === CardSource.CUSTOM && card.batchId) {
+          const batchName = customCardManager.getBatchName(card.batchId);
+          return { ...card, batchName: batchName || undefined };
+        }
+        return card;
+      });
+      
+      return cardsWithBatchNames;
     } catch (error) {
       console.warn(`[getStandardCardsByTypeAsync] 统一系统初始化失败，回退到常量 (${typeId}):`, error);
     }
@@ -195,6 +215,11 @@ export {
   CardType,
   CardSource,
 }
+
+// 卡包名称查询函数
+export const getBatchName = (batchId: string): string | null => {
+  return customCardManager.getBatchName(batchId);
+};
 
 // 单独导出类型
 export type {

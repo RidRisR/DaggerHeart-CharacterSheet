@@ -1,20 +1,105 @@
 "use client"
 
-import type { CardType, StandardCard } from "@/card/card-types"
+import type { CardType, StandardCard, ExtendedStandardCard } from "@/card/card-types"
+import { CardSource } from "@/card/card-types"
+import { getAllStandardCardsAsync, getBatchName } from "@/card"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
+import { CardContent } from "@/components/ui/card-content"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import remarkBreaks from "remark-breaks"
+
+// Helper function to get display type name, moved outside of the component
+const getDisplayTypeName = (card: StandardCard) => {
+    if (isVariantCard(card)) {
+        const realType = getVariantRealType(card);
+        if (realType) {
+            return getCardTypeName(realType);
+        }
+    }
+    return getCardTypeName(card.type);
+};
+
+// Helper function to get card source display name
+const getCardSourceDisplayName = async (card: StandardCard | ExtendedStandardCard): Promise<string> => {
+    // 如果已经有来源信息，直接使用
+    if (hasSourceInfo(card)) {
+        if (card.source === CardSource.BUILTIN) {
+            return "内置卡包";
+        }
+        if (card.source === CardSource.CUSTOM) {
+            // 如果已经有 batchName，直接使用
+            if (card.batchName) {
+                return card.batchName;
+            }
+            // 如果没有 batchName 但有 batchId，通过 getBatchName 获取名称
+            if (card.batchId) {
+                const batchName = getBatchName(card.batchId);
+                if (batchName) {
+                    return batchName;
+                }
+
+                // 如果 getBatchName 获取失败，与 allCards 对比查找同 ID 卡牌
+                try {
+                    const allCards = await getAllStandardCardsAsync();
+                    const matchedCard = allCards.find(c => c.id === card.id);
+                    if (matchedCard && matchedCard.batchName) {
+                        return matchedCard.batchName;
+                    }
+                    if (matchedCard && matchedCard.batchId) {
+                        return matchedCard.batchId;
+                    }
+                } catch (error) {
+                    console.warn("[SelectableCard] 通过 allCards 查找卡牌失败:", error);
+                }
+
+                return "卡包ID不存在";
+            }
+            return "自定义卡包";
+        }
+        return "内置卡包";
+    }
+
+    // 通过ID在全局卡牌库中查找匹配的卡牌
+    try {
+        const allCards = await getAllStandardCardsAsync();
+        const matchedCard = allCards.find(c => c.id === card.id);
+
+        if (matchedCard && matchedCard.source) {
+            if (matchedCard.source === CardSource.BUILTIN) {
+                return "内置卡包";
+            }
+            if (matchedCard.source === CardSource.CUSTOM) {
+                return matchedCard.batchName || matchedCard.batchId || "自定义卡包";
+            }
+        }
+
+        // 如果找不到匹配的卡牌
+        return "未知来源";
+    } catch (error) {
+        console.warn("[SelectableCard] 获取卡牌来源信息失败:", error);
+        return "未知来源";
+    }
+};
+
+// 辅助函数：检查卡牌是否有来源信息
+const hasSourceInfo = (card: any): card is ExtendedStandardCard => {
+    return 'source' in card && card.source !== undefined;
+};
 
 interface SelectableCardProps {
-    card: StandardCard
+    card: ExtendedStandardCard | StandardCard
     onClick: (cardId: string) => void; // Added onClick prop
     isSelected: boolean; // Added isSelected prop
+    showSource?: boolean; // 新增：是否显示来源，默认为 true
 }
 
-export function SelectableCard({ card, onClick, isSelected }: SelectableCardProps) { // Added isSelected to props
+export function SelectableCard({ card, onClick, isSelected, showSource = true }: SelectableCardProps) { // Added isSelected to props
     const [isHovered, setIsHovered] = useState(false)
     const [isAltPressed, setIsAltPressed] = useState(false)
+    const [cardSource, setCardSource] = useState<string>("加载中...")
     const cardRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
@@ -39,6 +124,18 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
         }
     }, [])
 
+    // 异步获取卡牌来源信息
+    useEffect(() => {
+        if (!showSource) return;
+
+        const fetchCardSource = async () => {
+            const source = await getCardSourceDisplayName(card);
+            setCardSource(source);
+        };
+
+        fetchCardSource();
+    }, [card.id, showSource]);
+
     if (!card) {
         console.warn("[SelectableCard] Card prop is null or undefined.")
         return null
@@ -48,17 +145,6 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
     // Prepare derived values for display, handling potential undefined fields and fallbacks
     const displayName = card.name || "未命名卡牌";
     const displayDescription = card.description || "无描述。";
-
-    // Enhanced card type name display for variants
-    const displayTypeName = (() => {
-        if (isVariantCard(card)) {
-            const realType = getVariantRealType(card);
-            if (realType) {
-                return getCardTypeName(realType);
-            }
-        }
-        return getCardTypeName(card.type);
-    })();
 
     // Get display items, providing empty strings as fallbacks
     const displayItem1 = card.cardSelectDisplay?.item1 || "";
@@ -80,7 +166,7 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
         >
             <div className="flex items-center justify-between mb-1">
                 <span className="font-semibold text-sm sm:text-base truncate max-w-[60%] text-gray-800" title={displayName}>{displayName}</span>
-                <span className="text-xs text-gray-500 px-1 sm:px-2 py-0.5 rounded bg-gray-100 shrink-0">{displayTypeName}</span>
+                <span className="text-xs text-gray-500 px-1 sm:px-2 py-0.5 rounded bg-gray-100 shrink-0">{getDisplayTypeName(card)}</span>
             </div>
             {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
                 <div className="flex flex-row gap-1 sm:gap-2 text-xs font-mono mb-2 pb-2 border-b border-dashed border-gray-300 flex-wrap">
@@ -90,17 +176,25 @@ export function SelectableCard({ card, onClick, isSelected }: SelectableCardProp
                     {displayItem4 && <div className="px-1 sm:px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm text-xs">{displayItem4}</div>}
                 </div>
             )}
-            <div className="text-xs text-gray-600 leading-snug mb-1 flex-1 overflow-hidden">{/*注意添加了flex-1和overflow-hidden*/}
+            <div className="text-xs text-gray-600 leading-snug mb-1 flex-1 overflow-hidden">
                 <ReactMarkdown skipHtml
                     components={{
+                        p: ({ children }) => <p className="first:mt-0 mb-0 mt-3">{children}</p>,
                         ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
-                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
+                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-0">{children}</ol>,
                         li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
                     }}
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
                 >
                     {displayDescription}
                 </ReactMarkdown>
             </div>
+            {(card.type !== 'profession' && card.hint) || showSource ? (
+                <div className="text-[10px] text-gray-400 mt-2">
+                    {card.type !== 'profession' && card.hint && <div className="italic text-left">{card.hint}</div>}
+                    {showSource && <div className="text-right">{cardSource}</div>}
+                </div>
+            ) : null}
         </div>
     )
 }

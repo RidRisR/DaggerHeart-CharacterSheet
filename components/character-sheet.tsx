@@ -883,6 +883,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
               <ExperienceSection formData={safeFormData} setFormData={setFormData} />
 
               {/* Profession Description */}
+              <h3 className="text-xs font-bold text-center">职业特性</h3>
               <ProfessionDescriptionSection description={safeFormData.cards[0]?.description} />
             </div>
 

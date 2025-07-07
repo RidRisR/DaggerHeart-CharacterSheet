@@ -19,7 +19,7 @@ export function ExperienceSection({ formData, setFormData }: ExperienceSectionPr
   const experienceValues = formData.experienceValues || ["", "", "", "", ""]
 
   return (
-    <div className="py-1 mb-2">
+    <div className="py-1">
       <h3 className="text-xs font-bold text-center">经历</h3>
 
       <div className="space-y-1">

@@ -13,7 +13,7 @@ const ProfessionDescriptionSection: React.FC<ProfessionDescriptionSectionProps> 
     }
 
     return (
-        <div className="border-2 border-gray-300 rounded-lg p-2 text-xs markdown-content">
+        <div className="border-2 border-gray-300 rounded-lg p-2 text-xs markdown-content h-64">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkBreaks]}
                 components={{

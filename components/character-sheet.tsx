@@ -772,7 +772,7 @@ export default function CharacterSheet() {
       {/* 固定位置的按钮 - 移除建卡指引按钮，因为已经移到父组件 */}
       <div></div>
 
-      <div className="w-full max-w-[210mm] mx-auto my-4">
+      <div className="w-full max-w-[210mm] mx-auto">
         <div
           className="a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
           style={{ width: "210mm" }}

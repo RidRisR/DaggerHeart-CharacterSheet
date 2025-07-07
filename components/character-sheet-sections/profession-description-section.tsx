@@ -17,13 +17,10 @@ const ProfessionDescriptionSection: React.FC<ProfessionDescriptionSectionProps> 
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkBreaks]}
                 components={{
-                    p: ({ node, ...props }) => <p className="mb-1" {...props} />,
-                    ul: ({ node, ...props }) => <ul className="list-disc list-inside" {...props} />,
-                    li: ({ node, ...props }) => <li className="ml-1" {...props} />,
-                    strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
-                    em: ({ node, ...props }) => <em className="italic" {...props} />,
-                    thead: ({ node, ...props }) => <thead className="bg-gray-200" {...props} />,
-                    tbody: ({ node, ...props }) => <tbody {...props} />,
+                    p: ({ children }) => <p className="first:mt-0 mb-0 mt-0.5">{children}</p>,
+                    ul: ({ children }) => <ul className="list-disc pl-4 mb-0">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal pl-4 mb-0">{children}</ol>,
+                    li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
                 }}
             >
                 {description}

@@ -20,7 +20,7 @@ export function ExperienceSection({ formData, setFormData }: ExperienceSectionPr
 
   return (
     <div className="py-1 mb-2">
-      <h3 className="text-xs font-bold text-center mb-1">经历</h3>
+      <h3 className="text-xs font-bold text-center">经历</h3>
 
       <div className="space-y-1">
         {experienceTexts.map((exp: string, i: number) => (

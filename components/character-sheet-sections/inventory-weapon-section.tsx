@@ -32,8 +32,7 @@ export function InventoryWeaponSection({
   const secondaryField = `inventoryWeapon${index}Secondary`
 
   return (
-    <div className="py-1 mb-2">
-      <h3 className="text-xs font-bold text-center mb-1">库存武器</h3>
+    <div className="py-1 mb-1">
 
       <div className="grid grid-cols-3 gap-1">
         <div className="col-span-1">

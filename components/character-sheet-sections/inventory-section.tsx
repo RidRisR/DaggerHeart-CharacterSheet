@@ -21,7 +21,7 @@ export function InventorySection({ formData, setFormData }: InventorySectionProp
 
   return (
     <div className="py-1 mb-2">
-      <h3 className="text-xs font-bold text-center mb-1">库存</h3>
+      <h3 className="text-xs font-bold text-center">库存</h3>
 
       <div className="space-y-0.5">
         {safeInventory.slice(0, 5).map((item: string, i: number) => (

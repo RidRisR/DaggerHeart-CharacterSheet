@@ -16,12 +16,9 @@ export function AttributesSection({
   handleSpellcastingToggle,
 }: AttributesSectionProps) {
   return (
-    <div className="space-y-2">
-      <div className="mb-2">
-        <h3 className="text-xs font-bold text-center mb-1">属性</h3>
-      </div>
+    <div className="space-y-1">
 
-      <div className="grid grid-cols-3 gap-x-2 gap-y-2">
+      <div className="grid grid-cols-3 gap-x-2 gap-y-1">
         {[
           { name: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },
           { name: "力量", key: "strength", skills: ["举起", "猛击", "擒抱"] },

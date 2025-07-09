@@ -7,7 +7,7 @@ export function GoldSection() {
   const { updateGold } = useSheetStore()
 
   const handleCheckboxChange = (index: number) => {
-    updateGold(index, !gold[index])
+    updateGold(index)
   }
 
   return (

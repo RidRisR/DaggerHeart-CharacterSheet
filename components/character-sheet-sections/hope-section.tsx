@@ -8,7 +8,7 @@ export function HopeSection() {
   const { sheetData: formData, updateHope } = useSheetStore();
   
   const handleCheckboxChange = (index: number) => {
-    updateHope(index, !formData.hope[index]);
+    updateHope(index);
   };
 
   let hopeTrait = ""

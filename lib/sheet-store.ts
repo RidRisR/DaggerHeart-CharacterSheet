@@ -12,8 +12,8 @@ interface SheetState {
     // Granular actions for better performance and cleaner code
     updateAttribute: (attribute: keyof SheetData, value: string) => void;
     toggleAttributeChecked: (attribute: keyof SheetData) => void;
-    updateGold: (index: number, checked: boolean) => void;
-    updateHope: (index: number, checked: boolean) => void;
+    updateGold: (index: number) => void;
+    updateHope: (index: number) => void;
     updateExperience: (index: number, value: string) => void;
     updateExperienceValues: (index: number, value: string) => void;
     updateHP: (index: number, checked: boolean) => void;
@@ -61,9 +61,34 @@ export const useSheetStore = create<SheetState>((set) => ({
         return state;
     }),
     
-    updateGold: (index, checked) => set((state) => {
-        const newGold = [...(state.sheetData.gold || [])];
-        newGold[index] = checked;
+    updateGold: (index: number) => set((state) => {
+        const gold = state.sheetData.gold || [];
+
+        // 计算属于哪一段
+        const segment = Math.floor(index / 10); // 0, 1, 2
+        const start = segment * 10;
+        const end = Math.min(start + 10, gold.length); // 修正：防止越界
+        const segmentGold = gold.slice(start, end);
+
+        // 找到该段最后一个被点亮的金币
+        const lastLit = segmentGold.lastIndexOf(true);
+
+        let newSegmentGold: boolean[];
+        if ((index - start) === lastLit && segmentGold[index - start]) {
+            // 如果点击的是该段最后一个被点亮的金币，则该段全部熄灭
+            newSegmentGold = segmentGold.map(() => false);
+        } else {
+            // 否则点亮前 n 个
+            newSegmentGold = segmentGold.map((_, i) => i <= (index - start));
+        }
+
+        // 拼接新金币数组
+        const newGold = [
+            ...gold.slice(0, start),
+            ...newSegmentGold,
+            ...gold.slice(end)
+        ];
+
         return {
             sheetData: {
                 ...state.sheetData,
@@ -72,9 +97,21 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
     }),
     
-    updateHope: (index, checked) => set((state) => {
-        const newHope = [...(state.sheetData.hope || [])];
-        newHope[index] = checked;
+    updateHope: (index: number) => set((state) => {
+        const current = state.sheetData.hope;
+        // 找到最后一个被点亮的 hope 的下标
+        const lastLit = current.lastIndexOf(true);
+        // 如果点击的正好是最后一个被点亮的 hope，则全部熄灭
+        if (index === lastLit && current[index]) {
+            return {
+                sheetData: {
+                    ...state.sheetData,
+                    hope: current.map(() => false)
+                }
+            };
+        }
+        // 其它情况，点亮前 n 个
+        const newHope = current.map((_, i) => i <= index);
         return {
             sheetData: {
                 ...state.sheetData,

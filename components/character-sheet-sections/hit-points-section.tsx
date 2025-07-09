@@ -11,13 +11,49 @@ export function HitPointsSection() {
     setSheetData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleMaxChange = (field: string, value: string) => {
-    setSheetData((prev) => ({ ...prev, [field]: parseInt(value) || 0 }))
+  const handleMaxChange = (field: "hp" | "stress", value: string) => {
+    const maxField = `${field}Max` as "hpMax" | "stressMax"
+    const currentField = field
+    const intValue = parseInt(value) || 0
+
+    setSheetData((prev) => {
+      const newSheetData = { ...prev, [maxField]: intValue }
+      const currentArray = (newSheetData[currentField] as boolean[]) || []
+      const checkedCount = currentArray.filter(Boolean).length
+
+      if (checkedCount > intValue) {
+        const newArray = Array(currentArray.length).fill(false)
+        for (let i = 0; i < intValue; i++) {
+          newArray[i] = true
+        }
+        newSheetData[currentField] = newArray
+      }
+
+      return newSheetData
+    })
   }
 
-  const renderBoxes = (field: string, max: number, total: number) => {
-    const fieldArray = Array.isArray((formData as any)[field]) ? ((formData as any)[field] as boolean[]) : Array(total).fill(false)
-    
+  const renderBoxes = (field: "hp" | "stress", max: number, total: number) => {
+    const fieldArray = Array.isArray(formData[field]) ? (formData[field] as boolean[]) : Array(total).fill(false)
+
+    const handleClick = (index: number) => {
+      const newFieldData = [...fieldArray]
+      const lastCheckedIndex = fieldArray.lastIndexOf(true)
+
+      if (lastCheckedIndex === index) {
+        // If clicking the last checked box, uncheck all
+        for (let i = 0; i < newFieldData.length; i++) {
+          newFieldData[i] = false
+        }
+      } else {
+        // Otherwise, check up to the clicked box
+        for (let i = 0; i < newFieldData.length; i++) {
+          newFieldData[i] = i <= index
+        }
+      }
+      setSheetData((prev) => ({ ...prev, [field]: newFieldData }))
+    }
+
     return (
       <div className="flex gap-1 flex-wrap">
         {Array(total)
@@ -25,7 +61,7 @@ export function HitPointsSection() {
           .map((_, i) => {
             const isWithinMax = i < max
             const isChecked = fieldArray[i] || false
-            
+
             return (
               <div
                 key={`${String(field)}-${i}`}
@@ -34,11 +70,7 @@ export function HitPointsSection() {
                 } ${isChecked ? "bg-gray-800" : "bg-white"}`}
                 onClick={() => {
                   if (isWithinMax) {
-                    setSheetData((prev) => {
-                      const newFieldData = [...((prev as any)[field] as boolean[])]
-                      newFieldData[i] = !newFieldData[i]
-                      return { ...prev, [field]: newFieldData }
-                    })
+                    handleClick(i)
                   }
                 }}
               />
@@ -90,7 +122,7 @@ export function HitPointsSection() {
               min="1"
               max="18"
               value={formData.hpMax || 6} // 默认值为6
-              onChange={(e) => handleMaxChange("hpMax", e.target.value)}
+              onChange={(e) => handleMaxChange("hp", e.target.value)}
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>
@@ -106,7 +138,7 @@ export function HitPointsSection() {
               min="1"
               max="12"
               value={formData.stressMax || 6} // 默认值为6
-              onChange={(e) => handleMaxChange("stressMax", e.target.value)}
+              onChange={(e) => handleMaxChange("stress", e.target.value)}
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>

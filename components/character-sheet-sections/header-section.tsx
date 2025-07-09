@@ -7,7 +7,19 @@ import { useCardPreview } from "@/hooks/use-card-preview"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { useSheetStore } from "@/lib/sheet-store"
 
-export function HeaderSection() {
+interface HeaderSectionProps {
+  onOpenProfessionModal: () => void;
+  onOpenAncestryModal: (field: string) => void;
+  onOpenCommunityModal: () => void;
+  onOpenSubclassModal: () => void;
+}
+
+export function HeaderSection({
+  onOpenProfessionModal,
+  onOpenAncestryModal,
+  onOpenCommunityModal,
+  onOpenSubclassModal
+}: HeaderSectionProps) {
   const { sheetData: formData, setSheetData } = useSheetStore()
   const containerRef = useRef<HTMLDivElement>(null)
   
@@ -17,27 +29,19 @@ export function HeaderSection() {
   }
 
   const openProfessionModal = () => {
-    // TODO: 这里需要实现职业选择模态框的逻辑
-    // 暂时留空，等待后续模态框组件的迁移
-    console.log("Open profession modal")
+    onOpenProfessionModal()
   }
 
   const openAncestryModal = (field: string) => {
-    // TODO: 这里需要实现血统选择模态框的逻辑
-    // 暂时留空，等待后续模态框组件的迁移
-    console.log("Open ancestry modal:", field)
+    onOpenAncestryModal(field)
   }
 
   const openCommunityModal = () => {
-    // TODO: 这里需要实现社群选择模态框的逻辑
-    // 暂时留空，等待后续模态框组件的迁移
-    console.log("Open community modal")
+    onOpenCommunityModal()
   }
 
   const openSubclassModal = () => {
-    // TODO: 这里需要实现子职业选择模态框的逻辑
-    // 暂时留空，等待后续模态框组件的迁移
-    console.log("Open subclass modal")
+    onOpenSubclassModal()
   }
 
   const { getElementProps } = useAutoResizeFont({

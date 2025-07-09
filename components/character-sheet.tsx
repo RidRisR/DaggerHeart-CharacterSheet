@@ -777,7 +777,12 @@ export default function CharacterSheet() {
           style={{ width: "210mm" }}
         >
           {/* Header Section */}
-          <HeaderSection />
+          <HeaderSection
+            onOpenProfessionModal={openProfessionModal}
+            onOpenAncestryModal={openAncestryModal}
+            onOpenCommunityModal={openCommunityModal}
+            onOpenSubclassModal={openSubclassModal}
+          />
 
           {/* Main Content - Two Column Layout */}
           <div className="grid grid-cols-2 gap-2 mt-2">

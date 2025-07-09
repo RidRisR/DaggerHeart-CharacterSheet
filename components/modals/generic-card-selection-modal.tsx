@@ -15,28 +15,6 @@ import { SheetCardReference } from "@/lib/sheet-data";
 import { useCardsByType } from "@/card/card-store";
 import { useSheetStore } from "@/lib/sheet-store"
 
-// Extend SafeFormData to include missing properties
-interface SafeFormData {
-    gold: any[]
-    experience: string[]
-    hope: any[]
-    hpMax: number
-    hp: any[]
-    stressMax: number
-    stress: any[]
-    armorBoxes: any[]
-    armorMax: number
-    companionExperience: string[]
-    companionExperienceValue: string[]
-    companionStress: any[]
-    cards: StandardCard[]
-    agility: { checked: boolean; value: string }
-    strength: { checked: boolean; value: string }
-    finesse: { checked: boolean; value: string }
-    professionRef?: SheetCardReference;
-    // Add other properties as needed
-}
-
 interface GenericCardSelectionModalProps {
     isOpen: boolean
     onClose: () => void
@@ -148,6 +126,18 @@ export function GenericCardSelectionModal({
     const isLoading = cardsLoading || (cardType === "subclass" && professionLoading);
     const hasError = cardsError || (cardType === "subclass" && professionError);
 
+    // Debug logging
+    console.log("GenericCardSelectionModal Debug:", {
+        cardType,
+        isLoading,
+        hasError,
+        baseCardsCount: baseCards?.length || 0,
+        filteredInitialCardsCount: filteredInitialCards.length,
+        finalFilteredCardsCount: finalFilteredCards.length,
+        selectedClass,
+        availableClasses
+    });
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
@@ -192,13 +182,25 @@ export function GenericCardSelectionModal({
                                     </p>
                                 </div>
                             </div>
+                            ) : finalFilteredCards.length === 0 ? (
+                                <div className="flex items-center justify-center h-32">
+                                    <div className="text-center">
+                                        <p className="text-gray-500 mb-2">没有找到符合条件的卡牌</p>
+                                        <p className="text-sm text-gray-400">
+                                            卡牌类型: {cardType}, 基础卡牌数: {baseCards?.length || 0}
+                                        </p>
+                                    </div>
+                                </div>
                         ) : (
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 auto-rows-min">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 auto-rows-min">
                                 {finalFilteredCards.map((card) => (
                                     <div key={card.id} className="w-full min-w-0 flex">
                                         <SelectableCard
                                             card={card}
-                                            onClick={() => onSelect(card.id, field)}
+                                            onClick={() => {
+                                                console.log(`Card clicked: ${card.id}, field: ${field}`);
+                                                onSelect(card.id, field);
+                                            }}
                                             isSelected={false}
                                         />
                                     </div>

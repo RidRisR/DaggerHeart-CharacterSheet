@@ -25,7 +25,7 @@ class AncestryCardConverter {
       type: CardType.Ancestry,
       description: processCardDescription(rawCard.效果) || "",
       hint: rawCard.简介,
-      imageUrl: "",
+      imageUrl: rawCard.imageURL || "",
       level: rawCard.类别,
       class: rawCard.种族, // Map 种族 to class
       headerDisplay: rawCard.名称,

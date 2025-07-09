@@ -23,7 +23,7 @@ class CommunityCardConverter {
       type: CardType.Community,
       description: processCardDescription(card.描述) || "",
       hint: card.简介,
-      imageUrl: "",
+      imageUrl: card.imageUrl || "",
       class: card.名称,
       headerDisplay: card.名称,
       cardSelectDisplay: {

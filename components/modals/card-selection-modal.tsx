@@ -482,7 +482,7 @@ export function CardSelectionModal({
               />
             </div>
 
-            <div id="scrollableDiv" ref={scrollableContainerRef} className="flex-1 overflow-y-auto p-4">
+            <div id="scrollableDiv" ref={scrollableContainerRef} className="flex-1 overflow-y-auto p-4 min-h-[800px]">
               {/* 显示加载状态 */}
               {cardsLoading && (
                 <div className="flex items-center justify-center h-32">

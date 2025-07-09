@@ -7,11 +7,13 @@ import { useSheetStore } from "@/lib/sheet-store"
 interface WeaponSectionProps {
   isPrimary?: boolean
   fieldPrefix: string
+  onOpenWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void;
 }
 
 export function WeaponSection({
   isPrimary = false,
   fieldPrefix,
+  onOpenWeaponModal,
 }: WeaponSectionProps) {
   const { sheetData: formData, setSheetData } = useSheetStore()
   
@@ -21,9 +23,7 @@ export function WeaponSection({
   }
 
   const openWeaponModal = (fieldName: string, slotType: "primary" | "secondary" | "inventory") => {
-    // TODO: 这里需要实现武器选择模态框的逻辑
-    // 暂时留空，等待后续模态框组件的迁移
-    console.log("Open weapon modal:", fieldName, slotType)
+    onOpenWeaponModal(fieldName, slotType)
   }
 
   const { getElementProps } = useAutoResizeFont({

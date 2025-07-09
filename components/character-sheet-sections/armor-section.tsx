@@ -4,7 +4,11 @@ import type React from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
 
-export function ArmorSection() {
+interface ArmorSectionProps {
+  onOpenArmorModal: () => void;
+}
+
+export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
   const { sheetData: formData, setSheetData } = useSheetStore()
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -13,9 +17,7 @@ export function ArmorSection() {
   }
 
   const openArmorModal = () => {
-    // TODO: 这里需要实现护甲选择模态框的逻辑
-    // 暂时留空，等待后续模态框组件的迁移
-    console.log("Open armor modal")
+    onOpenArmorModal()
   }
 
   const { getElementProps } = useAutoResizeFont({

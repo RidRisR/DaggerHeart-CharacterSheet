@@ -897,16 +897,18 @@ export default function CharacterSheet() {
                 <WeaponSection
                   isPrimary={true}
                   fieldPrefix="primaryWeapon"
+                  onOpenWeaponModal={openWeaponModal}
                 />
 
                 <WeaponSection
                   isPrimary={false}
                   fieldPrefix="secondaryWeapon"
+                  onOpenWeaponModal={openWeaponModal}
                 />
               </div>
 
               {/* Active Armor */}
-              <ArmorSection />
+              <ArmorSection onOpenArmorModal={openArmorModal} />
 
               {/* Inventory */}
               <InventorySection />
@@ -914,10 +916,12 @@ export default function CharacterSheet() {
               {/* Inventory Weapons */}
               <InventoryWeaponSection
                 index={1}
+                onOpenWeaponModal={openWeaponModal}
               />
 
               <InventoryWeaponSection
                 index={2}
+                onOpenWeaponModal={openWeaponModal}
               />
             </div>
           </div>

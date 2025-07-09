@@ -6,10 +6,12 @@ import { useSheetStore } from "@/lib/sheet-store"
 
 interface InventoryWeaponSectionProps {
   index: number
+  onOpenWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void;
 }
 
 export function InventoryWeaponSection({
   index,
+  onOpenWeaponModal,
 }: InventoryWeaponSectionProps) {
   const { sheetData: formData, setSheetData } = useSheetStore()
   
@@ -19,9 +21,7 @@ export function InventoryWeaponSection({
   }
 
   const openWeaponModal = (fieldName: string, slotType: "primary" | "secondary" | "inventory") => {
-    // TODO: 这里需要实现武器选择模态框的逻辑
-    // 暂时留空，等待后续模态框组件的迁移
-    console.log("Open weapon modal:", fieldName, slotType)
+    onOpenWeaponModal(fieldName, slotType)
   }
 
   const handleBooleanChange = (field: string) => {

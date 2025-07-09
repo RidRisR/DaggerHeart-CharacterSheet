@@ -30,7 +30,7 @@ class DomainCardConverter {
       name: card.名称 || "",
       type: CardType.Domain,
       description: processCardDescription(card.描述) || "",
-      imageUrl: "",
+      imageUrl: card.imageUrl || "",
       class: card.领域,
       level: card.等级,
       cardSelectDisplay: {

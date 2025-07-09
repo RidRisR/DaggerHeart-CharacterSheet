@@ -86,7 +86,7 @@ body {
   }
 
   /* 第二页特殊打印样式 - 控制内容密度和布局 */
-  .print-all-pages .page-two .a4-page {
+    .print-all-pages .page-one .page-two .a4-page {
     font-size: 0.75em;
     /* 进一步缩小字体 */
     padding: 3mm;

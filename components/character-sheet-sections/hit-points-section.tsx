@@ -80,7 +80,7 @@ export function HitPointsSection() {
     )
   }
   return (
-    <div className="py-1 mb-2">
+    <div className="py-1 mb-0">
       <h3 className="text-xs font-bold text-center mb-1">生命值与压力</h3>
 
       <div className="flex justify-between items-center mb-1 gap-1">

@@ -872,6 +872,7 @@ export default function CharacterSheet() {
               <ExperienceSection />
 
               {/* Profession Description */}
+              <h3 className="text-xs font-bold text-center">职业特性</h3>
               <ProfessionDescriptionSection description={safeFormData.cards[0]?.description} />
             </div>
 

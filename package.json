@@ -62,6 +62,7 @@
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "latest",
     "recharts": "latest",
+    "rehype-raw": "^7.0.0",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "sonner": "latest",
@@ -69,7 +70,8 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "latest",
     "vaul": "latest",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@types/node": "^22",

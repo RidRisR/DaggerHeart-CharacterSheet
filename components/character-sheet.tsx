@@ -12,7 +12,8 @@ import {
   getStandardCardsByTypeAsync,
   CardType, // Import CardType
 } from "@/card"
-import { useAllCards } from "@/hooks/use-cards"
+import { useAllCards } from "@/card/card-store"
+import { useSheetStore } from "@/lib/sheet-store"
 
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
@@ -30,18 +31,16 @@ import { WeaponSection } from "@/components/character-sheet-sections/weapon-sect
 import { ArmorSection } from "@/components/character-sheet-sections/armor-section"
 import { InventorySection } from "@/components/character-sheet-sections/inventory-section"
 import { InventoryWeaponSection } from "@/components/character-sheet-sections/inventory-weapon-section"
+import ProfessionDescriptionSection from "@/components/character-sheet-sections/profession-description-section"
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 
-interface CharacterSheetProps {
-  formData: SheetData
-  setFormData: React.Dispatch<React.SetStateAction<SheetData>>
-}
+export default function CharacterSheet() {
+  const { sheetData: formData, setSheetData: setFormData } = useSheetStore();
 
-export default function CharacterSheet({ formData, setFormData }: CharacterSheetProps) {
   // 添加一个安全的表达式计算函数
   const safeEvaluateExpression = (expression: string): number => {
     if (!expression || typeof expression !== 'string') {
@@ -75,15 +74,18 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
     }
   };
 
-  // 使用异步卡牌Hook
-  const { 
-    cards: allStandardCards, 
-    loading: cardsLoading, 
-    error: cardsError 
-  } = useAllCards({
-    enabled: true,
-    autoRefresh: false
-  });
+  // 使用全局卡牌Store
+  const {
+    cards: allStandardCards,
+    loading: cardsLoading,
+    error: cardsError,
+    fetchAllCards
+  } = useAllCards();
+
+  // 在组件加载时触发卡牌数据加载
+  useEffect(() => {
+    fetchAllCards();
+  }, [fetchAllCards]);
 
   // 模态框状态
   const [weaponModalOpen, setWeaponModalOpen] = useState(false)
@@ -368,9 +370,9 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       setFormData((prev) => {
         const updatedFormData = {
           ...prev,
-          profession: "", 
+          profession: "",
           professionRef: { id: "", name: "" },
-          subclass: "", 
+          subclass: "",
           subclassRef: { id: "", name: "" },
         };
         return updatedFormData;
@@ -385,9 +387,9 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         setFormData((prev) => {
           const updatedFormData = {
             ...prev,
-            profession: professionCard.id, 
+            profession: professionCard.id,
             professionRef: { id: professionCard.id, name: professionCard.name },
-            subclass: "", 
+            subclass: "",
             subclassRef: { id: "", name: "" },
           };
           return updatedFormData;
@@ -407,7 +409,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       setFormData((prev) => {
         const updatedFormData = {
           ...prev,
-          [field]: "", 
+          [field]: "",
           [refField]: { id: "", name: "" },
         };
         return updatedFormData;
@@ -422,7 +424,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         setFormData((prev) => {
           const updatedFormData = {
             ...prev,
-            [field]: ancestryCard.id, 
+            [field]: ancestryCard.id,
             [refField]: { id: ancestryCard.id, name: ancestryCard.name },
           };
           return updatedFormData;
@@ -440,7 +442,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       setFormData((prev) => {
         const updatedFormData = {
           ...prev,
-          community: "", 
+          community: "",
           communityRef: { id: "", name: "" },
         };
         return updatedFormData;
@@ -455,7 +457,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         setFormData((prev) => {
           const updatedFormData = {
             ...prev,
-            community: communityCard.id, 
+            community: communityCard.id,
             communityRef: { id: communityCard.id, name: communityCard.name },
           };
           return updatedFormData;
@@ -722,7 +724,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       setFormData((prev) => {
         const updatedFormData = {
           ...prev,
-          subclass: "", 
+          subclass: "",
           subclassRef: { id: "", name: "" },
         };
         return updatedFormData;
@@ -737,7 +739,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
         setFormData((prev) => {
           const updatedFormData = {
             ...prev,
-            subclass: subclassCard.id, 
+            subclass: subclassCard.id,
             subclassRef: { id: subclassCard.id, name: subclassCard.name },
           };
           return updatedFormData;
@@ -770,27 +772,25 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       {/* 固定位置的按钮 - 移除建卡指引按钮，因为已经移到父组件 */}
       <div></div>
 
-      <div className="w-full max-w-[210mm] mx-auto my-4">
+      <div className="w-full max-w-[210mm] mx-auto">
         <div
           className="a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
           style={{ width: "210mm" }}
         >
           {/* Header Section */}
           <HeaderSection
-            formData={safeFormData}
-            handleInputChange={handleInputChange}
-            openProfessionModal={openProfessionModal}
-            openAncestryModal={openAncestryModal}
-            openCommunityModal={openCommunityModal}
-            openSubclassModal={() => openGenericModal("subclass")}
+            onOpenProfessionModal={openProfessionModal}
+            onOpenAncestryModal={openAncestryModal}
+            onOpenCommunityModal={openCommunityModal}
+            onOpenSubclassModal={openSubclassModal}
           />
 
           {/* Main Content - Two Column Layout */}
-          <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="grid grid-cols-2 gap-2 mt-1">
             {/* Left Column */}
-            <div className="col-span-1 space-y-4">
+            <div className="col-span-1 space-y-1">
               {/* Character Image, Evasion, and Armor */}
-              <div className="flex gap-4 mb-4">
+              <div className="flex gap-4">
                 {/* Character Image Upload */}
                 <div className="flex flex-col items-center">
                   <ImageUploadCrop
@@ -833,7 +833,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                       />
                     </div>
                     <div className="flex flex-col">
-                      <div className="flex items-center mb-1">
+                      <div className="flex items-center">
                         <span className="test-center text-[10px] mr-1">护甲槽</span>
                       </div>
                       {/* Armor Boxes - 3 per row, 4 rows */}
@@ -860,38 +860,29 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
               </div>
 
               {/* Attributes Section */}
-              <AttributesSection
-                formData={safeFormData}
-                handleAttributeValueChange={handleAttributeValueChange}
-                handleBooleanChange={handleBooleanChange}
-                handleSpellcastingToggle={handleSpellcastingToggle}
-              />
+              <AttributesSection />
 
               {/* Hit Points & Stress */}
-              <HitPointsSection
-                formData={safeFormData}
-                handleInputChange={handleInputChange}
-                handleMaxChange={handleMaxChange}
-                renderBoxes={renderBoxes}
-              />
+              <HitPointsSection />
 
               {/* Hope */}
-              <HopeSection formData={safeFormData} handleCheckboxChange={handleCheckboxChange} />
+              <HopeSection />
 
               {/* Experience */}
-              <ExperienceSection formData={safeFormData} setFormData={setFormData} />
+              <ExperienceSection />
 
-              {/* Gold */}
-              <GoldSection formData={safeFormData} handleCheckboxChange={handleCheckboxChange} />
+              {/* Profession Description */}
+              <h3 className="text-xs font-bold text-center">职业特性</h3>
+              <ProfessionDescriptionSection description={safeFormData.cards[0]?.description} />
             </div>
 
             {/* Right Column */}
-            <div className="col-span-1 space-y-2">
+            <div className="col-span-1 space-y-1">
               {/* Active Weapons */}
-              <div className="py-1 mb-2">
-                <h3 className="text-xs font-bold text-center mb-1">装备</h3>
+              <div className="py-1">
+                <h3 className="text-xs font-bold text-center">装备</h3>
 
-                <div className="flex items-center gap-0.5 mb-1">
+                <div className="flex items-center gap-0.5">
                   <span className="text-[10px]">熟练度</span>
                   {Array(6)
                     .fill(0)
@@ -906,48 +897,38 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
                 </div>
 
                 <WeaponSection
-                  formData={safeFormData}
-                  handleInputChange={handleInputChange}
-                  openWeaponModal={openWeaponModal}
                   isPrimary={true}
                   fieldPrefix="primaryWeapon"
+                  onOpenWeaponModal={openWeaponModal}
                 />
 
                 <WeaponSection
-                  formData={safeFormData}
-                  handleInputChange={handleInputChange}
-                  openWeaponModal={openWeaponModal}
                   isPrimary={false}
                   fieldPrefix="secondaryWeapon"
+                  onOpenWeaponModal={openWeaponModal}
                 />
               </div>
 
               {/* Active Armor */}
-              <ArmorSection
-                formData={safeFormData}
-                handleInputChange={handleInputChange}
-                openArmorModal={openArmorModal}
-              />
+              <ArmorSection onOpenArmorModal={openArmorModal} />
 
               {/* Inventory */}
-              <InventorySection formData={safeFormData} setFormData={setFormData} />
+              <InventorySection />
 
               {/* Inventory Weapons */}
+              <h3 className="text-xs font-bold text-center">库存武器</h3>
               <InventoryWeaponSection
-                formData={safeFormData}
-                handleInputChange={handleInputChange}
-                openWeaponModal={openWeaponModal}
-                handleBooleanChange={handleBooleanChange}
                 index={1}
+                onOpenWeaponModal={openWeaponModal}
               />
 
               <InventoryWeaponSection
-                formData={safeFormData}
-                handleInputChange={handleInputChange}
-                openWeaponModal={openWeaponModal}
-                handleBooleanChange={handleBooleanChange}
                 index={2}
+                onOpenWeaponModal={openWeaponModal}
               />
+
+              {/* Gold */}
+              <GoldSection />
             </div>
           </div>
         </div>
@@ -1034,7 +1015,6 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
           cardType={getModalCardType(currentModal.type)} // Use the helper function here
           field={currentModal.field}
           levelFilter={currentModal.levelFilter}
-          formData={safeFormData} // Pass safeFormData here
         />
       )}
     </>

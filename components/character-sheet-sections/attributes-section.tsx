@@ -1,27 +1,39 @@
-import type { SheetData, AttributeValue } from "@/lib/sheet-data"
-
 "use client"
 
-interface AttributesSectionProps {
-  formData: SheetData
-  handleAttributeValueChange: (attribute: keyof SheetData, value: string) => void
-  handleBooleanChange: (field: keyof SheetData) => void
-  handleSpellcastingToggle: (attribute: keyof SheetData) => void
-}
+import type { SheetData, AttributeValue } from "@/lib/sheet-data"
+import { useSheetStore } from "@/lib/sheet-store";
 
-export function AttributesSection({
-  formData,
-  handleAttributeValueChange,
-  handleBooleanChange,
-  handleSpellcastingToggle,
-}: AttributesSectionProps) {
+export function AttributesSection() {
+  const { sheetData: formData, updateAttribute, toggleAttributeChecked, setSheetData } = useSheetStore();
+  
+  const handleAttributeValueChange = (attribute: keyof SheetData, value: string) => {
+    updateAttribute(attribute, value)
+  }
+
+  const handleBooleanChange = (field: keyof SheetData) => {
+    toggleAttributeChecked(field)
+  }
+
+  const handleSpellcastingToggle = (attribute: keyof SheetData) => {
+    setSheetData((prev) => {
+      const currentAttribute = prev[attribute]
+      if (typeof currentAttribute === "object" && currentAttribute !== null && "spellcasting" in currentAttribute) {
+        return {
+          ...prev,
+          [attribute]: {
+            ...currentAttribute,
+            spellcasting: !currentAttribute.spellcasting,
+          },
+        }
+      }
+      return prev
+    })
+  }
+
   return (
-    <div className="space-y-2">
-      <div className="mb-2">
-        <h3 className="text-xs font-bold text-center mb-1">属性</h3>
-      </div>
+    <div className="space-y-1">
 
-      <div className="grid grid-cols-3 gap-x-2 gap-y-2">
+      <div className="grid grid-cols-3 gap-x-2 gap-y-1">
         {[
           { name: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },
           { name: "力量", key: "strength", skills: ["举起", "猛击", "擒抱"] },

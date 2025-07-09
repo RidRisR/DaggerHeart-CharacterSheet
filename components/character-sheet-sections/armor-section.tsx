@@ -1,16 +1,25 @@
 "use client"
 
 import type React from "react"
-import type { SheetData } from "@/lib/sheet-data"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
+import { useSheetStore } from "@/lib/sheet-store"
 
 interface ArmorSectionProps {
-  formData: SheetData
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  openArmorModal: () => void
+  onOpenArmorModal: () => void;
 }
 
-export function ArmorSection({ formData, handleInputChange, openArmorModal }: ArmorSectionProps) {
+export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
+  const { sheetData: formData, setSheetData } = useSheetStore()
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setSheetData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const openArmorModal = () => {
+    onOpenArmorModal()
+  }
+
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
     minFontSize: 10

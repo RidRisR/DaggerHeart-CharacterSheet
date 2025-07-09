@@ -2,29 +2,48 @@
 
 import type React from "react"
 import { useRef } from "react"
-import type { SheetData } from "@/lib/sheet-data"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useCardPreview } from "@/hooks/use-card-preview"
 import { SelectableCard } from "@/components/ui/selectable-card"
+import { useSheetStore } from "@/lib/sheet-store"
 
 interface HeaderSectionProps {
-  formData: SheetData
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  openProfessionModal: () => void
-  openAncestryModal: (field: string) => void
-  openCommunityModal: () => void
-  openSubclassModal: () => void
+  onOpenProfessionModal: () => void;
+  onOpenAncestryModal: (field: string) => void;
+  onOpenCommunityModal: () => void;
+  onOpenSubclassModal: () => void;
 }
 
 export function HeaderSection({
-  formData,
-  handleInputChange,
-  openProfessionModal,
-  openAncestryModal,
-  openCommunityModal,
-  openSubclassModal,
+  onOpenProfessionModal,
+  onOpenAncestryModal,
+  onOpenCommunityModal,
+  onOpenSubclassModal
 }: HeaderSectionProps) {
+  const { sheetData: formData, setSheetData } = useSheetStore()
   const containerRef = useRef<HTMLDivElement>(null)
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setSheetData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const openProfessionModal = () => {
+    onOpenProfessionModal()
+  }
+
+  const openAncestryModal = (field: string) => {
+    onOpenAncestryModal(field)
+  }
+
+  const openCommunityModal = () => {
+    onOpenCommunityModal()
+  }
+
+  const openSubclassModal = () => {
+    onOpenSubclassModal()
+  }
+
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
     minFontSize: 10

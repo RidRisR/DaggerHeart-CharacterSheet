@@ -17,6 +17,7 @@ import { CharacterCreationGuide } from "@/components/guide/character-creation-gu
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
 import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
+import { useSheetStore } from "@/lib/sheet-store"
 
 // 内联图标组件
 const EyeIcon = () => (
@@ -77,7 +78,11 @@ import { exportToHTML, previewHTML } from "@/lib/html-exporter"
 
 export default function Home() {
   // 多角色系统状态
-  const [formData, setFormData] = useState(defaultSheetData)
+  const {
+    sheetData: formData,
+    setSheetData: setFormData,
+    replaceSheetData
+  } = useSheetStore();
   const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null)
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -151,7 +156,7 @@ export default function Home() {
           const characterData = loadCharacterById(activeId)
           if (characterData) {
             setCurrentCharacterId(activeId)
-            setFormData(characterData)
+            replaceSheetData(characterData)
             console.log(`[App] Loaded active character: ${activeId}`)
           } else {
             console.warn(`[App] Active character data not found: ${activeId}`)
@@ -165,7 +170,7 @@ export default function Home() {
           if (characterData) {
             setCurrentCharacterId(firstCharacter.id)
             setActiveCharacterId(firstCharacter.id)
-            setFormData(characterData)
+            replaceSheetData(characterData)
             console.log(`[App] Set first character as active: ${firstCharacter.id}`)
           }
         } else {
@@ -193,7 +198,7 @@ export default function Home() {
         saveCharacterById(metadata.id, newCharacterData)
         setActiveCharacterId(metadata.id)
         setCurrentCharacterId(metadata.id)
-        setFormData(newCharacterData)
+        replaceSheetData(newCharacterData)
         setCharacterList([metadata])
         console.log(`[App] Created first character: ${metadata.id}`)
       }
@@ -236,7 +241,7 @@ export default function Home() {
       if (characterData) {
         setCurrentCharacterId(characterId)
         setActiveCharacterId(characterId)
-        setFormData(characterData)
+        replaceSheetData(characterData)
         console.log(`[App] Successfully switched to character: ${characterId}`)
       } else {
         console.error(`[App] Character data not found: ${characterId}`)
@@ -520,12 +525,12 @@ export default function Home() {
         try {
           const { importCharacterFromHTMLFile } = await import('@/lib/html-importer')
           const result = await importCharacterFromHTMLFile(file)
-          
+
           if (result.success && result.data) {
             // 从导入的数据中提取角色名称作为默认存档名
             const characterName = result.data.name || "未命名角色"
             const defaultSaveName = `${characterName} (HTML导入)`
-            
+
             // 提示用户输入存档名称
             const saveName = prompt('请输入新存档的名称:', defaultSaveName)
             if (saveName && saveName.trim()) {
@@ -677,29 +682,29 @@ export default function Home() {
 
         {/* 第一页 */}
         <div className="page-one flex justify-center items-start min-h-screen">
-          <CharacterSheet formData={formData} setFormData={setFormData} />
+          <CharacterSheet />
         </div>
 
         {/* 第二页 */}
         <div className="page-two flex justify-center items-start min-h-screen">
-          <CharacterSheetPageTwo formData={formData} setFormData={setFormData} />
+          <CharacterSheetPageTwo />
         </div>
 
         {/* 第三页 - 条件渲染 */}
         {formData.includePageThreeInExport && (
           <div className="page-three flex justify-center items-start min-h-screen">
-            <CharacterSheetPageThree formData={formData} onFormDataChange={setFormData} allCards={formData.cards} />
+            <CharacterSheetPageThree />
           </div>
         )}
 
         {/* 第四页（仅打印时显示） */}
         <div className="page-four flex justify-center items-start min-h-screen">
-          <CharacterSheetPageFour formData={formData} />
+          <CharacterSheetPageFour />
         </div>
 
         {/* 第五页（仅打印时显示） */}
         <div className="page-five flex justify-center items-start min-h-screen">
-          <CharacterSheetPageFive formData={formData} />
+          <CharacterSheetPageFive />
         </div>
       </div>
     )
@@ -722,51 +727,40 @@ export default function Home() {
         <div className="lg:w-3/4">
           <Tabs defaultValue="page1" className="w-full max-w-[210mm]">
             <TabsList className={`grid w-full max-w-[210mm] transition-all duration-200 ${!formData.includePageThreeInExport
-                ? 'grid-cols-[1fr_1fr_auto]'
-                : 'grid-cols-3'
+              ? 'grid-cols-[1fr_1fr_auto]'
+              : 'grid-cols-3'
               }`}>
               <TabsTrigger value="page1">第一页</TabsTrigger>
               <TabsTrigger value="page2">第二页</TabsTrigger>
-              <TabsTrigger 
-                value="page3" 
-                className={`flex items-center justify-center transition-all duration-200 ${
-                  !formData.includePageThreeInExport 
+              <TabsTrigger
+                value="page3"
+                className={`flex items-center justify-center transition-all duration-200 ${!formData.includePageThreeInExport
                   ? 'w-12 min-w-12 px-1'
                   : 'px-4'
-                }`}
+                  }`}
               >
                 {formData.includePageThreeInExport && <span className="flex-grow text-center">第三页</span>}
-                <button
+                <span
                   onClick={(e) => {
                     e.stopPropagation()
                     toggleIncludePageThreeInExport()
                   }}
-                  className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                   title={formData.includePageThreeInExport ? "点击关闭第三页导出" : "点击开启第三页导出"}
                 >
                   {formData.includePageThreeInExport ? <EyeIcon /> : <EyeOffIcon />}
-                </button>
+                </span>
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="page1">
-              <CharacterSheet formData={formData} setFormData={setFormData} />
+              <CharacterSheet />
             </TabsContent>
             <TabsContent value="page2">
-              <CharacterSheetPageTwo
-                formData={formData}
-                setFormData={setFormData}
-              />
+              <CharacterSheetPageTwo />
             </TabsContent>
             <TabsContent value="page3">
-              <CharacterSheetPageThree
-                formData={formData}
-                onFormDataChange={setFormData}
-                allCards={[
-                  ...(formData.cards || []),
-                  ...(formData.inventory_cards || [])
-                ]}
-              />
+              <CharacterSheetPageThree />
             </TabsContent>
           </Tabs>
         </div>
@@ -863,7 +857,7 @@ export default function Home() {
       </div>
 
       {/* 建卡指引组件 - 移到父组件 */}
-      <CharacterCreationGuide isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} formData={formData} />
+      <CharacterCreationGuide isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
 
       {/* 存档管理模态框 */}
       <CharacterManagementModal
@@ -871,25 +865,11 @@ export default function Home() {
         onClose={closeCharacterManagementModal}
         characterList={characterList}
         currentCharacterId={currentCharacterId}
-        formData={formData}
         onSwitchCharacter={switchToCharacter}
         onCreateCharacter={createNewCharacterHandler}
         onDeleteCharacter={deleteCharacterHandler}
         onDuplicateCharacter={duplicateCharacterHandler}
         onRenameCharacter={renameCharacterHandler}
-        onImportData={(data: any) => {
-          // 数据迁移：为旧存档添加缺失字段
-          const mergedData = {
-            ...defaultSheetData,
-            ...data,
-            inventory_cards: data.inventory_cards || Array(20).fill({ id: '', name: '', type: 'unknown', description: '' }),
-            includePageThreeInExport: data.includePageThreeInExport ?? true // 确保第三页导出字段存在
-          }
-          setFormData(mergedData)
-        }}
-        onResetData={() => {
-          setFormData(defaultSheetData)
-        }}
       />
     </main>
   )

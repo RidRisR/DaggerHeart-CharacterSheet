@@ -6,20 +6,19 @@ import { CharacterMetadata } from "@/lib/sheet-data"
 import { loadCharacterById, MAX_CHARACTERS } from "@/lib/multi-character-storage"
 import { importCharacterFromHTMLFile } from "@/lib/html-importer"
 import { validateJSONCharacterData } from "@/lib/character-data-validator"
+import { useSheetStore } from "@/lib/sheet-store"
+import { defaultSheetData } from "@/lib/default-sheet-data"
 
 interface CharacterManagementModalProps {
     isOpen: boolean
     onClose: () => void
     characterList: CharacterMetadata[]
     currentCharacterId: string | null
-    formData: any
     onSwitchCharacter: (characterId: string) => void
     onCreateCharacter: (saveName: string) => boolean
     onDeleteCharacter: (characterId: string) => boolean
     onDuplicateCharacter: (characterId: string, newSaveName: string) => boolean
     onRenameCharacter: (characterId: string, newSaveName: string) => boolean
-    onImportData: (data: any) => void
-    onResetData: () => void
 }
 
 export function CharacterManagementModal({
@@ -27,14 +26,28 @@ export function CharacterManagementModal({
     onClose,
     characterList,
     currentCharacterId,
-    formData,
     onSwitchCharacter,
     onCreateCharacter,
     onDeleteCharacter,
     onDuplicateCharacter,
     onRenameCharacter,
-    onImportData
 }: CharacterManagementModalProps) {
+    const { sheetData: formData, setSheetData: setFormData, replaceSheetData } = useSheetStore()
+    
+    const onImportData = (data: any) => {
+        // 数据迁移：为旧存档添加缺失字段
+        const mergedData = {
+            ...defaultSheetData,
+            ...data,
+            inventory_cards: data.inventory_cards || Array(20).fill({ id: '', name: '', type: 'unknown', description: '' }),
+            includePageThreeInExport: data.includePageThreeInExport ?? true // 确保第三页导出字段存在
+        }
+        replaceSheetData(mergedData)
+    }
+    
+    const onResetData = () => {
+        replaceSheetData(defaultSheetData)
+    }
     // 监听ESC键关闭模态框
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {

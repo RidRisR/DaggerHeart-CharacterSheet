@@ -64,6 +64,18 @@ export const useSheetStore = create<SheetState>((set) => ({
     updateGold: (index: number) => set((state) => {
         const gold = state.sheetData.gold || [];
 
+        if (index == 20) {
+            // 特殊处理：如果点击的是第 20 个金币（最后一个），只反转20的状态
+            const newGold = [...gold];
+            newGold[20] = !newGold[20];
+            return {
+                sheetData: {
+                    ...state.sheetData,
+                    gold: newGold
+                }
+            };
+        }
+
         // 计算属于哪一段
         const segment = Math.floor(index / 10); // 0, 1, 2
         const start = segment * 10;

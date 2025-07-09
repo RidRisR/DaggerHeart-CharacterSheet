@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { CardType } from "@/card"; // Import CardType
 import { useState, useEffect, useMemo } from "react"
 import type { StandardCard } from "@/card/card-types"
-import { SelectableCard } from "@/components/ui/selectable-card"
+import { ImageCard } from "@/components/ui/image-card"
 import {
     Select,
     SelectContent,
@@ -14,6 +14,13 @@ import {
 import { SheetCardReference } from "@/lib/sheet-data";
 import { useCardsByType } from "@/card/card-store";
 import { useSheetStore } from "@/lib/sheet-store"
+
+// Helper to get a random integer between min and max (inclusive)
+const getRandomInt = (min: number, max: number) => {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 interface GenericCardSelectionModalProps {
     isOpen: boolean
@@ -141,7 +148,7 @@ export function GenericCardSelectionModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-            <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="relative bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <Select value={selectedClass} onValueChange={setSelectedClass} disabled={isLoading}>
@@ -191,20 +198,24 @@ export function GenericCardSelectionModal({
                                         </p>
                                     </div>
                                 </div>
-                        ) : (
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 auto-rows-min">
-                                {finalFilteredCards.map((card) => (
-                                    <div key={card.id} className="w-full min-w-0 flex">
-                                        <SelectableCard
-                                            card={card}
+                                ) : (<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                    {finalFilteredCards.map((card) => {
+                                        const cardWithImage = {
+                                            ...card,
+                                            imageUrl: card.imageUrl || `/${getRandomInt(10001, 10189)}.jpg`
+                                        };
+                                        return (
+                                            <ImageCard
+                                                key={card.id}
+                                                card={cardWithImage}
                                             onClick={() => {
                                                 console.log(`Card clicked: ${card.id}, field: ${field}`);
                                                 onSelect(card.id, field);
                                             }}
                                             isSelected={false}
                                         />
-                                    </div>
-                                ))}
+                                        );
+                                    })}
                             </div>
                         )}
                     </div>

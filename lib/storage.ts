@@ -5,6 +5,7 @@ import {
 import { createEmptyCard } from "@/card/card-types"; // Import createEmptyCard
 import type { SheetData, SheetCardReference } from "./sheet-data"; // Ensure SheetCardReference is imported if not already
 import { defaultSheetData } from "./default-sheet-data";
+import { migrateSheetData } from "./card-data-migration";
 
 // Moved getCardClass to module scope - now async
 const getCardClass = async (cardId: string | undefined, cardType: CardType): Promise<string> => {
@@ -43,7 +44,11 @@ export function loadCharacterData(): SheetData | null {
   try {
     if (typeof window !== "undefined" && window.localStorage) {
       const savedData = localStorage.getItem(STORAGE_KEY)
-      return savedData ? (JSON.parse(savedData) as SheetData) : null
+      if (savedData) {
+        const parsedData = JSON.parse(savedData) as SheetData;
+        return migrateSheetData(parsedData);
+      }
+      return null
     }
     return null
   } catch (error) {
@@ -118,8 +123,9 @@ export function importCharacterData(file: File): Promise<SheetData> {
           throw new Error("读取文件失败")
         }
         const data = JSON.parse(event.target.result as string) as SheetData
-        saveCharacterData(data)
-        resolve(data)
+        const migratedData = migrateSheetData(data);
+        saveCharacterData(migratedData)
+        resolve(migratedData)
       } catch (error) {
         console.error("导入角色数据失败:", error)
         reject(error)
@@ -187,7 +193,7 @@ export function importCharacterDataForMultiCharacter(file: File): Promise<SheetD
           data.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
         }
         
-        resolve(data);
+        resolve(migrateSheetData(data));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '文件解析失败';
         reject(new Error(`导入失败：${errorMessage}`));

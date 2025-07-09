@@ -43,6 +43,42 @@ interface CharacterSheetProps {
 }
 
 export default function CharacterSheet({ formData, setFormData }: CharacterSheetProps) {
+  // 卡牌状态更新函数
+  const updateCardValue = (cardIndex: number, deckType: 'cards' | 'inventory_cards', key: string, value: any) => {
+    setFormData(prevData => {
+      const newData = { ...prevData };
+      const originalDeck = deckType === 'cards' ? newData.cards : newData.inventory_cards;
+
+      if (!originalDeck || !originalDeck[cardIndex]) {
+        return newData;
+      }
+
+      // 创建卡组的拷贝
+      const targetDeck = [...originalDeck];
+
+      // 创建卡牌的深拷贝，确保每个实例都是独立的
+      const updatedCard = {
+        ...targetDeck[cardIndex],
+        values: {
+          ...targetDeck[cardIndex].values,
+          [key]: value
+        }
+      };
+
+      // 替换指定位置的卡牌
+      targetDeck[cardIndex] = updatedCard;
+
+      // 更新对应的卡组
+      if (deckType === 'cards') {
+        newData.cards = targetDeck;
+      } else {
+        newData.inventory_cards = targetDeck;
+      }
+
+      return newData;
+    });
+  };
+
   // 添加一个安全的表达式计算函数
   const safeEvaluateExpression = (expression: string): number => {
     if (!expression || typeof expression !== 'string') {
@@ -244,7 +280,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       return createEmptyCard();
     }
     const profession = allStandardCards.find((card) => card.id === id && card.type === CardType.Profession);
-    return profession ? profession : createEmptyCard();
+    return profession ? { ...profession, values: {} } : createEmptyCard();
   }
 
   // 根据ID获取血统名称
@@ -253,7 +289,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       return createEmptyCard();
     }
     const ancestry = allStandardCards.find((card) => card.id === id && card.type === CardType.Ancestry);
-    return ancestry ? ancestry : createEmptyCard();
+    return ancestry ? { ...ancestry, values: {} } : createEmptyCard();
   }
 
   // 根据ID获取社群名称
@@ -262,7 +298,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       return createEmptyCard();
     }
     const community = allStandardCards.find((card) => card.id === id && card.type === CardType.Community);
-    return community ? community : createEmptyCard();
+    return community ? { ...community, values: {} } : createEmptyCard();
   }
 
   // 根据ID获取子职业名称
@@ -271,7 +307,7 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
       return createEmptyCard();
     }
     const subclass = allStandardCards.find((card) => card.id === id && card.type === CardType.Subclass);
-    return subclass ? subclass : createEmptyCard();
+    return subclass ? { ...subclass, values: {} } : createEmptyCard();
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -884,7 +920,13 @@ export default function CharacterSheet({ formData, setFormData }: CharacterSheet
 
               {/* Profession Description */}
               <h3 className="text-xs font-bold text-center">职业特性</h3>
-              <ProfessionDescriptionSection description={safeFormData.cards[0]?.description} />
+              <ProfessionDescriptionSection
+                description={safeFormData.cards[0]?.description}
+                card={safeFormData.cards[0]}
+                cardIndex={0}
+                deckType="cards"
+                updateCardValue={updateCardValue}
+              />
             </div>
 
             {/* Right Column */}

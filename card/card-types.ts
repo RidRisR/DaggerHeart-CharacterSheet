@@ -35,6 +35,8 @@ export interface StandardCard {
     realType: string;      // 真实卡牌类型，来自RawVariantCard.类型
     subCategory?: string;   // 子类别，来自RawVariantCard.子类别
   }
+  // 可选的值字段，用于存储交互组件的状态
+  values?: Record<string, any>
   // ... 其他字段
 }
 

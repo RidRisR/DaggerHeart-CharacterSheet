@@ -11,6 +11,7 @@
 import { SheetData } from './sheet-data'
 import { validateAndProcessCharacterData, ValidationResult } from './character-data-validator'
 import { StandardCard } from '@/card/card-types'
+import { migrateSheetData } from './card-data-migration'
 
 interface ImportResult {
     success: boolean
@@ -147,7 +148,8 @@ export function extractCharacterDataFromHTML(htmlContent: string): ImportResult 
 function cleanAndNormalizeData(data: any): SheetData {
     // 使用通用验证器的处理逻辑
     const validation = validateAndProcessCharacterData(data, 'html')
-    return validation.data || data
+    const processedData = validation.data || data;
+    return migrateSheetData(processedData);
 }
 
 /**

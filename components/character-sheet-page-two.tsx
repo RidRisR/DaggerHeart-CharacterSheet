@@ -95,7 +95,11 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
 
     setFormData((prev) => {
       const newInventoryCards = [...(prev.inventory_cards || Array(20).fill(0).map(() => createEmptyCard()))]
-      newInventoryCards[index] = card
+      // 创建卡牌的深拷贝，确保每个实例都是独立的
+      newInventoryCards[index] = {
+        ...card,
+        values: card.values ? { ...card.values } : {}
+      }
       return { ...prev, inventory_cards: newInventoryCards }
     })
 
@@ -180,10 +184,16 @@ export default function CharacterSheetPageTwo({ formData, setFormData }: Charact
         newInventoryCards[fromIndex] = createEmptyCard() // 清空源位置
       }
 
+      // 创建卡牌的深拷贝，确保移动后的卡牌是独立实例
+      const cardCopy = {
+        ...card,
+        values: card.values ? { ...card.values } : {}
+      }
+
       if (toDeck === 'focused') {
-        newFocusedCards[toIndex] = card // 添加到目标位置
+        newFocusedCards[toIndex] = cardCopy // 添加到目标位置
       } else {
-        newInventoryCards[toIndex] = card // 添加到目标位置
+        newInventoryCards[toIndex] = cardCopy // 添加到目标位置
       }
 
       return {

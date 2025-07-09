@@ -5,14 +5,10 @@ import { StandardCard } from "@/card/card-types";
 import ReactMarkdown from 'react-markdown';
 
 export function HopeSection() {
-  const { sheetData: formData, setSheetData } = useSheetStore();
+  const { sheetData: formData, updateHope } = useSheetStore();
   
   const handleCheckboxChange = (index: number) => {
-    setSheetData((prev) => {
-      const newHope = [...prev.hope];
-      newHope[index] = !newHope[index];
-      return { ...prev, hope: newHope };
-    });
+    updateHope(index, !formData.hope[index]);
   };
 
   let hopeTrait = ""

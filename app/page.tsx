@@ -848,7 +848,7 @@ export default function Home() {
       </div>
 
       {/* 建卡指引组件 - 移到父组件 */}
-      <CharacterCreationGuide isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} formData={formData} />
+      <CharacterCreationGuide isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
 
       {/* 存档管理模态框 */}
       <CharacterManagementModal
@@ -856,25 +856,11 @@ export default function Home() {
         onClose={closeCharacterManagementModal}
         characterList={characterList}
         currentCharacterId={currentCharacterId}
-        formData={formData}
         onSwitchCharacter={switchToCharacter}
         onCreateCharacter={createNewCharacterHandler}
         onDeleteCharacter={deleteCharacterHandler}
         onDuplicateCharacter={duplicateCharacterHandler}
         onRenameCharacter={renameCharacterHandler}
-        onImportData={(data: any) => {
-          // 数据迁移：为旧存档添加缺失字段
-          const mergedData = {
-            ...defaultSheetData,
-            ...data,
-            inventory_cards: data.inventory_cards || Array(20).fill({ id: '', name: '', type: 'unknown', description: '' }),
-            includePageThreeInExport: data.includePageThreeInExport ?? true // 确保第三页导出字段存在
-          }
-          setFormData(mergedData)
-        }}
-        onResetData={() => {
-          setFormData(defaultSheetData)
-        }}
       />
     </main>
   )

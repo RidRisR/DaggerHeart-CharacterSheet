@@ -1000,7 +1000,6 @@ export default function CharacterSheet() {
           cardType={getModalCardType(currentModal.type)} // Use the helper function here
           field={currentModal.field}
           levelFilter={currentModal.levelFilter}
-          formData={safeFormData} // Pass safeFormData here
         />
       )}
     </>

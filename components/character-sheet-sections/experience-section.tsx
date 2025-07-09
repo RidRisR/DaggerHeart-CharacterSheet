@@ -4,7 +4,7 @@ import { useSheetStore } from "@/lib/sheet-store";
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 
 export function ExperienceSection() {
-  const { sheetData: formData, setSheetData } = useSheetStore();
+  const { sheetData: formData, updateExperience, updateExperienceValues } = useSheetStore();
   
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
@@ -25,9 +25,7 @@ export function ExperienceSection() {
               type="text"
               value={exp}
               onChange={(e) => {
-                const newExp = [...experienceTexts]
-                newExp[i] = e.target.value
-                setSheetData((prev) => ({ ...prev, experience: newExp }))
+                updateExperience(i, e.target.value)
               }}
               {...getElementProps(exp, `exp-${i}`, "flex-grow border-b border-gray-400 p-1 focus:outline-none print-empty-hide")}
               placeholder="Experience description"
@@ -36,9 +34,7 @@ export function ExperienceSection() {
               type="text"
               value={experienceValues[i]}
               onChange={(e) => {
-                const newValues = [...experienceValues]
-                newValues[i] = e.target.value
-                setSheetData((prev) => ({ ...prev, experienceValues: newValues }))
+                updateExperienceValues(i, e.target.value)
               }}
               {...getElementProps(experienceValues[i], `exp-value-${i}`, "w-8 border border-gray-400 rounded ml-1 text-center print-empty-hide")}
               placeholder="#"

@@ -5,14 +5,15 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { guideSteps, canProceedToNextStep, getProfessionSpecificContent } from "@/components/guide/guide-content"
 import type { SheetData } from "@/lib/sheet-data"
+import { useSheetStore } from "@/lib/sheet-store"
 
 interface CharacterCreationGuideProps {
   isOpen: boolean
   onClose: () => void
-  formData: SheetData
 }
 
-export function CharacterCreationGuide({ isOpen, onClose, formData }: CharacterCreationGuideProps) {
+export function CharacterCreationGuide({ isOpen, onClose }: CharacterCreationGuideProps) {
+  const { sheetData: formData } = useSheetStore()
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [canProceed, setCanProceed] = useState(false)
 

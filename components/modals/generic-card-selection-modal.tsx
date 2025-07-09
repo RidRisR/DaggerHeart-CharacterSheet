@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select"
 import { SheetCardReference } from "@/lib/sheet-data";
 import { useCardsByType } from "@/card/card-store";
+import { useSheetStore } from "@/lib/sheet-store"
 
 // Extend SafeFormData to include missing properties
 interface SafeFormData {
@@ -44,7 +45,6 @@ interface GenericCardSelectionModalProps {
     cardType: Exclude<CardType, CardType.Domain> // Changed to exclude CardType.Domain
     field?: string // Optional field for ancestry
     levelFilter?: number // Optional level filter for ancestry
-    formData: SafeFormData // Use the defined type for safeFormData
 }
 
 export function GenericCardSelectionModal({
@@ -55,8 +55,8 @@ export function GenericCardSelectionModal({
     cardType,
     field,
     levelFilter,
-    formData,
 }: GenericCardSelectionModalProps) {
+    const { sheetData: formData } = useSheetStore()
     const [selectedClass, setSelectedClass] = useState<string>("All")
 
     // Use hooks to fetch cards based on card type

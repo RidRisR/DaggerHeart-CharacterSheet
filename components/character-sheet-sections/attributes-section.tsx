@@ -4,40 +4,14 @@ import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store";
 
 export function AttributesSection() {
-  const { sheetData: formData, setSheetData } = useSheetStore();
+  const { sheetData: formData, updateAttribute, toggleAttributeChecked, setSheetData } = useSheetStore();
   
   const handleAttributeValueChange = (attribute: keyof SheetData, value: string) => {
-    setSheetData((prev) => {
-      const currentAttribute = prev[attribute]
-      if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
-        return {
-          ...prev,
-          [attribute]: { ...currentAttribute, value },
-        }
-      }
-      return prev
-    })
+    updateAttribute(attribute, value)
   }
 
   const handleBooleanChange = (field: keyof SheetData) => {
-    setSheetData((prev) => {
-      const currentAttribute = prev[field]
-      if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
-        return {
-          ...prev,
-          [field]: {
-            ...currentAttribute,
-            checked: !currentAttribute.checked,
-          },
-        }
-      } else if (typeof currentAttribute === "boolean") {
-        return {
-          ...prev,
-          [field]: !currentAttribute,
-        }
-      }
-      return prev
-    })
+    toggleAttributeChecked(field)
   }
 
   const handleSpellcastingToggle = (attribute: keyof SheetData) => {

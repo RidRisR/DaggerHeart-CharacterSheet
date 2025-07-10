@@ -41,7 +41,7 @@ export function HopeSection() {
       </div>
 
       <div className="text-center px-2">
-        <div className="text-[12px] leading-tight min-h-[3.5em] print:min-h-0">
+        <div className="text-[12px] leading-tight min-h-[3.5em] print:min-h-[1em]">
           <ReactMarkdown>{hopeTrait}</ReactMarkdown>
         </div>
       </div>

@@ -6,11 +6,11 @@ import { getCardTypeName, convertToStandardCard } from "@/card"
 import { CardType, createEmptyCard, StandardCard, isEmptyCard } from "@/card/card-types"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
-import { SelectableCard } from "@/components/ui/selectable-card"
+import { CardHoverPreview } from "@/components/ui/card-hover-preview"
 import { toast } from "@/hooks/use-toast"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { SheetData } from "@/lib/sheet-data"
-import type { CSSProperties, MouseEvent } from "react";
+import type { CSSProperties, MouseEvent } from "react"
 
 interface CardDeckSectionProps {
   formData: SheetData
@@ -30,9 +30,9 @@ interface CardDeckSectionProps {
 
 // Utility function for border color
 const getBorderColor = (type?: string, isSpecial = false): string => {
-  if (isSpecial) return "border-yellow-400";
-  return "border-gray-300";
-};
+  if (isSpecial) return "border-yellow-400"
+  return "border-gray-300"
+}
 
 // Utility function for special slot label
 const getSpecialSlotLabel = (index: number): string => {
@@ -155,22 +155,15 @@ function Card({
 
       {/* Hover preview */}
       {hoveredCard === index && card?.name && (
-        <div
-          className="absolute z-50 pointer-events-none w-96"
-          style={getPreviewPosition(index)}
-        >
-          <SelectableCard
-            card={standardCard}
-            onClick={() => { }}
-            isSelected={isSelected}
-          />
+        <div className="absolute z-50 pointer-events-none" style={getPreviewPosition(index)}>
+          <CardHoverPreview card={standardCard} />
         </div>
       )}
     </div>
-  );
+  )
 }
 
-const MemoizedCard = memo(Card);
+const MemoizedCard = memo(Card)
 
 export function CardDeckSection({
   formData,

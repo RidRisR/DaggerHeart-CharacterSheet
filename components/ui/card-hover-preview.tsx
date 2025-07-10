@@ -43,7 +43,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                 {/* Image Section */}
                 {cardImage && (
                     <div className="relative w-full h-40">
-                        <Image src={cardImage} alt={`Image for ${card.name}`} layout="fill" objectFit="cover" />
+                        <Image src={cardImage} alt={`Image for ${card.name}`} fill className="object-cover" />
                     </div>
                 )}
                 {/* Info Section Below Image */}
@@ -69,7 +69,15 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
             {card.description && (
                 <div className="flex-grow p-3 min-w-0 flex flex-col h-full">
                     <div className="text-sm text-gray-700 h-full overflow-y-auto pr-1 prose prose-sm max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={{ p: ({ node, ...props }) => <p className="mb-1.5" {...props} /> }}>
+                        <ReactMarkdown
+                            remarkPlugins={[remarkGfm, remarkBreaks]}
+                            components={{
+                                p: ({ children }) => <p className="first:mt-0 mb-0 mt-1">{children}</p>,
+                                ul: ({ children }) => <ul className="list-disc pl-4 mb-0">{children}</ul>,
+                                ol: ({ children }) => <ol className="list-decimal pl-4 mb-0">{children}</ol>,
+                                li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
+                            }}
+                        >
                             {card.description}
                         </ReactMarkdown>
                     </div>

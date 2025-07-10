@@ -880,7 +880,7 @@ export default function CharacterSheet() {
             <div className="col-span-1 space-y-1">
               {/* Active Weapons */}
               <div className="py-1">
-                <h3 className="text-xs font-bold text-center">装备</h3>
+                {/* <h3 className="text-xs font-bold text-center">装备</h3> */}
 
                 <div className="flex items-center gap-0.5">
                   <span className="text-[10px]">熟练度</span>

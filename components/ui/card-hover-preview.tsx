@@ -38,7 +38,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
 
     return (
         <div className="flex flex-row bg-white border border-gray-200 rounded-lg shadow-lg w-[520px] text-gray-800 overflow-auto">
-            {/* Left Column: Image and Core Info */}
+            {/* Left Column: Image and Info Section */}
             <div className="flex flex-col w-[220px] flex-shrink-0">
                 {/* Image Section */}
                 {cardImage && (

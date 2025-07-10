@@ -1,6 +1,6 @@
 "use client"
 
-import type { CardType, StandardCard, ExtendedStandardCard } from "@/card/card-types"
+import { CardType, StandardCard, ExtendedStandardCard } from "@/card/card-types"
 import { CardSource } from "@/card/card-types"
 import { getAllStandardCardsAsync, getBatchName } from "@/card"
 import { getCardTypeName } from "@/card/card-ui-config"
@@ -189,9 +189,9 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
                     {displayDescription}
                 </ReactMarkdown>
             </div>
-            {(card.type !== 'profession' && card.hint) || showSource ? (
+            {(card.type !== CardType.Profession && card.hint) || showSource ? (
                 <div className="text-[10px] text-gray-400 mt-2">
-                    {card.type !== 'profession' && card.hint && <div className="italic text-left">{card.hint}</div>}
+                    {card.type !== CardType.Profession && card.hint && <div className="italic text-left">{card.hint}</div>}
                     {showSource && <div className="text-right">{cardSource}</div>}
                 </div>
             ) : null}

@@ -1,6 +1,6 @@
 "use client"
 
-import type { CardType, StandardCard, ExtendedStandardCard } from "@/card/card-types"
+import { CardType, StandardCard, ExtendedStandardCard } from "@/card/card-types"
 import { CardSource } from "@/card/card-types"
 import { getAllStandardCardsAsync, getBatchName } from "@/card"
 import { getCardTypeName } from "@/card/card-ui-config"
@@ -240,9 +240,9 @@ export function ImageCard({ card, onClick, isSelected, showSource = true }: Imag
 
                 {/* Footer */}
                 <div className="mt-auto pt-4">
-                    {(card.type !== 'profession' && card.hint) || showSource ? (
+                    {(card.type !== CardType.Profession && card.hint) || showSource ? (
                         <div className="border-t border-gray-100 pt-3 text-right text-[10px] text-gray-400">
-                            {card.type !== 'profession' && card.hint && <div className="float-left mb-1 italic">{card.hint}</div>}
+                            {card.type !== CardType.Profession && card.hint && <div className="float-left mb-1 italic">{card.hint}</div>}
                             {showSource && <div>{cardSource}</div>}
                         </div>
                     ) : null}

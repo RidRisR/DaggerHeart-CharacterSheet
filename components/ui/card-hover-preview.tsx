@@ -3,12 +3,12 @@
 import type { StandardCard } from "@/card/card-types"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { getVariantRealType, isVariantCard } from "@/card/card-types"
+import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import React, { useState } from "react"
-import { PUBLIC_IMAGE_PREFIX } from "@/lib/utils"
 
 interface CardHoverPreviewProps {
     card: StandardCard
@@ -40,11 +40,11 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                 {cardImage && (
                     <div className="relative w-full h-40">
                         <Image
-                            src={imageError ? `${PUBLIC_IMAGE_PREFIX}/empty-card.webp` : `${PUBLIC_IMAGE_PREFIX}${cardImage}`}
+                            src={imageError ? '/empty-card.webp' : (card.imageUrl || '/empty-card.webp')}
                             alt={`Image for ${card.name}`}
-                            fill
+                            width={300}
+                            height={420}
                             className="object-cover"
-                            sizes="220px"
                             onError={() => setImageError(true)}
                         />
                     </div>

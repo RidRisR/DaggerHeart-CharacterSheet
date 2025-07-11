@@ -2,7 +2,7 @@
 import React, { useMemo } from "react"
 import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
 import { useSheetStore } from '@/lib/sheet-store';
-import { CardContent } from "@/components/ui/card-content"
+import { PrintImageCard } from "@/components/ui/print-image-card"
 
 // 卡组打印区域组件
 interface CardDeckPrintSectionProps {
@@ -31,27 +31,20 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 
     return (
         <div className="print-deck-section">
-            {/* 卡组标题 */}
-            <div className="print-deck-header mb-6">
-                <h2 className="text-xl font-bold text-center">{title}</h2>
-                <div className="text-sm text-gray-600 text-center mt-1">
-                    共 {cards.length} 张卡牌
-                </div>
-            </div>
 
             {/* 卡牌网格 - 3列布局，让浏览器自动分页 */}
             <div className="print-card-grid">
                 {cardRows.map((row, rowIndex) => (
                     <div
                         key={`row-${rowIndex}`}
-                        className="card-row grid grid-cols-3 gap-4 mb-4"
+                        className="card-row grid grid-cols-3 gap-4 mb-2"
                     >
                         {row.map((card, cardIndex) => (
                             <div
                                 key={card.id || `${rowIndex}-${cardIndex}`}
-                                className="card-item border rounded p-3 bg-white flex flex-col gap-1"
+                                className="card-item"
                             >
-                                <CardContent card={card} />
+                                <PrintImageCard card={card} />
                             </div>
                         ))}
 
@@ -70,12 +63,13 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 const CharacterSheetPageFour: React.FC = () => {
     const { sheetData: formData } = useSheetStore();
 
-    // 获取聚焦卡组的有效卡牌
+    // 获取聚焦卡组的有效卡牌，并跳过第一张
     const focusedCards = useMemo(() => {
-        return (formData?.cards || []).filter((card: StandardCard) => !isEmptyCard(card));
+        const allFocusedCards = (formData?.cards || []).filter((card: StandardCard) => !isEmptyCard(card));
+        return allFocusedCards.slice(1); // 从第二张卡牌开始
     }, [formData?.cards]);
 
-    // 如果聚焦卡组是空的，不渲染第四页
+    // 如果聚焦卡组是空的（或者只有一张卡被跳过了），不渲染第四页
     if (focusedCards.length === 0) {
         return null;
     }

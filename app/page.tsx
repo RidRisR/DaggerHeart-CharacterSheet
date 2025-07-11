@@ -699,7 +699,7 @@ export default function Home() {
         )}
 
         {/* 第四页（仅打印时显示） */}
-        <div className="page-four flex justify-center items-start min-h-screen">
+        <div className="page-four flex justify-center items-start min-h-screen p-4">
           <CharacterSheetPageFour />
         </div>
 

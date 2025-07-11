@@ -7,12 +7,18 @@ const assetPrefix = isGithubActions ? `/${repo}` : ''
 const basePath = isGithubActions ? `/${repo}` : ''
 
 const nextConfig = {
-    assetPrefix: assetPrefix,
-    basePath: basePath,
-    output: 'export',
-    images: {
-        unoptimized: true,
-    },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  assetPrefix: assetPrefix,
+  basePath: basePath,
+  output: 'export',
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;

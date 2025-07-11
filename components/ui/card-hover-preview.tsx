@@ -42,9 +42,9 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                         <Image
                             src={imageError ? '/empty-card.webp' : (card.imageUrl || '/empty-card.webp')}
                             alt={`Image for ${card.name}`}
-                            width={300}
-                            height={420}
+                            fill
                             className="object-cover"
+                            sizes="220px"
                             onError={() => setImageError(true)}
                         />
                     </div>

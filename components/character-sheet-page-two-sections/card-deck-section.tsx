@@ -6,11 +6,11 @@ import { getCardTypeName, convertToStandardCard } from "@/card"
 import { CardType, createEmptyCard, StandardCard, isEmptyCard } from "@/card/card-types"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
-import { SelectableCard } from "@/components/ui/selectable-card"
+import { CardHoverPreview } from "@/components/ui/card-hover-preview"
 import { toast } from "@/hooks/use-toast"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { SheetData } from "@/lib/sheet-data"
-import type { CSSProperties, MouseEvent } from "react";
+import type { CSSProperties, MouseEvent } from "react"
 
 interface CardDeckSectionProps {
   formData: SheetData
@@ -30,9 +30,9 @@ interface CardDeckSectionProps {
 
 // Utility function for border color
 const getBorderColor = (type?: string, isSpecial = false): string => {
-  if (isSpecial) return "border-yellow-400";
-  return "border-gray-300";
-};
+  if (isSpecial) return "border-yellow-400"
+  return "border-gray-300"
+}
 
 // Utility function for special slot label
 const getSpecialSlotLabel = (index: number): string => {
@@ -155,22 +155,15 @@ function Card({
 
       {/* Hover preview */}
       {hoveredCard === index && card?.name && (
-        <div
-          className="absolute z-50 pointer-events-none w-96"
-          style={getPreviewPosition(index)}
-        >
-          <SelectableCard
-            card={standardCard}
-            onClick={() => { }}
-            isSelected={isSelected}
-          />
+        <div className="absolute z-50 pointer-events-none" style={getPreviewPosition(index)}>
+          <CardHoverPreview card={standardCard} />
         </div>
       )}
     </div>
-  );
+  )
 }
 
-const MemoizedCard = memo(Card);
+const MemoizedCard = memo(Card)
 
 export function CardDeckSection({
   formData,
@@ -332,7 +325,7 @@ export function CardDeckSection({
     }
   }
 
-  // 计算悬浮窗位置
+  // 计算悬浮窗位置 - 智能定位
   const getPreviewPosition = (index: number): React.CSSProperties => {
     if (!cardRefs.current[index]) return {}
 
@@ -340,17 +333,64 @@ export function CardDeckSection({
     if (!card) return {}
 
     const rect = card.getBoundingClientRect()
-    const isRightSide = rect.left > window.innerWidth / 2
+    const previewWidth = 520 // CardHoverPreview 的宽度
+    const previewHeight = 280 // CardHoverPreview 的估计高度
+    const gap = 10 // 间距
 
-    return {
+    // 计算各个方向的可用空间
+    const spaceLeft = rect.left
+    const spaceRight = window.innerWidth - rect.right
+    const spaceTop = rect.top
+    const spaceBottom = window.innerHeight - rect.bottom
+
+    // 优先选择左右侧面，然后是上下
+    let position: React.CSSProperties = {
       position: "fixed",
-      top: `${rect.top}px`,
-      left: isRightSide ? "auto" : `${rect.right + 10}px`,
-      right: isRightSide ? `${window.innerWidth - rect.left + 10}px` : "auto",
+      zIndex: 9999, // 确保最高优先级
       maxHeight: "80vh",
       overflowY: "auto",
-      zIndex: 1000,
     }
+
+    // 1. 优先尝试右侧
+    if (spaceRight >= previewWidth + gap) {
+      position.left = `${rect.right + gap}px`
+      position.top = `${Math.max(0, rect.top - (previewHeight - rect.height) / 2)}px`
+    }
+    // 2. 其次尝试左侧
+    else if (spaceLeft >= previewWidth + gap) {
+      position.right = `${window.innerWidth - rect.left + gap}px`
+      position.top = `${Math.max(0, rect.top - (previewHeight - rect.height) / 2)}px`
+    }
+    // 3. 再尝试上方
+    else if (spaceTop >= previewHeight + gap) {
+      position.bottom = `${window.innerHeight - rect.top + gap}px`
+      position.left = `${Math.max(0, rect.left - (previewWidth - rect.width) / 2)}px`
+    }
+    // 4. 最后尝试下方
+    else if (spaceBottom >= previewHeight + gap) {
+      position.top = `${rect.bottom + gap}px`
+      position.left = `${Math.max(0, rect.left - (previewWidth - rect.width) / 2)}px`
+    }
+    // 5. 如果都不够，选择空间最大的方向
+    else {
+      const maxSpace = Math.max(spaceLeft, spaceRight, spaceTop, spaceBottom)
+
+      if (maxSpace === spaceRight) {
+        position.left = `${rect.right + gap}px`
+        position.top = `${Math.max(0, rect.top - (previewHeight - rect.height) / 2)}px`
+      } else if (maxSpace === spaceLeft) {
+        position.right = `${window.innerWidth - rect.left + gap}px`
+        position.top = `${Math.max(0, rect.top - (previewHeight - rect.height) / 2)}px`
+      } else if (maxSpace === spaceTop) {
+        position.bottom = `${window.innerHeight - rect.top + gap}px`
+        position.left = `${Math.max(0, rect.left - (previewWidth - rect.width) / 2)}px`
+      } else {
+        position.top = `${rect.bottom + gap}px`
+        position.left = `${Math.max(0, rect.left - (previewWidth - rect.width) / 2)}px`
+      }
+    }
+
+    return position
   }
 
   return (
@@ -402,18 +442,24 @@ export function CardDeckSection({
             const isSelected = false; // 移除选中状态，双卡组系统不需要此功能
 
             return (
-              <MemoizedCard
-                key={`card-${activeDeck}-${index}`} // 更新key以区分不同卡组
-                card={card}
-                index={index}
-                isSelected={isSelected}
-                isSpecial={isSpecial}
-                onCardClick={handleCardClick}
-                onCardRightClick={handleCardRightClick}
-                onHover={handleCardHover}
-                getPreviewPosition={getPreviewPosition}
-                hoveredCard={hoveredCard}
-              />
+              <div
+                key={`card-${activeDeck}-${index}`}
+                ref={(el) => {
+                  cardRefs.current[index] = el;
+                }}
+              >
+                <MemoizedCard
+                  card={card}
+                  index={index}
+                  isSelected={isSelected}
+                  isSpecial={isSpecial}
+                  onCardClick={handleCardClick}
+                  onCardRightClick={handleCardRightClick}
+                  onHover={handleCardHover}
+                  getPreviewPosition={getPreviewPosition}
+                  hoveredCard={hoveredCard}
+                />
+              </div>
             );
           })}
       </div>

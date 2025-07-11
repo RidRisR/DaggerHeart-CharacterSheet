@@ -64,6 +64,7 @@
     "rehype-raw": "^7.0.0",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
+    "sharp": "^0.34.3",
     "sonner": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
@@ -73,6 +74,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@tailwindcss/line-clamp": "^0.4.4",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

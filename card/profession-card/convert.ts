@@ -27,7 +27,7 @@ class ProfessionCardConverter {
       type: CardType.Profession,
       description: processCardDescription(card.职业特性) || "",
       hint: card.简介,
-      imageUrl: "",
+      imageUrl: card.imageUrl || "",
       class: card.名称,
       headerDisplay: card.名称,
       cardSelectDisplay: {

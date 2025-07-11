@@ -38,7 +38,7 @@ class SubClassCardConverter {
       name: card.名称,
       type: CardType.Subclass,
       description: processCardDescription(card.描述) || "",
-      imageUrl: "",
+      imageUrl: card.imageUrl || "",
       class: card.主职,
       level: levelNum,
       headerDisplay: card.子职业,

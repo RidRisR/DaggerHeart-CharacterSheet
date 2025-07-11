@@ -11,7 +11,7 @@ import {
 import { CardType } from "@/card"; // Add this import
 import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType } from "@/card/card-types"
 import { createEmptyCard } from "@/card/card-types"
-import { SelectableCard } from "@/components/ui/selectable-card"
+import { ImageCard } from "@/components/ui/image-card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -284,7 +284,7 @@ export function CardSelectionModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-bold">{positionTitle}</h2>
@@ -518,17 +518,18 @@ export function CardSelectionModal({
                 scrollableTarget="scrollableDiv"
                 scrollThreshold="800px"
               >
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 auto-rows-min">
-                  {displayedCards.map((card: StandardCard, index: number) => ( // Added types for card and index
-                    <div className="w-full min-w-0 flex">
-                      <SelectableCard
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {displayedCards.map((card: StandardCard, index: number) => {
+                      return (
+                        <ImageCard
                         key={`${card.id}-${index}`}
-                        card={card}
-                        onClick={() => handleSelectCard(card)} // Changed onSelect to onClick
-                        isSelected={false} // Assuming a default or placeholder for isSelected
+                          card={card}
+                          onClick={() => handleSelectCard(card)}
+                          isSelected={false}
+                          priority={index < 6}
                       />
-                    </div>
-                  ))}
+                      );
+                    })}
                 </div>
               </InfiniteScroll>
               )}

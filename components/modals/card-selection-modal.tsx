@@ -526,6 +526,7 @@ export function CardSelectionModal({
                           card={card}
                           onClick={() => handleSelectCard(card)}
                           isSelected={false}
+                          priority={index < 6}
                       />
                       );
                     })}

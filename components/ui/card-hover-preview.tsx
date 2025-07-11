@@ -36,7 +36,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                 {/* Image Section */}
                 {cardImage && (
                     <div className="relative w-full h-40">
-                        <Image src={cardImage} alt={`Image for ${card.name}`} fill className="object-cover" />
+                        <Image src={cardImage} alt={`Image for ${card.name}`} fill className="object-cover" sizes="220px" />
                     </div>
                 )}
                 {/* Info Section Below Image */}

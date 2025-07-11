@@ -192,7 +192,7 @@ export function GenericCardSelectionModal({
                                     </div>
                                 </div>
                                 ) : (<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                        {finalFilteredCards.map((card) => {
+                                        {finalFilteredCards.map((card, index) => {
                                         return (
                                             <ImageCard
                                                 key={card.id}
@@ -202,6 +202,7 @@ export function GenericCardSelectionModal({
                                                 onSelect(card.id, field);
                                             }}
                                             isSelected={false}
+                                                priority={index < 6}
                                         />
                                         );
                                     })}

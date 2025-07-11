@@ -9,6 +9,8 @@ import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
+import Image from "next/image"
+import { cn } from "@/lib/utils"
 
 // Helper function to get display type name, moved outside of the component
 const getDisplayTypeName = (card: StandardCard) => {
@@ -93,9 +95,10 @@ interface ImageCardProps {
     onClick: (cardId: string) => void;
     isSelected: boolean;
     showSource?: boolean; // 是否显示来源，默认为 true
+    priority?: boolean; // 是否优先加载图片
 }
 
-export function ImageCard({ card, onClick, isSelected, showSource = true }: ImageCardProps) {
+export function ImageCard({ card, onClick, isSelected, showSource = true, priority = false }: ImageCardProps) {
     const [isHovered, setIsHovered] = useState(false)
     const [isAltPressed, setIsAltPressed] = useState(false)
     const [cardSource, setCardSource] = useState<string>("加载中...")
@@ -173,32 +176,15 @@ export function ImageCard({ card, onClick, isSelected, showSource = true }: Imag
         >
             {/* Image Container */}
             <div className="relative w-full aspect-[3/2] overflow-hidden">
-                {card.imageUrl && !imageError ? (
-                    <>
-                        {/* Loading placeholder */}
-                        {!imageLoaded && (
-                            <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                                <div className="animate-pulse text-gray-400">加载中...</div>
-                            </div>
-                        )}
-
-                        {/* Actual image */}
-                        <img
-                            src={card.imageUrl}
-                            alt={displayName}
-                            className={`h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'
-                                }`}
-                            onLoad={() => setImageLoaded(true)}
-                            onError={() => setImageError(true)}
-                        />
-                    </>
-                ) : (
-                        <img
-                            src="/empty-card.webp"
-                            alt={displayName}
-                            className="h-full w-full object-cover"
-                        />
-                )}
+                <Image
+                    src={card.imageUrl || "/empty-card.webp"}
+                    alt={displayName}
+                    width={300}
+                    height={420}
+                    className="w-full h-auto object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+                    priority={priority}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                />
                 {/* 轻度遮罩 + 文字阴影 */}
                 <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
                 <div className="absolute inset-x-0 bottom-0 flex items-end p-4 pointer-events-none">

@@ -72,8 +72,38 @@ export function CardSelectionModal({
 
   // Group card types by category
   const cardTypesByCategory = useMemo(() => {
-    const standard = getCardTypesByCategory(CardCategory.Standard);
+    // 定义期望的顺序
+    const desiredOrder = [
+      CardType.Domain,      // 领域
+      CardType.Profession,  // 职业
+      CardType.Subclass,    // 子职业
+      CardType.Ancestry,    // 血统
+    ];
+
+    let standard = getCardTypesByCategory(CardCategory.Standard);
     const extended = getCardTypesByCategory(CardCategory.Extended);
+
+    // 对 standard 数组进行排序
+    standard.sort((a, b) => {
+      const indexA = desiredOrder.indexOf(a as CardType);
+      const indexB = desiredOrder.indexOf(b as CardType);
+
+      // 如果 a 和 b 都在期望顺序中，按期望顺序排
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      // 如果只有 a 在期望顺序中，a 排在前面
+      if (indexA !== -1) {
+        return -1;
+      }
+      // 如果只有 b 在期望顺序中，b 排在前面
+      if (indexB !== -1) {
+        return 1;
+      }
+      // 如果都不在，保持原有相对顺序（或按字母顺序）
+      return a.localeCompare(b);
+    });
+
     return { standard, extended };
   }, []);
 

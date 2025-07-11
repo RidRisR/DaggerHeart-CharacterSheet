@@ -1,9 +1,16 @@
 /** @type {import('next').NextConfig} */
 
-const repo = 'DaggerHeart-CharacterSheet'
+const isGithubActions = process.env.GITHUB_ACTIONS || false
 
-const assetPrefix = `/${repo}`
-const basePath = `/${repo}`
+let assetPrefix = ''
+let basePath = ''
+
+// 如果在 GitHub Actions 中运行，则设置 assetPrefix 和 basePath
+if (isGithubActions) {
+  const repo = 'DaggerHeart-CharacterSheet'
+  assetPrefix = `/${repo}`
+  basePath = `/${repo}`
+}
 
 const nextConfig = {
   env: {

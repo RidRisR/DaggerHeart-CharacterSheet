@@ -27,9 +27,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Build with Next.js
-        run: |
-          export NEXT_PUBLIC_BASE_PATH=/DaggerHeart-CharacterSheet
-          pnpm build
+        run: pnpm build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

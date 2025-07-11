@@ -71,9 +71,9 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
             <div className="w-px bg-gray-200"></div>
 
             {/* Right Column: Description + Hint */}
-            {card.description && (
-                <div className="flex-grow p-3 min-w-0 flex flex-col h-full">
-                    <div className="text-sm text-gray-700 h-full overflow-y-auto pr-1 prose prose-sm max-w-none">
+            <div className="flex-grow p-3 min-w-0 flex flex-col bg-gray-100 rounded-r-lg">
+                {card.description && (
+                    <div className="text-sm text-gray-700 flex-grow overflow-y-auto pr-1 prose prose-sm max-w-none">
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm, remarkBreaks]}
                             components={{
@@ -86,14 +86,14 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                             {card.description}
                         </ReactMarkdown>
                     </div>
-                    {card.hint && card.type !== "profession" && (
-                        <>
-                            <div className="h-px bg-gray-200 w-full my-2"></div>
-                            <p className="text-xs text-gray-500 italic">{card.hint}</p>
-                        </>
-                    )}
-                </div>
-            )}
+                )}
+                {card.hint && card.type !== "profession" && (
+                    <>
+                        {card.description && <div className="h-px bg-gray-200 w-full my-2 flex-shrink-0"></div>}
+                        <p className="text-xs text-gray-500 italic flex-shrink-0">{card.hint}</p>
+                    </>
+                )}
+            </div>
         </div>
     )
 }

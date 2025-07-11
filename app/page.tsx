@@ -713,7 +713,6 @@ export default function Home() {
 
   return (
     <main className="container mx-auto py-4">
-      <h1 className="text-2xl font-bold text-center mb-4">Daggerheart 角色卡</h1>
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* 左侧卡牌展示区域 - 打印时隐藏 */}

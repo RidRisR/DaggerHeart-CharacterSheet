@@ -25,13 +25,6 @@ import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce";
 import { useCardsByType } from "@/card/card-store";
 
-// Helper to get a random integer between min and max (inclusive)
-const getRandomInt = (min: number, max: number) => {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 const ITEMS_PER_PAGE = 30;
 
 interface CardSelectionModalProps {
@@ -529,7 +522,7 @@ export function CardSelectionModal({
                     {displayedCards.map((card: StandardCard, index: number) => {
                       const cardWithImage = {
                         ...card,
-                        imageUrl: card.imageUrl || `/${getRandomInt(10001, 10189)}.jpg`
+                        imageUrl: card.imageUrl || `/empty-card.webp`, // Ensure imageUrl is set
                       };
                       return (
                         <ImageCard

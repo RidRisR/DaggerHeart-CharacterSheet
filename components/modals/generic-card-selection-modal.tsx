@@ -15,13 +15,6 @@ import { SheetCardReference } from "@/lib/sheet-data";
 import { useCardsByType } from "@/card/card-store";
 import { useSheetStore } from "@/lib/sheet-store"
 
-// Helper to get a random integer between min and max (inclusive)
-const getRandomInt = (min: number, max: number) => {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 interface GenericCardSelectionModalProps {
     isOpen: boolean
     onClose: () => void
@@ -202,7 +195,7 @@ export function GenericCardSelectionModal({
                                     {finalFilteredCards.map((card) => {
                                         const cardWithImage = {
                                             ...card,
-                                            imageUrl: card.imageUrl || `/${getRandomInt(10001, 10189)}.jpg`
+                                            imageUrl: card.imageUrl || `/empty-card.webp`,
                                         };
                                         return (
                                             <ImageCard

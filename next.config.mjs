@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 
-const isGithubActions = process.env.GITHUB_ACTIONS === 'true'
 const repo = 'DaggerHeart-CharacterSheet'
 
-const assetPrefix = isGithubActions ? `/${repo}` : ''
-const basePath = isGithubActions ? `/${repo}` : ''
+const assetPrefix = `/${repo}`
+const basePath = `/${repo}`
 
 const nextConfig = {
   eslint: {

@@ -10,7 +10,8 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
+
+const basePath = '/DaggerHeart-CharacterSheet';
 
 // Helper function to get display type name, moved outside of the component
 const getDisplayTypeName = (card: StandardCard) => {
@@ -177,7 +178,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
             {/* Image Container */}
             <div className="relative w-full aspect-[3/2] overflow-hidden">
                 <Image
-                    src={imageError ? '/empty-card.webp' : (card.imageUrl || '/empty-card.webp')}
+                    src={imageError ? basePath + `/empty-card.webp` : (card.imageUrl ? basePath + `${card.imageUrl}` : basePath + `/empty-card.webp`)}
                     alt={displayName}
                     width={300}
                     height={420}

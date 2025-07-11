@@ -177,13 +177,15 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
             {/* Image Container */}
             <div className="relative w-full aspect-[3/2] overflow-hidden">
                 <Image
-                    src={card.imageUrl || "/empty-card.webp"}
+                    src={imageError ? "/empty-card.webp" : (card.imageUrl || "/empty-card.webp")}
                     alt={displayName}
                     width={300}
                     height={420}
                     className="w-full h-auto object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
                     priority={priority}
                     sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    onLoad={() => setImageLoaded(true)}
+                    onError={() => setImageError(true)}
                 />
                 {/* 轻度遮罩 + 文字阴影 */}
                 <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />

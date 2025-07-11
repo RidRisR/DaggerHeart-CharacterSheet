@@ -7,6 +7,7 @@ import Image from "next/image"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
+import React, { useState } from "react"
 
 interface CardHoverPreviewProps {
     card: StandardCard
@@ -26,6 +27,7 @@ const getDisplayTypeName = (card: StandardCard) => {
 export function CardHoverPreview({ card }: CardHoverPreviewProps) {
     if (!card) return null
 
+    const [imageError, setImageError] = useState(false)
     const displayTypeName = getDisplayTypeName(card)
     const cardImage = card.imageUrl || `/empty-card.webp` // Default image if none provided
 
@@ -36,7 +38,14 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                 {/* Image Section */}
                 {cardImage && (
                     <div className="relative w-full h-40">
-                        <Image src={cardImage} alt={`Image for ${card.name}`} fill className="object-cover" sizes="220px" />
+                        <Image
+                            src={imageError ? "/empty-card.webp" : cardImage}
+                            alt={`Image for ${card.name}`}
+                            fill
+                            className="object-cover"
+                            sizes="220px"
+                            onError={() => setImageError(true)}
+                        />
                     </div>
                 )}
                 {/* Info Section Below Image */}

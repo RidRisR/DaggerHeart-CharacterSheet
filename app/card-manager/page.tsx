@@ -19,6 +19,7 @@ import {
   type ExtendedStandardCard
 } from '@/card/index'
 import { CustomCardManager } from '@/card/custom-card-manager'
+import { getBasePath } from '@/lib/utils'
 
 interface ImportStatus {
   isImporting: boolean
@@ -132,8 +133,7 @@ export default function CardImportTestPage() {
   // 返回主站
   const goBackToMain = () => {
     refreshData()
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-    window.location.href = `${basePath}/`;
+    window.location.href = `${getBasePath()}/`
   }
 
   // 查看卡牌

@@ -9,6 +9,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import React, { useState } from "react"
+import { getBasePath } from "@/lib/utils"
 
 interface CardHoverPreviewProps {
     card: StandardCard
@@ -30,7 +31,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
 
     const [imageError, setImageError] = useState(false)
     const displayTypeName = getDisplayTypeName(card)
-    const cardImage = card.imageUrl || `/empty-card.webp` // Default image if none provided
+    const cardImage = card.imageUrl ? `${getBasePath()}${card.imageUrl}` : `${getBasePath()}/empty-card.webp`
 
     return (
         <div className="flex flex-row bg-white border border-gray-200 rounded-lg shadow-lg w-[520px] text-gray-800 overflow-auto">
@@ -40,7 +41,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                 {cardImage && (
                     <div className="relative w-full h-40">
                         <Image
-                            src={imageError ? '/empty-card.webp' : (card.imageUrl || '/empty-card.webp')}
+                            src={imageError ? `${getBasePath()}/empty-card.webp` : cardImage}
                             alt={`Image for ${card.name}`}
                             fill
                             className="object-cover"

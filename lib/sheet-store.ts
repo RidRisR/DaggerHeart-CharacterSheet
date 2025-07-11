@@ -4,6 +4,53 @@ import { create } from "zustand";
 import { defaultSheetData } from "./default-sheet-data";
 import type { SheetData, AttributeValue } from "./sheet-data";
 
+// 施法属性映射关系
+const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
+    "敏捷": "agility",
+    "力量": "strength",
+    "灵巧": "finesse",
+    "本能": "instinct",
+    "风度": "presence",
+    "知识": "knowledge"
+};
+
+// 同步子职业施法属性的函数
+const syncSubclassSpellcasting = (newData: SheetData, oldData: SheetData): SheetData => {
+    // 获取旧的和新的子职业施法属性
+    const oldSubclassCard = oldData.cards?.[1];
+    const newSubclassCard = newData.cards?.[1];
+
+    const oldSpellcastingAttr = oldSubclassCard?.cardSelectDisplay?.item3;
+    const newSpellcastingAttr = newSubclassCard?.cardSelectDisplay?.item3;
+
+    // 如果施法属性没有变化，直接返回
+    if (oldSpellcastingAttr === newSpellcastingAttr) {
+        return newData;
+    }
+
+    const result = { ...newData };
+
+    // 清除旧的施法属性标记
+    if (oldSpellcastingAttr && SPELLCASTING_ATTRIBUTE_MAP[oldSpellcastingAttr]) {
+        const oldAttrKey = SPELLCASTING_ATTRIBUTE_MAP[oldSpellcastingAttr];
+        const oldAttr = result[oldAttrKey] as AttributeValue;
+        if (oldAttr && typeof oldAttr === "object" && "spellcasting" in oldAttr) {
+            (result[oldAttrKey] as AttributeValue) = { ...oldAttr, spellcasting: false };
+        }
+    }
+
+    // 设置新的施法属性标记
+    if (newSpellcastingAttr && SPELLCASTING_ATTRIBUTE_MAP[newSpellcastingAttr]) {
+        const newAttrKey = SPELLCASTING_ATTRIBUTE_MAP[newSpellcastingAttr];
+        const newAttr = result[newAttrKey] as AttributeValue;
+        if (newAttr && typeof newAttr === "object" && "spellcasting" in newAttr) {
+            (result[newAttrKey] as AttributeValue) = { ...newAttr, spellcasting: true };
+        }
+    }
+
+    return result;
+};
+
 interface SheetState {
     sheetData: SheetData;
     setSheetData: (data: Partial<SheetData> | ((prevState: SheetData) => Partial<SheetData>)) => void;
@@ -25,11 +72,21 @@ export const useSheetStore = create<SheetState>((set) => ({
     sheetData: defaultSheetData,
     setSheetData: (updater) => {
         set((state) => {
-            const updatedData = typeof updater === 'function' ? updater(state.sheetData) : updater;
-            return { sheetData: { ...state.sheetData, ...updatedData } };
+            const oldData = state.sheetData;
+            const rawUpdatedData = typeof updater === 'function' ? updater(oldData) : updater;
+            const newData = { ...oldData, ...rawUpdatedData };
+
+            // 应用子职业施法属性同步
+            const finalData = syncSubclassSpellcasting(newData, oldData);
+
+            return { sheetData: finalData };
         });
     },
-    replaceSheetData: (newData) => set({ sheetData: newData }),
+    replaceSheetData: (newData) => set((state) => {
+        // 应用子职业施法属性同步
+        const finalData = syncSubclassSpellcasting(newData, state.sheetData);
+        return { sheetData: finalData };
+    }),
     
     // Granular actions
     updateAttribute: (attribute, value) => set((state) => {

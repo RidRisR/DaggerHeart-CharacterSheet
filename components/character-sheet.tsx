@@ -882,7 +882,7 @@ export default function CharacterSheet() {
               <div className="py-1">
                 {/* <h3 className="text-xs font-bold text-center">装备</h3> */}
 
-                <div className="flex items-center gap-0.5 mb-1.5">
+                <div className="flex items-center gap-0.5 mb-1">
                   <span className="text-[10px]">熟练度</span>
                   {Array(6)
                     .fill(0)

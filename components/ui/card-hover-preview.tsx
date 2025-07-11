@@ -12,13 +12,6 @@ interface CardHoverPreviewProps {
     card: StandardCard
 }
 
-// Helper to get a random integer between min and max (inclusive)
-const getRandomInt = (min: number, max: number) => {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 // Helper function to get display type name, moved outside for consistency
 const getDisplayTypeName = (card: StandardCard) => {
     if (isVariantCard(card)) {
@@ -34,7 +27,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
     if (!card) return null
 
     const displayTypeName = getDisplayTypeName(card)
-    const cardImage = `/${getRandomInt(10001, 10189)}.jpg`
+    const cardImage = card.imageUrl || `/empty-card.webp` // Default image if none provided
 
     return (
         <div className="flex flex-row bg-white border border-gray-200 rounded-lg shadow-lg w-[520px] text-gray-800 overflow-auto">

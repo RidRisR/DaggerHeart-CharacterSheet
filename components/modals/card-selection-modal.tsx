@@ -520,14 +520,10 @@ export function CardSelectionModal({
               >
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {displayedCards.map((card: StandardCard, index: number) => {
-                      const cardWithImage = {
-                        ...card,
-                        imageUrl: card.imageUrl || `/empty-card.webp`, // Ensure imageUrl is set
-                      };
                       return (
                         <ImageCard
                         key={`${card.id}-${index}`}
-                          card={cardWithImage}
+                          card={card}
                           onClick={() => handleSelectCard(card)}
                           isSelected={false}
                       />

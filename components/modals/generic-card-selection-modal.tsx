@@ -192,15 +192,11 @@ export function GenericCardSelectionModal({
                                     </div>
                                 </div>
                                 ) : (<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                    {finalFilteredCards.map((card) => {
-                                        const cardWithImage = {
-                                            ...card,
-                                            imageUrl: card.imageUrl || `/empty-card.webp`,
-                                        };
+                                        {finalFilteredCards.map((card) => {
                                         return (
                                             <ImageCard
                                                 key={card.id}
-                                                card={cardWithImage}
+                                                card={card}
                                             onClick={() => {
                                                 console.log(`Card clicked: ${card.id}, field: ${field}`);
                                                 onSelect(card.id, field);

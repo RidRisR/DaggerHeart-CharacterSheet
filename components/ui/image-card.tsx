@@ -103,6 +103,12 @@ export function ImageCard({ card, onClick, isSelected, showSource = true }: Imag
     const [imageError, setImageError] = useState(false)
     const cardRef = useRef<HTMLDivElement | null>(null)
 
+    // 当卡牌更换时，重置图片加载状态
+    useEffect(() => {
+        setImageLoaded(false);
+        setImageError(false);
+    }, [card.imageUrl]);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Alt") {
@@ -167,19 +173,12 @@ export function ImageCard({ card, onClick, isSelected, showSource = true }: Imag
         >
             {/* Image Container */}
             <div className="relative w-full aspect-[3/2] overflow-hidden">
-                {card.imageUrl ? (
+                {card.imageUrl && !imageError ? (
                     <>
                         {/* Loading placeholder */}
-                        {!imageLoaded && !imageError && (
+                        {!imageLoaded && (
                             <div className="flex h-full w-full items-center justify-center bg-gray-100">
                                 <div className="animate-pulse text-gray-400">加载中...</div>
-                            </div>
-                        )}
-
-                        {/* Error placeholder */}
-                        {imageError && (
-                            <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                                <span className="text-gray-400">图片加载失败</span>
                             </div>
                         )}
 
@@ -194,9 +193,11 @@ export function ImageCard({ card, onClick, isSelected, showSource = true }: Imag
                         />
                     </>
                 ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                        <span className="text-gray-400">No Image</span>
-                    </div>
+                        <img
+                            src="/empty-card.webp"
+                            alt={displayName}
+                            className="h-full w-full object-cover"
+                        />
                 )}
                 {/* 轻度遮罩 + 文字阴影 */}
                 <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />

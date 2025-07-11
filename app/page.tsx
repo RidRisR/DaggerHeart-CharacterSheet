@@ -18,6 +18,7 @@ import { CharacterManagementModal } from "@/components/modals/character-manageme
 import { Button } from "@/components/ui/button"
 import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
 import { useSheetStore } from "@/lib/sheet-store"
+import { getBasePath } from "@/lib/utils"
 
 // 内联图标组件
 const EyeIcon = () => (
@@ -839,7 +840,7 @@ export default function Home() {
 
         <Button
           onClick={() => {
-            window.location.href = `/DaggerHeart-CharacterSheet/card-manager`;
+            window.location.href = `${getBasePath()}/card-manager`;
           }}
           className="bg-gray-800 hover:bg-gray-700 focus:outline-none"
         >

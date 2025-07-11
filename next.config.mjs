@@ -1,19 +1,18 @@
 /** @type {import('next').NextConfig} */
 
+const isGithubActions = process.env.GITHUB_ACTIONS === 'true'
+const repo = 'DaggerHeart-CharacterSheet'
+
+const assetPrefix = isGithubActions ? `/${repo}` : ''
+const basePath = isGithubActions ? `/${repo}` : ''
 
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
-  assetPrefix: process.env.NEXT_PUBLIC_BASE_PATH ? `${process.env.NEXT_PUBLIC_BASE_PATH}/` : '.',
-  images: {
-    unoptimized: true,
-  },
-  output: 'export',
+    assetPrefix: assetPrefix,
+    basePath: basePath,
+    output: 'export',
+    images: {
+        unoptimized: true,
+    },
 };
 
 export default nextConfig;

@@ -11,8 +11,6 @@ import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import Image from "next/image"
 
-const basePath = '/DaggerHeart-CharacterSheet';
-
 // Helper function to get display type name, moved outside of the component
 const getDisplayTypeName = (card: StandardCard) => {
     if (isVariantCard(card)) {
@@ -178,7 +176,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
             {/* Image Container */}
             <div className="relative w-full aspect-[3/2] overflow-hidden">
                 <Image
-                    src={imageError ? basePath + `/empty-card.webp` : (card.imageUrl ? basePath + `${card.imageUrl}` : basePath + `/empty-card.webp`)}
+                    src={imageError ? `/empty-card.webp` : (card.imageUrl || `/empty-card.webp`)}
                     alt={displayName}
                     width={300}
                     height={420}

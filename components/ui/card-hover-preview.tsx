@@ -10,8 +10,6 @@ import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import React, { useState } from "react"
 
-const basePath = '/DaggerHeart-CharacterSheet';
-
 interface CardHoverPreviewProps {
     card: StandardCard
 }
@@ -42,7 +40,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                 {cardImage && (
                     <div className="relative w-full h-40">
                         <Image
-                            src={imageError ? basePath + '/empty-card.webp' : (basePath + card.imageUrl || basePath + '/empty-card.webp')}
+                            src={imageError ? '/empty-card.webp' : (card.imageUrl || '/empty-card.webp')}
                             alt={`Image for ${card.name}`}
                             width={300}
                             height={420}

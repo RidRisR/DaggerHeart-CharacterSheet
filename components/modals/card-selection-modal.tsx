@@ -78,6 +78,7 @@ export function CardSelectionModal({
       CardType.Profession,  // 职业
       CardType.Subclass,    // 子职业
       CardType.Ancestry,    // 血统
+      CardType.Community,   // 社群
     ];
 
     let standard = getCardTypesByCategory(CardCategory.Standard);

@@ -94,8 +94,8 @@ export const CARD_CLASS_OPTIONS = {
 // 定义不同卡牌类型对应的等级选项
 export const CARD_LEVEL_OPTIONS = {
   [CardType.Profession]: [],
-  [CardType.Ancestry]: [],
-  [CardType.Community]: ["特性一", "特性二"],
+  [CardType.Ancestry]: ["特性一", "特性二"],
+  [CardType.Community]: [],
   [CardType.Subclass]: ["基石", "专精", "大师"],
   [CardType.Domain]: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
 };

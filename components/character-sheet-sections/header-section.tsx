@@ -74,7 +74,9 @@ export function HeaderSection({
             onMouseLeave={handleMouseLeave}
             className="header-selection-button printable-selection-button w-56 bg-white border-gray-400 text-gray-800 text-xl font-bold print:bg-white print:text-black rounded p-1 h-7 text-xs text-left px-2"
           >
-            {formData.professionRef?.name || "选择职业"}
+            {formData.professionRef?.name
+              ? `${formData.professionRef.name}${formData.cards[0]?.cardSelectDisplay?.item1 && formData.cards[0]?.cardSelectDisplay?.item2 ? `  -  ${formData.cards[0].cardSelectDisplay.item1}&${formData.cards[0].cardSelectDisplay.item2}` : ''}`
+              : "选择职业"}
           </button>
         </div>
         <div className="text-[9px] mt-1">DAGGERHEART V20250520</div>

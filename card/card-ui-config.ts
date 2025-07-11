@@ -30,9 +30,9 @@ export const CARD_CLASS_OPTIONS_BY_TYPE = {
 export function getVariantSubclassOptions(variantType: string): { value: string; label: string }[] {
   const variantTypes = getVariantTypes();
   const typeDef = variantTypes[variantType];
-  
+
   if (!typeDef?.subclasses) return [];
-  
+
   return typeDef.subclasses.map((subclass: string) => ({
     value: subclass,
     label: subclass
@@ -65,8 +65,8 @@ export function getVariantLevelOptions(variantType: string): { value: string; la
 // Define a dictionary for level options by type with display names
 export const CARD_LEVEL_OPTIONS_BY_TYPE = {
   [CardType.Profession]: [], // Assuming no levels for Profession
-  [CardType.Ancestry]: [],  // Assuming no levels for Ancestry
-  [CardType.Community]: CARD_LEVEL_OPTIONS[CardType.Community].map((label: string, index: number) => ({ value: (index + 1).toString(), label })),
+  [CardType.Ancestry]: CARD_LEVEL_OPTIONS[CardType.Ancestry].map((label: string, index: number) => ({ value: (index + 1).toString(), label })),  // Corrected: Add level options for Ancestry
+  [CardType.Community]: [],
   [CardType.Subclass]: CARD_LEVEL_OPTIONS[CardType.Subclass].map((label: string, index: number) => ({ value: (index + 1).toString(), label })),
   [CardType.Domain]: CARD_LEVEL_OPTIONS[CardType.Domain].map((label: string, index: number) => ({ value: (index + 1).toString(), label })),
 };
@@ -77,7 +77,7 @@ export function getCardTypeName(typeId: string): string {
   if (Object.values(CardType).includes(typeId as CardType)) {
     return ALL_CARD_TYPES.get(typeId as CardType) || "未知类型";
   }
-  
+
   // 检查是否是变体类型
   return getVariantTypeName(typeId);
 }
@@ -88,7 +88,7 @@ export function getLevelOptions(typeId: string): { value: string; label: string 
   if (Object.values(CardType).includes(typeId as CardType)) {
     return CARD_LEVEL_OPTIONS_BY_TYPE[typeId as keyof typeof CARD_LEVEL_OPTIONS_BY_TYPE] || [];
   }
-  
+
   // 检查是否是变体类型
   return getVariantLevelOptions(typeId);
 }

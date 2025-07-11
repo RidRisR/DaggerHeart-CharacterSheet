@@ -62,6 +62,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                         {card.cardSelectDisplay?.item1 && <span className="truncate">{card.cardSelectDisplay.item1}</span>}
                         {card.cardSelectDisplay?.item2 && <span className="truncate">{card.cardSelectDisplay.item2}</span>}
                         {card.cardSelectDisplay?.item3 && <span className="truncate">{card.cardSelectDisplay.item3}</span>}
+                        {card.cardSelectDisplay?.item4 && <span className="truncate">{card.cardSelectDisplay.item4}</span>}
                     </div>
                 </div>
             </div>
@@ -76,7 +77,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm, remarkBreaks]}
                             components={{
-                                p: ({ children }) => <p className="first:mt-0 mb-0 mt-1">{children}</p>,
+                                p: ({ children }) => <p className="first:mt-0 mb-0 mt-2">{children}</p>,
                                 ul: ({ children }) => <ul className="list-disc pl-4 mb-0">{children}</ul>,
                                 ol: ({ children }) => <ol className="list-decimal pl-4 mb-0">{children}</ol>,
                                 li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,

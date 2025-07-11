@@ -187,6 +187,17 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
                     onLoad={() => setImageLoaded(true)}
                     onError={() => setImageError(true)}
                 />
+
+                {/* Level badge for Domain cards with frosted glass effect */}
+                {/* {card.type !== (CardType.Ancestry) && card.level && (
+                    <div className="absolute top-2 right-2 bg-black/25 backdrop-blur-md text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-lg border border-white/20 pointer-events-none">
+                        <span style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
+                            LV.  {card.level}
+                        </span>
+                    </div>
+                )} */}
+
+
                 {/* 轻度遮罩 + 文字阴影 */}
                 <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
                 <div className="absolute inset-x-0 bottom-0 flex items-end p-4 pointer-events-none">

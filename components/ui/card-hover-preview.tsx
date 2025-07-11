@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import React, { useState } from "react"
+import { PUBLIC_IMAGE_PREFIX } from "@/lib/utils"
 
 interface CardHoverPreviewProps {
     card: StandardCard
@@ -39,7 +40,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                 {cardImage && (
                     <div className="relative w-full h-40">
                         <Image
-                            src={imageError ? "/empty-card.webp" : cardImage}
+                            src={imageError ? `${PUBLIC_IMAGE_PREFIX}/empty-card.webp` : `${PUBLIC_IMAGE_PREFIX}${cardImage}`}
                             alt={`Image for ${card.name}`}
                             fill
                             className="object-cover"

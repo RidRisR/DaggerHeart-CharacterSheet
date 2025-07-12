@@ -44,7 +44,7 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
                 {cardRows.map((row, rowIndex) => (
                     <div
                         key={`row-${rowIndex}`}
-                        className="card-row grid grid-cols-3 3 gap-4 mb-2"
+                        className="card-row grid grid-cols-3 gap-1 mb-1"
                     >
                         {row.map((card, cardIndex) => (
                             <div

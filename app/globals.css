@@ -49,6 +49,11 @@ body {
   display: none;
 }
 
+@media print {
+  .card-description {
+    font-size: 9pt !important;
+  }
+}
 /* 在实际打印时移除居中样式，保持原始布局 */
 @media print {
 
@@ -166,29 +171,6 @@ body {
     /* Ensure selected text is black and visible */
   }
 
-  /* 第二页升级区域在实际打印时的样式 */
-  .page-two .mt-3.grid.grid-cols-3 {
-    gap: 0.3rem !important;
-    margin-top: 0.3rem !important;
-    font-size: 0.85em !important;
-  }
-
-  /* 第二页卡组区域在实际打印时紧凑布局 */
-  .page-two .mt-2 {
-    margin-top: 0.2rem !important;
-  }
-
-  /* 第二页所有内容间距在实际打印时缩小 */
-  .page-two h3 {
-    margin-bottom: 0.2rem !important;
-    margin-top: 0.2rem !important;
-  }
-
-  /* 第二页文本区域在实际打印时的优化 */
-  .page-two .text-m {
-    font-size: 0.65rem !important;
-    line-height: 1.2 !important;
-  }
 }
 
 /* 打印页面样式 */
@@ -216,7 +198,7 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   /* 增加行间距，给内容更多空间 */
 }
 
@@ -261,15 +243,6 @@ body {
 .print-deck-header {
   page-break-after: avoid;
   /* 标题不单独分页 */
-}
-
-/* 强制分页 - 在聚焦卡组和库存卡组之间 */
-.print-page-break {
-  page-break-before: always;
-}
-
-.card-row:last-child {
-  margin-bottom: 0;
 }
 
 .shield-shape {

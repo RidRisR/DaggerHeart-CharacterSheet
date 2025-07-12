@@ -67,7 +67,7 @@ export function PrintImageCard({ card }: PrintImageCardProps) {
                 )}
 
                 {/* Description */}
-                <div className="flex-1 text-xs text-gray-700 overflow-hidden">
+                <div className="flex-1 text-xs text-gray-700 overflow-hidden card-description">
                     <ReactMarkdown
                         skipHtml
                         components={{

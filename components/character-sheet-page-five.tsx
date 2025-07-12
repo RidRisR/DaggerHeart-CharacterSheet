@@ -2,7 +2,7 @@
 import React, { useMemo } from "react"
 import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
 import { useSheetStore } from '@/lib/sheet-store';
-import { CardContent } from "@/components/ui/card-content"
+import { PrintImageCard } from "@/components/ui/print-image-card"
 
 // 卡组打印区域组件
 interface CardDeckPrintSectionProps {
@@ -32,11 +32,8 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     return (
         <div className="print-deck-section">
             {/* 卡组标题 */}
-            <div className="print-deck-header mb-6">
+            <div className="print-deck-header mb-4">
                 <h2 className="text-xl font-bold text-center">{title}</h2>
-                <div className="text-sm text-gray-600 text-center mt-1">
-                    共 {cards.length} 张卡牌
-                </div>
             </div>
 
             {/* 卡牌网格 - 3列布局，让浏览器自动分页 */}
@@ -44,14 +41,14 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
                 {cardRows.map((row, rowIndex) => (
                     <div
                         key={`row-${rowIndex}`}
-                        className="card-row grid grid-cols-3 gap-4 mb-4"
+                        className="card-row grid grid-cols-3 gap-1 mb-1"
                     >
                         {row.map((card, cardIndex) => (
                             <div
                                 key={card.id || `${rowIndex}-${cardIndex}`}
-                                className="card-item border rounded p-3 bg-white flex flex-col gap-1"
+                                className="card-item"
                             >
-                                <CardContent card={card} />
+                                <PrintImageCard card={card} />
                             </div>
                         ))}
 

@@ -31,13 +31,20 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 
     return (
         <div className="print-deck-section">
+            {/* 卡组标题 */}
+            <div className="print-deck-header mb-6">
+                <h2 className="text-xl font-bold text-center">{title}</h2>
+                <div className="text-sm text-gray-600 text-center mt-1">
+                    共 {cards.length} 张卡牌
+                </div>
+            </div>
 
             {/* 卡牌网格 - 3列布局，让浏览器自动分页 */}
             <div className="print-card-grid">
                 {cardRows.map((row, rowIndex) => (
                     <div
                         key={`row-${rowIndex}`}
-                        className="card-row grid grid-cols-3 gap-4 mb-2"
+                        className="card-row grid grid-cols-3 3 gap-4 mb-2"
                     >
                         {row.map((card, cardIndex) => (
                             <div
@@ -75,8 +82,8 @@ const CharacterSheetPageFour: React.FC = () => {
     }
 
     return (
-        <div className="w-full max-w-[210mm] mx-auto my-4">
-            <div className="character-sheet-page-four a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md" style={{ width: "210mm" }}>
+        <div className="w-full max-w-[210mm] mx-auto">
+            <div className="character-sheet-page-four a4-page bg-white text-gray-800 shadow-lg print:shadow-none rounded-md" style={{ width: "210mm" }}>
                 <CardDeckPrintSection
                     cards={focusedCards}
                     title="聚焦卡组"

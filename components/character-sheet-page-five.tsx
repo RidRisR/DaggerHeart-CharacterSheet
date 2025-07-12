@@ -81,8 +81,8 @@ const CharacterSheetPageFive: React.FC = () => {
     }
 
     return (
-        <div className="w-full max-w-[210mm] mx-auto my-4">
-            <div className="character-sheet-page-five a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md" style={{ width: "210mm" }}>
+        <div className="w-full max-w-[210mm] mx-auto">
+            <div className="character-sheet-page-five a4-page bg-white text-gray-800 shadow-lg print:shadow-none rounded-md" style={{ width: "210mm" }}>
                 <CardDeckPrintSection
                     cards={inventoryCards}
                     title="库存卡组"

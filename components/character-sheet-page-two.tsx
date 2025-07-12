@@ -196,7 +196,7 @@ export default function CharacterSheetPageTwo() {
       {/* 固定位置的按钮已移至父组件 */}
       <div></div>
 
-      <div className="w-full max-w-[210mm] mx-auto my-4">
+      <div className="w-full max-w-[210mm] mx-auto">
         <div
           className="a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
           style={{ width: "210mm" }}

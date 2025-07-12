@@ -175,7 +175,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
             }}
         >
             {/* Image Container */}
-            <div className="relative w-full aspect-[3/2] overflow-hidden">
+            <div className="relative w-full aspect-[1.4] overflow-hidden">
                 <Image
                     src={imageError ? `${getBasePath()}/empty-card.webp` : (card.imageUrl ? `${getBasePath()}${card.imageUrl}` : `${getBasePath()}/empty-card.webp`)}
                     alt={displayName}

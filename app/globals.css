@@ -51,7 +51,7 @@ body {
 
 @media print {
   .card-description {
-    font-size: 9pt !important;
+    font-size: 7.5pt !important;
   }
 }
 /* 在实际打印时移除居中样式，保持原始布局 */
@@ -78,7 +78,7 @@ body {
 
   @page {
     size: A4;
-    margin: 5mm;
+    margin: 5mm 5mm 2mm 5mm;
     scale: 0.9;
   }
 
@@ -173,22 +173,6 @@ body {
 
 }
 
-/* 打印页面样式 */
-.print-page {
-  box-sizing: border-box;
-}
-
-.print-page-header {
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-}
-
-.print-page-content {
-  flex: 1;
-  overflow: hidden;
-}
-
 /* 卡牌行样式 - 同行高度对齐 */
 .card-row {
   page-break-inside: avoid;
@@ -198,20 +182,22 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
-  margin-bottom: 1rem;
-  /* 增加行间距，给内容更多空间 */
+  margin-bottom: 0.5rem;
 }
 
 .card-item {
   break-inside: avoid;
   height: 100%;
   /* 填满行高，确保同行等高 */
-  min-height: 120px;
+  min-height: 100px;
   /* 增加最小高度 */
   display: flex;
   flex-direction: column;
 }
 
+.print-page {
+  page-break-after: always;
+}
 .card-placeholder {
   /* 空白占位符，保持布局对齐 */
   visibility: hidden;
@@ -228,11 +214,6 @@ body {
   line-height: 1.3;
   height: auto;
   /* 自适应内容高度 */
-}
-
-/* 确保打印时的分页 */
-.print-page {
-  page-break-after: always;
 }
 
 /* 卡组区域样式 */

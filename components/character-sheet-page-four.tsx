@@ -32,11 +32,8 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     return (
         <div className="print-deck-section">
             {/* 卡组标题 */}
-            <div className="print-deck-header mb-6">
+            <div className="print-deck-header mb-4">
                 <h2 className="text-xl font-bold text-center">{title}</h2>
-                <div className="text-sm text-gray-600 text-center mt-1">
-                    共 {cards.length} 张卡牌
-                </div>
             </div>
 
             {/* 卡牌网格 - 3列布局，让浏览器自动分页 */}

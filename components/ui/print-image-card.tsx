@@ -39,20 +39,20 @@ export function PrintImageCard({ card }: PrintImageCardProps) {
     return (
         <div className="flex flex-col overflow-hidden rounded-lg border border-gray-300 bg-white h-full">
             {/* Image Container */}
-            <div className="relative w-full aspect-[3/2] overflow-hidden">
+            <div className="relative w-full aspect-[1.4] overflow-hidden">
                 <Image
                     src={card.imageUrl ? `${getBasePath()}${card.imageUrl}` : `${getBasePath()}/empty-card.webp`}
                     alt={displayName}
-                    width={300}
-                    height={200}
+                    fill
                     className="w-full h-full object-cover"
                     sizes="30vw"
                 />
-                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/35 to-transparent">
+                <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/50 to-transparent pointer-events-none flex flex-col justify-end p-2">
                     <h3 className="text-base font-bold text-white leading-tight">{displayName}</h3>
                     <span className="text-xs font-medium text-gray-200">{getDisplayTypeName(card)}</span>
                 </div>
             </div>
+
 
             {/* Content Container */}
             <div className="flex flex-1 flex-col p-2">

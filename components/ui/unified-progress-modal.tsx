@@ -244,17 +244,17 @@ class UnifiedProgressModalManager {
         position: absolute;
         top: 12px;
         right: 16px;
-        background: none;
-        border: none;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
         font-size: 14px;
-        color: #999;
+        color: #666;
         cursor: pointer;
         padding: 4px 8px;
         border-radius: 4px;
-        transition: background-color 0.2s ease;
+        transition: all 0.2s ease;
       `
-      cancelButton.onmouseover = () => { cancelButton.style.backgroundColor = '#f0f0f0' }
-      cancelButton.onmouseout = () => { cancelButton.style.backgroundColor = 'transparent' }
+      cancelButton.onmouseover = () => { cancelButton.style.backgroundColor = '#e9ecef' }
+      cancelButton.onmouseout = () => { cancelButton.style.backgroundColor = '#f8f9fa' }
       cancelButton.onclick = config.onCancel
       contentBox.appendChild(cancelButton)
     }

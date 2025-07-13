@@ -9,6 +9,7 @@ interface PrintContextType {
   registerPageImages: (pageId: string, imageCount: number) => void
   onPageImagesLoaded: (pageId: string) => void
   resetLoader: () => void
+  forceAllImagesLoaded: () => void
 }
 
 const PrintContext = createContext<PrintContextType | undefined>(undefined)

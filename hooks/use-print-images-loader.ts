@@ -8,6 +8,7 @@ interface UseImagesLoaderReturn {
   registerPageImages: (pageId: string, imageCount: number) => void
   onPageImagesLoaded: (pageId: string) => void
   resetLoader: () => void
+  forceAllImagesLoaded: () => void
 }
 
 export function useImagesLoader(): UseImagesLoaderReturn {
@@ -48,6 +49,16 @@ export function useImagesLoader(): UseImagesLoaderReturn {
     setRegisteredPages({})
   }, [])
 
+  const forceAllImagesLoaded = useCallback(() => {
+    setPageImagesLoaded(prev => {
+      const newState = { ...prev }
+      Object.keys(registeredPages).forEach(pageId => {
+        newState[pageId] = true
+      })
+      return newState
+    })
+  }, [registeredPages])
+
   const allImagesLoaded = useMemo(() => {
     return Object.keys(registeredPages).length > 0 && 
       Object.keys(registeredPages).every(pageId => pageImagesLoaded[pageId])
@@ -58,6 +69,7 @@ export function useImagesLoader(): UseImagesLoaderReturn {
     pageImagesLoaded,
     registerPageImages,
     onPageImagesLoaded,
-    resetLoader
+    resetLoader,
+    forceAllImagesLoaded
   }
 }

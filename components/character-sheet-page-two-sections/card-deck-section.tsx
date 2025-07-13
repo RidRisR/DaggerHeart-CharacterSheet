@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { SheetData } from "@/lib/sheet-data"
 import type { CSSProperties, MouseEvent } from "react"
+import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
 
 interface CardDeckSectionProps {
   formData: SheetData
@@ -62,6 +63,7 @@ interface CardProps {
   onHover: (index: number | null) => void;
   getPreviewPosition: (index: number) => CSSProperties;
   hoveredCard: number | null;
+  onPinCard: (card: StandardCard) => void;
 }
 
 function Card({
@@ -74,6 +76,7 @@ function Card({
   onHover,
   getPreviewPosition,
   hoveredCard,
+  onPinCard,
 }: CardProps) {
   const standardCard = convertToStandardCard(card);
 
@@ -90,7 +93,7 @@ function Card({
 
   return (
     <div
-      className={`relative cursor-pointer transition-colors rounded-md p-1 h-16 ${isSelected ? "border-3" : "border"
+      className={`relative cursor-pointer transition-colors rounded-md p-1 h-16 group ${isSelected ? "border-3" : "border"
         } ${getBorderColor(standardCard?.type, isSpecial)}`}
       onClick={() => onCardClick(index)}
       onContextMenu={(e) => onCardRightClick(index, e)}
@@ -104,7 +107,22 @@ function Card({
       }}
     >
       {/* 卡牌标题 */}
-      {card?.name && <div className="text-sm font-medium">{standardCard?.name || card.name}</div>}
+      {card?.name && (
+        <div className="flex items-center text-sm font-medium">
+          <span
+            className="truncate cursor-pointer hover:text-blue-600 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (standardCard) {
+                onPinCard(standardCard);
+              }
+            }}
+            title="点击钉住卡牌"
+          >
+            {standardCard?.name || card.name}
+          </span>
+        </div>
+      )}
 
       {/* 分隔线 */}
       <div className="h-px bg-gray-300 w-full my-0.5"></div>
@@ -180,6 +198,8 @@ export function CardDeckSection({
   cardModalSelectedLevels,
   setCardModalSelectedLevels,
 }: CardDeckSectionProps) {
+  // 钉住卡牌功能
+  const { pinCard } = usePinnedCardsStore();
   // 卡组视图状态
   const [activeDeck, setActiveDeck] = useState<'focused' | 'inventory'>('focused');
 
@@ -458,6 +478,7 @@ export function CardDeckSection({
                   onHover={handleCardHover}
                   getPreviewPosition={getPreviewPosition}
                   hoveredCard={hoveredCard}
+                  onPinCard={pinCard}
                 />
               </div>
             );

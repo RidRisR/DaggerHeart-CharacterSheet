@@ -21,6 +21,8 @@ import { useSheetStore } from "@/lib/sheet-store"
 import { getBasePath } from "@/lib/utils"
 import { PrintReadyChecker } from "@/components/print-ready-checker"
 import { usePrintContext } from "@/contexts/print-context"
+import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
+import { PinnedCardWindow } from "@/components/ui/pinned-card-window"
 
 // 内联图标组件
 const EyeIcon = () => (
@@ -86,6 +88,9 @@ export default function Home() {
     setSheetData: setFormData,
     replaceSheetData
   } = useSheetStore();
+  
+  // 钉住卡牌状态
+  const { pinnedCards } = usePinnedCardsStore();
   const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null)
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -1007,6 +1012,14 @@ export default function Home() {
         onDuplicateCharacter={duplicateCharacterHandler}
         onRenameCharacter={renameCharacterHandler}
       />
+
+      {/* 钉住的卡牌窗口 - 全局渲染，不受页面切换影响 */}
+      {pinnedCards.map((pinnedCard) => (
+        <PinnedCardWindow
+          key={pinnedCard.id}
+          pinnedCard={pinnedCard}
+        />
+      ))}
     </main>
   )
 }

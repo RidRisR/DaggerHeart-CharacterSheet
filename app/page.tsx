@@ -935,13 +935,13 @@ export default function Home() {
               导出预览
             </HoverMenuItem>
             <HoverMenuItem onClick={handleQuickExportPDF}>
-              快速导出PDF
+              导出PDF
             </HoverMenuItem>
             <HoverMenuItem onClick={handleQuickExportHTML}>
-              快速导出HTML
+              导出HTML
             </HoverMenuItem>
             <HoverMenuItem onClick={handleQuickExportJSON}>
-              快速导出JSON
+              导出JSON
             </HoverMenuItem>
           </HoverMenu>
 

@@ -6,10 +6,11 @@ import { useProgressModal } from "@/components/ui/unified-progress-modal"
 
 interface PrintReadyCheckerProps {
   onPrintReady?: () => void
+  onSkipWaiting?: () => void
   children?: React.ReactNode
 }
 
-export function PrintReadyChecker({ onPrintReady, children }: PrintReadyCheckerProps) {
+export function PrintReadyChecker({ onPrintReady, onSkipWaiting, children }: PrintReadyCheckerProps) {
   const { allImagesLoaded } = usePrintContext()
   const progressModal = useProgressModal()
 
@@ -24,10 +25,13 @@ export function PrintReadyChecker({ onPrintReady, children }: PrintReadyCheckerP
       // 图片未加载完成，显示等待进度条
       progressModal.showLoading(
         "正在准备打印预览", 
-        "正在加载图片，请稍候..."
+        "正在加载图片，请稍候...",
+        !!onSkipWaiting, // 如果有跳过回调，显示跳过按钮
+        onSkipWaiting,   // 跳过回调
+        "跳过等待"       // 按钮文本
       )
     }
-  }, [allImagesLoaded, onPrintReady, progressModal])
+  }, [allImagesLoaded, onPrintReady, onSkipWaiting, progressModal])
 
   // 在DOM上设置数据属性，供HTML导出器使用
   useEffect(() => {

@@ -757,8 +757,17 @@ export default function Home() {
   }
 
   if (isPrintingAll) {
+    const handleSkipWaiting = () => {
+      console.log('[App] 用户选择跳过图片加载等待')
+      // 强制设置图片加载完成状态，让页面正常显示
+      const printContextElement = document.querySelector('[data-print-context]') as HTMLElement
+      if (printContextElement) {
+        printContextElement.setAttribute('data-all-images-loaded', 'true')
+      }
+    }
+
     return (
-      <PrintReadyChecker>
+      <PrintReadyChecker onSkipWaiting={handleSkipWaiting}>
         <div className="print-all-pages">
           <PrintHelper />
 

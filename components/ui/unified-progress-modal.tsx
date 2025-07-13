@@ -21,6 +21,7 @@ interface ProgressConfig {
   total?: number
   showCancel?: boolean
   onCancel?: () => void
+  cancelText?: string
 }
 
 /**
@@ -62,13 +63,14 @@ class UnifiedProgressModalManager {
   /**
    * 显示等待模式
    */
-  showLoading(title: string, message: string, showCancel?: boolean, onCancel?: () => void): void {
+  showLoading(title: string, message: string, showCancel?: boolean, onCancel?: () => void, cancelText?: string): void {
     this.show({
       title,
       message,
       mode: ProgressMode.LOADING,
       showCancel,
-      onCancel
+      onCancel,
+      cancelText
     })
 
     // 设置自动关闭定时器（10分钟）
@@ -237,14 +239,14 @@ class UnifiedProgressModalManager {
     // 取消按钮
     if (config.showCancel && config.onCancel) {
       const cancelButton = document.createElement('button')
-      cancelButton.textContent = '取消'
+      cancelButton.textContent = config.cancelText || '取消'
       cancelButton.style.cssText = `
         position: absolute;
         top: 12px;
         right: 16px;
         background: none;
         border: none;
-        font-size: 18px;
+        font-size: 14px;
         color: #999;
         cursor: pointer;
         padding: 4px 8px;
@@ -398,7 +400,7 @@ class UnifiedProgressModalManager {
  * 进度条上下文
  */
 interface ProgressModalContextType {
-  showLoading: (title: string, message: string, showCancel?: boolean, onCancel?: () => void) => void
+  showLoading: (title: string, message: string, showCancel?: boolean, onCancel?: () => void, cancelText?: string) => void
   showProgress: (title: string, current: number, total: number, message: string) => void
   updateProgress: (current: number, total: number, message: string) => void
   updateLoading: (message: string) => void
@@ -442,8 +444,8 @@ export function ProgressModalProvider({ children }: ProgressModalProviderProps) 
   }, [manager])
 
   const contextValue: ProgressModalContextType = {
-    showLoading: useCallback((title, message, showCancel, onCancel) => {
-      manager.showLoading(title, message, showCancel, onCancel)
+    showLoading: useCallback((title, message, showCancel, onCancel, cancelText) => {
+      manager.showLoading(title, message, showCancel, onCancel, cancelText)
     }, [manager]),
 
     showProgress: useCallback((title, current, total, message) => {

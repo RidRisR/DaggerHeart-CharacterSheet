@@ -9,6 +9,7 @@ import {
   getStandardCardsByTypeAsync,
   CardType,
 } from "@/card"
+import { createEmptyCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { CardDrawer } from "@/components/card-drawer"
 import CharacterSheetPageFour from "@/components/character-sheet-page-four"
@@ -97,6 +98,8 @@ export default function Home() {
   const [isMigrationCompleted, setIsMigrationCompleted] = useState(false)
   // 添加客户端挂载状态
   const [isClient, setIsClient] = useState(false)
+  // 添加移动设备检测
+  const [isMobile, setIsMobile] = useState(false)
 
   // UI状态
   const [isPrintingAll, setIsPrintingAll] = useState(false)
@@ -122,6 +125,18 @@ export default function Home() {
     }, 1000)
 
     return () => clearTimeout(timer)
+  }, [])
+
+  // 移动设备检测
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window)
+    }
+    
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    
+    return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
 
   const closeCharacterManagementModal = () => {
@@ -593,6 +608,102 @@ export default function Home() {
   }
 
 
+  // 从抽屉删除卡牌
+  const handleDeleteCardFromDrawer = (cardIndex: number, isInventory: boolean) => {
+    const emptyCard = createEmptyCard()
+    
+    if (isInventory) {
+      // 用空卡替换库存卡牌，保持数组结构
+      const newInventoryCards = [...(formData.inventory_cards || [])]
+      // 确保数组长度为20
+      while (newInventoryCards.length < 20) {
+        newInventoryCards.push(createEmptyCard())
+      }
+      newInventoryCards[cardIndex] = emptyCard
+      setFormData(prev => ({
+        ...prev,
+        inventory_cards: newInventoryCards
+      }))
+    } else {
+      // 用空卡替换主卡组卡牌，保持数组结构
+      const newCards = [...(formData.cards || [])]
+      // 确保数组长度为20
+      while (newCards.length < 20) {
+        newCards.push(createEmptyCard())
+      }
+      newCards[cardIndex] = emptyCard
+      setFormData(prev => ({
+        ...prev,
+        cards: newCards
+      }))
+    }
+  }
+
+  // 从抽屉移动卡牌
+  const handleMoveCardFromDrawer = (cardIndex: number, fromInventory: boolean, toInventory: boolean) => {
+    if (fromInventory === toInventory) return // 不需要移动
+    
+    setFormData((prev) => {
+      const newFormData = { ...prev }
+      
+      // 确保两个卡组都存在且长度为20
+      if (!newFormData.cards) {
+        newFormData.cards = Array(20).fill(0).map(() => createEmptyCard())
+      }
+      if (!newFormData.inventory_cards) {
+        newFormData.inventory_cards = Array(20).fill(0).map(() => createEmptyCard())
+      }
+      
+      // 创建新的卡组数组
+      const newFocusedCards = [...newFormData.cards]
+      const newInventoryCards = [...newFormData.inventory_cards]
+      
+      // 确保数组长度为20
+      while (newFocusedCards.length < 20) {
+        newFocusedCards.push(createEmptyCard())
+      }
+      while (newInventoryCards.length < 20) {
+        newInventoryCards.push(createEmptyCard())
+      }
+      
+      // 获取要移动的卡牌
+      const sourceCards = fromInventory ? newInventoryCards : newFocusedCards
+      const targetCards = toInventory ? newInventoryCards : newFocusedCards
+      const cardToMove = sourceCards[cardIndex]
+      
+      if (!cardToMove || cardToMove.name === '') return prev // 空卡不能移动
+      
+      // 检查特殊卡位保护：不能从聚焦卡组的特殊卡位(前5位)移动出去
+      if (!fromInventory && cardIndex < 5) {
+        console.log('[抽屉移动] 特殊卡位不能移动到库存卡组')
+        return prev
+      }
+      
+      // 找到目标卡组中第一个空位（跳过特殊卡位）
+      let targetIndex = -1
+      const startIndex = toInventory ? 0 : 5 // 移动到聚焦卡组时从第6位开始查找
+      
+      for (let i = startIndex; i < targetCards.length; i++) {
+        if (!targetCards[i] || targetCards[i].name === '') {
+          targetIndex = i
+          break
+        }
+      }
+      
+      if (targetIndex === -1) return prev // 目标卡组已满
+      
+      // 执行移动：源位置用空卡替换，目标位置放入卡牌
+      sourceCards[cardIndex] = createEmptyCard()
+      targetCards[targetIndex] = cardToMove
+      
+      return {
+        ...newFormData,
+        cards: newFocusedCards,
+        inventory_cards: newInventoryCards
+      }
+    })
+  }
+
   // 从HTML导入新建存档
   const handleQuickImportFromHTML = () => {
     // 创建文件输入元素
@@ -832,6 +943,8 @@ export default function Home() {
           inventoryCards={formData.inventory_cards || []}
           isOpen={isCardDrawerOpen}
           onClose={() => setIsCardDrawerOpen(false)}
+          onDeleteCard={handleDeleteCardFromDrawer}
+          onMoveCard={handleMoveCardFromDrawer}
         />
       </div>
 
@@ -918,14 +1031,18 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <Button
               onClick={() => setIsCardDrawerOpen(!isCardDrawerOpen)}
-              className="bg-gray-800 hover:bg-gray-700 text-white w-12 h-12 rounded-full p-0 flex items-center justify-center"
+              className={`bg-gray-800 hover:bg-gray-700 text-white rounded-full p-0 flex items-center justify-center ${
+                isMobile ? 'w-14 h-14 text-lg' : 'w-12 h-12 text-base'
+              }`}
             >
               🎴
             </Button>
 
           <Button
             onClick={toggleGuide}
-            className="bg-blue-800 text-white hover:bg-blue-700 focus:outline-none whitespace-nowrap"
+            className={`bg-blue-800 text-white hover:bg-blue-700 focus:outline-none whitespace-nowrap ${
+              isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+            }`}
           >
             建卡指引
           </Button>
@@ -937,7 +1054,9 @@ export default function Home() {
             trigger={
               <Button 
                 onClick={handlePrintAll}
-                className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+                className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${
+                  isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+                }`}
               >
                 导出页面
               </Button>
@@ -964,7 +1083,9 @@ export default function Home() {
             trigger={
               <Button 
                 onClick={() => setCharacterManagementModalOpen(true)}
-                className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+                className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${
+                  isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+                }`}
               >
                 存档管理
               </Button>
@@ -988,7 +1109,9 @@ export default function Home() {
             onClick={() => {
               window.location.href = `${getBasePath()}/card-manager`;
             }}
-            className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+            className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${
+              isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+            }`}
           >
             卡牌管理
           </Button>

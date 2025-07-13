@@ -209,7 +209,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
             </div>
 
             {/* Content Container */}
-            <div className="flex flex-1 flex-col p-4 h-[210px]">
+            <div className="flex flex-1 flex-col p-4">
                 {/* Display Items */}
                 {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
                     <div className="mb-3 flex flex-row flex-wrap items-center gap-2 border-b border-dashed border-gray-200 pb-3 text-xs">

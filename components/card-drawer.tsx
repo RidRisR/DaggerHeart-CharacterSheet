@@ -12,11 +12,13 @@ interface CardDrawerProps {
   inventoryCards: Array<StandardCard>
   isOpen?: boolean
   onClose?: () => void
+  onDeleteCard?: (cardIndex: number, isInventory: boolean) => void
+  onMoveCard?: (cardIndex: number, fromInventory: boolean, toInventory: boolean) => void
 }
 
 type TabType = "focused" | "profession" | "background" | "domain" | "variant" | "inventory"
 
-export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onClose }: CardDrawerProps) {
+export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onClose, onDeleteCard, onMoveCard }: CardDrawerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const finalIsOpen = externalIsOpen !== undefined ? externalIsOpen : isOpen
@@ -62,10 +64,10 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window)
     }
-    
+
     checkIsMobile()
     window.addEventListener('resize', checkIsMobile)
-    
+
     return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
 
@@ -135,17 +137,15 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
         <div className="fixed inset-0 z-50 flex items-end">
           {/* 背景遮罩 */}
           <div
-            className={`fixed inset-0 bg-black transition-opacity duration-300 ${
-              isClosing ? 'bg-opacity-0' : 'bg-opacity-50'
-            }`}
+            className={`fixed inset-0 bg-black transition-opacity duration-300 ${isClosing ? 'bg-opacity-0' : 'bg-opacity-50'
+              }`}
             onClick={handleClose}
           />
 
           {/* 抽屉内容 */}
           <div
-            className={`card-drawer-content fixed bottom-0 left-0 right-0 bg-white w-full h-[35vh] min-h-[35vh] rounded-t-lg shadow-xl flex flex-col transition-transform duration-300 ease-out ${
-              isClosing ? 'translate-y-full' : 'translate-y-0'
-            }`}
+            className={`card-drawer-content fixed bottom-0 left-0 right-0 bg-white w-full h-[35vh] min-h-[35vh] rounded-t-lg shadow-xl flex flex-col transition-transform duration-300 ease-out ${isClosing ? 'translate-y-full' : 'translate-y-0'
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 顶部拖拽手柄 */}
@@ -160,7 +160,9 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 ${activeTab === tab.key
+                    className={`flex-shrink-0 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 ${
+                      isMobile ? 'px-4 py-2 text-base' : 'px-3 py-1.5 text-sm'
+                    } ${activeTab === tab.key
                       ? "bg-blue-500 text-white shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
                       }`}
@@ -188,25 +190,74 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
               ) : (
                 <div className="h-full overflow-x-auto overflow-y-hidden px-4 py-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                   <div className="flex gap-3 h-full items-start animate-in slide-in-from-right duration-300" style={{ touchAction: 'pan-x' }}>
-                    {currentCards.map((card, index) => (
-                      <div
-                        key={`${card.type}-${card.name}-${index}`}
-                        className="flex-shrink-0 w-72 animate-in fade-in duration-300"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                        onMouseEnter={() => handleCardHover(card)}
-                        onMouseLeave={() => handleCardHover(null)}
-                        onClick={() => handleCardClick(card)}
-                      >
-                        <div className="transform transition-all duration-200 hover:scale-105 hover:shadow-lg">
-                          <SimpleImageCard
-                            card={card}
-                            onClick={() => {}}
-                            isSelected={false}
-                            priority={index < 5} // 前5张卡牌优先加载
-                          />
+                    {currentCards.map((card, index) => {
+                      // 找到卡牌在原数组中的真实索引
+                      const isInventoryTab = activeTab === "inventory"
+                      const realIndex = isInventoryTab
+                        ? inventoryCards.findIndex(c => c === card)
+                        : cards.findIndex(c => c === card)
+                      
+                      // 检查是否是特殊卡位（聚焦卡组的前5个位置）
+                      const isSpecialSlot = !isInventoryTab && realIndex < 5
+
+                      return (
+                        <div
+                          key={`${card.type}-${card.name}-${index}`}
+                          className={`flex-shrink-0 w-72 animate-in fade-in duration-300 relative group ${
+                            isSpecialSlot ? 'border-2 border-yellow-400 rounded-lg' : ''
+                          }`}
+                          style={{ animationDelay: `${index * 50}ms` }}
+                          onMouseEnter={() => handleCardHover(card)}
+                          onMouseLeave={() => handleCardHover(null)}
+                          onClick={() => handleCardClick(card)}
+                        >
+                          {/* 浮动切换按钮 */}
+                          {onMoveCard && realIndex !== -1 && !isSpecialSlot && (
+                            <button
+                              className={`absolute top-2 left-2 z-[70] bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center font-bold opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg ${isMobile ? 'w-12 h-12 text-sm' : 'w-6 h-6 text-xs'
+                                }`}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onMoveCard(realIndex, isInventoryTab, !isInventoryTab)
+                              }}
+                              title={isInventoryTab ? "移动到聚焦卡组" : "移动到库存卡组"}
+                            >
+                              ⇄
+                            </button>
+                          )}
+                          {/* 浮动删除按钮 */}
+                          {onDeleteCard && realIndex !== -1 && !isSpecialSlot && (
+                            <button
+                              className={`absolute top-2 right-2 z-[70] bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center font-bold opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg ${isMobile ? 'w-12 h-12 text-sm' : 'w-6 h-6 text-xs'
+                                }`}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onDeleteCard(realIndex, isInventoryTab)
+                              }}
+                              title="删除卡牌"
+                            >
+                              ×
+                            </button>
+                          )}
+                          {/* 特殊卡位标签 */}
+                          {isSpecialSlot && (
+                            <div className="absolute -top-1 left-2 z-[60]">
+                              <span className="text-[10px] font-medium bg-yellow-100 px-1 py-0.5 rounded text-yellow-700 border border-yellow-300 shadow-sm">
+                                特殊卡位
+                              </span>
+                            </div>
+                          )}
+                          <div className="transform transition-all duration-200 hover:scale-105 hover:shadow-lg">
+                            <SimpleImageCard
+                              card={card}
+                              onClick={() => { }}
+                              isSelected={false}
+                              priority={index < 5} // 前5张卡牌优先加载
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -217,7 +268,7 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
 
       {/* 悬浮卡片预览 */}
       {hoveredCard && (
-        <div 
+        <div
           className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[60]"
           style={{ pointerEvents: isMobile ? 'auto' : 'none' }}
           onClick={isMobile ? () => setHoveredCard(null) : undefined}

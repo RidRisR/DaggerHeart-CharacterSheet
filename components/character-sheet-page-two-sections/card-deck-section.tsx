@@ -235,11 +235,16 @@ export function CardDeckSection({
 
   // 获取当前卡组数据的辅助函数
   const getCurrentDeckCards = (deckType: 'focused' | 'inventory'): StandardCard[] => {
-    if (deckType === 'focused') {
-      return formData?.cards || Array(20).fill(0).map(() => createEmptyCard());
-    } else {
-      return formData?.inventory_cards || Array(20).fill(0).map(() => createEmptyCard());
-    }
+    const sourceCards = deckType === 'focused' 
+      ? (formData?.cards || [])
+      : (formData?.inventory_cards || []);
+    
+    // 确保数组长度为20，不足的用空卡填充
+    const result = Array(20).fill(0).map((_, index) => 
+      sourceCards[index] || createEmptyCard()
+    );
+    
+    return result;
   };
 
   // 确保 formData 和当前卡组存在

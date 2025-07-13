@@ -37,14 +37,66 @@ class GlobalMenuManager implements GlobalMenuManagerType {
 
 const globalMenuManager = new GlobalMenuManager()
 
+// 获取菜单定位的CSS类
+function getMenuPositionClasses(side: "top" | "bottom" | "left" | "right", align: "start" | "center" | "end"): string {
+    let positionClasses = ""
+    
+    // 设置side定位
+    switch (side) {
+        case "top":
+            positionClasses += "bottom-full mb-2 "
+            break
+        case "bottom":
+            positionClasses += "top-full mt-2 "
+            break
+        case "left":
+            positionClasses += "right-full mr-2 "
+            break
+        case "right":
+            positionClasses += "left-full ml-2 "
+            break
+    }
+    
+    // 设置align对齐
+    if (side === "top" || side === "bottom") {
+        switch (align) {
+            case "start":
+                positionClasses += "left-0"
+                break
+            case "center":
+                positionClasses += "left-1/2 transform -translate-x-1/2"
+                break
+            case "end":
+                positionClasses += "right-0"
+                break
+        }
+    } else { // left or right
+        switch (align) {
+            case "start":
+                positionClasses += "top-0"
+                break
+            case "center":
+                positionClasses += "top-1/2 transform -translate-y-1/2"
+                break
+            case "end":
+                positionClasses += "bottom-0"
+                break
+        }
+    }
+    
+    return positionClasses
+}
+
 interface HoverMenuProps {
     trigger: ReactNode
     children: ReactNode
     className?: string
     menuClassName?: string
+    side?: "top" | "bottom" | "left" | "right"
+    align?: "start" | "center" | "end"
 }
 
-export function HoverMenu({ trigger, children, className = "", menuClassName = "" }: HoverMenuProps) {
+export function HoverMenu({ trigger, children, className = "", menuClassName = "", side = "left", align = "start" }: HoverMenuProps) {
     const [showMenu, setShowMenu] = useState(false)
     const [menuTimeout, setMenuTimeout] = useState<NodeJS.Timeout | null>(null)
     const [menuId] = useState(() => `menu-${Date.now()}-${Math.random()}`)
@@ -101,10 +153,10 @@ export function HoverMenu({ trigger, children, className = "", menuClassName = "
             >
                 {trigger}
 
-                {/* 悬浮菜单 - 向左弹出 */}
+                {/* 悬浮菜单 */}
                 {showMenu && (
                     <div
-                        className={`absolute right-full top-0 mr-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1 min-w-[120px] z-50 ${menuClassName}`}
+                        className={`absolute bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1 min-w-[120px] z-50 ${getMenuPositionClasses(side, align)} ${menuClassName}`}
                         onMouseEnter={handleMenuEnter}
                         onMouseLeave={handleMenuLeave}
                     >

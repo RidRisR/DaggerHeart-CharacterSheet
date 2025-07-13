@@ -10,7 +10,7 @@ import {
   CardType,
 } from "@/card"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import { CardDisplaySection } from "@/components/card-display-section"
+import { CardDrawer } from "@/components/card-drawer"
 import CharacterSheetPageFour from "@/components/character-sheet-page-four"
 import CharacterSheetPageFive from "@/components/character-sheet-page-five"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
@@ -97,6 +97,8 @@ export default function Home() {
   const [isPrintingAll, setIsPrintingAll] = useState(false)
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [characterManagementModalOpen, setCharacterManagementModalOpen] = useState(false)
+  const [currentTabValue, setCurrentTabValue] = useState("page1")
+  const [showShortcutHint, setShowShortcutHint] = useState(false)
 
   // 打印图片加载状态
   const { allImagesLoaded } = usePrintContext()
@@ -106,11 +108,15 @@ export default function Home() {
     setIsClient(true)
     // 设置默认页面标题
     document.title = "Character Sheet"
-  }, [])
 
-  const openCharacterManagementModal = () => {
-    setCharacterManagementModalOpen(true)
-  }
+    // 显示快捷键提示（3秒后消失）
+    const timer = setTimeout(() => {
+      setShowShortcutHint(true)
+      setTimeout(() => setShowShortcutHint(false), 3000)
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   const closeCharacterManagementModal = () => {
     setCharacterManagementModalOpen(false)
@@ -547,6 +553,39 @@ export default function Home() {
     }
   }
 
+  // 页面切换逻辑
+  const getAvailablePages = () => {
+    if (formData.includePageThreeInExport) {
+      return ["page1", "page2", "page3"]
+    } else {
+      return ["page1", "page2"] // 跳过收起的第三页
+    }
+  }
+
+  const switchToNextPage = () => {
+    const pages = getAvailablePages()
+    const currentIndex = pages.indexOf(currentTabValue)
+    // 循环：如果在最后一页，跳转到第一页
+    const nextIndex = currentIndex < pages.length - 1 ? currentIndex + 1 : 0
+    setCurrentTabValue(pages[nextIndex])
+  }
+
+  const switchToPrevPage = () => {
+    const pages = getAvailablePages()
+    const currentIndex = pages.indexOf(currentTabValue)
+    // 循环：如果在第一页，跳转到最后一页
+    const prevIndex = currentIndex > 0 ? currentIndex - 1 : pages.length - 1
+    setCurrentTabValue(pages[prevIndex])
+  }
+
+  const switchToPage = (pageValue: string) => {
+    const pages = getAvailablePages()
+    if (pages.includes(pageValue)) {
+      setCurrentTabValue(pageValue)
+    }
+  }
+
+
   // 从HTML导入新建存档
   const handleQuickImportFromHTML = () => {
     // 创建文件输入元素
@@ -594,7 +633,8 @@ export default function Home() {
     input.click()
   }
 
-  // 键盘快捷键 - Ctrl+数字键快速切换存档 + ESC退出预览
+
+  // 键盘快捷键 - 页面切换 + 存档切换 + ESC退出预览
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // ESC键退出导出预览
@@ -605,7 +645,38 @@ export default function Home() {
         return
       }
 
-      // 检查是否按下Ctrl键和数字键（1-9, 0）
+      // 页面切换快捷键（无修饰键）
+      if (!event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey && !isPrintingAll && !characterManagementModalOpen && !isGuideOpen) {
+        switch (event.key) {
+          case 'ArrowLeft':
+            event.preventDefault()
+            switchToPrevPage()
+            console.log('[App] 箭头键切换到上一页')
+            break
+          case 'ArrowRight':
+            event.preventDefault()
+            switchToNextPage()
+            console.log('[App] 箭头键切换到下一页')
+            break
+          case '1':
+            event.preventDefault()
+            switchToPage('page1')
+            console.log('[App] 数字键切换到第一页')
+            break
+          case '2':
+            event.preventDefault()
+            switchToPage('page2')
+            console.log('[App] 数字键切换到第二页')
+            break
+          case '3':
+            event.preventDefault()
+            switchToPage('page3')
+            console.log('[App] 数字键切换到第三页')
+            break
+        }
+      }
+
+      // Ctrl+数字键切换存档
       if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey) {
         const key = event.key
         let targetIndex = -1
@@ -627,15 +698,11 @@ export default function Home() {
       }
     }
 
-    // 在导出预览模式下总是监听ESC键，在非模态框状态下监听其他快捷键
-    if (isPrintingAll || !characterManagementModalOpen) {
-      document.addEventListener('keydown', handleKeyDown)
-    }
-
+    document.addEventListener('keydown', handleKeyDown)
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [characterList, currentCharacterId, characterManagementModalOpen, isPrintingAll])
+  }, [characterList, currentCharacterId, characterManagementModalOpen, isPrintingAll, isGuideOpen, currentTabValue, formData.includePageThreeInExport])
 
   // 已移除聚焦卡牌变更处理函数 - 功能由双卡组系统取代
 
@@ -686,32 +753,34 @@ export default function Home() {
           </div>
 
           {/* 打印预览控制按钮，只在屏幕上显示，打印时隐藏 */}
-          <div className="fixed bottom-4 right-4 z-[60] print:hidden print-control-buttons">
-            <div className="flex flex-col gap-2">
-              <Button
-                onClick={() => window.print()}
-                className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
-              >
-                导出为PDF
-              </Button>
-              <Button
-                onClick={handleExportHTML}
-                className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
-              >
-                导出为HTML
-              </Button>
-              <Button
-                onClick={handleExportJSON}
-                className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
-              >
-                导出为JSON
-              </Button>
-              <Button
-                onClick={() => setIsPrintingAll(false)}
-                className="bg-red-600 text-white hover:bg-red-700 focus:outline-none whitespace-nowrap"
-              >
-                返回
-              </Button>
+          <div className="fixed bottom-4 left-0 right-0 z-[60] print:hidden print-control-buttons">
+            <div className="flex justify-center">
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={() => window.print()}
+                  className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+                >
+                  导出为PDF
+                </Button>
+                <Button
+                  onClick={handleExportHTML}
+                  className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+                >
+                  导出为HTML
+                </Button>
+                <Button
+                  onClick={handleExportJSON}
+                  className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+                >
+                  导出为JSON
+                </Button>
+                <Button
+                  onClick={() => setIsPrintingAll(false)}
+                  className="bg-red-600 text-white hover:bg-red-700 focus:outline-none whitespace-nowrap"
+                >
+                  返回
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -747,21 +816,21 @@ export default function Home() {
   }
 
   return (
-    <main className="container mx-auto py-4">
+    <main className="min-w-0 w-full max-w-full mx-auto px-0 md:px-4 py-4 pb-20 md:pb-4 md:container">
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* 左侧卡牌展示区域 - 打印时隐藏 */}
-        <div className="lg:w-1/4 print:hidden">
-          <CardDisplaySection
-            cards={formData.cards || []}
-            inventoryCards={formData.inventory_cards || []}
-          />
-        </div>
+      {/* 底部抽屉式卡牌展示 - 打印时隐藏 */}
+      <div className="print:hidden">
+        <CardDrawer
+          cards={formData.cards || []}
+          inventoryCards={formData.inventory_cards || []}
+        />
+      </div>
 
-        {/* 右侧角色卡区域 */}
-        <div className="lg:w-3/4">
-          <Tabs defaultValue="page1" className="w-full max-w-[210mm]">
-            <TabsList className={`grid w-full max-w-[210mm] transition-all duration-200 ${!formData.includePageThreeInExport
+      <div className="flex justify-center px-2 md:px-0">
+        {/* 角色卡区域 - 带相对定位 */}
+        <div className="relative w-full md:max-w-[210mm]">
+          <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-full md:max-w-[210mm]">
+            <TabsList className={`grid w-full md:max-w-[210mm] transition-all duration-200 ${!formData.includePageThreeInExport
               ? 'grid-cols-[1fr_1fr_auto]'
               : 'grid-cols-3'
               }`}>
@@ -798,89 +867,130 @@ export default function Home() {
               <CharacterSheetPageThree />
             </TabsContent>
           </Tabs>
+
+          {/* 左侧切换区域 - 仅桌面端显示 */}
+          <div
+            className="print:hidden hidden md:block absolute -left-20 top-0 bottom-0 w-16 flex items-center justify-center cursor-pointer group z-20"
+            onClick={switchToPrevPage}
+            title="上一页 (←) - 循环切换"
+          >
+            {/* 悬停时显示的背景 */}
+            <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-l-lg"></div>
+            {/* 箭头图标 */}
+            <div className="relative bg-white shadow-md group-hover:shadow-lg p-2 rounded-full opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110 group-active:scale-95">
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </div>
+          </div>
+
+          {/* 右侧切换区域 - 仅桌面端显示 */}
+          <div
+            className="print:hidden hidden md:block absolute -right-20 top-0 bottom-0 w-16 flex items-center justify-center cursor-pointer group z-20"
+            onClick={switchToNextPage}
+            title="下一页 (→) - 循环切换"
+          >
+            {/* 悬停时显示的背景 */}
+            <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-r-lg"></div>
+            {/* 箭头图标 */}
+            <div className="relative bg-white shadow-md group-hover:shadow-lg p-2 rounded-full opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110 group-active:scale-95">
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      {/* 固定位置的按钮 - 移到父组件 */}
-      <div className="print:hidden fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        <button
-          onClick={toggleGuide}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-md focus:outline-none"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+      {/* 底部功能按钮区域 */}
+      <div className="print:hidden flex justify-center mt-8 mb-4">
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={toggleGuide}
+            className="bg-blue-800 text-white hover:bg-blue-700 focus:outline-none whitespace-nowrap"
           >
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-          建卡指引
-        </button>
+            建卡指引
+          </Button>
 
-        {/* 导出预览按钮 - 带悬浮菜单 */}
-        <HoverMenu
-          trigger={
-            <Button
-              onClick={() => handlePrintAll().catch(console.error)}
-              className="bg-gray-800 hover:bg-gray-700 focus:outline-none w-full"
+          {/* 导出按钮 */}
+          <HoverMenu
+            align="end"
+            side="top"
+            trigger={
+              <Button 
+                onClick={handlePrintAll}
+                className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+              >
+                导出页面
+              </Button>
+            }
+          >
+            <HoverMenuItem onClick={handlePrintAll}>
+              导出预览
+            </HoverMenuItem>
+            <HoverMenuItem onClick={handleQuickExportPDF}>
+              快速导出PDF
+            </HoverMenuItem>
+            <HoverMenuItem onClick={handleQuickExportHTML}>
+              快速导出HTML
+            </HoverMenuItem>
+            <HoverMenuItem onClick={handleQuickExportJSON}>
+              快速导出JSON
+            </HoverMenuItem>
+          </HoverMenu>
+
+          {/* 存档管理按钮 */}
+          <HoverMenu
+            align="end"
+            side="top"
+            trigger={
+              <Button 
+                onClick={() => setCharacterManagementModalOpen(true)}
+                className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+              >
+                存档管理
+              </Button>
+            }
+          >
+            <HoverMenuItem
+              onClick={handleQuickCreateArchive}
+              disabled={characterList.length >= MAX_CHARACTERS}
             >
-              导出页面
-            </Button>
-          }
-        >
-          <HoverMenuItem onClick={handleQuickExportPDF}>
-            导出为PDF
-          </HoverMenuItem>
-          <HoverMenuItem onClick={handleQuickExportHTML}>
-            导出为HTML
-          </HoverMenuItem>
-          <HoverMenuItem onClick={handleQuickExportJSON}>
-            导出为JSON
-          </HoverMenuItem>
-        </HoverMenu>
-
-        {/* 存档管理按钮 - 带悬浮菜单 */}
-        <HoverMenu
-          trigger={
-            <Button
-              onClick={openCharacterManagementModal}
-              className="bg-gray-800 hover:bg-gray-700 focus:outline-none w-full"
+              新建存档
+            </HoverMenuItem>
+            <HoverMenuItem
+              onClick={handleQuickImportFromHTML}
+              disabled={characterList.length >= MAX_CHARACTERS}
             >
-              存档管理
-            </Button>
-          }
-        >
-          <HoverMenuItem
-            onClick={handleQuickCreateArchive}
-            disabled={characterList.length >= MAX_CHARACTERS}
-          >
-            新建存档
-          </HoverMenuItem>
-          <HoverMenuItem
-            onClick={handleQuickImportFromHTML}
-            disabled={characterList.length >= MAX_CHARACTERS}
-          >
-            从HTML新建
-          </HoverMenuItem>
-        </HoverMenu>
+              从HTML新建
+            </HoverMenuItem>
+          </HoverMenu>
 
-        <Button
-          onClick={() => {
-            window.location.href = `${getBasePath()}/card-manager`;
-          }}
-          className="bg-gray-800 hover:bg-gray-700 focus:outline-none"
-        >
-          卡牌管理
-        </Button>
+          <Button
+            onClick={() => {
+              window.location.href = `${getBasePath()}/card-manager`;
+            }}
+            className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+          >
+            卡牌管理
+          </Button>
+        </div>
       </div>
+
+      {/* 快捷键提示 */}
+      {showShortcutHint && (
+        <div className="print:hidden fixed top-4 right-4 z-40 animate-in slide-in-from-top duration-300">
+          <div className="bg-black bg-opacity-80 text-white px-4 py-3 rounded-lg text-sm backdrop-blur-sm">
+            <div className="font-medium mb-2">⌨️ 快捷键提示</div>
+            <div className="space-y-1 text-xs">
+              <div>← → 切换页面</div>
+              <div>1 2 3 直接跳转</div>
+              <div>Ctrl+数字 切换存档</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 建卡指引组件 - 移到父组件 */}
       <CharacterCreationGuide isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />

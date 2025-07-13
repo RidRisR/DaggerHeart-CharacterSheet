@@ -423,7 +423,7 @@ export function CardSelectionModal({
                       }
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="start">
+                  <DropdownMenuContent className="w-52" align="start">
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
                       <Button onClick={handleClassSelectAll} variant="ghost" size="sm" className="w-full justify-start">全选</Button>
                     </DropdownMenuItem>
@@ -433,17 +433,22 @@ export function CardSelectionModal({
                     <DropdownMenuSeparator />
                     <ScrollArea className="h-64">
                       {classOptions.map((option) => (
-                        <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()}>
+                        <DropdownMenuItem
+                          key={option.value}
+                          onSelect={(e) => e.preventDefault()}
+                          onClick={() => {
+                            const newChecked = !selectedClasses.includes(option.value);
+                            setSelectedClasses(prev => {
+                              return newChecked
+                                ? [...prev, option.value]
+                                : prev.filter(v => v !== option.value);
+                            });
+                          }}
+                          className="cursor-pointer"
+                        >
                           <Checkbox
                             id={`class-${option.value}`}
                             checked={selectedClasses.includes(option.value)}
-                            onCheckedChange={(checked) => {
-                              setSelectedClasses(prev => {
-                                return checked
-                                  ? [...prev, option.value]
-                                  : prev.filter(v => v !== option.value);
-                              });
-                            }}
                           />
                           <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer select-none">
                             {option.label}
@@ -473,7 +478,7 @@ export function CardSelectionModal({
                       }
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="start">
+                  <DropdownMenuContent className="w-52" align="start">
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
                       <Button onClick={handleLevelSelectAll} variant="ghost" size="sm" className="w-full justify-start">全选</Button>
                     </DropdownMenuItem>
@@ -483,17 +488,22 @@ export function CardSelectionModal({
                     <DropdownMenuSeparator />
                     <ScrollArea className="h-48">
                       {levelOptions.map((option) => (
-                        <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()}>
+                        <DropdownMenuItem
+                          key={option.value}
+                          onSelect={(e) => e.preventDefault()}
+                          onClick={() => {
+                            const newChecked = !selectedLevels.includes(option.value);
+                            setSelectedLevels(prev => {
+                              return newChecked
+                                ? [...prev, option.value]
+                                : prev.filter(v => v !== option.value);
+                            });
+                          }}
+                          className="cursor-pointer"
+                        >
                           <Checkbox
                             id={`level-${option.value}`}
                             checked={selectedLevels.includes(option.value)}
-                            onCheckedChange={(checked) => {
-                              setSelectedLevels(prev => {
-                                return checked
-                                  ? [...prev, option.value]
-                                  : prev.filter(v => v !== option.value);
-                              });
-                            }}
                           />
                           <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer select-none">
                             {option.label}

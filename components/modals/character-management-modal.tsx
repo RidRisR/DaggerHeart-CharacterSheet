@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CharacterMetadata } from "@/lib/sheet-data"
 import { loadCharacterById, MAX_CHARACTERS } from "@/lib/multi-character-storage"
@@ -32,7 +32,7 @@ export function CharacterManagementModal({
     onDuplicateCharacter,
     onRenameCharacter,
 }: CharacterManagementModalProps) {
-    const { sheetData: formData, setSheetData: setFormData, replaceSheetData } = useSheetStore()
+    const { sheetData: formData, replaceSheetData } = useSheetStore()
     
     const onImportData = (data: any) => {
         // 数据迁移：为旧存档添加缺失字段
@@ -43,10 +43,6 @@ export function CharacterManagementModal({
             includePageThreeInExport: data.includePageThreeInExport ?? true // 确保第三页导出字段存在
         }
         replaceSheetData(mergedData)
-    }
-    
-    const onResetData = () => {
-        replaceSheetData(defaultSheetData)
     }
     // 监听ESC键关闭模态框
     useEffect(() => {
@@ -184,13 +180,8 @@ export function CharacterManagementModal({
             >
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-semibold">存档管理</h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-500 hover:text-gray-700"
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                        ✕
                     </button>
                 </div>
 

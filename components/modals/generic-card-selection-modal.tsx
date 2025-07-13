@@ -143,29 +143,34 @@ export function GenericCardSelectionModal({
             <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
             <div className="relative bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <Select value={selectedClass} onValueChange={setSelectedClass} disabled={isLoading}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="筛选类别" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {availableClasses.map((cls) => (
-                                    <SelectItem key={cls} value={cls}>
-                                        {cls === "All" ? "全部类别" : cls}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Button
-                            variant="destructive"
-                            onClick={() => onSelect("none", field)}
-                            className="bg-red-500 hover:bg-red-600 text-white"
-                            disabled={isLoading}
-                        >
-                            清除选择
-                        </Button>
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-xl font-bold">{title}</h2>
+                        <div className="flex items-center gap-2">
+                            <Select value={selectedClass} onValueChange={setSelectedClass} disabled={isLoading}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="筛选类别" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableClasses.map((cls) => (
+                                        <SelectItem key={cls} value={cls}>
+                                            {cls === "All" ? "全部类别" : cls}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Button
+                                variant="destructive"
+                                onClick={() => onSelect("none", field)}
+                                className="bg-red-500 hover:bg-red-600 text-white"
+                                disabled={isLoading}
+                            >
+                                清除选择
+                            </Button>
+                        </div>
                     </div>
-                    <h2 className="text-xl font-bold">{title}</h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                        ✕
+                    </button>
                 </div>
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <div className="flex-1 overflow-y-auto p-4">

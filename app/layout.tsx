@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   generator: "v0.dev",
 }
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 0.5,
+  maximumScale: 2,
+  userScalable: true,
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,24 +37,24 @@ export default function RootLayout({
               {children}
               <Toaster />
               <FadeNotificationContainer />
-            {/* 水印 */}
-            <div className="fixed bottom-2 left-2 text-gray-500 text-xs opacity-75 pointer-events-none">
-              本作品完全开源且免费
-              <br />
-              作者：RidRisR
-              <br />
-              翻译及校对：PolearmMaster, 末楔, 里予, 一得, RisRisR
-              <br />
-              项目地址&下载地址：
-              <a
-                href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline pointer-events-auto"
-              >
-                https://github.com/RidRisR/DaggerHeart-CharacterSheet
-              </a>
-            </div>
+              {/* 水印 */}
+              <div className="fixed bottom-2 left-2 text-gray-500 text-xs opacity-75 pointer-events-none">
+                本作品完全开源且免费
+                <br />
+                作者：RidRisR
+                <br />
+                翻译及校对：PolearmMaster, 末楔, 里予, 一得, RisRisR
+                <br />
+                项目地址&下载地址：
+                <a
+                  href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline pointer-events-auto"
+                >
+                  https://github.com/RidRisR/DaggerHeart-CharacterSheet
+                </a>
+              </div>
             </PrintProvider>
           </ProgressModalProvider>
         </ThemeProvider>

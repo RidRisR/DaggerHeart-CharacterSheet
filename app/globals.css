@@ -4,6 +4,14 @@
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+html {
+  margin: 0;
+  padding: 0;
 }
 
 /* 自动调整字体的打印样式 */

@@ -436,23 +436,24 @@ export function CardSelectionModal({
                         <DropdownMenuItem
                           key={option.value}
                           onSelect={(e) => e.preventDefault()}
-                          onClick={() => {
-                            const newChecked = !selectedClasses.includes(option.value);
-                            setSelectedClasses(prev => {
-                              return newChecked
-                                ? [...prev, option.value]
-                                : prev.filter(v => v !== option.value);
-                            });
-                          }}
                           className="cursor-pointer"
                         >
-                          <Checkbox
-                            id={`class-${option.value}`}
-                            checked={selectedClasses.includes(option.value)}
-                          />
-                          <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer select-none">
-                            {option.label}
-                          </label>
+                          <div className="flex items-center w-full">
+                            <Checkbox
+                              id={`class-${option.value}`}
+                              checked={selectedClasses.includes(option.value)}
+                              onCheckedChange={(checked) => {
+                                setSelectedClasses(prev => {
+                                  return checked
+                                    ? [...prev, option.value]
+                                    : prev.filter(v => v !== option.value);
+                                });
+                              }}
+                            />
+                            <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer select-none flex-1">
+                              {option.label}
+                            </label>
+                          </div>
                         </DropdownMenuItem>
                       ))}
                     </ScrollArea>
@@ -491,23 +492,24 @@ export function CardSelectionModal({
                         <DropdownMenuItem
                           key={option.value}
                           onSelect={(e) => e.preventDefault()}
-                          onClick={() => {
-                            const newChecked = !selectedLevels.includes(option.value);
-                            setSelectedLevels(prev => {
-                              return newChecked
-                                ? [...prev, option.value]
-                                : prev.filter(v => v !== option.value);
-                            });
-                          }}
                           className="cursor-pointer"
                         >
-                          <Checkbox
-                            id={`level-${option.value}`}
-                            checked={selectedLevels.includes(option.value)}
-                          />
-                          <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer select-none">
-                            {option.label}
-                          </label>
+                          <div className="flex items-center w-full">
+                            <Checkbox
+                              id={`level-${option.value}`}
+                              checked={selectedLevels.includes(option.value)}
+                              onCheckedChange={(checked) => {
+                                setSelectedLevels(prev => {
+                                  return checked
+                                    ? [...prev, option.value]
+                                    : prev.filter(v => v !== option.value);
+                                });
+                              }}
+                            />
+                            <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer select-none flex-1">
+                              {option.label}
+                            </label>
+                          </div>
                         </DropdownMenuItem>
                       ))}
                     </ScrollArea>
@@ -523,7 +525,7 @@ export function CardSelectionModal({
               />
             </div>
 
-            <div id="scrollableDiv" ref={scrollableContainerRef} className="flex-1 overflow-y-auto p-4 min-h-[800px]">
+            <div id="scrollableDiv" ref={scrollableContainerRef} className="flex-1 overflow-y-auto p-4 pb-8">
               {/* 显示加载状态 */}
               {cardsLoading && (
                 <div className="flex items-center justify-center h-32">

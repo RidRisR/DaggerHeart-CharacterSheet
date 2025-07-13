@@ -166,7 +166,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         <div
             ref={cardRef}
             key={cardId}
-            className={`group relative flex w-full max-w-sm flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all duration-300 ease-in-out hover:shadow-xl ${isSelected ? 'ring-2 ring-blue-500' : 'border'}`}
+            className={`group relative flex w-full max-w-sm flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all duration-300 ease-in-out hover:shadow-xl min-h-[520px] ${isSelected ? 'ring-2 ring-blue-500' : 'border'}`}
             onClick={() => onClick(cardId)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => {
@@ -241,9 +241,13 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
                 {/* Footer */}
                 <div className="mt-auto pt-4">
                     {(card.type !== CardType.Profession && card.hint) || showSource ? (
-                        <div className="border-t border-gray-100 pt-3 text-right text-[10px] text-gray-400">
-                            {card.type !== CardType.Profession && card.hint && <div className="float-left mb-1 italic">{card.hint}</div>}
-                            {showSource && <div>{cardSource}</div>}
+                        <div className="border-t border-gray-100 pt-3 text-[10px] text-gray-500">
+                            {card.type !== CardType.Profession && card.hint && (
+                                <div className="text-left mb-1 italic">{card.hint}</div>
+                            )}
+                            {showSource && (
+                                <div className="text-right">{cardSource}</div>
+                            )}
                         </div>
                     ) : null}
                 </div>

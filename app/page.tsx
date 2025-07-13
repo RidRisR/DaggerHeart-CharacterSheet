@@ -104,6 +104,7 @@ export default function Home() {
   const [characterManagementModalOpen, setCharacterManagementModalOpen] = useState(false)
   const [currentTabValue, setCurrentTabValue] = useState("page1")
   const [showShortcutHint, setShowShortcutHint] = useState(false)
+  const [isCardDrawerOpen, setIsCardDrawerOpen] = useState(false)
 
   // 打印图片加载状态
   const { allImagesLoaded } = usePrintContext()
@@ -550,6 +551,7 @@ export default function Home() {
     setIsGuideOpen(!isGuideOpen)
   }
 
+
   // 快速新建存档
   const handleQuickCreateArchive = () => {
     const saveName = prompt('请输入存档名称:')
@@ -821,21 +823,23 @@ export default function Home() {
   }
 
   return (
-    <main className="min-w-0 w-full max-w-full mx-auto px-0 md:px-4 py-4 pb-20 md:pb-4 md:container">
+    <main className="min-w-0 w-full max-w-full mx-auto px-0 md:px-4 py-4 pb-20 container">
 
       {/* 底部抽屉式卡牌展示 - 打印时隐藏 */}
       <div className="print:hidden">
         <CardDrawer
           cards={formData.cards || []}
           inventoryCards={formData.inventory_cards || []}
+          isOpen={isCardDrawerOpen}
+          onClose={() => setIsCardDrawerOpen(false)}
         />
       </div>
 
-      <div className="flex justify-center px-2 md:px-0">
+      <div className="flex justify-center px-0">
         {/* 角色卡区域 - 带相对定位 */}
-        <div className="relative w-full md:max-w-[210mm]">
+        <div className="relative w-full md:max-w-[220mm]">
           <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-full md:max-w-[210mm]">
-            <TabsList className={`grid w-full md:max-w-[210mm] transition-all duration-200 ${!formData.includePageThreeInExport
+            <TabsList className={`grid w-[210mm] transition-all duration-200 ${!formData.includePageThreeInExport
               ? 'grid-cols-[1fr_1fr_auto]'
               : 'grid-cols-3'
               }`}>
@@ -909,8 +913,16 @@ export default function Home() {
       </div>
 
       {/* 底部功能按钮区域 */}
-      <div className="print:hidden flex justify-center mt-8 mb-4">
-        <div className="flex items-center gap-4">
+      <div className="fixed bottom-4 left-0 right-0 z-30 print:hidden">
+        <div className="flex justify-center">
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={() => setIsCardDrawerOpen(!isCardDrawerOpen)}
+              className="bg-gray-800 hover:bg-gray-700 text-white w-12 h-12 rounded-full p-0 flex items-center justify-center"
+            >
+              🎴
+            </Button>
+
           <Button
             onClick={toggleGuide}
             className="bg-blue-800 text-white hover:bg-blue-700 focus:outline-none whitespace-nowrap"
@@ -980,6 +992,7 @@ export default function Home() {
           >
             卡牌管理
           </Button>
+          </div>
         </div>
       </div>
 

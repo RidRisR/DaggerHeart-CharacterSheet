@@ -64,6 +64,7 @@ interface CardProps {
   getPreviewPosition: (index: number) => CSSProperties;
   hoveredCard: number | null;
   onPinCard: (card: StandardCard) => void;
+  onCardDelete: (index: number) => void;
 }
 
 function Card({
@@ -77,6 +78,7 @@ function Card({
   getPreviewPosition,
   hoveredCard,
   onPinCard,
+  onCardDelete,
 }: CardProps) {
   const standardCard = convertToStandardCard(card);
 
@@ -108,7 +110,7 @@ function Card({
     >
       {/* 卡牌标题 */}
       {card?.name && (
-        <div className="flex items-center text-sm font-medium">
+        <div className="group flex items-center justify-between text-sm font-medium">
           <span
             className="truncate cursor-pointer hover:text-blue-600 transition-colors"
             onClick={(e) => {
@@ -121,6 +123,19 @@ function Card({
           >
             {standardCard?.name || card.name}
           </span>
+          <div className="flex-1"></div>
+          {!isSpecial && (
+            <button
+              className="ml-2 text-gray-400 hover:text-red-500 transition-all duration-200 text-xs opacity-0 group-hover:opacity-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCardDelete(index);
+              }}
+              title="删除卡牌"
+            >
+              ×
+            </button>
+          )}
         </div>
       )}
 
@@ -345,6 +360,19 @@ export function CardDeckSection({
     }
   }
 
+  // 处理卡牌删除
+  const handleCardDelete = (index: number) => {
+    // 特殊卡位不允许删除
+    if (isSpecialSlot(index)) return
+
+    const emptyCard = createEmptyCard();
+    if (activeDeck === 'focused') {
+      onCardChange(index, emptyCard);
+    } else {
+      onInventoryCardChange(index, emptyCard);
+    }
+  }
+
   // 计算悬浮窗位置 - 智能定位
   const getPreviewPosition = (index: number): React.CSSProperties => {
     if (!cardRefs.current[index]) return {}
@@ -479,6 +507,7 @@ export function CardDeckSection({
                   getPreviewPosition={getPreviewPosition}
                   hoveredCard={hoveredCard}
                   onPinCard={pinCard}
+                  onCardDelete={handleCardDelete}
                 />
               </div>
             );

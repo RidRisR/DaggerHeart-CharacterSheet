@@ -1,24 +1,40 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { StandardCard } from "@/card/card-types"
 import { ImageCard } from "@/components/ui/image-card"
+import { SimpleImageCard } from "@/components/ui/simple-image-card"
 import { isVariantCard } from "@/card/card-types"
-import { ChevronUp, ChevronDown } from "lucide-react"
 
 interface CardDrawerProps {
   cards: Array<StandardCard>
   inventoryCards: Array<StandardCard>
+  isOpen?: boolean
+  onClose?: () => void
 }
 
 type TabType = "focused" | "profession" | "background" | "domain" | "variant" | "inventory"
 
-export function CardDrawer({ cards, inventoryCards }: CardDrawerProps) {
+export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onClose }: CardDrawerProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
+  const finalIsOpen = externalIsOpen !== undefined ? externalIsOpen : isOpen
+  const handleClose = () => {
+    setIsClosing(true)
+    setHoveredCard(null) // 清除详情卡牌
+    setTimeout(() => {
+      setIsClosing(false)
+      if (onClose) {
+        onClose()
+      } else {
+        setIsOpen(false)
+      }
+    }, 300) // 匹配动画持续时间
+  }
   const [activeTab, setActiveTab] = useState<TabType>("focused")
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
+  const [hoveredCard, setHoveredCard] = useState<StandardCard | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
 
   // 卡牌分类
   const [focusedCards, setFocusedCards] = useState<typeof cards>([])
@@ -40,6 +56,25 @@ export function CardDrawer({ cards, inventoryCards }: CardDrawerProps) {
     const validInventoryCards = inventoryCards.filter((card) => card && card.name)
     setInventoryOnlyCards(validInventoryCards)
   }, [cards, inventoryCards])
+
+  // 检测移动设备
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window)
+    }
+    
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
+
+  // 当抽屉关闭时清除详情卡牌
+  useEffect(() => {
+    if (!finalIsOpen) {
+      setHoveredCard(null)
+    }
+  }, [finalIsOpen])
 
   // 获取当前标签页的卡牌
   const getCurrentCards = () => {
@@ -68,7 +103,6 @@ export function CardDrawer({ cards, inventoryCards }: CardDrawerProps) {
   }
 
   const currentCards = getCurrentCards()
-  const totalCards = focusedCards.length + inventoryOnlyCards.length
 
   // 标签页配置
   const tabs = [
@@ -80,81 +114,56 @@ export function CardDrawer({ cards, inventoryCards }: CardDrawerProps) {
     { key: "inventory" as const, label: "库存", count: getTabCount("inventory") },
   ]
 
-  const handleCardClick = (cardId: string) => {
-    setSelectedCardId(selectedCardId === cardId ? null : cardId)
+
+  const handleCardHover = (card: StandardCard | null) => {
+    if (!isMobile) {
+      setHoveredCard(card)
+    }
+  }
+
+  const handleCardClick = (card: StandardCard) => {
+    if (isMobile) {
+      setHoveredCard(hoveredCard === card ? null : card)
+    }
   }
 
   return (
     <>
-      {/* 悬浮触发按钮 - 桌面端 */}
-      <div className="fixed bottom-4 left-4 z-40 md:block hidden">
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="bg-gray-800 hover:bg-gray-700 active:scale-95 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-105"
-          title="查看卡牌"
-        >
-          <div className="text-center">
-            <div className="text-lg animate-pulse">🎴</div>
-            <div className="text-xs font-mono">{totalCards}</div>
-          </div>
-        </Button>
-      </div>
-
-      {/* 底部状态栏 - 移动端触发器 */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="w-full bg-gray-100 border-t border-gray-300 py-3 px-4 flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-200 active:bg-gray-300 transition-all duration-200 active:scale-[0.99]"
-        >
-          <span className="animate-pulse">🎴</span>
-          <span className="font-medium">我的卡牌 ({totalCards})</span>
-          <ChevronUp className="w-4 h-4 animate-bounce" />
-        </button>
-      </div>
 
       {/* 底部抽屉 */}
-      {isOpen && (
+      {(finalIsOpen || isClosing) && (
         <div className="fixed inset-0 z-50 flex items-end">
           {/* 背景遮罩 */}
-          <div 
-            className="absolute inset-0 bg-black bg-opacity-50 animate-in fade-in duration-300"
-            onClick={() => setIsOpen(false)}
+          <div
+            className={`fixed inset-0 bg-black transition-opacity duration-300 ${
+              isClosing ? 'bg-opacity-0' : 'bg-opacity-50'
+            }`}
+            onClick={handleClose}
           />
 
           {/* 抽屉内容 */}
-          <div 
-            className="card-drawer-content relative bg-white w-full h-[70vh] md:h-[60vh] rounded-t-lg shadow-xl flex flex-col animate-in slide-in-from-bottom duration-300 ease-out"
+          <div
+            className={`card-drawer-content fixed bottom-0 left-0 right-0 bg-white w-full h-[35vh] min-h-[35vh] rounded-t-lg shadow-xl flex flex-col transition-transform duration-300 ease-out ${
+              isClosing ? 'translate-y-full' : 'translate-y-0'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 顶部拖拽手柄 */}
-            <div className="flex items-center justify-center py-3 border-b border-gray-200">
+            <div className="flex items-center justify-center py-2 border-b border-gray-200">
               <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
             </div>
 
-            {/* 头部 */}
-            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">我的卡牌</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-              >
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-            </div>
-
             {/* 标签页导航 */}
-            <div className="px-4 py-2 border-b border-gray-200">
+            <div className="px-4 py-1.5 border-b border-gray-200 flex-shrink-0">
               <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
                 {tabs.map((tab) => (
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 ${
-                      activeTab === tab.key
-                        ? "bg-blue-500 text-white shadow-md"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
-                    }`}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 ${activeTab === tab.key
+                      ? "bg-blue-500 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
+                      }`}
                   >
                     {tab.label}
                     {tab.count > 0 && (
@@ -168,7 +177,7 @@ export function CardDrawer({ cards, inventoryCards }: CardDrawerProps) {
             </div>
 
             {/* 卡牌展示区 */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden min-h-0">
               {currentCards.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-gray-500 animate-in fade-in duration-500">
                   <div className="text-center">
@@ -180,17 +189,19 @@ export function CardDrawer({ cards, inventoryCards }: CardDrawerProps) {
                 <div className="h-full overflow-x-auto overflow-y-hidden px-4 py-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                   <div className="flex gap-3 h-full items-start animate-in slide-in-from-right duration-300" style={{ touchAction: 'pan-x' }}>
                     {currentCards.map((card, index) => (
-                      <div 
-                        key={`${card.type}-${card.name}-${index}`} 
-                        className="flex-shrink-0 w-32 animate-in fade-in duration-300"
+                      <div
+                        key={`${card.type}-${card.name}-${index}`}
+                        className="flex-shrink-0 w-72 animate-in fade-in duration-300"
                         style={{ animationDelay: `${index * 50}ms` }}
+                        onMouseEnter={() => handleCardHover(card)}
+                        onMouseLeave={() => handleCardHover(null)}
+                        onClick={() => handleCardClick(card)}
                       >
                         <div className="transform transition-all duration-200 hover:scale-105 hover:shadow-lg">
-                          <ImageCard
+                          <SimpleImageCard
                             card={card}
-                            onClick={handleCardClick}
-                            isSelected={selectedCardId === card.id}
-                            showSource={false}
+                            onClick={() => {}}
+                            isSelected={false}
                             priority={index < 5} // 前5张卡牌优先加载
                           />
                         </div>
@@ -200,6 +211,25 @@ export function CardDrawer({ cards, inventoryCards }: CardDrawerProps) {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 悬浮卡片预览 */}
+      {hoveredCard && (
+        <div 
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[60]"
+          style={{ pointerEvents: isMobile ? 'auto' : 'none' }}
+          onClick={isMobile ? () => setHoveredCard(null) : undefined}
+        >
+          <div className="w-80 max-w-[90vw] transform scale-110 animate-in zoom-in-95 fade-in duration-200">
+            <ImageCard
+              card={hoveredCard}
+              onClick={() => { }} // 预览时不可点击
+              isSelected={false}
+              showSource={true}
+              priority={true}
+            />
           </div>
         </div>
       )}

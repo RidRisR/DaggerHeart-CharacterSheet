@@ -46,7 +46,7 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
             {/* Image Container */}
             <div className="relative w-full aspect-[1.4] overflow-hidden">
                 <Image
-                    src={card.imageUrl ? `${getBasePath()}${card.imageUrl}` : `${getBasePath()}/empty-card.webp`}
+                    src={card.imageUrl ? `${getBasePath()}${card.imageUrl.startsWith('/') ? card.imageUrl : '/' + card.imageUrl}` : `${getBasePath()}/empty-card.webp`}
                     alt={displayName}
                     fill
                     className="w-full h-full object-cover"

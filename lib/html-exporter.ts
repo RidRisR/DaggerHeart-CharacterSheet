@@ -11,6 +11,21 @@ import { SheetData } from './sheet-data'
 import { CardType, getStandardCardsByTypeAsync } from '@/card'
 import { StandardCard } from '@/card/card-types'
 
+// 扩展Window接口以支持gc函数
+declare global {
+  interface Window {
+    gc?: () => void
+  }
+  
+  interface Performance {
+    memory?: {
+      usedJSHeapSize: number
+      totalJSHeapSize: number
+      jsHeapSizeLimit: number
+    }
+  }
+}
+
 interface HTMLExportOptions {
   includeStyles?: boolean
   compressHTML?: boolean
@@ -283,39 +298,88 @@ function transformHTMLContent(htmlContent: string): string {
 }
 
 /**
- * 将图片转换为Base64
+ * Canvas资源管理器
+ */
+class CanvasManager {
+  private canvas: HTMLCanvasElement | null = null
+  private ctx: CanvasRenderingContext2D | null = null
+
+  create(): HTMLCanvasElement {
+    this.cleanup()
+    
+    this.canvas = document.createElement('canvas')
+    this.ctx = this.canvas.getContext('2d')
+    
+    if (!this.ctx) {
+      throw new Error('无法创建Canvas上下文')
+    }
+    
+    return this.canvas
+  }
+
+  drawImage(img: HTMLImageElement): string {
+    if (!this.canvas || !this.ctx) {
+      throw new Error('Canvas未初始化')
+    }
+
+    // 设置canvas尺寸
+    this.canvas.width = img.naturalWidth
+    this.canvas.height = img.naturalHeight
+    
+    // 清空canvas
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    
+    // 绘制图片
+    this.ctx.drawImage(img, 0, 0)
+    
+    // 转换为Base64
+    let dataURL: string
+    try {
+      dataURL = this.canvas.toDataURL('image/webp', 0.8)
+      // 检查是否真的支持WebP
+      if (!dataURL.startsWith('data:image/webp')) {
+        dataURL = this.canvas.toDataURL('image/png', 0.8)
+      }
+    } catch (e) {
+      dataURL = this.canvas.toDataURL('image/png', 0.8)
+    }
+    
+    return dataURL
+  }
+
+  cleanup(): void {
+    if (this.canvas) {
+      // 清空canvas内容释放内存
+      if (this.ctx) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+      }
+      
+      // 重置尺寸为1x1以释放GPU内存
+      this.canvas.width = 1
+      this.canvas.height = 1
+    }
+    
+    this.canvas = null
+    this.ctx = null
+  }
+}
+
+/**
+ * 将图片转换为Base64（优化版）
  */
 function imageToBase64(img: HTMLImageElement): Promise<string> {
   return new Promise((resolve, reject) => {
+    const canvasManager = new CanvasManager()
+    
     try {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      
-      if (!ctx) {
-        reject(new Error('无法创建Canvas上下文'))
-        return
-      }
-
-      canvas.width = img.naturalWidth
-      canvas.height = img.naturalHeight
-      
-      ctx.drawImage(img, 0, 0)
-      
-      // 尝试获取WebP格式，如果不支持则使用PNG
-      let dataURL: string
-      try {
-        dataURL = canvas.toDataURL('image/webp', 0.8)
-        // 检查是否真的支持WebP
-        if (!dataURL.startsWith('data:image/webp')) {
-          dataURL = canvas.toDataURL('image/png', 0.8)
-        }
-      } catch (e) {
-        dataURL = canvas.toDataURL('image/png', 0.8)
-      }
-      
+      canvasManager.create()
+      const dataURL = canvasManager.drawImage(img)
       resolve(dataURL)
     } catch (error) {
       reject(error)
+    } finally {
+      // 确保Canvas资源被清理
+      canvasManager.cleanup()
     }
   })
 }
@@ -328,130 +392,270 @@ interface ProgressCallback {
 }
 
 /**
- * 创建进度条UI
+ * 导出状态管理
+ */
+class ExportStateManager {
+  private static instance: ExportStateManager
+  private isExporting: boolean = false
+  private currentProgressModal: any = null
+  private exportTimeout: NodeJS.Timeout | null = null
+
+  static getInstance(): ExportStateManager {
+    if (!ExportStateManager.instance) {
+      ExportStateManager.instance = new ExportStateManager()
+    }
+    return ExportStateManager.instance
+  }
+
+  startExport(): boolean {
+    if (this.isExporting) {
+      console.warn('[导出状态] 导出正在进行中，忽略重复请求')
+      return false
+    }
+    this.isExporting = true
+    console.log('[导出状态] 开始导出')
+    return true
+  }
+
+  finishExport(): void {
+    this.isExporting = false
+    this.clearTimeout()
+    this.closeProgressModal()
+    console.log('[导出状态] 导出完成')
+  }
+
+  setProgressModal(modal: any): void {
+    this.currentProgressModal = modal
+  }
+
+  closeProgressModal(): void {
+    if (this.currentProgressModal) {
+      try {
+        this.currentProgressModal.close()
+      } catch (error) {
+        console.warn('[导出状态] 关闭进度条时出错:', error)
+      }
+      this.currentProgressModal = null
+    }
+  }
+
+  setTimeout(callback: () => void, delay: number): void {
+    this.clearTimeout()
+    this.exportTimeout = setTimeout(() => {
+      console.warn('[导出状态] 导出超时')
+      this.finishExport()
+      callback()
+    }, delay)
+  }
+
+  clearTimeout(): void {
+    if (this.exportTimeout) {
+      clearTimeout(this.exportTimeout)
+      this.exportTimeout = null
+    }
+  }
+
+  isCurrentlyExporting(): boolean {
+    return this.isExporting
+  }
+}
+
+const exportStateManager = ExportStateManager.getInstance()
+
+/**
+ * 增强的进度条管理器
+ */
+class ProgressModalManager {
+  private modal: HTMLElement | null = null
+  private progressBar: HTMLElement | null = null
+  private progressText: HTMLElement | null = null
+  private statusMessage: HTMLElement | null = null
+  private isDestroyed: boolean = false
+
+  create(): {
+    updateProgress: (current: number, total: number, message: string) => void
+    close: () => void
+  } {
+    // 防止重复创建
+    if (this.modal) {
+      console.warn('[进度条] 进度条已存在，先关闭旧的')
+      this.destroy()
+    }
+
+    this.isDestroyed = false
+
+    // 创建模态框
+    this.modal = document.createElement('div')
+    this.modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+    `
+
+    // 创建进度框
+    const progressBox = document.createElement('div')
+    progressBox.style.cssText = `
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      min-width: 400px;
+      max-width: 500px;
+    `
+
+    // 标题
+    const title = document.createElement('h3')
+    title.textContent = '正在导出HTML文件'
+    title.style.cssText = `
+      margin: 0 0 20px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      text-align: center;
+    `
+
+    // 进度条容器
+    const progressContainer = document.createElement('div')
+    progressContainer.style.cssText = `
+      background: #f0f0f0;
+      border-radius: 8px;
+      height: 8px;
+      margin: 16px 0;
+      overflow: hidden;
+    `
+
+    // 进度条
+    this.progressBar = document.createElement('div')
+    this.progressBar.style.cssText = `
+      background: linear-gradient(90deg, #007cba, #005a8b);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 8px;
+    `
+
+    // 进度文本
+    this.progressText = document.createElement('div')
+    this.progressText.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #666;
+      margin: 8px 0;
+    `
+    this.progressText.innerHTML = '<span id="progress-message">准备中...</span><span id="progress-percent">0%</span>'
+
+    // 状态消息
+    this.statusMessage = document.createElement('div')
+    this.statusMessage.style.cssText = `
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+      margin-top: 12px;
+      height: 20px;
+    `
+
+    progressContainer.appendChild(this.progressBar)
+    progressBox.appendChild(title)
+    progressBox.appendChild(this.progressText)
+    progressBox.appendChild(progressContainer)
+    progressBox.appendChild(this.statusMessage)
+    this.modal.appendChild(progressBox)
+
+    // 安全地添加到DOM
+    try {
+      document.body.appendChild(this.modal)
+      console.log('[进度条] 进度条创建成功')
+    } catch (error) {
+      console.error('[进度条] 创建进度条失败:', error)
+      this.cleanup()
+      throw error
+    }
+
+    return {
+      updateProgress: this.updateProgress.bind(this),
+      close: this.destroy.bind(this)
+    }
+  }
+
+  private updateProgress = (current: number, total: number, message: string) => {
+    if (this.isDestroyed || !this.progressBar || !this.progressText || !this.statusMessage) {
+      return
+    }
+
+    try {
+      const percent = total > 0 ? Math.round((current / total) * 100) : 0
+      this.progressBar.style.width = `${percent}%`
+      
+      const messageEl = this.progressText.querySelector('#progress-message')
+      const percentEl = this.progressText.querySelector('#progress-percent')
+      
+      if (messageEl) {
+        if (total > 0) {
+          messageEl.textContent = `${current}/${total} 张图片`
+        } else {
+          messageEl.textContent = message
+        }
+      }
+      if (percentEl) percentEl.textContent = `${percent}%`
+      
+      this.statusMessage.textContent = message
+    } catch (error) {
+      console.warn('[进度条] 更新进度时出错:', error)
+    }
+  }
+
+  destroy = () => {
+    if (this.isDestroyed) {
+      return
+    }
+
+    this.isDestroyed = true
+    this.cleanup()
+    console.log('[进度条] 进度条已销毁')
+  }
+
+  private cleanup() {
+    try {
+      if (this.modal && document.body.contains(this.modal)) {
+        document.body.removeChild(this.modal)
+      }
+    } catch (error) {
+      console.warn('[进度条] 清理DOM时出错:', error)
+    }
+
+    // 清理引用
+    this.modal = null
+    this.progressBar = null
+    this.progressText = null
+    this.statusMessage = null
+  }
+}
+
+/**
+ * 创建进度条UI（兼容旧接口）
  */
 function createProgressModal(): {
   modal: HTMLElement
   updateProgress: (current: number, total: number, message: string) => void
   close: () => void
 } {
-  // 创建模态框
-  const modal = document.createElement('div')
-  modal.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: Arial, sans-serif;
-  `
-
-  // 创建进度框
-  const progressBox = document.createElement('div')
-  progressBox.style.cssText = `
-    background: white;
-    border-radius: 12px;
-    padding: 32px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    min-width: 400px;
-    max-width: 500px;
-  `
-
-  // 标题
-  const title = document.createElement('h3')
-  title.textContent = '正在导出HTML文件'
-  title.style.cssText = `
-    margin: 0 0 20px 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    text-align: center;
-  `
-
-  // 进度条容器
-  const progressContainer = document.createElement('div')
-  progressContainer.style.cssText = `
-    background: #f0f0f0;
-    border-radius: 8px;
-    height: 8px;
-    margin: 16px 0;
-    overflow: hidden;
-  `
-
-  // 进度条
-  const progressBar = document.createElement('div')
-  progressBar.style.cssText = `
-    background: linear-gradient(90deg, #007cba, #005a8b);
-    height: 100%;
-    width: 0%;
-    transition: width 0.3s ease;
-    border-radius: 8px;
-  `
-
-  // 进度文本
-  const progressText = document.createElement('div')
-  progressText.style.cssText = `
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    color: #666;
-    margin: 8px 0;
-  `
-  progressText.innerHTML = '<span id="progress-message">准备中...</span><span id="progress-percent">0%</span>'
-
-  // 状态消息
-  const statusMessage = document.createElement('div')
-  statusMessage.style.cssText = `
-    font-size: 12px;
-    color: #888;
-    text-align: center;
-    margin-top: 12px;
-    height: 20px;
-  `
-
-  progressContainer.appendChild(progressBar)
-  progressBox.appendChild(title)
-  progressBox.appendChild(progressText)
-  progressBox.appendChild(progressContainer)
-  progressBox.appendChild(statusMessage)
-  modal.appendChild(progressBox)
-
-  // 添加到DOM
-  document.body.appendChild(modal)
-
-  // 更新进度函数
-  const updateProgress = (current: number, total: number, message: string) => {
-    const percent = total > 0 ? Math.round((current / total) * 100) : 0
-    progressBar.style.width = `${percent}%`
-    
-    const messageEl = progressText.querySelector('#progress-message')
-    const percentEl = progressText.querySelector('#progress-percent')
-    
-    if (messageEl) {
-      if (total > 0) {
-        messageEl.textContent = `${current}/${total} 张图片`
-      } else {
-        messageEl.textContent = message
-      }
-    }
-    if (percentEl) percentEl.textContent = `${percent}%`
-    
-    statusMessage.textContent = message
+  const manager = new ProgressModalManager()
+  const { updateProgress, close } = manager.create()
+  
+  return {
+    modal: manager['modal']!, // 私有属性访问，仅用于兼容
+    updateProgress,
+    close
   }
-
-  // 关闭函数
-  const close = () => {
-    if (document.body.contains(modal)) {
-      document.body.removeChild(modal)
-    }
-  }
-
-  return { modal, updateProgress, close }
 }
 
 /**
@@ -467,6 +671,15 @@ async function convertImagesToBase64(onProgress?: ProgressCallback): Promise<Map
   let processed = 0
   for (const img of images) {
     try {
+      // 简单的内存检查
+      if (performance.memory && performance.memory.usedJSHeapSize > 1.5 * 1024 * 1024 * 1024) { // 1.5GB
+        console.warn('[HTML导出] 内存使用过高，强制垃圾回收')
+        // 触发垃圾回收（如果可能）
+        if (window.gc) {
+          window.gc()
+        }
+      }
+
       if (img.complete && img.naturalWidth > 0 && img.src) {
         const fileName = img.src.split('/').pop() || '未知图片'
         onProgress?.(processed, images.length, `正在转换: ${fileName}`)
@@ -478,7 +691,7 @@ async function convertImagesToBase64(onProgress?: ProgressCallback): Promise<Map
         console.log(`[HTML导出] 已转换图片 ${processed}/${images.length}: ${fileName}`)
         onProgress?.(processed, images.length, `已完成: ${fileName}`)
         
-        // 短暂延迟让用户看到进度更新
+        // 短暂延迟让用户看到进度更新，同时让浏览器有机会进行垃圾回收
         await new Promise(resolve => setTimeout(resolve, 50))
       } else {
         console.warn(`[HTML导出] 跳过未加载的图片: ${img.src}`)
@@ -489,6 +702,12 @@ async function convertImagesToBase64(onProgress?: ProgressCallback): Promise<Map
       console.error(`[HTML导出] 转换图片失败: ${img.src}`, error)
       processed++
       onProgress?.(processed, images.length, `转换失败: ${img.src.split('/').pop()}`)
+      
+      // 如果是内存相关错误，建议用户刷新页面
+      if (error instanceof Error && error.message.includes('memory')) {
+        console.error('[HTML导出] 检测到内存相关错误，建议刷新页面后重试')
+        throw new Error('内存不足，请刷新页面后重试')
+      }
     }
   }
   
@@ -716,6 +935,12 @@ async function generateFileName(formData: SheetData, options: HTMLExportOptions 
  * 导出为HTML文件
  */
 export async function exportToHTML(formData: SheetData, options: HTMLExportOptions = {}): Promise<void> {
+  // 检查是否已有导出在进行
+  if (!exportStateManager.startExport()) {
+    alert('导出正在进行中，请稍候...')
+    return
+  }
+
   let progressModal: any = null
   
   try {
@@ -723,13 +948,27 @@ export async function exportToHTML(formData: SheetData, options: HTMLExportOptio
       throw new Error('请先进入打印预览模式再导出HTML。点击"打印预览"按钮后重试。')
     }
 
+    // 简单的内存检查
+    if (performance.memory && performance.memory.usedJSHeapSize > 1024 * 1024 * 1024) { // 1GB
+      console.warn('[HTML导出] 当前内存使用较高，可能影响导出性能')
+    }
+
     // 先检查有多少图片需要转换
     const images = Array.from(document.querySelectorAll('.print-all-pages img')) as HTMLImageElement[]
     const imageCount = images.length
     
+    console.log(`[HTML导出] 准备转换 ${imageCount} 张图片`)
+    
     // 创建进度条并初始化
     progressModal = createProgressModal()
+    exportStateManager.setProgressModal(progressModal)
+    
     progressModal.updateProgress(0, imageCount, '正在准备导出...')
+    
+    // 设置超时机制（5分钟）
+    exportStateManager.setTimeout(() => {
+      throw new Error('导出超时，请重试')
+    }, 5 * 60 * 1000)
     
     // 等待一下让进度条显示
     await new Promise(resolve => setTimeout(resolve, 100))
@@ -750,7 +989,7 @@ export async function exportToHTML(formData: SheetData, options: HTMLExportOptio
     
     if (fileSizeMB > 10) {
       // 暂时关闭进度条显示警告
-      if (progressModal) progressModal.close()
+      exportStateManager.closeProgressModal()
       
       const shouldContinue = confirm(
         `警告：生成的HTML文件大小为 ${fileSizeMB}MB，可能过大。\n\n` +
@@ -765,30 +1004,38 @@ export async function exportToHTML(formData: SheetData, options: HTMLExportOptio
         console.log('[HTML导出] 用户取消导出')
         return
       }
-    } else {
-      // 如果文件大小正常，关闭进度条
-      if (progressModal) progressModal.close()
     }
 
     // 创建并触发下载
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
+    let blobUrl: string | null = null
+    try {
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+      blobUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
 
-    link.href = url
-    link.download = filename
-    link.style.display = 'none'
+      link.href = blobUrl
+      link.download = filename
+      link.style.display = 'none'
 
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      console.log(`[HTML导出] 导出完成: ${filename} (${fileSizeMB}MB)`)
+    } finally {
+      // 确保Blob URL被释放
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl)
+      }
+    }
     
-    console.log(`[HTML导出] 导出完成: ${filename} (${fileSizeMB}MB)`)
   } catch (error) {
-    if (progressModal) progressModal.close()
+    console.error('[HTML导出] 导出过程中出错:', error)
     const errorMessage = `HTML导出失败: ${error instanceof Error ? error.message : '未知错误'}`
     throw new Error(errorMessage)
+  } finally {
+    // 确保所有资源都被清理
+    exportStateManager.finishExport()
   }
 }
 

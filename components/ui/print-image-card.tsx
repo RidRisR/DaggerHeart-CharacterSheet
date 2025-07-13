@@ -92,7 +92,7 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
                 {/* Footer */}
                 {card.type !== CardType.Profession && card.hint && (
                     <div className="mt-auto pt-2 border-t border-gray-100">
-                        <div className="text-[10px] text-gray-500 italic">{card.hint}</div>
+                        <div className="text-[10px] text-gray-600 italic">{card.hint}</div>
                     </div>
                 )}
             </div>

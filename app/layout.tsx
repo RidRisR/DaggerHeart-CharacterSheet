@@ -10,7 +10,6 @@ import { ProgressModalProvider } from "@/components/ui/unified-progress-modal"
 import PrintHelper from "./print-helper"
 
 export const metadata: Metadata = {
-  title: "Character Sheet",
   description: "Interactive character sheet for tabletop RPGs",
   generator: "v0.dev",
 }

@@ -20,6 +20,7 @@ import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
 import { useSheetStore } from "@/lib/sheet-store"
 import { getBasePath } from "@/lib/utils"
 import { PrintReadyChecker } from "@/components/print-ready-checker"
+import { usePrintContext } from "@/contexts/print-context"
 
 // 内联图标组件
 const EyeIcon = () => (
@@ -97,9 +98,14 @@ export default function Home() {
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [characterManagementModalOpen, setCharacterManagementModalOpen] = useState(false)
 
+  // 打印图片加载状态
+  const { allImagesLoaded } = usePrintContext()
+
   // 客户端挂载检测
   useEffect(() => {
     setIsClient(true)
+    // 设置默认页面标题
+    document.title = "Character Sheet"
   }, [])
 
   const openCharacterManagementModal = () => {
@@ -393,13 +399,19 @@ export default function Home() {
     };
 
     const name = formData.name || '()';
-    const ancestry1Class = await getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry);
-    const professionClass = await getCardClass(formData.professionRef?.id, CardType.Profession);
-    const ancestry2Class = await getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry);
-    const communityClass = await getCardClass(formData.communityRef?.id, CardType.Community);
     const level = formData.level || '()';
 
-    document.title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
+    // 并行获取所有卡片类名
+    const [ancestry1Class, professionClass, ancestry2Class, communityClass] = await Promise.all([
+      getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry),
+      getCardClass(formData.professionRef?.id, CardType.Profession),
+      getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry),
+      getCardClass(formData.communityRef?.id, CardType.Community)
+    ]);
+
+    const title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
+    console.log('[App] 设置页面标题:', title);
+    document.title = title;
     setIsPrintingAll(true);
   }
 
@@ -427,20 +439,49 @@ export default function Home() {
     }
   }
 
+  // 等待图片加载完成和页面渲染的通用函数
+  const waitForImagesLoaded = (): Promise<void> => {
+    return new Promise((resolve) => {
+      if (allImagesLoaded) {
+        // 图片已经加载完成，等待300ms让页面完全渲染
+        setTimeout(resolve, 300)
+        return
+      }
+
+      // 检查图片加载状态的间隔检查
+      const startTime = Date.now()
+      const checkInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime
+
+        if (allImagesLoaded) {
+          // 图片加载完成，等待300ms后resolve
+          clearInterval(checkInterval)
+          setTimeout(resolve, 300)
+        } else if (elapsedTime > 1000) {
+          // 3秒超时，直接继续
+          clearInterval(checkInterval)
+          console.log('[App] 图片加载超时，继续执行操作')
+          resolve()
+        }
+      }, 100)
+    })
+  }
+
   // 快速导出功能 - 通过切换到预览页面实现
   const handleQuickExportPDF = async () => {
     try {
       console.log('[App] 快速PDF导出 - 进入预览页面')
       // 设置标题
       await handlePrintAll()
-      // 短暂延迟后自动触发打印
+      // 等待图片加载完成后自动触发打印
+      await waitForImagesLoaded()
+      // 给浏览器一点时间更新document.title
+      window.print()
+      // 打印完成后自动返回主页面
       setTimeout(() => {
-        window.print()
-        // 打印完成后自动返回主页面
-        setTimeout(() => {
-          setIsPrintingAll(false)
-        }, 500)
-      }, 500)
+        setIsPrintingAll(false)
+        document.title = "Character Sheet" // 重置标题
+      }, 300)
     } catch (error) {
       console.error('[App] 快速PDF导出失败:', error)
       alert('PDF导出失败: ' + (error instanceof Error ? error.message : '未知错误'))
@@ -452,11 +493,11 @@ export default function Home() {
       console.log('[App] 快速HTML导出 - 进入预览页面')
       // 进入预览页面
       await handlePrintAll()
-      // 短暂延迟后调用HTML导出并返回
-      setTimeout(async () => {
-        await handleExportHTML()
-        setIsPrintingAll(false) // 返回主页面
-      }, 500)
+      // 等待图片加载完成后调用HTML导出并返回
+      await waitForImagesLoaded()
+      await handleExportHTML()
+      setIsPrintingAll(false) // 返回主页面
+      document.title = "Character Sheet" // 重置标题
     } catch (error) {
       console.error('[App] 快速HTML导出失败:', error)
       alert('HTML导出失败: ' + (error instanceof Error ? error.message : '未知错误'))
@@ -468,11 +509,11 @@ export default function Home() {
       console.log('[App] 快速JSON导出 - 进入预览页面')
       // 进入预览页面
       await handlePrintAll()
-      // 短暂延迟后调用JSON导出并返回
-      setTimeout(() => {
-        handleExportJSON()
-        setIsPrintingAll(false) // 返回主页面
-      }, 500)
+      // 等待图片加载完成后调用JSON导出并返回
+      await waitForImagesLoaded()
+      handleExportJSON()
+      setIsPrintingAll(false) // 返回主页面
+      document.title = "Character Sheet" // 重置标题
     } catch (error) {
       console.error('[App] 快速JSON导出失败:', error)
       alert('JSON导出失败: ' + (error instanceof Error ? error.message : '未知错误'))

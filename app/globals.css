@@ -171,6 +171,16 @@ body {
     /* Ensure selected text is black and visible */
   }
 
+.card-item {
+  break-inside: avoid;
+  height: 100%;
+  /* 填满行高，确保同行等高 */
+  min-height: 350px;
+  max-height: 365px;
+  /* 增加最小高度 */
+  display: flex;
+  flex-direction: column;
+}
 }
 
 /* 卡牌行样式 - 同行高度对齐 */
@@ -183,16 +193,6 @@ body {
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   margin-bottom: 0.5rem;
-}
-
-.card-item {
-  break-inside: avoid;
-  height: 100%;
-  /* 填满行高，确保同行等高 */
-  min-height: 100px;
-  /* 增加最小高度 */
-  display: flex;
-  flex-direction: column;
 }
 
 .print-page {

@@ -49,7 +49,7 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     return (
         <div className="print-deck-section">
             {/* 卡组标题 */}
-            <div className="print-deck-header mb-4">
+            <div className="print-deck-header mb-1">
                 <h2 className="text-xl font-bold text-center">{title}</h2>
             </div>
 
@@ -60,21 +60,24 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
                         key={`row-${rowIndex}`}
                         className="card-row grid grid-cols-3 gap-1 mb-1"
                     >
-                        {row.map((card, cardIndex) => (
-                            <div
-                                key={card.id || `${rowIndex}-${cardIndex}`}
-                                className="card-item"
-                            >
-                                <PrintImageCard 
-                                    card={card} 
-                                    onImageLoad={() => handleImageLoad(card.id || `${rowIndex}-${cardIndex}`)}
-                                />
-                            </div>
-                        ))}
+                        {row.map((card, cardIndex) => {
+                            const uniqueKey = `${rowIndex}-${cardIndex}`;
+                            return (
+                                <div
+                                    key={uniqueKey}
+                                    className="card-item"
+                                >
+                                    <PrintImageCard
+                                        card={card} 
+                                        onImageLoad={() => handleImageLoad(uniqueKey)}
+                                    />
+                                </div>
+                            );
+                        })}
 
                         {/* 填充空白格子（如果一行不足3张） */}
                         {Array.from({ length: 3 - row.length }).map((_, emptyIndex) => (
-                            <div key={`empty-${emptyIndex}`} className="card-placeholder"></div>
+                            <div key={`empty-${rowIndex}-${emptyIndex}`} className="card-placeholder"></div>
                         ))}
                     </div>
                 ))}
@@ -90,8 +93,10 @@ const CharacterSheetPageFour: React.FC = () => {
 
     // 获取聚焦卡组的有效卡牌，并跳过序号为0的那张
     const focusedCards = useMemo(() => {
-        const allFocusedCards = (formData?.cards || []).filter((card: StandardCard) => !isEmptyCard(card));
-        return allFocusedCards.filter((_, index) => index !== 0); // 跳过序号为0的卡牌
+        const allCards = formData?.cards || [];
+        return allCards
+            .slice(1) // 先去掉序号0的卡牌
+            .filter((card: StandardCard) => !isEmptyCard(card)); // 再过滤空卡
     }, [formData?.cards]);
 
     // 创建稳定的回调函数

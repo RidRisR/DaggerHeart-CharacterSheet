@@ -590,24 +590,51 @@ function waitForImagesLoaded(): Promise<void> {
  */
 function replaceImagesWithBase64(html: string, imageMap: Map<string, string>): string {
   let updatedHTML = html
+  let replacedCount = 0
   
   // 替换所有img标签的src属性
   imageMap.forEach((base64Data, originalSrc) => {
     // 创建正则表达式来匹配这个特定图片的src
     const escapedSrc = originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const srcPattern = new RegExp(`src=["']${escapedSrc}["']`, 'g')
+    const beforeReplace = updatedHTML
     updatedHTML = updatedHTML.replace(srcPattern, `src="${base64Data}"`)
     
+    if (updatedHTML !== beforeReplace) {
+      replacedCount++
+    }
+    
     // 也尝试匹配可能的相对路径版本
-    const urlPath = new URL(originalSrc, window.location.href).pathname
-    if (urlPath !== originalSrc) {
-      const relativePattern = new RegExp(`src=["']${urlPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'g')
-      updatedHTML = updatedHTML.replace(relativePattern, `src="${base64Data}"`)
+    try {
+      const urlPath = new URL(originalSrc, window.location.href).pathname
+      if (urlPath !== originalSrc) {
+        const beforeRelativeReplace = updatedHTML
+        const relativePattern = new RegExp(`src=["']${urlPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'g')
+        updatedHTML = updatedHTML.replace(relativePattern, `src="${base64Data}"`)
+        
+        if (updatedHTML !== beforeRelativeReplace) {
+          replacedCount++
+        }
+      }
+    } catch (error) {
+      // 静默处理URL解析错误
+    }
+    
+    // 尝试只匹配文件名
+    const fileName = originalSrc.split('/').pop()
+    if (fileName) {
+      const beforeFileReplace = updatedHTML
+      const filePattern = new RegExp(`src=["'][^"']*/${fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'g')
+      updatedHTML = updatedHTML.replace(filePattern, `src="${base64Data}"`)
+      
+      if (updatedHTML !== beforeFileReplace) {
+        replacedCount++
+      }
     }
   })
   
   // 记录替换结果
-  console.log(`[HTML导出] 图片替换完成，共替换 ${imageMap.size} 张图片`)
+  console.log(`[HTML导出] 图片替换完成，共替换 ${replacedCount} 次`)
   
   return updatedHTML
 }

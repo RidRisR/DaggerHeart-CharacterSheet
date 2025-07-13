@@ -60,21 +60,24 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
                         key={`row-${rowIndex}`}
                         className="card-row grid grid-cols-3 gap-1 mb-1"
                     >
-                        {row.map((card, cardIndex) => (
-                            <div
-                                key={card.id || `${rowIndex}-${cardIndex}`}
-                                className="card-item"
-                            >
-                                <PrintImageCard 
-                                    card={card} 
-                                    onImageLoad={() => handleImageLoad(card.id || `${rowIndex}-${cardIndex}`)}
-                                />
-                            </div>
-                        ))}
+                        {row.map((card, cardIndex) => {
+                            const uniqueKey = `${rowIndex}-${cardIndex}`;
+                            return (
+                                <div
+                                    key={uniqueKey}
+                                    className="card-item"
+                                >
+                                    <PrintImageCard 
+                                        card={card} 
+                                        onImageLoad={() => handleImageLoad(uniqueKey)}
+                                    />
+                                </div>
+                            );
+                        })}
 
                         {/* 填充空白格子（如果一行不足3张） */}
                         {Array.from({ length: 3 - row.length }).map((_, emptyIndex) => (
-                            <div key={`empty-${emptyIndex}`} className="card-placeholder"></div>
+                            <div key={`empty-${rowIndex}-${emptyIndex}`} className="card-placeholder"></div>
                         ))}
                     </div>
                 ))}

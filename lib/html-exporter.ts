@@ -1018,13 +1018,31 @@ function generateInlineCSS(extractedStyles: string): string {
         font-size: var(--print-font-size, 14px) !important;
       }
 
+      .card-description {
+        font-size: 7.5pt !important;
+      }
+
+      .print-all-pages .page-one,
+      .print-all-pages .page-two,
+      .print-all-pages .page-three,
+      .print-all-pages .page-four,
+      .print-all-pages .page-five {
+        display: block;
+        padding: 0;
+        min-height: auto;
+      }
+
+      .a4-page {
+        width: 210mm;
+      }
+
       .no-print { display: none !important; }
 
       body { margin: 0; padding: 0; }
 
       @page {
         size: A4;
-        margin: 0;
+        margin: 5mm 5mm 2mm 5mm;
         scale: 0.9;
       }
     }

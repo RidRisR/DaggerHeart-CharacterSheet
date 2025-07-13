@@ -58,7 +58,7 @@ const EyeOffIcon = () => (
   </svg>
 )
 import { StandardCard } from "@/card/card-types"
-import { SheetData, CharacterMetadata } from "@/lib/sheet-data"
+import { CharacterMetadata } from "@/lib/sheet-data"
 import { exportCharacterData } from "@/lib/storage"
 import {
   migrateToMultiCharacterStorage,
@@ -76,7 +76,7 @@ import {
   MAX_CHARACTERS
 } from "@/lib/multi-character-storage"
 import PrintHelper from "./print-helper"
-import { exportToHTML, previewHTML } from "@/lib/html-exporter"
+import { exportToHTML } from "@/lib/html-exporter"
 
 export default function Home() {
   // 多角色系统状态
@@ -406,6 +406,7 @@ export default function Home() {
   // HTML导出功能
   const handleExportHTML = async () => {
     try {
+      console.log('[App] 开始HTML导出，正在等待图片加载...')
       await exportToHTML(formData)
       console.log('[App] HTML导出完成')
     } catch (error) {
@@ -414,16 +415,6 @@ export default function Home() {
     }
   }
 
-  // HTML预览功能
-  const handlePreviewHTML = async () => {
-    try {
-      await previewHTML(formData)
-      console.log('[App] HTML预览打开')
-    } catch (error) {
-      console.error('[App] HTML预览失败:', error)
-      alert('HTML预览失败: ' + (error instanceof Error ? error.message : '未知错误'))
-    }
-  }
 
   // JSON导出功能
   const handleExportJSON = () => {

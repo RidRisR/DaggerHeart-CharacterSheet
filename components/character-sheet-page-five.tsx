@@ -1,6 +1,6 @@
 "use client"
-import React, { useMemo, useState, useEffect } from "react"
-import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
+import React, { useMemo, useState, useEffect, useCallback } from "react"
+import { isEmptyCard, StandardCard } from "@/card/card-types"
 import { useSheetStore } from '@/lib/sheet-store';
 import { PrintImageCard } from "@/components/ui/print-image-card"
 import { usePrintContext } from "@/contexts/print-context"
@@ -24,6 +24,11 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
             onAllImagesLoaded?.()
         }
     }, [loadedImages.size, cards.length, onAllImagesLoaded])
+
+    // 重置加载状态当卡片数量改变时
+    useEffect(() => {
+        setLoadedImages(new Set<string>())
+    }, [cards.length])
 
     const handleImageLoad = (cardId: string) => {
         setLoadedImages(prev => new Set(prev).add(cardId))
@@ -88,6 +93,11 @@ const CharacterSheetPageFive: React.FC = () => {
         return (formData?.inventory_cards || []).filter((card: StandardCard) => !isEmptyCard(card));
     }, [formData?.inventory_cards]);
 
+    // 创建稳定的回调函数
+    const handleAllImagesLoaded = useCallback(() => {
+        onPageImagesLoaded('page-five')
+    }, [onPageImagesLoaded])
+
     // 注册页面图片数量
     useEffect(() => {
         registerPageImages('page-five', inventoryCards.length)
@@ -104,7 +114,7 @@ const CharacterSheetPageFive: React.FC = () => {
                 <CardDeckPrintSection
                     cards={inventoryCards}
                     title="库存卡组"
-                    onAllImagesLoaded={() => onPageImagesLoaded('page-five')}
+                    onAllImagesLoaded={handleAllImagesLoaded}
                 />
             </div>
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 
 interface UseImagesLoaderReturn {
   allImagesLoaded: boolean
@@ -15,16 +15,32 @@ export function useImagesLoader(): UseImagesLoaderReturn {
   const [registeredPages, setRegisteredPages] = useState<Record<string, number>>({})
 
   const registerPageImages = useCallback((pageId: string, imageCount: number) => {
-    setRegisteredPages(prev => ({ ...prev, [pageId]: imageCount }))
-    if (imageCount === 0) {
-      setPageImagesLoaded(prev => ({ ...prev, [pageId]: true }))
-    } else {
-      setPageImagesLoaded(prev => ({ ...prev, [pageId]: false }))
-    }
+    setRegisteredPages(prev => {
+      // 避免不必要的更新
+      if (prev[pageId] === imageCount) {
+        return prev
+      }
+      return { ...prev, [pageId]: imageCount }
+    })
+    
+    setPageImagesLoaded(prev => {
+      const shouldBeLoaded = imageCount === 0
+      // 避免不必要的更新
+      if (prev[pageId] === shouldBeLoaded) {
+        return prev
+      }
+      return { ...prev, [pageId]: shouldBeLoaded }
+    })
   }, [])
 
   const onPageImagesLoaded = useCallback((pageId: string) => {
-    setPageImagesLoaded(prev => ({ ...prev, [pageId]: true }))
+    setPageImagesLoaded(prev => {
+      // 避免不必要的更新
+      if (prev[pageId] === true) {
+        return prev
+      }
+      return { ...prev, [pageId]: true }
+    })
   }, [])
 
   const resetLoader = useCallback(() => {
@@ -32,8 +48,10 @@ export function useImagesLoader(): UseImagesLoaderReturn {
     setRegisteredPages({})
   }, [])
 
-  const allImagesLoaded = Object.keys(registeredPages).length > 0 && 
-    Object.keys(registeredPages).every(pageId => pageImagesLoaded[pageId])
+  const allImagesLoaded = useMemo(() => {
+    return Object.keys(registeredPages).length > 0 && 
+      Object.keys(registeredPages).every(pageId => pageImagesLoaded[pageId])
+  }, [registeredPages, pageImagesLoaded])
 
   return {
     allImagesLoaded,

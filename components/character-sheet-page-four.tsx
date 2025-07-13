@@ -1,6 +1,6 @@
 "use client"
-import React, { useMemo, useState, useEffect } from "react"
-import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
+import React, { useMemo, useState, useEffect, useCallback } from "react"
+import { isEmptyCard, StandardCard } from "@/card/card-types"
 import { useSheetStore } from '@/lib/sheet-store';
 import { PrintImageCard } from "@/components/ui/print-image-card"
 import { usePrintContext } from "@/contexts/print-context"
@@ -24,6 +24,11 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
             onAllImagesLoaded?.()
         }
     }, [loadedImages.size, cards.length, onAllImagesLoaded])
+
+    // 重置加载状态当卡片数量改变时
+    useEffect(() => {
+        setLoadedImages(new Set<string>())
+    }, [cards.length])
 
     const handleImageLoad = (cardId: string) => {
         setLoadedImages(prev => new Set(prev).add(cardId))
@@ -89,6 +94,11 @@ const CharacterSheetPageFour: React.FC = () => {
         return allFocusedCards.slice(1); // 从第二张卡牌开始
     }, [formData?.cards]);
 
+    // 创建稳定的回调函数
+    const handleAllImagesLoaded = useCallback(() => {
+        onPageImagesLoaded('page-four')
+    }, [onPageImagesLoaded])
+
     // 注册页面图片数量
     useEffect(() => {
         registerPageImages('page-four', focusedCards.length)
@@ -105,7 +115,7 @@ const CharacterSheetPageFour: React.FC = () => {
                 <CardDeckPrintSection
                     cards={focusedCards}
                     title="聚焦卡组"
-                    onAllImagesLoaded={() => onPageImagesLoaded('page-four')}
+                    onAllImagesLoaded={handleAllImagesLoaded}
                 />
             </div>
         </div>

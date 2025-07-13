@@ -283,15 +283,71 @@ function transformHTMLContent(htmlContent: string): string {
 }
 
 /**
+ * 等待所有图片加载完成
+ */
+function waitForImagesLoaded(): Promise<void> {
+  return new Promise((resolve) => {
+    console.log('[HTML导出] 等待图片加载完成...')
+    
+    let checkCount = 0
+    const maxChecks = 100 // 最多等待10秒 (100 * 100ms)
+    
+    const checkPrintContext = () => {
+      checkCount++
+      
+      const printContextElement = document.querySelector('[data-print-context]')
+      if (printContextElement) {
+        const allImagesLoaded = printContextElement.getAttribute('data-all-images-loaded') === 'true'
+        if (allImagesLoaded) {
+          console.log('[HTML导出] 所有图片已加载完成')
+          resolve()
+          return
+        }
+      }
+      
+      // 如果没有打印上下文，检查所有图片是否自然加载完成
+      const images = Array.from(document.querySelectorAll('.print-all-pages img'))
+      if (images.length === 0) {
+        console.log('[HTML导出] 没有找到图片，继续导出')
+        resolve()
+        return
+      }
+      
+      const loadedImages = images.filter(img => {
+        const image = img as HTMLImageElement
+        return image.complete && image.naturalWidth > 0
+      })
+      
+      console.log(`[HTML导出] 图片加载进度: ${loadedImages.length}/${images.length}`)
+      
+      if (loadedImages.length === images.length) {
+        console.log('[HTML导出] 所有图片已加载完成')
+        resolve()
+      } else if (checkCount >= maxChecks) {
+        console.warn('[HTML导出] 等待图片加载超时，继续导出')
+        resolve()
+      } else {
+        setTimeout(checkPrintContext, 100)
+      }
+    }
+    
+    checkPrintContext()
+  })
+}
+
+/**
  * 从打印预览页面提取HTML内容
  */
 function extractPrintPreviewHTML(): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const printContainer = document.querySelector('.print-all-pages')
       if (!printContainer) {
         throw new Error('未找到打印预览容器，请先进入打印预览模式')
       }
+
+      // 等待所有图片加载完成
+      await waitForImagesLoaded()
 
       // 克隆容器以避免影响原页面
       const clonedContainer = printContainer.cloneNode(true) as HTMLElement

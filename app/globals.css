@@ -183,8 +183,8 @@ html {
   break-inside: avoid;
   height: 100%;
   /* 填满行高，确保同行等高 */
-  min-height: 350px;
-  max-height: 365px;
+  min-height: 340px;
+    max-height: 370px;
   /* 增加最小高度 */
   display: flex;
   flex-direction: column;

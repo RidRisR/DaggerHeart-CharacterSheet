@@ -406,7 +406,7 @@ export default function Home() {
   // HTML导出功能
   const handleExportHTML = async () => {
     try {
-      console.log('[App] 开始HTML导出，正在等待图片加载...')
+      console.log('[App] 开始HTML导出，正在等待图片加载并转换为Base64...')
       await exportToHTML(formData)
       console.log('[App] HTML导出完成')
     } catch (error) {

@@ -283,6 +283,221 @@ function transformHTMLContent(htmlContent: string): string {
 }
 
 /**
+ * 将图片转换为Base64
+ */
+function imageToBase64(img: HTMLImageElement): Promise<string> {
+  return new Promise((resolve, reject) => {
+    try {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      
+      if (!ctx) {
+        reject(new Error('无法创建Canvas上下文'))
+        return
+      }
+
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      
+      ctx.drawImage(img, 0, 0)
+      
+      // 尝试获取WebP格式，如果不支持则使用PNG
+      let dataURL: string
+      try {
+        dataURL = canvas.toDataURL('image/webp', 0.8)
+        // 检查是否真的支持WebP
+        if (!dataURL.startsWith('data:image/webp')) {
+          dataURL = canvas.toDataURL('image/png', 0.8)
+        }
+      } catch (e) {
+        dataURL = canvas.toDataURL('image/png', 0.8)
+      }
+      
+      resolve(dataURL)
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
+/**
+ * 进度回调接口
+ */
+interface ProgressCallback {
+  (current: number, total: number, message: string): void
+}
+
+/**
+ * 创建进度条UI
+ */
+function createProgressModal(): {
+  modal: HTMLElement
+  updateProgress: (current: number, total: number, message: string) => void
+  close: () => void
+} {
+  // 创建模态框
+  const modal = document.createElement('div')
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+  `
+
+  // 创建进度框
+  const progressBox = document.createElement('div')
+  progressBox.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    min-width: 400px;
+    max-width: 500px;
+  `
+
+  // 标题
+  const title = document.createElement('h3')
+  title.textContent = '正在导出HTML文件'
+  title.style.cssText = `
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+  `
+
+  // 进度条容器
+  const progressContainer = document.createElement('div')
+  progressContainer.style.cssText = `
+    background: #f0f0f0;
+    border-radius: 8px;
+    height: 8px;
+    margin: 16px 0;
+    overflow: hidden;
+  `
+
+  // 进度条
+  const progressBar = document.createElement('div')
+  progressBar.style.cssText = `
+    background: linear-gradient(90deg, #007cba, #005a8b);
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 8px;
+  `
+
+  // 进度文本
+  const progressText = document.createElement('div')
+  progressText.style.cssText = `
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #666;
+    margin: 8px 0;
+  `
+  progressText.innerHTML = '<span id="progress-message">准备中...</span><span id="progress-percent">0%</span>'
+
+  // 状态消息
+  const statusMessage = document.createElement('div')
+  statusMessage.style.cssText = `
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-top: 12px;
+    height: 20px;
+  `
+
+  progressContainer.appendChild(progressBar)
+  progressBox.appendChild(title)
+  progressBox.appendChild(progressText)
+  progressBox.appendChild(progressContainer)
+  progressBox.appendChild(statusMessage)
+  modal.appendChild(progressBox)
+
+  // 添加到DOM
+  document.body.appendChild(modal)
+
+  // 更新进度函数
+  const updateProgress = (current: number, total: number, message: string) => {
+    const percent = total > 0 ? Math.round((current / total) * 100) : 0
+    progressBar.style.width = `${percent}%`
+    
+    const messageEl = progressText.querySelector('#progress-message')
+    const percentEl = progressText.querySelector('#progress-percent')
+    
+    if (messageEl) {
+      if (total > 0) {
+        messageEl.textContent = `${current}/${total} 张图片`
+      } else {
+        messageEl.textContent = message
+      }
+    }
+    if (percentEl) percentEl.textContent = `${percent}%`
+    
+    statusMessage.textContent = message
+  }
+
+  // 关闭函数
+  const close = () => {
+    if (document.body.contains(modal)) {
+      document.body.removeChild(modal)
+    }
+  }
+
+  return { modal, updateProgress, close }
+}
+
+/**
+ * 收集并转换所有图片为Base64
+ */
+async function convertImagesToBase64(onProgress?: ProgressCallback): Promise<Map<string, string>> {
+  const imageMap = new Map<string, string>()
+  const images = Array.from(document.querySelectorAll('.print-all-pages img')) as HTMLImageElement[]
+  
+  console.log(`[HTML导出] 开始转换 ${images.length} 张图片为Base64...`)
+  onProgress?.(0, images.length, '开始转换图片...')
+  
+  let processed = 0
+  for (const img of images) {
+    try {
+      if (img.complete && img.naturalWidth > 0 && img.src) {
+        const fileName = img.src.split('/').pop() || '未知图片'
+        onProgress?.(processed, images.length, `正在转换: ${fileName}`)
+        
+        const base64 = await imageToBase64(img)
+        imageMap.set(img.src, base64)
+        processed++
+        
+        console.log(`[HTML导出] 已转换图片 ${processed}/${images.length}: ${fileName}`)
+        onProgress?.(processed, images.length, `已完成: ${fileName}`)
+        
+        // 短暂延迟让用户看到进度更新
+        await new Promise(resolve => setTimeout(resolve, 50))
+      } else {
+        console.warn(`[HTML导出] 跳过未加载的图片: ${img.src}`)
+        processed++
+        onProgress?.(processed, images.length, `跳过未加载的图片`)
+      }
+    } catch (error) {
+      console.error(`[HTML导出] 转换图片失败: ${img.src}`, error)
+      processed++
+      onProgress?.(processed, images.length, `转换失败: ${img.src.split('/').pop()}`)
+    }
+  }
+  
+  console.log(`[HTML导出] 图片转换完成，成功转换 ${imageMap.size}/${images.length} 张图片`)
+  onProgress?.(images.length, images.length, '图片转换完成')
+  return imageMap
+}
+
+/**
  * 等待所有图片加载完成
  */
 function waitForImagesLoaded(): Promise<void> {
@@ -336,9 +551,36 @@ function waitForImagesLoaded(): Promise<void> {
 }
 
 /**
+ * 替换HTML中的图片为Base64
+ */
+function replaceImagesWithBase64(html: string, imageMap: Map<string, string>): string {
+  let updatedHTML = html
+  
+  // 替换所有img标签的src属性
+  imageMap.forEach((base64Data, originalSrc) => {
+    // 创建正则表达式来匹配这个特定图片的src
+    const escapedSrc = originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const srcPattern = new RegExp(`src=["']${escapedSrc}["']`, 'g')
+    updatedHTML = updatedHTML.replace(srcPattern, `src="${base64Data}"`)
+    
+    // 也尝试匹配可能的相对路径版本
+    const urlPath = new URL(originalSrc, window.location.href).pathname
+    if (urlPath !== originalSrc) {
+      const relativePattern = new RegExp(`src=["']${urlPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'g')
+      updatedHTML = updatedHTML.replace(relativePattern, `src="${base64Data}"`)
+    }
+  })
+  
+  // 记录替换结果
+  console.log(`[HTML导出] 图片替换完成，共替换 ${imageMap.size} 张图片`)
+  
+  return updatedHTML
+}
+
+/**
  * 从打印预览页面提取HTML内容
  */
-function extractPrintPreviewHTML(): Promise<string> {
+function extractPrintPreviewHTML(onProgress?: ProgressCallback): Promise<string> {
   return new Promise(async (resolve, reject) => {
     try {
       const printContainer = document.querySelector('.print-all-pages')
@@ -348,6 +590,9 @@ function extractPrintPreviewHTML(): Promise<string> {
 
       // 等待所有图片加载完成
       await waitForImagesLoaded()
+
+      // 转换所有图片为Base64
+      const imageMap = await convertImagesToBase64(onProgress)
 
       // 克隆容器以避免影响原页面
       const clonedContainer = printContainer.cloneNode(true) as HTMLElement
@@ -391,6 +636,9 @@ function extractPrintPreviewHTML(): Promise<string> {
       // 转换HTML内容
       let extractedHTML = cleanupExtractedHTML(clonedContainer.outerHTML)
       extractedHTML = transformHTMLContent(extractedHTML)
+      
+      // 替换图片为Base64
+      extractedHTML = replaceImagesWithBase64(extractedHTML, imageMap)
 
       resolve(extractedHTML)
     } catch (error) {
@@ -402,10 +650,10 @@ function extractPrintPreviewHTML(): Promise<string> {
 /**
  * 生成完整的HTML文档
  */
-async function generateFullHTML(formData: SheetData, options: HTMLExportOptions = {}): Promise<string> {
+async function generateFullHTML(formData: SheetData, options: HTMLExportOptions = {}, onProgress?: ProgressCallback): Promise<string> {
   try {
     const title = await generateDocumentTitle(formData)
-    const extractedHTML = await extractPrintPreviewHTML()
+    const extractedHTML = await extractPrintPreviewHTML(onProgress)
     const styles = options.includeStyles !== false ? extractPageStyles() : ''
 
     const html = `<!DOCTYPE html>
@@ -468,13 +716,59 @@ async function generateFileName(formData: SheetData, options: HTMLExportOptions 
  * 导出为HTML文件
  */
 export async function exportToHTML(formData: SheetData, options: HTMLExportOptions = {}): Promise<void> {
+  let progressModal: any = null
+  
   try {
     if (!document.querySelector('.print-all-pages')) {
       throw new Error('请先进入打印预览模式再导出HTML。点击"打印预览"按钮后重试。')
     }
 
-    const html = await generateFullHTML(formData, options)
+    // 先检查有多少图片需要转换
+    const images = Array.from(document.querySelectorAll('.print-all-pages img')) as HTMLImageElement[]
+    const imageCount = images.length
+    
+    // 创建进度条并初始化
+    progressModal = createProgressModal()
+    progressModal.updateProgress(0, imageCount, '正在准备导出...')
+    
+    // 等待一下让进度条显示
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    const html = await generateFullHTML(formData, options, progressModal.updateProgress)
     const filename = await generateFileName(formData, options)
+    
+    progressModal.updateProgress(imageCount, imageCount, '正在生成文件...')
+    
+    // 短暂延迟让用户看到100%完成
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // 检查文件大小并给出警告
+    const fileSizeBytes = new Blob([html]).size
+    const fileSizeMB = Math.round(fileSizeBytes / 1024 / 1024 * 100) / 100
+    
+    console.log(`[HTML导出] 生成的HTML文件大小: ${fileSizeMB}MB`)
+    
+    if (fileSizeMB > 10) {
+      // 暂时关闭进度条显示警告
+      if (progressModal) progressModal.close()
+      
+      const shouldContinue = confirm(
+        `警告：生成的HTML文件大小为 ${fileSizeMB}MB，可能过大。\n\n` +
+        '这主要是由于内嵌了大量图片。文件过大可能导致：\n' +
+        '• 下载时间较长\n' +
+        '• 浏览器打开缓慢\n' +
+        '• 某些设备无法正常加载\n\n' +
+        '是否继续导出？'
+      )
+      
+      if (!shouldContinue) {
+        console.log('[HTML导出] 用户取消导出')
+        return
+      }
+    } else {
+      // 如果文件大小正常，关闭进度条
+      if (progressModal) progressModal.close()
+    }
 
     // 创建并触发下载
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
@@ -489,7 +783,10 @@ export async function exportToHTML(formData: SheetData, options: HTMLExportOptio
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
+    
+    console.log(`[HTML导出] 导出完成: ${filename} (${fileSizeMB}MB)`)
   } catch (error) {
+    if (progressModal) progressModal.close()
     const errorMessage = `HTML导出失败: ${error instanceof Error ? error.message : '未知错误'}`
     throw new Error(errorMessage)
   }

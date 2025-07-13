@@ -10,6 +10,7 @@
 import { SheetData } from './sheet-data'
 import { CardType, getStandardCardsByTypeAsync } from '@/card'
 import { StandardCard } from '@/card/card-types'
+import { UnifiedProgressModalManager } from '@/components/ui/unified-progress-modal'
 
 // 扩展Window接口以支持gc函数
 declare global {
@@ -397,7 +398,7 @@ interface ProgressCallback {
 class ExportStateManager {
   private static instance: ExportStateManager
   private isExporting: boolean = false
-  private currentProgressModal: any = null
+  private currentProgressModal: UnifiedProgressModalManager | null = null
   private exportTimeout: NodeJS.Timeout | null = null
 
   static getInstance(): ExportStateManager {
@@ -421,10 +422,20 @@ class ExportStateManager {
     this.isExporting = false
     this.clearTimeout()
     this.closeProgressModal()
+    
+    // 强制垃圾回收（如果可能）以防止内存泄漏
+    if (window.gc && performance.memory) {
+      const memoryUsage = performance.memory.usedJSHeapSize / (1024 * 1024) // MB
+      if (memoryUsage > 500) { // 如果内存使用超过500MB
+        console.log('[导出状态] 内存使用较高，尝试垃圾回收')
+        window.gc()
+      }
+    }
+    
     console.log('[导出状态] 导出完成')
   }
 
-  setProgressModal(modal: any): void {
+  setProgressModal(modal: UnifiedProgressModalManager): void {
     this.currentProgressModal = modal
   }
 
@@ -462,201 +473,6 @@ class ExportStateManager {
 
 const exportStateManager = ExportStateManager.getInstance()
 
-/**
- * 增强的进度条管理器
- */
-class ProgressModalManager {
-  private modal: HTMLElement | null = null
-  private progressBar: HTMLElement | null = null
-  private progressText: HTMLElement | null = null
-  private statusMessage: HTMLElement | null = null
-  private isDestroyed: boolean = false
-
-  create(): {
-    updateProgress: (current: number, total: number, message: string) => void
-    close: () => void
-  } {
-    // 防止重复创建
-    if (this.modal) {
-      console.warn('[进度条] 进度条已存在，先关闭旧的')
-      this.destroy()
-    }
-
-    this.isDestroyed = false
-
-    // 创建模态框
-    this.modal = document.createElement('div')
-    this.modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: Arial, sans-serif;
-    `
-
-    // 创建进度框
-    const progressBox = document.createElement('div')
-    progressBox.style.cssText = `
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      min-width: 400px;
-      max-width: 500px;
-    `
-
-    // 标题
-    const title = document.createElement('h3')
-    title.textContent = '正在导出HTML文件'
-    title.style.cssText = `
-      margin: 0 0 20px 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-      text-align: center;
-    `
-
-    // 进度条容器
-    const progressContainer = document.createElement('div')
-    progressContainer.style.cssText = `
-      background: #f0f0f0;
-      border-radius: 8px;
-      height: 8px;
-      margin: 16px 0;
-      overflow: hidden;
-    `
-
-    // 进度条
-    this.progressBar = document.createElement('div')
-    this.progressBar.style.cssText = `
-      background: linear-gradient(90deg, #007cba, #005a8b);
-      height: 100%;
-      width: 0%;
-      transition: width 0.3s ease;
-      border-radius: 8px;
-    `
-
-    // 进度文本
-    this.progressText = document.createElement('div')
-    this.progressText.style.cssText = `
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      color: #666;
-      margin: 8px 0;
-    `
-    this.progressText.innerHTML = '<span id="progress-message">准备中...</span><span id="progress-percent">0%</span>'
-
-    // 状态消息
-    this.statusMessage = document.createElement('div')
-    this.statusMessage.style.cssText = `
-      font-size: 12px;
-      color: #888;
-      text-align: center;
-      margin-top: 12px;
-      height: 20px;
-    `
-
-    progressContainer.appendChild(this.progressBar)
-    progressBox.appendChild(title)
-    progressBox.appendChild(this.progressText)
-    progressBox.appendChild(progressContainer)
-    progressBox.appendChild(this.statusMessage)
-    this.modal.appendChild(progressBox)
-
-    // 安全地添加到DOM
-    try {
-      document.body.appendChild(this.modal)
-      console.log('[进度条] 进度条创建成功')
-    } catch (error) {
-      console.error('[进度条] 创建进度条失败:', error)
-      this.cleanup()
-      throw error
-    }
-
-    return {
-      updateProgress: this.updateProgress.bind(this),
-      close: this.destroy.bind(this)
-    }
-  }
-
-  private updateProgress = (current: number, total: number, message: string) => {
-    if (this.isDestroyed || !this.progressBar || !this.progressText || !this.statusMessage) {
-      return
-    }
-
-    try {
-      const percent = total > 0 ? Math.round((current / total) * 100) : 0
-      this.progressBar.style.width = `${percent}%`
-      
-      const messageEl = this.progressText.querySelector('#progress-message')
-      const percentEl = this.progressText.querySelector('#progress-percent')
-      
-      if (messageEl) {
-        if (total > 0) {
-          messageEl.textContent = `${current}/${total} 张图片`
-        } else {
-          messageEl.textContent = message
-        }
-      }
-      if (percentEl) percentEl.textContent = `${percent}%`
-      
-      this.statusMessage.textContent = message
-    } catch (error) {
-      console.warn('[进度条] 更新进度时出错:', error)
-    }
-  }
-
-  destroy = () => {
-    if (this.isDestroyed) {
-      return
-    }
-
-    this.isDestroyed = true
-    this.cleanup()
-    console.log('[进度条] 进度条已销毁')
-  }
-
-  private cleanup() {
-    try {
-      if (this.modal && document.body.contains(this.modal)) {
-        document.body.removeChild(this.modal)
-      }
-    } catch (error) {
-      console.warn('[进度条] 清理DOM时出错:', error)
-    }
-
-    // 清理引用
-    this.modal = null
-    this.progressBar = null
-    this.progressText = null
-    this.statusMessage = null
-  }
-}
-
-/**
- * 创建进度条UI（兼容旧接口）
- */
-function createProgressModal(): {
-  modal: HTMLElement
-  updateProgress: (current: number, total: number, message: string) => void
-  close: () => void
-} {
-  const manager = new ProgressModalManager()
-  const { updateProgress, close } = manager.create()
-  
-  return {
-    modal: manager['modal']!, // 私有属性访问，仅用于兼容
-    updateProgress,
-    close
-  }
-}
 
 /**
  * 收集并转换所有图片为Base64
@@ -941,7 +757,7 @@ export async function exportToHTML(formData: SheetData, options: HTMLExportOptio
     return
   }
 
-  let progressModal: any = null
+  let progressModal: UnifiedProgressModalManager | null = null
   
   try {
     if (!document.querySelector('.print-all-pages')) {
@@ -959,11 +775,11 @@ export async function exportToHTML(formData: SheetData, options: HTMLExportOptio
     
     console.log(`[HTML导出] 准备转换 ${imageCount} 张图片`)
     
-    // 创建进度条并初始化
-    progressModal = createProgressModal()
+    // 创建统一进度条并初始化
+    progressModal = new UnifiedProgressModalManager()
     exportStateManager.setProgressModal(progressModal)
     
-    progressModal.updateProgress(0, imageCount, '正在准备导出...')
+    progressModal.showProgress('正在导出HTML文件', 0, imageCount, '正在准备导出...')
     
     // 设置超时机制（5分钟）
     exportStateManager.setTimeout(() => {
@@ -973,10 +789,16 @@ export async function exportToHTML(formData: SheetData, options: HTMLExportOptio
     // 等待一下让进度条显示
     await new Promise(resolve => setTimeout(resolve, 100))
     
-    const html = await generateFullHTML(formData, options, progressModal.updateProgress)
+    const html = await generateFullHTML(formData, options, (current, total, message) => {
+      if (progressModal) {
+        progressModal.updateProgress(current, total, message)
+      }
+    })
     const filename = await generateFileName(formData, options)
     
-    progressModal.updateProgress(imageCount, imageCount, '正在生成文件...')
+    if (progressModal) {
+      progressModal.updateProgress(imageCount, imageCount, '正在生成文件...')
+    }
     
     // 短暂延迟让用户看到100%完成
     await new Promise(resolve => setTimeout(resolve, 500))

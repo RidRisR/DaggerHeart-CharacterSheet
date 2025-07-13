@@ -6,6 +6,7 @@ import { CardSystemInitializer } from "@/components/card-system-initializer"
 import { Toaster } from "@/components/ui/toaster"
 import { FadeNotificationContainer } from "@/components/ui/fade-notification"
 import { PrintProvider } from "@/contexts/print-context"
+import { ProgressModalProvider } from "@/components/ui/unified-progress-modal"
 import PrintHelper from "./print-helper"
 
 export const metadata: Metadata = {
@@ -23,12 +24,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <PrintProvider>
-            <CardSystemInitializer />
-            <PrintHelper />
-            {children}
-            <Toaster />
-            <FadeNotificationContainer />
+          <ProgressModalProvider>
+            <PrintProvider>
+              <CardSystemInitializer />
+              <PrintHelper />
+              {children}
+              <Toaster />
+              <FadeNotificationContainer />
             {/* 水印 */}
             <div className="fixed bottom-2 left-2 text-gray-500 text-xs opacity-75 pointer-events-none">
               本作品完全开源且免费
@@ -47,7 +49,8 @@ export default function RootLayout({
                 https://github.com/RidRisR/DaggerHeart-CharacterSheet
               </a>
             </div>
-          </PrintProvider>
+            </PrintProvider>
+          </ProgressModalProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react"
 import { usePrintContext } from "@/contexts/print-context"
+import { useProgressModal } from "@/components/ui/unified-progress-modal"
 
 interface PrintReadyCheckerProps {
   onPrintReady?: () => void
@@ -10,12 +11,23 @@ interface PrintReadyCheckerProps {
 
 export function PrintReadyChecker({ onPrintReady, children }: PrintReadyCheckerProps) {
   const { allImagesLoaded } = usePrintContext()
+  const progressModal = useProgressModal()
 
   useEffect(() => {
     if (allImagesLoaded) {
       onPrintReady?.()
+      // 图片加载完成，关闭进度条
+      if (progressModal.isVisible()) {
+        progressModal.close()
+      }
+    } else {
+      // 图片未加载完成，显示等待进度条
+      progressModal.showLoading(
+        "正在准备打印预览", 
+        "正在加载图片，请稍候..."
+      )
     }
-  }, [allImagesLoaded, onPrintReady])
+  }, [allImagesLoaded, onPrintReady, progressModal])
 
   // 在DOM上设置数据属性，供HTML导出器使用
   useEffect(() => {
@@ -38,22 +50,13 @@ export function PrintReadyChecker({ onPrintReady, children }: PrintReadyCheckerP
       if (existingElement && document.body.contains(existingElement)) {
         document.body.removeChild(existingElement)
       }
+      
+      // 组件卸载时关闭进度条
+      if (progressModal.isVisible()) {
+        progressModal.close()
+      }
     }
-  }, [])
+  }, [progressModal])
 
-  return (
-    <>
-      {children}
-      {!allImagesLoaded && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 print:hidden">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <div className="flex items-center space-x-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="text-lg">正在加载图片，请稍候...</span>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  )
+  return <>{children}</>
 }

@@ -997,6 +997,9 @@ export default function Home() {
               </Button>
             }
           >
+            <HoverMenuItem onClick={() => setCharacterManagementModalOpen(true)}>
+              存档管理
+            </HoverMenuItem>
             <HoverMenuItem
               onClick={handleQuickCreateArchive}
               disabled={characterList.length >= MAX_CHARACTERS}
@@ -1019,7 +1022,7 @@ export default function Home() {
               isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
             }`}
           >
-            卡牌管理
+              卡包管理
           </Button>
           </div>
         </div>

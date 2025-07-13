@@ -227,7 +227,6 @@ export function CardDeckSection({
   }, []);
 
   // 移除：selectedCards 状态和聚焦逻辑
-  const [isAltPressed, setIsAltPressed] = useState(false)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [cardSelectionModalOpen, setCardSelectionModalOpen] = useState(false)
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
@@ -253,28 +252,7 @@ export function CardDeckSection({
 
   // 移除：所有与 selectedCards 和 focused_card_ids 相关的逻辑
 
-  // 监听Alt键
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Alt") {
-        setIsAltPressed(true)
-      }
-    }
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === "Alt") {
-        setIsAltPressed(false)
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-    window.addEventListener("keyup", handleKeyUp)
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-      window.removeEventListener("keyup", handleKeyUp)
-    }
-  }, [])
+  // 移除：Alt键监听逻辑，已不需要
 
   // 检查是否是特殊卡位（聚焦卡组的前五个位置）
   const isSpecialSlot = (index: number): boolean => {

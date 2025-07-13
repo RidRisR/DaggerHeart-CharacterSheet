@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
 import { useSheetStore } from "@/lib/sheet-store"
 import { getBasePath } from "@/lib/utils"
+import { PrintReadyChecker } from "@/components/print-ready-checker"
 
 // 内联图标组件
 const EyeIcon = () => (
@@ -634,52 +635,53 @@ export default function Home() {
 
   if (isPrintingAll) {
     return (
-      <div className="print-all-pages">
-        <PrintHelper />
+      <PrintReadyChecker>
+        <div className="print-all-pages">
+          <PrintHelper />
 
-        {/* 顶部提示横条 - 只在屏幕上显示，打印时隐藏 */}
-        <div className="fixed top-0 left-0 right-0 z-[70] print:hidden">
-          <div
-            className="bg-black bg-opacity-50 text-white px-6 py-3 text-center cursor-pointer hover:bg-opacity-70 transition-all duration-200"
-            onClick={() => setIsPrintingAll(false)}
-          >
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-sm">
-                按 <kbd className="px-2 py-1 bg-gray-700 rounded text-xs mx-1">ESC</kbd> 键或点击此处退出预览
-              </span>
+          {/* 顶部提示横条 - 只在屏幕上显示，打印时隐藏 */}
+          <div className="fixed top-0 left-0 right-0 z-[70] print:hidden">
+            <div
+              className="bg-black bg-opacity-50 text-white px-6 py-3 text-center cursor-pointer hover:bg-opacity-70 transition-all duration-200"
+              onClick={() => setIsPrintingAll(false)}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-sm">
+                  按 <kbd className="px-2 py-1 bg-gray-700 rounded text-xs mx-1">ESC</kbd> 键或点击此处退出预览
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* 打印预览控制按钮，只在屏幕上显示，打印时隐藏 */}
-        <div className="fixed bottom-4 right-4 z-[60] print:hidden print-control-buttons">
-          <div className="flex flex-col gap-2">
-            <Button
-              onClick={() => window.print()}
-              className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
-            >
-              导出为PDF
-            </Button>
-            <Button
-              onClick={handleExportHTML}
-              className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
-            >
-              导出为HTML
-            </Button>
-            <Button
-              onClick={handleExportJSON}
-              className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
-            >
-              导出为JSON
-            </Button>
-            <Button
-              onClick={() => setIsPrintingAll(false)}
-              className="bg-red-600 text-white hover:bg-red-700 focus:outline-none whitespace-nowrap"
-            >
-              返回
-            </Button>
+          {/* 打印预览控制按钮，只在屏幕上显示，打印时隐藏 */}
+          <div className="fixed bottom-4 right-4 z-[60] print:hidden print-control-buttons">
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => window.print()}
+                className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+              >
+                导出为PDF
+              </Button>
+              <Button
+                onClick={handleExportHTML}
+                className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+              >
+                导出为HTML
+              </Button>
+              <Button
+                onClick={handleExportJSON}
+                className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+              >
+                导出为JSON
+              </Button>
+              <Button
+                onClick={() => setIsPrintingAll(false)}
+                className="bg-red-600 text-white hover:bg-red-700 focus:outline-none whitespace-nowrap"
+              >
+                返回
+              </Button>
+            </div>
           </div>
-        </div>
 
         {/* 第一页 */}
         <div className="page-one flex justify-center items-start min-h-screen">
@@ -707,7 +709,8 @@ export default function Home() {
         <div className="page-five flex justify-center items-start min-h-screen">
           <CharacterSheetPageFive />
         </div>
-      </div>
+        </div>
+      </PrintReadyChecker>
     )
   }
 

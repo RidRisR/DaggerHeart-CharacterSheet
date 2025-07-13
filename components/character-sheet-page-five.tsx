@@ -1,21 +1,33 @@
 "use client"
-import React, { useMemo } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
 import { useSheetStore } from '@/lib/sheet-store';
 import { PrintImageCard } from "@/components/ui/print-image-card"
+import { usePrintContext } from "@/contexts/print-context"
 
 // 卡组打印区域组件
 interface CardDeckPrintSectionProps {
     cards: StandardCard[];
     title: string;
-    deckType: 'focused' | 'inventory';
+    onAllImagesLoaded?: () => void;
 }
 
 const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     cards,
     title,
-    deckType
+    onAllImagesLoaded
 }) => {
+    const [loadedImages, setLoadedImages] = useState(new Set<string>())
+    
+    useEffect(() => {
+        if (loadedImages.size === cards.length && cards.length > 0) {
+            onAllImagesLoaded?.()
+        }
+    }, [loadedImages.size, cards.length, onAllImagesLoaded])
+
+    const handleImageLoad = (cardId: string) => {
+        setLoadedImages(prev => new Set(prev).add(cardId))
+    }
     // 按3张一行分组，让浏览器自动分页
     const cardRows = useMemo(() => {
         const rows: StandardCard[][] = [];
@@ -48,7 +60,10 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
                                 key={card.id || `${rowIndex}-${cardIndex}`}
                                 className="card-item"
                             >
-                                <PrintImageCard card={card} />
+                                <PrintImageCard 
+                                    card={card} 
+                                    onImageLoad={() => handleImageLoad(card.id || `${rowIndex}-${cardIndex}`)}
+                                />
                             </div>
                         ))}
 
@@ -66,11 +81,17 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 // 打印专用页面，专门展示库存卡组
 const CharacterSheetPageFive: React.FC = () => {
     const { sheetData: formData } = useSheetStore();
+    const { registerPageImages, onPageImagesLoaded } = usePrintContext();
 
     // 获取库存卡组的有效卡牌
     const inventoryCards = useMemo(() => {
         return (formData?.inventory_cards || []).filter((card: StandardCard) => !isEmptyCard(card));
     }, [formData?.inventory_cards]);
+
+    // 注册页面图片数量
+    useEffect(() => {
+        registerPageImages('page-five', inventoryCards.length)
+    }, [inventoryCards.length, registerPageImages])
 
     // 如果库存卡组是空的，不渲染第五页
     if (inventoryCards.length === 0) {
@@ -83,7 +104,7 @@ const CharacterSheetPageFive: React.FC = () => {
                 <CardDeckPrintSection
                     cards={inventoryCards}
                     title="库存卡组"
-                    deckType="inventory"
+                    onAllImagesLoaded={() => onPageImagesLoaded('page-five')}
                 />
             </div>
         </div>

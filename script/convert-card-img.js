@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 
-const rootDir = path.join(__dirname, '../public');
+const rootDir = path.join(__dirname, '../public/convert');
 
 function walkDir(dir, callback) {
   fs.readdirSync(dir, { withFileTypes: true }).forEach(dirent => {

@@ -1,21 +1,33 @@
 "use client"
-import React, { useMemo } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import { CardType, isEmptyCard, StandardCard } from "@/card/card-types"
 import { useSheetStore } from '@/lib/sheet-store';
 import { PrintImageCard } from "@/components/ui/print-image-card"
+import { usePrintContext } from "@/contexts/print-context"
 
 // 卡组打印区域组件
 interface CardDeckPrintSectionProps {
     cards: StandardCard[];
     title: string;
-    deckType: 'focused' | 'inventory';
+    onAllImagesLoaded?: () => void;
 }
 
 const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     cards,
     title,
-    deckType
+    onAllImagesLoaded
 }) => {
+    const [loadedImages, setLoadedImages] = useState(new Set<string>())
+    
+    useEffect(() => {
+        if (loadedImages.size === cards.length && cards.length > 0) {
+            onAllImagesLoaded?.()
+        }
+    }, [loadedImages.size, cards.length, onAllImagesLoaded])
+
+    const handleImageLoad = (cardId: string) => {
+        setLoadedImages(prev => new Set(prev).add(cardId))
+    }
     // 按3张一行分组，让浏览器自动分页
     const cardRows = useMemo(() => {
         const rows: StandardCard[][] = [];
@@ -48,7 +60,10 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
                                 key={card.id || `${rowIndex}-${cardIndex}`}
                                 className="card-item"
                             >
-                                <PrintImageCard card={card} />
+                                <PrintImageCard 
+                                    card={card} 
+                                    onImageLoad={() => handleImageLoad(card.id || `${rowIndex}-${cardIndex}`)}
+                                />
                             </div>
                         ))}
 
@@ -66,12 +81,18 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 // 打印专用页面，专门展示聚焦卡组
 const CharacterSheetPageFour: React.FC = () => {
     const { sheetData: formData } = useSheetStore();
+    const { registerPageImages, onPageImagesLoaded } = usePrintContext();
 
     // 获取聚焦卡组的有效卡牌，并跳过第一张
     const focusedCards = useMemo(() => {
         const allFocusedCards = (formData?.cards || []).filter((card: StandardCard) => !isEmptyCard(card));
         return allFocusedCards.slice(1); // 从第二张卡牌开始
     }, [formData?.cards]);
+
+    // 注册页面图片数量
+    useEffect(() => {
+        registerPageImages('page-four', focusedCards.length)
+    }, [focusedCards.length, registerPageImages])
 
     // 如果聚焦卡组是空的（或者只有一张卡被跳过了），不渲染第四页
     if (focusedCards.length === 0) {
@@ -84,7 +105,7 @@ const CharacterSheetPageFour: React.FC = () => {
                 <CardDeckPrintSection
                     cards={focusedCards}
                     title="聚焦卡组"
-                    deckType="focused"
+                    onAllImagesLoaded={() => onPageImagesLoaded('page-four')}
                 />
             </div>
         </div>

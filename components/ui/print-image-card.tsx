@@ -22,9 +22,10 @@ const getDisplayTypeName = (card: StandardCard) => {
 
 interface PrintImageCardProps {
     card: ExtendedStandardCard | StandardCard
+    onImageLoad?: () => void
 }
 
-export function PrintImageCard({ card }: PrintImageCardProps) {
+export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
     if (!card) {
         return null
     }
@@ -36,6 +37,10 @@ export function PrintImageCard({ card }: PrintImageCardProps) {
     const displayItem3 = card.cardSelectDisplay?.item3 || "";
     const displayItem4 = card.cardSelectDisplay?.item4 || "";
 
+    const handleImageLoad = () => {
+        onImageLoad?.()
+    }
+
     return (
         <div className="flex flex-col overflow-hidden rounded-lg border border-gray-300 bg-white h-full">
             {/* Image Container */}
@@ -46,6 +51,8 @@ export function PrintImageCard({ card }: PrintImageCardProps) {
                     fill
                     className="w-full h-full object-cover"
                     sizes="30vw"
+                    onLoad={handleImageLoad}
+                    priority
                 />
                 <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/50 to-transparent pointer-events-none flex flex-col justify-end p-2">
                     <h3 className="text-base font-bold text-white leading-tight">{displayName}</h3>

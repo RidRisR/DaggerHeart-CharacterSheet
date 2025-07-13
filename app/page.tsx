@@ -9,7 +9,6 @@ import {
   getStandardCardsByTypeAsync,
   CardType,
 } from "@/card"
-import { createEmptyCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { CardDrawer } from "@/components/card-drawer"
 import CharacterSheetPageFour from "@/components/character-sheet-page-four"
@@ -18,7 +17,7 @@ import { CharacterCreationGuide } from "@/components/guide/character-creation-gu
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
 import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
-import { useSheetStore } from "@/lib/sheet-store"
+import { useSheetStore, useCardActions } from "@/lib/sheet-store"
 import { getBasePath } from "@/lib/utils"
 import { PrintReadyChecker } from "@/components/print-ready-checker"
 import { usePrintContext } from "@/contexts/print-context"
@@ -92,6 +91,8 @@ export default function Home() {
   
   // 钉住卡牌状态
   const { pinnedCards } = usePinnedCardsStore();
+  // 卡牌操作方法
+  const { deleteCard, moveCard } = useCardActions();
   const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null)
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -608,101 +609,6 @@ export default function Home() {
   }
 
 
-  // 从抽屉删除卡牌
-  const handleDeleteCardFromDrawer = (cardIndex: number, isInventory: boolean) => {
-    const emptyCard = createEmptyCard()
-    
-    if (isInventory) {
-      // 用空卡替换库存卡牌，保持数组结构
-      const newInventoryCards = [...(formData.inventory_cards || [])]
-      // 确保数组长度为20
-      while (newInventoryCards.length < 20) {
-        newInventoryCards.push(createEmptyCard())
-      }
-      newInventoryCards[cardIndex] = emptyCard
-      setFormData(prev => ({
-        ...prev,
-        inventory_cards: newInventoryCards
-      }))
-    } else {
-      // 用空卡替换主卡组卡牌，保持数组结构
-      const newCards = [...(formData.cards || [])]
-      // 确保数组长度为20
-      while (newCards.length < 20) {
-        newCards.push(createEmptyCard())
-      }
-      newCards[cardIndex] = emptyCard
-      setFormData(prev => ({
-        ...prev,
-        cards: newCards
-      }))
-    }
-  }
-
-  // 从抽屉移动卡牌
-  const handleMoveCardFromDrawer = (cardIndex: number, fromInventory: boolean, toInventory: boolean) => {
-    if (fromInventory === toInventory) return // 不需要移动
-    
-    setFormData((prev) => {
-      const newFormData = { ...prev }
-      
-      // 确保两个卡组都存在且长度为20
-      if (!newFormData.cards) {
-        newFormData.cards = Array(20).fill(0).map(() => createEmptyCard())
-      }
-      if (!newFormData.inventory_cards) {
-        newFormData.inventory_cards = Array(20).fill(0).map(() => createEmptyCard())
-      }
-      
-      // 创建新的卡组数组
-      const newFocusedCards = [...newFormData.cards]
-      const newInventoryCards = [...newFormData.inventory_cards]
-      
-      // 确保数组长度为20
-      while (newFocusedCards.length < 20) {
-        newFocusedCards.push(createEmptyCard())
-      }
-      while (newInventoryCards.length < 20) {
-        newInventoryCards.push(createEmptyCard())
-      }
-      
-      // 获取要移动的卡牌
-      const sourceCards = fromInventory ? newInventoryCards : newFocusedCards
-      const targetCards = toInventory ? newInventoryCards : newFocusedCards
-      const cardToMove = sourceCards[cardIndex]
-      
-      if (!cardToMove || cardToMove.name === '') return prev // 空卡不能移动
-      
-      // 检查特殊卡位保护：不能从聚焦卡组的特殊卡位(前5位)移动出去
-      if (!fromInventory && cardIndex < 5) {
-        console.log('[抽屉移动] 特殊卡位不能移动到库存卡组')
-        return prev
-      }
-      
-      // 找到目标卡组中第一个空位（跳过特殊卡位）
-      let targetIndex = -1
-      const startIndex = toInventory ? 0 : 5 // 移动到聚焦卡组时从第6位开始查找
-      
-      for (let i = startIndex; i < targetCards.length; i++) {
-        if (!targetCards[i] || targetCards[i].name === '') {
-          targetIndex = i
-          break
-        }
-      }
-      
-      if (targetIndex === -1) return prev // 目标卡组已满
-      
-      // 执行移动：源位置用空卡替换，目标位置放入卡牌
-      sourceCards[cardIndex] = createEmptyCard()
-      targetCards[targetIndex] = cardToMove
-      
-      return {
-        ...newFormData,
-        cards: newFocusedCards,
-        inventory_cards: newInventoryCards
-      }
-    })
-  }
 
   // 从HTML导入新建存档
   const handleQuickImportFromHTML = () => {
@@ -943,8 +849,8 @@ export default function Home() {
           inventoryCards={formData.inventory_cards || []}
           isOpen={isCardDrawerOpen}
           onClose={() => setIsCardDrawerOpen(false)}
-          onDeleteCard={handleDeleteCardFromDrawer}
-          onMoveCard={handleMoveCardFromDrawer}
+          onDeleteCard={deleteCard}
+          onMoveCard={moveCard}
         />
       </div>
 

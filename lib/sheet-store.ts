@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { defaultSheetData } from "./default-sheet-data";
 import type { SheetData, AttributeValue } from "./sheet-data";
+import { createEmptyCard, type StandardCard } from "@/card/card-types";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -66,6 +67,11 @@ interface SheetState {
     updateHP: (index: number, checked: boolean) => void;
     updateName: (name: string) => void;
     updateLevel: (level: string) => void;
+    
+    // Card management actions
+    deleteCard: (index: number, isInventory: boolean) => void;
+    moveCard: (fromIndex: number, fromInventory: boolean, toInventory: boolean) => boolean;
+    updateCard: (index: number, card: StandardCard, isInventory: boolean) => void;
 }
 
 export const useSheetStore = create<SheetState>((set) => ({
@@ -235,6 +241,160 @@ export const useSheetStore = create<SheetState>((set) => ({
             level
         }
     })),
+    
+    // Card management actions
+    deleteCard: (index, isInventory) => set((state) => {
+        // 检查特殊卡位保护：聚焦卡组的前5个位置不能删除
+        if (!isInventory && index < 5) {
+            console.log('[Store] 特殊卡位不能删除');
+            return state;
+        }
+        
+        const emptyCard = createEmptyCard();
+        
+        if (isInventory) {
+            // 删除库存卡牌
+            const newInventoryCards = [...(state.sheetData.inventory_cards || [])];
+            // 确保数组长度为20
+            while (newInventoryCards.length < 20) {
+                newInventoryCards.push(createEmptyCard());
+            }
+            newInventoryCards[index] = emptyCard;
+            
+            return {
+                sheetData: {
+                    ...state.sheetData,
+                    inventory_cards: newInventoryCards
+                }
+            };
+        } else {
+            // 删除主卡组卡牌
+            const newCards = [...(state.sheetData.cards || [])];
+            // 确保数组长度为20
+            while (newCards.length < 20) {
+                newCards.push(createEmptyCard());
+            }
+            newCards[index] = emptyCard;
+            
+            return {
+                sheetData: {
+                    ...state.sheetData,
+                    cards: newCards
+                }
+            };
+        }
+    }),
+    
+    moveCard: (fromIndex, fromInventory, toInventory) => {
+        let success = false;
+        
+        set((state) => {
+            if (fromInventory === toInventory) {
+                success = false;
+                return state; // 不需要移动
+            }
+            
+            // 确保两个卡组都存在且长度为20
+            const newFocusedCards = [...(state.sheetData.cards || [])];
+            const newInventoryCards = [...(state.sheetData.inventory_cards || [])];
+            
+            while (newFocusedCards.length < 20) {
+                newFocusedCards.push(createEmptyCard());
+            }
+            while (newInventoryCards.length < 20) {
+                newInventoryCards.push(createEmptyCard());
+            }
+            
+            // 获取要移动的卡牌
+            const sourceCards = fromInventory ? newInventoryCards : newFocusedCards;
+            const targetCards = toInventory ? newInventoryCards : newFocusedCards;
+            const cardToMove = sourceCards[fromIndex];
+            
+            if (!cardToMove || cardToMove.name === '') {
+                success = false;
+                return state; // 空卡不能移动
+            }
+            
+            // 检查特殊卡位保护：不能从聚焦卡组的特殊卡位(前5位)移动出去
+            if (!fromInventory && fromIndex < 5) {
+                console.log('[Store] 特殊卡位不能移动到库存卡组');
+                success = false;
+                return state;
+            }
+            
+            // 检查特殊卡位保护：不能移动到聚焦卡组的特殊卡位(前5位)
+            // 从库存移动到聚焦卡组时，不能放入特殊卡位
+            if (!toInventory && fromInventory) {
+                console.log('[Store] 从库存移动到聚焦卡组，不能占用特殊卡位');
+                // 这种情况下会在后面的逻辑中自动跳过特殊卡位，从第6位开始查找
+            }
+            
+            // 找到目标卡组中第一个空位（跳过特殊卡位）
+            let targetIndex = -1;
+            const startIndex = toInventory ? 0 : 5; // 移动到聚焦卡组时从第6位开始查找
+            
+            for (let i = startIndex; i < targetCards.length; i++) {
+                if (!targetCards[i] || targetCards[i].name === '') {
+                    targetIndex = i;
+                    break;
+                }
+            }
+            
+            if (targetIndex === -1) {
+                success = false;
+                return state; // 目标卡组已满
+            }
+            
+            // 执行移动：源位置用空卡替换，目标位置放入卡牌
+            sourceCards[fromIndex] = createEmptyCard();
+            targetCards[targetIndex] = cardToMove;
+            
+            success = true;
+            return {
+                sheetData: {
+                    ...state.sheetData,
+                    cards: newFocusedCards,
+                    inventory_cards: newInventoryCards
+                }
+            };
+        });
+        
+        return success;
+    },
+    
+    updateCard: (index, card, isInventory) => set((state) => {
+        if (isInventory) {
+            // 更新库存卡牌
+            const newInventoryCards = [...(state.sheetData.inventory_cards || [])];
+            // 确保数组长度为20
+            while (newInventoryCards.length < 20) {
+                newInventoryCards.push(createEmptyCard());
+            }
+            newInventoryCards[index] = card;
+            
+            return {
+                sheetData: {
+                    ...state.sheetData,
+                    inventory_cards: newInventoryCards
+                }
+            };
+        } else {
+            // 更新主卡组卡牌
+            const newCards = [...(state.sheetData.cards || [])];
+            // 确保数组长度为20
+            while (newCards.length < 20) {
+                newCards.push(createEmptyCard());
+            }
+            newCards[index] = card;
+            
+            return {
+                sheetData: {
+                    ...state.sheetData,
+                    cards: newCards
+                }
+            };
+        }
+    }),
 }));
 
 // Selector functions for better performance
@@ -252,3 +412,27 @@ export const useSheetAttributes = () => useSheetStore(state => ({
     instinct: state.sheetData.instinct,
     presence: state.sheetData.presence,
 }));
+
+// Card-specific selectors
+export const useSheetCards = () => useSheetStore(state => state.sheetData.cards);
+export const useSheetInventoryCards = () => useSheetStore(state => state.sheetData.inventory_cards);
+
+// Cache the card actions object to avoid infinite loops
+let cachedCardActions: {
+    deleteCard: (index: number, isInventory: boolean) => void;
+    moveCard: (fromIndex: number, fromInventory: boolean, toInventory: boolean) => boolean;
+    updateCard: (index: number, card: StandardCard, isInventory: boolean) => void;
+} | null = null;
+
+export const useCardActions = () => {
+    return useSheetStore(state => {
+        if (!cachedCardActions) {
+            cachedCardActions = {
+                deleteCard: state.deleteCard,
+                moveCard: state.moveCard,
+                updateCard: state.updateCard,
+            };
+        }
+        return cachedCardActions;
+    });
+};

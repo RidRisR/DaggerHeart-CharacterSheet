@@ -12,13 +12,13 @@ import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { SheetData } from "@/lib/sheet-data"
 import type { CSSProperties, MouseEvent } from "react"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
+import { useCardActions } from "@/lib/sheet-store"
 
 interface CardDeckSectionProps {
   formData: SheetData
   onCardChange: (index: number, card: StandardCard) => void
   onInventoryCardChange: (index: number, card: StandardCard) => void // 新增：库存卡组修改函数
-  onCardMove: (fromDeck: 'focused' | 'inventory', fromIndex: number, toDeck: 'focused' | 'inventory', toIndex: number, card: StandardCard) => void // 新增：卡牌移动函数
-  // 移除：onFocusedCardsChange 功能由双卡组系统取代
+  // 移除：onCardMove 功能现在由 store 处理
   cardModalActiveTab: string;
   setCardModalActiveTab: React.Dispatch<React.SetStateAction<string>>;
   cardModalSearchTerm: string;
@@ -202,8 +202,7 @@ export function CardDeckSection({
   formData,
   onCardChange,
   onInventoryCardChange, // 新增参数
-  onCardMove, // 新增：卡牌移动函数
-  // 移除：onFocusedCardsChange 参数
+  // 移除：onCardMove 参数，现在由 store 处理
   cardModalActiveTab,
   setCardModalActiveTab,
   cardModalSearchTerm,
@@ -215,6 +214,8 @@ export function CardDeckSection({
 }: CardDeckSectionProps) {
   // 钉住卡牌功能
   const { pinCard } = usePinnedCardsStore();
+  // 卡牌操作方法
+  const { deleteCard, moveCard } = useCardActions();
   // 卡组视图状态
   const [activeDeck, setActiveDeck] = useState<'focused' | 'inventory'>('focused');
 
@@ -280,66 +281,35 @@ export function CardDeckSection({
     return activeDeck === 'focused' && index < 5;
   }
 
-  // 处理卡牌右键点击事件 - 实现双卡组移动逻辑
+  // 处理卡牌右键点击事件 - 使用 store 方法
   const handleCardRightClick = (index: number, e: React.MouseEvent) => {
     e.preventDefault(); // 阻止默认右键菜单
-
+    
     const isFromFocused = activeDeck === 'focused';
-    const sourceCards = getCurrentDeckCards(activeDeck);
-    const targetDeckType = isFromFocused ? 'inventory' : 'focused';
-    const targetCards = getCurrentDeckCards(targetDeckType);
-
-    // 特殊卡位保护：聚焦卡组的前5位不能移动到库存
-    if (isFromFocused && index < 5) {
+    const fromInventory = activeDeck === 'inventory';
+    const toInventory = !fromInventory;
+    
+    const success = moveCard(index, fromInventory, toInventory);
+    
+    if (success) {
       showFadeNotification({
-        message: "特殊卡位不能移动到库存卡组",
-        type: "error"
+        message: `卡牌已移动到${isFromFocused ? '库存' : '聚焦'}卡组`,
+        type: "success"
       });
-      return;
-    }
-
-    // 检查源卡牌是否为空
-    const sourceCard = sourceCards[index];
-    if (isEmptyCard(sourceCard)) {
-      showFadeNotification({
-        message: "空卡位无法移动",
-        type: "info"
-      });
-      return;
-    }
-
-    // 查找目标卡组的空位
-    let emptyTargetIndex = -1;
-
-    if (isFromFocused) {
-      // 从聚焦卡组移动到库存卡组：可以移动到任何空位
-      emptyTargetIndex = targetCards.findIndex(isEmptyCard);
     } else {
-      // 从库存卡组移动到聚焦卡组：只能移动到普通卡位（索引 5-19）
-      emptyTargetIndex = targetCards.findIndex((card, index) => index >= 5 && isEmptyCard(card));
+      // 移动失败，可能是特殊卡位保护或目标卡组已满
+      if (isFromFocused && index < 5) {
+        showFadeNotification({
+          message: "特殊卡位不能移动到库存卡组",
+          type: "error"
+        });
+      } else {
+        showFadeNotification({
+          message: `移动失败，目标卡组可能已满或卡牌为空`,
+          type: "error"
+        });
+      }
     }
-
-    if (emptyTargetIndex === -1) {
-      const errorMessage = isFromFocused
-        ? `库存卡组已满，无法移动`
-        : `聚焦卡组的普通卡位已满，无法移动`;
-      showFadeNotification({
-        message: errorMessage,
-        type: "error"
-      });
-      return;
-    }    // 执行移动 - 使用新的原子性移动函数
-    const fromDeck = activeDeck;
-    const toDeck = isFromFocused ? 'inventory' : 'focused';
-    onCardMove(fromDeck, index, toDeck, emptyTargetIndex, sourceCard);
-
-    // 成功移动提示
-    showFadeNotification({
-      message: `卡牌已移动到${isFromFocused ? '库存' : '聚焦'}卡组`,
-      type: "success"
-    });
-
-    console.log(`卡牌已从${isFromFocused ? '聚焦' : '库存'}卡组移动到${isFromFocused ? '库存' : '聚焦'}卡组`);
   }
 
   // 处理卡牌点击事件
@@ -365,17 +335,12 @@ export function CardDeckSection({
     }
   }
 
-  // 处理卡牌删除
+  // 处理卡牌删除 - 使用 store 方法
   const handleCardDelete = (index: number) => {
     // 特殊卡位不允许删除
     if (isSpecialSlot(index)) return
 
-    const emptyCard = createEmptyCard();
-    if (activeDeck === 'focused') {
-      onCardChange(index, emptyCard);
-    } else {
-      onInventoryCardChange(index, emptyCard);
-    }
+    deleteCard(index, activeDeck === 'inventory');
   }
 
   // 计算悬浮窗位置 - 智能定位

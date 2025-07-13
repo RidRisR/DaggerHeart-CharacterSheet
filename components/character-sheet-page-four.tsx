@@ -88,10 +88,10 @@ const CharacterSheetPageFour: React.FC = () => {
     const { sheetData: formData } = useSheetStore();
     const { registerPageImages, onPageImagesLoaded } = usePrintContext();
 
-    // 获取聚焦卡组的有效卡牌，并跳过第一张
+    // 获取聚焦卡组的有效卡牌，并跳过序号为0的那张
     const focusedCards = useMemo(() => {
         const allFocusedCards = (formData?.cards || []).filter((card: StandardCard) => !isEmptyCard(card));
-        return allFocusedCards.slice(1); // 从第二张卡牌开始
+        return allFocusedCards.filter((_, index) => index !== 0); // 跳过序号为0的卡牌
     }, [formData?.cards]);
 
     // 创建稳定的回调函数
@@ -104,7 +104,7 @@ const CharacterSheetPageFour: React.FC = () => {
         registerPageImages('page-four', focusedCards.length)
     }, [focusedCards.length, registerPageImages])
 
-    // 如果聚焦卡组是空的（或者只有一张卡被跳过了），不渲染第四页
+    // 如果聚焦卡组是空的（或者只有序号为0的卡被跳过了），不渲染第四页
     if (focusedCards.length === 0) {
         return null;
     }

@@ -10,7 +10,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import Image from "next/image"
-import { getBasePath } from "@/lib/utils"
+import { getCardImageUrl, getCardImageUrlSync } from "@/lib/utils"
 
 // Helper function to get display type name, moved outside of the component
 const getDisplayTypeName = (card: StandardCard) => {
@@ -104,13 +104,22 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
     const [cardSource, setCardSource] = useState<string>("加载中...")
     const [imageLoaded, setImageLoaded] = useState(false)
     const [imageError, setImageError] = useState(false)
+    const [imageSrc, setImageSrc] = useState<string>('')
     const cardRef = useRef<HTMLDivElement | null>(null)
 
-    // 当卡牌更换时，重置图片加载状态
+    // 当卡牌更换时，重置图片加载状态并获取图片URL
     useEffect(() => {
         setImageLoaded(false);
         setImageError(false);
-    }, [card.imageUrl]);
+        
+        // 异步获取图片URL
+        const loadImageUrl = async () => {
+            const url = await getCardImageUrl(card, imageError);
+            setImageSrc(url);
+        };
+        
+        loadImageUrl();
+    }, [card, imageError]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -177,7 +186,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
             {/* Image Container */}
             <div className="relative w-full aspect-[1.4] overflow-hidden">
                 <Image
-                    src={imageError ? `${getBasePath()}/image/empty-card.webp` : (card.imageUrl ? `${getBasePath()}/image${card.imageUrl.startsWith('/') ? card.imageUrl : '/' + card.imageUrl}` : `${getBasePath()}/image/empty-card.webp`)}
+                    src={imageSrc || getCardImageUrlSync(undefined, true)}
                     alt={displayName}
                     width={300}
                     height={420}

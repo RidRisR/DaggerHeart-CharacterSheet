@@ -7,7 +7,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import Image from "next/image"
-import { getBasePath } from "@/lib/utils"
+import { getCardImageUrl, getCardImageUrlSync } from "@/lib/utils"
 
 // Helper function to get display type name
 const getDisplayTypeName = (card: StandardCard) => {
@@ -26,6 +26,18 @@ interface PrintImageCardProps {
 }
 
 export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
+    const [imageSrc, setImageSrc] = React.useState<string>('')
+    
+    // 异步获取图片URL
+    React.useEffect(() => {
+        const loadImageUrl = async () => {
+            const url = await getCardImageUrl(card);
+            setImageSrc(url);
+        };
+        
+        loadImageUrl();
+    }, [card]);
+    
     if (!card) {
         return null
     }
@@ -46,7 +58,7 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
             {/* Image Container */}
             <div className="relative w-full aspect-[1.4] overflow-hidden">
                 <Image
-                    src={card.imageUrl ? `${getBasePath()}/image${card.imageUrl.startsWith('/') ? card.imageUrl : '/' + card.imageUrl}` : `${getBasePath()}/image/empty-card.webp`}
+                    src={imageSrc || getCardImageUrlSync(undefined, true)}
                     alt={displayName}
                     fill
                     className="w-full h-full object-cover"

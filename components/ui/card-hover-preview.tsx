@@ -9,7 +9,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import React, { useState } from "react"
-import { getBasePath } from "@/lib/utils"
+import { getCardImageUrl, getCardImageUrlSync } from "@/lib/utils"
 
 interface CardHoverPreviewProps {
     card: StandardCard
@@ -27,21 +27,32 @@ const getDisplayTypeName = (card: StandardCard) => {
 }
 
 export function CardHoverPreview({ card }: CardHoverPreviewProps) {
+    const [imageError, setImageError] = useState(false)
+    const [imageSrc, setImageSrc] = useState<string>('')
+    
+    // 异步获取图片URL
+    React.useEffect(() => {
+        const loadImageUrl = async () => {
+            const url = await getCardImageUrl(card, imageError);
+            setImageSrc(url);
+        };
+        
+        loadImageUrl();
+    }, [card, imageError]);
+    
     if (!card) return null
 
-    const [imageError, setImageError] = useState(false)
     const displayTypeName = getDisplayTypeName(card)
-    const cardImage = card.imageUrl ? `${getBasePath()}/image${card.imageUrl.startsWith('/') ? card.imageUrl : '/' + card.imageUrl}` : `${getBasePath()}/image/empty-card.webp`
 
     return (
         <div className="flex flex-row bg-white border border-gray-200 rounded-lg shadow-lg w-[520px] text-gray-800 overflow-auto">
             {/* Left Column: Image and Info Section */}
             <div className="flex flex-col w-[220px] flex-shrink-0">
                 {/* Image Section */}
-                {cardImage && (
+                {imageSrc && (
                     <div className="relative w-full h-40">
                         <Image
-                            src={imageError ? `${getBasePath()}/image/empty-card.webp` : cardImage}
+                            src={imageSrc}
                             alt={`Image for ${card.name}`}
                             fill
                             className="object-cover"

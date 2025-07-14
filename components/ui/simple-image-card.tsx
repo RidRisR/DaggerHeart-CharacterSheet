@@ -5,7 +5,7 @@ import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import React, { useState } from "react"
 import Image from "next/image"
-import { getBasePath } from "@/lib/utils"
+import { getCardImageUrl, getCardImageUrlSync } from "@/lib/utils"
 
 const getDisplayTypeName = (card: StandardCard) => {
     if (isVariantCard(card)) {
@@ -26,6 +26,17 @@ interface SimpleImageCardProps {
 
 export function SimpleImageCard({ card, onClick, isSelected, priority = false }: SimpleImageCardProps) {
     const [imageError, setImageError] = useState(false)
+    const [imageSrc, setImageSrc] = useState<string>('')
+
+    // 异步获取图片URL
+    React.useEffect(() => {
+        const loadImageUrl = async () => {
+            const url = await getCardImageUrl(card, imageError);
+            setImageSrc(url);
+        };
+        
+        loadImageUrl();
+    }, [card, imageError]);
 
     if (!card) {
         console.warn("[SimpleImageCard] Card prop is null or undefined.")
@@ -48,7 +59,7 @@ export function SimpleImageCard({ card, onClick, isSelected, priority = false }:
             {/* Image Container */}
             <div className="relative w-full aspect-[1.4] overflow-hidden">
                 <Image
-                    src={imageError ? `${getBasePath()}/image/empty-card.webp` : (card.imageUrl ? `${getBasePath()}/image${card.imageUrl.startsWith('/') ? card.imageUrl : '/' + card.imageUrl}` : `${getBasePath()}/image/empty-card.webp`)}
+                    src={imageSrc || getCardImageUrlSync(undefined, true)}
                     alt={displayName}
                     width={300}
                     height={420}

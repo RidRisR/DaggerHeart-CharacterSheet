@@ -3,13 +3,12 @@
 import type { StandardCard } from "@/card/card-types"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { getVariantRealType, isVariantCard } from "@/card/card-types"
-import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import React, { useState } from "react"
-import { getCardImageUrl, getCardImageUrlSync } from "@/lib/utils"
+import { getCardImageUrl } from "@/lib/utils"
 
 interface CardHoverPreviewProps {
     card: StandardCard

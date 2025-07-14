@@ -90,7 +90,17 @@ function Card({
         return getCardTypeName(realType);
       }
     }
-    return standardCard ? getCardTypeName(standardCard.type) : "";
+
+    if (standardCard) {
+      const typeName = getCardTypeName(standardCard.type);
+      // 如果是领域卡且有等级信息，添加等级显示
+      if (standardCard.type.includes("domain") && standardCard.level) {
+        return `${typeName} Lv.${standardCard.level}`;
+      }
+      return typeName;
+    }
+
+    return "";
   })();
 
   return (

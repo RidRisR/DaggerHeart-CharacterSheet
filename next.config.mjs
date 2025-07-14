@@ -15,7 +15,7 @@ if (isGithubActions) {
 
 // 如果是本地构建，使用相对路径
 if (isLocalBuild) {
-  assetPrefix = '.'
+  assetPrefix = './'
   basePath = ''
 }
 

@@ -48,7 +48,7 @@ export function SimpleImageCard({ card, onClick, isSelected, priority = false }:
             {/* Image Container */}
             <div className="relative w-full aspect-[1.4] overflow-hidden">
                 <Image
-                    src={imageError ? `${getBasePath()}/empty-card.webp` : (card.imageUrl ? `${getBasePath()}${card.imageUrl.startsWith('/') ? card.imageUrl : '/' + card.imageUrl}` : `${getBasePath()}/empty-card.webp`)}
+                    src={imageError ? `${getBasePath()}/image/empty-card.webp` : (card.imageUrl ? `${getBasePath()}/image${card.imageUrl.startsWith('/') ? card.imageUrl : '/' + card.imageUrl}` : `${getBasePath()}/image/empty-card.webp`)}
                     alt={displayName}
                     width={300}
                     height={420}

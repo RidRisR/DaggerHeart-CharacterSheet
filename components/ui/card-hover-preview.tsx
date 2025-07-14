@@ -31,7 +31,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
 
     const [imageError, setImageError] = useState(false)
     const displayTypeName = getDisplayTypeName(card)
-    const cardImage = card.imageUrl ? `${getBasePath()}${card.imageUrl}` : `${getBasePath()}/empty-card.webp`
+    const cardImage = card.imageUrl ? `${getBasePath()}/image${card.imageUrl.startsWith('/') ? card.imageUrl : '/' + card.imageUrl}` : `${getBasePath()}/image/empty-card.webp`
 
     return (
         <div className="flex flex-row bg-white border border-gray-200 rounded-lg shadow-lg w-[520px] text-gray-800 overflow-auto">
@@ -41,7 +41,7 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
                 {cardImage && (
                     <div className="relative w-full h-40">
                         <Image
-                            src={imageError ? `${getBasePath()}/empty-card.webp` : cardImage}
+                            src={imageError ? `${getBasePath()}/image/empty-card.webp` : cardImage}
                             alt={`Image for ${card.name}`}
                             fill
                             className="object-cover"

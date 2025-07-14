@@ -669,8 +669,15 @@ export default function Home() {
         return
       }
 
+      // 检查是否在输入框中
+      const isInputFocused = document.activeElement && (
+        document.activeElement.tagName === 'INPUT' ||
+        document.activeElement.tagName === 'TEXTAREA' ||
+        (document.activeElement as HTMLElement).contentEditable === 'true'
+      )
+
       // 页面切换快捷键（无修饰键）
-      if (!event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey && !isPrintingAll && !characterManagementModalOpen && !isGuideOpen) {
+      if (!event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey && !isPrintingAll && !characterManagementModalOpen && !isGuideOpen && !isInputFocused) {
         switch (event.key) {
           case 'ArrowLeft':
             event.preventDefault()

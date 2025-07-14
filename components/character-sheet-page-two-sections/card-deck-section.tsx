@@ -126,7 +126,7 @@ function Card({
           <div className="flex-1"></div>
           {!isSpecial && (
             <button
-              className="ml-2 text-gray-400 hover:text-red-500 transition-all duration-200 text-xs opacity-0 group-hover:opacity-100"
+              className="ml-2 text-gray-400 hover:text-red-500 transition-all duration-200 text-sm opacity-0 group-hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
                 onCardDelete(index);

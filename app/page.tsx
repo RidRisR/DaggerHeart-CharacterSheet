@@ -781,30 +781,35 @@ export default function Home() {
           </div>
 
           {/* 打印预览控制按钮，只在屏幕上显示，打印时隐藏 */}
-          <div className="fixed bottom-4 left-0 right-0 z-[60] print:hidden print-control-buttons">
+          <div className={`fixed left-0 right-0 z-[60] print:hidden print-control-buttons ${isMobile ? 'bottom-8' : 'bottom-4'
+            }`}>
             <div className="flex justify-center">
               <div className="flex items-center gap-4">
                 <Button
                   onClick={() => window.print()}
-                  className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+                  className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+                    }`}
                 >
                   导出为PDF
                 </Button>
                 <Button
                   onClick={handleExportHTML}
-                  className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+                  className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+                    }`}
                 >
                   导出为HTML
                 </Button>
                 <Button
                   onClick={handleExportJSON}
-                  className="bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap"
+                  className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+                    }`}
                 >
                   导出为JSON
                 </Button>
                 <Button
                   onClick={() => setIsPrintingAll(false)}
-                  className="bg-red-600 text-white hover:bg-red-700 focus:outline-none whitespace-nowrap"
+                  className={`bg-red-600 text-white hover:bg-red-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+                    }`}
                 >
                   返回
                 </Button>
@@ -844,7 +849,7 @@ export default function Home() {
   }
 
   return (
-    <main className={`min-w-0 w-full max-w-full mx-auto px-0 md:px-4 py-4 container ${
+    <main className={`min-w-0 w-full max-w-full mx-auto px-0 container ${
       isMobile ? 'pb-32' : 'pb-20'
     }`}>
 
@@ -911,7 +916,7 @@ export default function Home() {
             {/* 悬停时显示的背景 */}
             <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-l-lg"></div>
             {/* 箭头图标 */}
-            <div className="relative bg-white shadow-md group-hover:shadow-lg p-2 rounded-full opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110 group-active:scale-95">
+            <div className="relative bg-white shadow-md group-hover:shadow-lg p-2 rounded-full opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110 group-active:scale-90">
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -927,7 +932,7 @@ export default function Home() {
             {/* 悬停时显示的背景 */}
             <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-r-lg"></div>
             {/* 箭头图标 */}
-            <div className="relative bg-white shadow-md group-hover:shadow-lg p-2 rounded-full opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110 group-active:scale-95">
+            <div className="relative bg-white shadow-md group-hover:shadow-lg p-2 rounded-full opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110 group-active:scale-90">
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

@@ -144,7 +144,7 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
 
           {/* 抽屉内容 */}
           <div
-            className={`card-drawer-content fixed bottom-0 left-0 right-0 bg-white w-full h-[35vh] min-h-[35vh] rounded-t-lg shadow-xl flex flex-col transition-transform duration-300 ease-out ${isClosing ? 'translate-y-full' : 'translate-y-0'
+            className={`card-drawer-content fixed bottom-0 left-0 right-0 bg-white w-full min-h-[35vh] rounded-t-lg shadow-xl flex flex-col transition-transform duration-300 ease-out ${isClosing ? 'translate-y-full' : 'translate-y-0'
               }`}
             onClick={(e) => e.stopPropagation()}
           >

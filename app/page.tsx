@@ -844,7 +844,9 @@ export default function Home() {
   }
 
   return (
-    <main className="min-w-0 w-full max-w-full mx-auto px-0 md:px-4 py-4 pb-20 container">
+    <main className={`min-w-0 w-full max-w-full mx-auto px-0 md:px-4 py-4 container ${
+      isMobile ? 'pb-32' : 'pb-20'
+    }`}>
 
       {/* 底部抽屉式卡牌展示 - 打印时隐藏 */}
       <div className="print:hidden">
@@ -936,7 +938,9 @@ export default function Home() {
       </div>
 
       {/* 底部功能按钮区域 */}
-      <div className="fixed bottom-4 left-0 right-0 z-30 print:hidden">
+      <div className={`fixed left-0 right-0 z-30 print:hidden ${
+        isMobile ? 'bottom-8' : 'bottom-4'
+      }`}>
         <div className="flex justify-center">
           <div className="flex items-center gap-4">
             <Button
@@ -975,15 +979,16 @@ export default function Home() {
             <HoverMenuItem onClick={handlePrintAll}>
               导出预览
             </HoverMenuItem>
+              <HoverMenuItem onClick={handleQuickExportJSON}>
+                导出JSON
+              </HoverMenuItem>
             <HoverMenuItem onClick={handleQuickExportPDF}>
               导出PDF
             </HoverMenuItem>
             <HoverMenuItem onClick={handleQuickExportHTML}>
               导出HTML
             </HoverMenuItem>
-            <HoverMenuItem onClick={handleQuickExportJSON}>
-              导出JSON
-            </HoverMenuItem>
+
           </HoverMenu>
 
           {/* 存档管理按钮 */}

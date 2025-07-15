@@ -115,7 +115,7 @@ export function CharacterCreationGuide({ isOpen, onClose }: CharacterCreationGui
   return (
     <div 
       ref={guideRef}
-      className="fixed w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 print:hidden select-none"
+      className="fixed w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 print:hidden"
       style={{
         left: hasBeenMoved ? `${position.x}px` : 'auto',
         top: hasBeenMoved ? `${position.y}px` : '80px',
@@ -125,7 +125,7 @@ export function CharacterCreationGuide({ isOpen, onClose }: CharacterCreationGui
     >
       <div className="p-4">
         <div 
-          className="flex justify-between items-center mb-4 cursor-grab active:cursor-grabbing bg-gray-50 hover:bg-gray-100 -mx-4 -mt-4 px-4 pt-4 pb-2 rounded-t-lg transition-colors"
+          className="flex justify-between items-center mb-4 cursor-grab active:cursor-grabbing bg-gray-50 hover:bg-gray-100 -mx-4 -mt-4 px-4 pt-4 pb-2 rounded-t-lg transition-colors select-none"
           onMouseDown={handleMouseDown}
           title="拖拽这里移动窗口"
         >

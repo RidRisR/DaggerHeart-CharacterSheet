@@ -5,7 +5,7 @@ import { useSheetStore } from "@/lib/sheet-store";
 
 export function AttributesSection() {
   const { sheetData: formData, updateAttribute, toggleAttributeChecked, setSheetData } = useSheetStore();
-  
+
   const handleAttributeValueChange = (attribute: keyof SheetData, value: string) => {
     updateAttribute(attribute, value)
   }
@@ -32,8 +32,8 @@ export function AttributesSection() {
 
   return (
     <div>
-      <h3 className="text-xs font-bold text-center">属性</h3>
-      <div className="grid grid-cols-3 gap-x-2 gap-y-1">
+      <h3 className="text-xs font-bold text-center mt-1">属性</h3>
+      <div className="grid grid-cols-3 gap-x-2 gap-y-0.5">
         {[
           { name: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },
           { name: "力量", key: "strength", skills: ["举起", "猛击", "擒抱"] },
@@ -43,7 +43,7 @@ export function AttributesSection() {
           { name: "知识", key: "knowledge", skills: ["回忆", "分析", "理解"] },
         ].map((attr) => (
           <div key={attr.name} className="flex flex-col items-center">
-            <div className="flex items-center justify-between w-full mb-0.5">
+            <div className="flex items-center justify-between w-full mb-0">
               <div className="flex items-center">
                 <div className="text-[12px] font-bold">{attr.name}</div>
                 {(() => {
@@ -99,7 +99,7 @@ export function AttributesSection() {
                   className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
                   placeholder="#"
                 />
-                <div className="text-[10px] text-center mt-0.5">{attr.skills.join(", ")}</div>
+                <div className="text-[10px] text-center ">{attr.skills.join(", ")}</div>
               </div>
             </div>
           </div>

@@ -785,151 +785,163 @@ export default function CharacterSheet() {
             onOpenSubclassModal={openSubclassModal}
           />
 
-          {/* Main Content - Two Column Layout */}
-          <div className="grid grid-cols-2 gap-2 mt-1">
-            {/* Left Column */}
-            <div className="col-span-1 space-y-1">
-              {/* Character Image, Evasion, and Armor */}
-              <div className="flex gap-4">
-                {/* Character Image Upload */}
-                <div className="flex flex-col items-center">
-                  <ImageUploadCrop
-                    currentImage={safeFormData.characterImage}
-                    onImageChange={(imageBase64) =>
-                      setFormData((prev) => ({ ...prev, characterImage: imageBase64 }))
-                    }
-                    width="6rem"
-                    height="6rem"
-                    placeholder={{ title: "角色图像", subtitle: "点击上传" }}
-                    inputId="character-image-upload"
-                  />
-                </div>
-
-                {/* Evasion Box */}
-                <div className="flex flex-col items-center justify-start">
-                  <div className="w-24 h-24 border-2 border-gray-800 bg-gray-800 flex flex-col items-center justify-center text-white rounded-lg">
-                    <div className="text-ms font-bold">闪避值</div>
-                    <input
-                      type="text"
-                      name="evasion"
-                      value={safeFormData.evasion}
-                      onChange={handleInputChange}
-                      placeholder={safeFormData.cards[0]?.professionSpecial?.["起始闪避"]?.toString() || ""}
-                      className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
+          {/* Main Content - Two Section Layout */}
+          <div className="flex flex-col gap-2 mt-1">
+            {/* Top Section */}
+            <div className="grid grid-cols-2 gap-2">
+              {/* Top Left */}
+              <div className="flex flex-col">
+                {/* Character Image, Evasion, and Armor */}
+                <div className="flex gap-4">
+                  {/* Character Image Upload */}
+                  <div className="flex flex-col items-center">
+                    <ImageUploadCrop
+                      currentImage={safeFormData.characterImage}
+                      onImageChange={(imageBase64) =>
+                        setFormData((prev) => ({ ...prev, characterImage: imageBase64 }))
+                      }
+                      width="6rem"
+                      height="6rem"
+                      placeholder={{ title: "角色图像", subtitle: "点击上传" }}
+                      inputId="character-image-upload"
                     />
                   </div>
-                </div>
 
-                {/* Armor Box and Grid */}
-                <div className="flex flex-col">
-                  <div className="flex gap-2">
+                  {/* Evasion Box */}
+                  <div className="flex flex-col items-center justify-start">
                     <div className="w-24 h-24 border-2 border-gray-800 bg-gray-800 flex flex-col items-center justify-center text-white rounded-lg">
-                      <div className="text-ms font-bold">护甲值</div>
+                      <div className="text-ms font-bold">闪避值</div>
                       <input
                         type="text"
-                        name="armorValue"
-                        value={safeFormData.armorValue}
+                        name="evasion"
+                        value={safeFormData.evasion}
                         onChange={handleInputChange}
+                        placeholder={safeFormData.cards[0]?.professionSpecial?.["起始闪避"]?.toString() || ""}
                         className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
                       />
                     </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center">
-                        <span className="test-center text-[10px] mr-1">护甲槽</span>
+                  </div>
+
+                  {/* Armor Box and Grid */}
+                  <div className="flex flex-col">
+                    <div className="flex gap-2">
+                      <div className="w-24 h-24 border-2 border-gray-800 bg-gray-800 flex flex-col items-center justify-center text-white rounded-lg">
+                        <div className="text-ms font-bold">护甲值</div>
+                        <input
+                          type="text"
+                          name="armorValue"
+                          value={safeFormData.armorValue}
+                          onChange={handleInputChange}
+                          className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
+                        />
                       </div>
-                      {/* Armor Boxes - 3 per row, 4 rows */}
-                      <div className="grid grid-cols-3 gap-1">
-                        {(() => {
-                          const calculatedArmorValue = safeEvaluateExpression(safeFormData.armorValue || "0");
-                          return Array(12)
-                            .fill(0)
-                            .map((_, i) => (
-                              <div
-                                key={`armor-box-${i}`}
-                                className={`w-4 h-4 border ${i < calculatedArmorValue
-                                  ? "border-gray-800 cursor-pointer"
-                                  : "border-gray-400 border-dashed"
-                                  } ${safeFormData.armorBoxes[i] && i < calculatedArmorValue ? "bg-gray-800" : "bg-white"}`}
-                                onClick={() => i < calculatedArmorValue && handleCheckboxChange("armorBoxes", i)}
-                              ></div>
-                            ));
-                        })()}
+                      <div className="flex flex-col">
+                        <div className="flex items-center">
+                          <span className="test-center text-[10px] mr-1">护甲槽</span>
+                        </div>
+                        {/* Armor Boxes - 3 per row, 4 rows */}
+                        <div className="grid grid-cols-3 gap-1">
+                          {(() => {
+                            const calculatedArmorValue = safeEvaluateExpression(safeFormData.armorValue || "0");
+                            return Array(12)
+                              .fill(0)
+                              .map((_, i) => (
+                                <div
+                                  key={`armor-box-${i}`}
+                                  className={`w-4 h-4 border ${i < calculatedArmorValue
+                                    ? "border-gray-800 cursor-pointer"
+                                    : "border-gray-400 border-dashed"
+                                    } ${safeFormData.armorBoxes[i] && i < calculatedArmorValue ? "bg-gray-800" : "bg-white"}`}
+                                  onClick={() => i < calculatedArmorValue && handleCheckboxChange("armorBoxes", i)}
+                                ></div>
+                              ));
+                          })()}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Attributes Section */}
+                <AttributesSection />
+
+                {/* Hit Points & Stress */}
+                <HitPointsSection />
               </div>
 
-              {/* Attributes Section */}
-              <AttributesSection />
+              {/* Top Right */}
+              <div className="flex flex-col space-y-1">
+                {/* Active Weapons */}
+                <div className="py-0 ">
+                  <h3 className="text-xs font-bold text-center print:mb-2">装备</h3>
 
-              {/* Hit Points & Stress */}
-              <HitPointsSection />
+                  <div className="flex items-center gap-0.5 mb-1">
+                    <span className="text-[10px]">熟练度</span>
+                    {Array(6)
+                      .fill(0)
+                      .map((_, i) => (
+                        <div
+                          key={`prof-${i}`}
+                          className={`w-3 h-3 rounded-full border-2 border-gray-800 cursor-pointer ${safeFormData.proficiency[i] ? "bg-gray-800" : "bg-white"
+                            }`}
+                          onClick={() => handleCheckboxChange("proficiency", i)}
+                        ></div>
+                      ))}
+                  </div>
 
-              {/* Hope */}
-              <HopeSection />
+                  <WeaponSection
+                    isPrimary={true}
+                    fieldPrefix="primaryWeapon"
+                    onOpenWeaponModal={openWeaponModal}
+                  />
 
-              {/* Experience */}
-              <ExperienceSection />
-
-              {/* Profession Description */}
-              <h3 className="text-xs font-bold text-center">职业特性</h3>
-              <ProfessionDescriptionSection description={safeFormData.cards[0]?.description} />
-            </div>
-
-            {/* Right Column */}
-            <div className="col-span-1 space-y-1.5">
-              {/* Active Weapons */}
-              <div className="py-1">
-                <h3 className="text-xs font-bold text-center">装备</h3>
-
-                <div className="flex items-center gap-0.5 mb-1">
-                  <span className="text-[10px]">熟练度</span>
-                  {Array(6)
-                    .fill(0)
-                    .map((_, i) => (
-                      <div
-                        key={`prof-${i}`}
-                        className={`w-3 h-3 rounded-full border-2 border-gray-800 cursor-pointer ${safeFormData.proficiency[i] ? "bg-gray-800" : "bg-white"
-                          }`}
-                        onClick={() => handleCheckboxChange("proficiency", i)}
-                      ></div>
-                    ))}
+                  <WeaponSection
+                    isPrimary={false}
+                    fieldPrefix="secondaryWeapon"
+                    onOpenWeaponModal={openWeaponModal}
+                  />
                 </div>
 
-                <WeaponSection
-                  isPrimary={true}
-                  fieldPrefix="primaryWeapon"
-                  onOpenWeaponModal={openWeaponModal}
-                />
+                {/* Active Armor */}
+                <ArmorSection onOpenArmorModal={openArmorModal} />
+              </div>
+            </div>
 
-                <WeaponSection
-                  isPrimary={false}
-                  fieldPrefix="secondaryWeapon"
-                  onOpenWeaponModal={openWeaponModal}
-                />
+            {/* Bottom Section */}
+            <div className="grid grid-cols-2 gap-2">
+              {/* Bottom Left */}
+              <div className="col-span-1 space-y-1">
+                {/* Hope */}
+                <HopeSection />
+
+                {/* Experience */}
+                <ExperienceSection />
+
+                {/* Profession Description */}
+                <h3 className="text-xs font-bold text-center">职业特性</h3>
+                <ProfessionDescriptionSection description={safeFormData.cards[0]?.description} />
               </div>
 
-              {/* Active Armor */}
-              <ArmorSection onOpenArmorModal={openArmorModal} />
+              {/* Bottom Right */}
+              <div className="col-span-1 space-y-0.5 print:space-y-1.5">
+                {/* Inventory */}
+                <InventorySection />
 
-              {/* Inventory */}
-              <InventorySection />
+                {/* Inventory Weapons */}
+                <h3 className="text-xs font-bold text-center">库存武器</h3>
+                <InventoryWeaponSection
+                  index={1}
+                  onOpenWeaponModal={openWeaponModal}
+                />
 
-              {/* Inventory Weapons */}
-              <h3 className="text-xs font-bold text-center">库存武器</h3>
-              <InventoryWeaponSection
-                index={1}
-                onOpenWeaponModal={openWeaponModal}
-              />
+                <InventoryWeaponSection
+                  index={2}
+                  onOpenWeaponModal={openWeaponModal}
+                />
 
-              <InventoryWeaponSection
-                index={2}
-                onOpenWeaponModal={openWeaponModal}
-              />
-
-              {/* Gold */}
-              <GoldSection />
+                {/* Gold */}
+                <GoldSection />
+              </div>
             </div>
           </div>
         </div>

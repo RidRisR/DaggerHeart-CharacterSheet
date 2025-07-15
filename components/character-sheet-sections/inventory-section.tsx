@@ -16,8 +16,8 @@ export function InventorySection() {
     Array.isArray(formData.inventory) && formData.inventory.length >= 5 ? formData.inventory : ["", "", "", "", ""]
 
   return (
-    <div className="py-1 mb-2">
-      <h3 className="text-xs font-bold text-center">库存</h3>
+    <div className="py-1 mb-1">
+      <h3 className="text-xs font-bold text-center mb-0.5">库存</h3>
 
       <div className="space-y-0.5">
         {safeInventory.slice(0, 5).map((item: string, i: number) => (

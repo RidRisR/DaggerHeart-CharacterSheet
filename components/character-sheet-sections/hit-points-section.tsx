@@ -80,11 +80,11 @@ export function HitPointsSection() {
     )
   }
   return (
-    <div className="py-1 mb-0">
-      <h3 className="text-xs font-bold text-center mb-1">生命值与压力</h3>
+    <div className="py-1 mb-1">
+      <h3 className="text-xs font-bold text-center mb-2.5 print:mb-2">生命值与压力</h3>
 
       <div className="flex justify-between items-center mb-1 gap-1">
-        <div className="bg-gray-800 text-white text-[9px] p-1 text-center rounded-md flex-1">
+        <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div>轻度伤害</div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 1 HP</div>
         </div>
@@ -93,9 +93,9 @@ export function HitPointsSection() {
           name="minorThreshold"
           value={formData.minorThreshold}
           onChange={handleInputChange}
-          className="w-10 text-center text-sm border border-gray-400 rounded mx-1 print-empty-hide"
+          className="w-10 text-center text-m border border-gray-400 rounded mx-1 print-empty-hide"
         />
-        <div className="bg-gray-800 text-white text-[9px] p-1 text-center rounded-md flex-1">
+        <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div>重度伤害</div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 2 HP</div>
         </div>
@@ -104,15 +104,15 @@ export function HitPointsSection() {
           name="majorThreshold"
           value={formData.majorThreshold}
           onChange={handleInputChange}
-          className="w-10 text-center text-sm border border-gray-400 rounded mx-1 print-empty-hide"
+          className="w-10 text-center text-m border border-gray-400 rounded mx-1 print-empty-hide"
         />
-        <div className="bg-gray-800 text-white text-[9px] p-1 text-center rounded-md flex-1">
+        <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div>严重伤害</div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 3 HP</div>
         </div>
       </div>
 
-      <div className="mb-1">
+      <div className="mt-3 print:mt-0 space-y-1.5 print:space-y-1">
         <div className="flex items-center justify-between">
           <span className="font-bold mr-2 text-xs">
             HP

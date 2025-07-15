@@ -114,20 +114,27 @@ export function HitPointsSection() {
 
       <div className="mb-1">
         <div className="flex items-center justify-between">
-          <span className="font-bold mr-2 text-xs">HP</span>
+          <span className="font-bold mr-2 text-xs">
+            HP
+            {formData.cards?.[0]?.professionSpecial?.["起始生命"] && (
+              <span className="text-[10px] text-gray-600 ml-1 print:hidden">
+                (职业初始: {formData.cards?.[0]?.professionSpecial?.["起始生命"] ?? "未知"})
+              </span>
+            )}
+          </span>
           <div className="flex items-center">
             <span className="text-[9px] mr-1 print:hidden">最大值:</span> {/* 打印时隐藏 */}
             <input
               type="number"
               min="1"
               max="18"
-              value={formData.hpMax || 6} // 默认值为6
+              value={formData.hpMax || 6} // 默认值为职业起始生命或6
               onChange={(e) => handleMaxChange("hp", e.target.value)}
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>
         </div>
-        {renderBoxes("hp", Number(formData.hpMax || 6), 18)}
+        {renderBoxes("hp", Number(formData.hpMax || formData.cards?.[0]?.professionSpecial?.["起始生命"] || 6), 18)}
 
         <div className="flex items-center justify-between mt-1">
           <span className="font-bold mr-2 text-xs">压力</span>

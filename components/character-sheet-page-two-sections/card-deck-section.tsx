@@ -39,17 +39,17 @@ const getBorderColor = (type?: string, isSpecial = false): string => {
 const getSpecialSlotLabel = (index: number): string => {
   switch (index) {
     case 0:
-      return "职业卡";
+      return "职业";
     case 1:
-      return "子职业卡";
+      return "子职业";
     case 2:
-      return "血统卡一";
+      return "血统一";
     case 3:
-      return "血统卡二";
+      return "血统二";
     case 4:
-      return "社群卡";
+      return "社群";
     default:
-      return "普通卡";
+      return "普通";
   }
 };
 

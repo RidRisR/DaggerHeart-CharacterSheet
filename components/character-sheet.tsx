@@ -814,6 +814,7 @@ export default function CharacterSheet() {
                       name="evasion"
                       value={safeFormData.evasion}
                       onChange={handleInputChange}
+                      placeholder={safeFormData.cards[0]?.professionSpecial?.["起始闪避"]?.toString() || ""}
                       className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
                     />
                   </div>

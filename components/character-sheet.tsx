@@ -878,7 +878,7 @@ export default function CharacterSheet() {
             </div>
 
             {/* Right Column */}
-            <div className="col-span-1 space-y-1">
+            <div className="col-span-1 space-y-1.5">
               {/* Active Weapons */}
               <div className="py-1">
                 <h3 className="text-xs font-bold text-center">装备</h3>

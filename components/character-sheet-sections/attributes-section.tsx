@@ -31,8 +31,8 @@ export function AttributesSection() {
   }
 
   return (
-    <div className="space-y-1">
-
+    <div>
+      <h3 className="text-xs font-bold text-center">属性</h3>
       <div className="grid grid-cols-3 gap-x-2 gap-y-1">
         {[
           { name: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },

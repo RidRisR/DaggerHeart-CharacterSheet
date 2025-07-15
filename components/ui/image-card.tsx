@@ -96,21 +96,26 @@ interface ImageCardProps {
     isSelected: boolean;
     showSource?: boolean; // 是否显示来源，默认为 true
     priority?: boolean; // 是否优先加载图片
+    refreshTrigger?: number; // 用于手动触发刷新动画
 }
 
-export function ImageCard({ card, onClick, isSelected, showSource = true, priority = false }: ImageCardProps) {
+export function ImageCard({ card, onClick, isSelected, showSource = true, priority = false, refreshTrigger }: ImageCardProps) {
     const [isHovered, setIsHovered] = useState(false)
     const [isAltPressed, setIsAltPressed] = useState(false)
     const [cardSource, setCardSource] = useState<string>("加载中...")
     const [imageLoaded, setImageLoaded] = useState(false)
     const [imageError, setImageError] = useState(false)
     const [imageSrc, setImageSrc] = useState<string>('')
+    const [cardScale, setCardScale] = useState('scale(1)')
     const cardRef = useRef<HTMLDivElement | null>(null)
 
     // 当卡牌更换时，重置图片加载状态并获取图片URL
     useEffect(() => {
         setImageLoaded(false);
         setImageError(false);
+        
+        // 轻微缩放动画
+        setCardScale('scale(0.99)');
         
         // 异步获取图片URL
         const loadImageUrl = async () => {
@@ -119,7 +124,28 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         };
         
         loadImageUrl();
+        
+        // 100ms后恢复正常大小
+        const timer = setTimeout(() => {
+            setCardScale('scale(1)');
+        }, 100);
+        
+        return () => clearTimeout(timer);
     }, [card, imageError]);
+
+    // 监听手动刷新触发器
+    useEffect(() => {
+        if (refreshTrigger) {
+            // 触发缩放动画反馈
+            setCardScale('scale(0.99)');
+            
+            const timer = setTimeout(() => {
+                setCardScale('scale(1)');
+            }, 100);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [refreshTrigger]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -176,6 +202,10 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
             ref={cardRef}
             key={cardId}
             className={`group relative flex w-full max-w-sm flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all duration-300 ease-in-out hover:shadow-xl min-h-[520px] ${isSelected ? 'ring-2 ring-blue-500' : 'border'}`}
+            style={{ 
+                transform: cardScale,
+                transition: 'transform 100ms ease-out'
+            }}
             onClick={() => onClick(cardId)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => {

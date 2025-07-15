@@ -36,19 +36,21 @@ export function GenericCardSelectionModal({
 }: GenericCardSelectionModalProps) {
     const { sheetData: formData } = useSheetStore()
     const [selectedClass, setSelectedClass] = useState<string>("All")
+    const [selectedSource, setSelectedSource] = useState<string>("All")
+    const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发卡牌刷新动画
 
     // Use hooks to fetch cards based on card type
-    const { 
-        cards: baseCards, 
-        loading: cardsLoading, 
+    const {
+        cards: baseCards,
+        loading: cardsLoading,
         error: cardsError,
         fetchCardsByType: fetchBaseCards
     } = useCardsByType(cardType as CardType);
 
     // For subclass cards, we also need profession cards to determine the filter
-    const { 
-        cards: professionCards, 
-        loading: professionLoading, 
+    const {
+        cards: professionCards,
+        loading: professionLoading,
         error: professionError,
         fetchCardsByType: fetchProfessionCards
     } = useCardsByType(CardType.Profession);
@@ -117,10 +119,36 @@ export function GenericCardSelectionModal({
 
     if (!isOpen) return null
 
-    // Calculate final filtered cards based on class selection
-    const finalFilteredCards = filteredInitialCards.filter(
-        (card) => selectedClass === "All" || (card.class && card.class.includes(selectedClass)),
-    )
+    // Calculate final filtered cards based on class and source selection
+    const finalFilteredCards = useMemo(() => {
+        return filteredInitialCards.filter((card) => {
+            // Class filter
+            const classMatch = selectedClass === "All" || (card.class && card.class.includes(selectedClass));
+
+            // Source filter
+            let sourceMatch = true;
+            if (selectedSource !== "All") {
+                if (card.source === 'builtin') {
+                    sourceMatch = selectedSource === 'builtin';
+                } else if (card.source === 'custom') {
+                    if (card.batchId) {
+                        sourceMatch = selectedSource === `custom:${card.batchId}`;
+                    } else {
+                        sourceMatch = selectedSource === 'custom:unknown';
+                    }
+                } else {
+                    sourceMatch = false;
+                }
+            }
+
+            return classMatch && sourceMatch;
+        });
+    }, [filteredInitialCards, selectedClass, selectedSource]);
+
+    // 监听筛选结果变化，触发刷新动画
+    useEffect(() => {
+        setRefreshTrigger(prev => prev + 1);
+    }, [finalFilteredCards]);
 
     // Show loading state
     const isLoading = cardsLoading || (cardType === "subclass" && professionLoading);
@@ -187,31 +215,32 @@ export function GenericCardSelectionModal({
                                     </p>
                                 </div>
                             </div>
-                            ) : finalFilteredCards.length === 0 ? (
-                                <div className="flex items-center justify-center h-32">
-                                    <div className="text-center">
-                                        <p className="text-gray-500 mb-2">没有找到符合条件的卡牌</p>
-                                        <p className="text-sm text-gray-400">
-                                            卡牌类型: {cardType}, 基础卡牌数: {baseCards?.length || 0}
-                                        </p>
-                                    </div>
+                        ) : finalFilteredCards.length === 0 ? (
+                            <div className="flex items-center justify-center h-32">
+                                <div className="text-center">
+                                    <p className="text-gray-500 mb-2">没有找到符合条件的卡牌</p>
+                                    <p className="text-sm text-gray-400">
+                                        卡牌类型: {cardType}, 基础卡牌数: {baseCards?.length || 0}
+                                    </p>
                                 </div>
-                                ) : (<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                        {finalFilteredCards.map((card, index) => {
-                                        return (
-                                            <ImageCard
-                                                key={card.id}
-                                                card={card}
-                                            onClick={() => {
-                                                console.log(`Card clicked: ${card.id}, field: ${field}`);
-                                                onSelect(card.id, field);
-                                            }}
-                                            isSelected={false}
-                                                priority={index < 6}
-                                        />
-                                        );
-                                    })}
                             </div>
+                        ) : (<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {finalFilteredCards.map((card, index) => {
+                                return (
+                                    <ImageCard
+                                        key={card.id}
+                                        card={card}
+                                        onClick={() => {
+                                            console.log(`Card clicked: ${card.id}, field: ${field}`);
+                                            onSelect(card.id, field);
+                                        }}
+                                        isSelected={false}
+                                        priority={index < 6}
+                                        refreshTrigger={refreshTrigger}
+                                    />
+                                );
+                            })}
+                        </div>
                         )}
                     </div>
                 </div>

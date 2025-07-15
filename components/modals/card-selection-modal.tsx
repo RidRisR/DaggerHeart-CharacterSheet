@@ -64,6 +64,8 @@ export function CardSelectionModal({
   const scrollableContainerRef = useRef<HTMLDivElement>(null)
   const [classDropdownOpen, setClassDropdownOpen] = useState(false); // Add state for class dropdown
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false); // Add state for level dropdown
+  const [sourceDropdownOpen, setSourceDropdownOpen] = useState(false); // Add state for source dropdown
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发卡牌刷新动画
 
   // Add category state management
   const [expandedCategories, setExpandedCategories] = useState(new Set(['standard', 'extended'])); // Default: both expanded
@@ -137,12 +139,12 @@ export function CardSelectionModal({
 
   const classOptions = useMemo(() => {
     if (!activeTab) return []
-    
+
     // 如果是变体类型，返回该类型的子类别作为class选项
     if (isVariantType(activeTab)) {
       return getVariantSubclassOptions(activeTab);
     }
-    
+
     // 否则返回标准卡牌类型的class选项
     return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
   }, [activeTab]);
@@ -152,7 +154,7 @@ export function CardSelectionModal({
     if (isVariantType(activeTab)) {
       return getLevelOptions(activeTab);
     }
-    
+
     // 否则返回标准卡牌类型的等级选项
     return getLevelOptions(activeTab as CardType)
   }, [activeTab]);
@@ -205,7 +207,7 @@ export function CardSelectionModal({
       if (selectedClasses.length > 0) {
         // 对于variant类型，class实际上是子类别
         if (isVariantType(activeTab)) {
-          filtered = filtered.filter((card) => 
+          filtered = filtered.filter((card) =>
             card.variantSpecial?.subCategory && selectedClasses.includes(card.variantSpecial.subCategory)
           );
         } else {
@@ -229,6 +231,8 @@ export function CardSelectionModal({
     }
     setDisplayedCards(fullyFilteredCards.slice(0, ITEMS_PER_PAGE));
     setHasMore(fullyFilteredCards.length > ITEMS_PER_PAGE);
+    // 触发卡牌刷新动画
+    setRefreshTrigger(prev => prev + 1);
   }, [fullyFilteredCards]);
 
   const fetchMoreData = () => {
@@ -549,32 +553,33 @@ export function CardSelectionModal({
               {/* 显示卡牌内容 */}
               {!cardsLoading && !cardsError && (
                 <InfiniteScroll
-                dataLength={displayedCards.length}
-                next={fetchMoreData}
-                hasMore={hasMore}
-                loader={<div className="text-center py-4">加载中...</div>}
-                endMessage={
-                  <p style={{ textAlign: 'center' }} className="py-4">
-                    <b>{fullyFilteredCards.length > 0 ? "已加载全部卡牌" : "未找到符合条件的卡牌"}</b>
-                  </p>
-                }
-                scrollableTarget="scrollableDiv"
-                scrollThreshold="800px"
-              >
+                  dataLength={displayedCards.length}
+                  next={fetchMoreData}
+                  hasMore={hasMore}
+                  loader={<div className="text-center py-4">加载中...</div>}
+                  endMessage={
+                    <p style={{ textAlign: 'center' }} className="py-4">
+                      <b>{fullyFilteredCards.length > 0 ? "已加载全部卡牌" : "未找到符合条件的卡牌"}</b>
+                    </p>
+                  }
+                  scrollableTarget="scrollableDiv"
+                  scrollThreshold="800px"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {displayedCards.map((card: StandardCard, index: number) => {
                       return (
                         <ImageCard
-                        key={`${card.id}-${index}`}
+                          key={`${card.id}-${index}`}
                           card={card}
                           onClick={() => handleSelectCard(card)}
                           isSelected={false}
                           priority={index < 6}
-                      />
+                          refreshTrigger={refreshTrigger}
+                        />
                       );
                     })}
-                </div>
-              </InfiniteScroll>
+                  </div>
+                </InfiniteScroll>
               )}
             </div>
           </div>

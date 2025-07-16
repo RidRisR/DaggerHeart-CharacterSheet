@@ -19,7 +19,7 @@ export function InventorySection() {
     <div className="py-2 mb-1">
       <h3 className="text-xs font-bold text-center">库存</h3>
 
-      <div className="space-y-0.5">
+      <div className="space-y-1">
         {safeInventory.slice(0, 5).map((item: string, i: number) => (
           <input
             key={`inventory-${i}`}

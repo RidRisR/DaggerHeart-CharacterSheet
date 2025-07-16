@@ -908,7 +908,7 @@ export default function CharacterSheet() {
             </div>
 
             {/* Bottom Section */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 p-1">
               {/* Bottom Left */}
               <div className="col-span-1 space-y-1">
                 {/* Hope */}
@@ -923,7 +923,7 @@ export default function CharacterSheet() {
               </div>
 
               {/* Bottom Right */}
-              <div className="col-span-1 space-y-0.5 print:space-y-1.5">
+              <div className="col-span-1 space-y-1.5 -mt-1.5">
                 {/* Inventory */}
                 <InventorySection />
 

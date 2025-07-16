@@ -594,27 +594,17 @@ function replaceImagesWithBase64(html: string, imageMap: Map<string, string>): s
   
   // 替换所有img标签的src属性
   imageMap.forEach((base64Data, originalSrc) => {
-    // 创建正则表达式来匹配这个特定图片的src
-    const escapedSrc = originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const srcPattern = new RegExp(`src=["']${escapedSrc}["']`, 'g')
-    const beforeReplace = updatedHTML
-    updatedHTML = updatedHTML.replace(srcPattern, `src="${base64Data}"`)
+    // 使用字符串替换而不是正则表达式，避免"Regular expression too large"错误
+    const variants = [
+      `src="${originalSrc}"`,
+      `src='${originalSrc}'`,
+    ]
     
-    if (updatedHTML !== beforeReplace) {
-      replacedCount++
-    }
-    
-    // 也尝试匹配可能的相对路径版本
+    // 尝试相对路径版本
     try {
       const urlPath = new URL(originalSrc, window.location.href).pathname
       if (urlPath !== originalSrc) {
-        const beforeRelativeReplace = updatedHTML
-        const relativePattern = new RegExp(`src=["']${urlPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'g')
-        updatedHTML = updatedHTML.replace(relativePattern, `src="${base64Data}"`)
-        
-        if (updatedHTML !== beforeRelativeReplace) {
-          replacedCount++
-        }
+        variants.push(`src="${urlPath}"`, `src='${urlPath}'`)
       }
     } catch (error) {
       // 静默处理URL解析错误
@@ -623,14 +613,40 @@ function replaceImagesWithBase64(html: string, imageMap: Map<string, string>): s
     // 尝试只匹配文件名
     const fileName = originalSrc.split('/').pop()
     if (fileName) {
-      const beforeFileReplace = updatedHTML
-      const filePattern = new RegExp(`src=["'][^"']*/${fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'g')
-      updatedHTML = updatedHTML.replace(filePattern, `src="${base64Data}"`)
-      
-      if (updatedHTML !== beforeFileReplace) {
-        replacedCount++
+      // 使用indexOf来查找包含文件名的src属性
+      let searchIndex = 0
+      while (searchIndex < updatedHTML.length) {
+        const srcIndex = updatedHTML.indexOf(`src=`, searchIndex)
+        if (srcIndex === -1) break
+        
+        const quoteIndex = srcIndex + 4
+        const quote = updatedHTML.charAt(quoteIndex)
+        if (quote === '"' || quote === "'") {
+          const endQuoteIndex = updatedHTML.indexOf(quote, quoteIndex + 1)
+          if (endQuoteIndex !== -1) {
+            const srcValue = updatedHTML.substring(quoteIndex + 1, endQuoteIndex)
+            if (srcValue.endsWith('/' + fileName)) {
+              updatedHTML = updatedHTML.substring(0, quoteIndex + 1) + 
+                          base64Data + 
+                          updatedHTML.substring(endQuoteIndex)
+              replacedCount++
+              searchIndex = quoteIndex + base64Data.length + 1
+              continue
+            }
+          }
+        }
+        searchIndex = srcIndex + 4
       }
     }
+    
+    // 使用简单的字符串替换
+    variants.forEach(variant => {
+      const replacement = `src="${base64Data}"`
+      if (updatedHTML.includes(variant)) {
+        updatedHTML = updatedHTML.replace(variant, replacement)
+        replacedCount++
+      }
+    })
   })
   
   // 记录替换结果

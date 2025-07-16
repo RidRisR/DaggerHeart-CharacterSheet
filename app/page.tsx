@@ -23,6 +23,7 @@ import { PrintReadyChecker } from "@/components/print-ready-checker"
 import { usePrintContext } from "@/contexts/print-context"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
 import { PinnedCardWindow } from "@/components/ui/pinned-card-window"
+import { useTextModeStore } from "@/lib/text-mode-store"
 
 // 内联图标组件
 const EyeIcon = () => (
@@ -60,6 +61,44 @@ const EyeOffIcon = () => (
     <line x1="2" y1="2" x2="22" y2="22"></line>
   </svg>
 )
+
+// 文字模式图标
+const TextIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="4 7 4 4 20 4 20 7"></polyline>
+    <line x1="9" y1="20" x2="15" y2="20"></line>
+    <line x1="12" y1="4" x2="12" y2="20"></line>
+  </svg>
+)
+
+// 图片模式图标
+const ImageIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+    <polyline points="21 15 16 10 5 21"></polyline>
+  </svg>
+)
 import { StandardCard } from "@/card/card-types"
 import { CharacterMetadata } from "@/lib/sheet-data"
 import { exportCharacterData } from "@/lib/storage"
@@ -88,11 +127,13 @@ export default function Home() {
     setSheetData: setFormData,
     replaceSheetData
   } = useSheetStore();
-  
+
   // 钉住卡牌状态
   const { pinnedCards } = usePinnedCardsStore();
   // 卡牌操作方法
   const { deleteCard, moveCard } = useCardActions();
+  // 文字模式状态
+  const { isTextMode, toggleTextMode } = useTextModeStore();
   const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null)
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -133,10 +174,10 @@ export default function Home() {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window)
     }
-    
+
     checkIsMobile()
     window.addEventListener('resize', checkIsMobile)
-    
+
     return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
 
@@ -824,41 +865,40 @@ export default function Home() {
             </div>
           </div>
 
-        {/* 第一页 */}
-        <div className="page-one flex justify-center items-start min-h-screen">
-          <CharacterSheet />
-        </div>
-
-        {/* 第二页 */}
-        <div className="page-two flex justify-center items-start min-h-screen">
-          <CharacterSheetPageTwo />
-        </div>
-
-        {/* 第三页 - 条件渲染 */}
-        {formData.includePageThreeInExport && (
-          <div className="page-three flex justify-center items-start min-h-screen">
-            <CharacterSheetPageThree />
+          {/* 第一页 */}
+          <div className="page-one flex justify-center items-start min-h-screen">
+            <CharacterSheet />
           </div>
-        )}
 
-        {/* 第四页（仅打印时显示） */}
-        <div className="page-four flex justify-center items-start min-h-screen">
-          <CharacterSheetPageFour />
-        </div>
+          {/* 第二页 */}
+          <div className="page-two flex justify-center items-start min-h-screen">
+            <CharacterSheetPageTwo />
+          </div>
 
-        {/* 第五页（仅打印时显示） */}
-        <div className="page-five flex justify-center items-start min-h-screen">
-          <CharacterSheetPageFive />
-        </div>
+          {/* 第三页 - 条件渲染 */}
+          {formData.includePageThreeInExport && (
+            <div className="page-three flex justify-center items-start min-h-screen">
+              <CharacterSheetPageThree />
+            </div>
+          )}
+
+          {/* 第四页（仅打印时显示） */}
+          <div className="page-four flex justify-center items-start min-h-screen">
+            <CharacterSheetPageFour />
+          </div>
+
+          {/* 第五页（仅打印时显示） */}
+          <div className="page-five flex justify-center items-start min-h-screen">
+            <CharacterSheetPageFive />
+          </div>
         </div>
       </PrintReadyChecker>
     )
   }
 
   return (
-    <main className={`min-w-0 w-full max-w-full mx-auto px-0 container ${
-      isMobile ? 'pb-32' : 'pb-20'
-    }`}>
+    <main className={`min-w-0 w-full max-w-full mx-auto px-0 container ${isMobile ? 'pb-32' : 'pb-20'
+      }`}>
 
       {/* 底部抽屉式卡牌展示 - 打印时隐藏 */}
       <div className="print:hidden">
@@ -873,10 +913,11 @@ export default function Home() {
       </div>
 
       <div className="flex justify-center px-0">
-        {/* 角色卡区域 - 带相对定位 */}
-        <div className="relative w-full md:max-w-[220mm]">
-          <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-full md:max-w-[210mm]">
-            <TabsList className={`grid w-[210mm] transition-all duration-200 ${!formData.includePageThreeInExport
+        <div className="w-full md:max-w-[220mm]">
+          {/* 角色卡区域 - 带相对定位 */}
+          <div className="relative w-full md:max-w-[210mm]">
+            <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-full">
+            <TabsList className={`grid w-full transition-all duration-200 ${!formData.includePageThreeInExport
               ? 'grid-cols-[1fr_1fr_auto]'
               : 'grid-cols-3'
               }`}>
@@ -946,105 +987,136 @@ export default function Home() {
             </div>
           </div>
 
+          </div>
+
+          {/* 文字模式切换开关 - 胶囊型，在容器外右下角 */}
+          <div className="print:hidden mt-3 flex justify-end w-[210mm]">
+            <div
+              className="bg-gray-200 dark:bg-gray-700 rounded-full p-0.5 shadow-md cursor-pointer transition-all duration-200 hover:shadow-lg scale-90"
+              onClick={toggleTextMode}
+            >
+              <div className="flex items-center">
+                <div
+                  className={`
+                    px-2 py-1 rounded-full flex items-center gap-1 transition-all duration-300 text-xs
+                    ${!isTextMode
+                      ? 'bg-white dark:bg-gray-900 shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400'
+                    }
+                  `}
+                >
+                  <ImageIcon />
+                  <span className="font-medium">图片</span>
+                </div>
+                <div
+                  className={`
+                    px-2 py-1 rounded-full flex items-center gap-1 transition-all duration-300 text-xs
+                    ${isTextMode
+                      ? 'bg-white dark:bg-gray-900 shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400'
+                    }
+                  `}
+                >
+                  <TextIcon />
+                  <span className="font-medium">文字</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* 底部功能按钮区域 */}
-      <div className={`fixed left-0 right-0 z-30 print:hidden ${
-        isMobile ? 'bottom-8' : 'bottom-4'
-      }`}>
+      <div className={`fixed left-0 right-0 z-30 print:hidden ${isMobile ? 'bottom-8' : 'bottom-4'
+        }`}>
         <div className="flex justify-center">
           <div className="flex items-center gap-4">
             <Button
               onClick={() => setIsCardDrawerOpen(!isCardDrawerOpen)}
-              className={`bg-gray-800 hover:bg-gray-700 text-white rounded-full p-0 flex items-center justify-center ${
-                isMobile ? 'w-14 h-14 text-lg' : 'w-12 h-12 text-base'
-              }`}
+              className={`bg-gray-800 hover:bg-gray-700 text-white rounded-full p-0 flex items-center justify-center ${isMobile ? 'w-14 h-14 text-lg' : 'w-12 h-12 text-base'
+                }`}
             >
               🎴
             </Button>
 
-          <Button
-            onClick={toggleGuide}
-            className={`bg-blue-800 text-white hover:bg-blue-700 focus:outline-none whitespace-nowrap ${
-              isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
-            }`}
-          >
-            建卡指引
-          </Button>
-
-          {/* 导出按钮 */}
-          <HoverMenu
-            align="end"
-            side="top"
-            trigger={
-              <Button 
-                onClick={handlePrintAll}
-                className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${
-                  isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+            <Button
+              onClick={toggleGuide}
+              className={`bg-blue-800 text-white hover:bg-blue-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
                 }`}
-              >
-                导出页面
-              </Button>
-            }
-          >
-            <HoverMenuItem onClick={handlePrintAll}>
-              导出预览
-            </HoverMenuItem>
+            >
+              建卡指引
+            </Button>
+
+            {/* 导出按钮 */}
+            <HoverMenu
+              align="end"
+              side="top"
+              trigger={
+                <Button
+                  onClick={handlePrintAll}
+                  className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+                    }`}
+                >
+                  导出页面
+                </Button>
+              }
+            >
+              <HoverMenuItem onClick={handlePrintAll}>
+                导出预览
+              </HoverMenuItem>
               <HoverMenuItem onClick={handleQuickExportJSON}>
                 导出JSON
               </HoverMenuItem>
-            <HoverMenuItem onClick={handleQuickExportPDF}>
-              导出PDF
-            </HoverMenuItem>
-            <HoverMenuItem onClick={handleQuickExportHTML}>
-              导出HTML
-            </HoverMenuItem>
+              <HoverMenuItem onClick={handleQuickExportPDF}>
+                导出PDF
+              </HoverMenuItem>
+              <HoverMenuItem onClick={handleQuickExportHTML}>
+                导出HTML
+              </HoverMenuItem>
 
-          </HoverMenu>
+            </HoverMenu>
 
-          {/* 存档管理按钮 */}
-          <HoverMenu
-            align="end"
-            side="top"
-            trigger={
-              <Button 
-                onClick={() => setCharacterManagementModalOpen(true)}
-                className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${
-                  isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
-                }`}
-              >
+            {/* 存档管理按钮 */}
+            <HoverMenu
+              align="end"
+              side="top"
+              trigger={
+                <Button
+                  onClick={() => setCharacterManagementModalOpen(true)}
+                  className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+                    }`}
+                >
+                  存档管理
+                </Button>
+              }
+            >
+              <HoverMenuItem onClick={() => setCharacterManagementModalOpen(true)}>
                 存档管理
-              </Button>
-            }
-          >
-            <HoverMenuItem onClick={() => setCharacterManagementModalOpen(true)}>
-              存档管理
-            </HoverMenuItem>
-            <HoverMenuItem
-              onClick={handleQuickCreateArchive}
-              disabled={characterList.length >= MAX_CHARACTERS}
-            >
-              新建存档
-            </HoverMenuItem>
-            <HoverMenuItem
-              onClick={handleQuickImportFromHTML}
-              disabled={characterList.length >= MAX_CHARACTERS}
-            >
-              从HTML新建
-            </HoverMenuItem>
-          </HoverMenu>
+              </HoverMenuItem>
+              <HoverMenuItem
+                onClick={handleQuickCreateArchive}
+                disabled={characterList.length >= MAX_CHARACTERS}
+              >
+                新建存档
+              </HoverMenuItem>
+              <HoverMenuItem
+                onClick={handleQuickImportFromHTML}
+                disabled={characterList.length >= MAX_CHARACTERS}
+              >
+                从HTML新建
+              </HoverMenuItem>
+            </HoverMenu>
 
-          <Button
-            onClick={() => {
-              window.location.href = `${getBasePath()}/card-manager`;
-            }}
-            className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${
-              isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
-            }`}
-          >
+            <Button
+              onClick={() => {
+                window.location.href = `${getBasePath()}/card-manager`;
+              }}
+              className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+                }`}
+            >
               卡包管理
-          </Button>
+            </Button>
+
           </div>
         </div>
       </div>

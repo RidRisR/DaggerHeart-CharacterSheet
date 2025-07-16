@@ -12,6 +12,8 @@ import { CardType } from "@/card"; // Add this import
 import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType } from "@/card/card-types"
 import { createEmptyCard } from "@/card/card-types"
 import { ImageCard } from "@/components/ui/image-card"
+import { SelectableCard } from "@/components/ui/selectable-card"
+import { useTextModeStore } from "@/lib/text-mode-store"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -58,6 +60,7 @@ export function CardSelectionModal({
   selectedLevels,
   setSelectedLevels,
 }: CardSelectionModalProps) {
+  const { isTextMode } = useTextModeStore()
   const [displayedCards, setDisplayedCards] = useState<StandardCard[]>([])
   const [filteredCards, setFilteredCards] = useState<StandardCard[]>([]) // Add state for filtered cards
   const [hasMore, setHasMore] = useState(true)
@@ -565,9 +568,19 @@ export function CardSelectionModal({
                   scrollableTarget="scrollableDiv"
                   scrollThreshold="800px"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <div className={`grid gap-4 justify-items-center ${isTextMode
+                    ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+                    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                    }`}>
                     {displayedCards.map((card: StandardCard, index: number) => {
-                      return (
+                      return isTextMode ? (
+                        <SelectableCard
+                          key={`${card.id}-${index}`}
+                          card={card}
+                          onClick={() => handleSelectCard(card)}
+                          isSelected={false}
+                        />
+                      ) : (
                         <ImageCard
                           key={`${card.id}-${index}`}
                           card={card}

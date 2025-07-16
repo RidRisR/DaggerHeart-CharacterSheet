@@ -4,6 +4,8 @@ import { CardType } from "@/card"; // Import CardType
 import { useState, useEffect, useMemo } from "react"
 import type { StandardCard } from "@/card/card-types"
 import { ImageCard } from "@/components/ui/image-card"
+import { SelectableCard } from "@/components/ui/selectable-card"
+import { useTextModeStore } from "@/lib/text-mode-store"
 import {
     Select,
     SelectContent,
@@ -35,6 +37,7 @@ export function GenericCardSelectionModal({
     levelFilter,
 }: GenericCardSelectionModalProps) {
     const { sheetData: formData } = useSheetStore()
+    const { isTextMode } = useTextModeStore()
     const [selectedClass, setSelectedClass] = useState<string>("All")
     const [selectedSource, setSelectedSource] = useState<string>("All")
     const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发卡牌刷新动画
@@ -224,23 +227,37 @@ export function GenericCardSelectionModal({
                                     </p>
                                 </div>
                             </div>
-                        ) : (<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {finalFilteredCards.map((card, index) => {
-                                return (
-                                    <ImageCard
-                                        key={card.id}
-                                        card={card}
-                                        onClick={() => {
-                                            console.log(`Card clicked: ${card.id}, field: ${field}`);
-                                            onSelect(card.id, field);
-                                        }}
-                                        isSelected={false}
-                                        priority={index < 6}
-                                        refreshTrigger={refreshTrigger}
-                                    />
-                                );
-                            })}
-                        </div>
+                                ) : (
+                                    <div className={`grid gap-4 justify-items-center ${isTextMode
+                                        ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+                                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                                        }`}>
+                                        {finalFilteredCards.map((card, index) => {
+                                            return isTextMode ? (
+                                                <SelectableCard
+                                                    key={card.id}
+                                                    card={card}
+                                                    onClick={() => {
+                                                        console.log(`Card clicked: ${card.id}, field: ${field}`);
+                                                        onSelect(card.id, field);
+                                                    }}
+                                                    isSelected={false}
+                                                />
+                                            ) : (
+                                                <ImageCard
+                                                    key={card.id}
+                                                    card={card}
+                                                    onClick={() => {
+                                                        console.log(`Card clicked: ${card.id}, field: ${field}`);
+                                                        onSelect(card.id, field);
+                                                    }}
+                                                    isSelected={false}
+                                                    priority={index < 6}
+                                                    refreshTrigger={refreshTrigger}
+                                                />
+                                            );
+                                        })}
+                                        </div>
                         )}
                     </div>
                 </div>

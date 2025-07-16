@@ -916,7 +916,7 @@ export default function Home() {
         <div className="w-full md:max-w-[220mm]">
           {/* 角色卡区域 - 带相对定位 */}
           <div className="relative w-full md:max-w-[210mm]">
-            <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-full">
+            <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-[210mm]">
             <TabsList className={`grid w-full transition-all duration-200 ${!formData.includePageThreeInExport
               ? 'grid-cols-[1fr_1fr_auto]'
               : 'grid-cols-3'

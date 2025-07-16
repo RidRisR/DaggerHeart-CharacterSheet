@@ -7,6 +7,7 @@ import { CardType, createEmptyCard, StandardCard, isEmptyCard } from "@/card/car
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { CardHoverPreview } from "@/components/ui/card-hover-preview"
+import { useTextModeStore } from "@/lib/text-mode-store"
 import { toast } from "@/hooks/use-toast"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { SheetData } from "@/lib/sheet-data"
@@ -65,6 +66,7 @@ interface CardProps {
   hoveredCard: number | null;
   onPinCard: (card: StandardCard) => void;
   onCardDelete: (index: number) => void;
+  isTextMode: boolean;
 }
 
 function Card({
@@ -79,6 +81,7 @@ function Card({
   hoveredCard,
   onPinCard,
   onCardDelete,
+  isTextMode,
 }: CardProps) {
   const standardCard = convertToStandardCard(card);
 
@@ -199,7 +202,7 @@ function Card({
       {/* Hover preview */}
       {hoveredCard === index && card?.name && (
         <div className="absolute z-50 pointer-events-none" style={getPreviewPosition(index)}>
-          <CardHoverPreview card={standardCard} />
+          <CardHoverPreview card={standardCard} isTextMode={isTextMode} />
         </div>
       )}
     </div>
@@ -226,6 +229,8 @@ export function CardDeckSection({
   const { pinCard } = usePinnedCardsStore();
   // 卡牌操作方法
   const { deleteCard, moveCard } = useCardActions();
+  // 文字模式状态
+  const { isTextMode } = useTextModeStore();
   // 卡组视图状态
   const [activeDeck, setActiveDeck] = useState<'focused' | 'inventory'>('focused');
 
@@ -466,6 +471,7 @@ export function CardDeckSection({
                   hoveredCard={hoveredCard}
                   onPinCard={pinCard}
                   onCardDelete={handleCardDelete}
+                  isTextMode={isTextMode}
                 />
               </div>
             );

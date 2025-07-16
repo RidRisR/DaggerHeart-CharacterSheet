@@ -9,9 +9,11 @@ import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import React, { useState } from "react"
 import { getCardImageUrl } from "@/lib/utils"
+import { SelectableCard } from "@/components/ui/selectable-card"
 
 interface CardHoverPreviewProps {
     card: StandardCard
+    isTextMode?: boolean
 }
 
 // Helper function to get display type name, moved outside for consistency
@@ -25,7 +27,7 @@ const getDisplayTypeName = (card: StandardCard) => {
     return getCardTypeName(card.type)
 }
 
-export function CardHoverPreview({ card }: CardHoverPreviewProps) {
+export function CardHoverPreview({ card, isTextMode = false }: CardHoverPreviewProps) {
     const [imageError, setImageError] = useState(false)
     const [imageSrc, setImageSrc] = useState<string>('')
     
@@ -40,6 +42,20 @@ export function CardHoverPreview({ card }: CardHoverPreviewProps) {
     }, [card, imageError]);
     
     if (!card) return null
+
+    // 文字模式下使用 SelectableCard 组件
+    if (isTextMode) {
+        return (
+            <div className="shadow-lg">
+                <SelectableCard 
+                    card={card} 
+                    onClick={() => {}} 
+                    isSelected={false}
+                    showSource={false}
+                />
+            </div>
+        )
+    }
 
     const displayTypeName = getDisplayTypeName(card)
 

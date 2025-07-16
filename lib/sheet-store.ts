@@ -62,6 +62,8 @@ interface SheetState {
     toggleAttributeChecked: (attribute: keyof SheetData) => void;
     updateGold: (index: number) => void;
     updateHope: (index: number) => void;
+    updateArmorBox: (index: number) => void;
+    updateProficiency: (index: number) => void;
     updateExperience: (index: number, value: string) => void;
     updateExperienceValues: (index: number, value: string) => void;
     updateHP: (index: number, checked: boolean) => void;
@@ -80,7 +82,15 @@ export const useSheetStore = create<SheetState>((set) => ({
         set((state) => {
             const oldData = state.sheetData;
             const rawUpdatedData = typeof updater === 'function' ? updater(oldData) : updater;
-            const newData = { ...oldData, ...rawUpdatedData };
+            let newData = { ...oldData, ...rawUpdatedData };
+
+            // 检查 armorValue 是否改变，如果改变则清空所有 armorBoxes
+            if ('armorValue' in rawUpdatedData && rawUpdatedData.armorValue !== oldData.armorValue) {
+                newData = {
+                    ...newData,
+                    armorBoxes: Array(12).fill(false)
+                };
+            }
 
             // 应用子职业施法属性同步
             const finalData = syncSubclassSpellcasting(newData, oldData);
@@ -173,7 +183,7 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
     
     updateHope: (index: number) => set((state) => {
-        const current = state.sheetData.hope;
+        const current = state.sheetData.hope || [];
         // 找到最后一个被点亮的 hope 的下标
         const lastLit = current.lastIndexOf(true);
         // 如果点击的正好是最后一个被点亮的 hope，则全部熄灭
@@ -191,6 +201,52 @@ export const useSheetStore = create<SheetState>((set) => ({
             sheetData: {
                 ...state.sheetData,
                 hope: newHope
+            }
+        };
+    }),
+    
+    updateArmorBox: (index: number) => set((state) => {
+        const current = state.sheetData.armorBoxes || [];
+        // 找到最后一个被点亮的 armorBox 的下标
+        const lastLit = current.lastIndexOf(true);
+        // 如果点击的正好是最后一个被点亮的 armorBox，则全部熄灭
+        if (index === lastLit && current[index]) {
+            return {
+                sheetData: {
+                    ...state.sheetData,
+                    armorBoxes: current.map(() => false)
+                }
+            };
+        }
+        // 其它情况，点亮前 n 个
+        const newArmorBoxes = current.map((_, i) => i <= index);
+        return {
+            sheetData: {
+                ...state.sheetData,
+                armorBoxes: newArmorBoxes
+            }
+        };
+    }),
+    
+    updateProficiency: (index: number) => set((state) => {
+        const current = Array.isArray(state.sheetData.proficiency) ? state.sheetData.proficiency : [];
+        // 找到最后一个被点亮的 proficiency 的下标
+        const lastLit = current.lastIndexOf(true);
+        // 如果点击的正好是最后一个被点亮的 proficiency，则全部熄灭
+        if (index === lastLit && current[index]) {
+            return {
+                sheetData: {
+                    ...state.sheetData,
+                    proficiency: current.map(() => false)
+                }
+            };
+        }
+        // 其它情况，点亮前 n 个
+        const newProficiency = current.map((_, i) => i <= index);
+        return {
+            sheetData: {
+                ...state.sheetData,
+                proficiency: newProficiency
             }
         };
     }),
@@ -402,6 +458,8 @@ export const useSheetName = () => useSheetStore(state => state.sheetData.name);
 export const useSheetLevel = () => useSheetStore(state => state.sheetData.level);
 export const useSheetGold = () => useSheetStore(state => state.sheetData.gold);
 export const useSheetHope = () => useSheetStore(state => state.sheetData.hope);
+export const useSheetArmorBoxes = () => useSheetStore(state => state.sheetData.armorBoxes);
+export const useSheetProficiency = () => useSheetStore(state => state.sheetData.proficiency);
 export const useSheetHP = () => useSheetStore(state => state.sheetData.hp);
 export const useSheetExperience = () => useSheetStore(state => state.sheetData.experience);
 export const useSheetAttributes = () => useSheetStore(state => ({

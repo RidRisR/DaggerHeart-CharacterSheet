@@ -1,19 +1,16 @@
 "use client"
 
 import type React from "react"
-import type { SheetData } from "@/lib/sheet-data"
 
 import { useState, useEffect, useRef } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
 import { ArmorItem, armorItems } from "@/data/list/armor"
 import {
-  getAllStandardCardsAsync,
-  getStandardCardsByTypeAsync,
   CardType, // Import CardType
 } from "@/card"
 import { useAllCards } from "@/card/card-store"
-import { useSheetStore } from "@/lib/sheet-store"
+import { useSheetStore, useSheetArmorBoxes, useSheetProficiency } from "@/lib/sheet-store"
 
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
@@ -34,12 +31,12 @@ import { InventoryWeaponSection } from "@/components/character-sheet-sections/in
 import ProfessionDescriptionSection from "@/components/character-sheet-sections/profession-description-section"
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 
 export default function CharacterSheet() {
-  const { sheetData: formData, setSheetData: setFormData } = useSheetStore();
+  const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency } = useSheetStore();
+  const armorBoxes = useSheetArmorBoxes();
+  const proficiency = useSheetProficiency();
 
   // 添加一个安全的表达式计算函数
   const safeEvaluateExpression = (expression: string): number => {
@@ -78,7 +75,6 @@ export default function CharacterSheet() {
   const {
     cards: allStandardCards,
     loading: cardsLoading,
-    error: cardsError,
     fetchAllCards
   } = useAllCards();
 
@@ -110,14 +106,11 @@ export default function CharacterSheet() {
     communityRef: formData?.communityRef || { id: "", name: "" },
     subclassRef: formData?.subclassRef || { id: "", name: "" },
 
-    gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
     experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
-    hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),
     hpMax: formData?.hpMax || 6,
     hp: Array.isArray(formData?.hp) ? formData.hp : Array(18).fill(false),
     stressMax: formData?.stressMax || 6,
     stress: Array.isArray(formData?.stress) ? formData.stress : Array(18).fill(false),
-    armorBoxes: Array.isArray(formData?.armorBoxes) ? formData.armorBoxes : Array(12).fill(false),
     armorMax: formData?.armorMax || 0, // 保留默认值
     companionExperience: Array.isArray(formData?.companionExperience) ? formData.companionExperience : ["", "", "", "", ""],
     companionExperienceValue: Array.isArray(formData?.companionExperienceValue) ? formData.companionExperienceValue : ["", "", "", "", ""],
@@ -132,7 +125,6 @@ export default function CharacterSheet() {
     instinct: formData?.instinct || { checked: false, value: "" },
     presence: formData?.presence || { checked: false, value: "" },
     knowledge: formData?.knowledge || { checked: false, value: "" },
-    proficiency: Array.isArray(formData?.proficiency) ? formData.proficiency : Array(6).fill(false),
   }
 
   // 同步特殊卡牌与角色选择 - 不直接修改状态，而是返回新的卡牌数组
@@ -285,67 +277,16 @@ export default function CharacterSheet() {
       if (name === "armorValue") {
         const parsedValue = parseInt(value, 10);
         updatedFormData.armorMax = isNaN(parsedValue) ? 0 : parsedValue;
+        // Note: armorBoxes will be automatically cleared by the store when armorValue changes
       }
 
       return updatedFormData;
     });
   }
 
-  const handleAttributeValueChange = (attribute: keyof SheetData, value: string) => {
-    // console.log("Updating attribute:", attribute, "with value:", value); // Removed this log
-    setFormData((prev) => {
-      const currentAttribute = prev[attribute]
-      if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
-        return {
-          ...prev,
-          [attribute]: { ...currentAttribute, value },
-        }
-      }
-      return prev
-    })
-  }
 
-  const handleCheckboxChange = (field: keyof SheetData, index: number) => {
-    setFormData((prev) => {
-      let currentArray = prev[field] as boolean[] | undefined
-      if (!Array.isArray(currentArray)) {
-        if (field === "armorBoxes") currentArray = Array(12).fill(false)
-        else if (field === "hp" || field === "stress") currentArray = Array(18).fill(false)
-        else if (field === "hope") currentArray = Array(6).fill(false)
-        else if (field === "gold") currentArray = Array(20).fill(false)
-        else currentArray = []
-      }
-      const newArray = [...currentArray]
-      newArray[index] = !newArray[index]
-      return { ...prev, [field]: newArray }
-    })
-  }
 
-  const handleBooleanChange = (field: keyof SheetData) => {
-    setFormData((prev) => {
-      const currentAttribute = prev[field]
-      if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
-        return {
-          ...prev,
-          [field]: {
-            ...currentAttribute,
-            checked: !currentAttribute.checked,
-          },
-        }
-      } else if (typeof currentAttribute === "boolean") {
-        return {
-          ...prev,
-          [field]: !currentAttribute,
-        }
-      }
-      return prev
-    })
-  }
 
-  const handleMaxChange = (field: keyof SheetData, value: string) => {
-    const numValue = Number.parseInt(value) || 0
-    setFormData((prev) => ({ ...prev, [field]: numValue }))
-  }
 
   // Helper function to map modal string type to CardType enum
   const getModalCardType = (modalType: "profession" | "ancestry" | "community" | "subclass"): Exclude<CardType, CardType.Domain> => {
@@ -656,26 +597,6 @@ export default function CharacterSheet() {
     }
   }, [formData, cardsLoading]); // 添加 cardsLoading 作为依赖项
 
-  // Generate boxes based on max values
-  const renderBoxes = (field: keyof SheetData, max: number, total: number) => {
-    return (
-      <div className="flex gap-1 flex-wrap">
-        {Array(total)
-          .fill(0)
-          .map((_, i) => {
-            const fieldArray = Array.isArray(safeFormData[field]) ? (safeFormData[field] as boolean[]) : Array(total).fill(false)
-            return (
-              <div
-                key={`${String(field)}-${i}`}
-                className={`w-4 h-4 border-2 ${i < max ? "border-gray-800 cursor-pointer" : "border-gray-400 border-dashed"
-                  } ${fieldArray[i] ? "bg-gray-800" : "bg-white"}`}
-                onClick={() => i < max && handleCheckboxChange(field, i)}
-              ></div>
-            )
-          })}
-      </div>
-    )
-  }
 
   // 模态框控制函数
   const openWeaponModal = (fieldName: string, slotType: "primary" | "secondary" | "inventory") => {
@@ -684,9 +605,6 @@ export default function CharacterSheet() {
     setWeaponModalOpen(true)
   }
 
-  const closeWeaponModal = () => {
-    setWeaponModalOpen(false)
-  }
 
   const openArmorModal = () => {
     setArmorModalOpen(true)
@@ -714,9 +632,6 @@ export default function CharacterSheet() {
   const openCommunityModal = () => openGenericModal("community")
   const openSubclassModal = () => openGenericModal("subclass") // Ensure subclass type is supported
 
-  const handlePrint = () => {
-    window.print()
-  }
 
   const handleSubclassChange = (value: string) => {
     console.log(`handleSubclassChange called with ID: ${value}`);
@@ -751,21 +666,6 @@ export default function CharacterSheet() {
     needsSyncRef.current = true;
   }
 
-  const handleSpellcastingToggle = (attribute: keyof SheetData) => {
-    setFormData((prev) => {
-      const currentAttribute = prev[attribute]
-      if (typeof currentAttribute === "object" && currentAttribute !== null && "spellcasting" in currentAttribute) {
-        return {
-          ...prev,
-          [attribute]: {
-            ...currentAttribute,
-            spellcasting: !currentAttribute.spellcasting,
-          },
-        }
-      }
-      return prev
-    })
-  }
 
   return (
     <>
@@ -851,8 +751,8 @@ export default function CharacterSheet() {
                                   className={`w-4 h-4 border ${i < calculatedArmorValue
                                     ? "border-gray-800 cursor-pointer"
                                     : "border-gray-400 border-dashed"
-                                    } ${safeFormData.armorBoxes[i] && i < calculatedArmorValue ? "bg-gray-800" : "bg-white"}`}
-                                  onClick={() => i < calculatedArmorValue && handleCheckboxChange("armorBoxes", i)}
+                                    } ${armorBoxes?.[i] && i < calculatedArmorValue ? "bg-gray-800" : "bg-white"}`}
+                                  onClick={() => i < calculatedArmorValue && updateArmorBox(i)}
                                 ></div>
                               ));
                           })()}
@@ -882,9 +782,9 @@ export default function CharacterSheet() {
                       .map((_, i) => (
                         <div
                           key={`prof-${i}`}
-                          className={`w-3 h-3 rounded-full border-2 border-gray-800 cursor-pointer ${safeFormData.proficiency[i] ? "bg-gray-800" : "bg-white"
+                          className={`w-3 h-3 rounded-full border-2 border-gray-800 cursor-pointer ${Array.isArray(proficiency) && proficiency[i] ? "bg-gray-800" : "bg-white"
                             }`}
-                          onClick={() => handleCheckboxChange("proficiency", i)}
+                          onClick={() => updateProficiency(i)}
                         ></div>
                       ))}
                   </div>

@@ -3,6 +3,8 @@ import React, { useMemo, useState, useEffect, useCallback } from "react"
 import { isEmptyCard, StandardCard } from "@/card/card-types"
 import { useSheetStore } from '@/lib/sheet-store';
 import { PrintImageCard } from "@/components/ui/print-image-card"
+import { CardContent } from "@/components/ui/card-content"
+import { useTextModeStore } from "@/lib/text-mode-store"
 import { usePrintContext } from "@/contexts/print-context"
 
 // 卡组打印区域组件
@@ -17,13 +19,17 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     title,
     onAllImagesLoaded
 }) => {
+    const { isTextMode } = useTextModeStore()
     const [loadedImages, setLoadedImages] = useState(new Set<string>())
     
     useEffect(() => {
-        if (loadedImages.size === cards.length && cards.length > 0) {
+        if (isTextMode) {
+            // 文字模式下不需要等待图片加载，直接标记完成
+            onAllImagesLoaded?.()
+        } else if (loadedImages.size === cards.length && cards.length > 0) {
             onAllImagesLoaded?.()
         }
-    }, [loadedImages.size, cards.length, onAllImagesLoaded])
+    }, [loadedImages.size, cards.length, onAllImagesLoaded, isTextMode])
 
     // 重置加载状态当卡片数量改变时
     useEffect(() => {
@@ -33,7 +39,7 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     const handleImageLoad = (cardId: string) => {
         setLoadedImages(prev => new Set(prev).add(cardId))
     }
-    // 按3张一行分组，让浏览器自动分页
+    // 按行分组，每行3张
     const cardRows = useMemo(() => {
         const rows: StandardCard[][] = [];
         for (let i = 0; i < cards.length; i += 3) {
@@ -53,24 +59,30 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
                 <h2 className="text-xl font-bold text-center">{title}</h2>
             </div>
 
-            {/* 卡牌网格 - 3列布局，让浏览器自动分页 */}
+            {/* 卡牌网格 - 和以前一样的方法 */}
             <div className="print-card-grid">
                 {cardRows.map((row, rowIndex) => (
                     <div
                         key={`row-${rowIndex}`}
-                        className="card-row grid grid-cols-3 gap-1 mb-1"
+                        className={`grid grid-cols-3 gap-1 mb-1 ${isTextMode ? 'card-row-text' : 'card-row'}`}
                     >
                         {row.map((card, cardIndex) => {
                             const uniqueKey = `${rowIndex}-${cardIndex}`;
                             return (
                                 <div
                                     key={uniqueKey}
-                                    className="card-item"
+                                    className={isTextMode ? "card-item-text" : "card-item"}
                                 >
-                                    <PrintImageCard 
-                                        card={card} 
-                                        onImageLoad={() => handleImageLoad(uniqueKey)}
-                                    />
+                                    {isTextMode ? (
+                                        <div className="border rounded p-2 bg-white text-xs h-full flex flex-col">
+                                            <CardContent card={card} />
+                                        </div>
+                                    ) : (
+                                        <PrintImageCard
+                                            card={card}
+                                            onImageLoad={() => handleImageLoad(uniqueKey)}
+                                        />
+                                    )}
                                 </div>
                             );
                         })}
@@ -90,6 +102,7 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 const CharacterSheetPageFive: React.FC = () => {
     const { sheetData: formData } = useSheetStore();
     const { registerPageImages, onPageImagesLoaded } = usePrintContext();
+    const { isTextMode } = useTextModeStore();
 
     // 获取库存卡组的有效卡牌
     const inventoryCards = useMemo(() => {
@@ -103,8 +116,10 @@ const CharacterSheetPageFive: React.FC = () => {
 
     // 注册页面图片数量
     useEffect(() => {
-        registerPageImages('page-five', inventoryCards.length)
-    }, [inventoryCards.length, registerPageImages])
+        // 文字模式下注册0张图片，图片模式下注册实际数量
+        const imageCount = isTextMode ? 0 : inventoryCards.length
+        registerPageImages('page-five', imageCount)
+    }, [inventoryCards.length, registerPageImages, isTextMode])
 
     // 如果库存卡组是空的，不渲染第五页
     if (inventoryCards.length === 0) {

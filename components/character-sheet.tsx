@@ -10,7 +10,7 @@ import {
   CardType, // Import CardType
 } from "@/card"
 import { useAllCards } from "@/card/card-store"
-import { useSheetStore, useSheetArmorBoxes, useSheetProficiency } from "@/lib/sheet-store"
+import { useSheetStore, useSheetArmorBoxes, useSheetProficiency, useSafeSheetData } from "@/lib/sheet-store"
 
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
@@ -30,13 +30,13 @@ import { InventorySection } from "@/components/character-sheet-sections/inventor
 import { InventoryWeaponSection } from "@/components/character-sheet-sections/inventory-weapon-section"
 import ProfessionDescriptionSection from "@/components/character-sheet-sections/profession-description-section"
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
-import { defaultSheetData } from "@/lib/default-sheet-data"; // Import the unified defaultFormData
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 
 export default function CharacterSheet() {
   const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency } = useSheetStore();
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
+  const safeFormData = useSafeSheetData();
 
   // 添加一个安全的表达式计算函数
   const safeEvaluateExpression = (expression: string): number => {
@@ -94,38 +94,6 @@ export default function CharacterSheet() {
   const needsSyncRef = useRef(true)
   const initialRenderRef = useRef(true)
 
-  // 确保 formData 和所有必要的子属性都存在
-  // 适配 gold、experience、hope、hp、stress、armorBoxes 等字段为数组类型
-  const safeFormData = {
-    ...defaultSheetData,
-    ...(formData || {}),
-    // Ensure new Ref fields are initialized if not present in formData
-    professionRef: formData?.professionRef || { id: "", name: "" },
-    ancestry1Ref: formData?.ancestry1Ref || { id: "", name: "" },
-    ancestry2Ref: formData?.ancestry2Ref || { id: "", name: "" },
-    communityRef: formData?.communityRef || { id: "", name: "" },
-    subclassRef: formData?.subclassRef || { id: "", name: "" },
-
-    experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
-    hpMax: formData?.hpMax || 6,
-    hp: Array.isArray(formData?.hp) ? formData.hp : Array(18).fill(false),
-    stressMax: formData?.stressMax || 6,
-    stress: Array.isArray(formData?.stress) ? formData.stress : Array(18).fill(false),
-    armorMax: formData?.armorMax || 0, // 保留默认值
-    companionExperience: Array.isArray(formData?.companionExperience) ? formData.companionExperience : ["", "", "", "", ""],
-    companionExperienceValue: Array.isArray(formData?.companionExperienceValue) ? formData.companionExperienceValue : ["", "", "", "", ""],
-    companionStress: Array.isArray(formData?.companionStress) ? formData.companionStress : Array(6).fill(false),
-    cards: Array.isArray(formData?.cards)
-      ? formData.cards // 只允许 StandardCard[]
-      : Array(20).fill(0).map(() => createEmptyCard()),
-    // 确保属性对象存在
-    agility: formData?.agility || { checked: false, value: "" },
-    strength: formData?.strength || { checked: false, value: "" },
-    finesse: formData?.finesse || { checked: false, value: "" },
-    instinct: formData?.instinct || { checked: false, value: "" },
-    presence: formData?.presence || { checked: false, value: "" },
-    knowledge: formData?.knowledge || { checked: false, value: "" },
-  }
 
   // 同步特殊卡牌与角色选择 - 不直接修改状态，而是返回新的卡牌数组
   const getUpdatedSpecialCards = () => {

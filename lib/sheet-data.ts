@@ -121,7 +121,7 @@ export interface SheetData {
   companionName?: string // 伙伴名称
   companionWeapon?: string // 伙伴武器/攻击方式
   // ===== 伙伴训练选项（page-three） =====
-  trainingOptions?: {
+  trainingOptions: {
     intelligent: boolean[]
     radiantInDarkness: boolean[]
     creatureComfort: boolean[]

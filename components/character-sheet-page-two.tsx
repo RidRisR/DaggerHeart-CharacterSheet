@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
-import { useSheetStore } from "@/lib/sheet-store";
+import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
 import { createEmptyCard, type StandardCard } from "@/card/card-types"
 
 // Import sections
@@ -12,35 +12,8 @@ import { CardDeckSection } from "@/components/character-sheet-page-two-sections/
 import { UpgradeSection } from "@/components/character-sheet-page-two-sections/upgrade-section"
 
 export default function CharacterSheetPageTwo() {
-  const { sheetData: formData, setSheetData: setFormData } = useSheetStore();
-
-  // 确保 formData 存在并有默认值
-  const safeFormData = {
-    ...formData,
-    cards: Array.isArray(formData?.cards)
-      ? formData.cards
-      : Array(20).fill(0).map(() => createEmptyCard()),
-    inventory_cards: Array.isArray(formData?.inventory_cards)
-      ? formData.inventory_cards
-      : Array(20).fill(0).map(() => createEmptyCard()),
-    checkedUpgrades: formData?.checkedUpgrades || { tier1: {}, tier2: {}, tier3: {} },
-    gold: Array.isArray(formData?.gold) ? formData.gold : Array(20).fill(false),
-    experience: Array.isArray(formData?.experience) ? formData.experience : ["", "", "", "", ""],
-    hope: Array.isArray(formData?.hope) ? formData.hope : Array(6).fill(false),
-    hp: Array.isArray(formData?.hp) ? formData.hp : Array(18).fill(false),
-    stress: Array.isArray(formData?.stress) ? formData.stress : Array(18).fill(false),
-    armorBoxes: Array.isArray(formData?.armorBoxes) ? formData.armorBoxes : Array(12).fill(false),
-    companionExperience: Array.isArray(formData?.companionExperience) ? formData.companionExperience : ["", "", "", "", ""],
-    companionExperienceValue: Array.isArray(formData?.companionExperienceValue) ? formData.companionExperienceValue : ["", "", "", "", ""],
-    companionStress: Array.isArray(formData?.companionStress) ? formData.companionStress : Array(6).fill(false),
-    agility: formData?.agility || { checked: false, value: "" },
-    strength: formData?.strength || { checked: false, value: "" },
-    finesse: formData?.finesse || { checked: false, value: "" },
-    instinct: formData?.instinct || { checked: false, value: "" },
-    presence: formData?.presence || { checked: false, value: "" },
-    knowledge: formData?.knowledge || { checked: false, value: "" },
-    proficiency: Array.isArray(formData?.proficiency) ? formData.proficiency : Array(6).fill(false),
-  }
+  const { setSheetData: setFormData } = useSheetStore();
+  const safeFormData = useSafeSheetData();
 
   // State for CardSelectionModal filters, lifted to this component
   const [cardModalActiveTab, setCardModalActiveTab] = useState<string>("");
@@ -65,7 +38,7 @@ export default function CharacterSheetPageTwo() {
     isUpdatingRef.current = true
 
     setFormData((prev) => {
-      const newCards = [...prev.cards]
+      const newCards = [...(prev.cards || [])]
       newCards[index] = card
       return { ...prev, cards: newCards }
     })

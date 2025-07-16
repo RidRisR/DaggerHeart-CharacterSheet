@@ -2,38 +2,15 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ImageUploadCrop } from '@/components/ui/image-upload-crop';
-import { useSheetStore } from '@/lib/sheet-store';
+import { useSheetStore, useSafeSheetData } from '@/lib/sheet-store';
+import { defaultSheetData } from '@/lib/default-sheet-data';
 
 const MAX_STRESS = (formData: any) => Number(formData.companionStressMax) || 3;
 const TOTAL_STRESS = 6;
 
 const CharacterSheetPageThree: React.FC = () => {
     const { sheetData: formData, setSheetData: onFormDataChange } = useSheetStore();
-
-    const safeFormData = {
-        ...formData,
-        companionExperience: Array.isArray(formData?.companionExperience) ? formData.companionExperience : ["", "", "", "", ""],
-        companionExperienceValue: Array.isArray(formData?.companionExperienceValue) ? formData.companionExperienceValue : ["", "", "", "", ""],
-        companionStress: Array.isArray(formData?.companionStress) ? formData.companionStress : Array(6).fill(false),
-        companionImage: formData?.companionImage || "",
-        companionDescription: formData?.companionDescription || "",
-        companionRange: formData?.companionRange || "",
-        companionEvasion: formData?.companionEvasion || "",
-        companionStressMax: formData?.companionStressMax || 3,
-        companionName: formData?.companionName || "",
-        companionWeapon: formData?.companionWeapon || "",
-        // 训练相关
-        trainingOptions: {
-            intelligent: Array.isArray(formData?.trainingOptions?.intelligent) ? formData.trainingOptions.intelligent : Array(3).fill(false),
-            radiantInDarkness: Array.isArray(formData?.trainingOptions?.radiantInDarkness) ? formData.trainingOptions.radiantInDarkness : Array(1).fill(false),
-            creatureComfort: Array.isArray(formData?.trainingOptions?.creatureComfort) ? formData.trainingOptions.creatureComfort : Array(1).fill(false),
-            armored: Array.isArray(formData?.trainingOptions?.armored) ? formData.trainingOptions.armored : Array(1).fill(false),
-            vicious: Array.isArray(formData?.trainingOptions?.vicious) ? formData.trainingOptions.vicious : Array(3).fill(false),
-            resilient: Array.isArray(formData?.trainingOptions?.resilient) ? formData.trainingOptions.resilient : Array(3).fill(false),
-            bonded: Array.isArray(formData?.trainingOptions?.bonded) ? formData.trainingOptions.bonded : Array(1).fill(false),
-            aware: Array.isArray(formData?.trainingOptions?.aware) ? formData.trainingOptions.aware : Array(3).fill(false),
-        },
-    }
+    const safeFormData = useSafeSheetData();
 
     // 伙伴经验区块（右侧为图片+描述，无经验示例）
     const renderCompanionExperienceSection = () => (
@@ -116,20 +93,11 @@ const CharacterSheetPageThree: React.FC = () => {
     );
 
     // 训练区块复用升级区块风格，复选框风格与第一页一致
-    type TrainingField =
-        | "trainingIntelligent"
-        | "trainingRadiantInDarkness"
-        | "trainingCreatureComfort"
-        | "trainingArmored"
-        | "trainingVicious"
-        | "trainingResilient"
-        | "trainingBonded"
-        | "trainingAware";
-    const renderTrainingOption = (mainText: string, namePrefix: keyof typeof safeFormData.trainingOptions, checkboxCount: number) => {
+    const renderTrainingOption = (mainText: string, namePrefix: keyof NonNullable<typeof safeFormData.trainingOptions>, checkboxCount: number) => {
         const parts = mainText.split(/：|:/);
         const title = parts[0];
         const desc = parts.length > 1 ? parts.slice(1).join(':').trim() : '';
-        const arr = safeFormData.trainingOptions[namePrefix];
+        const arr = safeFormData.trainingOptions?.[namePrefix] || [];
 
         return (
             <div className="flex items-start gap-2 mb-1 text-[13px] leading-[1.6]">
@@ -151,9 +119,10 @@ const CharacterSheetPageThree: React.FC = () => {
                                     onFormDataChange({
                                         ...formData,
                                         trainingOptions: {
+                                            ...defaultSheetData.trainingOptions,
                                             ...safeFormData.trainingOptions,
                                             [namePrefix]: newArr,
-                                        },
+                                        } as any,
                                     });
                                 }}
                                 tabIndex={0}

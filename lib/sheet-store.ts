@@ -462,6 +462,22 @@ export const useSheetArmorBoxes = () => useSheetStore(state => state.sheetData.a
 export const useSheetProficiency = () => useSheetStore(state => state.sheetData.proficiency);
 export const useSheetHP = () => useSheetStore(state => state.sheetData.hp);
 export const useSheetExperience = () => useSheetStore(state => state.sheetData.experience);
+
+// Safe data selector with default values - using a memoized approach
+let cachedSafeData: SheetData | null = null;
+let lastSheetData: SheetData | null = null;
+
+export const useSafeSheetData = () => useSheetStore(state => {
+    // Only recalculate if sheetData has changed
+    if (state.sheetData !== lastSheetData) {
+        lastSheetData = state.sheetData;
+        cachedSafeData = {
+            ...defaultSheetData,
+            ...state.sheetData,
+        };
+    }
+    return cachedSafeData!;
+});
 export const useSheetAttributes = () => useSheetStore(state => ({
     agility: state.sheetData.agility,
     finesse: state.sheetData.finesse,

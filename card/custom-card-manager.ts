@@ -128,6 +128,10 @@ export class CustomCardManager {
 
     private isInitialized = false;
     private initializationPromise: Promise<void> | null = null;
+    
+    // 批次名称缓存
+    private static batchNameCache: Map<string, string> = new Map();
+    private static batchNameCacheInitialized = false;
 
     private constructor() {
         // 不在构造函数中立即开始初始化，等待ensureInitialized()被调用
@@ -159,12 +163,17 @@ export class CustomCardManager {
             // 然后加载自定义卡牌
             this.loadCustomCards();
 
+            // 预加载批次名称缓存
+            this.initializeBatchNameCache();
+
             this.isInitialized = true;
             console.log('[CustomCardManager] 系统初始化完成');
         } catch (error) {
             console.error('[CustomCardManager] 系统初始化失败:', error);
             // 即使内置卡牌初始化失败，也要尝试加载自定义卡牌
             this.loadCustomCards();
+            // 预加载批次名称缓存
+            this.initializeBatchNameCache();
             this.isInitialized = true; // 标记为已初始化，避免重复尝试
         }
     }
@@ -422,6 +431,9 @@ export class CustomCardManager {
 
             // 重新加载自定义卡牌到内存
             this.reloadCustomCards();
+
+            // 清除批次名称缓存，因为新增了批次
+            CustomCardManager.clearBatchNameCache();
 
             // 预热关键缓存以提升后续性能
             // 这些操作会触发缓存的重新计算和存储
@@ -1279,11 +1291,73 @@ export class CustomCardManager {
     }
 
     /**
-     * 获取批次名称
+     * 获取批次名称（带缓存优化）
      */
     getBatchName(batchId: string): string | null {
+        // 如果缓存未初始化，先初始化
+        if (!CustomCardManager.batchNameCacheInitialized) {
+            this.initializeBatchNameCache();
+        }
+        
+        // 从缓存中获取
+        const cachedName = CustomCardManager.batchNameCache.get(batchId);
+        if (cachedName !== undefined) {
+            return cachedName;
+        }
+        
+        // 缓存未命中，从存储加载（这种情况应该很少见）
         const batch = this.getBatchById(batchId);
-        return batch?.name || null;
+        const batchName = batch?.name || null;
+        
+        // 更新缓存
+        if (batchName) {
+            CustomCardManager.batchNameCache.set(batchId, batchName);
+        }
+        
+        return batchName;
+    }
+
+    /**
+     * 初始化批次名称缓存
+     */
+    private initializeBatchNameCache(): void {
+        if (CustomCardManager.batchNameCacheInitialized) {
+            return;
+        }
+        
+        logDebug('initializeBatchNameCache', { action: 'start' });
+        
+        try {
+            const index = CustomCardStorage.loadIndex();
+            CustomCardManager.batchNameCache.clear();
+            
+            let cacheCount = 0;
+            for (const [batchId, batch] of Object.entries(index.batches)) {
+                if (batch.name) {
+                    CustomCardManager.batchNameCache.set(batchId, batch.name);
+                    cacheCount++;
+                }
+            }
+            
+            CustomCardManager.batchNameCacheInitialized = true;
+            logDebug('initializeBatchNameCache', { 
+                action: 'complete', 
+                cachedCount: cacheCount 
+            });
+        } catch (error) {
+            logDebug('initializeBatchNameCache', { 
+                action: 'error', 
+                error: error 
+            });
+        }
+    }
+
+    /**
+     * 清除批次名称缓存
+     */
+    private static clearBatchNameCache(): void {
+        CustomCardManager.batchNameCache.clear();
+        CustomCardManager.batchNameCacheInitialized = false;
     }
 
     /**
@@ -1341,6 +1415,9 @@ export class CustomCardManager {
             // 重新加载内存中的卡牌数据
             logDebug('removeBatch', { step: 'reloading custom cards' });
             this.reloadCustomCards();
+
+            // 清除批次名称缓存，因为删除了批次
+            CustomCardManager.clearBatchNameCache();
 
             logDebug('removeBatch', { result: 'success' });
             return true;

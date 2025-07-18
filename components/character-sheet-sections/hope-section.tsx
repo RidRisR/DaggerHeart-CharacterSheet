@@ -24,7 +24,7 @@ export function HopeSection() {
 
   return (
     <div className="py-1 mb-1">
-      <h3 className="text-xs font-bold text-center mb-1">希望</h3>
+      <h3 className="text-xs font-bold text-center mb-2">希望</h3>
       <div className="text-[12px] text-center mb-1">花费一点希望使用经历或帮助队友</div>
 
       <div className="flex justify-center gap-2 mb-2">
@@ -41,7 +41,7 @@ export function HopeSection() {
       </div>
 
       <div className="text-center px-2">
-        <div className="text-[12px] leading-tight min-h-[2em] print:min-h-[1em]">
+        <div className="text-[12px] leading-tight min-h-[2.5em]">
           <ReactMarkdown>{hopeTrait}</ReactMarkdown>
         </div>
       </div>

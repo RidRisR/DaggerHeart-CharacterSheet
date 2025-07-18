@@ -18,7 +18,7 @@ export function ExperienceSection() {
     <div className="py-1">
       <h3 className="text-xs font-bold text-center">经历</h3>
 
-      <div className="space-y-1">
+      <div className="space-y-1.5 print:space-y-1">
         {experienceTexts.map((exp: string, i: number) => (
           <div key={`exp-${i}`} className="flex items-center">
             <input

@@ -778,7 +778,7 @@ export default function CharacterSheet() {
             {/* Bottom Section */}
             <div className="grid grid-cols-2 gap-2 p-1">
               {/* Bottom Left */}
-              <div className="col-span-1 space-y-1">
+              <div className="col-span-1 space-y-1 -mt-1">
                 {/* Hope */}
                 <HopeSection />
 

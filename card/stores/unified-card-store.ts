@@ -110,6 +110,7 @@ interface UnifiedCardActions {
     available: string;
     total: string;
     percentage: number;
+    usagePercent: number;
   };
   getStats: () => CustomCardStats;
   calculateStorageUsage: () => StorageStats;
@@ -529,11 +530,15 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
         // Storage management
         getStorageInfo: () => {
           const stats = get().calculateStorageUsage();
+          const totalSpace = stats.totalSize + stats.availableSpace;
+          const usagePercent = totalSpace > 0 ? (stats.totalSize / totalSpace) * 100 : 0;
+          
           return {
             used: (stats.totalSize / (1024 * 1024)).toFixed(2) + ' MB',
             available: (stats.availableSpace / (1024 * 1024)).toFixed(2) + ' MB',
-            total: ((stats.totalSize + stats.availableSpace) / (1024 * 1024)).toFixed(2) + ' MB',
-            percentage: (stats.totalSize / (stats.totalSize + stats.availableSpace)) * 100
+            total: (totalSpace / (1024 * 1024)).toFixed(2) + ' MB',
+            percentage: usagePercent,
+            usagePercent: usagePercent  // Add for compatibility
           };
         },
 
@@ -1057,19 +1062,41 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
             errors.push('No valid card data found in import');
           }
           
-          // Validate card structure for each type
-          cardTypes.forEach(type => {
-            if (importData[type] && Array.isArray(importData[type])) {
-              importData[type].forEach((card: any, index: number) => {
-                if (!card.id) {
-                  errors.push(`${type}[${index}]: Missing card ID`);
-                }
-                if (!card.name) {
-                  errors.push(`${type}[${index}]: Missing card name`);
-                }
+          // Use the original validation system for detailed validation
+          try {
+            // Import validation utilities dynamically
+            const { CardTypeValidator } = require('../type-validators');
+            const { ValidationDataMerger } = require('../validation-utils');
+            
+            // Create validation context from import data
+            const validationContext = ValidationDataMerger.createValidationContextFromImportData(
+              importData,
+              'temp_validation'
+            );
+            
+            // Validate using the original system's validator
+            const validationResult = CardTypeValidator.validateImportData(importData, validationContext);
+            
+            if (!validationResult.isValid) {
+              // Convert validation errors to simple error messages
+              validationResult.errors.forEach((error: any) => {
+                errors.push(`${error.path}: ${error.message}`);
               });
             }
-          });
+          } catch (error) {
+            console.warn('[UnifiedCardStore] Failed to use advanced validation, falling back to basic validation:', error);
+            
+            // Fallback: just check for ID field
+            cardTypes.forEach(type => {
+              if (importData[type] && Array.isArray(importData[type])) {
+                importData[type].forEach((card: any, index: number) => {
+                  if (!card.id) {
+                    errors.push(`${type}[${index}]: Missing card ID`);
+                  }
+                });
+              }
+            });
+          }
           
           return {
             isValid: errors.length === 0,

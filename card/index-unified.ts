@@ -392,9 +392,23 @@ const createCustomCardManagerCompatibility = () => {
   return Object.assign(getInstance, staticMethods);
 };
 
+// Create the compatibility layer instance
+const customCardManagerInstance = createCustomCardManagerCompatibility();
+
+// Add ensureInitialized directly to the top level for compatibility
+(customCardManagerInstance as any).ensureInitialized = async (): Promise<void> => {
+  const store = useUnifiedCardStore.getState();
+  if (!store.initialized) {
+    const result = await store.initializeSystem();
+    if (!result.initialized) {
+      throw new Error('Failed to initialize card system');
+    }
+  }
+};
+
 // Export the compatibility layer
-export const customCardManager = createCustomCardManagerCompatibility();
-export const CustomCardManager = createCustomCardManagerCompatibility();
+export const customCardManager = customCardManagerInstance as any;
+export const CustomCardManager = customCardManagerInstance as any;
 
 // For backward compatibility
 export const builtinCardManager = customCardManager;

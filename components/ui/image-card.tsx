@@ -2,9 +2,10 @@
 
 import { CardType, StandardCard, ExtendedStandardCard } from "@/card/card-types"
 import { CardSource } from "@/card/card-types"
-import { getAllStandardCardsAsync, getBatchName } from "@/card"
+import { getBatchName } from "@/card"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
+import { useCardStore } from "@/card/card-store"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -24,7 +25,7 @@ const getDisplayTypeName = (card: StandardCard) => {
 };
 
 // Helper function to get card source display name
-const getCardSourceDisplayName = async (card: StandardCard | ExtendedStandardCard): Promise<string> => {
+const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): string => {
     // 如果已经有来源信息，直接使用
     if (hasSourceInfo(card)) {
         if (card.source === CardSource.BUILTIN) {
@@ -42,18 +43,14 @@ const getCardSourceDisplayName = async (card: StandardCard | ExtendedStandardCar
                     return batchName;
                 }
 
-                // 如果 getBatchName 获取失败，与 allCards 对比查找同 ID 卡牌
-                try {
-                    const allCards = await getAllStandardCardsAsync();
-                    const matchedCard = allCards.find(c => c.id === card.id);
-                    if (matchedCard && matchedCard.batchName) {
-                        return matchedCard.batchName;
-                    }
-                    if (matchedCard && matchedCard.batchId) {
-                        return matchedCard.batchId;
-                    }
-                } catch (error) {
-                    console.warn("[ImageCard] 通过 allCards 查找卡牌失败:", error);
+                // 如果 getBatchName 获取失败，从 store 中查找同 ID 卡牌
+                const store = useCardStore.getState();
+                const matchedCard = store.allCards.find(c => c.id === card.id);
+                if (matchedCard && matchedCard.batchName) {
+                    return matchedCard.batchName;
+                }
+                if (matchedCard && matchedCard.batchId) {
+                    return matchedCard.batchId;
                 }
 
                 return "卡包ID不存在";
@@ -63,26 +60,21 @@ const getCardSourceDisplayName = async (card: StandardCard | ExtendedStandardCar
         return "内置卡包";
     }
 
-    // 通过ID在全局卡牌库中查找匹配的卡牌
-    try {
-        const allCards = await getAllStandardCardsAsync();
-        const matchedCard = allCards.find(c => c.id === card.id);
+    // 通过ID在 store 中查找匹配的卡牌
+    const store = useCardStore.getState();
+    const matchedCard = store.allCards.find(c => c.id === card.id);
 
-        if (matchedCard && matchedCard.source) {
-            if (matchedCard.source === CardSource.BUILTIN) {
-                return "内置卡包";
-            }
-            if (matchedCard.source === CardSource.CUSTOM) {
-                return matchedCard.batchName || matchedCard.batchId || "自定义卡包";
-            }
+    if (matchedCard && matchedCard.source) {
+        if (matchedCard.source === CardSource.BUILTIN) {
+            return "内置卡包";
         }
-
-        // 如果找不到匹配的卡牌
-        return "未知来源";
-    } catch (error) {
-        console.warn("[ImageCard] 获取卡牌来源信息失败:", error);
-        return "未知来源";
+        if (matchedCard.source === CardSource.CUSTOM) {
+            return matchedCard.batchName || matchedCard.batchId || "自定义卡包";
+        }
     }
+
+    // 如果找不到匹配的卡牌
+    return "未知来源";
 };
 
 // 辅助函数：检查卡牌是否有来源信息
@@ -169,16 +161,12 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         }
     }, [])
 
-    // 异步获取卡牌来源信息
+    // 获取卡牌来源信息
     useEffect(() => {
         if (!showSource) return;
 
-        const fetchCardSource = async () => {
-            const source = await getCardSourceDisplayName(card);
-            setCardSource(source);
-        };
-
-        fetchCardSource();
+        const source = getCardSourceDisplayName(card);
+        setCardSource(source);
     }, [card.id, showSource]);
 
     if (!card) {

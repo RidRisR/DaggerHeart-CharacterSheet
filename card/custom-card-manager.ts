@@ -432,9 +432,6 @@ export class CustomCardManager {
             // 重新加载自定义卡牌到内存
             this.reloadCustomCards();
 
-            // 清除批次名称缓存，因为新增了批次
-            CustomCardManager.clearBatchNameCache();
-
             // 预热关键缓存以提升后续性能
             // 这些操作会触发缓存的重新计算和存储
             try {
@@ -830,6 +827,10 @@ export class CustomCardManager {
     private reloadCustomCards(): void {
         console.log(`[CustomCardManager] 开始重新加载自定义卡牌`);
         this.customCards = [];
+        
+        // 清除批次名称缓存，因为即将重新加载数据
+        CustomCardManager.clearBatchNameCache();
+        
         const index = CustomCardStorage.loadIndex();
 
         console.log(`[CustomCardManager] 索引中的批次数量: ${Object.keys(index.batches).length}`);
@@ -1415,9 +1416,6 @@ export class CustomCardManager {
             // 重新加载内存中的卡牌数据
             logDebug('removeBatch', { step: 'reloading custom cards' });
             this.reloadCustomCards();
-
-            // 清除批次名称缓存，因为删除了批次
-            CustomCardManager.clearBatchNameCache();
 
             logDebug('removeBatch', { result: 'success' });
             return true;

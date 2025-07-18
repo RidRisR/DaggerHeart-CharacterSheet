@@ -93,9 +93,16 @@ export async function getCardImageUrl(
       const cardType = matchedCard.type?.toLowerCase() || 'unknown';
 
       // 获取卡片名称，转换为适合文件名的格式
-      const cardName = matchedCard.name?.toLowerCase()
-        .replace(/[^a-z0-9\u4e00-\u9fff]/g, '')  // 移除特殊字符，保留中文
-        .replace(/\s+/g, '') || 'unknown';
+      let cardName: string;
+      if (cardType === 'ancestry' && 'class' in matchedCard && matchedCard.class) {
+        cardName = matchedCard.class.toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fff]/g, '')  // 移除特殊字符，保留中文
+          .replace(/\s+/g, '');
+      } else {
+        cardName = matchedCard.name?.toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fff]/g, '')  // 移除特殊字符，保留中文
+          .replace(/\s+/g, '') || 'unknown';
+      }
 
       // 尝试构建推断的图片路径
       const inferredUrl = `/${batchName}/${cardType}/${cardName}.webp`;

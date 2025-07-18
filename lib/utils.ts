@@ -113,7 +113,14 @@ export async function getCardImageUrl(
     return `${basePath}/image/empty-card.webp`;
   }
   
-  // 确保路径以斜杠开头
+  // 检查是否是完整的 HTTP/HTTPS URL
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    // 对于外部 URL，直接返回（但这些 URL 可能无法访问）
+    console.warn(`[getCardImageUrl] 外部图片 URL 可能无法访问: ${imageUrl}`);
+    return imageUrl;
+  }
+  
+  // 确保路径以斜杠开头（用于相对路径）
   const normalizedUrl = imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl;
   
   // 返回完整的图片路径

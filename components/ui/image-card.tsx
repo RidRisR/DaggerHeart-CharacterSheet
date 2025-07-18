@@ -111,7 +111,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         
         // 异步获取图片URL
         const loadImageUrl = async () => {
-            const url = await getCardImageUrl(card, imageError);
+            const url = await getCardImageUrl(card, false); // 重置时不传递错误状态
             setImageSrc(url);
         };
         
@@ -123,7 +123,18 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         }, 100);
         
         return () => clearTimeout(timer);
-    }, [card, imageError]);
+    }, [card]); // 移除 imageError 依赖，避免无限循环
+
+    // 当图片加载失败时，获取备用图片URL
+    useEffect(() => {
+        if (imageError && !imageSrc?.includes('empty-card.webp')) {
+            const loadErrorImageUrl = async () => {
+                const url = await getCardImageUrl(card, true); // 传递错误状态以获取默认图片
+                setImageSrc(url);
+            };
+            loadErrorImageUrl();
+        }
+    }, [imageError, card, imageSrc]);
 
     // 监听手动刷新触发器
     useEffect(() => {

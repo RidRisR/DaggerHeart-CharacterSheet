@@ -41,6 +41,15 @@ export {
   getVariantLevelOptions,
 } from './card-ui-config';
 
+// Re-export variant type functions
+export {
+  getVariantTypeName,
+  getVariantTypeNames,
+  getVariantTypes,
+  getVariantSubclasses,
+  hasVariantType,
+} from './card-predefined-field';
+
 // Re-export card converter
 export { convertToStandardCard } from './card-converter';
 

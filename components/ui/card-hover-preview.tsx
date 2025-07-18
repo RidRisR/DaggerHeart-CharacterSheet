@@ -33,13 +33,25 @@ export function CardHoverPreview({ card, isTextMode = false }: CardHoverPreviewP
     
     // 异步获取图片URL
     React.useEffect(() => {
+        setImageError(false); // 重置错误状态
         const loadImageUrl = async () => {
-            const url = await getCardImageUrl(card, imageError);
+            const url = await getCardImageUrl(card, false);
             setImageSrc(url);
         };
         
         loadImageUrl();
-    }, [card, imageError]);
+    }, [card]);
+
+    // 处理图片加载失败
+    React.useEffect(() => {
+        if (imageError && !imageSrc?.includes('empty-card.webp')) {
+            const loadErrorImageUrl = async () => {
+                const url = await getCardImageUrl(card, true);
+                setImageSrc(url);
+            };
+            loadErrorImageUrl();
+        }
+    }, [imageError, card, imageSrc]);
     
     if (!card) return null
 

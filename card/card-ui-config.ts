@@ -81,8 +81,8 @@ export function getCardTypeName(typeId: string): string {
     return ALL_CARD_TYPES.get(typeId as CardType) || "未知类型";
   }
 
-  // 检查是否是变体类型
-  return getVariantTypeName(typeId);
+  // 检查是否是变体类型 - 对于变体类型，直接返回 typeId 作为显示名称
+  return typeId;
 }
 
 // 获取等级选项

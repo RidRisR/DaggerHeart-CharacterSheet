@@ -149,7 +149,8 @@ export function CardSelectionModal({
     }
 
     // 否则返回标准卡牌类型的class选项
-    return getCardClassOptionsByType()[activeTab as CardType] || []
+    const options = getCardClassOptionsByType();
+    return options[activeTab as keyof typeof options] || []
   }, [activeTab]);
 
   const levelOptions = useMemo(() => {
@@ -272,13 +273,13 @@ export function CardSelectionModal({
   if (!isOpen) return null
 
   const handleClassSelectAll = () => {
-    const allClassValues = classOptions.map(opt => opt.value);
+    const allClassValues = classOptions.map((opt: any) => opt.value);
     setSelectedClasses(allClassValues);
   };
 
   const handleClassInvertSelection = () => {
-    const allClassValues = classOptions.map(opt => opt.value);
-    setSelectedClasses(prev => allClassValues.filter(val => !prev.includes(val)));
+    const allClassValues = classOptions.map((opt: any) => opt.value);
+    setSelectedClasses(prev => allClassValues.filter((val: any) => !prev.includes(val)));
   };
 
   const handleLevelSelectAll = () => {
@@ -425,7 +426,7 @@ export function CardSelectionModal({
                             : selectedClasses.length === 0
                               ? "未选类别"
                               : selectedClasses.length === 1
-                                ? classOptions.find(o => o.value === selectedClasses[0])?.label || "选择类别"
+                                ? classOptions.find((o: any) => o.value === selectedClasses[0])?.label || "选择类别"
                                 : `${selectedClasses.length} 类已选`
                       }
                     </Button>
@@ -439,7 +440,7 @@ export function CardSelectionModal({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <ScrollArea className="h-64">
-                      {classOptions.map((option) => (
+                      {classOptions.map((option: any) => (
                         <DropdownMenuItem
                           key={option.value}
                           onSelect={(e) => e.preventDefault()}

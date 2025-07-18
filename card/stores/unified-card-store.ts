@@ -15,17 +15,77 @@ import {
   BatchStats
 } from '../card-types';
 
-// Import existing interfaces for compatibility
-import type {
-  CustomCardIndex,
-  BatchData,
-  CustomFieldNamesStore,
-  VariantTypesForBatch,
-  CustomFieldsForBatch,
-  StorageStats,
-  IntegrityReport,
-  CleanupReport
-} from '../card-storage';
+// Type definitions (moved from deleted card-storage.ts)
+export interface CustomCardIndex {
+  batches: Record<string, {
+    id: string;
+    name: string;
+    fileName: string;
+    importTime: string;
+    version?: string;
+    cardCount: number;
+    cardTypes: string[];
+    size: number;
+    isSystemBatch?: boolean;
+    disabled?: boolean;
+  }>;
+  totalCards: number;
+  totalBatches: number;
+  lastUpdate: string;
+}
+
+export interface BatchData {
+  metadata: {
+    id: string;
+    name: string;
+    fileName: string;
+    importTime: string;
+    version?: string;
+    description?: string;
+    author?: string;
+  };
+  cards: ExtendedStandardCard[];
+  customFieldDefinitions?: CustomFieldsForBatch;
+  variantTypes?: VariantTypesForBatch;
+}
+
+export interface CustomFieldNamesStore {
+  [category: string]: string[];
+}
+
+export interface VariantTypesForBatch {
+  [typeId: string]: {
+    description?: string;
+    subclasses?: string[];
+    levelRange?: [number, number];
+  };
+}
+
+export interface CustomFieldsForBatch {
+  [category: string]: string[];
+}
+
+export interface StorageStats {
+  totalSize: number;
+  indexSize: number;
+  batchesSize: number;
+  configSize: number;
+  availableSpace: number;
+}
+
+export interface IntegrityReport {
+  isValid: boolean;
+  issues: string[];
+  orphanedKeys: string[];
+  missingBatches: string[];
+  corruptedBatches: string[];
+}
+
+export interface CleanupReport {
+  removedKeys: string[];
+  errors: string[];
+  freedSpace: number;
+}
 
 // Import built-in card data
 // import builtinCardPackJson from '../../data/cards/builtin-base.json';
@@ -161,6 +221,9 @@ const DEFAULT_CONFIG: StorageConfig = {
 // Builtin batch ID
 const BUILTIN_BATCH_ID = "SYSTEM_BUILTIN_CARDS";
 
+// Helper function to check if we're on the server
+const isServer = typeof window === 'undefined';
+
 // Create the unified store
 export const useUnifiedCardStore = create<UnifiedCardStore>()(
   subscribeWithSelector(
@@ -283,10 +346,9 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
             if (!validation.isValid) {
               return {
                 success: false,
+                imported: 0,
                 errors: validation.errors,
-                importedCards: [],
-                batchId: '',
-                stats: { totalCards: 0, cardsByType: {} }
+                batchId: ''
               };
             }
             
@@ -309,10 +371,9 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
             if (duplicateIds.length > 0) {
               return {
                 success: false,
+                imported: 0,
                 errors: [`Duplicate card IDs found: ${duplicateIds.join(', ')}`],
-                importedCards: [],
-                batchId: '',
-                stats: { totalCards: 0, cardsByType: {} }
+                batchId: ''
               };
             }
             
@@ -321,10 +382,9 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
             if (!convertResult.success) {
               return {
                 success: false,
+                imported: 0,
                 errors: convertResult.errors || ['Conversion failed'],
-                importedCards: [],
-                batchId: '',
-                stats: { totalCards: 0, cardsByType: {} }
+                batchId: ''
               };
             }
             
@@ -345,8 +405,12 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
               isSystemBatch: false,
               disabled: false,
               cards: convertResult.cards.map(card => ({ ...card, batchId, source: CardSource.CUSTOM })),
-              customFieldDefinitions: importData.customFieldDefinitions,
-              variantTypes: importData.variantTypes
+              customFieldDefinitions: importData.customFieldDefinitions ? 
+                Object.fromEntries(
+                  Object.entries(importData.customFieldDefinitions)
+                    .filter(([key, value]) => key !== 'variantTypes' && Array.isArray(value))
+                ) as CustomFieldsForBatch : undefined,
+              variantTypes: importData.customFieldDefinitions?.variantTypes
             };
             
             // Update store state
@@ -392,25 +456,18 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
             
             return {
               success: true,
-              importedCards: batchInfo.cards,
-              batchId,
-              stats: {
-                totalCards: convertResult.cards.length,
-                cardsByType: cardTypes.reduce((acc, type) => {
-                  acc[type] = batchInfo.cards.filter(card => card.type === type).length;
-                  return acc;
-                }, {} as Record<string, number>)
-              }
+              imported: convertResult.cards.length,
+              errors: [],
+              batchId
             };
             
           } catch (error) {
             console.error('[UnifiedCardStore] Import failed:', error);
             return {
               success: false,
+              imported: 0,
               errors: [error instanceof Error ? error.message : 'Import failed'],
-              importedCards: [],
-              batchId: '',
-              stats: { totalCards: 0, cardsByType: {} }
+              batchId: ''
             };
           }
         },
@@ -552,6 +609,17 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
         },
 
         calculateStorageUsage: () => {
+          // Return default values on server-side
+          if (isServer) {
+            return {
+              totalSize: 0,
+              indexSize: 0,
+              batchesSize: 0,
+              configSize: 0,
+              availableSpace: get().config.maxStorageSize
+            };
+          }
+          
           // Calculate storage usage from localStorage
           let totalSize = 0;
           let indexSize = 0;
@@ -741,6 +809,9 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
         },
 
         _syncToLocalStorage: () => {
+          // Skip on server-side
+          if (isServer) return;
+          
           const state = get();
           
           try {
@@ -775,6 +846,9 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
         },
 
         _loadFromLocalStorage: () => {
+          // Skip on server-side
+          if (isServer) return;
+          
           try {
             // Load index
             const indexStr = localStorage.getItem(STORAGE_KEYS.INDEX);
@@ -1056,7 +1130,10 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
           
           // Check if at least one card type is present
           const cardTypes = ['profession', 'ancestry', 'community', 'subclass', 'domain', 'variant'];
-          const hasCards = cardTypes.some(type => importData[type] && Array.isArray(importData[type]) && importData[type].length > 0);
+          const hasCards = cardTypes.some(type => {
+            const cards = (importData as any)[type];
+            return cards && Array.isArray(cards) && cards.length > 0;
+          });
           
           if (!hasCards) {
             errors.push('No valid card data found in import');
@@ -1066,13 +1143,67 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
           try {
             // Import validation utilities dynamically
             const { CardTypeValidator } = require('../type-validators');
-            const { ValidationDataMerger } = require('../validation-utils');
             
-            // Create validation context from import data
-            const validationContext = ValidationDataMerger.createValidationContextFromImportData(
-              importData,
-              'temp_validation'
-            );
+            // Create validation context from import data (inline implementation to avoid circular dependency)
+            const tempCustomFields = importData.customFieldDefinitions ? Object.fromEntries(
+              Object.entries(importData.customFieldDefinitions)
+                .filter(([key, value]) => Array.isArray(value) && key !== 'variantTypes')
+                .map(([key, value]) => [key, value as string[]])
+            ) : undefined;
+            
+            const tempVariantTypes = importData.customFieldDefinitions?.variantTypes;
+            
+            // Merge custom fields (inline implementation)
+            const existing = get().getAggregatedCustomFields();
+            const builtinFields: CustomFieldNamesStore = {};
+            
+            // Get builtin fields
+            const builtinCardPackJson = require('../../data/cards/builtin-base.json');
+            const builtinCustomFields = (builtinCardPackJson as any).customFieldDefinitions;
+            if (builtinCustomFields) {
+              for (const [category, names] of Object.entries(builtinCustomFields)) {
+                if (Array.isArray(names) && category !== 'variantTypes') {
+                  builtinFields[category] = names as string[];
+                }
+              }
+            }
+            
+            const mergedCustomFields: CustomFieldNamesStore = { ...builtinFields };
+            for (const [category, names] of Object.entries(existing)) {
+              if (!mergedCustomFields[category]) {
+                mergedCustomFields[category] = [];
+              }
+              mergedCustomFields[category] = [...new Set([...mergedCustomFields[category], ...names])];
+            }
+            
+            if (tempCustomFields) {
+              for (const [category, names] of Object.entries(tempCustomFields)) {
+                if (Array.isArray(names)) {
+                  if (!mergedCustomFields[category]) {
+                    mergedCustomFields[category] = [];
+                  }
+                  mergedCustomFields[category] = [...new Set([...mergedCustomFields[category], ...names])];
+                }
+              }
+            }
+            
+            // Merge variant types (inline implementation)
+            const existingVariantTypes = get().getAggregatedVariantTypes();
+            const builtinVariantTypes: VariantTypesForBatch = {};
+            if (builtinCustomFields?.variantTypes) {
+              Object.assign(builtinVariantTypes, builtinCustomFields.variantTypes);
+            }
+            const mergedVariantTypes = { ...builtinVariantTypes, ...existingVariantTypes };
+            if (tempVariantTypes) {
+              Object.assign(mergedVariantTypes, tempVariantTypes);
+            }
+            
+            // Create validation context
+            const validationContext = {
+              customFields: mergedCustomFields,
+              variantTypes: mergedVariantTypes,
+              tempBatchId: 'temp_validation'
+            };
             
             // Validate using the original system's validator
             const validationResult = CardTypeValidator.validateImportData(importData, validationContext);
@@ -1088,8 +1219,9 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
             
             // Fallback: just check for ID field
             cardTypes.forEach(type => {
-              if (importData[type] && Array.isArray(importData[type])) {
-                importData[type].forEach((card: any, index: number) => {
+              const cards = (importData as any)[type];
+              if (cards && Array.isArray(cards)) {
+                cards.forEach((card: any, index: number) => {
                   if (!card.id) {
                     errors.push(`${type}[${index}]: Missing card ID`);
                   }

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { customCardManager, CustomCardManager } from '@/card'
-import { CustomCardStorage } from '@/card/card-storage'
+import { CustomCardStorage } from '@/card'
 
 /**
  * 卡牌系统初始化组件

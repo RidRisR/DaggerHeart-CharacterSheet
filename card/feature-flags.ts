@@ -12,7 +12,7 @@ interface FeatureFlags {
 
 // Default feature flag values
 const DEFAULT_FLAGS: FeatureFlags = {
-  useUnifiedCardSystem: false, // Start with legacy system
+  useUnifiedCardSystem: true, // Default to unified system (legacy available as fallback)
   enableUnifiedCardDebug: false,
   enableUnifiedCardMetrics: false,
 };
@@ -119,8 +119,8 @@ if (typeof window !== 'undefined') {
       console.log(`
 Card System Feature Flags:
 
-🚀 Enable unified system:  cardSystemFlags.enable()
-🔙 Disable unified system: cardSystemFlags.disable()
+🚀 Enable unified system:  cardSystemFlags.enable() (default)
+🔙 Disable unified system: cardSystemFlags.disable() (fallback to legacy)
 🐛 Enable debug logging:   cardSystemFlags.enableDebug()
 📊 Check current status:   cardSystemFlags.status()
 

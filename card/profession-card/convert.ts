@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid"
 import { CardType, processCardDescription, type StandardCard } from "@/card/card-types"
-import { DomainClass, ProfessionClass } from "@/card/card-predefined-field";
+import { DomainClass, ProfessionClass } from "@/card/card-types";
 
 // 职业卡牌数据结构
 export interface ProfessionCard {

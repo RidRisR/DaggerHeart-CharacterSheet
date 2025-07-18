@@ -1,25 +1,45 @@
-// 属性类别常量列表
-export const ATTRIBUTE_CLASS_NAMES: string[] = [
-    "力量", "敏捷", "灵巧", "风度", "本能", "知识", "不可施法"
-];
-
-// 子职业等级常量列表  
-export const SUBCLASS_LEVEL_NAMES: string[] = [
-    "基石", "专精", "大师", "未知"
-];
-
-// 从常量列表生成类型
-export type AttributeClass = typeof ATTRIBUTE_CLASS_NAMES[number];
-export type SubClassLevel = typeof SUBCLASS_LEVEL_NAMES[number];
-export type SubClassClass = string;
-export type ProfessionClass = string;
-export type AncestryClass = string;
-export type CommunityClass = string;
-export type DomainClass = string;
+// Constants moved to card-types.ts to avoid circular dependencies
+// Other type definitions moved to card-types.ts to avoid circular dependencies
 
 // Import storage functions
-import { CustomCardStorage, type CustomFieldsForBatch, type VariantTypesForBatch } from './card-storage';
+import { useUnifiedCardStore } from './stores/unified-card-store';
+import { type CustomFieldsForBatch, type VariantTypesForBatch, type CustomFieldNamesStore } from './stores/unified-card-store';
 import { type ValidationContext } from './type-validators';
+
+// Helper function to merge custom fields (simplified inline implementation)
+function mergeCustomFields(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): CustomFieldNamesStore {
+  const store = useUnifiedCardStore.getState();
+  const existing = store.getAggregatedCustomFields();
+  
+  if (!tempDefinitions) {
+    return existing;
+  }
+  
+  const merged: CustomFieldNamesStore = { ...existing };
+  
+  for (const [category, names] of Object.entries(tempDefinitions)) {
+    if (Array.isArray(names)) {
+      if (!merged[category]) {
+        merged[category] = [];
+      }
+      merged[category] = [...new Set([...merged[category], ...names])];
+    }
+  }
+  
+  return merged;
+}
+
+// Helper function to merge variant types (simplified inline implementation)
+function mergeVariantTypes(tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): VariantTypesForBatch {
+  const store = useUnifiedCardStore.getState();
+  const existing = store.getAggregatedVariantTypes();
+  
+  if (!tempDefinitions) {
+    return existing;
+  }
+  
+  return { ...existing, ...tempDefinitions };
+}
 
 // 调试日志标记
 const DEBUG_PREDEFINED_FIELDS = false;
@@ -31,7 +51,7 @@ const logDebug = (operation: string, details: any) => {
 
 // Getter functions
 export function getProfessionCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
-    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
+    const aggregatedCustomFields = mergeCustomFields(tempBatchId, tempDefinitions);
     const customNames = aggregatedCustomFields.professions || []; // Use 'professions' instead of 'profession'
     const result = [...new Set([...customNames])];
     
@@ -48,7 +68,7 @@ export function getProfessionCardNames(tempBatchId?: string, tempDefinitions?: C
 }
 
 export function getAncestryCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
-    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
+    const aggregatedCustomFields = mergeCustomFields(tempBatchId, tempDefinitions);
     const customNames = aggregatedCustomFields.ancestries || []; // Use 'ancestries' instead of 'ancestry'
     const result = [...new Set([...customNames])];
     
@@ -63,7 +83,7 @@ export function getAncestryCardNames(tempBatchId?: string, tempDefinitions?: Cus
 }
 
 export function getCommunityCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
-    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
+    const aggregatedCustomFields = mergeCustomFields(tempBatchId, tempDefinitions);
     const customNames = aggregatedCustomFields.communities || []; // Use 'communities' instead of 'community'
     const result = [...new Set([...customNames])];
     
@@ -84,7 +104,7 @@ export function getSubClassCardNames(tempBatchId?: string, tempDefinitions?: Cus
 }
 
 export function getDomainCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
-    const aggregatedCustomFields = CustomCardStorage.getAggregatedCustomFieldNamesWithTemp(tempBatchId, tempDefinitions);
+    const aggregatedCustomFields = mergeCustomFields(tempBatchId, tempDefinitions);
     const customNames = aggregatedCustomFields.domains || []; // Use 'domains' instead of 'domain'
     const result = [...new Set([...customNames])];
     
@@ -108,7 +128,7 @@ export function getDomainCardNames(tempBatchId?: string, tempDefinitions?: Custo
  * 获取所有可用的变体类型定义
  */
 export function getVariantTypes(tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): Record<string, any> {
-    const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
+    const aggregatedTypes = mergeVariantTypes(tempBatchId, tempDefinitions);
     
     logDebug('getVariantTypes', {
         typeCount: Object.keys(aggregatedTypes).length,
@@ -124,7 +144,7 @@ export function getVariantTypes(tempBatchId?: string, tempDefinitions?: VariantT
  * 获取指定变体类型的子类别选项
  */
 export function getVariantSubclasses(variantType: string, tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): string[] {
-    const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
+    const aggregatedTypes = mergeVariantTypes(tempBatchId, tempDefinitions);
     const typeDef = aggregatedTypes[variantType];
     
     logDebug('getVariantSubclasses', {
@@ -141,7 +161,7 @@ export function getVariantSubclasses(variantType: string, tempBatchId?: string, 
  * 获取所有变体类型的名称列表
  */
 export function getVariantTypeNames(tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): string[] {
-    const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
+    const aggregatedTypes = mergeVariantTypes(tempBatchId, tempDefinitions);
     
     const typeNames = Object.keys(aggregatedTypes);
     
@@ -158,7 +178,7 @@ export function getVariantTypeNames(tempBatchId?: string, tempDefinitions?: Vari
  * 检查变体类型是否存在
  */
 export function hasVariantType(variantType: string, tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): boolean {
-    const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
+    const aggregatedTypes = mergeVariantTypes(tempBatchId, tempDefinitions);
     const exists = variantType in aggregatedTypes;
     
     logDebug('hasVariantType', {
@@ -174,7 +194,7 @@ export function hasVariantType(variantType: string, tempBatchId?: string, tempDe
  * 获取变体类型的显示名称
  */
 export function getVariantTypeName(variantType: string, tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): string {
-    const aggregatedTypes = CustomCardStorage.getAggregatedVariantTypesWithTemp(tempBatchId, tempDefinitions);
+    const aggregatedTypes = mergeVariantTypes(tempBatchId, tempDefinitions);
     const typeDef = aggregatedTypes[variantType];
     
     // 直接使用variantType作为显示名称，不再依赖name字段

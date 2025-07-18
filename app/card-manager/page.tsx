@@ -18,7 +18,7 @@ import {
   type ImportResult,
   type ExtendedStandardCard
 } from '@/card/index'
-import { CustomCardManager } from '@/card/custom-card-manager'
+import { CustomCardManager } from '@/card'
 import { getBasePath } from '@/lib/utils'
 
 interface ImportStatus {

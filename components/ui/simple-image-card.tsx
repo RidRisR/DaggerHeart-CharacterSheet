@@ -5,7 +5,7 @@ import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import React, { useState } from "react"
 import Image from "next/image"
-import { getCardImageUrl, getCardImageUrlSync } from "@/lib/utils"
+import { getCardImageUrl } from "@/lib/utils"
 
 const getDisplayTypeName = (card: StandardCard) => {
     if (isVariantCard(card)) {
@@ -26,7 +26,7 @@ interface SimpleImageCardProps {
 
 export function SimpleImageCard({ card, onClick, isSelected, priority = false }: SimpleImageCardProps) {
     const [imageError, setImageError] = useState(false)
-    const [imageSrc, setImageSrc] = useState<string>('')
+    const [imageSrc, setImageSrc] = useState<string | null>(null)
 
     // 异步获取图片URL
     React.useEffect(() => {
@@ -58,16 +58,18 @@ export function SimpleImageCard({ card, onClick, isSelected, priority = false }:
         >
             {/* Image Container */}
             <div className="relative w-full aspect-[1.4] overflow-hidden">
-                <Image
-                    src={imageSrc || getCardImageUrlSync(undefined, true)}
-                    alt={displayName}
-                    width={300}
-                    height={420}
-                    className="w-full h-auto object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
-                    priority={priority}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                    onError={() => setImageError(true)}
-                />
+                {imageSrc && (
+                    <Image
+                        src={imageSrc}
+                        alt={displayName}
+                        width={300}
+                        height={420}
+                        className="w-full h-auto object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+                        priority={priority}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                        onError={() => setImageError(true)}
+                    />
+                )}
 
                 {/* 轻度遮罩 + 文字阴影 */}
                 <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/25 to-transparent pointer-events-none" />

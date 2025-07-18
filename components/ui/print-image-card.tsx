@@ -7,7 +7,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import Image from "next/image"
-import { getCardImageUrl, getCardImageUrlSync } from "@/lib/utils"
+import { getCardImageUrl } from "@/lib/utils"
 
 // Helper function to get display type name
 const getDisplayTypeName = (card: StandardCard) => {
@@ -26,7 +26,7 @@ interface PrintImageCardProps {
 }
 
 export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
-    const [imageSrc, setImageSrc] = React.useState<string>('')
+    const [imageSrc, setImageSrc] = React.useState<string | null>(null)
     
     // 异步获取图片URL
     React.useEffect(() => {
@@ -57,15 +57,17 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
         <div className="flex flex-col overflow-hidden rounded-lg border border-gray-300 bg-white h-full">
             {/* Image Container */}
             <div className="relative w-full aspect-[1.4] overflow-hidden">
-                <Image
-                    src={imageSrc || getCardImageUrlSync(undefined, true)}
-                    alt={displayName}
-                    fill
-                    className="w-full h-full object-cover"
-                    sizes="30vw"
-                    onLoad={handleImageLoad}
-                    priority
-                />
+                {imageSrc && (
+                    <Image
+                        src={imageSrc}
+                        alt={displayName}
+                        fill
+                        className="w-full h-full object-cover"
+                        sizes="30vw"
+                        onLoad={handleImageLoad}
+                        priority
+                    />
+                )}
                 <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/50 to-transparent pointer-events-none flex flex-col justify-end p-2">
                     <h3 className="text-base font-bold text-white leading-tight">{displayName}</h3>
                     <span className="text-xs font-medium text-gray-200">{getDisplayTypeName(card)}</span>

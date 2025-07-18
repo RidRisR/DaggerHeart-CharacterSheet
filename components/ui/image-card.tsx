@@ -10,7 +10,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import Image from "next/image"
-import { getCardImageUrl, getCardImageUrlSync } from "@/lib/utils"
+import { getCardImageUrl } from "@/lib/utils"
 
 // Helper function to get display type name, moved outside of the component
 const getDisplayTypeName = (card: StandardCard) => {
@@ -105,7 +105,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
     const [cardSource, setCardSource] = useState<string>("加载中...")
     const [imageLoaded, setImageLoaded] = useState(false)
     const [imageError, setImageError] = useState(false)
-    const [imageSrc, setImageSrc] = useState<string>('')
+    const [imageSrc, setImageSrc] = useState<string | null>(null)
     const [cardScale, setCardScale] = useState('scale(1)')
     const cardRef = useRef<HTMLDivElement | null>(null)
 
@@ -215,17 +215,19 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         >
             {/* Image Container */}
             <div className="relative w-full aspect-[1.4] overflow-hidden">
-                <Image
-                    src={imageSrc || getCardImageUrlSync(undefined, true)}
-                    alt={displayName}
-                    width={300}
-                    height={420}
-                    className="w-full h-auto object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
-                    priority={priority}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                    onLoad={() => setImageLoaded(true)}
-                    onError={() => setImageError(true)}
-                />
+                {imageSrc && (
+                    <Image
+                        src={imageSrc}
+                        alt={displayName}
+                        width={300}
+                        height={420}
+                        className="w-full h-auto object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+                        priority={priority}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                        onLoad={() => setImageLoaded(true)}
+                        onError={() => setImageError(true)}
+                    />
+                )}
 
                 {/* Level badge for Domain cards with frosted glass effect */}
                 {/* {card.type !== (CardType.Ancestry) && card.level && (

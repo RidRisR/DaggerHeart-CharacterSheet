@@ -19,8 +19,8 @@ export {
   CardType,
   CardSource,
   ALL_CARD_TYPES,
-  CARD_CLASS_OPTIONS,
-  CARD_LEVEL_OPTIONS
+  CARD_LEVEL_OPTIONS,
+  getCardClassOptions as CARD_CLASS_OPTIONS
 } from './card-types';
 
 export type {
@@ -32,9 +32,13 @@ export type {
 
 // Re-export UI configuration functions
 export {
-  CARD_CLASS_OPTIONS_BY_TYPE,
+  getCardClassOptionsByType as CARD_CLASS_OPTIONS_BY_TYPE,
+  getCardClassOptionsByType,
   getCardTypeName,
   getLevelOptions,
+  getVariantSubclassOptions,
+  getAvailableVariantTypes,
+  getVariantLevelOptions,
 } from './card-ui-config';
 
 // Re-export card converter
@@ -205,6 +209,48 @@ export function refreshCustomCards(): void {
 export const getBatchName = (batchId: string): string | null => {
   const store = useUnifiedCardStore.getState();
   return store.getBatchName(batchId);
+};
+
+/**
+ * Toggle batch disabled status
+ */
+export const toggleBatchDisabled = async (batchId: string): Promise<boolean> => {
+  const store = useUnifiedCardStore.getState();
+  return store.toggleBatchDisabled(batchId);
+};
+
+/**
+ * Get batch disabled status
+ */
+export const getBatchDisabledStatus = (batchId: string): boolean => {
+  const store = useUnifiedCardStore.getState();
+  return store.getBatchDisabledStatus(batchId);
+};
+
+/**
+ * Get all batches with status information
+ */
+export const getAllBatches = () => {
+  const store = useUnifiedCardStore.getState();
+  return store.getAllBatches();
+};
+
+/**
+ * Initialize the card system (compatibility function)
+ */
+export const initializeCardSystem = async (): Promise<void> => {
+  const store = useUnifiedCardStore.getState();
+  if (!store.initialized) {
+    await store.initializeSystem();
+  }
+};
+
+/**
+ * Force reinitialize the card system
+ */
+export const reinitializeCardSystem = async (): Promise<void> => {
+  const store = useUnifiedCardStore.getState();
+  await store.initializeSystem();
 };
 
 // ===== Compatibility Layer for CustomCardManager =====

@@ -183,6 +183,12 @@ interface UnifiedCardActions {
   // Batch operations
   updateBatchCustomFields: (batchId: string, definitions: CustomFieldsForBatch) => void;
   updateBatchVariantTypes: (batchId: string, types: VariantTypesForBatch) => void;
+  toggleBatchDisabled: (batchId: string) => Promise<boolean>;
+  getBatchDisabledStatus: (batchId: string) => boolean;
+  
+  // Legacy compatibility methods
+  ensureInitialized: () => Promise<void>;
+  forceReinitialize: () => Promise<void>;
   
   // Utilities
   getBatchName: (batchId: string) => string | null;
@@ -751,6 +757,62 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
           });
           
           get()._syncToLocalStorage();
+        },
+        toggleBatchDisabled: async (batchId: string) => {
+          const state = get();
+          const batch = state.batches.get(batchId);
+          if (!batch) return false;
+          
+          const updatedBatch = {
+            ...batch,
+            disabled: !batch.disabled
+          };
+          
+          const newBatches = new Map(state.batches);
+          newBatches.set(batchId, updatedBatch);
+          
+          // Update the index as well
+          const newIndex = { ...state.index };
+          if (newIndex.batches[batchId]) {
+            newIndex.batches[batchId] = {
+              ...newIndex.batches[batchId],
+              disabled: updatedBatch.disabled
+            };
+          }
+          
+          set({ 
+            batches: newBatches,
+            index: newIndex,
+            cacheValid: false 
+          });
+          
+          get()._syncToLocalStorage();
+          return true;
+        },
+        getBatchDisabledStatus: (batchId: string) => {
+          const batch = get().batches.get(batchId);
+          return batch?.disabled || false;
+        },
+
+        // Legacy compatibility methods
+        ensureInitialized: async () => {
+          const state = get();
+          if (!state.initialized) {
+            await get().initializeSystem();
+          }
+        },
+        forceReinitialize: async () => {
+          // Clear current state
+          set({
+            batches: new Map(),
+            cards: new Map(),
+            index: { batches: {}, totalBatches: 0, totalCards: 0, lastUpdate: new Date().toISOString() },
+            initialized: false,
+            cacheValid: false
+          });
+          
+          // Reinitialize system
+          await get().initializeSystem();
         },
 
         // Utilities

@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react" // Added useState
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {
-  CARD_CLASS_OPTIONS_BY_TYPE,
+  getCardClassOptionsByType,
   getLevelOptions,
   getVariantSubclassOptions,
   getCardTypeName,
-} from "@/card/card-ui-config"
+} from "@/card/index"
 import { CardType } from "@/card"; // Add this import
 import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType } from "@/card/card-types"
 import { createEmptyCard } from "@/card/card-types"
@@ -149,7 +149,7 @@ export function CardSelectionModal({
     }
 
     // 否则返回标准卡牌类型的class选项
-    return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
+    return getCardClassOptionsByType()[activeTab as CardType] || []
   }, [activeTab]);
 
   const levelOptions = useMemo(() => {

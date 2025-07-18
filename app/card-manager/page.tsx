@@ -14,11 +14,15 @@ import {
   clearAllCustomCards,
   getCustomCardStorageInfo,
   getCustomCards,
+  toggleBatchDisabled,
+  getBatchDisabledStatus,
+  getAllBatches,
+  initializeCardSystem,
+  reinitializeCardSystem,
   type ImportData,
   type ImportResult,
   type ExtendedStandardCard
 } from '@/card/index'
-import { CustomCardManager } from '@/card'
 import { getBasePath } from '@/lib/utils'
 
 interface ImportStatus {
@@ -103,8 +107,7 @@ export default function CardImportTestPage() {
       setIsClient(true)
       if (typeof window !== 'undefined') {
         // 确保系统初始化后再刷新数据
-        const customCardManager = CustomCardManager.getInstance()
-        await customCardManager.ensureInitialized()
+        await initializeCardSystem()
         refreshData()
       }
     }
@@ -150,8 +153,7 @@ export default function CardImportTestPage() {
   // 切换批次启用/禁用状态
   const handleToggleBatchDisabled = async (batchId: string) => {
     try {
-      const customCardManager = CustomCardManager.getInstance()
-      const success = await customCardManager.toggleBatchDisabled(batchId)
+      const success = await toggleBatchDisabled(batchId)
 
       if (success) {
         // 刷新数据以反映更改
@@ -165,16 +167,6 @@ export default function CardImportTestPage() {
     }
   }
 
-  // 获取批次禁用状态
-  const getBatchDisabledStatus = (batchId: string): boolean => {
-    try {
-      const customCardManager = CustomCardManager.getInstance()
-      return customCardManager.getBatchDisabledStatus(batchId)
-    } catch (error) {
-      console.error('获取卡牌包状态时出错:', error)
-      return false
-    }
-  }
 
   // 处理文件选择
   const handleFileSelect = (files: FileList | null) => {
@@ -306,9 +298,8 @@ export default function CardImportTestPage() {
         // 清空所有localStorage数据
         localStorage.clear()
 
-        // 强制重新初始化CustomCardManager
-        const customCardManager = CustomCardManager.getInstance()
-        await customCardManager.forceReinitialize()
+        // 强制重新初始化卡牌系统
+        await reinitializeCardSystem()
 
         // 刷新数据显示
         refreshData()

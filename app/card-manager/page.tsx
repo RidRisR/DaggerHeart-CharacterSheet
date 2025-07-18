@@ -128,7 +128,7 @@ export default function CardImportTestPage() {
   const refreshData = () => {
     if (typeof window !== 'undefined') {
       setStats(getCustomCardStats())
-      setBatches(getCustomCardBatches())
+      setBatches(getAllBatches())
       setStorageInfo(getCustomCardStorageInfo())
     }
   }
@@ -653,7 +653,7 @@ export default function CardImportTestPage() {
                           </Button>
                           <Button
                             size="sm"
-                            variant={getBatchDisabledStatus(batch.id) ? "outline" : "secondary"}
+                            variant="outline"
                             onClick={() => handleToggleBatchDisabled(batch.id)}
                             className="h-8 px-2"
                             title={getBatchDisabledStatus(batch.id) ? "启用批次" : "禁用批次"}
@@ -669,6 +669,7 @@ export default function CardImportTestPage() {
                             variant="destructive"
                             onClick={() => handleRemoveBatch(batch.id)}
                             className="h-8 px-2"
+                            disabled={batch.isSystemBatch}
                           >
                             <XCircle className="h-3 w-3" />
                           </Button>

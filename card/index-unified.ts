@@ -51,7 +51,7 @@ export {
 } from './card-predefined-field';
 
 // Re-export card converter
-export { convertToStandardCard } from './card-converter';
+export { convertToStandardCard, convertToStandardCardAsync } from './card-converter';
 
 // ===== Main Card Data Functions =====
 
@@ -99,7 +99,53 @@ export async function getAllStandardCardsAsync(): Promise<ExtendedStandardCard[]
 }
 
 /**
- * Get cards by type - async version ensuring system initialization
+ * Get cards by type - synchronous version (use when system is guaranteed to be initialized)
+ */
+export function getStandardCardsByType(typeId: CardType): ExtendedStandardCard[] {
+  const store = useUnifiedCardStore.getState();
+  
+  if (!store.initialized) {
+    console.warn('[Unified Card System] System not initialized, returning empty array. Use getStandardCardsByTypeAsync() for automatic initialization.');
+    return [];
+  }
+  
+  const cards = store.loadCardsByType(typeId);
+  
+  // Add batchName for custom cards
+  return cards.map(card => {
+    if (card.source === CardSource.CUSTOM && card.batchId) {
+      const batchName = store.getBatchName(card.batchId);
+      return { ...card, batchName: batchName || undefined };
+    }
+    return card;
+  });
+}
+
+/**
+ * Get a specific card by ID - O(1) lookup
+ */
+export function getStandardCardById(cardId: string): ExtendedStandardCard | null {
+  const store = useUnifiedCardStore.getState();
+  
+  if (!store.initialized) {
+    console.warn('[Unified Card System] System not initialized, returning null. Use async version for automatic initialization.');
+    return null;
+  }
+  
+  const card = store.getCardById(cardId);
+  if (!card) return null;
+  
+  // Add batchName for custom cards
+  if (card.source === CardSource.CUSTOM && card.batchId) {
+    const batchName = store.getBatchName(card.batchId);
+    return { ...card, batchName: batchName || undefined };
+  }
+  
+  return card;
+}
+
+/**
+ * Get cards by type - async version ensuring system initialization (legacy support)
  */
 export async function getStandardCardsByTypeAsync(typeId: CardType): Promise<ExtendedStandardCard[]> {
   const store = useUnifiedCardStore.getState();
@@ -113,19 +159,25 @@ export async function getStandardCardsByTypeAsync(typeId: CardType): Promise<Ext
     }
   }
   
-  const cards = store.loadCardsByType(typeId);
+  return getStandardCardsByType(typeId);
+}
+
+/**
+ * Get a specific card by ID - async version ensuring system initialization (legacy support)
+ */
+export async function getStandardCardByIdAsync(cardId: string): Promise<ExtendedStandardCard | null> {
+  const store = useUnifiedCardStore.getState();
   
-  // Add batchName for custom cards
-  const cardsWithBatchNames = cards.map(card => {
-    if (card.source === CardSource.CUSTOM && card.batchId) {
-      const batchName = store.getBatchName(card.batchId);
-      return { ...card, batchName: batchName || undefined };
+  // Ensure system is initialized
+  if (!store.initialized) {
+    const result = await store.initializeSystem();
+    if (!result.initialized) {
+      console.error('[Unified Card System] Failed to initialize system');
+      return null;
     }
-    return card;
-  });
+  }
   
-  console.log(`[Unified Card System] Loaded ${cardsWithBatchNames.length} cards of type ${typeId}`);
-  return cardsWithBatchNames;
+  return getStandardCardById(cardId);
 }
 
 // ===== Custom Card Management Functions =====
@@ -195,13 +247,6 @@ export function clearAllCustomCards(): void {
   store.clearAllCustomCards();
 }
 
-/**
- * Get storage usage information
- */
-export function getCustomCardStorageInfo() {
-  const store = useUnifiedCardStore.getState();
-  return store.getStorageInfo();
-}
 
 /**
  * Refresh custom cards (invalidate cache and reload)
@@ -244,320 +289,11 @@ export const getAllBatches = () => {
   return store.getAllBatches();
 };
 
-/**
- * Initialize the card system (compatibility function)
- */
-export const initializeCardSystem = async (): Promise<void> => {
-  const store = useUnifiedCardStore.getState();
-  if (!store.initialized) {
-    await store.initializeSystem();
-  }
-};
+// ===== Store and Hooks =====
 
-/**
- * Force reinitialize the card system
- */
-export const reinitializeCardSystem = async (): Promise<void> => {
-  const store = useUnifiedCardStore.getState();
-  await store.initializeSystem();
-};
+console.log('[Unified Card System] System loaded, waiting for client initialization...');
 
-// ===== Compatibility Layer for CustomCardManager =====
-
-/**
- * Compatibility layer that provides the same interface as CustomCardManager
- */
-const createCustomCardManagerCompatibility = () => {
-  const getInstance = () => ({
-    // Core data methods
-    getAllCards: (): ExtendedStandardCard[] => {
-      const store = useUnifiedCardStore.getState();
-      return store.loadAllCards();
-    },
-    
-    getAllCardsByType: (typeId: CardType): ExtendedStandardCard[] => {
-      const store = useUnifiedCardStore.getState();
-      return store.loadCardsByType(typeId);
-    },
-    
-    getCustomCards: (): ExtendedStandardCard[] => {
-      const store = useUnifiedCardStore.getState();
-      return store.loadAllCards().filter(card => card.source === CardSource.CUSTOM);
-    },
-    
-    getCustomCardsByType: (typeId: CardType): ExtendedStandardCard[] => {
-      const store = useUnifiedCardStore.getState();
-      return store.loadCardsByType(typeId).filter(card => card.source === CardSource.CUSTOM);
-    },
-    
-    // System methods
-    ensureInitialized: async (): Promise<void> => {
-      const store = useUnifiedCardStore.getState();
-      if (!store.initialized) {
-        const result = await store.initializeSystem();
-        if (!result.initialized) {
-          throw new Error('Failed to initialize card system');
-        }
-      }
-    },
-    
-    tryGetAllCards: (): ExtendedStandardCard[] | null => {
-      const store = useUnifiedCardStore.getState();
-      return store.initialized ? store.loadAllCards() : null;
-    },
-    
-    // Batch management
-    importCards: async (importData: ImportData, batchName?: string): Promise<ImportResult> => {
-      const store = useUnifiedCardStore.getState();
-      return store.importCards(importData, batchName);
-    },
-    
-    getAllBatches: () => {
-      const store = useUnifiedCardStore.getState();
-      return store.getAllBatches();
-    },
-    
-    removeBatch: (batchId: string): boolean => {
-      const store = useUnifiedCardStore.getState();
-      return store.removeBatch(batchId);
-    },
-    
-    getBatchName: (batchId: string): string | null => {
-      const store = useUnifiedCardStore.getState();
-      return store.getBatchName(batchId);
-    },
-    
-    // Statistics and storage
-    getStats: (): CustomCardStats => {
-      const store = useUnifiedCardStore.getState();
-      return store.getStats();
-    },
-    
-    getStorageInfo: () => {
-      const store = useUnifiedCardStore.getState();
-      return store.getStorageInfo();
-    },
-    
-    clearAllCustomCards: (): void => {
-      const store = useUnifiedCardStore.getState();
-      store.clearAllCustomCards();
-    },
-    
-    // Type registration (compatibility - not used in new system)
-    registerCardType: (_typeId: string, _config: any): void => {
-      console.log('[Unified Card System] registerCardType called (compatibility mode)');
-    },
-    
-    // Cache management
-    reloadCustomCards: (): void => {
-      const store = useUnifiedCardStore.getState();
-      store.reloadCustomCards();
-    }
-  });
-  
-  // Static methods for compatibility
-  const staticMethods = {
-    getInstance,
-    
-    // Direct static access to common methods
-    initialize: async () => {
-      const store = useUnifiedCardStore.getState();
-      return store.initializeSystem();
-    },
-    
-    generateBatchId: (): string => {
-      const store = useUnifiedCardStore.getState();
-      return store.generateBatchId();
-    },
-    
-    getAggregatedCustomFieldNames: () => {
-      const store = useUnifiedCardStore.getState();
-      return store.getAggregatedCustomFields();
-    },
-    
-    getAggregatedVariantTypes: () => {
-      const store = useUnifiedCardStore.getState();
-      return store.getAggregatedVariantTypes();
-    },
-    
-    checkStorageSpace: (requiredSize: number): boolean => {
-      const store = useUnifiedCardStore.getState();
-      return store.checkStorageSpace(requiredSize);
-    },
-    
-    getFormattedStorageInfo: () => {
-      const store = useUnifiedCardStore.getState();
-      return store.getStorageInfo();
-    },
-    
-    saveBatch: (_batchId: string, _data: any): void => {
-      console.warn('[Unified Card System] saveBatch called - not implemented in compatibility mode');
-    },
-    
-    loadIndex: () => {
-      const store = useUnifiedCardStore.getState();
-      return store.index;
-    },
-    
-    saveIndex: (_index: any): void => {
-      console.warn('[Unified Card System] saveIndex called - handled automatically');
-    },
-    
-    removeBatch: (batchId: string): void => {
-      const store = useUnifiedCardStore.getState();
-      store.removeBatch(batchId);
-    },
-    
-    loadBatch: (_batchId: string) => {
-      console.warn('[Unified Card System] loadBatch called - not implemented in compatibility mode');
-      return null;
-    },
-    
-    updateBatchCustomFields: (batchId: string, definitions: any): void => {
-      const store = useUnifiedCardStore.getState();
-      store.updateBatchCustomFields(batchId, definitions);
-    },
-    
-    updateBatchVariantTypes: (batchId: string, types: any): void => {
-      const store = useUnifiedCardStore.getState();
-      store.updateBatchVariantTypes(batchId, types);
-    },
-    
-    validateIntegrity: () => {
-      const store = useUnifiedCardStore.getState();
-      return store.validateIntegrity();
-    },
-    
-    cleanupOrphanedData: () => {
-      const store = useUnifiedCardStore.getState();
-      return store.cleanupOrphanedData();
-    },
-    
-    calculateStorageUsage: () => {
-      const store = useUnifiedCardStore.getState();
-      return store.calculateStorageUsage();
-    },
-    
-    clearAllData: (): void => {
-      const store = useUnifiedCardStore.getState();
-      store.clearAllCustomCards();
-    }
-  };
-  
-  return Object.assign(getInstance, staticMethods);
-};
-
-// Create the compatibility layer instance
-const customCardManagerInstance = createCustomCardManagerCompatibility();
-
-// Add ensureInitialized directly to the top level for compatibility
-(customCardManagerInstance as any).ensureInitialized = async (): Promise<void> => {
-  const store = useUnifiedCardStore.getState();
-  if (!store.initialized) {
-    const result = await store.initializeSystem();
-    if (!result.initialized) {
-      throw new Error('Failed to initialize card system');
-    }
-  }
-};
-
-// Export the compatibility layer
-export const customCardManager = customCardManagerInstance as any;
-export const CustomCardManager = customCardManagerInstance as any;
-
-// For backward compatibility
-export const builtinCardManager = customCardManager;
-
-// Export the CustomCardStorage compatibility (simplified)
-export const CustomCardStorage = {
-  initialize: () => {
-    const store = useUnifiedCardStore.getState();
-    return store.initializeSystem();
-  },
-  
-  generateBatchId: (): string => {
-    const store = useUnifiedCardStore.getState();
-    return store.generateBatchId();
-  },
-  
-  getAggregatedCustomFieldNames: () => {
-    const store = useUnifiedCardStore.getState();
-    return store.getAggregatedCustomFields();
-  },
-  
-  getAggregatedVariantTypes: () => {
-    const store = useUnifiedCardStore.getState();
-    return store.getAggregatedVariantTypes();
-  },
-  
-  checkStorageSpace: (requiredSize: number): boolean => {
-    const store = useUnifiedCardStore.getState();
-    return store.checkStorageSpace(requiredSize);
-  },
-  
-  getFormattedStorageInfo: () => {
-    const store = useUnifiedCardStore.getState();
-    return store.getStorageInfo();
-  },
-  
-  loadIndex: () => {
-    const store = useUnifiedCardStore.getState();
-    return store.index;
-  },
-  
-  saveIndex: (_index: any): void => {
-    console.warn('[Unified Card System] saveIndex called - handled automatically');
-  },
-  
-  saveBatch: (_batchId: string, _data: any): void => {
-    console.warn('[Unified Card System] saveBatch called - not implemented');
-  },
-  
-  loadBatch: (_batchId: string) => {
-    console.warn('[Unified Card System] loadBatch called - not implemented');
-    return null;
-  },
-  
-  removeBatch: (batchId: string): void => {
-    const store = useUnifiedCardStore.getState();
-    store.removeBatch(batchId);
-  },
-  
-  updateBatchCustomFields: (batchId: string, definitions: any): void => {
-    const store = useUnifiedCardStore.getState();
-    store.updateBatchCustomFields(batchId, definitions);
-  },
-  
-  updateBatchVariantTypes: (batchId: string, types: any): void => {
-    const store = useUnifiedCardStore.getState();
-    store.updateBatchVariantTypes(batchId, types);
-  },
-  
-  validateIntegrity: () => {
-    const store = useUnifiedCardStore.getState();
-    return store.validateIntegrity();
-  },
-  
-  cleanupOrphanedData: () => {
-    const store = useUnifiedCardStore.getState();
-    return store.cleanupOrphanedData();
-  },
-  
-  calculateStorageUsage: () => {
-    const store = useUnifiedCardStore.getState();
-    return store.calculateStorageUsage();
-  },
-  
-  clearAllData: (): void => {
-    const store = useUnifiedCardStore.getState();
-    store.clearAllCustomCards();
-  }
-};
-
-// Register card types (for compatibility)
-console.log('[Unified Card System] All converters registered, waiting for client initialization...');
-
-// Export store for direct access if needed
+// Export store for direct access
 export { useUnifiedCardStore };
 
 // Export hooks for React components
@@ -565,5 +301,6 @@ export {
   useCards,
   useBatches,
   useCardStats,
-  useCardSystem
+  useCardSystem,
+  useCardById
 } from './stores/unified-card-store';

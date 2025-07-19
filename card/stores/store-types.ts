@@ -187,9 +187,6 @@ export interface UnifiedCardActions {
   toggleBatchDisabled: (batchId: string) => Promise<boolean>;
   getBatchDisabledStatus: (batchId: string) => boolean;
   
-  // Legacy compatibility methods
-  ensureInitialized: () => Promise<void>;
-  forceReinitialize: () => Promise<void>;
   
   // Utilities
   getBatchName: (batchId: string) => string | null;

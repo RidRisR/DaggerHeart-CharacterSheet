@@ -12,17 +12,15 @@ import {
   getCustomCardStats,
   removeCustomCardBatch,
   clearAllCustomCards,
-  getCustomCardStorageInfo,
   getCustomCards,
   toggleBatchDisabled,
   getBatchDisabledStatus,
   getAllBatches,
-  initializeCardSystem,
-  reinitializeCardSystem,
   type ImportData,
   type ImportResult,
   type ExtendedStandardCard
 } from '@/card/index'
+import { useUnifiedCardStore } from '@/card/stores/unified-card-store'
 import { getBasePath } from '@/lib/utils'
 
 interface ImportStatus {
@@ -107,7 +105,10 @@ export default function CardImportTestPage() {
       setIsClient(true)
       if (typeof window !== 'undefined') {
         // 确保系统初始化后再刷新数据
-        await initializeCardSystem()
+        const store = useUnifiedCardStore.getState()
+        if (!store.initialized) {
+          await store.initializeSystem()
+        }
         refreshData()
       }
     }
@@ -129,7 +130,7 @@ export default function CardImportTestPage() {
     if (typeof window !== 'undefined') {
       setStats(getCustomCardStats())
       setBatches(getAllBatches())
-      setStorageInfo(getCustomCardStorageInfo())
+      setStorageInfo(useUnifiedCardStore.getState().getStorageInfo())
     }
   }
 
@@ -299,7 +300,8 @@ export default function CardImportTestPage() {
         localStorage.clear()
 
         // 强制重新初始化卡牌系统
-        await reinitializeCardSystem()
+        const store = useUnifiedCardStore.getState()
+        await store.initializeSystem()
 
         // 刷新数据显示
         refreshData()

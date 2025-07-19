@@ -635,28 +635,6 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     return batch?.disabled || false;
   },
 
-  // Legacy compatibility methods
-  ensureInitialized: async () => {
-    const state = get();
-    if (!state.initialized) {
-      await get().initializeSystem();
-    }
-  },
-
-  forceReinitialize: async () => {
-    // Clear current state
-    set({
-      batches: new Map(),
-      cards: new Map(),
-      cardsByType: new Map(),
-      index: { batches: {}, totalBatches: 0, totalCards: 0, lastUpdate: new Date().toISOString() },
-      initialized: false,
-      cacheValid: false
-    });
-    
-    // Reinitialize system
-    await get().initializeSystem();
-  },
 
   // Utilities
   getBatchName: (batchId: string) => {

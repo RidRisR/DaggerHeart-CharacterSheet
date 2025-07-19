@@ -6,7 +6,7 @@ import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-three"
 import {
-  getStandardCardsByTypeAsync,
+  getStandardCardById,
   CardType,
 } from "@/card"
 import { defaultSheetData } from "@/lib/default-sheet-data"
@@ -455,11 +455,10 @@ export default function Home() {
   }
 
   const handlePrintAll = async () => {
-    const getCardClass = async (cardId: string | undefined, cardType: CardType): Promise<string> => {
+    const getCardClass = (cardId: string | undefined): string => {
       if (!cardId) return '()';
       try {
-        const cardsOfType: StandardCard[] = await getStandardCardsByTypeAsync(cardType);
-        const card = cardsOfType.find((c: StandardCard) => c.id === cardId);
+        const card = getStandardCardById(cardId);
         return card && card.class ? String(card.class) : '()';
       } catch (error) {
         console.error('Error getting card class:', error);
@@ -470,13 +469,11 @@ export default function Home() {
     const name = formData.name || '()';
     const level = formData.level || '()';
 
-    // 并行获取所有卡片类名
-    const [ancestry1Class, professionClass, ancestry2Class, communityClass] = await Promise.all([
-      getCardClass(formData.ancestry1Ref?.id, CardType.Ancestry),
-      getCardClass(formData.professionRef?.id, CardType.Profession),
-      getCardClass(formData.ancestry2Ref?.id, CardType.Ancestry),
-      getCardClass(formData.communityRef?.id, CardType.Community)
-    ]);
+    // 同步获取所有卡片类名
+    const ancestry1Class = getCardClass(formData.ancestry1Ref?.id);
+    const professionClass = getCardClass(formData.professionRef?.id);
+    const ancestry2Class = getCardClass(formData.ancestry2Ref?.id);
+    const communityClass = getCardClass(formData.communityRef?.id);
 
     const title = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}`;
     console.log('[App] 设置页面标题:', title);

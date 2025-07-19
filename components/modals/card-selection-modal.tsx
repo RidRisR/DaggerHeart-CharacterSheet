@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce";
-import { useCardsByType } from "@/card/hooks";
+import { useCardStore } from "@/card/stores/unified-card-store";
 
 const ITEMS_PER_PAGE = 30;
 
@@ -163,22 +163,23 @@ export function CardSelectionModal({
     return getLevelOptions(activeTab as CardType)
   }, [activeTab]);
 
-  // 使用新的Hook获取卡牌数据
-  const {
-    cards: cardsForActiveTab,
-    loading: cardsLoading,
-    error: cardsError,
-    fetchCardsByType
-  } = useCardsByType(
-    isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType)
-  );
+  // 使用store直接获取卡牌数据
+  const store = useCardStore();
+  const cardsForActiveTab = useMemo(() => {
+    if (!store.initialized || !activeTab) return [];
+    const targetType = isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType);
+    return store.loadCardsByType(targetType);
+  }, [store.initialized, store.cards, store.batches, activeTab]);
+  
+  const cardsLoading = store.loading;
+  const cardsError = store.error;
 
-  // 当模态框打开且有活动标签时，触发数据加载
+  // 当模态框打开且有活动标签时，确保系统已初始化
   useEffect(() => {
-    if (isOpen && activeTab) {
-      fetchCardsByType();
+    if (isOpen && activeTab && !store.initialized) {
+      store.initializeSystem();
     }
-  }, [isOpen, activeTab, fetchCardsByType]);
+  }, [isOpen, activeTab, store.initialized, store.initializeSystem]);
 
   const fullyFilteredCards = useMemo(() => {
     if (!activeTab || !isOpen || cardsLoading || !cardsForActiveTab.length) {

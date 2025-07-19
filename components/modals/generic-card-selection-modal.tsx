@@ -14,7 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { SheetCardReference } from "@/lib/sheet-data";
-import { useCardsByType } from "@/card/hooks";
+import { useCardStore } from "@/card/stores/unified-card-store";
 import { useSheetStore } from "@/lib/sheet-store"
 
 interface GenericCardSelectionModalProps {
@@ -42,31 +42,30 @@ export function GenericCardSelectionModal({
     const [selectedSource, setSelectedSource] = useState<string>("All")
     const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发卡牌刷新动画
 
-    // Use hooks to fetch cards based on card type
-    const {
-        cards: baseCards,
-        loading: cardsLoading,
-        error: cardsError,
-        fetchCardsByType: fetchBaseCards
-    } = useCardsByType(cardType as CardType);
+    // Use store to fetch cards based on card type
+    const store = useCardStore();
+    
+    const baseCards = useMemo(() => {
+        if (!store.initialized || !cardType) return [];
+        return store.loadCardsByType(cardType as CardType);
+    }, [store.initialized, store.cards, store.batches, cardType]);
+    
+    const professionCards = useMemo(() => {
+        if (!store.initialized) return [];
+        return store.loadCardsByType(CardType.Profession);
+    }, [store.initialized, store.cards, store.batches]);
+    
+    const cardsLoading = store.loading;
+    const cardsError = store.error;
+    const professionLoading = store.loading;
+    const professionError = store.error;
 
-    // For subclass cards, we also need profession cards to determine the filter
-    const {
-        cards: professionCards,
-        loading: professionLoading,
-        error: professionError,
-        fetchCardsByType: fetchProfessionCards
-    } = useCardsByType(CardType.Profession);
-
-    // 当模态框打开时，触发数据加载
+    // 当模态框打开时，确保系统已初始化
     useEffect(() => {
-        if (isOpen) {
-            fetchBaseCards();
-            if (cardType === "subclass") {
-                fetchProfessionCards();
-            }
+        if (isOpen && !store.initialized) {
+            store.initializeSystem();
         }
-    }, [isOpen, cardType, fetchBaseCards, fetchProfessionCards]);
+    }, [isOpen, store.initialized, store.initializeSystem]);
 
     // Calculate filtered cards based on card type and level filter
     const filteredInitialCards = useMemo(() => {

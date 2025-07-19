@@ -5,9 +5,11 @@
 
 import { create } from 'zustand';
 import { persist, subscribeWithSelector } from 'zustand/middleware';
+import { useMemo } from 'react';
 import {
   UnifiedCardStore,
-  DEFAULT_CONFIG
+  DEFAULT_CONFIG,
+  ExtendedStandardCard
 } from './store-types';
 import { createStoreActions } from './store-actions';
 
@@ -60,6 +62,24 @@ export const useCardSystem = () => useUnifiedCardStore(state => ({
   error: state.error,
   initializeSystem: state.initializeSystem
 }));
+
+/**
+ * Hook for getting a specific card by ID - optimized lookup with memoization
+ */
+export const useCardById = (cardId: string): ExtendedStandardCard | null => {
+  const store = useUnifiedCardStore();
+  
+  return useMemo(() => {
+    if (!store.initialized || !cardId) return null;
+    return store.getCardById(cardId);
+  }, [store.initialized, store.cards, store.batches, cardId]);
+};
+
+/**
+ * Direct access to the unified card store
+ * Use this for all card operations
+ */
+export const useCardStore = useUnifiedCardStore;
 
 // Re-export types for external use
 export type {

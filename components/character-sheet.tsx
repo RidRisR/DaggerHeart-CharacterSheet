@@ -2,14 +2,14 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
 import { ArmorItem, armorItems } from "@/data/list/armor"
 import {
   CardType, // Import CardType
 } from "@/card"
-import { useAllCards } from "@/card/hooks"
+import { useCardStore } from "@/card/stores/unified-card-store"
 import { useSheetStore, useSheetArmorBoxes, useSheetProficiency, useSafeSheetData } from "@/lib/sheet-store"
 
 // Import modals
@@ -72,16 +72,20 @@ export default function CharacterSheet() {
   };
 
   // 使用全局卡牌Store
-  const {
-    cards: allStandardCards,
-    loading: cardsLoading,
-    fetchAllCards
-  } = useAllCards();
+  const store = useCardStore();
+  const allStandardCards = useMemo(() => {
+    if (!store.initialized) return [];
+    return store.loadAllCards();
+  }, [store.initialized, store.cards, store.batches]);
+  
+  const cardsLoading = store.loading;
 
-  // 在组件加载时触发卡牌数据加载
+  // 在组件加载时确保系统已初始化
   useEffect(() => {
-    fetchAllCards();
-  }, [fetchAllCards]);
+    if (!store.initialized) {
+      store.initializeSystem();
+    }
+  }, [store.initialized, store.initializeSystem]);
 
   // 模态框状态
   const [weaponModalOpen, setWeaponModalOpen] = useState(false)

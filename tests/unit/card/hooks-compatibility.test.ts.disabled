@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useAllCards, useCardsByType } from '@/card/hooks'
+import { useCardStore } from '@/card/stores/hooks'
 import { CardType } from '@/card'
 // Test utilities available if needed
 // import { createMockCard } from '../../utils/mocks'

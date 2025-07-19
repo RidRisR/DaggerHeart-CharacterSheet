@@ -41,7 +41,7 @@ export async function getCardImageUrl(
   if (!imageUrl && card.id) {
     try {
       // 使用 card hooks 查找 - 优化的直接查找
-      const { useCardStore } = await import("@/card/hooks");
+      const { useCardStore } = await import("@/card/stores/unified-card-store");
       const store = useCardStore.getState();
 
       // 使用优化的 getCardById 方法，避免加载所有卡牌

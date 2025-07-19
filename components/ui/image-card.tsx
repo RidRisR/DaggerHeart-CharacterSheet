@@ -5,7 +5,7 @@ import { CardSource } from "@/card/card-types"
 import { getBatchName } from "@/card"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
-import { useCardStore } from "@/card/card-store"
+import { useCardStore } from "@/card/hooks"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -45,7 +45,8 @@ const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): st
 
                 // 如果 getBatchName 获取失败，从 store 中查找同 ID 卡牌
                 const store = useCardStore.getState();
-                const matchedCard = store.allCards.find(c => c.id === card.id);
+                const allCards = store.loadAllCards();
+                const matchedCard = allCards.find(c => c.id === card.id);
                 if (matchedCard && matchedCard.batchName) {
                     return matchedCard.batchName;
                 }
@@ -62,7 +63,8 @@ const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): st
 
     // 通过ID在 store 中查找匹配的卡牌
     const store = useCardStore.getState();
-    const matchedCard = store.allCards.find(c => c.id === card.id);
+    const allCards = store.loadAllCards();
+    const matchedCard = allCards.find(c => c.id === card.id);
 
     if (matchedCard && matchedCard.source) {
         if (matchedCard.source === CardSource.BUILTIN) {

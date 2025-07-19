@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce";
-import { useCardsByType } from "@/card/card-store";
+import { useCardsByType } from "@/card/hooks";
 
 const ITEMS_PER_PAGE = 30;
 

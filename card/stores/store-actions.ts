@@ -615,14 +615,8 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     
     get()._syncToLocalStorage();
     
-    // Reset card-store cache to force reload
-    try {
-      const { useCardStore } = await import('../card-store');
-      const cardStore = useCardStore.getState();
-      cardStore.reset();
-    } catch (error) {
-      console.error('[UnifiedCardStore] Failed to reset card-store cache:', error);
-    }
+    // Note: Old card-store cache reset is no longer needed with unified system
+    // Cards are automatically updated through the unified store
     
     return true;
   },

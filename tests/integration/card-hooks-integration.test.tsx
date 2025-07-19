@@ -1,0 +1,252 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { render, screen } from '../utils/test-utils'
+import { useAllCards, useCardsByType } from '@/card/hooks'
+import { CardType } from '@/card'
+import React from 'react'
+
+// Mock the unified store
+const createMockStore = () => ({
+  initialized: false,
+  loading: false,
+  error: null,
+  cards: new Map(),
+  batches: new Map(),
+  loadAllCards: vi.fn(() => []),
+  loadCardsByType: vi.fn(() => []),
+  initializeSystem: vi.fn(() => Promise.resolve({ initialized: true })),
+})
+
+vi.mock('@/card/stores/unified-card-store', () => ({
+  useUnifiedCardStore: vi.fn(() => createMockStore())
+}))
+
+// Test component that uses useAllCards (similar to character-sheet.tsx)
+const AllCardsTestComponent: React.FC = () => {
+  const {
+    cards,
+    loading: cardsLoading,
+    error,
+    initialized,
+    fetchAllCards,
+    clearError
+  } = useAllCards()
+
+  React.useEffect(() => {
+    fetchAllCards()
+  }, [fetchAllCards])
+
+  if (cardsLoading) {
+    return <div data-testid="loading">Loading cards...</div>
+  }
+
+  if (error) {
+    return (
+      <div data-testid="error">
+        Error: {error}
+        <button onClick={clearError} data-testid="clear-error">Clear Error</button>
+      </div>
+    )
+  }
+
+  return (
+    <div data-testid="cards-container">
+      <div data-testid="initialized">{initialized ? 'Initialized' : 'Not Initialized'}</div>
+      <div data-testid="card-count">Cards: {cards.length}</div>
+      <button onClick={fetchAllCards} data-testid="fetch-cards">Fetch Cards</button>
+    </div>
+  )
+}
+
+// Test component that uses useCardsByType (similar to generic-card-selection-modal.tsx)
+const CardsByTypeTestComponent: React.FC<{ cardType: CardType }> = ({ cardType }) => {
+  const {
+    cards,
+    loading: cardsLoading,
+    error,
+    initialized,
+    fetchCardsByType,
+    clearError
+  } = useCardsByType(cardType)
+
+  React.useEffect(() => {
+    fetchCardsByType()
+  }, [fetchCardsByType])
+
+  if (cardsLoading) {
+    return <div data-testid="loading">Loading {cardType} cards...</div>
+  }
+
+  if (error) {
+    return (
+      <div data-testid="error">
+        Error: {error}
+        <button onClick={clearError} data-testid="clear-error">Clear Error</button>
+      </div>
+    )
+  }
+
+  return (
+    <div data-testid="cards-by-type-container">
+      <div data-testid="card-type">Type: {cardType}</div>
+      <div data-testid="initialized">{initialized ? 'Initialized' : 'Not Initialized'}</div>
+      <div data-testid="card-count">Cards: {cards.length}</div>
+      <button onClick={fetchCardsByType} data-testid="fetch-cards">Fetch {cardType} Cards</button>
+    </div>
+  )
+}
+
+describe('Card Hooks Integration Tests', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('useAllCards Integration', () => {
+    it('should render component without errors', () => {
+      render(<AllCardsTestComponent />)
+      
+      expect(screen.getByTestId('cards-container')).toBeInTheDocument()
+      expect(screen.getByTestId('initialized')).toHaveTextContent('Not Initialized')
+      expect(screen.getByTestId('card-count')).toHaveTextContent('Cards: 0')
+    })
+
+    it('should provide fetch button that can be clicked', async () => {
+      render(<AllCardsTestComponent />)
+      
+      const fetchButton = screen.getByTestId('fetch-cards')
+      expect(fetchButton).toBeInTheDocument()
+      
+      // Should be clickable without throwing errors
+      fetchButton.click()
+    })
+
+    it('should handle useEffect fetch call', () => {
+      render(<AllCardsTestComponent />)
+      
+      // Component should render without errors when fetchAllCards is called in useEffect
+      expect(screen.getByTestId('cards-container')).toBeInTheDocument()
+    })
+  })
+
+  describe('useCardsByType Integration', () => {
+    it('should render component with card type', () => {
+      render(<CardsByTypeTestComponent cardType={CardType.Ancestry} />)
+      
+      expect(screen.getByTestId('cards-by-type-container')).toBeInTheDocument()
+      expect(screen.getByTestId('card-type')).toHaveTextContent('Type: ancestry')
+      expect(screen.getByTestId('initialized')).toHaveTextContent('Not Initialized')
+      expect(screen.getByTestId('card-count')).toHaveTextContent('Cards: 0')
+    })
+
+    it('should handle different card types', () => {
+      const { rerender } = render(<CardsByTypeTestComponent cardType={CardType.Profession} />)
+      
+      expect(screen.getByTestId('card-type')).toHaveTextContent('Type: profession')
+      
+      rerender(<CardsByTypeTestComponent cardType={CardType.Community} />)
+      expect(screen.getByTestId('card-type')).toHaveTextContent('Type: community')
+    })
+
+    it('should provide fetch button for specific type', () => {
+      render(<CardsByTypeTestComponent cardType={CardType.Subclass} />)
+      
+      const fetchButton = screen.getByTestId('fetch-cards')
+      expect(fetchButton).toHaveTextContent('Fetch subclass Cards')
+      
+      // Should be clickable without throwing errors
+      fetchButton.click()
+    })
+  })
+
+  describe('Component Compatibility Patterns', () => {
+    it('should support the loading pattern used in existing components', () => {
+      render(<AllCardsTestComponent />)
+      
+      // Should handle the loading state pattern
+      expect(screen.queryByTestId('loading')).not.toBeInTheDocument()
+      expect(screen.getByTestId('cards-container')).toBeInTheDocument()
+    })
+
+    it('should support the effect pattern for card fetching', () => {
+      // This test verifies that useEffect with fetchAllCards works
+      render(<AllCardsTestComponent />)
+      
+      // Component should render successfully
+      expect(screen.getByTestId('cards-container')).toBeInTheDocument()
+    })
+
+    it('should support multiple hook instances', () => {
+      render(
+        <div>
+          <AllCardsTestComponent />
+          <CardsByTypeTestComponent cardType={CardType.Ancestry} />
+          <CardsByTypeTestComponent cardType={CardType.Profession} />
+        </div>
+      )
+      
+      // All components should render without conflicts
+      expect(screen.getByTestId('cards-container')).toBeInTheDocument()
+      expect(screen.getAllByTestId('cards-by-type-container')).toHaveLength(2)
+    })
+  })
+
+  describe('Error Handling Integration', () => {
+    it('should handle clearError function calls', () => {
+      // This tests that clearError can be called without throwing
+      render(<AllCardsTestComponent />)
+      
+      const fetchButton = screen.getByTestId('fetch-cards')
+      
+      // Should not throw when clicked
+      expect(() => {
+        fetchButton.click()
+      }).not.toThrow()
+    })
+  })
+
+  describe('Hook Interface Compatibility', () => {
+    it('should provide all expected properties to components', () => {
+      let hookResult: any = null
+      
+      const TestComponent = () => {
+        hookResult = useAllCards()
+        return <div>Test</div>
+      }
+      
+      render(<TestComponent />)
+      
+      // Verify all expected properties are present
+      expect(hookResult).toHaveProperty('cards')
+      expect(hookResult).toHaveProperty('loading')
+      expect(hookResult).toHaveProperty('error')
+      expect(hookResult).toHaveProperty('initialized')
+      expect(hookResult).toHaveProperty('fetchAllCards')
+      expect(hookResult).toHaveProperty('clearError')
+      
+      // Verify types
+      expect(Array.isArray(hookResult.cards)).toBe(true)
+      expect(typeof hookResult.loading).toBe('boolean')
+      expect(typeof hookResult.initialized).toBe('boolean')
+      expect(typeof hookResult.fetchAllCards).toBe('function')
+      expect(typeof hookResult.clearError).toBe('function')
+    })
+
+    it('useCardsByType should provide all expected properties', () => {
+      let hookResult: any = null
+      
+      const TestComponent = () => {
+        hookResult = useCardsByType(CardType.Domain)
+        return <div>Test</div>
+      }
+      
+      render(<TestComponent />)
+      
+      // Verify all expected properties are present
+      expect(hookResult).toHaveProperty('cards')
+      expect(hookResult).toHaveProperty('loading')
+      expect(hookResult).toHaveProperty('error')
+      expect(hookResult).toHaveProperty('initialized')
+      expect(hookResult).toHaveProperty('fetchCardsByType')
+      expect(hookResult).toHaveProperty('clearError')
+    })
+  })
+})

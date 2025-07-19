@@ -14,7 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { SheetCardReference } from "@/lib/sheet-data";
-import { useCardsByType } from "@/card/card-store";
+import { useCardsByType } from "@/card/hooks";
 import { useSheetStore } from "@/lib/sheet-store"
 
 interface GenericCardSelectionModalProps {

@@ -13,6 +13,7 @@ import {
   removeCustomCardBatch,
   clearAllCustomCards,
   getCustomCards,
+  getCardsByBatchId,
   toggleBatchDisabled,
   getBatchDisabledStatus,
   getAllBatches,
@@ -142,10 +143,10 @@ export default function CardImportTestPage() {
 
   // 查看卡牌
   const handleViewCards = (batchId?: string) => {
-    const customCards = getCustomCards()
+    // 使用新的接口获取卡牌
     const cardsToView = batchId
-      ? customCards.filter(card => card.batchId === batchId)
-      : customCards
+      ? getCardsByBatchId(batchId)
+      : useUnifiedCardStore.getState().loadAllCards()
     setViewingCards(cardsToView)
     setViewModalOpen(true)
   }

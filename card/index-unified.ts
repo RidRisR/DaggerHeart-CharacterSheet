@@ -199,6 +199,16 @@ export function getCustomCardsByType(typeId: CardType): ExtendedStandardCard[] {
 }
 
 /**
+ * Get cards by batch ID
+ * @param batchId - The batch ID to filter by
+ * @returns Array of cards belonging to the specified batch
+ */
+export function getCardsByBatchId(batchId: string): ExtendedStandardCard[] {
+  const store = useUnifiedCardStore.getState();
+  return store.loadAllCards().filter(card => card.batchId === batchId);
+}
+
+/**
  * Import custom cards
  */
 export async function importCustomCards(importData: ImportData, batchName?: string): Promise<ImportResult> {

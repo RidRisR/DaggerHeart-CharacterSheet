@@ -705,6 +705,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       // Aggregate custom fields
       if (batch.customFieldDefinitions) {
         for (const [category, fields] of Object.entries(batch.customFieldDefinitions)) {
+          if (!Array.isArray(fields)) continue; // Skip non-array values
           if (!aggregatedFields[category]) {
             aggregatedFields[category] = [];
           }
@@ -850,44 +851,63 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       if (existingBuiltinBatch && existingBuiltinBatch.version === builtinCardPackJson.default.version) {
         console.log(`[UnifiedCardStore] Builtin cards version (${builtinCardPackJson.default.version}) is up to date`);
         
+        // Check if cardCount needs to be fixed
+        const actualCardCount = existingBuiltinBatch.cardIds.length;
+        const needsCardCountFix = existingBuiltinBatch.cardCount !== actualCardCount;
+        
         // Check if we need to restore disabled status from localStorage
         const indexStr = localStorage.getItem('daggerheart_custom_cards_index');
+        let savedDisabledStatus = existingBuiltinBatch.disabled || false;
+        let needsDisabledStatusUpdate = false;
+        
         if (indexStr) {
           try {
             const index = JSON.parse(indexStr);
-            const savedDisabledStatus = index.batches?.[BUILTIN_BATCH_ID]?.disabled;
+            const savedStatus = index.batches?.[BUILTIN_BATCH_ID]?.disabled;
             const currentDisabledStatus = existingBuiltinBatch.disabled || false;
             
-            if (savedDisabledStatus !== undefined && savedDisabledStatus !== currentDisabledStatus) {
-              console.log(`[UnifiedCardStore] Restoring builtin batch disabled status: ${currentDisabledStatus} -> ${savedDisabledStatus}`);
-              
-              // Update the batch in memory
-              const updatedBatch = {
-                ...existingBuiltinBatch,
-                disabled: savedDisabledStatus
-              };
-              
-              const newBatches = new Map(state.batches);
-              newBatches.set(BUILTIN_BATCH_ID, updatedBatch);
-              
-              // Update the index as well
-              const newIndex = { ...state.index };
-              if (newIndex.batches[BUILTIN_BATCH_ID]) {
-                newIndex.batches[BUILTIN_BATCH_ID] = {
-                  ...newIndex.batches[BUILTIN_BATCH_ID],
-                  disabled: savedDisabledStatus
-                };
-              }
-              
-              set({ 
-                batches: newBatches,
-                index: newIndex,
-                cacheValid: false 
-              });
+            if (savedStatus !== undefined && savedStatus !== currentDisabledStatus) {
+              console.log(`[UnifiedCardStore] Restoring builtin batch disabled status: ${currentDisabledStatus} -> ${savedStatus}`);
+              savedDisabledStatus = savedStatus;
+              needsDisabledStatusUpdate = true;
             }
           } catch (error) {
             console.error('[UnifiedCardStore] Error restoring builtin batch disabled status:', error);
           }
+        }
+        
+        // Update if either cardCount or disabled status needs fixing
+        if (needsCardCountFix || needsDisabledStatusUpdate) {
+          console.log(`[UnifiedCardStore] Fixing builtin batch - cardCount: ${existingBuiltinBatch.cardCount} -> ${actualCardCount}, needsDisabledUpdate: ${needsDisabledStatusUpdate}`);
+          
+          // Update the batch in memory
+          const updatedBatch = {
+            ...existingBuiltinBatch,
+            cardCount: actualCardCount,
+            disabled: savedDisabledStatus
+          };
+          
+          const newBatches = new Map(state.batches);
+          newBatches.set(BUILTIN_BATCH_ID, updatedBatch);
+          
+          // Update the index as well
+          const newIndex = { ...state.index };
+          if (newIndex.batches[BUILTIN_BATCH_ID]) {
+            newIndex.batches[BUILTIN_BATCH_ID] = {
+              ...newIndex.batches[BUILTIN_BATCH_ID],
+              cardCount: actualCardCount,
+              disabled: savedDisabledStatus
+            };
+          }
+          
+          set({ 
+            batches: newBatches,
+            index: newIndex,
+            cacheValid: false 
+          });
+          
+          // Sync to localStorage to persist the fix
+          get()._syncToLocalStorage();
         }
         
         return;

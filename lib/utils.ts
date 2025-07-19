@@ -6,8 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getBasePath() {
-  // 使用 ?? 而不是 || 来正确处理空字符串
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ".";
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ".";
   return basePath;
 }
 

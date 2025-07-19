@@ -26,7 +26,7 @@ export function navigateToPage(path: string) {
     // 本地静态导出环境：使用 .html 扩展名
     const cleanPath = path.startsWith('/') ? path.slice(1) : path;
     if (cleanPath === '' || cleanPath === 'index') {
-      targetUrl = './index.html';
+      targetUrl = './车卡器入口.html';
     } else {
       targetUrl = `./${cleanPath}.html`;
     }

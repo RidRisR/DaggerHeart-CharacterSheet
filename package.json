@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && rm -f out/*.txt && cp -r 自定义卡包示例 out/自定义卡牌包示例",
-    "build:local": "LOCAL_BUILD=true next build && rm -f out/*.txt && cp -r 自定义卡包示例 out/自定义卡牌包示例",
+    "build:local": "LOCAL_BUILD=true next build && rm -f out/*.txt && cp -r 自定义卡包示例 out/自定义卡牌包示例 && mv out/index.html \"out/车卡器入口.html\"",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",

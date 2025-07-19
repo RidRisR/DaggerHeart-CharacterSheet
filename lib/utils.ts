@@ -40,13 +40,12 @@ export async function getCardImageUrl(
   // 如果没有imageUrl，尝试通过ID从store中查找
   if (!imageUrl && card.id) {
     try {
-      // 使用 card hooks 查找
+      // 使用 card hooks 查找 - 优化的直接查找
       const { useCardStore } = await import("@/card/hooks");
       const store = useCardStore.getState();
 
-      // 直接从 store 中查找卡片，不触发加载
-      const allCards = store.loadAllCards();
-      const foundCard = allCards.find(c => c.id === card.id);
+      // 使用优化的 getCardById 方法，避免加载所有卡牌
+      const foundCard = store.getCardById(card.id);
       if (foundCard?.imageUrl) {
         imageUrl = foundCard.imageUrl;
       } else if (foundCard) {

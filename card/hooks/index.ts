@@ -94,6 +94,18 @@ export const useCardsByType = (type: CardType): UseCardsByTypeResult => {
 };
 
 /**
+ * Hook for getting a specific card by ID - optimized lookup
+ */
+export const useCardById = (cardId: string): ExtendedStandardCard | null => {
+  const store = useUnifiedCardStore();
+  
+  return useMemo(() => {
+    if (!store.initialized || !cardId) return null;
+    return store.getCardById(cardId);
+  }, [store.initialized, store.cards, store.batches, cardId]);
+};
+
+/**
  * Direct access to the unified card store
  * This replaces the old useCardStore export
  */

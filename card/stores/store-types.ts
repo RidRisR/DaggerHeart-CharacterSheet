@@ -152,6 +152,7 @@ export interface UnifiedCardActions {
   // Core data operations
   loadAllCards: () => ExtendedStandardCard[];
   loadCardsByType: (type: CardType) => ExtendedStandardCard[];
+  getCardById: (cardId: string) => ExtendedStandardCard | null;
   reloadCustomCards: () => void;
   
   // Custom card management

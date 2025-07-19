@@ -4,7 +4,6 @@
  */
 
 import {
-  UnifiedCardStore,
   UnifiedCardState,
   UnifiedCardActions,
   BatchInfo,
@@ -13,18 +12,13 @@ import {
   CustomFieldNamesStore,
   VariantTypesForBatch,
   CustomFieldsForBatch,
-  StorageStats,
-  IntegrityReport,
-  CleanupReport,
   STORAGE_KEYS,
-  DEFAULT_CONFIG,
   BUILTIN_BATCH_ID,
   isServer,
   ExtendedStandardCard,
   CardType,
   CardSource,
   ImportData,
-  ImportResult,
   CustomCardStats,
   BatchStats
 } from './store-types';
@@ -128,6 +122,21 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       }) as ExtendedStandardCard[];
   },
 
+  getCardById: (cardId: string) => {
+    const state = get();
+    const card = state.cards.get(cardId);
+    
+    // Check if card exists and is not from a disabled batch
+    if (!card) return null;
+    
+    if (card.batchId) {
+      const batch = state.batches.get(card.batchId);
+      if (batch?.disabled) return null;
+    }
+    
+    return card;
+  },
+
   reloadCustomCards: () => {
     // Reload custom cards from localStorage
     get()._loadFromLocalStorage();
@@ -168,7 +177,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       const allImportedCards: any[] = [];
       
       // Collect all cards from import data
-      Object.entries(importData).forEach(([type, cards]) => {
+      Object.entries(importData).forEach(([, cards]) => {
         if (Array.isArray(cards)) {
           allImportedCards.push(...cards);
         }

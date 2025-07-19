@@ -45,8 +45,7 @@ const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): st
 
                 // 如果 getBatchName 获取失败，从 store 中查找同 ID 卡牌
                 const store = useCardStore.getState();
-                const allCards = store.loadAllCards();
-                const matchedCard = allCards.find(c => c.id === card.id);
+                const matchedCard = store.getCardById(card.id);
                 if (matchedCard && matchedCard.batchName) {
                     return matchedCard.batchName;
                 }
@@ -63,8 +62,7 @@ const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): st
 
     // 通过ID在 store 中查找匹配的卡牌
     const store = useCardStore.getState();
-    const allCards = store.loadAllCards();
-    const matchedCard = allCards.find(c => c.id === card.id);
+    const matchedCard = store.getCardById(card.id);
 
     if (matchedCard && matchedCard.source) {
         if (matchedCard.source === CardSource.BUILTIN) {
@@ -94,10 +92,10 @@ interface ImageCardProps {
 }
 
 export function ImageCard({ card, onClick, isSelected, showSource = true, priority = false, refreshTrigger }: ImageCardProps) {
-    const [isHovered, setIsHovered] = useState(false)
-    const [isAltPressed, setIsAltPressed] = useState(false)
+    const [_isHovered, setIsHovered] = useState(false)
+    const [_isAltPressed, setIsAltPressed] = useState(false)
     const [cardSource, setCardSource] = useState<string>("加载中...")
-    const [imageLoaded, setImageLoaded] = useState(false)
+    const [_imageLoaded, setImageLoaded] = useState(false)
     const [imageError, setImageError] = useState(false)
     const [imageSrc, setImageSrc] = useState<string | null>(null)
     const [cardScale, setCardScale] = useState('scale(1)')

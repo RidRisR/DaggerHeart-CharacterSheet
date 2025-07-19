@@ -3,7 +3,8 @@
  * 提供临时数据与存储数据的内存合并机制，避免预写入操作
  */
 
-import { CustomCardStorage, type CustomFieldsForBatch, type CustomFieldNamesStore, type VariantTypesForBatch } from './card-storage';
+import { useUnifiedCardStore } from './stores/unified-card-store';
+import type { CustomFieldsForBatch, CustomFieldNamesStore, VariantTypesForBatch } from './stores/unified-card-store';
 import type { ValidationContext } from './type-validators';
 import builtinCardPackJson from '../data/cards/builtin-base.json';
 
@@ -37,7 +38,8 @@ export class ValidationDataMerger {
         logDebug('mergeCustomFields', { tempBatchId, tempDefinitions });
 
         // 获取现有的自定义字段（不包含临时数据）
-        const existing = CustomCardStorage.getAggregatedCustomFieldNamesFromBatches();
+        const store = useUnifiedCardStore.getState();
+        const existing = store.getAggregatedCustomFields();
         logDebug('[DEBUG] 现有的字段定义:', existing);
 
         // 获取内置卡包的字段定义
@@ -109,7 +111,8 @@ export class ValidationDataMerger {
         logDebug('mergeVariantTypes', { tempBatchId, tempDefinitions });
 
         // 获取现有的变体类型定义（不包含临时数据）
-        const existing = CustomCardStorage.getAggregatedVariantTypesFromBatches();
+        const store = useUnifiedCardStore.getState();
+        const existing = store.getAggregatedVariantTypes();
 
         // 获取内置卡包的变体类型定义
         const builtinVariantTypes: VariantTypesForBatch = {};

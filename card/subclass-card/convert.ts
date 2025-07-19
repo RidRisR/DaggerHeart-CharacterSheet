@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid"
 import { CardType, processCardDescription, type StandardCard } from "@/card/card-types"
-import { AttributeClass, SubClassClass, SubClassLevel } from "../card-predefined-field"
+import { AttributeClass, SubClassClass, SubClassLevel } from "../card-types"
 // 领域卡牌数据结构
 export interface SubClassCard {
   id: string

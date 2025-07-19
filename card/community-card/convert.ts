@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import { CardType, processCardDescription, type StandardCard } from "@/card/card-types"
-import { CommunityClass } from "../card-predefined-field"
+import { CardType, processCardDescription, type StandardCard, type CommunityClass } from "@/card/card-types"
 
 
 // 社群卡牌数据结构

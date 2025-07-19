@@ -14,7 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { SheetCardReference } from "@/lib/sheet-data";
-import { useCardsByType } from "@/card/card-store";
+import { getStandardCardsByType } from "@/card";
 import { useSheetStore } from "@/lib/sheet-store"
 
 interface GenericCardSelectionModalProps {
@@ -42,31 +42,21 @@ export function GenericCardSelectionModal({
     const [selectedSource, setSelectedSource] = useState<string>("All")
     const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发卡牌刷新动画
 
-    // Use hooks to fetch cards based on card type
-    const {
-        cards: baseCards,
-        loading: cardsLoading,
-        error: cardsError,
-        fetchCardsByType: fetchBaseCards
-    } = useCardsByType(cardType as CardType);
-
-    // For subclass cards, we also need profession cards to determine the filter
-    const {
-        cards: professionCards,
-        loading: professionLoading,
-        error: professionError,
-        fetchCardsByType: fetchProfessionCards
-    } = useCardsByType(CardType.Profession);
-
-    // 当模态框打开时，触发数据加载
-    useEffect(() => {
-        if (isOpen) {
-            fetchBaseCards();
-            if (cardType === "subclass") {
-                fetchProfessionCards();
-            }
-        }
-    }, [isOpen, cardType, fetchBaseCards, fetchProfessionCards]);
+    // Use synchronous API for better performance
+    const baseCards = useMemo(() => {
+        if (!cardType) return [];
+        return getStandardCardsByType(cardType as CardType);
+    }, [cardType]);
+    
+    const professionCards = useMemo(() => {
+        return getStandardCardsByType(CardType.Profession);
+    }, []);
+    
+    // Loading states are no longer needed with synchronous API
+    const cardsLoading = false;
+    const cardsError = null;
+    const professionLoading = false;
+    const professionError = null;
 
     // Calculate filtered cards based on card type and level filter
     const filteredInitialCards = useMemo(() => {

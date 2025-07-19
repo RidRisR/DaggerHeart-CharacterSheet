@@ -1,11 +1,18 @@
-import {
-  // Import the new getter functions
-  getProfessionCardNames,
-  getAncestryCardNames,
-  getCommunityCardNames,
-  getSubClassCardNames,
-  getDomainCardNames
-} from "@/card/card-predefined-field";
+// Functions will be imported dynamically to avoid circular dependencies
+
+// 属性类别常量列表
+export const ATTRIBUTE_CLASS_NAMES: string[] = [
+    "力量", "敏捷", "灵巧", "风度", "本能", "知识", "不可施法"
+];
+
+// 子职业等级常量列表  
+export const SUBCLASS_LEVEL_NAMES: string[] = [
+    "基石", "专精", "大师", "未知"
+];
+
+// 从常量列表生成类型
+export type AttributeClass = typeof ATTRIBUTE_CLASS_NAMES[number];
+export type SubClassLevel = typeof SUBCLASS_LEVEL_NAMES[number];
 
 export interface StandardCard {
   standarized: boolean
@@ -79,16 +86,24 @@ export function getCardTypesByCategory(category: CardCategory): string[] {
   }
 }
 
-// 卡牌类别选项
-// This structure might need to be dynamically generated if it's used to populate UI directly
-// For now, we assume it might be used for initial setup or as a base, and UI components
-// will call the getter functions directly for the most up-to-date list.
-export const CARD_CLASS_OPTIONS = {
-  [CardType.Profession]: getProfessionCardNames(),
-  [CardType.Ancestry]: getAncestryCardNames(),
-  [CardType.Community]: getCommunityCardNames(),
-  [CardType.Subclass]: getSubClassCardNames(),
-  [CardType.Domain]: getDomainCardNames(),
+// 卡牌类别选项 - 动态生成以避免循环依赖
+export function getCardClassOptions(tempBatchId?: string, tempDefinitions?: any) {
+  // Import functions dynamically to avoid circular dependencies
+  const {
+    getProfessionCardNames,
+    getAncestryCardNames,
+    getCommunityCardNames,
+    getSubClassCardNames,
+    getDomainCardNames
+  } = require("@/card/card-predefined-field");
+  
+  return {
+    [CardType.Profession]: getProfessionCardNames(tempBatchId, tempDefinitions),
+    [CardType.Ancestry]: getAncestryCardNames(tempBatchId, tempDefinitions),
+    [CardType.Community]: getCommunityCardNames(tempBatchId, tempDefinitions),
+    [CardType.Subclass]: getSubClassCardNames(tempBatchId, tempDefinitions),
+    [CardType.Domain]: getDomainCardNames(tempBatchId, tempDefinitions),
+  };
 }
 
 // 定义不同卡牌类型对应的等级选项
@@ -196,6 +211,13 @@ export interface CustomCardStats {
   cardsByBatch: Record<string, number>;
   storageUsed: number; // 字节数
 }
+
+// Card class types (moved here to avoid circular dependencies)
+export type SubClassClass = string;
+export type ProfessionClass = string;
+export type AncestryClass = string;
+export type CommunityClass = string;
+export type DomainClass = string;
 
 // 批次统计信息
 export interface BatchStats {

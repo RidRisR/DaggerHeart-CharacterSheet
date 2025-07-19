@@ -12,13 +12,15 @@ import {
   getCustomCardStats,
   removeCustomCardBatch,
   clearAllCustomCards,
-  getCustomCardStorageInfo,
   getCustomCards,
+  toggleBatchDisabled,
+  getBatchDisabledStatus,
+  getAllBatches,
   type ImportData,
   type ImportResult,
   type ExtendedStandardCard
 } from '@/card/index'
-import { CustomCardManager } from '@/card/custom-card-manager'
+import { useUnifiedCardStore } from '@/card/stores/unified-card-store'
 import { getBasePath } from '@/lib/utils'
 
 interface ImportStatus {
@@ -103,8 +105,10 @@ export default function CardImportTestPage() {
       setIsClient(true)
       if (typeof window !== 'undefined') {
         // 确保系统初始化后再刷新数据
-        const customCardManager = CustomCardManager.getInstance()
-        await customCardManager.ensureInitialized()
+        const store = useUnifiedCardStore.getState()
+        if (!store.initialized) {
+          await store.initializeSystem()
+        }
         refreshData()
       }
     }
@@ -125,8 +129,8 @@ export default function CardImportTestPage() {
   const refreshData = () => {
     if (typeof window !== 'undefined') {
       setStats(getCustomCardStats())
-      setBatches(getCustomCardBatches())
-      setStorageInfo(getCustomCardStorageInfo())
+      setBatches(getAllBatches())
+      setStorageInfo(useUnifiedCardStore.getState().getStorageInfo())
     }
   }
 
@@ -150,8 +154,7 @@ export default function CardImportTestPage() {
   // 切换批次启用/禁用状态
   const handleToggleBatchDisabled = async (batchId: string) => {
     try {
-      const customCardManager = CustomCardManager.getInstance()
-      const success = await customCardManager.toggleBatchDisabled(batchId)
+      const success = await toggleBatchDisabled(batchId)
 
       if (success) {
         // 刷新数据以反映更改
@@ -165,16 +168,6 @@ export default function CardImportTestPage() {
     }
   }
 
-  // 获取批次禁用状态
-  const getBatchDisabledStatus = (batchId: string): boolean => {
-    try {
-      const customCardManager = CustomCardManager.getInstance()
-      return customCardManager.getBatchDisabledStatus(batchId)
-    } catch (error) {
-      console.error('获取卡牌包状态时出错:', error)
-      return false
-    }
-  }
 
   // 处理文件选择
   const handleFileSelect = (files: FileList | null) => {
@@ -306,9 +299,9 @@ export default function CardImportTestPage() {
         // 清空所有localStorage数据
         localStorage.clear()
 
-        // 强制重新初始化CustomCardManager
-        const customCardManager = CustomCardManager.getInstance()
-        await customCardManager.forceReinitialize()
+        // 强制重新初始化卡牌系统
+        const store = useUnifiedCardStore.getState()
+        await store.initializeSystem()
 
         // 刷新数据显示
         refreshData()
@@ -662,7 +655,7 @@ export default function CardImportTestPage() {
                           </Button>
                           <Button
                             size="sm"
-                            variant={getBatchDisabledStatus(batch.id) ? "outline" : "secondary"}
+                            variant="outline"
                             onClick={() => handleToggleBatchDisabled(batch.id)}
                             className="h-8 px-2"
                             title={getBatchDisabledStatus(batch.id) ? "启用批次" : "禁用批次"}
@@ -678,6 +671,7 @@ export default function CardImportTestPage() {
                             variant="destructive"
                             onClick={() => handleRemoveBatch(batch.id)}
                             className="h-8 px-2"
+                            disabled={batch.isSystemBatch}
                           >
                             <XCircle className="h-3 w-3" />
                           </Button>

@@ -8,8 +8,8 @@ import {
     SUBCLASS_LEVEL_NAMES,
     type AttributeClass,
     type SubClassLevel
-} from './card-predefined-field';
-import { CustomFieldsForBatch, type CustomFieldNamesStore, type VariantTypesForBatch } from './card-storage';
+} from './card-types';
+import { CustomFieldsForBatch, type CustomFieldNamesStore, type VariantTypesForBatch } from './stores/unified-card-store';
 
 export interface TemporaryCustomFields {
     tempBatchId?: string;

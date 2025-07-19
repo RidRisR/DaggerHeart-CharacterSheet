@@ -5,7 +5,7 @@ import { CardSource } from "@/card/card-types"
 import { getBatchName } from "@/card"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
-import { useCardStore } from "@/card/card-store"
+import { getStandardCardById } from "@/card"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -24,7 +24,7 @@ const getDisplayTypeName = (card: StandardCard) => {
     return getCardTypeName(card.type);
 };
 
-// Helper function to get card source display name
+// Helper function to get card source display name (optimized)
 const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): string => {
     // 如果已经有来源信息，直接使用
     if (hasSourceInfo(card)) {
@@ -42,29 +42,16 @@ const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): st
                 if (batchName) {
                     return batchName;
                 }
-
-                // 如果 getBatchName 获取失败，从 store 中查找同 ID 卡牌
-                const store = useCardStore.getState();
-                const matchedCard = store.allCards.find(c => c.id === card.id);
-                if (matchedCard && matchedCard.batchName) {
-                    return matchedCard.batchName;
-                }
-                if (matchedCard && matchedCard.batchId) {
-                    return matchedCard.batchId;
-                }
-
-                return "卡包ID不存在";
+                return card.batchId;
             }
             return "自定义卡包";
         }
         return "内置卡包";
     }
 
-    // 通过ID在 store 中查找匹配的卡牌
-    const store = useCardStore.getState();
-    const matchedCard = store.allCards.find(c => c.id === card.id);
-
-    if (matchedCard && matchedCard.source) {
+    // 使用优化的同步查找方法
+    const matchedCard = getStandardCardById(card.id);
+    if (matchedCard && hasSourceInfo(matchedCard)) {
         if (matchedCard.source === CardSource.BUILTIN) {
             return "内置卡包";
         }
@@ -92,10 +79,10 @@ interface ImageCardProps {
 }
 
 export function ImageCard({ card, onClick, isSelected, showSource = true, priority = false, refreshTrigger }: ImageCardProps) {
-    const [isHovered, setIsHovered] = useState(false)
-    const [isAltPressed, setIsAltPressed] = useState(false)
+    const [_isHovered, setIsHovered] = useState(false)
+    const [_isAltPressed, setIsAltPressed] = useState(false)
     const [cardSource, setCardSource] = useState<string>("加载中...")
-    const [imageLoaded, setImageLoaded] = useState(false)
+    const [_imageLoaded, setImageLoaded] = useState(false)
     const [imageError, setImageError] = useState(false)
     const [imageSrc, setImageSrc] = useState<string | null>(null)
     const [cardScale, setCardScale] = useState('scale(1)')
@@ -111,7 +98,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         
         // 异步获取图片URL
         const loadImageUrl = async () => {
-            const url = await getCardImageUrl(card, imageError);
+            const url = await getCardImageUrl(card, false); // 重置时不传递错误状态
             setImageSrc(url);
         };
         
@@ -123,7 +110,18 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         }, 100);
         
         return () => clearTimeout(timer);
-    }, [card, imageError]);
+    }, [card]); // 移除 imageError 依赖，避免无限循环
+
+    // 当图片加载失败时，获取备用图片URL
+    useEffect(() => {
+        if (imageError && !imageSrc?.includes('empty-card.webp')) {
+            const loadErrorImageUrl = async () => {
+                const url = await getCardImageUrl(card, true); // 传递错误状态以获取默认图片
+                setImageSrc(url);
+            };
+            loadErrorImageUrl();
+        }
+    }, [imageError, card, imageSrc]);
 
     // 监听手动刷新触发器
     useEffect(() => {

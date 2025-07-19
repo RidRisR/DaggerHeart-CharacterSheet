@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react" // Added useState
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {
-  CARD_CLASS_OPTIONS_BY_TYPE,
+  getCardClassOptionsByType,
   getLevelOptions,
   getVariantSubclassOptions,
   getCardTypeName,
-} from "@/card/card-ui-config"
+} from "@/card/index"
 import { CardType } from "@/card"; // Add this import
 import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType } from "@/card/card-types"
 import { createEmptyCard } from "@/card/card-types"
@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce";
-import { useCardsByType } from "@/card/card-store";
+import { getStandardCardsByType } from "@/card";
 
 const ITEMS_PER_PAGE = 30;
 
@@ -149,7 +149,8 @@ export function CardSelectionModal({
     }
 
     // 否则返回标准卡牌类型的class选项
-    return CARD_CLASS_OPTIONS_BY_TYPE[activeTab as keyof typeof CARD_CLASS_OPTIONS_BY_TYPE] || []
+    const options = getCardClassOptionsByType();
+    return options[activeTab as keyof typeof options] || []
   }, [activeTab]);
 
   const levelOptions = useMemo(() => {
@@ -162,25 +163,19 @@ export function CardSelectionModal({
     return getLevelOptions(activeTab as CardType)
   }, [activeTab]);
 
-  // 使用新的Hook获取卡牌数据
-  const {
-    cards: cardsForActiveTab,
-    loading: cardsLoading,
-    error: cardsError,
-    fetchCardsByType
-  } = useCardsByType(
-    isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType)
-  );
-
-  // 当模态框打开且有活动标签时，触发数据加载
-  useEffect(() => {
-    if (isOpen && activeTab) {
-      fetchCardsByType();
-    }
-  }, [isOpen, activeTab, fetchCardsByType]);
+  // 使用同步API直接获取卡牌数据
+  const cardsForActiveTab = useMemo(() => {
+    if (!activeTab) return [];
+    const targetType = isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType);
+    return getStandardCardsByType(targetType);
+  }, [activeTab]);
+  
+  // Loading states are no longer needed with synchronous API
+  const cardsLoading = false;
+  const cardsError = null;
 
   const fullyFilteredCards = useMemo(() => {
-    if (!activeTab || !isOpen || cardsLoading || !cardsForActiveTab.length) {
+    if (!activeTab || !isOpen || !cardsForActiveTab.length) {
       return [];
     }
     let filtered = cardsForActiveTab;
@@ -272,13 +267,13 @@ export function CardSelectionModal({
   if (!isOpen) return null
 
   const handleClassSelectAll = () => {
-    const allClassValues = classOptions.map(opt => opt.value);
+    const allClassValues = classOptions.map((opt: any) => opt.value);
     setSelectedClasses(allClassValues);
   };
 
   const handleClassInvertSelection = () => {
-    const allClassValues = classOptions.map(opt => opt.value);
-    setSelectedClasses(prev => allClassValues.filter(val => !prev.includes(val)));
+    const allClassValues = classOptions.map((opt: any) => opt.value);
+    setSelectedClasses(prev => allClassValues.filter((val: any) => !prev.includes(val)));
   };
 
   const handleLevelSelectAll = () => {
@@ -425,7 +420,7 @@ export function CardSelectionModal({
                             : selectedClasses.length === 0
                               ? "未选类别"
                               : selectedClasses.length === 1
-                                ? classOptions.find(o => o.value === selectedClasses[0])?.label || "选择类别"
+                                ? classOptions.find((o: any) => o.value === selectedClasses[0])?.label || "选择类别"
                                 : `${selectedClasses.length} 类已选`
                       }
                     </Button>
@@ -439,7 +434,7 @@ export function CardSelectionModal({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <ScrollArea className="h-64">
-                      {classOptions.map((option) => (
+                      {classOptions.map((option: any) => (
                         <DropdownMenuItem
                           key={option.value}
                           onSelect={(e) => e.preventDefault()}

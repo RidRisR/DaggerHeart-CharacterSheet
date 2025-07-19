@@ -5,7 +5,7 @@
 
 import { v4 as uuidv4 } from "uuid"
 import { CardType, processCardDescription, type StandardCard } from "@/card/card-types"
-import { DomainClass } from "../card-predefined-field"
+import { DomainClass } from "../card-types"
 
 
 // 领域卡牌数据结构

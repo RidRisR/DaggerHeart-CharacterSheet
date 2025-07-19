@@ -23,7 +23,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { CardType, StandardCard } from "@/card/card-types"
+import { StandardCard } from "@/card/card-types"
 import { getCardTypeName } from "@/card"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import ReactMarkdown from "react-markdown"

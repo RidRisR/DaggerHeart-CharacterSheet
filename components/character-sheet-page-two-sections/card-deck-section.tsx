@@ -1,14 +1,13 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef, memo, useCallback } from "react"
+import { useState, useRef, memo, useCallback } from "react"
 import { getCardTypeName, convertToStandardCard } from "@/card"
-import { CardType, createEmptyCard, StandardCard, isEmptyCard } from "@/card/card-types"
+import { createEmptyCard, StandardCard, isEmptyCard } from "@/card/card-types"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { CardHoverPreview } from "@/components/ui/card-hover-preview"
 import { useTextModeStore } from "@/lib/text-mode-store"
-import { toast } from "@/hooks/use-toast"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { SheetData } from "@/lib/sheet-data"
 import type { CSSProperties, MouseEvent } from "react"
@@ -31,7 +30,7 @@ interface CardDeckSectionProps {
 }
 
 // Utility function for border color
-const getBorderColor = (type?: string, isSpecial = false): string => {
+const getBorderColor = (isSpecial = false): string => {
   if (isSpecial) return "border-yellow-400"
   return "border-gray-300"
 }
@@ -109,7 +108,7 @@ function Card({
   return (
     <div
       className={`relative cursor-pointer transition-colors rounded-md p-1 h-16 group ${isSelected ? "border-3" : "border"
-        } ${getBorderColor(standardCard?.type, isSpecial)}`}
+        } ${getBorderColor(isSpecial)}`}
       onClick={() => onCardClick(index)}
       onContextMenu={(e) => onCardRightClick(index, e)}
       onMouseEnter={() => {
@@ -498,7 +497,7 @@ export function CardDeckSection({
       )}
 
       {/* 添加自定义边框宽度样式 */}
-      <style jsx global>{`
+      <style>{`
         .border-3 {
           border-width: 3px;
         }

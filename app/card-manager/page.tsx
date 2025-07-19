@@ -21,7 +21,7 @@ import {
   type ExtendedStandardCard
 } from '@/card/index'
 import { useUnifiedCardStore } from '@/card/stores/unified-card-store'
-import { getBasePath } from '@/lib/utils'
+import { getBasePath, navigateToPage } from '@/lib/utils'
 
 interface ImportStatus {
   isImporting: boolean
@@ -137,7 +137,7 @@ export default function CardImportTestPage() {
   // 返回主站
   const goBackToMain = () => {
     refreshData()
-    window.location.href = `${getBasePath()}/`
+    navigateToPage('/')
   }
 
   // 查看卡牌

@@ -6,8 +6,37 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getBasePath() {
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ".";
+  // 使用 ?? 而不是 || 来正确处理空字符串
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ".";
   return basePath;
+}
+
+// 智能导航函数，基于 basePath 判断环境并处理路径
+export function navigateToPage(path: string) {
+  const basePath = getBasePath();
+  
+  // 判断是否是本地静态导出环境
+  // 在静态导出时，页面是通过 file:// 协议访问的
+  const isStaticExport = typeof window !== 'undefined' && 
+    window.location.protocol === 'file:';
+
+  let targetUrl: string;
+
+  if (isStaticExport) {
+    // 本地静态导出环境：使用 .html 扩展名
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    if (cleanPath === '' || cleanPath === 'index') {
+      targetUrl = './index.html';
+    } else {
+      targetUrl = `./${cleanPath}.html`;
+    }
+  } else {
+    // 开发环境或在线环境：使用标准路径
+    targetUrl = `${basePath}${path}`;
+  }
+
+  console.log(`[navigateToPage] 导航到: ${targetUrl} (basePath: ${basePath}, isStaticExport: ${isStaticExport})`);
+  window.location.href = targetUrl;
 }
 
 import type { StandardCard } from "@/card/card-types";

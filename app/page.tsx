@@ -18,7 +18,7 @@ import { CharacterManagementModal } from "@/components/modals/character-manageme
 import { Button } from "@/components/ui/button"
 import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
 import { useSheetStore, useCardActions } from "@/lib/sheet-store"
-import { getBasePath } from "@/lib/utils"
+import { getBasePath, navigateToPage } from "@/lib/utils"
 import { PrintReadyChecker } from "@/components/print-ready-checker"
 import { usePrintContext } from "@/contexts/print-context"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
@@ -1106,7 +1106,7 @@ export default function Home() {
 
             <Button
               onClick={() => {
-                window.location.href = `${getBasePath()}/card-manager`;
+                navigateToPage('/card-manager');
               }}
               className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
                 }`}

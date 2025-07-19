@@ -14,7 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { SheetCardReference } from "@/lib/sheet-data";
-import { useCardStore } from "@/card/stores/unified-card-store";
+import { getStandardCardsByType } from "@/card";
 import { useSheetStore } from "@/lib/sheet-store"
 
 interface GenericCardSelectionModalProps {
@@ -42,30 +42,21 @@ export function GenericCardSelectionModal({
     const [selectedSource, setSelectedSource] = useState<string>("All")
     const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发卡牌刷新动画
 
-    // Use store to fetch cards based on card type
-    const store = useCardStore();
-    
+    // Use synchronous API for better performance
     const baseCards = useMemo(() => {
-        if (!store.initialized || !cardType) return [];
-        return store.loadCardsByType(cardType as CardType);
-    }, [store.initialized, store.cards, store.batches, cardType]);
+        if (!cardType) return [];
+        return getStandardCardsByType(cardType as CardType);
+    }, [cardType]);
     
     const professionCards = useMemo(() => {
-        if (!store.initialized) return [];
-        return store.loadCardsByType(CardType.Profession);
-    }, [store.initialized, store.cards, store.batches]);
+        return getStandardCardsByType(CardType.Profession);
+    }, []);
     
-    const cardsLoading = store.loading;
-    const cardsError = store.error;
-    const professionLoading = store.loading;
-    const professionError = store.error;
-
-    // 当模态框打开时，确保系统已初始化
-    useEffect(() => {
-        if (isOpen && !store.initialized) {
-            store.initializeSystem();
-        }
-    }, [isOpen, store.initialized, store.initializeSystem]);
+    // Loading states are no longer needed with synchronous API
+    const cardsLoading = false;
+    const cardsError = null;
+    const professionLoading = false;
+    const professionError = null;
 
     // Calculate filtered cards based on card type and level filter
     const filteredInitialCards = useMemo(() => {

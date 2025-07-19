@@ -82,7 +82,10 @@ function Card({
   onCardDelete,
   isTextMode,
 }: CardProps) {
-  const standardCard = convertToStandardCard(card);
+  // Optimize: avoid unnecessary conversion if already StandardCard
+  const standardCard = card && typeof card === 'object' && 'type' in card && 'name' in card 
+    ? card as StandardCard 
+    : convertToStandardCard(card);
 
   // Enhanced card type name display for variants
   const displayTypeName = (() => {

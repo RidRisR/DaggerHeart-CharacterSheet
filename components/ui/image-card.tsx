@@ -5,7 +5,7 @@ import { CardSource } from "@/card/card-types"
 import { getBatchName } from "@/card"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
-import { useCardStore } from "@/card/stores/unified-card-store"
+import { getStandardCardById } from "@/card"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -24,7 +24,7 @@ const getDisplayTypeName = (card: StandardCard) => {
     return getCardTypeName(card.type);
 };
 
-// Helper function to get card source display name
+// Helper function to get card source display name (optimized)
 const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): string => {
     // 如果已经有来源信息，直接使用
     if (hasSourceInfo(card)) {
@@ -42,29 +42,16 @@ const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): st
                 if (batchName) {
                     return batchName;
                 }
-
-                // 如果 getBatchName 获取失败，从 store 中查找同 ID 卡牌
-                const store = useCardStore.getState();
-                const matchedCard = store.getCardById(card.id);
-                if (matchedCard && matchedCard.batchName) {
-                    return matchedCard.batchName;
-                }
-                if (matchedCard && matchedCard.batchId) {
-                    return matchedCard.batchId;
-                }
-
-                return "卡包ID不存在";
+                return card.batchId;
             }
             return "自定义卡包";
         }
         return "内置卡包";
     }
 
-    // 通过ID在 store 中查找匹配的卡牌
-    const store = useCardStore.getState();
-    const matchedCard = store.getCardById(card.id);
-
-    if (matchedCard && matchedCard.source) {
+    // 使用优化的同步查找方法
+    const matchedCard = getStandardCardById(card.id);
+    if (matchedCard && hasSourceInfo(matchedCard)) {
         if (matchedCard.source === CardSource.BUILTIN) {
             return "内置卡包";
         }

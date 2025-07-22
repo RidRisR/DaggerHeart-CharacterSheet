@@ -199,7 +199,8 @@ export interface UnifiedCardActions {
   _removeCardFromTypeMap: (card: ExtendedStandardCard) => void;
   _recomputeAggregations: () => void;
   _syncToLocalStorage: () => void;
-  _loadFromLocalStorage: () => void;
+  _loadAllCards: () => Promise<void>;
+  _loadCustomCardsFromStorage: () => void;
   _seedBuiltinCards: () => Promise<void>;
   _migrateLegacyData: () => Promise<any>;
   _computeStats: () => CustomCardStats;

@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce";
-import { getStandardCardsByType } from "@/card";
+import { useUnifiedCardStore } from "@/card/stores/unified-card-store";
 
 const ITEMS_PER_PAGE = 30;
 
@@ -163,21 +163,25 @@ export function CardSelectionModal({
     return getLevelOptions(activeTab as CardType)
   }, [activeTab]);
 
-  // 使用同步API直接获取卡牌数据
-  const cardsForActiveTab = useMemo(() => {
-    if (!activeTab) return [];
-    const targetType = isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType);
-    return getStandardCardsByType(targetType);
-  }, [activeTab]);
+  // 使用 unified-card-store 直接获取卡牌数据
+  const cardStore = useUnifiedCardStore();
   
-  // Loading states are no longer needed with synchronous API
-  const cardsLoading = false;
-  const cardsError = null;
+  const cardsForActiveTab = useMemo(() => {
+    if (!activeTab || !cardStore.initialized) return [];
+    const targetType = isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType);
+    return cardStore.loadCardsByType(targetType);
+  }, [activeTab, cardStore.initialized, cardStore.loadCardsByType]);
+  
+  // 使用真实的加载状态
+  const cardsLoading = cardStore.loading;
+  const cardsError = cardStore.error;
 
   const fullyFilteredCards = useMemo(() => {
+    // 提前检查必要条件
     if (!activeTab || !isOpen || !cardsForActiveTab.length) {
       return [];
     }
+    
     let filtered = cardsForActiveTab;
 
     // 如果当前选中的是variant类型，需要按照真实的variant类型过滤
@@ -187,38 +191,43 @@ export function CardSelectionModal({
         // 对于variant卡牌，检查variantSpecial.realType是否匹配当前选中的variant类型
         return card.variantSpecial?.realType === activeTab;
       });
+      // 如果过滤后没有卡牌，提前返回
+      if (filtered.length === 0) return [];
     }
 
+    // 搜索过滤
     if (debouncedSearchTerm) {
       const term = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (card) =>
-          (card.name && card.name.toLowerCase().includes(term)) ||
-          (card.description && card.description.toLowerCase().includes(term)) ||
-          (card.cardSelectDisplay?.item1 && card.cardSelectDisplay.item1.toLowerCase().includes(term)) ||
-          (card.cardSelectDisplay?.item2 && card.cardSelectDisplay.item2.toLowerCase().includes(term)) ||
-          (card.cardSelectDisplay?.item3 && card.cardSelectDisplay.item3.toLowerCase().includes(term))
-      );
+      filtered = filtered.filter((card) => {
+        // 优化：使用短路求值，一旦匹配就返回
+        return (card.name?.toLowerCase().includes(term)) ||
+               (card.description?.toLowerCase().includes(term)) ||
+               (card.cardSelectDisplay?.item1?.toLowerCase().includes(term)) ||
+               (card.cardSelectDisplay?.item2?.toLowerCase().includes(term)) ||
+               (card.cardSelectDisplay?.item3?.toLowerCase().includes(term));
+      });
+      // 如果搜索后没有结果，提前返回
+      if (filtered.length === 0) return [];
     }
 
-    if (classOptions.length > 0) {
-      if (selectedClasses.length > 0) {
-        // 对于variant类型，class实际上是子类别
-        if (isVariantType(activeTab)) {
-          filtered = filtered.filter((card) =>
-            card.variantSpecial?.subCategory && selectedClasses.includes(card.variantSpecial.subCategory)
-          );
-        } else {
-          filtered = filtered.filter((card) => card.class && selectedClasses.includes(card.class));
-        }
+    // 类别过滤
+    if (selectedClasses.length > 0 && classOptions.length > 0) {
+      if (isVariantType(activeTab)) {
+        filtered = filtered.filter((card) =>
+          card.variantSpecial?.subCategory && selectedClasses.includes(card.variantSpecial.subCategory)
+        );
+      } else {
+        filtered = filtered.filter((card) => card.class && selectedClasses.includes(card.class));
       }
+      // 如果类别过滤后没有结果，提前返回
+      if (filtered.length === 0) return [];
     }
 
-    if (levelOptions.length > 0) {
-      if (selectedLevels.length > 0) {
-        filtered = filtered.filter((card) => card.level && selectedLevels.includes(card.level.toString()));
-      }
+    // 等级过滤
+    if (selectedLevels.length > 0 && levelOptions.length > 0) {
+      filtered = filtered.filter((card) => card.level && selectedLevels.includes(card.level.toString()));
     }
+    
     return filtered;
   }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses, selectedLevels, isOpen, activeTab, classOptions.length, levelOptions.length]);
 

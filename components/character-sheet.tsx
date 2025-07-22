@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
 import { ArmorItem, armorItems } from "@/data/list/armor"
@@ -73,11 +73,6 @@ export default function CharacterSheet() {
 
   // 使用全局卡牌Store
   const store = useCardStore();
-  const allStandardCards = useMemo(() => {
-    if (!store.initialized) return [];
-    return store.loadAllCards();
-  }, [store.initialized, store.cards, store.batches]);
-  
   const cardsLoading = store.loading;
 
   // 在组件加载时确保系统已初始化
@@ -205,38 +200,38 @@ export default function CharacterSheet() {
 
   // 根据ID获取职业名称
   const getProfessionById = (id: string): StandardCard => {
-    if (cardsLoading || !allStandardCards.length) {
+    if (cardsLoading) {
       return createEmptyCard();
     }
-    const profession = allStandardCards.find((card) => card.id === id && card.type === CardType.Profession);
-    return profession ? profession : createEmptyCard();
+    const card = store.getCardById(id);
+    return (card && card.type === CardType.Profession) ? card : createEmptyCard();
   }
 
   // 根据ID获取血统名称
   const getAncestryById = (id: string): StandardCard => {
-    if (cardsLoading || !allStandardCards.length) {
+    if (cardsLoading) {
       return createEmptyCard();
     }
-    const ancestry = allStandardCards.find((card) => card.id === id && card.type === CardType.Ancestry);
-    return ancestry ? ancestry : createEmptyCard();
+    const card = store.getCardById(id);
+    return (card && card.type === CardType.Ancestry) ? card : createEmptyCard();
   }
 
   // 根据ID获取社群名称
   const getCommunityById = (id: string): StandardCard => {
-    if (cardsLoading || !allStandardCards.length) {
+    if (cardsLoading) {
       return createEmptyCard();
     }
-    const community = allStandardCards.find((card) => card.id === id && card.type === CardType.Community);
-    return community ? community : createEmptyCard();
+    const card = store.getCardById(id);
+    return (card && card.type === CardType.Community) ? card : createEmptyCard();
   }
 
   // 根据ID获取子职业名称
   const getSubclassById = (id: string): StandardCard => {
-    if (cardsLoading || !allStandardCards.length) {
+    if (cardsLoading) {
       return createEmptyCard();
     }
-    const subclass = allStandardCards.find((card) => card.id === id && card.type === CardType.Subclass);
-    return subclass ? subclass : createEmptyCard();
+    const card = store.getCardById(id);
+    return (card && card.type === CardType.Subclass) ? card : createEmptyCard();
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -291,12 +286,12 @@ export default function CharacterSheet() {
         return updatedFormData;
       });
     } else {
-      if (cardsLoading || !allStandardCards.length) {
+      if (cardsLoading) {
         console.warn('handleProfessionChange: Cards not loaded yet');
         return;
       }
-      const professionCard = allStandardCards.find((p) => p.id === value && p.type === CardType.Profession);
-      if (professionCard) {
+      const professionCard = store.getCardById(value);
+      if (professionCard && professionCard.type === CardType.Profession) {
         setFormData((prev) => {
           const updatedFormData = {
             ...prev,
@@ -328,12 +323,12 @@ export default function CharacterSheet() {
         return updatedFormData;
       })
     } else {
-      if (cardsLoading || !allStandardCards.length) {
+      if (cardsLoading) {
         console.warn('handleAncestryChange: Cards not loaded yet');
         return;
       }
-      const ancestryCard = allStandardCards.find((a) => a.id === value && a.type === CardType.Ancestry);
-      if (ancestryCard) {
+      const ancestryCard = store.getCardById(value);
+      if (ancestryCard && ancestryCard.type === CardType.Ancestry) {
         setFormData((prev) => {
           const updatedFormData = {
             ...prev,
@@ -361,12 +356,12 @@ export default function CharacterSheet() {
         return updatedFormData;
       })
     } else {
-      if (cardsLoading || !allStandardCards.length) {
+      if (cardsLoading) {
         console.warn('handleCommunityChange: Cards not loaded yet');
         return;
       }
-      const communityCard = allStandardCards.find((c) => c.id === value && c.type === CardType.Community);
-      if (communityCard) {
+      const communityCard = store.getCardById(value);
+      if (communityCard && communityCard.type === CardType.Community) {
         setFormData((prev) => {
           const updatedFormData = {
             ...prev,
@@ -550,7 +545,7 @@ export default function CharacterSheet() {
   // 使用useEffect监听特殊字段的变化，并在需要时同步卡牌
   useEffect(() => {
     // 关键修复：如果卡牌数据仍在加载，则直接返回，不执行任何同步操作。
-    // 这可以防止在卡牌列表（allStandardCards）准备好之前就尝试去查找卡牌，从而避免了将卡牌替换为空白卡的问题。
+    // 这可以防止在卡牌数据加载完成之前尝试查找卡牌，从而避免了将卡牌替换为空白卡的问题。
     if (cardsLoading) {
       return;
     }
@@ -617,12 +612,12 @@ export default function CharacterSheet() {
         return updatedFormData;
       })
     } else {
-      if (cardsLoading || !allStandardCards.length) {
+      if (cardsLoading) {
         console.warn('handleSubclassChange: Cards not loaded yet');
         return;
       }
-      const subclassCard = allStandardCards.find((s) => s.id === value && (s.type === CardType.Subclass || s.type === CardType.Profession));
-      if (subclassCard) {
+      const subclassCard = store.getCardById(value);
+      if (subclassCard && (subclassCard.type === CardType.Subclass || subclassCard.type === CardType.Profession)) {
         setFormData((prev) => {
           const updatedFormData = {
             ...prev,

@@ -277,6 +277,9 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       // Rebuild cardsByType map
       get()._rebuildCardsByType();
 
+      // 预处理图片 URL
+      get()._preprocessCardImages();
+
       console.log(`[UnifiedCardStore] Successfully imported ${convertResult.cards.length} cards`);
 
       return {
@@ -654,6 +657,81 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     set({ cacheValid: false });
   },
 
+  // Image URL preprocessing
+  _preprocessCardImages: () => {
+    const state = get();
+    const updatedCards = new Map(state.cards);
+    let processedCount = 0;
+
+    for (const [cardId, card] of state.cards) {
+      // 跳过已有图片URL的卡牌
+      if (card.imageUrl) continue;
+
+      const inferredUrl = get()._inferCardImageUrl(card);
+      if (inferredUrl) {
+        console.log(`[UnifiedCardStore] 为卡牌 "${card.name}" (ID: ${cardId}) 推断图片路径: ${inferredUrl}`);
+        updatedCards.set(cardId, { ...card, imageUrl: inferredUrl });
+        processedCount++;
+      } else {
+        console.log(`[UnifiedCardStore] 无法为卡牌 "${card.name}" (ID: ${cardId}) 推断图片路径`);
+      }
+    }
+
+    if (processedCount > 0) {
+      console.log(`[UnifiedCardStore] Preprocessed ${processedCount} card images`);
+      set({ cards: updatedCards });
+    }
+  },
+
+  _inferCardImageUrl: (card: ExtendedStandardCard): string | null => {
+    try {
+      // 获取batch名称
+      let batchName: string | null = null;
+
+      // 如果是内置卡片，优先使用 builtin-cards
+      if (card.source === 'builtin') {
+        batchName = 'builtin-cards';
+      }
+      // 如果已经有 batchName，直接使用（但内置卡片除外）
+      else if (card.batchName && typeof card.batchName === 'string') {
+        batchName = card.batchName;
+      }
+      // 如果没有 batchName 但有 batchId，通过 getBatchName 获取名称
+      else if (card.batchId && typeof card.batchId === 'string') {
+        const batch = get().batches.get(card.batchId);
+        batchName = batch?.name || null;
+      }
+
+      // 如果获取不到 batchName，就直接返回 null
+      if (!batchName) {
+        return null;
+      }
+
+      // 获取卡片类型
+      const cardType = card.type?.toLowerCase() || 'unknown';
+
+      // 获取卡片名称，转换为适合文件名的格式
+      let cardName: string;
+      if (cardType === 'ancestry' && card.class) {
+        cardName = card.class.toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fff]/g, '')  // 移除特殊字符，保留中文
+          .replace(/\s+/g, '');
+      } else {
+        cardName = card.name?.toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fff]/g, '')  // 移除特殊字符，保留中文
+          .replace(/\s+/g, '') || 'unknown';
+      }
+
+      // 构建推断的图片路径
+      const inferredPath = `/${batchName}/${cardType}/${cardName}.webp`;
+      // console.log(`[_inferCardImageUrl] "${card.name}" 推断图片路径: ${inferredPath}`);
+      return inferredPath;
+    } catch (error) {
+      console.warn('[_inferCardImageUrl] 推断图片路径失败:', error);
+      return null;
+    }
+  },
+
   // Internal helpers
   _rebuildCardsByType: () => {
     const state = get();
@@ -833,6 +911,9 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
       // 加载完成后构建类型 Map
       get()._rebuildCardsByType();
+
+      // 预处理图片 URL
+      get()._preprocessCardImages();
     } catch (error) {
       console.error('[UnifiedCardStore] Error loading from localStorage:', error);
     }
@@ -1063,6 +1144,9 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
       // 更新类型 Map
       get()._rebuildCardsByType();
+
+      // 预处理图片 URL
+      get()._preprocessCardImages();
 
       console.log(`[UnifiedCardStore] Successfully imported ${convertResult.cards.length} builtin cards`);
 

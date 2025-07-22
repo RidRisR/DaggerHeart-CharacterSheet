@@ -206,6 +206,8 @@ export interface UnifiedCardActions {
   _importBuiltinCards: (jsonCardPack: any, previousDisabledStatus?: boolean) => Promise<void>;
   _convertImportData: (importData: ImportData) => Promise<{ success: boolean; cards: ExtendedStandardCard[]; errors?: string[] }>;
   _validateImportData: (importData: ImportData) => { isValid: boolean; errors: string[] };
+  _preprocessCardImages: () => void;
+  _inferCardImageUrl: (card: ExtendedStandardCard) => string | null;
 }
 
 export type UnifiedCardStore = UnifiedCardState & UnifiedCardActions;

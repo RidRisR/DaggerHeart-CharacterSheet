@@ -186,9 +186,9 @@
 | 字段 | 类型 | 必填 | 约束/描述 |
 | :--- | :--- | :--- | :--- |
 | `id` | String | ✅ | 全局唯一ID |
-| `名称` | String | ✅ | 子职业的名称 |
+| `名称` | String | ✅ | 子职业的名称，应当为`子职业`+`等级` |
 | `描述` | String | ✅ | 子职业能力的详细描述，支持Markdown |
-| `主职` | String | ✅ | 必须与某个已定义的 `profession` 卡牌的 `名称` 完全一致 |
+| `主职` | String | ✅ | 必须与某个 `customFieldDefinitions.professions` 的名称完全一致 |
 | `子职业` | String | ✅ | 通常与`名称`相同，表示子职业的名称 |
 | `等级` | String | ✅ | **只能是** `基石`、`专精`、`大师` |
 | `施法` | String | ✅ | **只能是** `力量`、`敏捷`、`灵巧`、`风度`、`本能`、`知识`、`不可施法` |
@@ -198,7 +198,7 @@
 | :--- | :--- | :--- | :--- |
 | `id` | String | ✅ | 全局唯一ID |
 | `名称` | String | ✅ | 法术名称 |
-| `领域` | String | ✅ | 必须在 `customFieldDefinitions.domains` 中定义 |
+| `领域` | String | ✅ | **必须**在 `customFieldDefinitions.domains` 中定义 |
 | `描述` | String | ✅ | 法术效果的详细描述，支持Markdown |
 | `等级` | Number | ✅ | 法术的等级 (1-10) |
 | `属性` | String | ✅ | 通常是“法术”或其他标签 |
@@ -213,7 +213,7 @@
 | `子类别`| String | ❌ | 必须在对应 `variantTypes[类型].subclasses` 中定义 |
 | `等级` | Number | ❌ | 卡牌的等级 |
 | `效果` | String | ✅ | 卡牌效果的详细描述，支持Markdown |
-| `简略信息`| Object | ❌ | 包含 `item1`, `item2`, `item3` 等字符串字段，用于快速预览 |
+| `简略信息`| Object | ❌ | 包含 `item1`, `item2`, `item3` 等字符串字段，用于快速预览,应该保持简短 |
 
 ---
 

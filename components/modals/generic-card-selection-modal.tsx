@@ -14,7 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { SheetCardReference } from "@/lib/sheet-data";
-import { getStandardCardsByType } from "@/card";
+import { getStandardCardsByTypeAsync } from "@/card";
 import { useSheetStore } from "@/lib/sheet-store"
 
 interface GenericCardSelectionModalProps {
@@ -41,22 +41,52 @@ export function GenericCardSelectionModal({
     const [selectedClass, setSelectedClass] = useState<string>("All")
     const [selectedSource, setSelectedSource] = useState<string>("All")
     const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发卡牌刷新动画
+    const [baseCards, setBaseCards] = useState<StandardCard[]>([]);
+    const [professionCards, setProfessionCards] = useState<StandardCard[]>([]);
+    const [cardsLoading, setCardsLoading] = useState(true);
+    const [cardsError, setCardsError] = useState<string | null>(null);
 
-    // Use synchronous API for better performance
-    const baseCards = useMemo(() => {
-        if (!cardType) return [];
-        return getStandardCardsByType(cardType as CardType);
-    }, [cardType]);
-    
-    const professionCards = useMemo(() => {
-        return getStandardCardsByType(CardType.Profession);
-    }, []);
-    
-    // Loading states are no longer needed with synchronous API
-    const cardsLoading = false;
-    const cardsError = null;
-    const professionLoading = false;
-    const professionError = null;
+    // Load cards asynchronously when modal opens or card type changes
+    useEffect(() => {
+        if (!isOpen || !cardType) return;
+
+        let isMounted = true;
+        
+        const loadCards = async () => {
+            setCardsLoading(true);
+            setCardsError(null);
+
+            try {
+                // Load base cards
+                const cards = await getStandardCardsByTypeAsync(cardType as CardType);
+                if (isMounted) {
+                    setBaseCards(cards);
+                }
+
+                // Load profession cards if needed for subclass filtering
+                if (cardType === "subclass") {
+                    const profCards = await getStandardCardsByTypeAsync(CardType.Profession);
+                    if (isMounted) {
+                        setProfessionCards(profCards);
+                    }
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setCardsError(error instanceof Error ? error.message : "Failed to load cards");
+                }
+            } finally {
+                if (isMounted) {
+                    setCardsLoading(false);
+                }
+            }
+        };
+
+        loadCards();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [isOpen, cardType]);
 
     // Calculate filtered cards based on card type and level filter
     const filteredInitialCards = useMemo(() => {
@@ -118,21 +148,8 @@ export function GenericCardSelectionModal({
             // Class filter
             const classMatch = selectedClass === "All" || (card.class && card.class.includes(selectedClass));
 
-            // Source filter
+            // Source filter - StandardCard doesn't have source property, skip this filter
             let sourceMatch = true;
-            if (selectedSource !== "All") {
-                if (card.source === 'builtin') {
-                    sourceMatch = selectedSource === 'builtin';
-                } else if (card.source === 'custom') {
-                    if (card.batchId) {
-                        sourceMatch = selectedSource === `custom:${card.batchId}`;
-                    } else {
-                        sourceMatch = selectedSource === 'custom:unknown';
-                    }
-                } else {
-                    sourceMatch = false;
-                }
-            }
 
             return classMatch && sourceMatch;
         });
@@ -144,8 +161,8 @@ export function GenericCardSelectionModal({
     }, [finalFilteredCards]);
 
     // Show loading state
-    const isLoading = cardsLoading || (cardType === "subclass" && professionLoading);
-    const hasError = cardsError || (cardType === "subclass" && professionError);
+    const isLoading = cardsLoading;
+    const hasError = cardsError;
 
     // Debug logging
     console.log("GenericCardSelectionModal Debug:", {
@@ -204,7 +221,7 @@ export function GenericCardSelectionModal({
                                 <div className="text-center">
                                     <p className="text-red-500 mb-2">加载失败</p>
                                     <p className="text-sm text-gray-500">
-                                        {cardsError || professionError || "未知错误"}
+                                        {cardsError || "未知错误"}
                                     </p>
                                 </div>
                             </div>

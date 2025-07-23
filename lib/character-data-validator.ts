@@ -188,7 +188,16 @@ export function cleanAndNormalizeData(data: any): SheetData {
       resilient: Array.isArray(data.trainingOptions.resilient) ? data.trainingOptions.resilient : [],
       bonded: Array.isArray(data.trainingOptions.bonded) ? data.trainingOptions.bonded : [],
       aware: Array.isArray(data.trainingOptions.aware) ? data.trainingOptions.aware : []
-    } : undefined
+    } : {
+      intelligent: [],
+      radiantInDarkness: [],
+      creatureComfort: [],
+      armored: [],
+      vicious: [],
+      resilient: [],
+      bonded: [],
+      aware: []
+    }
   }
 
   return cleaned

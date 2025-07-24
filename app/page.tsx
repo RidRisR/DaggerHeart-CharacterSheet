@@ -7,18 +7,18 @@ import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-three"
 import {
   getStandardCardById,
-  CardType,
 } from "@/card"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { CardDrawer } from "@/components/card-drawer"
 import CharacterSheetPageFour from "@/components/character-sheet-page-four"
 import CharacterSheetPageFive from "@/components/character-sheet-page-five"
+import ArmorTemplatePage from "@/components/armor-template-page"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
 import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
 import { useSheetStore, useCardActions } from "@/lib/sheet-store"
-import { getBasePath, navigateToPage } from "@/lib/utils"
+import { navigateToPage } from "@/lib/utils"
 import { PrintReadyChecker } from "@/components/print-ready-checker"
 import { usePrintContext } from "@/contexts/print-context"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
@@ -99,7 +99,6 @@ const ImageIcon = () => (
     <polyline points="21 15 16 10 5 21"></polyline>
   </svg>
 )
-import { StandardCard } from "@/card/card-types"
 import { CharacterMetadata } from "@/lib/sheet-data"
 import { exportCharacterData } from "@/lib/storage"
 import {
@@ -742,6 +741,11 @@ export default function Home() {
             switchToPage('page3')
             console.log('[App] 数字键切换到第三页')
             break
+          case '4':
+            event.preventDefault()
+            switchToPage('page4')
+            console.log('[App] 数字键切换到第四页（护甲模板）')
+            break
         }
       }
 
@@ -888,6 +892,11 @@ export default function Home() {
           <div className="page-five flex justify-center items-start min-h-screen">
             <CharacterSheetPageFive />
           </div>
+
+          {/* 护甲模板页面（仅打印时显示） */}
+          <div className="page-armor flex justify-center items-start min-h-screen">
+            <ArmorTemplatePage />
+          </div>
         </div>
       </PrintReadyChecker>
     )
@@ -915,8 +924,8 @@ export default function Home() {
           <div className="relative w-full md:max-w-[210mm]">
             <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-[210mm]">
             <TabsList className={`grid w-full transition-all duration-200 ${!formData.includePageThreeInExport
-              ? 'grid-cols-[1fr_1fr_auto]'
-              : 'grid-cols-3'
+                ? 'grid-cols-[1fr_1fr_auto_1fr]'
+                : 'grid-cols-4'
               }`}>
               <TabsTrigger value="page1">第一页</TabsTrigger>
               <TabsTrigger value="page2">第二页</TabsTrigger>
@@ -939,6 +948,7 @@ export default function Home() {
                   {formData.includePageThreeInExport ? <EyeIcon /> : <EyeOffIcon />}
                 </span>
               </TabsTrigger>
+                <TabsTrigger value="page4">护甲模板</TabsTrigger>
             </TabsList>
 
             <TabsContent value="page1">
@@ -950,6 +960,9 @@ export default function Home() {
             <TabsContent value="page3">
               <CharacterSheetPageThree />
             </TabsContent>
+              <TabsContent value="page4">
+                <ArmorTemplatePage />
+              </TabsContent>
           </Tabs>
 
           {/* 左侧切换区域 - 仅桌面端显示 */}

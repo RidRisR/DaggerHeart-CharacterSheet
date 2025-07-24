@@ -7,18 +7,18 @@ import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-three"
 import {
   getStandardCardById,
-  CardType,
 } from "@/card"
 import { isEmptyCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { CardDrawer } from "@/components/card-drawer"
 import { CharacterSheetPageFour, CharacterSheetPageFive } from "@/components/character-sheet-card-print-page"
+import ArmorTemplatePage from "@/components/armor-template-page"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
 import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
 import { useSheetStore, useCardActions } from "@/lib/sheet-store"
-import { getBasePath, navigateToPage } from "@/lib/utils"
+import { navigateToPage } from "@/lib/utils"
 import { PrintReadyChecker } from "@/components/print-ready-checker"
 import { usePrintContext } from "@/contexts/print-context"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
@@ -99,7 +99,6 @@ const ImageIcon = () => (
     <polyline points="21 15 16 10 5 21"></polyline>
   </svg>
 )
-import { StandardCard } from "@/card/card-types"
 import { CharacterMetadata } from "@/lib/sheet-data"
 import { exportCharacterData } from "@/lib/storage"
 import {
@@ -742,6 +741,11 @@ export default function Home() {
             switchToPage('page3')
             console.log('[App] 数字键切换到第三页')
             break
+          case '4':
+            event.preventDefault()
+            switchToPage('page4')
+            console.log('[App] 数字键切换到第四页（护甲模板）')
+            break
         }
       }
 
@@ -807,11 +811,11 @@ export default function Home() {
     }
 
     // 检查第四页是否有内容（聚焦卡组，排除第一张卡）
-    const hasFocusedCards = formData?.cards && formData.cards.length > 1 && 
+    const hasFocusedCards = formData?.cards && formData.cards.length > 1 &&
       formData.cards.slice(1).some(card => card && !isEmptyCard(card))
 
     // 检查第五页是否有内容（库存卡组）
-    const hasInventoryCards = formData?.inventory_cards && formData.inventory_cards.length > 0 && 
+    const hasInventoryCards = formData?.inventory_cards && formData.inventory_cards.length > 0 &&
       formData.inventory_cards.some(card => card && !isEmptyCard(card))
 
     // 确定最后一页是哪一页
@@ -905,13 +909,20 @@ export default function Home() {
           )}
 
           {/* 第五页（仅在有库存卡组时显示） */}
-          {hasInventoryCards && (
-            <div className={`page-five flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-five' ? 'last-printed-page' : ''}`}>
-              <CharacterSheetPageFive />
-            </div>
-          )}
-        </div>
-      </PrintReadyChecker>
+          {
+            hasInventoryCards && (
+              <div className={`page-five flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-five' ? 'last-printed-page' : ''}`}>
+                <CharacterSheetPageFive />
+              </div>
+            )
+          }
+
+          {/* 护甲模板页面（仅打印时显示） */}
+          <div className="page-armor flex justify-center items-start min-h-screen">
+            <ArmorTemplatePage />
+          </div>
+        </div >
+      </PrintReadyChecker >
     )
   }
 
@@ -936,75 +947,79 @@ export default function Home() {
           {/* 角色卡区域 - 带相对定位 */}
           <div className="relative w-full md:max-w-[210mm]">
             <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-[210mm]">
-            <TabsList className={`grid w-full transition-all duration-200 ${!formData.includePageThreeInExport
-              ? 'grid-cols-[1fr_1fr_auto]'
-              : 'grid-cols-3'
-              }`}>
-              <TabsTrigger value="page1">第一页</TabsTrigger>
-              <TabsTrigger value="page2">第二页</TabsTrigger>
-              <TabsTrigger
-                value="page3"
-                className={`flex items-center justify-center transition-all duration-200 ${!formData.includePageThreeInExport
-                  ? 'w-12 min-w-12 px-1'
-                  : 'px-4'
-                  }`}
-              >
-                {formData.includePageThreeInExport && <span className="flex-grow text-center">第三页</span>}
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    toggleIncludePageThreeInExport()
-                  }}
-                  className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-                  title={formData.includePageThreeInExport ? "点击关闭第三页导出" : "点击开启第三页导出"}
+              <TabsList className={`grid w-full transition-all duration-200 ${!formData.includePageThreeInExport
+                ? 'grid-cols-[1fr_1fr_auto_1fr]'
+                : 'grid-cols-4'
+                }`}>
+                <TabsTrigger value="page1">第一页</TabsTrigger>
+                <TabsTrigger value="page2">第二页</TabsTrigger>
+                <TabsTrigger
+                  value="page3"
+                  className={`flex items-center justify-center transition-all duration-200 ${!formData.includePageThreeInExport
+                    ? 'w-12 min-w-12 px-1'
+                    : 'px-4'
+                    }`}
                 >
-                  {formData.includePageThreeInExport ? <EyeIcon /> : <EyeOffIcon />}
-                </span>
-              </TabsTrigger>
-            </TabsList>
+                  {formData.includePageThreeInExport && <span className="flex-grow text-center">第三页</span>}
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleIncludePageThreeInExport()
+                    }}
+                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                    title={formData.includePageThreeInExport ? "点击关闭第三页导出" : "点击开启第三页导出"}
+                  >
+                    {formData.includePageThreeInExport ? <EyeIcon /> : <EyeOffIcon />}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="page4">护甲模板</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="page1">
-              <CharacterSheet />
-            </TabsContent>
-            <TabsContent value="page2">
-              <CharacterSheetPageTwo />
-            </TabsContent>
-            <TabsContent value="page3">
-              <CharacterSheetPageThree />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="page1">
+                <CharacterSheet />
+              </TabsContent>
+              <TabsContent value="page2">
+                <CharacterSheetPageTwo />
+              </TabsContent>
+              <TabsContent value="page3">
+                <CharacterSheetPageThree />
+              </TabsContent>
+              <TabsContent value="page4">
+                <ArmorTemplatePage />
+              </TabsContent>
+            </Tabs>
 
-          {/* 左侧切换区域 - 仅桌面端显示 */}
-          <div
-            className="print:hidden hidden md:block absolute -left-20 top-0 bottom-0 w-16 flex items-center justify-center cursor-pointer group z-20"
-            onClick={switchToPrevPage}
-            title="上一页 (←) - 循环切换"
-          >
-            {/* 悬停时显示的背景 */}
-            <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-l-lg"></div>
-            {/* 箭头图标 */}
-            <div className="relative bg-white shadow-md group-hover:shadow-lg p-2 rounded-full opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110 group-active:scale-90">
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+            {/* 左侧切换区域 - 仅桌面端显示 */}
+            <div
+              className="print:hidden hidden md:block absolute -left-20 top-0 bottom-0 w-16 flex items-center justify-center cursor-pointer group z-20"
+              onClick={switchToPrevPage}
+              title="上一页 (←) - 循环切换"
+            >
+              {/* 悬停时显示的背景 */}
+              <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-l-lg"></div>
+              {/* 箭头图标 */}
+              <div className="relative bg-white shadow-md group-hover:shadow-lg p-2 rounded-full opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110 group-active:scale-90">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </div>
             </div>
-          </div>
 
-          {/* 右侧切换区域 - 仅桌面端显示 */}
-          <div
-            className="print:hidden hidden md:block absolute -right-20 top-0 bottom-0 w-16 flex items-center justify-center cursor-pointer group z-20"
-            onClick={switchToNextPage}
-            title="下一页 (→) - 循环切换"
-          >
-            {/* 悬停时显示的背景 */}
-            <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-r-lg"></div>
-            {/* 箭头图标 */}
-            <div className="relative bg-white shadow-md group-hover:shadow-lg p-2 rounded-full opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110 group-active:scale-90">
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+            {/* 右侧切换区域 - 仅桌面端显示 */}
+            <div
+              className="print:hidden hidden md:block absolute -right-20 top-0 bottom-0 w-16 flex items-center justify-center cursor-pointer group z-20"
+              onClick={switchToNextPage}
+              title="下一页 (→) - 循环切换"
+            >
+              {/* 悬停时显示的背景 */}
+              <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-r-lg"></div>
+              {/* 箭头图标 */}
+              <div className="relative bg-white shadow-md group-hover:shadow-lg p-2 rounded-full opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110 group-active:scale-90">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
             </div>
-          </div>
 
           </div>
 

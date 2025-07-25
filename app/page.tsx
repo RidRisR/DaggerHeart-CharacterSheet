@@ -9,10 +9,10 @@ import {
   getStandardCardById,
   CardType,
 } from "@/card"
+import { isEmptyCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { CardDrawer } from "@/components/card-drawer"
-import CharacterSheetPageFour from "@/components/character-sheet-page-four"
-import CharacterSheetPageFive from "@/components/character-sheet-page-five"
+import { CharacterSheetPageFour, CharacterSheetPageFive } from "@/components/character-sheet-card-print-page"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { Button } from "@/components/ui/button"
@@ -806,6 +806,24 @@ export default function Home() {
       console.log('[App] 用户选择跳过图片加载等待，页面将立即显示')
     }
 
+    // 检查第四页是否有内容（聚焦卡组，排除第一张卡）
+    const hasFocusedCards = formData?.cards && formData.cards.length > 1 && 
+      formData.cards.slice(1).some(card => card && !isEmptyCard(card))
+
+    // 检查第五页是否有内容（库存卡组）
+    const hasInventoryCards = formData?.inventory_cards && formData.inventory_cards.length > 0 && 
+      formData.inventory_cards.some(card => card && !isEmptyCard(card))
+
+    // 确定最后一页是哪一页
+    let lastPageClass = 'page-two' // 默认第二页是最后一页
+    if (hasInventoryCards) {
+      lastPageClass = 'page-five'
+    } else if (hasFocusedCards) {
+      lastPageClass = 'page-four'
+    } else if (formData.includePageThreeInExport) {
+      lastPageClass = 'page-three'
+    }
+
     return (
       <PrintReadyChecker onSkipWaiting={handleSkipWaiting}>
         <div className="print-all-pages">
@@ -863,31 +881,35 @@ export default function Home() {
           </div>
 
           {/* 第一页 */}
-          <div className="page-one flex justify-center items-start min-h-screen">
+          <div className={`page-one flex justify-center items-start min-h-screen ${lastPageClass === 'page-one' ? 'last-printed-page' : ''}`}>
             <CharacterSheet />
           </div>
 
           {/* 第二页 */}
-          <div className="page-two flex justify-center items-start min-h-screen">
+          <div className={`page-two flex justify-center items-start min-h-screen ${lastPageClass === 'page-two' ? 'last-printed-page' : ''}`}>
             <CharacterSheetPageTwo />
           </div>
 
           {/* 第三页 - 条件渲染 */}
           {formData.includePageThreeInExport && (
-            <div className="page-three flex justify-center items-start min-h-screen">
+            <div className={`page-three flex justify-center items-start min-h-screen ${lastPageClass === 'page-three' ? 'last-printed-page' : ''}`}>
               <CharacterSheetPageThree />
             </div>
           )}
 
-          {/* 第四页（仅打印时显示） */}
-          <div className="page-four flex justify-center items-start min-h-screen">
-            <CharacterSheetPageFour />
-          </div>
+          {/* 第四页（仅在有聚焦卡组时显示） */}
+          {hasFocusedCards && (
+            <div className={`page-four flex justify-center items-start min-h-screen ${lastPageClass === 'page-four' ? 'last-printed-page' : ''}`}>
+              <CharacterSheetPageFour />
+            </div>
+          )}
 
-          {/* 第五页（仅打印时显示） */}
-          <div className="page-five flex justify-center items-start min-h-screen">
-            <CharacterSheetPageFive />
-          </div>
+          {/* 第五页（仅在有库存卡组时显示） */}
+          {hasInventoryCards && (
+            <div className={`page-five flex justify-center items-start min-h-screen ${lastPageClass === 'page-five' ? 'last-printed-page' : ''}`}>
+              <CharacterSheetPageFive />
+            </div>
+          )}
         </div>
       </PrintReadyChecker>
     )

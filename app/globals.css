@@ -30,13 +30,18 @@ html {
   }
 }
 
-/* 打印所有页面的特殊样式 */
+/* 打印所有页面的特殊样式 - 默认都有分页符 */
 .print-all-pages .page-one,
 .print-all-pages .page-two,
 .print-all-pages .page-three,
 .print-all-pages .page-four,
 .print-all-pages .page-five {
   page-break-after: always;
+}
+
+/* 最后渲染的页面不需要分页符，通过 JS 动态添加类来控制 */
+.print-all-pages .last-printed-page {
+  page-break-after: avoid !important;
 }
 
 /* 在打印预览模式下确保每个页面居中 */
@@ -93,8 +98,8 @@ html {
     width: 210mm;
     margin: 0;
     padding: 0mm;
-    page-break-after: always;
     font-size: 0.85em;
+    /* 移除通用的 page-break-after，由具体页面控制 */
   }
 
   /* 在打印时隐藏所有固定位置的按钮 */

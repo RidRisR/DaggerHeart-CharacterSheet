@@ -1,11 +1,11 @@
 "use client"
 import React, { useMemo, useState, useEffect, useCallback } from "react"
 import { isEmptyCard, StandardCard } from "@/card/card-types"
-import { useSheetStore } from '@/lib/sheet-store';
 import { PrintImageCard } from "@/components/ui/print-image-card"
 import { CardContent } from "@/components/ui/card-content"
 import { useTextModeStore } from "@/lib/text-mode-store"
 import { usePrintContext } from "@/contexts/print-context"
+import { useSheetStore } from "@/lib/sheet-store"
 
 // 卡组打印区域组件
 interface CardDeckPrintSectionProps {
@@ -21,7 +21,7 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 }) => {
     const { isTextMode } = useTextModeStore()
     const [loadedImages, setLoadedImages] = useState(new Set<string>())
-    
+
     useEffect(() => {
         if (isTextMode) {
             // 文字模式下不需要等待图片加载，直接标记完成
@@ -98,43 +98,52 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     );
 };
 
-// 打印专用页面，专门展示聚焦卡组
-const CharacterSheetPageFour: React.FC = () => {
-    const { sheetData: formData } = useSheetStore();
+// 通用卡牌打印页面组件接口
+interface CardPrintPageProps {
+    pageId: string;
+    title: string;
+    cards: StandardCard[];
+    className?: string;
+}
+
+// 通用卡牌打印页面组件
+export const CharacterSheetCardPrintPage: React.FC<CardPrintPageProps> = ({
+    pageId,
+    title,
+    cards,
+    className = ""
+}) => {
     const { registerPageImages, onPageImagesLoaded } = usePrintContext();
     const { isTextMode } = useTextModeStore();
 
-    // 获取聚焦卡组的有效卡牌，并跳过序号为0的那张
-    const focusedCards = useMemo(() => {
-        const allCards = formData?.cards || [];
-        return allCards
-            .slice(1) // 先去掉序号0的卡牌
-            .filter((card: StandardCard) => !isEmptyCard(card)); // 再过滤空卡
-    }, [formData?.cards]);
+    // 过滤空卡牌
+    const validCards = useMemo(() => {
+        return cards.filter((card: StandardCard) => !isEmptyCard(card));
+    }, [cards]);
 
     // 创建稳定的回调函数
     const handleAllImagesLoaded = useCallback(() => {
-        onPageImagesLoaded('page-four')
-    }, [onPageImagesLoaded])
+        onPageImagesLoaded(pageId)
+    }, [onPageImagesLoaded, pageId])
 
     // 注册页面图片数量
     useEffect(() => {
         // 文字模式下注册0张图片，图片模式下注册实际数量
-        const imageCount = isTextMode ? 0 : focusedCards.length
-        registerPageImages('page-four', imageCount)
-    }, [focusedCards.length, registerPageImages, isTextMode])
+        const imageCount = isTextMode ? 0 : validCards.length
+        registerPageImages(pageId, imageCount)
+    }, [validCards.length, registerPageImages, isTextMode, pageId])
 
-    // 如果聚焦卡组是空的（或者只有序号为0的卡被跳过了），不渲染第四页
-    if (focusedCards.length === 0) {
+    // 如果没有有效卡牌，不渲染页面
+    if (validCards.length === 0) {
         return null;
     }
 
     return (
         <div className="w-full max-w-[210mm] mx-auto">
-            <div className="character-sheet-page-four a4-page bg-white text-gray-800 shadow-lg print:shadow-none rounded-md" style={{ width: "210mm" }}>
+            <div className={`a4-page bg-white text-gray-800 shadow-lg print:shadow-none rounded-md ${className}`} style={{ width: "210mm" }}>
                 <CardDeckPrintSection
-                    cards={focusedCards}
-                    title="聚焦卡组"
+                    cards={validCards}
+                    title={title}
                     onAllImagesLoaded={handleAllImagesLoaded}
                 />
             </div>
@@ -142,4 +151,42 @@ const CharacterSheetPageFour: React.FC = () => {
     )
 }
 
-export default CharacterSheetPageFour
+// 具体的页面组件
+export const CharacterSheetPageFour: React.FC = () => {
+    const { sheetData: formData } = useSheetStore();
+
+    // 获取聚焦卡组的卡牌，并跳过序号为0的那张
+    const focusedCards = useMemo(() => {
+        const allCards = formData?.cards || [];
+        return allCards.slice(1); // 去掉序号0的卡牌
+    }, [formData?.cards]);
+
+    return (
+        <CharacterSheetCardPrintPage
+            pageId="page-four"
+            title="聚焦卡组"
+            cards={focusedCards}
+            className="character-sheet-page-four"
+        />
+    )
+}
+
+export const CharacterSheetPageFive: React.FC = () => {
+    const { sheetData: formData } = useSheetStore();
+
+    // 获取库存卡组的卡牌
+    const inventoryCards = useMemo(() => {
+        return formData?.inventory_cards || [];
+    }, [formData?.inventory_cards]);
+
+    return (
+        <CharacterSheetCardPrintPage
+            pageId="page-five"
+            title="库存卡组"
+            cards={inventoryCards}
+            className="character-sheet-page-five"
+        />
+    )
+}
+
+export default CharacterSheetCardPrintPage

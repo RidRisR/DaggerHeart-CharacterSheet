@@ -96,13 +96,9 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         // 轻微缩放动画
         setCardScale('scale(0.99)');
         
-        // 异步获取图片URL
-        const loadImageUrl = async () => {
-            const url = await getCardImageUrl(card, false); // 重置时不传递错误状态
-            setImageSrc(url);
-        };
-        
-        loadImageUrl();
+        // 获取图片URL
+        const url = getCardImageUrl(card, false); // 重置时不传递错误状态
+        setImageSrc(url);
         
         // 100ms后恢复正常大小
         const timer = setTimeout(() => {
@@ -115,11 +111,8 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
     // 当图片加载失败时，获取备用图片URL
     useEffect(() => {
         if (imageError && !imageSrc?.includes('empty-card.webp')) {
-            const loadErrorImageUrl = async () => {
-                const url = await getCardImageUrl(card, true); // 传递错误状态以获取默认图片
-                setImageSrc(url);
-            };
-            loadErrorImageUrl();
+            const url = getCardImageUrl(card, true); // 传递错误状态以获取默认图片
+            setImageSrc(url);
         }
     }, [imageError, card, imageSrc]);
 

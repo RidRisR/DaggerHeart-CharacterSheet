@@ -27,16 +27,22 @@ interface PrintImageCardProps {
 
 export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
     const [imageSrc, setImageSrc] = React.useState<string | null>(null)
+    const [imageError, setImageError] = React.useState(false)
     
-    // 异步获取图片URL
+    // 获取图片URL
     React.useEffect(() => {
-        const loadImageUrl = async () => {
-            const url = await getCardImageUrl(card);
-            setImageSrc(url);
-        };
-        
-        loadImageUrl();
+        setImageError(false);
+        const url = getCardImageUrl(card, false);
+        setImageSrc(url);
     }, [card]);
+
+    // 当图片加载失败时，获取备用图片URL
+    React.useEffect(() => {
+        if (imageError && !imageSrc?.includes('empty-card.webp')) {
+            const url = getCardImageUrl(card, true);
+            setImageSrc(url);
+        }
+    }, [imageError, card, imageSrc]);
     
     if (!card) {
         return null
@@ -65,6 +71,7 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
                         className="w-full h-full object-cover"
                         sizes="30vw"
                         onLoad={handleImageLoad}
+                        onError={() => setImageError(true)}
                         priority
                     />
                 )}

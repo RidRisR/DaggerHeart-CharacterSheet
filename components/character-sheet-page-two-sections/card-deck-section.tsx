@@ -125,7 +125,7 @@ function Card({
     >
       {/* 卡牌标题 */}
       {card?.name && (
-        <div className="group flex items-center justify-between text-sm font-medium">
+        <div className="group flex items-center justify-between !text-sm font-medium">
           <span
             className="truncate cursor-pointer hover:text-blue-600 transition-colors"
             onClick={(e) => {
@@ -141,7 +141,7 @@ function Card({
           <div className="flex-1"></div>
           {!isSpecial && (
             <button
-              className="ml-2 text-gray-400 hover:text-red-500 transition-all duration-200 text-sm opacity-0 group-hover:opacity-100"
+              className="ml-2 text-gray-400 hover:text-red-500 transition-all duration-200 !text-sm opacity-0 group-hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
                 onCardDelete(index);
@@ -159,7 +159,7 @@ function Card({
 
       {/* 卡牌底部信息 */}
       {card?.name && (
-        <div className="flex justify-between items-center text-xs text-gray-500">
+        <div className="flex justify-between items-center !text-xs text-gray-500">
           <span className="truncate max-w-[33%]">
             {standardCard?.cardSelectDisplay?.item1 || ""}
           </span>
@@ -410,7 +410,7 @@ export function CardDeckSection({
     <div className="mt-2">
       <div className="flex items-center justify-between mb-1">
         <div className="h-px bg-gray-800 flex-grow"></div>
-        <h3 className="text-sm font-bold text-center mx-2 print:mb-4">卡组</h3>
+        <h3 className="!text-sm font-bold text-center mx-2 print:mb-4">卡组</h3>
         <div className="h-px bg-gray-800 flex-grow"></div>
       </div>
 
@@ -438,7 +438,7 @@ export function CardDeckSection({
         </div>
 
         {/* 操作提示 */}
-        <div className="text-xs text-gray-500">
+        <div className="!text-xs text-gray-500">
           💡 左键进入卡牌选择，右键移动卡牌到其他卡组
         </div>
       </div>

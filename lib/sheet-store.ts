@@ -463,6 +463,21 @@ export const useSheetProficiency = () => useSheetStore(state => state.sheetData.
 export const useSheetHP = () => useSheetStore(state => state.sheetData.hp);
 export const useSheetExperience = () => useSheetStore(state => state.sheetData.experience);
 
+// Helper function to safely merge data, filtering out undefined values
+const safelyMergeData = (defaultData: SheetData, userData: Partial<SheetData>): SheetData => {
+    const result = { ...defaultData };
+    
+    // Only copy defined values from userData
+    Object.keys(userData).forEach(key => {
+        const value = userData[key as keyof SheetData];
+        if (value !== undefined) {
+            (result as any)[key] = value;
+        }
+    });
+    
+    return result;
+};
+
 // Safe data selector with default values - using a memoized approach
 let cachedSafeData: SheetData | null = null;
 let lastSheetData: SheetData | null = null;
@@ -471,10 +486,7 @@ export const useSafeSheetData = () => useSheetStore(state => {
     // Only recalculate if sheetData has changed
     if (state.sheetData !== lastSheetData) {
         lastSheetData = state.sheetData;
-        cachedSafeData = {
-            ...defaultSheetData,
-            ...state.sheetData,
-        };
+        cachedSafeData = safelyMergeData(defaultSheetData, state.sheetData);
     }
     return cachedSafeData!;
 });

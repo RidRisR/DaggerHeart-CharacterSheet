@@ -1,5 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { StandardCard } from "@/card/card-types";
+import { useUnifiedCardStore } from "@/card/stores/unified-card-store";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -38,8 +40,6 @@ export function navigateToPage(path: string) {
   window.location.href = targetUrl;
 }
 
-import type { StandardCard } from "@/card/card-types";
-
 export function getCardImageUrl(
   card: StandardCard | undefined,
   isError: boolean = false
@@ -51,20 +51,34 @@ export function getCardImageUrl(
     return `${basePath}/image/empty-card.webp`;
   }
 
+  // 获取要使用的 imageUrl
+  let imageUrl = card.imageUrl;
+  
+  // 如果当前卡片没有 imageUrl，尝试从 allCards 中查找同 ID 的卡片
+  if (!imageUrl && card.id) {
+    const store = useUnifiedCardStore.getState();
+    if (store.initialized) {
+      const foundCard = store.getCardById(card.id);
+      if (foundCard?.imageUrl) {
+        imageUrl = foundCard.imageUrl;
+      }
+    }
+  }
+
   // 现在 imageUrl 应该已经在加载时预处理过了
-  if (!card.imageUrl) {
+  if (!imageUrl) {
     return `${basePath}/image/empty-card.webp`;
   }
 
   // 检查是否是完整的 HTTP/HTTPS URL
-  if (card.imageUrl.startsWith('http://') || card.imageUrl.startsWith('https://')) {
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
     // 对于外部 URL，直接返回（但这些 URL 可能无法访问）
-    console.warn(`[getCardImageUrl] 外部图片 URL 可能无法访问: ${card.imageUrl}`);
-    return card.imageUrl;
+    console.warn(`[getCardImageUrl] 外部图片 URL 可能无法访问: ${imageUrl}`);
+    return imageUrl;
   }
 
   // 确保路径以斜杠开头（用于相对路径）
-  const normalizedUrl = card.imageUrl.startsWith('/') ? card.imageUrl : '/' + card.imageUrl;
+  const normalizedUrl = imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl;
 
   // 返回完整的图片路径
   return `${basePath}/image${normalizedUrl}`;

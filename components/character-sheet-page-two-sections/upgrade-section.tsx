@@ -24,10 +24,10 @@ export function UpgradeSection({
 
   return (
     <div className="border border-gray-300 rounded-md shadow-sm">
-      <div className="bg-gray-800 text-white p-1 text-center font-bold text-sm rounded-t-md">{title}</div>
-      <div className="bg-gray-600 text-white p-1 text-xs">{description}</div>
+      <div className="bg-gray-800 text-white p-1 text-center font-bold !text-sm rounded-t-md">{title}</div>
+      <div className="bg-gray-600 text-white p-1 !text-xs">{description}</div>
       <div className="p-1">
-        <p className="text-xs mb-2">
+        <p className="!text-xs mb-2">
           {tier === 1
             ? "更新你的等级，从下方的升级列表中选择并标记两个选项。"
             : "更新你的等级，从下方的升级列表或更低级的列表中选择并标记两个选项。"}
@@ -35,7 +35,7 @@ export function UpgradeSection({
 
         <div className="space-y-1">
           {getUpgradeOptions(tier).map((option, index) => (
-            <div key={`${tierKey}-${index}`} className="flex items-start text-[10px] leading-[1.6]">
+            <div key={`${tierKey}-${index}`} className="flex items-start !text-[10px] leading-[1.6]">
               <span className={`flex flex-shrink-0 items-center justify-end mt-px ${option.doubleBox && option.boxCount === 2 ? '' : 'gap-px'}`} style={{ minWidth: '3.2em' }}>
                 {Array(option.boxCount).fill(null).map((_, i) => (
                   <div
@@ -75,7 +75,7 @@ export function UpgradeSection({
           ))}
         </div>
 
-        <div className="mt-3 text-xs">
+        <div className="mt-3 !text-xs">
           {tier === 1 && (
             <>
               将伤害阈值+1，选择一张不高于你当前等级的领域卡加入卡组。

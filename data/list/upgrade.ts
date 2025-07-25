@@ -6,7 +6,7 @@ export const upgradeOptionsData = {
     { label: "永久增加一个生命槽。", doubleBox: false, boxCount: 2 },
     { label: "永久增加一个压力槽。", doubleBox: false, boxCount: 2 },
     { label: "选择两项经历获得额外+1。", doubleBox: false, boxCount: 1 },
-    { label: "选择一张不高于你当前等级的领域卡加入卡组。", doubleBox: false, boxCount: 1 },
+    { label: "获得一张不高于你当前等级的领域卡。", doubleBox: false, boxCount: 1 },
     { label: "获得闪避值+1。", doubleBox: false, boxCount: 1 },
   ],
 

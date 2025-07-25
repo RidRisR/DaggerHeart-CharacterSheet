@@ -410,7 +410,7 @@ export function CardDeckSection({
     <div className="mt-2">
       <div className="flex items-center justify-between mb-1">
         <div className="h-px bg-gray-800 flex-grow"></div>
-        <h3 className="text-sm font-bold text-center mx-2">卡组</h3>
+        <h3 className="text-sm font-bold text-center mx-2 print:mb-4">卡组</h3>
         <div className="h-px bg-gray-800 flex-grow"></div>
       </div>
 

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SelectableCard } from '@/components/ui/selectable-card'
-import { AlertCircle, Upload, FileText, CheckCircle, XCircle, Info, Eye, RefreshCw, Home, Power, PowerOff } from 'lucide-react'
+import { AlertCircle, Upload, FileText, CheckCircle, XCircle, Info, Eye, RefreshCw, Home, Power, PowerOff, BookOpen } from 'lucide-react'
 import {
   importCustomCards,
   getCustomCardBatches,
@@ -23,6 +23,13 @@ import {
 } from '@/card/index'
 import { useUnifiedCardStore } from '@/card/stores/unified-card-store'
 import { getBasePath, navigateToPage } from '@/lib/utils'
+import { DocumentModal } from '@/components/DocumentModal'
+import userGuideContent from '@/public/自定义卡包指南和示例/用户指南.md'
+import aiGuideContent from '@/public/自定义卡包指南和示例/AI-卡包创作指南.md'
+import exampleJsonData from '@/public/自定义卡包指南和示例/神州战役卡牌包.json'
+
+// 将 JSON 对象转换为格式化的字符串
+const exampleJsonContent = JSON.stringify(exampleJsonData, null, 2)
 
 interface ImportStatus {
   isImporting: boolean
@@ -93,6 +100,7 @@ export default function CardImportTestPage() {
   const [viewingCards, setViewingCards] = useState<ExtendedStandardCard[]>([])
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [isClient, setIsClient] = useState(false)
+  const [documentModalOpen, setDocumentModalOpen] = useState(false)
   const [storageInfo, setStorageInfo] = useState(() => ({
     used: '0 KB',
     available: '0 KB',
@@ -404,16 +412,17 @@ export default function CardImportTestPage() {
                 <span className="text-xs text-muted-foreground mt-1 block">
                   支持卡牌类型格式：profession (职业), ancestry (血统), community (社群), subclass (子职业), domain (领域)，variant（任意）
                 </span>
-                <span className="text-xs text-muted-foreground mt-1 block">
-                  <a
-                    href="https://github.com/RidRisR/DaggerHeart-CharacterSheet/blob/main/自定义卡包示例/用户指南.md"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 underline"
+                <div className="mt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setDocumentModalOpen(true)}
+                    className="flex items-center gap-2"
                   >
-                    点击这里查看用户指南和示例卡牌包
-                  </a>
-                </span>
+                    <BookOpen className="h-4 w-4" />
+                    查看用户指南和示例
+                  </Button>
+                </div>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -729,6 +738,15 @@ export default function CardImportTestPage() {
         cards={viewingCards}
         isOpen={viewModalOpen}
         onClose={() => setViewModalOpen(false)}
+      />
+
+      {/* 文档查看模态框 */}
+      <DocumentModal
+        isOpen={documentModalOpen}
+        onClose={() => setDocumentModalOpen(false)}
+        userGuideContent={userGuideContent}
+        aiGuideContent={aiGuideContent}
+        exampleJsonContent={exampleJsonContent}
       />
     </div>
   )

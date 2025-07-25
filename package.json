@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && rm -f out/*.txt && cp -r 自定义卡包示例 out/自定义卡牌包示例",
-    "build:local": "LOCAL_BUILD=true next build && rm -f out/*.txt && cp -r 自定义卡包示例 out/自定义卡牌包示例 && mv out/index.html \"out/车卡器入口.html\"",
+    "build": "next build && rm -f out/*.txt",
+    "build:local": "LOCAL_BUILD=true next build && rm -f out/*.txt && mv out/index.html \"out/车卡器入口.html\"",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",
@@ -95,6 +95,7 @@
     "eslint-config-next": "15.3.4",
     "happy-dom": "^18.0.1",
     "postcss": "^8",
+    "raw-loader": "^4.0.2",
     "tailwindcss": "^3.4.17",
     "typescript": "^5",
     "vitest": "^3.2.4"

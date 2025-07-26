@@ -1,8 +1,7 @@
 "use client"
 import React, { useMemo, useState, useEffect, useCallback } from "react"
 import { isEmptyCard, StandardCard } from "@/card/card-types"
-import { PrintImageCard } from "@/components/ui/print-image-card"
-import { CardContent } from "@/components/ui/card-content"
+import { PrintCard } from "@/components/ui/print-card"
 import { useTextModeStore } from "@/lib/text-mode-store"
 import { usePrintContext } from "@/contexts/print-context"
 import { useSheetStore } from "@/lib/sheet-store"
@@ -66,26 +65,17 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
                 {cardRows.map((row, rowIndex) => (
                     <div
                         key={`row-${rowIndex}`}
-                        className={`grid grid-cols-3 gap-2 mb-2 print:gap-1 print:mb-1 ${isTextMode ? 'card-row-text' : 'card-row'}`}
+                        className={`grid grid-cols-3 gap-2 mb-2 print:gap-1 print:mb-2 ${isTextMode ? 'card-row-text' : 'card-row'}`}
                     >
                         {row.map((card, cardIndex) => {
                             const uniqueKey = `${rowIndex}-${cardIndex}`;
                             return (
-                                <div
+                                <PrintCard
                                     key={uniqueKey}
-                                    className={isTextMode ? "card-item-text" : "card-item"}
-                                >
-                                    {isTextMode ? (
-                                        <div className="border rounded p-2 bg-white text-xs h-full flex flex-col">
-                                            <CardContent card={card} />
-                                        </div>
-                                    ) : (
-                                        <PrintImageCard
-                                            card={card}
-                                            onImageLoad={() => handleImageLoad(uniqueKey)}
-                                        />
-                                    )}
-                                </div>
+                                    card={card}
+                                    showImage={!isTextMode}
+                                    onImageLoad={isTextMode ? undefined : () => handleImageLoad(uniqueKey)}
+                                />
                             );
                         })}
 

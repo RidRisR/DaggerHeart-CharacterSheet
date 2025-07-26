@@ -70,14 +70,14 @@ html {
   
   /* 打印卡牌专用样式 */
   .print-card {
-    border: 1.5px solid #666 !important;
+    border: 2px solid #64748b !important;
     box-shadow: none !important;
     height: 95mm;
   }
   
   .print-card-header {
     background-color: #f9f9f9 !important;
-    border-bottom: 1px solid #ccc !important;
+    border-bottom: 2px solid #cbd5e1 !important;
     padding: 4px 8px !important;
   }
   
@@ -261,7 +261,7 @@ html {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0.4rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
     padding: 0 0.2rem;
   }
 
@@ -274,7 +274,7 @@ html {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0.4rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
     padding: 0 0.2rem;
   }
   .print-page {
@@ -296,7 +296,7 @@ html {
     line-height: 1.4;
     height: auto;
     /* 自适应内容高度 */
-    color: #333;
+    color: #5c5c5c;
   }
 
   /* 卡组区域样式 */
@@ -316,7 +316,7 @@ html {
   .print-deck-header h2 {
     font-size: 11pt !important;
     font-weight: 500 !important;
-    color: #555 !important;
+    color: #5c5c5c !important;
     white-space: nowrap;
   }
   

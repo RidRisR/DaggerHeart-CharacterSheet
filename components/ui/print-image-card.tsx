@@ -60,9 +60,9 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
     }
 
     return (
-        <div className="flex flex-col overflow-hidden rounded-lg border border-gray-300 bg-white h-full">
-            {/* Image Container */}
-            <div className="relative w-full aspect-[1.4] overflow-hidden">
+        <div className="flex flex-col overflow-hidden rounded-lg border border-gray-400 bg-white h-full shadow-sm print-card">
+            {/* Image Container - 调整比例，不再有文字覆盖 */}
+            <div className="relative w-full aspect-[1.6] overflow-hidden bg-gray-100">
                 {imageSrc && (
                     <Image
                         src={imageSrc}
@@ -75,34 +75,37 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
                         priority
                     />
                 )}
-                <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/50 to-transparent pointer-events-none flex flex-col justify-end p-2">
-                    <h3 className="text-base font-bold text-white leading-tight">{displayName}</h3>
-                    <span className="text-xs font-medium text-gray-200">{getDisplayTypeName(card)}</span>
-                </div>
             </div>
 
+            {/* Title Bar - 独立的标题区域 */}
+            <div className="px-2 py-1.5 border-b border-gray-200 bg-gray-50 print-card-header">
+                <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-bold text-gray-900 leading-none flex-1">{displayName}</h3>
+                    <span className="text-[11px] font-medium text-gray-600 flex-shrink-0">{getDisplayTypeName(card)}</span>
+                </div>
+                {/* Display Items - 移到标题栏内 */}
+                {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
+                    <div className="flex flex-row flex-wrap items-center gap-2 print-card-tags mt-0.5">
+                        {displayItem1 && <div className="text-[9px] font-medium text-gray-500">{displayItem1}</div>}
+                        {displayItem2 && <div className="text-[9px] font-medium text-gray-500">{displayItem2}</div>}
+                        {displayItem3 && <div className="text-[9px] font-medium text-gray-500">{displayItem3}</div>}
+                        {displayItem4 && <div className="text-[9px] font-medium text-gray-500">{displayItem4}</div>}
+                    </div>
+                )}
+            </div>
 
             {/* Content Container */}
             <div className="flex flex-1 flex-col p-2">
-                {/* Display Items */}
-                {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
-                    <div className="mb-2 flex flex-row flex-wrap items-center gap-1 border-b border-dashed border-gray-200 pb-2 text-[10px]">
-                        {displayItem1 && <div className="rounded-full bg-gray-100 px-2 py-0.5 font-semibold text-gray-700">{displayItem1}</div>}
-                        {displayItem2 && <div className="rounded-full bg-gray-100 px-2 py-0.5 font-semibold text-gray-700">{displayItem2}</div>}
-                        {displayItem3 && <div className="rounded-full bg-gray-100 px-2 py-0.5 font-semibold text-gray-700">{displayItem3}</div>}
-                        {displayItem4 && <div className="rounded-full bg-gray-100 px-2 py-0.5 font-semibold text-gray-700">{displayItem4}</div>}
-                    </div>
-                )}
 
                 {/* Description */}
-                <div className="flex-1 text-xs text-gray-700 overflow-hidden card-description">
+                <div className="flex-1 text-xs text-gray-700 overflow-hidden card-description print-card-description">
                     <ReactMarkdown
                         skipHtml
                         components={{
-                            p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
-                            ul: ({ children }) => <ul className="mb-1 list-inside list-disc text-[11px]">{children}</ul>,
-                            ol: ({ children }) => <ol className="mb-1 list-inside list-decimal text-[11px]">{children}</ol>,
-                            li: ({ children }) => <li className="mb-0.5">{children}</li>,
+                            p: ({ children }) => <p className="mb-1 last:mb-0 leading-tight">{children}</p>,
+                            ul: ({ children }) => <ul className="mb-1 list-inside list-disc text-[10px] space-y-0">{children}</ul>,
+                            ol: ({ children }) => <ol className="mb-1 list-inside list-decimal text-[10px] space-y-0">{children}</ol>,
+                            li: ({ children }) => <li className="mb-0">{children}</li>,
                         }}
                         remarkPlugins={[remarkGfm, remarkBreaks]}
                     >
@@ -112,8 +115,8 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
 
                 {/* Footer */}
                 {card.type !== CardType.Profession && card.hint && (
-                    <div className="mt-auto pt-2 border-t border-gray-100">
-                        <div className="text-[10px] text-gray-600 italic">{card.hint}</div>
+                    <div className="mt-auto pt-1 border-t border-gray-200">
+                        <div className="text-[10px] text-gray-600 italic print-card-hint">{card.hint}</div>
                     </div>
                 )}
             </div>

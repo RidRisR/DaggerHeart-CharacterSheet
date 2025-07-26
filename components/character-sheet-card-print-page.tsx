@@ -54,9 +54,11 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
 
     return (
         <div className="print-deck-section">
-            {/* 卡组标题 */}
-            <div className="print-deck-header mb-1">
-                <h2 className="text-xl font-bold text-center">{title}</h2>
+            {/* 卡组标题 - 横向分隔线式 */}
+            <div className="print-deck-header flex items-center justify-center">
+                <div className="flex-1 h-px bg-gray-400"></div>
+                <h2 className="px-3 text-sm font-medium text-gray-700">{title}</h2>
+                <div className="flex-1 h-px bg-gray-400"></div>
             </div>
 
             {/* 卡牌网格 - 和以前一样的方法 */}

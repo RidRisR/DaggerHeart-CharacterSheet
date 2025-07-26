@@ -826,7 +826,7 @@ export default function Home() {
 
     return (
       <PrintReadyChecker onSkipWaiting={handleSkipWaiting}>
-        <div className="print-all-pages">
+        <div className="print-all-pages pb-24">
           <PrintHelper />
 
           {/* 顶部提示横条 - 只在屏幕上显示，打印时隐藏 */}
@@ -881,32 +881,32 @@ export default function Home() {
           </div>
 
           {/* 第一页 */}
-          <div className={`page-one flex justify-center items-start min-h-screen ${lastPageClass === 'page-one' ? 'last-printed-page' : ''}`}>
+          <div className={`page-one flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-one' ? 'last-printed-page' : ''}`}>
             <CharacterSheet />
           </div>
 
           {/* 第二页 */}
-          <div className={`page-two flex justify-center items-start min-h-screen ${lastPageClass === 'page-two' ? 'last-printed-page' : ''}`}>
+          <div className={`page-two flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-two' ? 'last-printed-page' : ''}`}>
             <CharacterSheetPageTwo />
           </div>
 
           {/* 第三页 - 条件渲染 */}
           {formData.includePageThreeInExport && (
-            <div className={`page-three flex justify-center items-start min-h-screen ${lastPageClass === 'page-three' ? 'last-printed-page' : ''}`}>
+            <div className={`page-three flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-three' ? 'last-printed-page' : ''}`}>
               <CharacterSheetPageThree />
             </div>
           )}
 
           {/* 第四页（仅在有聚焦卡组时显示） */}
           {hasFocusedCards && (
-            <div className={`page-four flex justify-center items-start min-h-screen ${lastPageClass === 'page-four' ? 'last-printed-page' : ''}`}>
+            <div className={`page-four flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-four' ? 'last-printed-page' : ''}`}>
               <CharacterSheetPageFour />
             </div>
           )}
 
           {/* 第五页（仅在有库存卡组时显示） */}
           {hasInventoryCards && (
-            <div className={`page-five flex justify-center items-start min-h-screen ${lastPageClass === 'page-five' ? 'last-printed-page' : ''}`}>
+            <div className={`page-five flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-five' ? 'last-printed-page' : ''}`}>
               <CharacterSheetPageFive />
             </div>
           )}

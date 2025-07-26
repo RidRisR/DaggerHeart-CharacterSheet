@@ -64,7 +64,54 @@ html {
 
 @media print {
   .card-description {
-    font-size: 7.5pt !important;
+    font-size: 9pt !important;
+    line-height: 1.4 !important;
+  }
+  
+  /* 打印卡牌专用样式 */
+  .print-card {
+    border: 1.5px solid #666 !important;
+    box-shadow: none !important;
+    height: 95mm;
+  }
+  
+  .print-card-header {
+    background-color: #f9f9f9 !important;
+    border-bottom: 1px solid #ccc !important;
+    padding: 4px 8px !important;
+  }
+  
+  .print-card-header h3 {
+    font-size: 10pt !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
+  }
+  
+  .print-card-header span {
+    font-size: 7pt !important;
+    background-color: #e0e0e0 !important;
+    padding: 1px 6px !important;
+    border-radius: 3px !important;
+  }
+  
+  .print-card-tags {
+    font-size: 7pt !important;
+    line-height: 1.2 !important;
+    color: #666 !important;
+  }
+  
+  .print-card-description {
+    font-size: 8pt !important;
+    line-height: 1.3 !important;
+  }
+  
+  .print-card-description p {
+    margin-bottom: 4px !important;
+  }
+  
+  .print-card-hint {
+    font-size: 7pt !important;
+    line-height: 1.2 !important;
   }
 }
 /* 在实际打印时移除居中样式，保持原始布局 */
@@ -186,12 +233,13 @@ html {
   .card-item {
     break-inside: avoid;
     height: 100%;
-    /* 填满行高，确保同行等高 */
-    min-height: 340px;
-    max-height: 370px;
-    /* 增加最小高度 */
+    /* 移除固定高度限制，使用aspect-ratio保持比例 */
+    min-height: auto;
+    max-height: none;
     display: flex;
     flex-direction: column;
+    border: 1px solid #ddd;
+    background: white;
   }
   /* 文字模式下的卡片样式 - 允许分页且自适应高度 */
   .card-item-text {
@@ -214,8 +262,9 @@ html {
     /* 同一行卡牌高度对齐 */
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    gap: 0.4rem;
     margin-bottom: 0.5rem;
+    padding: 0 0.2rem;
   }
 
   /* 文字模式下的卡牌行样式 - 允许分页 */
@@ -226,8 +275,9 @@ html {
     /* 同一行卡牌高度对齐 */
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    gap: 0.4rem;
     margin-bottom: 0.5rem;
+    padding: 0 0.2rem;
   }
   .print-page {
     page-break-after: always;
@@ -244,20 +294,38 @@ html {
     /* 描述区域自动扩展 */
     overflow: visible;
     /* 显示完整内容，不截断 */
-    font-size: 0.75rem;
-    line-height: 1.3;
+    font-size: 9pt;
+    line-height: 1.4;
     height: auto;
     /* 自适应内容高度 */
+    color: #333;
   }
 
   /* 卡组区域样式 */
   .print-deck-section {
-    margin-bottom: 2rem;
+    margin-bottom: 0.5rem;
+    padding: 0 0.2rem;
   }
 
   .print-deck-header {
     page-break-after: avoid;
     /* 标题不单独分页 */
+    margin-bottom: 0.3rem;
+    padding: 0 1rem;
+    height: 6mm;
+  }
+  
+  .print-deck-header h2 {
+    font-size: 11pt !important;
+    font-weight: 500 !important;
+    color: #555 !important;
+    white-space: nowrap;
+  }
+  
+  .print-deck-header > div {
+    /* 分隔线样式 */
+    background-color: #999 !important;
+    height: 0.5px !important;
   }
 
   .shield-shape {

@@ -238,8 +238,6 @@ html {
     max-height: none;
     display: flex;
     flex-direction: column;
-    border: 1px solid #ddd;
-    background: white;
   }
   /* 文字模式下的卡片样式 - 允许分页且自适应高度 */
   .card-item-text {

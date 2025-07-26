@@ -44,7 +44,7 @@ export const CardContent: React.FC<CardContentProps> = ({ card, className = "" }
                         {card.description}
                     </ReactMarkdown>
                     {(card.type !== CardType.Profession && card.hint) && (
-                        <div className="text-[10px] text-gray-400 mt-2">
+                        <div className="text-[10px] text-gray-500 mt-2">
                             <div className="italic text-left">{card.hint}</div>
                         </div>
                     )}

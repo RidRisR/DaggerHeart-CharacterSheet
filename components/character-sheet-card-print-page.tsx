@@ -53,9 +53,9 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
     }
 
     return (
-        <div className="print-deck-section mb-6 print:mb-3">
+        <div className="print-deck-section">
             {/* 卡组标题 - 横向分隔线式 */}
-            <div className="print-deck-header flex items-center justify-center mb-4 print:mb-2">
+            <div className="print-deck-header flex items-center justify-center">
                 <div className="flex-1 h-px bg-gray-400"></div>
                 <h2 className="px-3 text-sm font-medium text-gray-700">{title}</h2>
                 <div className="flex-1 h-px bg-gray-400"></div>
@@ -66,7 +66,7 @@ const CardDeckPrintSection: React.FC<CardDeckPrintSectionProps> = ({
                 {cardRows.map((row, rowIndex) => (
                     <div
                         key={`row-${rowIndex}`}
-                        className={`grid grid-cols-3 gap-2 mb-2 print:gap-1 ${isTextMode ? 'card-row-text' : 'card-row'}`}
+                        className={`grid grid-cols-3 gap-2 mt-2 print:gap-1 ${isTextMode ? 'card-row-text' : 'card-row'}`}
                     >
                         {row.map((card, cardIndex) => {
                             const uniqueKey = `${rowIndex}-${cardIndex}`;

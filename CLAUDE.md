@@ -84,3 +84,72 @@ pnpm test:integration # Run only integration tests
 - Character sheet has special card slot protections (first 5 slots in focused deck)
 - Print functionality includes image loading optimization
 - The project uses PNPM as the package manager
+
+## SheetData Flow and Migration
+
+### SheetData Sources
+SheetData can come from multiple sources in the application:
+
+1. **New Character Creation**
+   - `lib/multi-character-storage.ts` - `createNewCharacter()` creates from `defaultSheetData`
+   - `lib/default-sheet-data.ts` - Defines the default structure for new characters
+
+2. **Loading from Storage**
+   - `lib/multi-character-storage.ts` - `loadCharacterById()` loads from localStorage
+   - Includes migration logic for `inventory_cards` field (lines 177-183)
+
+3. **Character Duplication**
+   - `lib/multi-character-storage.ts` - `duplicateCharacter()` copies existing character data
+
+4. **JSON Import**
+   - `lib/storage.ts` - `importCharacterDataForMultiCharacter()` imports from JSON files
+   - Adds `inventory_cards` if missing (lines 185-188)
+
+5. **HTML Import**
+   - `lib/html-importer.ts` - `importCharacterFromHTMLFile()` extracts from HTML
+   - Uses `validateAndProcessCharacterData()` for validation
+
+6. **Legacy Migration**
+   - `lib/multi-character-storage.ts` - `migrateToMultiCharacterStorage()` migrates from old single-character system
+
+### Existing Migration Patterns
+
+1. **Load-time Migration** (in `loadCharacterById`):
+   ```typescript
+   // Add missing inventory_cards field
+   if (!parsed.inventory_cards) {
+     console.log(`[Migration] Adding inventory_cards to character ${id}`);
+     parsed.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
+     needsSave = true;
+   }
+   ```
+
+2. **Import-time Migration** (in `importCharacterDataForMultiCharacter`):
+   ```typescript
+   // Backward compatibility for old saves
+   if (!data.inventory_cards) {
+     console.log('[Import] Adding inventory_cards to imported data');
+     data.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
+   }
+   ```
+
+3. **Validation and Normalization**:
+   - `lib/character-data-validator.ts` - `cleanAndNormalizeData()` ensures data consistency
+   - `validateAndProcessCharacterData()` provides comprehensive validation
+
+### Adding New Fields Migration Strategy
+
+When adding new fields to SheetData:
+
+1. **Update `lib/sheet-data.ts`** - Add the new field to the SheetData interface
+2. **Update `lib/default-sheet-data.ts`** - Add default value for new field
+3. **Add migration in `loadCharacterById()`** - Check and add field when loading
+4. **Add migration in import functions** - Ensure imports handle missing field
+5. **Update `cleanAndNormalizeData()`** if field needs special handling
+
+### Migration Testing Points
+- Load existing characters without new field
+- Import old JSON files
+- Import HTML files
+- Duplicate existing characters
+- Create new characters

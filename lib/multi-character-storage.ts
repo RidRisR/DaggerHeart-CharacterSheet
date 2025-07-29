@@ -1,6 +1,6 @@
 import { SheetData, CharacterMetadata, CharacterList } from "./sheet-data";
 import { defaultSheetData } from "./default-sheet-data";
-import { createEmptyCard } from "@/card/card-types";
+import { migrateSheetData } from "./sheet-data-migration";
 
 // ===== 多角色系统存储键 =====
 export const CHARACTER_LIST_KEY = "dh_character_list";       // 角色元数据列表
@@ -164,7 +164,7 @@ export function loadCharacterById(id: string): SheetData | null {
       return null;
     }
 
-    const parsed = JSON.parse(stored);
+    let parsed = JSON.parse(stored);
 
     // 基本验证
     if (!parsed || typeof parsed !== 'object') {
@@ -172,42 +172,15 @@ export function loadCharacterById(id: string): SheetData | null {
       return null;
     }
 
-    // 兼容性迁移：为旧角色添加 inventory_cards 字段
-    if (!parsed.inventory_cards) {
-      console.log(`[Migration] Adding inventory_cards to character ${id}`);
-      parsed.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
-      // 立即保存迁移后的数据
-      saveCharacterById(id, parsed);
-    }
-
-    // 兼容性迁移：为旧属性数据添加施法标记字段和第三页导出控制字段
-    let needsSave = false;
-
-    // 兼容性迁移：为旧角色添加第三页导出控制字段
-    if (parsed.includePageThreeInExport === undefined) {
-      console.log(`[Migration] Adding includePageThreeInExport to character ${id}`);
-      parsed.includePageThreeInExport = true;
-      needsSave = true;
-    }
-    const attributeKeys = ['agility', 'strength', 'finesse', 'instinct', 'presence', 'knowledge'] as const;
-
-    attributeKeys.forEach(key => {
-      const attrValue = parsed[key];
-      if (attrValue && typeof attrValue === 'object' && 'checked' in attrValue && 'value' in attrValue) {
-        // 如果是有效的AttributeValue但缺少spellcasting字段，则添加默认值
-        if (!('spellcasting' in attrValue)) {
-          attrValue.spellcasting = false;
-          needsSave = true;
-        }
-      }
-    });
-
-    if (needsSave) {
-      console.log(`[Migration] Adding spellcasting flags to character ${id}`);
-      saveCharacterById(id, parsed);
-    }
-
-    return parsed;
+    // 应用数据迁移（迁移函数会自动判断是否需要迁移）
+    console.log(`[Migration] Applying migrations for character ${id}`);
+    const migratedData = migrateSheetData(parsed);
+    
+    // 保存迁移后的数据（即使没有迁移也保存，确保数据一致性）
+    console.log(`[Migration] Saving processed data for character ${id}`);
+    saveCharacterById(id, migratedData);
+    
+    return migratedData;
   } catch (error) {
     console.error(`[Character] Load failed for ${id} (Fast Fail):`, error);
     return null;
@@ -254,7 +227,7 @@ export function getActiveCharacterId(): string | null {
 }
 
 // ===== 角色操作 =====
-export function createNewCharacter(name: string, order?: number): SheetData {
+export function createNewCharacter(name: string): SheetData {
   const newCharacter: SheetData = {
     ...defaultSheetData,
     name: name || "新角色",
@@ -271,13 +244,11 @@ export function duplicateCharacter(originalId: string, newName: string): SheetDa
     return null;
   }
 
-  const duplicatedData: SheetData = {
+  // 复制数据并应用迁移（确保复制的数据是最新格式）
+  const duplicatedData = migrateSheetData({
     ...originalData,
     name: newName || `${originalData.name} (副本)`,
-    // 确保第三页导出字段存在
-    includePageThreeInExport: originalData.includePageThreeInExport ?? true,
-    // 注释：移除了 focused_card_ids 复制，聚焦功能由双卡组系统取代
-  };
+  });
 
   return duplicatedData;
 }

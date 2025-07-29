@@ -2,8 +2,8 @@ import {
   getStandardCardsByTypeAsync,
   CardType, // Import CardType
 } from "@/card";
-import { createEmptyCard } from "@/card/card-types"; // Import createEmptyCard
 import type { SheetData, SheetCardReference } from "./sheet-data"; // Ensure SheetCardReference is imported if not already
+import { migrateSheetData } from "./sheet-data-migration";
 import { defaultSheetData } from "./default-sheet-data";
 
 // Moved getCardClass to module scope - now async
@@ -181,13 +181,11 @@ export function importCharacterDataForMultiCharacter(file: File): Promise<SheetD
           throw new Error('无效的角色数据格式');
         }
         
-        // 向后兼容：为旧存档添加 inventory_cards 字段
-        if (!data.inventory_cards) {
-          console.log('[Import] Adding inventory_cards to imported data');
-          data.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
-        }
+        // 应用数据迁移
+        const migratedData = migrateSheetData(data);
+        console.log('[Import] Applied data migrations to imported data');
         
-        resolve(data);
+        resolve(migratedData);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '文件解析失败';
         reject(new Error(`导入失败：${errorMessage}`));

@@ -12,6 +12,7 @@ import { SheetData } from './sheet-data'
 import { StandardCard } from '@/card/card-types'
 import { defaultSheetData } from './default-sheet-data'
 import type { AttributeValue } from './sheet-data'
+import { migrateSheetData } from './sheet-data-migration'
 
 export interface ValidationResult {
   valid: boolean
@@ -272,7 +273,7 @@ export function validateAndProcessCharacterData(rawData: any, source: 'json' | '
     const cleanedData = cleanAndNormalizeData(rawData)
 
     // 4. 与默认数据合并（保持向后兼容）
-    const mergedData: any = { 
+    let mergedData: any = { 
       ...defaultSheetData, 
       ...cleanedData
     }
@@ -282,7 +283,11 @@ export function validateAndProcessCharacterData(rawData: any, source: 'json' | '
       mergedData.focused_card_ids = (rawData as any).focused_card_ids
     }
 
-    // 5. 兼容性检查
+    // 5. 应用数据迁移
+    mergedData = migrateSheetData(mergedData);
+    console.log(`[Data Validation] Applied data migrations for ${source.toUpperCase()}`)
+
+    // 6. 兼容性检查
     const compatibility = validateCompatibility(mergedData)
 
     console.log(`[Data Validation] ${source.toUpperCase()}数据验证成功:`, mergedData.name)

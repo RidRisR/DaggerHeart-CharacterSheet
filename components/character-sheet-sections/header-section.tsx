@@ -6,6 +6,7 @@ import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useCardPreview } from "@/hooks/use-card-preview"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { useSheetStore } from "@/lib/sheet-store"
+import { PageHeader } from "@/components/page-header"
 
 interface HeaderSectionProps {
   onOpenProfessionModal: () => void;
@@ -22,7 +23,7 @@ export function HeaderSection({
 }: HeaderSectionProps) {
   const { sheetData: formData, setSheetData } = useSheetStore()
   const containerRef = useRef<HTMLDivElement>(null)
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setSheetData((prev) => ({ ...prev, [name]: value }))
@@ -79,7 +80,7 @@ export function HeaderSection({
               : "选择职业"}
           </button>
         </div>
-        <div className="text-[9px] mt-1">DAGGERHEART V20250520</div>
+        <PageHeader />
       </div>
       <div className="flex flex-col items-center gap-1">
         <div className="flex gap-2">

@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { useSheetStore } from "@/lib/sheet-store"
+import { PageHeader } from "@/components/page-header"
 
 
 // Helper component for upgrade items
@@ -158,11 +159,7 @@ export default function CharacterSheetModulePage() {
           style={{ width: "210mm" }}
         >
           {/* Header Section - 黑色顶盖 */}
-          <div className="bg-gray-800 text-white p-1.5 flex items-center rounded-t-md mb-2">
-            <div className="flex flex-col">
-              <div className="text-[9px]">DAGGERHEART V20250520</div>
-            </div>
-          </div>
+          <PageHeader />
           
           {/* Page Title */}
           <div className="mb-2">

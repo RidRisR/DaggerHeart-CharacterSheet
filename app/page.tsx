@@ -916,6 +916,13 @@ export default function Home() {
   return (
     <main className={`min-w-0 w-full max-w-full mx-auto px-0 container ${isMobile ? 'pb-32' : 'pb-20'
       }`}>
+      
+      {/* 当前存档名称显示 - 打印时隐藏 */}
+      <div className="print:hidden w-full text-center py-4 border-b border-gray-200">
+        <h1 className="text-xl font-semibold text-gray-800">
+          {characterList.find(char => char.id === currentCharacterId)?.saveName || '加载中...'}
+        </h1>
+      </div>
 
       {/* 底部抽屉式卡牌展示 - 打印时隐藏 */}
       <div className="print:hidden">

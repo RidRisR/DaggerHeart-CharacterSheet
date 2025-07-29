@@ -10,6 +10,7 @@ import { createEmptyCard, type StandardCard } from "@/card/card-types"
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
 import { CardDeckSection } from "@/components/character-sheet-page-two-sections/card-deck-section"
 import { UpgradeSection } from "@/components/character-sheet-page-two-sections/upgrade-section"
+import { PageHeader } from "@/components/page-header"
 
 export default function CharacterSheetPageTwo() {
   const { setSheetData: setFormData } = useSheetStore();
@@ -133,11 +134,7 @@ export default function CharacterSheetPageTwo() {
           style={{ width: "210mm" }}
         >
           {/* Header - 调整职业名称显示框的大小 */}
-        <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md">
-            <div className="flex flex-col">
-            <div className="text-[9px]">DAGGERHEART V20250520</div>
-            </div>
-          </div>
+          <PageHeader />
 
           {/* Character Description Section */}
           <CharacterDescriptionSection formData={safeFormData} handleInputChange={handleInputChange} />

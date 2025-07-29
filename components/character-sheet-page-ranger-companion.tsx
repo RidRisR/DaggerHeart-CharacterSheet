@@ -4,6 +4,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ImageUploadCrop } from '@/components/ui/image-upload-crop';
 import { useSheetStore, useSafeSheetData } from '@/lib/sheet-store';
 import { defaultSheetData } from '@/lib/default-sheet-data';
+import { PageHeader } from '@/components/page-header';
 
 const MAX_STRESS = (formData: any) => Number(formData.companionStressMax) || 3;
 const TOTAL_STRESS = 6;
@@ -198,11 +199,7 @@ const CharacterSheetPageThree: React.FC = () => {
                     style={{ width: "210mm" }}
                 >
             {/* Header Section - 黑色顶盖 */}
-                    <div className="bg-gray-800 text-white p-2 flex items-center rounded-t-md mb-3">
-                <div className="flex flex-col">
-                    <div className="text-[9px]">DAGGERHEART V20250520</div>
-                </div>
-            </div>
+            <PageHeader />
             {/* Header Section */}
             <div className="flex justify-between items-start mb-3">
                 <div>

@@ -1,153 +1,27 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { useSheetStore } from "@/lib/sheet-store"
 import { PageHeader } from "@/components/page-header"
 
-
-// Helper component for upgrade items
-const UpgradeItem = ({
-  title,
-  cost,
-  tier,
-  checkboxes = 1,
-}: {
-  title: string
-  cost: string
-  tier?: string
-  checkboxes?: number
-  }) => {
-  const [checked, setChecked] = useState(Array(checkboxes).fill(false));
-  const maxCheckboxes = 3; // 最大格子数，用于对齐
-
-  // 分离标题和描述
-  const parts = title.split(/：|:/);
-  const mainTitle = parts[0];
-  const description = parts.length > 1 ? parts.slice(1).join(':').trim() : '';
-
-  return (
-    <div className="flex items-start gap-1.5 mb-0.5 text-[9pt] leading-[1.3]">
-      {/* 格子区，右对齐，预留最大格子宽度 */}
-      <span className="flex flex-shrink-0 items-center justify-end gap-0.5 mt-px" style={{ minWidth: '2.8em' }}>
-        {Array(maxCheckboxes - checkboxes).fill(0).map((_, i) => (
-          <span key={`empty-${i}`} className="inline-block align-middle w-[1em] h-[1em]" />
-        ))}
-        {Array(checkboxes).fill(0).map((_, i) => (
-          <span
-            key={i}
-            className={`inline-block align-middle w-[1em] h-[1em] border border-gray-800 ${checked[i] ? 'bg-gray-800' : 'bg-white'} cursor-pointer transition-colors`}
-            style={{ borderRadius: '2px', marginLeft: i === 0 && (maxCheckboxes - checkboxes) === 0 ? 0 : '0.08em' }}
-            onClick={() => {
-              const newChecked = [...checked];
-              newChecked[i] = !newChecked[i];
-              setChecked(newChecked);
-            }}
-            tabIndex={0}
-            role="checkbox"
-            aria-checked={checked[i]}
-          ></span>
-        ))}
-      </span>
-      {/* 标题、描述和花费信息 */}
-      <div className="flex-1">
-        <div>
-          <span className="font-bold text-gray-800 mr-1">{mainTitle}</span>
-          {description && <span className="text-gray-700">{description}</span>}
-        </div>
-        <div className="text-[9px] text-gray-500 leading-tight">{cost}</div>
-        {tier && <div className="text-[9px] text-gray-500 font-semibold leading-tight">{tier}</div>}
-      </div>
-    </div>
-  );
-};
-
-// Helper component for the scrap material list - compact version with number input
-const ScrapItem = ({ 
-  num, 
-  name, 
-  category, 
-  index 
-}: { 
-  num: string
-  name: string
-  category: string
-  index: number 
-}) => {
-  const { sheetData, updateScrapMaterial } = useSheetStore()
-  const materials = sheetData.armorTemplate?.scrapMaterials
-  const value = materials && (materials as any)[category] ? (materials as any)[category][index] : 0
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value.trim();
-    // 只允许数字输入
-    if (inputValue === '' || /^\d+$/.test(inputValue)) {
-      let numValue = 0;
-      if (inputValue !== '') {
-        const parsed = parseInt(inputValue, 10);
-        if (!isNaN(parsed) && parsed >= 0) {
-          numValue = parsed;
-        }
-      }
-      updateScrapMaterial(category, index, numValue);
-    }
-  };
-
-  const handleBlur = () => {
-    // 失焦时确保显示正确的数值，这个逻辑已经在 store 中处理
-  };
-
-  return (
-    <div className="flex items-center">
-      <span className="text-xs text-gray-600 w-6">{num}.</span>
-      <span className="text-xs w-12">{name}</span>
-      <input
-        type="text"
-        value={value === 0 ? '' : value.toString()}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className="w-12 text-center border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs print-empty-hide"
-        placeholder="0"
-      />
-    </div>
-  );
-};
-
-
-// Component for upgrade slots
-const UpgradeSlots = () => {
-  const { sheetData, updateUpgradeSlot, updateUpgradeSlotText } = useSheetStore()
-  const slots = sheetData.armorTemplate?.upgradeSlots || []
-
-  return (
-    <div className="space-y-1 px-3">
-      {slots.map((slot, i) => (
-        <div key={i} className="flex items-center gap-3">
-          <div
-            className={`w-4 h-4 border-2 mt-1 border-black rounded-full cursor-pointer transition-colors ${slot.checked ? 'bg-gray-800' : 'bg-white'}`}
-            onClick={() => updateUpgradeSlot(i, !slot.checked, slot.text)}
-            tabIndex={0}
-            role="checkbox"
-            aria-checked={slot.checked}
-          ></div>
-          <input
-            type="text"
-            value={slot.text}
-            onChange={(e) => updateUpgradeSlotText(i, e.target.value)}
-            className="flex-grow border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-sm mt-1 print-empty-hide"
-            placeholder="强化件名称"
-          />
-        </div>
-      ))}
-    </div>
-  );
-};
+// 导入拆分的组件
+import { UpgradeItem } from "@/components/character-sheet-iknis-sections/upgrade-item"
+import { ScrapItem } from "@/components/character-sheet-iknis-sections/scrap-item"
+import { UpgradeSlots } from "@/components/character-sheet-iknis-sections/upgrade-slots"
+import { 
+  UPGRADE_CONFIGS, 
+  PRECOMPILED_TIER2_CONFIGS, 
+  PRECOMPILED_TIER3_CONFIGS, 
+  PRECOMPILED_TIER4_CONFIGS 
+} from "@/components/character-sheet-iknis-sections/upgrade-configs"
 
 export default function CharacterSheetModulePage() {
   const { sheetData, updateArmorTemplateField, updateScrapMaterial } = useSheetStore()
   const armorTemplate = sheetData.armorTemplate || {}
+  const scrapMaterials = armorTemplate.scrapMaterials
+  
   return (
     <>
       {/* 固定位置的按钮 - 与其他页面保持一致 */}
@@ -166,23 +40,19 @@ export default function CharacterSheetModulePage() {
             <h1 className="text-2xl font-bold text-gray-800">主板模块</h1>
           </div>
 
-          {/* Name Section */}
-          <div className="mb-1.5">
-            <Input 
-              type="text" 
-              placeholder="武装名称" 
-              className="h-8 w-full print-empty-hide"
-              value={armorTemplate.weaponName || ''}
-              onChange={(e) => updateArmorTemplateField('weaponName', e.target.value)}
-            />
-          </div>
 
           <div className="grid grid-cols-[1fr,1.2fr] gap-x-6">
             {/* Left Column */}
             <div className="flex flex-col">
               {/* Iknis Section */}
               <div className="border-2 border-gray-800 p-2 rounded-md h-full">
-                <h2 className="text-lg font-bold mb-1 text-center">伊科尼斯</h2>
+                <Input 
+                  type="text" 
+                  placeholder="伊科尼斯武装名称" 
+                  className="h-8 w-full mb-1 text-center font-bold print-empty-hide"
+                  value={armorTemplate.weaponName || ''}
+                  onChange={(e) => updateArmorTemplateField('weaponName', e.target.value)}
+                />
 
                 <div className="mb-1.5">
                   <h3 className="font-bold text-xs mb-0.5">武器属性</h3>
@@ -210,11 +80,11 @@ export default function CharacterSheetModulePage() {
                       onValueChange={(value) => updateArmorTemplateField('attackRange', value)}
                       className="contents"
                     >
-                      <ToggleGroupItem value="melee" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">近战-d12+1</ToggleGroupItem>
-                      <ToggleGroupItem value="far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">远-d8+1</ToggleGroupItem>
-                      <ToggleGroupItem value="near" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">临近-d10+2</ToggleGroupItem>
-                      <ToggleGroupItem value="very-far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">极远-d6+1</ToggleGroupItem>
-                      <ToggleGroupItem value="close" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">近距离-d10</ToggleGroupItem>
+                      <ToggleGroupItem value="melee" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">近战  d12+1</ToggleGroupItem>
+                      <ToggleGroupItem value="far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">远  d8+1</ToggleGroupItem>
+                      <ToggleGroupItem value="near" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">邻近  d10+2</ToggleGroupItem>
+                      <ToggleGroupItem value="very-far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">极远  d6+1</ToggleGroupItem>
+                      <ToggleGroupItem value="close" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">近距离  d10</ToggleGroupItem>
                     </ToggleGroup>
                     <input
                       type="text"
@@ -280,16 +150,15 @@ export default function CharacterSheetModulePage() {
               <div>
                 <h4 className="text-xs font-bold text-gray-700 mb-0.5">基础强化件</h4>
                 <div className="space-y-1">
-                  <UpgradeItem checkboxes={2} title="力量：+1伤害" cost="3齿轮, 2镜头, 4铝, 1电容器" />
-                  <UpgradeItem title="屏蔽：+1护甲值" cost="3电线, 2银, 2铂金, 3保险丝" />
-                  <UpgradeItem title="收敛：+1攻击检定" cost="4线圈, 2水晶, 5金, 3圆盘" />
-                  <UpgradeItem title="增幅：额外掷一个伤害骰，然后弃掉结果中最小的一个骰子" cost="4水晶, 4钴, 4铜, 4电容器" />
-                  <UpgradeItem checkboxes={2} title="扩域：将攻击范围增加一级（近战到邻近等）。" cost="5镜头, 3银, 2电路, 2继电器" />
-                  <UpgradeItem title="拒绝：+2护甲值" cost="6线圈, 3线, 2铜, 4电池" />
-                  <UpgradeItem title="指针：+2攻击检定" cost="10线, 7金, 5保险丝, 5电路, 2电池" />
-                  <UpgradeItem title="拆分：当你进行攻击时，标记一个压力点以瞄准范围内的另一个生物。" cost="12齿轮, 5镜头, 15铝, 9继电器" />
-                  <UpgradeItem checkboxes={2} title="修复：当你造成严重伤害时，恢复一点生命值" cost="6线圈, 4线, 1水晶, 5钴, 5银, 7继电器, 2电池" />
-                  <UpgradeItem title="震慑：当你的攻击骰出关键成功时，目标必须标记一点压力。" cost="6触发器, 8铜, 9铝, 10光盘" />
+                  {UPGRADE_CONFIGS.map((config, index) => (
+                    <UpgradeItem 
+                      key={index}
+                      title={config.title}
+                      cost={config.cost}
+                      checkboxes={config.checkboxes}
+                      scrapMaterials={scrapMaterials}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -297,30 +166,49 @@ export default function CharacterSheetModulePage() {
               <div className="space-y-2">
                 {/* 预编译：二阶 */}
                 <div>
-                  <h4 className="text-xs font-bold text-blue-700 mb-0.5">预编译：二阶</h4>
+                  <h4 className="text-xs font-bold text-gray-700 mb-0.5">预编译：二阶</h4>
                   <div className="space-y-1">
-                    <UpgradeItem checkboxes={2} title="烧录：+2伤害" cost="11触发器, 11铂金, 11电路, 7光盘" />
-                    <UpgradeItem title="捕获：你可以在受到伤害时额外标记一个护甲槽。" cost="26齿轮, 13金, 15继电器, 8电池" />
-                    <UpgradeItem title="触发：在成功命中后，你可以标记两点压力让目标多标记一点生命值。" cost="33触发器, 13水晶, 23钴, 16圆盘" />
+                    {PRECOMPILED_TIER2_CONFIGS.map((config, index) => (
+                      <UpgradeItem 
+                        key={index}
+                        title={config.title}
+                        cost={config.cost}
+                        checkboxes={config.checkboxes}
+                        scrapMaterials={scrapMaterials}
+                      />
+                    ))}
                   </div>
                 </div>
 
                 {/* 预编译：三阶 */}
                 <div>
-                  <h4 className="text-xs font-bold text-purple-700 mb-0.5">预编译：三阶</h4>
+                  <h4 className="text-xs font-bold text-gray-700 mb-0.5">预编译：三阶</h4>
                   <div className="space-y-1">
-                    <UpgradeItem title="阻塞：+3护甲值；-1闪避" cost="27水晶, 67铝, 33继电器, 4电容器, 5电池" />
-                    <UpgradeItem title="压缩：在攻击的同时，你可以移动至远距离范围内的任意地点" cost="37线圈, 43银, 67保险丝, 12电容器" />
-                    <UpgradeItem checkboxes={2} title="隐藏：+3伤害" cost="28触发器, 28电路, 28继电器, 1遗物" />
+                    {PRECOMPILED_TIER3_CONFIGS.map((config, index) => (
+                      <UpgradeItem 
+                        key={index}
+                        title={config.title}
+                        cost={config.cost}
+                        checkboxes={config.checkboxes}
+                        scrapMaterials={scrapMaterials}
+                      />
+                    ))}
                   </div>
                 </div>
 
                 {/* 预编译：四阶 */}
                 <div>
-                  <h4 className="text-xs font-bold text-red-700 mb-0.5">预编译：四阶</h4>
+                  <h4 className="text-xs font-bold text-gray-700 mb-0.5">预编译：四阶</h4>
                   <div className="space-y-1">
-                    <UpgradeItem title="追踪：你可以标记2点压力以重新进行一次攻击检定" cost="75齿轮, 67透镜, 30铜, 33电路" />
-                    <UpgradeItem title="覆写：你的攻击掷骰具有优势" cost="63电线, 71金, 58圆盘, 5遗物" />
+                    {PRECOMPILED_TIER4_CONFIGS.map((config, index) => (
+                      <UpgradeItem 
+                        key={index}
+                        title={config.title}
+                        cost={config.cost}
+                        checkboxes={config.checkboxes}
+                        scrapMaterials={scrapMaterials}
+                      />
+                    ))}
                   </div>
                 </div>
               </div>
@@ -337,19 +225,19 @@ export default function CharacterSheetModulePage() {
               <div className="grid grid-cols-4 gap-x-3 gap-y-1">
                 {/* 碎片 (d6) */}
                 <div>
-                  <p className="font-bold text-xs mb-0.5">碎片 (d6)</p>
+                  <p className="font-bold text-sm mb-0.5">碎片 (d6)</p>
                   <div className="space-y-0">
                     <ScrapItem num="1" name="齿轮" category="fragments" index={0} />
                     <ScrapItem num="2" name="线圈" category="fragments" index={1} />
-                    <ScrapItem num="3" name="线" category="fragments" index={2} />
-                    <ScrapItem num="4" name="触发" category="fragments" index={3} />
+                    <ScrapItem num="3" name="缆线" category="fragments" index={2} />
+                    <ScrapItem num="4" name="扳机" category="fragments" index={3} />
                     <ScrapItem num="5" name="镜头" category="fragments" index={4} />
                     <ScrapItem num="6" name="水晶" category="fragments" index={5} />
                   </div>
                 </div>
                 {/* 金属 (D8) */}
                 <div>
-                  <p className="font-bold text-xs mb-0.5">金属 (D8)</p>
+                  <p className="font-bold text-sm mb-0.5">金属 (D8)</p>
                   <div className="space-y-0">
                     <ScrapItem num="1" name="铝" category="metals" index={0} />
                     <ScrapItem num="3" name="铜" category="metals" index={1} />
@@ -361,7 +249,7 @@ export default function CharacterSheetModulePage() {
                 </div>
                 {/* 组件 (D10) */}
                 <div>
-                  <p className="font-bold text-xs mb-0.5">组件 (D10)</p>
+                  <p className="font-bold text-sm mb-0.5">组件 (D10)</p>
                   <div className="space-y-0">
                     <ScrapItem num="1" name="保险丝" category="components" index={0} />
                     <ScrapItem num="3" name="电路" category="components" index={1} />
@@ -373,7 +261,7 @@ export default function CharacterSheetModulePage() {
                 </div>
                 {/* 遗物 */}
                 <div>
-                  <p className="font-bold text-xs mb-0.5">遗物</p>
+                  <p className="font-bold text-sm mb-0.5">遗物</p>
                   <div className="space-y-0.5">
                     {[0, 1, 2, 3, 4].map((index) => (
                       <input 

@@ -60,8 +60,12 @@ export function useImagesLoader(): UseImagesLoaderReturn {
   }, [registeredPages])
 
   const allImagesLoaded = useMemo(() => {
-    return Object.keys(registeredPages).length > 0 && 
-      Object.keys(registeredPages).every(pageId => pageImagesLoaded[pageId])
+    // 如果没有注册任何页面，认为所有图片都已加载完成
+    if (Object.keys(registeredPages).length === 0) {
+      return true
+    }
+    // 否则检查所有注册的页面是否都已加载完成
+    return Object.keys(registeredPages).every(pageId => pageImagesLoaded[pageId])
   }, [registeredPages, pageImagesLoaded])
 
   return {

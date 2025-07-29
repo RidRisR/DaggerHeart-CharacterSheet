@@ -23,7 +23,7 @@ import {
 } from '@/card/index'
 import { useUnifiedCardStore } from '@/card/stores/unified-card-store'
 import { getBasePath, navigateToPage } from '@/lib/utils'
-import { DocumentModal } from '@/components/DocumentModal'
+import { DocumentModal } from '@/components/modals/document-modal'
 import userGuideContent from '@/public/自定义卡包指南和示例/用户指南.md'
 import aiGuideContent from '@/public/自定义卡包指南和示例/AI-卡包创作指南.md'
 import exampleJsonData from '@/public/自定义卡包指南和示例/神州战役卡牌包.json'

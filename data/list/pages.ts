@@ -33,7 +33,7 @@ export const pageConfigs: PageConfig[] = [
   {
     id: 'page4',
     label: '主板扩展',
-    description: '依科尼斯护甲表',
+    description: '伊科尼斯护甲表',
     alwaysVisible: false,
     visibilityKey: 'armorTemplate'
   }

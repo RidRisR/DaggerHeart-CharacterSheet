@@ -27,7 +27,7 @@ const UpgradeItem = ({
   const description = parts.length > 1 ? parts.slice(1).join(':').trim() : '';
 
   return (
-    <div className="flex items-start gap-1.5 mb-0.5 text-[11px] leading-[1.3]">
+    <div className="flex items-start gap-1.5 mb-0.5 text-[9pt] leading-[1.3]">
       {/* 格子区，右对齐，预留最大格子宽度 */}
       <span className="flex flex-shrink-0 items-center justify-end gap-0.5 mt-px" style={{ minWidth: '2.8em' }}>
         {Array(maxCheckboxes - checkboxes).fill(0).map((_, i) => (
@@ -53,9 +53,9 @@ const UpgradeItem = ({
       <div className="flex-1">
         <div>
           <span className="font-bold text-gray-800 mr-1">{mainTitle}</span>
-          {description && <span className="text-gray-600">{description}</span>}
+          {description && <span className="text-gray-700">{description}</span>}
         </div>
-        <div className="text-[9px] text-gray-600 leading-tight">{cost}</div>
+        <div className="text-[9px] text-gray-500 leading-tight">{cost}</div>
         {tier && <div className="text-[9px] text-gray-500 font-semibold leading-tight">{tier}</div>}
       </div>
     </div>
@@ -64,9 +64,9 @@ const UpgradeItem = ({
 
 // Helper component for the scrap material list - compact version with number input
 const ScrapItem = ({ num, name }: { num: string; name: string }) => (
-  <div className="flex items-center gap-1.5">
-    <span className="text-xs text-gray-600">{num}.</span>
-    <span className="text-xs flex-1">{name}</span>
+  <div className="flex items-center">
+    <span className="text-xs text-gray-600 w-6">{num}.</span>
+    <span className="text-xs w-12">{name}</span>
     <input
       type="text"
       className="w-12 text-center border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs"
@@ -85,7 +85,7 @@ const UpgradeSlots = () => {
       {slots.map((slot, i) => (
         <div key={i} className="flex items-center gap-3">
           <div
-            className={`w-4 h-4 border-2 border-black rounded-full cursor-pointer transition-colors ${slot.checked ? 'bg-gray-800' : 'bg-white'}`}
+            className={`w-4 h-4 border-2 mt-1 border-black rounded-full cursor-pointer transition-colors ${slot.checked ? 'bg-gray-800' : 'bg-white'}`}
             onClick={() => {
               const newSlots = [...slots];
               newSlots[i] = { ...newSlots[i], checked: !newSlots[i].checked };
@@ -97,7 +97,7 @@ const UpgradeSlots = () => {
           ></div>
           <input
             type="text"
-            className="flex-grow border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs"
+            className="flex-grow border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-sm mt-1"
             placeholder="强化件名称"
             value={slot.text}
             onChange={(e) => {
@@ -137,7 +137,7 @@ export default function CharacterSheetModulePage() {
 
           {/* Name Section */}
           <div className="mb-1.5">
-            <Input type="text" placeholder="名字" className="h-8 w-full" />
+            <Input type="text" placeholder="武装名称" className="h-8 w-full" />
           </div>
 
           <div className="grid grid-cols-[1fr,1.2fr] gap-x-6">
@@ -145,7 +145,7 @@ export default function CharacterSheetModulePage() {
             <div className="flex flex-col">
               {/* Iknis Section */}
               <div className="border-2 border-gray-800 p-2 rounded-md h-full">
-                <h2 className="text-lg font-bold mb-1 text-center">伊克尼斯</h2>
+                <h2 className="text-lg font-bold mb-1 text-center">伊科尼斯</h2>
 
                 <div className="mb-1.5">
                   <h3 className="font-bold text-xs mb-0.5">武器属性</h3>
@@ -161,13 +161,20 @@ export default function CharacterSheetModulePage() {
 
                 <div className="mb-1.5">
                   <h3 className="font-bold text-xs mb-0.5">攻击范围和伤害骰</h3>
-                  <ToggleGroup type="single" className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-                    <ToggleGroupItem value="melee" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">近战-d12+1</ToggleGroupItem>
-                    <ToggleGroupItem value="far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">远-d8+1</ToggleGroupItem>
-                    <ToggleGroupItem value="near" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">临近-d10+2</ToggleGroupItem>
-                    <ToggleGroupItem value="very-far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">极远-d6+1</ToggleGroupItem>
-                    <ToggleGroupItem value="close" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">近距离-d10</ToggleGroupItem>
-                  </ToggleGroup>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+                    <ToggleGroup type="single" className="contents">
+                      <ToggleGroupItem value="melee" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">近战-d12+1</ToggleGroupItem>
+                      <ToggleGroupItem value="far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">远-d8+1</ToggleGroupItem>
+                      <ToggleGroupItem value="near" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">临近-d10+2</ToggleGroupItem>
+                      <ToggleGroupItem value="very-far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">极远-d6+1</ToggleGroupItem>
+                      <ToggleGroupItem value="close" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">近距离-d10</ToggleGroupItem>
+                    </ToggleGroup>
+                    <input
+                      type="text"
+                      className="border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 px-1.5 py-0.5 text-xs text-center"
+                      placeholder="强化后范围和伤害骰"
+                    />
+                  </div>
                 </div>
 
                 <div className="mb-1">
@@ -221,11 +228,11 @@ export default function CharacterSheetModulePage() {
                   <UpgradeItem title="屏蔽：+1护甲值" cost="3电线, 2银, 2铂金, 3保险丝" />
                   <UpgradeItem title="收敛：+1攻击检定" cost="4线圈, 2水晶, 5金, 3圆盘" />
                   <UpgradeItem title="增幅：额外掷一个伤害骰，然后弃掉结果中最小的一个骰子" cost="4水晶, 4钴, 4铜, 4电容器" />
-                  <UpgradeItem checkboxes={2} title="扩域：将攻击范围增加一级（近战到临近、近到远等）。" cost="5镜头, 3银, 2电路, 2继电器" />
+                  <UpgradeItem checkboxes={2} title="扩域：将攻击范围增加一级（近战到邻近等）。" cost="5镜头, 3银, 2电路, 2继电器" />
                   <UpgradeItem title="拒绝：+2护甲值" cost="6线圈, 3线, 2铜, 4电池" />
                   <UpgradeItem title="指针：+2攻击检定" cost="10线, 7金, 5保险丝, 5电路, 2电池" />
                   <UpgradeItem title="拆分：当你进行攻击时，标记一个压力点以瞄准范围内的另一个生物。" cost="12齿轮, 5镜头, 15铝, 9继电器" />
-                  <UpgradeItem checkboxes={2} title="修复：当你造成严重伤害时，清除一点你的生命值" cost="6线圈, 4线, 1水晶, 5钴, 5银, 7继电器, 2电池" />
+                  <UpgradeItem checkboxes={2} title="修复：当你造成严重伤害时，恢复一点生命值" cost="6线圈, 4线, 1水晶, 5钴, 5银, 7继电器, 2电池" />
                   <UpgradeItem title="震慑：当你的攻击骰出关键成功时，目标必须标记一点压力。" cost="6触发器, 8铜, 9铝, 10光盘" />
                 </div>
               </div>
@@ -237,8 +244,8 @@ export default function CharacterSheetModulePage() {
                   <h4 className="text-xs font-bold text-blue-700 mb-0.5">预编译：二阶</h4>
                   <div className="space-y-1">
                     <UpgradeItem checkboxes={2} title="烧录：+2伤害" cost="11触发器, 11铂金, 11电路, 7光盘" />
-                    <UpgradeItem title="捕获：你可以在受到伤害时额外标记一个护甲槽从而额外降低一点伤害。" cost="26齿轮, 13金, 15继电器, 8电池" />
-                    <UpgradeItem title="触发：在成功命中后你可以标记两点压力来让目标多标记一点生命值" cost="33触发器, 13水晶, 23钴, 16圆盘" />
+                    <UpgradeItem title="捕获：你可以在受到伤害时额外标记一个护甲槽。" cost="26齿轮, 13金, 15继电器, 8电池" />
+                    <UpgradeItem title="触发：在成功命中后，你可以标记两点压力让目标多标记一点生命值。" cost="33触发器, 13水晶, 23钴, 16圆盘" />
                   </div>
                 </div>
 
@@ -247,7 +254,7 @@ export default function CharacterSheetModulePage() {
                   <h4 className="text-xs font-bold text-purple-700 mb-0.5">预编译：三阶</h4>
                   <div className="space-y-1">
                     <UpgradeItem title="阻塞：+3护甲值；-1闪避" cost="27水晶, 67铝, 33继电器, 4电容器, 5电池" />
-                    <UpgradeItem title="压缩：在进行攻击的同时，你可以移动至远距离范围内的任意地点" cost="37线圈, 43银, 67保险丝, 12电容器" />
+                    <UpgradeItem title="压缩：在攻击的同时，你可以移动至远距离范围内的任意地点" cost="37线圈, 43银, 67保险丝, 12电容器" />
                     <UpgradeItem checkboxes={2} title="隐藏：+3伤害" cost="28触发器, 28电路, 28继电器, 1遗物" />
                   </div>
                 </div>
@@ -274,7 +281,7 @@ export default function CharacterSheetModulePage() {
               <div className="grid grid-cols-4 gap-x-3 gap-y-1">
                 {/* 碎片 (d6) */}
                 <div>
-                  <p className="font-bold text-[10px] mb-0.5">碎片 (d6)</p>
+                  <p className="font-bold text-xs mb-0.5">碎片 (d6)</p>
                   <div className="space-y-0">
                     <ScrapItem num="1" name="齿轮" />
                     <ScrapItem num="2" name="线圈" />
@@ -286,7 +293,7 @@ export default function CharacterSheetModulePage() {
                 </div>
                 {/* 金属 (D8) */}
                 <div>
-                  <p className="font-bold text-[10px] mb-0.5">金属 (D8)</p>
+                  <p className="font-bold text-xs mb-0.5">金属 (D8)</p>
                   <div className="space-y-0">
                     <ScrapItem num="1" name="铝" />
                     <ScrapItem num="3" name="铜" />
@@ -298,7 +305,7 @@ export default function CharacterSheetModulePage() {
                 </div>
                 {/* 组件 (D10) */}
                 <div>
-                  <p className="font-bold text-[10px] mb-0.5">组件 (D10)</p>
+                  <p className="font-bold text-xs mb-0.5">组件 (D10)</p>
                   <div className="space-y-0">
                     <ScrapItem num="1" name="保险丝" />
                     <ScrapItem num="3" name="电路" />
@@ -310,8 +317,10 @@ export default function CharacterSheetModulePage() {
                 </div>
                 {/* 遗物 */}
                 <div>
-                  <p className="font-bold text-[10px] mb-0.5">遗物</p>
+                  <p className="font-bold text-xs mb-0.5">遗物</p>
                   <div className="space-y-0.5">
+                    <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs" placeholder="遗物名称" />
+                    <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs" placeholder="遗物名称" />
                     <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs" placeholder="遗物名称" />
                     <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs" placeholder="遗物名称" />
                     <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs" placeholder="遗物名称" />
@@ -325,11 +334,11 @@ export default function CharacterSheetModulePage() {
                 量子币
               </div>
               <div className="flex-1 flex items-center justify-center">
-                <div className="w-14 h-14 border-3 border-gray-800 rounded-full flex items-center justify-center">
-                  <div className="w-10 h-10 border-2 border-gray-500 rounded-full flex items-center justify-center">
+                <div className="w-20 h-20 border-4 border-gray-800 rounded-full flex items-center justify-center">
+                  <div className="w-16 h-16 border-2 border-gray-500 rounded-full flex items-center justify-center">
                     <input
                       type="text"
-                      className="w-8 text-center bg-transparent focus:outline-none text-lg font-bold"
+                      className="w-14 text-center bg-transparent focus:outline-none text-lg font-bold"
                       placeholder="0"
                     />
                   </div>

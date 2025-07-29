@@ -416,3 +416,19 @@ html {
     }
   }
 }
+
+/* Tab容器移动端滚动样式 */
+.tabs-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.tabs-container::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .tabs-container {
+    scrollbar-width: none; /* Firefox */
+  }
+}

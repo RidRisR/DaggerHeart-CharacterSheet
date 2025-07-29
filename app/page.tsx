@@ -23,44 +23,12 @@ import { PrintReadyChecker } from "@/components/print-ready-checker"
 import { usePrintContext } from "@/contexts/print-context"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
 import { PinnedCardWindow } from "@/components/ui/pinned-card-window"
+import { PageVisibilityDropdown } from "@/components/ui/page-visibility-dropdown"
 import { useTextModeStore } from "@/lib/text-mode-store"
+import { registerPages, getTabPages } from "@/lib/page-registry"
+import { PrintPageRenderer } from "@/components/print/print-page-renderer"
 
-// 内联图标组件
-const EyeIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-    <circle cx="12" cy="12" r="3"></circle>
-  </svg>
-)
-
-const EyeOffIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
-    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 11 8 11 8a13.16 13.16 0 0 1-1.67 2.68"></path>
-    <path d="M6.61 6.61A13.526 13.526 0 0 0 1 12s4 8 11 8a9.74 9.74 0 0 0 5.39-1.61"></path>
-    <line x1="2" y1="2" x2="22" y2="22"></line>
-  </svg>
-)
+// EyeIcon和EyeOffIcon已移除 - 现在使用PageVisibilityDropdown
 
 // 文字模式图标
 const TextIcon = () => (
@@ -118,6 +86,78 @@ import {
 } from "@/lib/multi-character-storage"
 import PrintHelper from "./print-helper"
 import { exportToHTML } from "@/lib/html-exporter"
+
+// 注册所有页面
+registerPages([
+  {
+    id: 'page1',
+    label: '第一页',
+    component: CharacterSheet,
+    printClass: 'page-one',
+    visibility: { type: 'always' },
+    printOrder: 1,
+    showInTabs: true
+  },
+  {
+    id: 'page2',
+    label: '第二页',
+    component: CharacterSheetPageTwo,
+    printClass: 'page-two',
+    visibility: { type: 'always' },
+    printOrder: 2,
+    showInTabs: true
+  },
+  {
+    id: 'page3',
+    label: '游侠伙伴',
+    component: CharacterSheetPageThree,
+    printClass: 'page-three',
+    visibility: { type: 'config', configKey: 'rangerCompanion' },
+    printOrder: 3,
+    showInTabs: true
+  },
+  {
+    id: 'page4',
+    label: '主板扩展',
+    component: ArmorTemplatePage,
+    printClass: 'page-armor',
+    visibility: { type: 'config', configKey: 'armorTemplate' },
+    printOrder: 4,
+    showInTabs: true
+  },
+  {
+    id: 'focused-cards',
+    label: '聚焦卡组',
+    component: CharacterSheetPageFour,
+    printClass: 'page-four',
+    visibility: {
+      type: 'data',
+      dataCheck: (data) => {
+        // 检查聚焦卡组（排除第一张卡）
+        return data.cards && data.cards.length > 1 &&
+          data.cards.slice(1).some(card => card && !isEmptyCard(card))
+      }
+    },
+    printOrder: 5,
+    showInTabs: false  // 不在Tab中显示
+  },
+  {
+    id: 'inventory-cards',
+    label: '库存卡组',
+    component: CharacterSheetPageFive,
+    printClass: 'page-five',
+    visibility: {
+      type: 'data',
+      dataCheck: (data) => {
+        // 检查库存卡组
+        return !!(data.inventory_cards && data.inventory_cards.length > 0 &&
+          data.inventory_cards.some(card => card && !isEmptyCard(card)))
+      }
+    },
+    printOrder: 6,
+    showInTabs: false  // 不在Tab中显示
+  }
+])
 
 export default function Home() {
   // 多角色系统状态
@@ -184,12 +224,16 @@ export default function Home() {
     setCharacterManagementModalOpen(false)
   }
 
-  // 第三页导出控制
-  const toggleIncludePageThreeInExport = () => {
-    setFormData(prev => ({
-      ...prev,
-      includePageThreeInExport: !prev.includePageThreeInExport,
-    }))
+  // 移除旧的第三页导出控制函数 - 现在使用 PageVisibilityDropdown
+
+  // 生成可见的tab配置
+  const getVisibleTabs = () => {
+    // 防护条件：如果formData不存在，返回空数组
+    if (!formData) {
+      return []
+    }
+
+    return getTabPages(formData)
   }
 
   // 数据迁移处理 - 只在客户端执行
@@ -613,13 +657,10 @@ export default function Home() {
     }
   }
 
-  // 页面切换逻辑
+  // 页面切换逻辑 - 基于页面注册系统
   const getAvailablePages = () => {
-    if (formData.includePageThreeInExport) {
-      return ["page1", "page2", "page3"]
-    } else {
-      return ["page1", "page2"] // 跳过收起的第三页
-    }
+    const tabs = getVisibleTabs()
+    return tabs.map(tab => tab.tabValue || tab.id)
   }
 
   const switchToNextPage = () => {
@@ -727,24 +768,23 @@ export default function Home() {
             console.log('[App] 箭头键切换到下一页')
             break
           case '1':
-            event.preventDefault()
-            switchToPage('page1')
-            console.log('[App] 数字键切换到第一页')
-            break
           case '2':
-            event.preventDefault()
-            switchToPage('page2')
-            console.log('[App] 数字键切换到第二页')
-            break
           case '3':
-            event.preventDefault()
-            switchToPage('page3')
-            console.log('[App] 数字键切换到第三页')
-            break
           case '4':
+          case '5':
+          case '6':
+          case '7':
+          case '8':
+          case '9':
             event.preventDefault()
-            switchToPage('page4')
-            console.log('[App] 数字键切换到第四页（护甲模板）')
+            // 动态映射数字键到可见的tabs
+            const keyNumber = parseInt(event.key)
+            const availablePages = getAvailablePages()
+            if (keyNumber > 0 && keyNumber <= availablePages.length) {
+              const targetPage = availablePages[keyNumber - 1]
+              switchToPage(targetPage)
+              console.log(`[App] 数字键${keyNumber}切换到页面`)
+            }
             break
         }
       }
@@ -775,7 +815,7 @@ export default function Home() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [characterList, currentCharacterId, characterManagementModalOpen, isPrintingAll, isGuideOpen, currentTabValue, formData.includePageThreeInExport])
+  }, [characterList, currentCharacterId, characterManagementModalOpen, isPrintingAll, isGuideOpen, currentTabValue, formData?.pageVisibility])
 
   // 已移除聚焦卡牌变更处理函数 - 功能由双卡组系统取代
 
@@ -808,24 +848,6 @@ export default function Home() {
   if (isPrintingAll) {
     const handleSkipWaiting = () => {
       console.log('[App] 用户选择跳过图片加载等待，页面将立即显示')
-    }
-
-    // 检查第四页是否有内容（聚焦卡组，排除第一张卡）
-    const hasFocusedCards = formData?.cards && formData.cards.length > 1 &&
-      formData.cards.slice(1).some(card => card && !isEmptyCard(card))
-
-    // 检查第五页是否有内容（库存卡组）
-    const hasInventoryCards = formData?.inventory_cards && formData.inventory_cards.length > 0 &&
-      formData.inventory_cards.some(card => card && !isEmptyCard(card))
-
-    // 确定最后一页是哪一页
-    let lastPageClass = 'page-two' // 默认第二页是最后一页
-    if (hasInventoryCards) {
-      lastPageClass = 'page-five'
-    } else if (hasFocusedCards) {
-      lastPageClass = 'page-four'
-    } else if (formData.includePageThreeInExport) {
-      lastPageClass = 'page-three'
     }
 
     return (
@@ -884,43 +906,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 第一页 */}
-          <div className={`page-one flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-one' ? 'last-printed-page' : ''}`}>
-            <CharacterSheet />
-          </div>
-
-          {/* 第二页 */}
-          <div className={`page-two flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-two' ? 'last-printed-page' : ''}`}>
-            <CharacterSheetPageTwo />
-          </div>
-
-          {/* 第三页 - 条件渲染 */}
-          {formData.includePageThreeInExport && (
-            <div className={`page-three flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-three' ? 'last-printed-page' : ''}`}>
-              <CharacterSheetPageThree />
-            </div>
-          )}
-
-          {/* 第四页（仅在有聚焦卡组时显示） */}
-          {hasFocusedCards && (
-            <div className={`page-four flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-four' ? 'last-printed-page' : ''}`}>
-              <CharacterSheetPageFour />
-            </div>
-          )}
-
-          {/* 第五页（仅在有库存卡组时显示） */}
-          {
-            hasInventoryCards && (
-              <div className={`page-five flex justify-center items-start min-h-screen pb-20 ${lastPageClass === 'page-five' ? 'last-printed-page' : ''}`}>
-                <CharacterSheetPageFive />
-              </div>
-            )
-          }
-
-          {/* 护甲模板页面（仅打印时显示） */}
-          <div className="page-armor flex justify-center items-start min-h-screen">
-            <ArmorTemplatePage />
-          </div>
+          {/* 使用动态页面渲染器 */}
+          <PrintPageRenderer sheetData={formData} />
         </div >
       </PrintReadyChecker >
     )
@@ -947,46 +934,42 @@ export default function Home() {
           {/* 角色卡区域 - 带相对定位 */}
           <div className="relative w-full md:max-w-[210mm]">
             <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-[210mm]">
-              <TabsList className={`grid w-full transition-all duration-200 ${!formData.includePageThreeInExport
-                ? 'grid-cols-[1fr_1fr_auto_1fr]'
-                : 'grid-cols-4'
-                }`}>
-                <TabsTrigger value="page1">第一页</TabsTrigger>
-                <TabsTrigger value="page2">第二页</TabsTrigger>
-                <TabsTrigger
-                  value="page3"
-                  className={`flex items-center justify-center transition-all duration-200 ${!formData.includePageThreeInExport
-                    ? 'w-12 min-w-12 px-1'
-                    : 'px-4'
-                    }`}
-                >
-                  {formData.includePageThreeInExport && <span className="flex-grow text-center">第三页</span>}
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleIncludePageThreeInExport()
-                    }}
-                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-                    title={formData.includePageThreeInExport ? "点击关闭第三页导出" : "点击开启第三页导出"}
-                  >
-                    {formData.includePageThreeInExport ? <EyeIcon /> : <EyeOffIcon />}
-                  </span>
-                </TabsTrigger>
-                <TabsTrigger value="page4">护甲模板</TabsTrigger>
-              </TabsList>
+              {/* 支持移动端滚动的Tab容器 */}
+              <div className="w-full overflow-x-auto tabs-container">
+                <TabsList className="grid w-full transition-all duration-300 ease-in-out"
+                  style={{
+                    gridTemplateColumns: `repeat(${getVisibleTabs().length}, 1fr) auto`
+                  }}>
+                  {/* 动态渲染可见的tabs - 填满可用空间 */}
+                  {getVisibleTabs().map((tab, index) => (
+                    <TabsTrigger 
+                      key={tab.id}
+                      value={tab.id}
+                      className="transition-all duration-200 ease-in-out animate-in slide-in-from-right-2"
+                      style={{
+                        animationDelay: `${index * 50}ms`
+                      }}
+                    >
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
 
-              <TabsContent value="page1">
-                <CharacterSheet />
-              </TabsContent>
-              <TabsContent value="page2">
-                <CharacterSheetPageTwo />
-              </TabsContent>
-              <TabsContent value="page3">
-                <CharacterSheetPageThree />
-              </TabsContent>
-              <TabsContent value="page4">
-                <ArmorTemplatePage />
-              </TabsContent>
+                  {/* 页面管理下拉菜单 - 固定宽度 */}
+                  <div className="flex items-center justify-center min-w-[44px]">
+                    <PageVisibilityDropdown />
+                  </div>
+                </TabsList>
+              </div>
+
+              {/* 动态渲染Tab内容 */}
+              {getVisibleTabs().map((tab) => {
+                const Component = tab.component
+                return (
+                  <TabsContent key={tab.id} value={tab.tabValue || tab.id}>
+                    <Component />
+                  </TabsContent>
+                )
+              })}
             </Tabs>
 
             {/* 左侧切换区域 - 仅桌面端显示 */}

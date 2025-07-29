@@ -115,7 +115,7 @@ export const defaultSheetData: SheetData = {
     // 第三页导出控制
     includePageThreeInExport: true, // @deprecated 向后兼容
     pageVisibility: {
-        page3: true,         // 默认显示第三页
-        armorTemplate: true  // 默认显示护甲模板页
+        rangerCompanion: true,  // 默认显示游侠伙伴页
+        armorTemplate: true     // 默认显示护甲模板页
     },
 };

@@ -137,8 +137,8 @@ export interface SheetData {
   // ===== 页面可见性控制 =====
   includePageThreeInExport?: boolean // @deprecated 使用 pageVisibility 代替
   pageVisibility?: {
-    page3: boolean         // 第三页（角色笔记）
-    armorTemplate: boolean // 护甲模板页
+    rangerCompanion: boolean  // 游侠伙伴页
+    armorTemplate: boolean    // 护甲模板页
     // 未来可添加更多页面
   }
 

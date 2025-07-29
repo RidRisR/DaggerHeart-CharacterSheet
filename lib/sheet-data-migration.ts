@@ -35,14 +35,14 @@ function migratePageVisibility(data: SheetData): SheetData {
   
   if ('includePageThreeInExport' in data && data.includePageThreeInExport !== undefined) {
     migrated.pageVisibility = {
-      page3: data.includePageThreeInExport,
+      rangerCompanion: data.includePageThreeInExport,
       armorTemplate: true // 默认显示护甲模板
     }
     console.log('[Migration] Migrated includePageThreeInExport to pageVisibility')
   } else {
     // 如果没有相关字段，使用默认值
     migrated.pageVisibility = {
-      page3: true,
+      rangerCompanion: true,
       armorTemplate: true
     }
     console.log('[Migration] Added default pageVisibility')
@@ -95,6 +95,31 @@ function migrateAttributeSpellcasting(data: SheetData): SheetData {
 }
 
 /**
+ * pageVisibility 字段重命名迁移
+ * 将旧的 page3 字段重命名为 rangerCompanion
+ */
+function migratePageVisibilityRename(data: SheetData): SheetData {
+  if (!data.pageVisibility) {
+    return data
+  }
+
+  const migrated = { ...data }
+  
+  // 如果存在旧的 page3 字段，迁移到新字段名
+  if ('page3' in data.pageVisibility) {
+    migrated.pageVisibility = {
+      ...data.pageVisibility,
+      rangerCompanion: (data.pageVisibility as any).page3
+    }
+    // 删除旧字段
+    delete (migrated.pageVisibility as any).page3
+    console.log('[Migration] Renamed pageVisibility.page3 to rangerCompanion')
+  }
+
+  return migrated
+}
+
+/**
  * 清理废弃字段
  * 移除不再使用的字段，保持数据结构清洁
  */
@@ -131,6 +156,7 @@ export function migrateSheetData(
   migrated = migratePageVisibility(migrated)
   migrated = migrateInventoryCards(migrated)
   migrated = migrateAttributeSpellcasting(migrated)
+  migrated = migratePageVisibilityRename(migrated)
   
   // 3. 清理废弃字段（最后执行）
   migrated = cleanupDeprecatedFields(migrated)

@@ -27,6 +27,7 @@ import { PageVisibilityDropdown } from "@/components/ui/page-visibility-dropdown
 import { useTextModeStore } from "@/lib/text-mode-store"
 import { registerPages, getTabPages } from "@/lib/page-registry"
 import { PrintPageRenderer } from "@/components/print/print-page-renderer"
+import { SaveSwitcher } from "@/components/ui/save-switcher"
 
 // EyeIcon和EyeOffIcon已移除 - 现在使用PageVisibilityDropdown
 
@@ -566,7 +567,7 @@ export default function Home() {
           // 图片加载完成，等待300ms后resolve
           clearInterval(checkInterval)
           setTimeout(resolve, 300)
-        } else if (elapsedTime > 1000) {
+        } else if (elapsedTime > 3000) {
           // 3秒超时，直接继续
           clearInterval(checkInterval)
           console.log('[App] 图片加载超时，继续执行操作')
@@ -916,13 +917,6 @@ export default function Home() {
   return (
     <main className={`min-w-0 w-full max-w-full mx-auto px-0 container ${isMobile ? 'pb-32' : 'pb-20'
       }`}>
-      
-      {/* 当前存档名称显示 - 打印时隐藏 */}
-      <div className="print:hidden w-full text-center py-4 border-b border-gray-200">
-        <h1 className="text-xl font-semibold text-gray-800">
-          {characterList.find(char => char.id === currentCharacterId)?.saveName || '加载中...'}
-        </h1>
-      </div>
 
       {/* 底部抽屉式卡牌展示 - 打印时隐藏 */}
       <div className="print:hidden">
@@ -940,6 +934,15 @@ export default function Home() {
         <div className="w-full md:max-w-[220mm]">
           {/* 角色卡区域 - 带相对定位 */}
           <div className="relative w-full md:max-w-[210mm]">
+            {/* 页面标题 - 打印时隐藏 */}
+            <div className="print:hidden w-[210mm] mb-3 text-center">
+              <SaveSwitcher
+                characterList={characterList}
+                currentCharacterId={currentCharacterId}
+                onRenameCharacter={renameCharacterHandler}
+              />
+            </div>
+
             <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-[210mm]">
               {/* 支持移动端滚动的Tab容器 */}
               <div className="w-full overflow-x-auto tabs-container">
@@ -981,7 +984,8 @@ export default function Home() {
 
             {/* 左侧切换区域 - 仅桌面端显示 */}
             <div
-              className="print:hidden hidden md:block absolute -left-20 top-0 bottom-0 w-16 flex items-center justify-center cursor-pointer group z-20"
+              className="print:hidden hidden md:block absolute -left-20 w-16 flex items-center justify-center cursor-pointer group z-20"
+              style={{ top: '48px', bottom: 0 }}
               onClick={switchToPrevPage}
               title="上一页 (←) - 循环切换"
             >
@@ -997,7 +1001,8 @@ export default function Home() {
 
             {/* 右侧切换区域 - 仅桌面端显示 */}
             <div
-              className="print:hidden hidden md:block absolute -right-20 top-0 bottom-0 w-16 flex items-center justify-center cursor-pointer group z-20"
+              className="print:hidden hidden md:block absolute -right-20 w-16 flex items-center justify-center cursor-pointer group z-20"
+              style={{ top: '48px', bottom: 0 }}
               onClick={switchToNextPage}
               title="下一页 (→) - 循环切换"
             >

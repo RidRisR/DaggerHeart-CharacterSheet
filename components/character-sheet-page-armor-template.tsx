@@ -4,6 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { useSheetStore } from "@/lib/sheet-store"
 
 
 // Helper component for upgrade items
@@ -63,22 +64,61 @@ const UpgradeItem = ({
 };
 
 // Helper component for the scrap material list - compact version with number input
-const ScrapItem = ({ num, name }: { num: string; name: string }) => (
-  <div className="flex items-center">
-    <span className="text-xs text-gray-600 w-6">{num}.</span>
-    <span className="text-xs w-12">{name}</span>
-    <input
-      type="text"
-      className="w-12 text-center border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs"
-      placeholder="0"
-    />
-  </div>
-);
+const ScrapItem = ({ 
+  num, 
+  name, 
+  category, 
+  index 
+}: { 
+  num: string
+  name: string
+  category: string
+  index: number 
+}) => {
+  const { sheetData, updateScrapMaterial } = useSheetStore()
+  const materials = sheetData.armorTemplate?.scrapMaterials
+  const value = materials && (materials as any)[category] ? (materials as any)[category][index] : 0
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value.trim();
+    // 只允许数字输入
+    if (inputValue === '' || /^\d+$/.test(inputValue)) {
+      let numValue = 0;
+      if (inputValue !== '') {
+        const parsed = parseInt(inputValue, 10);
+        if (!isNaN(parsed) && parsed >= 0) {
+          numValue = parsed;
+        }
+      }
+      updateScrapMaterial(category, index, numValue);
+    }
+  };
+
+  const handleBlur = () => {
+    // 失焦时确保显示正确的数值，这个逻辑已经在 store 中处理
+  };
+
+  return (
+    <div className="flex items-center">
+      <span className="text-xs text-gray-600 w-6">{num}.</span>
+      <span className="text-xs w-12">{name}</span>
+      <input
+        type="text"
+        value={value === 0 ? '' : value.toString()}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        className="w-12 text-center border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs print-empty-hide"
+        placeholder="0"
+      />
+    </div>
+  );
+};
 
 
 // Component for upgrade slots
 const UpgradeSlots = () => {
-  const [slots, setSlots] = useState(Array(5).fill({ checked: false, text: '' }));
+  const { sheetData, updateUpgradeSlot, updateUpgradeSlotText } = useSheetStore()
+  const slots = sheetData.armorTemplate?.upgradeSlots || []
 
   return (
     <div className="space-y-1 px-3">
@@ -86,25 +126,17 @@ const UpgradeSlots = () => {
         <div key={i} className="flex items-center gap-3">
           <div
             className={`w-4 h-4 border-2 mt-1 border-black rounded-full cursor-pointer transition-colors ${slot.checked ? 'bg-gray-800' : 'bg-white'}`}
-            onClick={() => {
-              const newSlots = [...slots];
-              newSlots[i] = { ...newSlots[i], checked: !newSlots[i].checked };
-              setSlots(newSlots);
-            }}
+            onClick={() => updateUpgradeSlot(i, !slot.checked, slot.text)}
             tabIndex={0}
             role="checkbox"
             aria-checked={slot.checked}
           ></div>
           <input
             type="text"
-            className="flex-grow border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-sm mt-1"
-            placeholder="强化件名称"
             value={slot.text}
-            onChange={(e) => {
-              const newSlots = [...slots];
-              newSlots[i] = { ...newSlots[i], text: e.target.value };
-              setSlots(newSlots);
-            }}
+            onChange={(e) => updateUpgradeSlotText(i, e.target.value)}
+            className="flex-grow border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-sm mt-1 print-empty-hide"
+            placeholder="强化件名称"
           />
         </div>
       ))}
@@ -113,6 +145,8 @@ const UpgradeSlots = () => {
 };
 
 export default function CharacterSheetModulePage() {
+  const { sheetData, updateArmorTemplateField, updateScrapMaterial } = useSheetStore()
+  const armorTemplate = sheetData.armorTemplate || {}
   return (
     <>
       {/* 固定位置的按钮 - 与其他页面保持一致 */}
@@ -137,7 +171,13 @@ export default function CharacterSheetModulePage() {
 
           {/* Name Section */}
           <div className="mb-1.5">
-            <Input type="text" placeholder="武装名称" className="h-8 w-full" />
+            <Input 
+              type="text" 
+              placeholder="武装名称" 
+              className="h-8 w-full print-empty-hide"
+              value={armorTemplate.weaponName || ''}
+              onChange={(e) => updateArmorTemplateField('weaponName', e.target.value)}
+            />
           </div>
 
           <div className="grid grid-cols-[1fr,1.2fr] gap-x-6">
@@ -149,29 +189,41 @@ export default function CharacterSheetModulePage() {
 
                 <div className="mb-1.5">
                   <h3 className="font-bold text-xs mb-0.5">武器属性</h3>
-                  <ToggleGroup type="single" className="grid grid-cols-3 gap-x-1.5 gap-y-0.5">
-                    <ToggleGroupItem value="agility" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">敏捷</ToggleGroupItem>
-                    <ToggleGroupItem value="strength" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">力量</ToggleGroupItem>
-                    <ToggleGroupItem value="finesse" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">灵巧</ToggleGroupItem>
-                    <ToggleGroupItem value="presence" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">风度</ToggleGroupItem>
-                    <ToggleGroupItem value="instinct" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">本能</ToggleGroupItem>
-                    <ToggleGroupItem value="knowledge" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">知识</ToggleGroupItem>
+                  <ToggleGroup 
+                    type="single" 
+                    value={armorTemplate.weaponAttribute || ''} 
+                    onValueChange={(value) => updateArmorTemplateField('weaponAttribute', value)}
+                    className="grid grid-cols-3 gap-x-1.5 gap-y-0.5"
+                  >
+                    <ToggleGroupItem value="agility" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">敏捷</ToggleGroupItem>
+                    <ToggleGroupItem value="strength" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">力量</ToggleGroupItem>
+                    <ToggleGroupItem value="finesse" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">灵巧</ToggleGroupItem>
+                    <ToggleGroupItem value="presence" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">风度</ToggleGroupItem>
+                    <ToggleGroupItem value="instinct" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">本能</ToggleGroupItem>
+                    <ToggleGroupItem value="knowledge" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">知识</ToggleGroupItem>
                   </ToggleGroup>
                 </div>
 
                 <div className="mb-1.5">
                   <h3 className="font-bold text-xs mb-0.5">攻击范围和伤害骰</h3>
                   <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-                    <ToggleGroup type="single" className="contents">
-                      <ToggleGroupItem value="melee" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">近战-d12+1</ToggleGroupItem>
-                      <ToggleGroupItem value="far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">远-d8+1</ToggleGroupItem>
-                      <ToggleGroupItem value="near" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">临近-d10+2</ToggleGroupItem>
-                      <ToggleGroupItem value="very-far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">极远-d6+1</ToggleGroupItem>
-                      <ToggleGroupItem value="close" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">近距离-d10</ToggleGroupItem>
+                    <ToggleGroup 
+                      type="single" 
+                      value={armorTemplate.attackRange || ''} 
+                      onValueChange={(value) => updateArmorTemplateField('attackRange', value)}
+                      className="contents"
+                    >
+                      <ToggleGroupItem value="melee" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">近战-d12+1</ToggleGroupItem>
+                      <ToggleGroupItem value="far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">远-d8+1</ToggleGroupItem>
+                      <ToggleGroupItem value="near" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">临近-d10+2</ToggleGroupItem>
+                      <ToggleGroupItem value="very-far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">极远-d6+1</ToggleGroupItem>
+                      <ToggleGroupItem value="close" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">近距离-d10</ToggleGroupItem>
                     </ToggleGroup>
                     <input
                       type="text"
-                      className="border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 px-1.5 py-0.5 text-xs text-center"
+                      value={armorTemplate.customRangeAndDamage || ''}
+                      onChange={(e) => updateArmorTemplateField('customRangeAndDamage', e.target.value)}
+                      className="border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 px-1.5 py-0.5 text-xs text-center print-empty-hide"
                       placeholder="强化后范围和伤害骰"
                     />
                   </div>
@@ -179,9 +231,14 @@ export default function CharacterSheetModulePage() {
 
                 <div className="mb-1">
                   <h3 className="font-bold text-xs mb-0.5">伤害属性</h3>
-                  <ToggleGroup type="single" className="flex gap-2">
-                    <ToggleGroupItem value="physical" className="px-2 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">物理</ToggleGroupItem>
-                    <ToggleGroupItem value="tech" className="px-2 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-blue-600 data-[state=on]:text-white">科技</ToggleGroupItem>
+                  <ToggleGroup 
+                    type="single" 
+                    value={armorTemplate.damageType || ''} 
+                    onValueChange={(value) => updateArmorTemplateField('damageType', value)}
+                    className="flex gap-2"
+                  >
+                    <ToggleGroupItem value="physical" className="px-2 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">物理</ToggleGroupItem>
+                    <ToggleGroupItem value="tech" className="px-2 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">科技</ToggleGroupItem>
                   </ToggleGroup>
                 </div>
 
@@ -200,7 +257,9 @@ export default function CharacterSheetModulePage() {
                 </div>
                 <textarea
                   placeholder="描述你的武装的外观、特性和背景故事..."
-                  className="flex-1 w-full min-h-[3rem] p-1.5 text-xs border border-gray-300 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"
+                  value={armorTemplate.description || ''}
+                  onChange={(e) => updateArmorTemplateField('description', e.target.value)}
+                  className="flex-1 w-full min-h-[3rem] p-1.5 text-xs border border-gray-300 rounded bg-gray-50 print:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none print-empty-hide"
                 />
               </div>
               {/* Upgrade Slots */}
@@ -283,47 +342,52 @@ export default function CharacterSheetModulePage() {
                 <div>
                   <p className="font-bold text-xs mb-0.5">碎片 (d6)</p>
                   <div className="space-y-0">
-                    <ScrapItem num="1" name="齿轮" />
-                    <ScrapItem num="2" name="线圈" />
-                    <ScrapItem num="3" name="线" />
-                    <ScrapItem num="4" name="触发" />
-                    <ScrapItem num="5" name="镜头" />
-                    <ScrapItem num="6" name="水晶" />
+                    <ScrapItem num="1" name="齿轮" category="fragments" index={0} />
+                    <ScrapItem num="2" name="线圈" category="fragments" index={1} />
+                    <ScrapItem num="3" name="线" category="fragments" index={2} />
+                    <ScrapItem num="4" name="触发" category="fragments" index={3} />
+                    <ScrapItem num="5" name="镜头" category="fragments" index={4} />
+                    <ScrapItem num="6" name="水晶" category="fragments" index={5} />
                   </div>
                 </div>
                 {/* 金属 (D8) */}
                 <div>
                   <p className="font-bold text-xs mb-0.5">金属 (D8)</p>
                   <div className="space-y-0">
-                    <ScrapItem num="1" name="铝" />
-                    <ScrapItem num="3" name="铜" />
-                    <ScrapItem num="5" name="钴" />
-                    <ScrapItem num="6" name="银" />
-                    <ScrapItem num="7" name="铂" />
-                    <ScrapItem num="8" name="金" />
+                    <ScrapItem num="1" name="铝" category="metals" index={0} />
+                    <ScrapItem num="3" name="铜" category="metals" index={1} />
+                    <ScrapItem num="5" name="钴" category="metals" index={2} />
+                    <ScrapItem num="6" name="银" category="metals" index={3} />
+                    <ScrapItem num="7" name="铂" category="metals" index={4} />
+                    <ScrapItem num="8" name="金" category="metals" index={5} />
                   </div>
                 </div>
                 {/* 组件 (D10) */}
                 <div>
                   <p className="font-bold text-xs mb-0.5">组件 (D10)</p>
                   <div className="space-y-0">
-                    <ScrapItem num="1" name="保险丝" />
-                    <ScrapItem num="3" name="电路" />
-                    <ScrapItem num="6" name="碟片" />
-                    <ScrapItem num="8" name="继电器" />
-                    <ScrapItem num="9" name="电容器" />
-                    <ScrapItem num="10" name="电池" />
+                    <ScrapItem num="1" name="保险丝" category="components" index={0} />
+                    <ScrapItem num="3" name="电路" category="components" index={1} />
+                    <ScrapItem num="6" name="碟片" category="components" index={2} />
+                    <ScrapItem num="8" name="继电器" category="components" index={3} />
+                    <ScrapItem num="9" name="电容器" category="components" index={4} />
+                    <ScrapItem num="10" name="电池" category="components" index={5} />
                   </div>
                 </div>
                 {/* 遗物 */}
                 <div>
                   <p className="font-bold text-xs mb-0.5">遗物</p>
                   <div className="space-y-0.5">
-                    <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs" placeholder="遗物名称" />
-                    <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs" placeholder="遗物名称" />
-                    <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs" placeholder="遗物名称" />
-                    <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs" placeholder="遗物名称" />
-                    <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs" placeholder="遗物名称" />
+                    {[0, 1, 2, 3, 4].map((index) => (
+                      <input 
+                        key={index}
+                        type="text" 
+                        value={armorTemplate.scrapMaterials?.relics?.[index] || ''}
+                        onChange={(e) => updateScrapMaterial('relics', index, e.target.value)}
+                        className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs print-empty-hide" 
+                        placeholder="遗物名称" 
+                      />
+                    ))}
                   </div>
                 </div>
               </div>
@@ -338,7 +402,22 @@ export default function CharacterSheetModulePage() {
                   <div className="w-16 h-16 border-2 border-gray-500 rounded-full flex items-center justify-center">
                     <input
                       type="text"
-                      className="w-14 text-center bg-transparent focus:outline-none text-lg font-bold"
+                      value={armorTemplate.electronicCoins === 0 ? '' : (armorTemplate.electronicCoins || '').toString()}
+                      onChange={(e) => {
+                        const inputValue = e.target.value.trim();
+                        // 只允许数字输入
+                        if (inputValue === '' || /^\d+$/.test(inputValue)) {
+                          let numValue = 0;
+                          if (inputValue !== '') {
+                            const parsed = parseInt(inputValue, 10);
+                            if (!isNaN(parsed) && parsed >= 0) {
+                              numValue = parsed;
+                            }
+                          }
+                          updateArmorTemplateField('electronicCoins', numValue);
+                        }
+                      }}
+                      className="w-14 text-center bg-transparent focus:outline-none text-lg font-bold print-empty-hide"
                       placeholder="0"
                     />
                   </div>

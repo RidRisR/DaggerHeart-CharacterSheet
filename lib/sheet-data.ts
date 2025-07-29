@@ -35,6 +35,43 @@ export interface AttributeValue {
   spellcasting?: boolean  // 施法属性标记，可选字段确保向后兼容
 }
 
+export interface ArmorTemplateData {
+  // Basic information
+  weaponName?: string
+  description?: string
+  
+  // Iknis configuration
+  weaponAttribute?: 'agility' | 'strength' | 'finesse' | 'presence' | 'instinct' | 'knowledge'
+  attackRange?: 'melee' | 'near' | 'close' | 'far' | 'very-far'
+  customRangeAndDamage?: string
+  damageType?: 'physical' | 'tech'
+  
+  // Upgrade slots (5 slots)
+  upgradeSlots?: Array<{
+    checked: boolean
+    text: string
+  }>
+  
+  // Upgrade system - grouped by tier, using efficient data structure
+  upgrades?: {
+    basic: Record<string, boolean | boolean[]>  // Basic upgrades, support multiple checkboxes
+    tier2: Record<string, boolean | boolean[]>  // Pre-compiled tier 2
+    tier3: Record<string, boolean | boolean[]>  // Pre-compiled tier 3
+    tier4: Record<string, boolean | boolean[]>  // Pre-compiled tier 4
+  }
+  
+  // Scrap collection system - grouped by dice type
+  scrapMaterials?: {
+    fragments: number[]   // Fragments (d6) - 6 items: gear, coil, wire, trigger, lens, crystal
+    metals: number[]      // Metals (d8) - 6 items: aluminum, copper, cobalt, silver, platinum, gold
+    components: number[]  // Components (d10) - 6 items: fuse, circuit, disc, relay, capacitor, battery
+    relics: string[]      // Relics - 5 custom text inputs
+  }
+  
+  // Electronic coins
+  electronicCoins?: number
+}
+
 export interface SheetData {
   // 通用属性
   name: string
@@ -141,6 +178,9 @@ export interface SheetData {
     armorTemplate: boolean    // 护甲模板页
     // 未来可添加更多页面
   }
+
+  // ===== 护甲模板数据 =====
+  armorTemplate?: ArmorTemplateData
 
   // ===== 临时索引签名，兼容动态key访问，后续逐步收敛类型安全 =====
   // [key: string]: any // 已废弃，彻底类型安全后移除

@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { defaultSheetData } from "./default-sheet-data";
-import type { SheetData, AttributeValue } from "./sheet-data";
+import type { SheetData, AttributeValue, ArmorTemplateData } from "./sheet-data";
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 
 // 施法属性映射关系
@@ -74,6 +74,13 @@ interface SheetState {
     deleteCard: (index: number, isInventory: boolean) => void;
     moveCard: (fromIndex: number, fromInventory: boolean, toInventory: boolean) => boolean;
     updateCard: (index: number, card: StandardCard, isInventory: boolean) => void;
+    
+    // Armor template actions
+    updateArmorTemplateField: (field: keyof ArmorTemplateData, value: any) => void;
+    updateUpgradeSlot: (index: number, checked: boolean, text: string) => void;
+    updateUpgradeSlotText: (index: number, text: string) => void;
+    updateUpgrade: (tier: string, upgradeName: string, value: boolean | boolean[]) => void;
+    updateScrapMaterial: (category: string, index: number, value: number | string) => void;
 }
 
 export const useSheetStore = create<SheetState>((set) => ({
@@ -417,6 +424,110 @@ export const useSheetStore = create<SheetState>((set) => ({
         
         return success;
     },
+    
+    // Armor template actions
+    updateArmorTemplateField: (field, value) => set((state) => ({
+        sheetData: {
+            ...state.sheetData,
+            armorTemplate: {
+                ...state.sheetData.armorTemplate,
+                [field]: value
+            }
+        }
+    })),
+
+    updateUpgradeSlot: (index, checked, text) => set((state) => {
+        const current = [...(state.sheetData.armorTemplate?.upgradeSlots || [])];
+        
+        // 复选框逻辑：实现与其他组件相同的行为
+        // 找到最后一个被点亮的插槽的下标
+        let lastLit = -1;
+        for (let i = current.length - 1; i >= 0; i--) {
+            if (current[i]?.checked === true) {
+                lastLit = i;
+                break;
+            }
+        }
+        
+        // 如果点击的正好是最后一个被点亮的插槽，则全部熄灭
+        if (index === lastLit && current[index]?.checked) {
+            const slots = current.map(slot => ({ 
+                checked: false, 
+                text: slot?.text || '' 
+            }));
+            return {
+                sheetData: {
+                    ...state.sheetData,
+                    armorTemplate: {
+                        ...state.sheetData.armorTemplate,
+                        upgradeSlots: slots
+                    }
+                }
+            };
+        }
+        
+        // 其它情况，点亮前 n+1 个插槽
+        const slots = current.map((slot, i) => ({
+            checked: i <= index,
+            text: slot?.text || ''
+        }));
+        
+        return {
+            sheetData: {
+                ...state.sheetData,
+                armorTemplate: {
+                    ...state.sheetData.armorTemplate,
+                    upgradeSlots: slots
+                }
+            }
+        };
+    }),
+
+    updateUpgradeSlotText: (index, text) => set((state) => {
+        const slots = [...(state.sheetData.armorTemplate?.upgradeSlots || [])];
+        slots[index] = { checked: slots[index]?.checked || false, text };
+        return {
+            sheetData: {
+                ...state.sheetData,
+                armorTemplate: {
+                    ...state.sheetData.armorTemplate,
+                    upgradeSlots: slots
+                }
+            }
+        };
+    }),
+
+    updateUpgrade: (tier, upgradeName, value) => set((state) => ({
+        sheetData: {
+            ...state.sheetData,
+            armorTemplate: {
+                ...state.sheetData.armorTemplate,
+                upgrades: {
+                    ...state.sheetData.armorTemplate?.upgrades,
+                    [tier]: {
+                        ...state.sheetData.armorTemplate?.upgrades?.[tier],
+                        [upgradeName]: value
+                    }
+                }
+            }
+        }
+    })),
+
+    updateScrapMaterial: (category, index, value) => set((state) => {
+        const materials = { ...state.sheetData.armorTemplate?.scrapMaterials };
+        if (materials && materials[category]) {
+            materials[category][index] = value;
+        }
+        return {
+            sheetData: {
+                ...state.sheetData,
+                armorTemplate: {
+                    ...state.sheetData.armorTemplate,
+                    scrapMaterials: materials
+                }
+            }
+        };
+    }),
     
     updateCard: (index, card, isInventory) => set((state) => {
         if (isInventory) {

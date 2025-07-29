@@ -36,14 +36,14 @@ function migratePageVisibility(data: SheetData): SheetData {
   if ('includePageThreeInExport' in data && data.includePageThreeInExport !== undefined) {
     migrated.pageVisibility = {
       rangerCompanion: data.includePageThreeInExport,
-      armorTemplate: true // 默认显示护甲模板
+      armorTemplate: false // 默认隐藏护甲模板页
     }
     console.log('[Migration] Migrated includePageThreeInExport to pageVisibility')
   } else {
     // 如果没有相关字段，使用默认值
     migrated.pageVisibility = {
-      rangerCompanion: true,
-      armorTemplate: true
+      rangerCompanion: false,
+      armorTemplate: false
     }
     console.log('[Migration] Added default pageVisibility')
   }
@@ -120,6 +120,39 @@ function migratePageVisibilityRename(data: SheetData): SheetData {
 }
 
 /**
+ * 护甲模板字段迁移
+ * 为缺少护甲模板字段的旧数据添加默认结构
+ */
+function migrateArmorTemplate(data: SheetData): SheetData {
+  if (data.armorTemplate) {
+    return data
+  }
+
+  const migrated = { ...data }
+  migrated.armorTemplate = {
+    weaponName: '',
+    description: '',
+    upgradeSlots: Array(5).fill(0).map(() => ({ checked: false, text: '' })),
+    upgrades: {
+      basic: {},
+      tier2: {},
+      tier3: {},
+      tier4: {}
+    },
+    scrapMaterials: {
+      fragments: Array(6).fill(0),
+      metals: Array(6).fill(0),
+      components: Array(6).fill(0),
+      relics: Array(5).fill('')
+    },
+    electronicCoins: 0
+  }
+  
+  console.log('[Migration] Added armorTemplate field')
+  return migrated
+}
+
+/**
  * 清理废弃字段
  * 移除不再使用的字段，保持数据结构清洁
  */
@@ -157,6 +190,7 @@ export function migrateSheetData(
   migrated = migrateInventoryCards(migrated)
   migrated = migrateAttributeSpellcasting(migrated)
   migrated = migratePageVisibilityRename(migrated)
+  migrated = migrateArmorTemplate(migrated)
   
   // 3. 清理废弃字段（最后执行）
   migrated = cleanupDeprecatedFields(migrated)

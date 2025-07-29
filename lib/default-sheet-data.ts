@@ -115,7 +115,27 @@ export const defaultSheetData: SheetData = {
     // 第三页导出控制
     includePageThreeInExport: true, // @deprecated 向后兼容
     pageVisibility: {
-        rangerCompanion: true,  // 默认显示游侠伙伴页
-        armorTemplate: true     // 默认显示护甲模板页
+        rangerCompanion: false,  // 默认隐藏游侠伙伴页
+        armorTemplate: false     // 默认隐藏护甲模板页
+    },
+
+    // 护甲模板默认数据
+    armorTemplate: {
+        weaponName: '',
+        description: '',
+        upgradeSlots: Array(5).fill(0).map(() => ({ checked: false, text: '' })),
+        upgrades: {
+            basic: {},
+            tier2: {},
+            tier3: {},
+            tier4: {}
+        },
+        scrapMaterials: {
+            fragments: Array(6).fill(0), // gear, coil, wire, trigger, lens, crystal
+            metals: Array(6).fill(0),    // aluminum, copper, cobalt, silver, platinum, gold
+            components: Array(6).fill(0), // fuse, circuit, disc, relay, capacitor, battery
+            relics: Array(5).fill('')
+        },
+        electronicCoins: 0
     },
 };

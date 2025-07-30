@@ -711,6 +711,16 @@ function extractPrintPreviewHTML(onProgress?: ProgressCallback): Promise<string>
         }
       })
 
+      // 处理cost内容替换 - 将动态cost内容替换为静态内容
+      const costContainers = clonedContainer.querySelectorAll('.export-cost-container')
+      costContainers.forEach(container => {
+        const staticContent = container.getAttribute('data-static-cost')
+        if (staticContent) {
+          container.innerHTML = staticContent
+          console.log(`[HTML导出] 替换cost内容: ${staticContent}`)
+        }
+      })
+
       // 转换HTML内容
       let extractedHTML = cleanupExtractedHTML(clonedContainer.outerHTML)
       extractedHTML = transformHTMLContent(extractedHTML)

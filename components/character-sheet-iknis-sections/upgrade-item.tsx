@@ -60,7 +60,10 @@ export const UpgradeItem = ({
           <span className="font-bold text-gray-800 mr-1">{mainTitle}</span>
           {description && <span className="text-gray-700">{description}</span>}
         </div>
-        <div className="text-[10px] text-gray-500 leading-tight">
+        <div 
+          className="text-[10px] text-gray-500 leading-tight export-cost-container"
+          data-static-cost={renderMaterialCost(cost)}
+        >
           {/* 非打印模式：显示嵌入可用性信息的成本 */}
           <div className="print:hidden">
             {getMaterialCostWithAvailability(cost, scrapMaterials).map((part, index, array) => (

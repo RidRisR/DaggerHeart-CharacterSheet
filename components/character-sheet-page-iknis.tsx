@@ -10,31 +10,29 @@ import { PageHeader } from "@/components/page-header"
 import { UpgradeItem } from "@/components/character-sheet-iknis-sections/upgrade-item"
 import { ScrapItem } from "@/components/character-sheet-iknis-sections/scrap-item"
 import { UpgradeSlots } from "@/components/character-sheet-iknis-sections/upgrade-slots"
-import { 
-  UPGRADE_CONFIGS, 
-  PRECOMPILED_TIER2_CONFIGS, 
-  PRECOMPILED_TIER3_CONFIGS, 
-  PRECOMPILED_TIER4_CONFIGS 
+import {
+  UPGRADE_CONFIGS,
+  PRECOMPILED_TIER2_CONFIGS,
+  PRECOMPILED_TIER3_CONFIGS,
+  PRECOMPILED_TIER4_CONFIGS
 } from "@/components/character-sheet-iknis-sections/upgrade-configs"
 
 export default function CharacterSheetModulePage() {
   const { sheetData, updateArmorTemplateField, updateScrapMaterial } = useSheetStore()
   const armorTemplate = sheetData.armorTemplate || {}
   const scrapMaterials = armorTemplate.scrapMaterials
-  
+
   return (
     <>
-      {/* 固定位置的按钮 - 与其他页面保持一致 */}
-      <div></div>
 
       <div className="w-full max-w-[210mm] mx-auto">
         <div
-          className="a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+          className="a4-page page-armor p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
           style={{ width: "210mm" }}
         >
           {/* Header Section - 黑色顶盖 */}
           <PageHeader />
-          
+
           {/* Page Title */}
           <div className="mb-2">
             <h1 className="text-2xl font-bold text-gray-800">主板模块</h1>
@@ -46,9 +44,9 @@ export default function CharacterSheetModulePage() {
             <div className="flex flex-col">
               {/* Iknis Section */}
               <div className="border-2 border-gray-800 p-2 rounded-md h-full">
-                <Input 
-                  type="text" 
-                  placeholder="伊科尼斯武装名称" 
+                <Input
+                  type="text"
+                  placeholder="伊科尼斯武装名称"
                   className="h-8 w-full mb-1 text-center font-bold print-empty-hide"
                   value={armorTemplate.weaponName || ''}
                   onChange={(e) => updateArmorTemplateField('weaponName', e.target.value)}
@@ -56,9 +54,9 @@ export default function CharacterSheetModulePage() {
 
                 <div className="mb-1.5">
                   <h3 className="font-bold text-xs mb-0.5">武器属性</h3>
-                  <ToggleGroup 
-                    type="single" 
-                    value={armorTemplate.weaponAttribute || ''} 
+                  <ToggleGroup
+                    type="single"
+                    value={armorTemplate.weaponAttribute || ''}
                     onValueChange={(value) => updateArmorTemplateField('weaponAttribute', value)}
                     className="grid grid-cols-3 gap-x-1.5 gap-y-0.5"
                   >
@@ -74,9 +72,9 @@ export default function CharacterSheetModulePage() {
                 <div className="mb-1.5">
                   <h3 className="font-bold text-xs mb-0.5">攻击范围和伤害骰</h3>
                   <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-                    <ToggleGroup 
-                      type="single" 
-                      value={armorTemplate.attackRange || ''} 
+                    <ToggleGroup
+                      type="single"
+                      value={armorTemplate.attackRange || ''}
                       onValueChange={(value) => updateArmorTemplateField('attackRange', value)}
                       className="contents"
                     >
@@ -98,9 +96,9 @@ export default function CharacterSheetModulePage() {
 
                 <div className="mb-1">
                   <h3 className="font-bold text-xs mb-0.5">伤害属性</h3>
-                  <ToggleGroup 
-                    type="single" 
-                    value={armorTemplate.damageType || ''} 
+                  <ToggleGroup
+                    type="single"
+                    value={armorTemplate.damageType || ''}
                     onValueChange={(value) => updateArmorTemplateField('damageType', value)}
                     className="flex gap-2"
                   >
@@ -151,7 +149,7 @@ export default function CharacterSheetModulePage() {
                 <h4 className="text-xs font-bold text-gray-700 mb-0.5">基础强化件</h4>
                 <div className="space-y-1">
                   {UPGRADE_CONFIGS.map((config, index) => (
-                    <UpgradeItem 
+                    <UpgradeItem
                       key={index}
                       title={config.title}
                       cost={config.cost}
@@ -169,7 +167,7 @@ export default function CharacterSheetModulePage() {
                   <h4 className="text-xs font-bold text-gray-700 mb-0.5">预编译：二阶</h4>
                   <div className="space-y-1">
                     {PRECOMPILED_TIER2_CONFIGS.map((config, index) => (
-                      <UpgradeItem 
+                      <UpgradeItem
                         key={index}
                         title={config.title}
                         cost={config.cost}
@@ -185,7 +183,7 @@ export default function CharacterSheetModulePage() {
                   <h4 className="text-xs font-bold text-gray-700 mb-0.5">预编译：三阶</h4>
                   <div className="space-y-1">
                     {PRECOMPILED_TIER3_CONFIGS.map((config, index) => (
-                      <UpgradeItem 
+                      <UpgradeItem
                         key={index}
                         title={config.title}
                         cost={config.cost}
@@ -201,7 +199,7 @@ export default function CharacterSheetModulePage() {
                   <h4 className="text-xs font-bold text-gray-700 mb-0.5">预编译：四阶</h4>
                   <div className="space-y-1">
                     {PRECOMPILED_TIER4_CONFIGS.map((config, index) => (
-                      <UpgradeItem 
+                      <UpgradeItem
                         key={index}
                         title={config.title}
                         cost={config.cost}
@@ -264,13 +262,13 @@ export default function CharacterSheetModulePage() {
                   <p className="font-bold text-sm mb-0.5">遗物</p>
                   <div className="space-y-0.5">
                     {[0, 1, 2, 3, 4].map((index) => (
-                      <input 
+                      <input
                         key={index}
-                        type="text" 
+                        type="text"
                         value={armorTemplate.scrapMaterials?.relics?.[index] || ''}
                         onChange={(e) => updateScrapMaterial('relics', index, e.target.value)}
-                        className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs print-empty-hide" 
-                        placeholder="遗物名称" 
+                        className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 h-4 text-xs print-empty-hide"
+                        placeholder="遗物名称"
                       />
                     ))}
                   </div>

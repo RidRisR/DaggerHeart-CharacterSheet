@@ -35,7 +35,8 @@ html {
 .print-all-pages .page-two,
 .print-all-pages .page-three,
 .print-all-pages .page-four,
-.print-all-pages .page-five {
+.print-all-pages .page-five,
+.print-all-pages .page-armor {
   page-break-after: always;
 }
 
@@ -49,7 +50,8 @@ html {
 .print-all-pages .page-two,
 .print-all-pages .page-three,
 .print-all-pages .page-four,
-.print-all-pages .page-five {
+.print-all-pages .page-five,
+.print-all-pages .page-armor {
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -120,7 +122,8 @@ html {
   .print-all-pages .page-two,
   .print-all-pages .page-three,
   .print-all-pages .page-four,
-  .print-all-pages .page-five {
+  .print-all-pages .page-five,
+  .print-all-pages .page-armor {
     display: block;
     padding: 0;
     min-height: auto;

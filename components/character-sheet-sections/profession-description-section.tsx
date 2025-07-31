@@ -13,7 +13,7 @@ const ProfessionDescriptionSection: React.FC<ProfessionDescriptionSectionProps> 
     const transformedDescription = description ? transformCustomSyntax(description) : '';
 
     return (
-        <div className="border-2 border-gray-300 rounded-lg p-1.5 text-xs markdown-content h-[15rem] overflow-auto">
+        <div className="border-2 border-gray-300 rounded-lg p-1.5 text-xs markdown-content h-[250px] overflow-auto">
             <ReactMarkdown
                 children={transformedDescription}
                 rehypePlugins={[rehypeRaw]}

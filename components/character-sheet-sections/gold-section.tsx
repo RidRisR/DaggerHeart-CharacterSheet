@@ -12,7 +12,7 @@ export function GoldSection() {
 
   return (
     <div className="py-1 mb-2">
-      <h3 className="text-xs font-bold text-center mb-1">金币</h3>
+      <h3 className="text-xs font-bold text-center mb-3">金币</h3>
       <div className="flex flex-row gap-6 items-end justify-center">
         {/* HANDFULS */}
         <div className="flex flex-col items-center">

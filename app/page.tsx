@@ -121,7 +121,7 @@ registerPages([
     id: 'page4',
     label: '主板扩展',
     component: ArmorTemplatePage,
-    printClass: 'page-armor',
+    printClass: 'page-iknis',
     visibility: { type: 'config', configKey: 'armorTemplate' },
     printOrder: 4,
     showInTabs: true

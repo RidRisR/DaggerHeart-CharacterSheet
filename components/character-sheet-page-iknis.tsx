@@ -27,7 +27,7 @@ export default function CharacterSheetModulePage() {
 
       <div className="w-full max-w-[210mm] mx-auto">
         <div
-          className="a4-page page-armor p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+          className="a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
           style={{ width: "210mm" }}
         >
           {/* Header Section - 黑色顶盖 */}

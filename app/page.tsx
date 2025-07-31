@@ -853,7 +853,7 @@ export default function Home() {
 
     return (
       <PrintReadyChecker onSkipWaiting={handleSkipWaiting}>
-        <div className="print-all-pages pb-24">
+        <div className="print-all-pages">
           <PrintHelper />
 
           {/* 顶部提示横条 - 只在屏幕上显示，打印时隐藏 */}

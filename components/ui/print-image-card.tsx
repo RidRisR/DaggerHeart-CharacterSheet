@@ -68,7 +68,7 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
                         src={imageSrc}
                         alt={displayName}
                         fill
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-[center_20%]"
                         sizes="30vw"
                         onLoad={handleImageLoad}
                         onError={() => setImageError(true)}

@@ -25,7 +25,7 @@ export function PrintPageRenderer({ sheetData }: PrintPageRendererProps) {
         return (
           <div
             key={page.id}
-            className={`${page.printClass} flex justify-center items-start min-h-screen pb-20 ${
+            className={`${page.printClass} flex justify-center items-start ${
               isLastPage ? 'last-printed-page' : ''
             }`}
           >

@@ -55,7 +55,7 @@ html {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  min-height: 100vh;
+  min-height: auto;
   padding: 20px 0;
 }
 
@@ -69,48 +69,48 @@ html {
     font-size: 9pt !important;
     line-height: 1.4 !important;
   }
-  
+
   /* 打印卡牌专用样式 */
   .print-card {
     border: 1.5px solid #666 !important;
     box-shadow: none !important;
-    height: 90mm;
+    height: 95mm;
   }
-  
+
   .print-card-header {
     background-color: #f9f9f9 !important;
     border-bottom: 1px solid #ccc !important;
     padding: 4px 8px !important;
   }
-  
+
   .print-card-header h3 {
     font-size: 10pt !important;
     font-weight: 700 !important;
     line-height: 1.1 !important;
   }
-  
+
   .print-card-header span {
     font-size: 7pt !important;
     background-color: #e0e0e0 !important;
     padding: 1px 6px !important;
     border-radius: 3px !important;
   }
-  
+
   .print-card-tags {
     font-size: 7pt !important;
     line-height: 1.2 !important;
     color: #666 !important;
   }
-  
+
   .print-card-description {
     font-size: 8pt !important;
     line-height: 1.3 !important;
   }
-  
+
   .print-card-description p {
     margin-bottom: 4px !important;
   }
-  
+
   .print-card-hint {
     font-size: 7pt !important;
     line-height: 1.2 !important;
@@ -128,6 +128,10 @@ html {
     padding: 0;
     min-height: auto;
   }
+    /* 移除a4-page的内边距 */
+    .a4-page {
+      padding: 0 !important;
+    }
 }
 
 @media print {
@@ -308,14 +312,14 @@ html {
     padding: 0 1rem;
     height: 6mm;
   }
-  
+
   .print-deck-header h2 {
     font-size: 11pt !important;
     font-weight: 500 !important;
     color: #555 !important;
     white-space: nowrap;
   }
-  
+
   .print-deck-header > div {
     /* 分隔线样式 */
     background-color: #999 !important;

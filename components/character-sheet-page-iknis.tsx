@@ -117,7 +117,7 @@ export default function CharacterSheetModulePage() {
             <div className="flex flex-col h-full space-y-3">
               {/* Weapon Description */}
               <div className="border-2 border-gray-800 p-2 rounded-md flex-1 flex flex-col">
-                <div className="text-center font-bold bg-gray-300 -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
+                <div className="text-center font-bold bg-gray-800 text-white -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
                   武装描述
                 </div>
                 <textarea
@@ -129,7 +129,7 @@ export default function CharacterSheetModulePage() {
               </div>
               {/* Upgrade Slots */}
               <div className="border-2 border-gray-800 p-2 rounded-md flex-1">
-                <div className="text-center font-bold bg-gray-300 -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
+                <div className="text-center font-bold bg-gray-800 text-white -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
                   强化件插槽
                 </div>
                 <p className="text-center text-xs mb-1.5">从两个插槽开始。每位阶解锁1个。</p>
@@ -140,7 +140,7 @@ export default function CharacterSheetModulePage() {
 
           {/* Upgrades Section */}
           <div className="border-2 border-gray-800 p-2 mt-2 rounded-md">
-            <div className="text-center font-bold bg-gray-300 -mt-2 -mx-2 mb-2 py-0.5 text-sm">
+            <div className="text-center font-bold bg-gray-800 text-white -mt-2 -mx-2 mb-2 py-0.5 text-sm">
               强化件
             </div>
             <div className="grid grid-cols-2 gap-x-2">
@@ -217,7 +217,7 @@ export default function CharacterSheetModulePage() {
           <div className="grid grid-cols-[3fr_1fr] gap-x-2 mt-2">
             {/* Scrap List */}
             <div className="border-2 border-gray-800 p-2 rounded-md">
-              <div className="text-center font-bold bg-gray-300 -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
+              <div className="text-center font-bold bg-gray-800 text-white -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
                 废料收集
               </div>
               <div className="grid grid-cols-4 gap-x-3 gap-y-1">
@@ -277,7 +277,7 @@ export default function CharacterSheetModulePage() {
             </div>
             {/* Electronic Coins */}
             <div className="border-2 border-gray-800 p-2 rounded-md flex flex-col">
-              <div className="text-center font-bold bg-gray-300 -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
+              <div className="text-center font-bold bg-gray-800 text-white -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
                 量子币
               </div>
               <div className="flex-1 flex items-center justify-center">

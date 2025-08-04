@@ -60,12 +60,12 @@ export default function CharacterSheetModulePage() {
                     onValueChange={(value) => updateArmorTemplateField('weaponAttribute', value)}
                     className="grid grid-cols-3 gap-x-1.5 gap-y-0.5"
                   >
-                    <ToggleGroupItem value="agility" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">敏捷</ToggleGroupItem>
-                    <ToggleGroupItem value="strength" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">力量</ToggleGroupItem>
-                    <ToggleGroupItem value="finesse" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">灵巧</ToggleGroupItem>
-                    <ToggleGroupItem value="presence" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">风度</ToggleGroupItem>
-                    <ToggleGroupItem value="instinct" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">本能</ToggleGroupItem>
-                    <ToggleGroupItem value="knowledge" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">知识</ToggleGroupItem>
+                    <ToggleGroupItem value="agility" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">敏捷</ToggleGroupItem>
+                    <ToggleGroupItem value="strength" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">力量</ToggleGroupItem>
+                    <ToggleGroupItem value="finesse" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">灵巧</ToggleGroupItem>
+                    <ToggleGroupItem value="presence" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">风度</ToggleGroupItem>
+                    <ToggleGroupItem value="instinct" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">本能</ToggleGroupItem>
+                    <ToggleGroupItem value="knowledge" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">知识</ToggleGroupItem>
                   </ToggleGroup>
                 </div>
 
@@ -78,11 +78,11 @@ export default function CharacterSheetModulePage() {
                       onValueChange={(value) => updateArmorTemplateField('attackRange', value)}
                       className="contents"
                     >
-                      <ToggleGroupItem value="melee" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">近战  d12+1</ToggleGroupItem>
-                      <ToggleGroupItem value="far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">远  d8+1</ToggleGroupItem>
-                      <ToggleGroupItem value="near" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">邻近  d10+2</ToggleGroupItem>
-                      <ToggleGroupItem value="very-far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">极远  d6+1</ToggleGroupItem>
-                      <ToggleGroupItem value="close" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">近距离  d10</ToggleGroupItem>
+                      <ToggleGroupItem value="melee" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">近战  d12+1</ToggleGroupItem>
+                      <ToggleGroupItem value="far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">远  d8+1</ToggleGroupItem>
+                      <ToggleGroupItem value="near" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">邻近  d10+2</ToggleGroupItem>
+                      <ToggleGroupItem value="very-far" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">极远  d6+1</ToggleGroupItem>
+                      <ToggleGroupItem value="close" className="px-1.5 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">近距离  d10</ToggleGroupItem>
                     </ToggleGroup>
                     <input
                       type="text"
@@ -102,8 +102,8 @@ export default function CharacterSheetModulePage() {
                     onValueChange={(value) => updateArmorTemplateField('damageType', value)}
                     className="flex gap-2"
                   >
-                    <ToggleGroupItem value="physical" className="px-2 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">物理</ToggleGroupItem>
-                    <ToggleGroupItem value="tech" className="px-2 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-800 data-[state=on]:text-white">科技</ToggleGroupItem>
+                    <ToggleGroupItem value="physical" className="px-2 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">物理</ToggleGroupItem>
+                    <ToggleGroupItem value="tech" className="px-2 py-0.5 text-xs rounded border border-gray-400 data-[state=on]:bg-gray-300 data-[state=on]:text-black">科技</ToggleGroupItem>
                   </ToggleGroup>
                 </div>
 
@@ -117,7 +117,7 @@ export default function CharacterSheetModulePage() {
             <div className="flex flex-col h-full space-y-3">
               {/* Weapon Description */}
               <div className="border-2 border-gray-800 p-2 rounded-md flex-1 flex flex-col">
-                <div className="text-center font-bold bg-gray-800 text-white -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
+                <div className="text-center font-bold bg-gray-300 text-black -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
                   武装描述
                 </div>
                 <textarea
@@ -129,7 +129,7 @@ export default function CharacterSheetModulePage() {
               </div>
               {/* Upgrade Slots */}
               <div className="border-2 border-gray-800 p-2 rounded-md flex-1">
-                <div className="text-center font-bold bg-gray-800 text-white -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
+                <div className="text-center font-bold bg-gray-300 text-black -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
                   强化件插槽
                 </div>
                 <p className="text-center text-xs mb-1.5">从两个插槽开始。每位阶解锁1个。</p>
@@ -140,7 +140,7 @@ export default function CharacterSheetModulePage() {
 
           {/* Upgrades Section */}
           <div className="border-2 border-gray-800 p-2 mt-2 rounded-md">
-            <div className="text-center font-bold bg-gray-800 text-white -mt-2 -mx-2 mb-2 py-0.5 text-sm">
+            <div className="text-center font-bold bg-gray-300 text-black -mt-2 -mx-2 mb-2 py-0.5 text-sm">
               强化件
             </div>
             <div className="grid grid-cols-2 gap-x-2">
@@ -217,7 +217,7 @@ export default function CharacterSheetModulePage() {
           <div className="grid grid-cols-[3fr_1fr] gap-x-2 mt-2">
             {/* Scrap List */}
             <div className="border-2 border-gray-800 p-2 rounded-md">
-              <div className="text-center font-bold bg-gray-800 text-white -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
+              <div className="text-center font-bold bg-gray-300 text-black -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
                 废料收集
               </div>
               <div className="grid grid-cols-4 gap-x-3 gap-y-1">
@@ -277,7 +277,7 @@ export default function CharacterSheetModulePage() {
             </div>
             {/* Electronic Coins */}
             <div className="border-2 border-gray-800 p-2 rounded-md flex flex-col">
-              <div className="text-center font-bold bg-gray-800 text-white -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
+              <div className="text-center font-bold bg-gray-300 text-black -mt-2 -mx-2 mb-1.5 py-0.5 text-sm">
                 量子币
               </div>
               <div className="flex-1 flex items-center justify-center">

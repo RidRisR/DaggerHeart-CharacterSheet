@@ -15,6 +15,7 @@ import { CharacterSheetPageFour, CharacterSheetPageFive } from "@/components/cha
 import ArmorTemplatePage from "@/components/character-sheet-page-iknis"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
+import { SealDiceExportModal } from "@/components/modals/seal-dice-export-modal"
 import { Button } from "@/components/ui/button"
 import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
 import { useSheetStore, useCardActions } from "@/lib/sheet-store"
@@ -187,6 +188,7 @@ export default function Home() {
   const [isPrintingAll, setIsPrintingAll] = useState(false)
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [characterManagementModalOpen, setCharacterManagementModalOpen] = useState(false)
+  const [sealDiceExportModalOpen, setSealDiceExportModalOpen] = useState(false)
   const [currentTabValue, setCurrentTabValue] = useState("page1")
   const [showShortcutHint, setShowShortcutHint] = useState(false)
   const [isCardDrawerOpen, setIsCardDrawerOpen] = useState(false)
@@ -952,7 +954,7 @@ export default function Home() {
                   }}>
                   {/* 动态渲染可见的tabs - 填满可用空间 */}
                   {getVisibleTabs().map((tab, index) => (
-                    <TabsTrigger 
+                    <TabsTrigger
                       key={tab.id}
                       value={tab.id}
                       className="transition-all duration-200 ease-in-out animate-in slide-in-from-right-2"
@@ -1093,6 +1095,9 @@ export default function Home() {
               <HoverMenuItem onClick={handlePrintAll}>
                 导出预览
               </HoverMenuItem>
+              <HoverMenuItem onClick={() => setSealDiceExportModalOpen(true)}>
+                导出到海豹骰
+              </HoverMenuItem>
               <HoverMenuItem onClick={handleQuickExportJSON}>
                 导出JSON
               </HoverMenuItem>
@@ -1178,6 +1183,13 @@ export default function Home() {
         onDeleteCharacter={deleteCharacterHandler}
         onDuplicateCharacter={duplicateCharacterHandler}
         onRenameCharacter={renameCharacterHandler}
+      />
+
+      {/* 海豹骰子导出模态框 */}
+      <SealDiceExportModal
+        isOpen={sealDiceExportModalOpen}
+        onClose={() => setSealDiceExportModalOpen(false)}
+        sheetData={formData}
       />
 
       {/* 钉住的卡牌窗口 - 全局渲染，不受页面切换影响 */}

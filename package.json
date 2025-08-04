@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && rm -f out/*.txt",
-    "build:local": "LOCAL_BUILD=true next build && rm -f out/*.txt && mv out/index.html \"out/车卡器入口.html\"",
+    "build": "next build && rm -f out/*.txt && node scripts/extract-css.js",
+    "build:local": "LOCAL_BUILD=true next build && rm -f out/*.txt && mv out/index.html \"out/车卡器入口.html\" && node scripts/extract-css.js",
+    "extract-css": "node scripts/extract-css.js",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",

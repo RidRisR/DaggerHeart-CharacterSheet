@@ -11,6 +11,7 @@ import { SheetData } from './sheet-data'
 import { CardType, getStandardCardsByTypeAsync } from '@/card'
 import { StandardCard } from '@/card/card-types'
 import { UnifiedProgressModalManager } from '@/components/ui/unified-progress-modal'
+import { embeddedStyles, hasEmbeddedStyles, getStylesInfo } from './embedded-styles'
 
 // 扩展Window接口以支持gc函数
 declare global {
@@ -81,8 +82,18 @@ function isLocalFileEnvironment(): boolean {
  * 提取页面样式
  */
 function extractPageStyles(): string {
-  const allStyles: string[] = []
   const isLocal = isLocalFileEnvironment()
+  
+  // 优先使用嵌入的样式
+  if (hasEmbeddedStyles()) {
+    const stylesInfo = getStylesInfo()
+    console.log(`[HTML导出] 使用嵌入的CSS样式 (${stylesInfo.sizeKB} KB)`)
+    return embeddedStyles
+  }
+  
+  // 如果没有嵌入样式，尝试从页面提取（作为后备方案）
+  console.warn('[HTML导出] 未找到嵌入的CSS样式，尝试从页面提取...')
+  const allStyles: string[] = []
 
   // 获取所有样式表
   for (const stylesheet of document.styleSheets) {
@@ -114,9 +125,9 @@ function extractPageStyles(): string {
   })
 
   // 如果没有提取到任何样式，提供基础样式作为后备
-  if (allStyles.length === 0 && isLocal) {
+  if (allStyles.length === 0) {
     console.warn('未能提取到任何CSS样式，将使用基础后备样式')
-    allStyles.push(getBasicFallbackStyles())
+    return getBasicFallbackStyles()
   }
 
   return allStyles.join('\n')

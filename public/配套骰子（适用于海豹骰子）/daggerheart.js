@@ -75,15 +75,13 @@ const CONFIG = {
     rollTitle: '{userName}进行二元骰检定',
     rollTitleWithReason: '{userName}为「{reason}」进行二元骰检定',
     // 希望/恐惧变化数值文案
-    hopeChangeDetails: '希望值: {calculation} = {finalValue} ({currentHope}/{maxHope})',
-    fearChangeDetails: '恐惧值: {calculation} = {finalValue} ({currentFear}/{maxFear})',
+    hopeChangeDetails: '希望值: {finalValue} ({currentHope}/{maxHope}) = {calculation}',
+    fearChangeDetails: '恐惧值: {finalValue} ({currentFear}/{maxFear}) = {calculation}',
     // 压力变化文案(用于大成功)
     stressDecreased: '压力-1 ({currentStress}/{maxStress})',
     stressAtZero: '压力已为0 ({currentStress}/{maxStress})',
     // 希望变化文案（用于大成功）
-    criticalSuccessHopeDetails: '关键成功！希望值: {calculation} = {finalValue} ({currentHope}/{maxHope})',
-    // 反应掷骰提示文案
-    reactionRollNotice: '反应掷骰不会获得希望或者恐惧',
+    criticalSuccessHopeDetails: '希望值: {finalValue} ({currentHope}/{maxHope}) = {calculation}',
     // GM管理文案
     gmSet: '已设置为此群GM',
     gmRemoved: '已卸任GM职位',
@@ -150,7 +148,7 @@ const DAGGERHEART_TEMPLATE = {
   // 名片模板配置 - 使用 .sn dh 设置
   nameTemplate: {
     dh: {
-      template: '{$t玩家_RAW} HP{生命}/{生命上限} 压力{压力}/{压力上限} 希望{希望}/{希望上限} 护甲{护甲}/{护甲上限}',
+      template: '{$t玩家_RAW} 希望{希望}/{希望上限} HP{生命}/{生命上限} 压力{压力}/{压力上限} 护甲{护甲}/{护甲上限}',
       helpText: 'Daggerheart角色名片'
     },
     gm: {
@@ -307,22 +305,22 @@ function getAttributeName(name) {
 function setAttributeAndUpdateCard(ctx, attrName, value) {
   // 设置属性值
   seal.vars.intSet(ctx, attrName, value);
-  
+
   // 检查是否在群组中
   if (!ctx.group || !ctx.group.groupId) {
     return;
   }
-  
+
   // 检查是否为 GM
   const groupId = ctx.group.groupId;
   const gmUserId = GMManager.getGMUser(groupId);
   const isGM = gmUserId === ctx.player.userId;
-  
+
   // 应用对应的名片模板
-  const template = isGM 
+  const template = isGM
     ? DAGGERHEART_TEMPLATE.nameTemplate.gm.template
     : DAGGERHEART_TEMPLATE.nameTemplate.dh.template;
-    
+
   seal.applyPlayerGroupCardByTemplate(ctx, template);
 }
 
@@ -1089,7 +1087,7 @@ class DualityDiceLogic {
         modifierTotal += value;
 
         const sign = exp.sign > 0 ? '+' : '-';
-        const detailText = `${sign}${exp.name}[${Math.abs(actualValue)}]=${value >= 0 ? '+' : ''}${value}(-1希望)`;
+        const detailText = `${sign}${exp.name}[${Math.abs(actualValue)}]`;
         modifierDetails.push(detailText);
         calculationParts.push(`${value >= 0 ? '+' : ''}${value}`);
       } else {
@@ -1116,7 +1114,7 @@ class DualityDiceLogic {
     const constants = parsedCommand.modifiers.filter(m => m.type === 'constant');
     for (const constant of constants) {
       modifierTotal += constant.value;
-      const detailText = `常量${constant.value >= 0 ? '+' : ''}${constant.value}`;
+      const detailText = `${constant.value >= 0 ? '+' : ''}${constant.value}`;
       modifierDetails.push(detailText);
       calculationParts.push(`${constant.value >= 0 ? '+' : ''}${constant.value}`);
     }
@@ -1190,18 +1188,22 @@ class ResponseFormatter {
    */
   static buildComplexResponse(title, rollResult, updateAttributes = true) {
     let response = `${title}\n`;
+
+    // 先显示希望骰和恐惧骰的详细信息
     response += `希望骰: ${rollResult.hopeRoll}  恐惧骰: ${rollResult.fearRoll}`;
 
     if (rollResult.modifierDetails.length > 0) {
       response += `\n调整值: ${rollResult.modifierDetails.join(', ')}`;
     }
 
-    // 构建详细的计算过程，每个修饰符分开显示
-    const parts = [`${rollResult.hopeRoll}`, `+${rollResult.fearRoll}`];
-    if (rollResult.calculationParts && rollResult.calculationParts.length > 0) {
-      parts.push(...rollResult.calculationParts);
+    // 最后显示总点数结果
+    if (rollResult.resultType === 'critical') {
+      response += `\n总点数: *关键成功*`;
+    } else if (rollResult.resultType === 'hope') {
+      response += `\n总点数: *希望${rollResult.finalTotal}*`;
+    } else if (rollResult.resultType === 'fear') {
+      response += `\n总点数: *恐惧${rollResult.finalTotal}*`;
     }
-    response += `\n总点数: ${parts.join('')} = ${rollResult.finalTotal}`;
     response += `\n--------------------`;
 
     // 在分隔线前显示恐惧值变化
@@ -1252,10 +1254,6 @@ class ResponseFormatter {
       }
     }
 
-    // 反应掷骰提示（当不更新属性时）
-    if (!updateAttributes) {
-      response += `\n${CONFIG.messages.reactionRollNotice}`;
-    }
 
     response += `\n--------------------`;
     response += `\n${rollResult.outcomeText}`;
@@ -1469,7 +1467,7 @@ const commandHandlers = {
         hopeRoll = parseInt(args[1]);
         fearRoll = parseInt(args[2]);
       } else {
-      // dd 模式: .test 希望骰点数 恐惧骰点数
+        // dd 模式: .test 希望骰点数 恐惧骰点数
         if (args.length !== 2) {
           seal.replyToSender(ctx, msg, '参数错误！用法：\n.test 希望骰点数 恐惧骰点数 - 测试dd命令(更新属性)\n.test -r 希望骰点数 恐惧骰点数 - 测试ddr命令(不更新属性)\n例如：.test 12 12 (关键成功)');
           return seal.ext.newCmdExecuteResult(false);
@@ -1606,6 +1604,7 @@ cmdDuality.name = 'dd';
 cmdDuality.help = `.dd [修饰符...] [原因] // 二元骰检定
 修饰符支持:
   ±属性名 - 使用属性值(如+敏捷 +力量 +agi +str)
+  ±经历名 - 使用经历值(消耗1点希望，如+锻造 +魔法学)
   ±[N]优势/adv - 优势骰(N个d6取最高,默认1)
   ±[N]劣势/dis - 劣势骰(N个d6取最低,默认1)  
   ±[N]dM - 额外骰子(N个M面骰,默认1)
@@ -1614,6 +1613,7 @@ cmdDuality.help = `.dd [修饰符...] [原因] // 二元骰检定
   .dd +敏捷 攀爬检定
   .dd +力量+优势 破门
   .dd +本能+2d6-劣势 复杂检定
+  .dd +锻造+优势 制作装备(使用经历)
 
 角色管理: 使用 .set daggerheart 切换规则，然后用 st 指令设置属性，.sn dh 应用名片`;
 cmdDuality.solve = commandHandlers.dualityDice;
@@ -1624,6 +1624,7 @@ cmdDualityRollOnly.name = 'ddr';
 cmdDualityRollOnly.help = `.ddr [修饰符...] [原因] // 反应二元骰，仅消耗希望不获得希望
 修饰符支持:
   ±属性名 - 使用属性值(如+敏捷 +力量 +agi +str)
+  ±经历名 - 使用经历值(消耗1点希望，如+锻造 +魔法学)
   ±[N]优势/adv - 优势骰(N个d6取最高,默认1)
   ±[N]劣势/dis - 劣势骰(N个d6取最低,默认1)  
   ±[N]dM - 额外骰子(N个M面骰,默认1)
@@ -1631,6 +1632,7 @@ cmdDualityRollOnly.help = `.ddr [修饰符...] [原因] // 反应二元骰，仅
 示例:
   .ddr +敏捷 攀爬检定
   .ddr +力量+优势 破门
+  .ddr +锻造 制作检定(使用经历)
 注意: 使用经历时会消耗希望，但不会获得希望或更新其他属性`;
 cmdDualityRollOnly.solve = commandHandlers.dualityDiceRollOnly;
 
@@ -1655,7 +1657,8 @@ cmdGM.help = `.gm [clear] // GM管理命令
 无参数: 设置当前用户为此群的GM，并应用GM恐惧值名片
 .gm clear: 卸任当前群的GM
 
-GM功能说明:
+重要提示:
+- 必须使用 .gm 命令设置GM，不要使用 .sn gm
 - GM恐惧值初始为0/12
 - 当有人投出恐惧结果时，GM恐惧值自动+1并更新名片`;
 cmdGM.solve = commandHandlers.gmSet;
@@ -1692,8 +1695,7 @@ cmdHelp.solve = (ctx, msg) => {
     helpText += '\n【规则设置】\n';
     helpText += '● .set dh - 开启Daggerheart规则\n';
     helpText += '● .sn dh - 应用玩家名片模板\n';
-    helpText += '\n⚠️ 警告：请勿直接使用 .sn gm 命令，这会导致名片无法与数据同步\n';
-    helpText += '正确做法：先使用 .gm 设置GM身份，系统会自动应用GM名片\n';
+    helpText += '● .gm - 设置自己为GM（注意：必须使用.gm命令，不要使用.sn gm）\n';
     helpText += '\n使用 .[命令] help 查看详细帮助\n';
     helpText += '例如：.dd help 查看dd命令详细说明';
 

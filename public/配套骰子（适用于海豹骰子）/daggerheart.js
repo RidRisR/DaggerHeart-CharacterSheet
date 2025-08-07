@@ -6,16 +6,8 @@
 // @timestamp    1735802400
 // @diceRequireVer 1.2.0
 // @license      MIT
-// @homepageURL  https://github.com/sealdice/javascript
+// @homepageURL  https://github.com/RidRisR/DaggerHeart-CharacterSheet/blob/main/public/%E9%85%8D%E5%A5%97%E9%AA%B0%E5%AD%90%EF%BC%88%E9%80%82%E7%94%A8%E4%BA%8E%E6%B5%B7%E8%B1%B9%E9%AA%B0%E5%AD%90%EF%BC%89/daggerheart.js
 // ==/UserScript==
-
-/*
- * 此插件采用单文件复杂逻辑组织规范
- * 代码结构和规范请参考: CLAUDE.md > Single-File Code Organization Standards
- * 语法文档请参考: examples/doc/daggerheart-syntax.md
- * 角色管理文档请参考: examples/doc/daggerheart-player-data.md
- * 如需修改或扩展功能，请严格遵守文档中的组织原则
- */
 
 // ==========================================
 // 配置常量区 - All configurable items centrally managed
@@ -1633,7 +1625,8 @@ cmdDualityRollOnly.help = `.ddr [修饰符...] [原因] // 反应二元骰，仅
   .ddr +敏捷 攀爬检定
   .ddr +力量+优势 破门
   .ddr +锻造 制作检定(使用经历)
-注意: 使用经历时会消耗希望，但不会获得希望或更新其他属性`;
+
+注意: .ddr命令仅在使用经历时会消耗希望，不会获得希望或更新其他属性`;
 cmdDualityRollOnly.solve = commandHandlers.dualityDiceRollOnly;
 
 // 创建并注册测试命令
@@ -1696,8 +1689,8 @@ cmdHelp.solve = (ctx, msg) => {
     helpText += '● .set dh - 开启Daggerheart规则\n';
     helpText += '● .sn dh - 应用玩家名片模板\n';
     helpText += '● .gm - 设置自己为GM（注意：必须使用.gm命令，不要使用.sn gm）\n';
-    helpText += '\n使用 .[命令] help 查看详细帮助\n';
-    helpText += '例如：.dd help 查看dd命令详细说明';
+    helpText += '\n使用 .help [命令] 查看详细帮助\n';
+    helpText += '例如：.help dd 查看dd命令详细说明';
 
     seal.replyToSender(ctx, msg, helpText);
     return seal.ext.newCmdExecuteResult(true);

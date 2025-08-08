@@ -30,7 +30,7 @@ const ProfessionDescriptionSection: React.FC<ProfessionDescriptionSectionProps> 
                         if (dataType === 'input' || dataType === 'box' || dataType === 'checkbox') {
                             if (dataType === 'input') {
                                 const len = parseInt(dataValue as string, 10) || 8;
-                                return <input type="text" className="border-b border-black outline-none px-1 mx-1 bg-transparent" style={{ width: `${len * 0.6}em` }} />;
+                                return <input type="text" className="border-b border-black outline-none px-1 mx-1 bg-transparent" style={{ width: `${len * 9.6}px` }} />;
                             } else if (dataType === 'box') {
                                 const size = parseInt(dataValue as string, 10) || 1;
                                 const px = 8 * size;

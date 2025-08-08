@@ -2,16 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 全局固定字体大小，防止浏览器字体设置影响 */
+* {
+  /* 禁用浏览器的最小字体大小限制 */
+  -webkit-text-size-adjust: none !important;
+  -moz-text-size-adjust: none !important;
+  -ms-text-size-adjust: none !important;
+  text-size-adjust: none !important;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  /* 固定字体大小，防止浏览器设置影响 */
+  font-size: 16px !important;
 }
 
 html {
   margin: 0;
   padding: 0;
+  /* 固定根元素字体大小，防止浏览器字体设置影响布局 */
+  font-size: 16px !important;
+  /* 禁用文本大小调整 - 使用none而不是100% */
+  -webkit-text-size-adjust: none !important;
+  -moz-text-size-adjust: none !important;
+  -ms-text-size-adjust: none !important;
+  text-size-adjust: none !important;
 }
 
 /* 自动调整字体的打印样式 */
@@ -151,7 +169,7 @@ html {
     width: 210mm;
     margin: 0;
     padding: 0mm;
-    font-size: 0.85em;
+    font-size: 13.6px; /* 0.85em * 16px = 13.6px */
     /* 移除通用的 page-break-after，由具体页面控制 */
   }
 
@@ -376,7 +394,7 @@ html {
       --chart-3: 197 37% 24%;
       --chart-4: 43 74% 66%;
       --chart-5: 27 87% 67%;
-      --radius: 0.5rem;
+      --radius: 8px;
       --sidebar-background: 0 0% 98%;
       --sidebar-foreground: 240 5.3% 26.1%;
       --sidebar-primary: 240 5.9% 10%;

@@ -1155,7 +1155,7 @@ export default function Home() {
                 导出预览
               </HoverMenuItem>
               <HoverMenuItem onClick={() => setSealDiceExportModalOpen(true)}>
-                导出到海豹骰
+                导出海豹骰
               </HoverMenuItem>
               <HoverMenuItem onClick={handleQuickExportJSON}>
                 导出JSON

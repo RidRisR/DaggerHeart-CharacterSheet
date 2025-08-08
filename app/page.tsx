@@ -525,6 +525,12 @@ export default function Home() {
     console.log('[App] 设置页面标题:', title);
     document.title = title;
     setIsPrintingAll(true);
+    
+    // 等待React完成渲染，让打印组件有时间注册图片
+    await new Promise(resolve => {
+      // 使用 setTimeout 确保在下一个事件循环中执行
+      setTimeout(resolve, 100);
+    });
   }
 
   // HTML导出功能
@@ -554,28 +560,42 @@ export default function Home() {
   // 等待图片加载完成和页面渲染的通用函数
   const waitForImagesLoaded = (): Promise<void> => {
     return new Promise((resolve) => {
-      if (allImagesLoaded) {
-        // 图片已经加载完成，等待300ms让页面完全渲染
-        setTimeout(resolve, 300)
-        return
-      }
-
-      // 检查图片加载状态的间隔检查
-      const startTime = Date.now()
-      const checkInterval = setInterval(() => {
-        const elapsedTime = Date.now() - startTime
-
+      console.log('[App] 开始等待图片加载...')
+      
+      // 添加初始延迟，确保组件有时间注册图片
+      setTimeout(() => {
+        console.log('[App] 初始延迟结束，开始检查图片加载状态')
+        
         if (allImagesLoaded) {
-          // 图片加载完成，等待300ms后resolve
-          clearInterval(checkInterval)
+          // 图片已经加载完成，等待300ms让页面完全渲染
+          console.log('[App] 图片已加载完成，等待渲染完成')
           setTimeout(resolve, 300)
-        } else if (elapsedTime > 3000) {
-          // 3秒超时，直接继续
-          clearInterval(checkInterval)
-          console.log('[App] 图片加载超时，继续执行操作')
-          resolve()
+          return
         }
-      }, 100)
+
+        // 检查图片加载状态的间隔检查
+        const startTime = Date.now()
+        const checkInterval = setInterval(() => {
+          const elapsedTime = Date.now() - startTime
+
+          if (allImagesLoaded) {
+            // 图片加载完成，等待300ms后resolve
+            clearInterval(checkInterval)
+            console.log('[App] 图片加载完成，等待最终渲染')
+            setTimeout(resolve, 300)
+          } else if (elapsedTime > 5000) {
+            // 增加超时时间到5秒，给图片更多加载时间
+            clearInterval(checkInterval)
+            console.log('[App] 图片加载超时（5秒），继续执行操作')
+            resolve()
+          } else {
+            // 每隔一段时间输出当前状态
+            if (elapsedTime % 1000 < 100) {
+              console.log(`[App] 等待图片加载中... (${Math.floor(elapsedTime/1000)}s)`)
+            }
+          }
+        }, 100)
+      }, 200) // 初始延迟200ms，给组件注册时间
     })
   }
 
@@ -583,12 +603,48 @@ export default function Home() {
   const handleQuickExportPDF = async () => {
     try {
       console.log('[App] 快速PDF导出 - 进入预览页面')
-      // 设置标题
+      // 设置标题并切换到预览模式
       await handlePrintAll()
       // 等待图片加载完成后自动触发打印
       await waitForImagesLoaded()
-      // 给浏览器一点时间更新document.title
+      
+      // 额外的安全检查：确保所有图片元素都已经在DOM中
+      console.log('[App] 进行最终的DOM检查...')
+      await new Promise(resolve => {
+        setTimeout(() => {
+          const images = document.querySelectorAll('img')
+          let loadedCount = 0
+          let totalCount = images.length
+          
+          console.log(`[App] 检查到 ${totalCount} 张图片`)
+          
+          if (totalCount === 0) {
+            console.log('[App] 没有图片需要加载，直接继续')
+            resolve(void 0)
+            return
+          }
+          
+          images.forEach((img, index) => {
+            if (img.complete && img.naturalWidth > 0) {
+              loadedCount++
+              console.log(`[App] 图片 ${index + 1} 已加载完成`)
+            } else {
+              console.log(`[App] 图片 ${index + 1} 未完成加载，但继续执行`)
+            }
+          })
+          
+          console.log(`[App] DOM检查完成，${loadedCount}/${totalCount} 张图片已加载`)
+          resolve(void 0)
+        }, 100)
+      })
+      
+      // 给浏览器额外时间确保渲染完成
+      console.log('[App] 等待最终渲染完成...')
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      console.log('[App] 触发打印')
       window.print()
+      
       // 打印完成后自动返回主页面
       setTimeout(() => {
         setIsPrintingAll(false)
@@ -597,6 +653,9 @@ export default function Home() {
     } catch (error) {
       console.error('[App] 快速PDF导出失败:', error)
       alert('PDF导出失败: ' + (error instanceof Error ? error.message : '未知错误'))
+      // 出错时也要返回主页面
+      setIsPrintingAll(false)
+      document.title = "Character Sheet"
     }
   }
 

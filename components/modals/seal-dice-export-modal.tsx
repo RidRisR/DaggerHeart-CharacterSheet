@@ -92,12 +92,12 @@ export function SealDiceExportModal({ isOpen, onClose, sheetData }: SealDiceExpo
             <h4 className="font-medium text-blue-900 mb-2">使用说明：</h4>
             <ol className="list-decimal list-inside space-y-1 text-blue-800">
               <li>复制上方的完整命令</li>
-              <li>在安装了海豹骰子的群聊中发送</li>
-              <li>海豹骰子会自动设置你的角色属性</li>
-              <li>可以使用 <code className="bg-blue-100 px-1 rounded">.st show</code> 查看导入的属性</li>
-              <li>使用 <code className="bg-blue-100 px-1 rounded">.sn dh</code> 应用Daggerheart名片模板</li>
+              <li>在安装了海豹骰子的群聊中发送,海豹骰子会自动设置你的角色属性（你可以试用 卢娜：3572397642）</li>
+              <li>可以使用 <code className="bg-blue-100 px-1 rounded">.set dh</code> 开启dh规则模式</li>
+              <li>使用 <code className="bg-blue-100 px-1 rounded">.sn dh</code> 应用Daggerheart名片模板（可能需要管理权限）</li>
               <li>如果你是GM，使用 <code className="bg-blue-100 px-1 rounded">.gm</code> 设置为GM身份</li>
               <li>随时使用 <code className="bg-blue-100 px-1 rounded">.dh</code> 来查看骰子的完整功能</li>
+              <li>使用 <code className="bg-blue-100 px-1 rounded">.help [命令名称]</code> 来查看具体命令的帮助，如 <code className="bg-blue-100 px-1 rounded">.help dd</code></li>
             </ol>
           </div>
 

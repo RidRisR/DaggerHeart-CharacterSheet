@@ -156,7 +156,7 @@ export function HoverMenu({ trigger, children, className = "", menuClassName = "
                 {/* 悬浮菜单 */}
                 {showMenu && (
                     <div
-                        className={`absolute bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1 min-w-[120px] z-50 ${getMenuPositionClasses(side, align)} ${menuClassName}`}
+                        className={`absolute bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1.5 min-w-[200px] z-50 ${getMenuPositionClasses(side, align)} ${menuClassName}`}
                         onMouseEnter={handleMenuEnter}
                         onMouseLeave={handleMenuLeave}
                     >
@@ -190,9 +190,14 @@ export function HoverMenuItem({ onClick, disabled = false, children, className =
         <button
             onClick={handleClick}
             disabled={disabled}
-            className={`w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+            className={`w-full text-left px-5 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
         >
             {children}
         </button>
     )
+}
+
+// 导出分隔线组件
+export function HoverMenuDivider() {
+    return <div className="my-1 mx-2 border-t border-gray-200 dark:border-gray-700" />
 }

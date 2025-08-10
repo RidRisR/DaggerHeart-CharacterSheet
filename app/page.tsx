@@ -17,7 +17,7 @@ import { CharacterCreationGuide } from "@/components/guide/character-creation-gu
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { SealDiceExportModal } from "@/components/modals/seal-dice-export-modal"
 import { Button } from "@/components/ui/button"
-import { HoverMenu, HoverMenuItem } from "@/components/ui/hover-menu"
+import { HoverMenu, HoverMenuItem, HoverMenuDivider } from "@/components/ui/hover-menu"
 import { useSheetStore, useCardActions } from "@/lib/sheet-store"
 import { navigateToPage } from "@/lib/utils"
 import { PrintReadyChecker } from "@/components/print/print-ready-checker"
@@ -958,6 +958,16 @@ export default function Home() {
                   导出为JSON
                 </Button>
                 <Button
+                  onClick={() => {
+                    setSealDiceExportModalOpen(true)
+                    setIsPrintingAll(false)
+                  }}
+                  className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+                    }`}
+                >
+                  导出海豹骰
+                </Button>
+                <Button
                   onClick={() => setIsPrintingAll(false)}
                   className={`bg-red-600 text-white hover:bg-red-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
                     }`}
@@ -1007,7 +1017,7 @@ export default function Home() {
             <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-[210mm]">
               {/* 支持移动端滚动的Tab容器 */}
               <div className="w-full overflow-x-auto tabs-container">
-                <TabsList className="grid w-full transition-all duration-300 ease-in-out"
+                <TabsList className={`grid w-full transition-all duration-300 ease-in-out ${isMobile ? 'h-12' : 'h-10'}`}
                   style={{
                     gridTemplateColumns: `repeat(${getVisibleTabs().length}, 1fr) auto`
                   }}>
@@ -1016,7 +1026,7 @@ export default function Home() {
                     <TabsTrigger
                       key={tab.id}
                       value={tab.id}
-                      className="transition-all duration-200 ease-in-out animate-in slide-in-from-right-2"
+                      className={`transition-all duration-200 ease-in-out animate-in slide-in-from-right-2 ${isMobile ? 'py-2.5 text-sm' : 'py-1.5 text-sm'}`}
                       style={{
                         animationDelay: `${index * 50}ms`
                       }}
@@ -1131,7 +1141,7 @@ export default function Home() {
 
             <Button
               onClick={toggleGuide}
-              className={`bg-blue-800 text-white hover:bg-blue-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
+              className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
                 }`}
             >
               建卡指引
@@ -1151,19 +1161,30 @@ export default function Home() {
                 </Button>
               }
             >
-              <HoverMenuItem onClick={handlePrintAll}>
-                导出预览
+              <HoverMenuItem 
+                onClick={handlePrintAll}
+              >
+                打开导出预览界面
               </HoverMenuItem>
-              <HoverMenuItem onClick={() => setSealDiceExportModalOpen(true)}>
+              <HoverMenuDivider />
+              <HoverMenuItem 
+                onClick={() => setSealDiceExportModalOpen(true)}
+              >
                 导出海豹骰
               </HoverMenuItem>
-              <HoverMenuItem onClick={handleQuickExportJSON}>
+              <HoverMenuItem 
+                onClick={handleQuickExportJSON}
+              >
                 导出JSON
               </HoverMenuItem>
-              <HoverMenuItem onClick={handleQuickExportPDF}>
+              <HoverMenuItem 
+                onClick={handleQuickExportPDF}
+              >
                 导出PDF
               </HoverMenuItem>
-              <HoverMenuItem onClick={handleQuickExportHTML}>
+              <HoverMenuItem 
+                onClick={handleQuickExportHTML}
+              >
                 导出HTML
               </HoverMenuItem>
 
@@ -1183,9 +1204,12 @@ export default function Home() {
                 </Button>
               }
             >
-              <HoverMenuItem onClick={() => setCharacterManagementModalOpen(true)}>
-                存档管理
+              <HoverMenuItem 
+                onClick={() => setCharacterManagementModalOpen(true)}
+              >
+                打开存档管理器
               </HoverMenuItem>
+              <HoverMenuDivider />
               <HoverMenuItem
                 onClick={handleQuickCreateArchive}
                 disabled={characterList.length >= MAX_CHARACTERS}
@@ -1196,7 +1220,7 @@ export default function Home() {
                 onClick={handleQuickImportFromHTML}
                 disabled={characterList.length >= MAX_CHARACTERS}
               >
-                从HTML新建
+                从HTML导入
               </HoverMenuItem>
             </HoverMenu>
 

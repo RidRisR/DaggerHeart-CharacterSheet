@@ -1,7 +1,7 @@
 import { SheetData, AttributeValue } from './sheet-data'
 
 /**
- * 海豹骰子导出器 - 将角色数据转换为海豹骰子可用的.st命令格式
+ * 骰子导出器 - 将角色数据转换为骰子可用的.st命令格式
  */
 
 /**
@@ -43,7 +43,7 @@ function getMaxCapacity(boolArray: boolean[] | undefined): number {
 }
 
 /**
- * 将角色数据导出为海豹骰子格式
+ * 将角色数据导出为骰子格式
  * @param sheetData 角色表单数据
  * @returns .st命令字符串
  */
@@ -143,7 +143,7 @@ export function exportToSealDice(sheetData: SheetData): string {
 }
 
 /**
- * 验证导出的字符串是否符合海豹骰子格式
+ * 验证导出的字符串是否符合骰子格式
  * @param exportString 导出的字符串
  * @returns 是否有效
  */

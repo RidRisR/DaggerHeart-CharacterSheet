@@ -965,7 +965,7 @@ export default function Home() {
                   className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
                     }`}
                 >
-                  导出海豹骰
+                  导出到骰子
                 </Button>
                 <Button
                   onClick={() => setIsPrintingAll(false)}
@@ -1170,7 +1170,7 @@ export default function Home() {
               <HoverMenuItem 
                 onClick={() => setSealDiceExportModalOpen(true)}
               >
-                导出海豹骰
+                导出到骰子
               </HoverMenuItem>
               <HoverMenuItem 
                 onClick={handleQuickExportJSON}
@@ -1268,7 +1268,7 @@ export default function Home() {
         onRenameCharacter={renameCharacterHandler}
       />
 
-      {/* 海豹骰子导出模态框 */}
+      {/* 骰子导出模态框 */}
       <SealDiceExportModal
         isOpen={sealDiceExportModalOpen}
         onClose={() => setSealDiceExportModalOpen(false)}

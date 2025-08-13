@@ -9,14 +9,6 @@
 // @homepageURL  https://github.com/RidRisR/DaggerHeart-CharacterSheet/blob/main/public/配套骰子（适用于海豹骰子）/daggerheart.js
 // ==/UserScript==
 
-/*
- * 此插件采用单文件复杂逻辑组织规范
- * 代码结构和规范请参考: CLAUDE.md > Single-File Code Organization Standards
- * 语法文档请参考: examples/doc/daggerheart-syntax.md
- * 角色管理文档请参考: examples/doc/daggerheart-player-data.md
- * 如需修改或扩展功能，请严格遵守文档中的组织原则
- */
-
 // ==========================================
 // 配置常量区 - All configurable items centrally managed
 // ==========================================

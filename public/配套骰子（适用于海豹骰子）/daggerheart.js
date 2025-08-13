@@ -1,13 +1,21 @@
 // ==UserScript==
 // @name         Daggerheart二元骰
-// @author       SealDice社区
+// @author       RidRisR
 // @version      2.1.0
 // @description  Daggerheart风格的二元骰系统，支持复杂修饰符语法和完整角色管理
 // @timestamp    1735802400
 // @diceRequireVer 1.2.0
 // @license      MIT
-// @homepageURL  https://github.com/RidRisR/DaggerHeart-CharacterSheet/blob/main/public/%E9%85%8D%E5%A5%97%E9%AA%B0%E5%AD%90%EF%BC%88%E9%80%82%E7%94%A8%E4%BA%8E%E6%B5%B7%E8%B1%B9%E9%AA%B0%E5%AD%90%EF%BC%89/daggerheart.js
+// @homepageURL  https://github.com/RidRisR/DaggerHeart-CharacterSheet/blob/main/public/配套骰子（适用于海豹骰子）/daggerheart.js
 // ==/UserScript==
+
+/*
+ * 此插件采用单文件复杂逻辑组织规范
+ * 代码结构和规范请参考: CLAUDE.md > Single-File Code Organization Standards
+ * 语法文档请参考: examples/doc/daggerheart-syntax.md
+ * 角色管理文档请参考: examples/doc/daggerheart-player-data.md
+ * 如需修改或扩展功能，请严格遵守文档中的组织原则
+ */
 
 // ==========================================
 // 配置常量区 - All configurable items centrally managed
@@ -152,10 +160,10 @@ const DAGGERHEART_TEMPLATE = {
   // 属性显示配置 - 支持 st 指令
   attrConfig: {
     // st show 时置顶显示的属性
-    top: ['敏捷', '力量', '本能', '知识', '风度', '灵巧', '生命', '压力', '希望', '护甲', '恐惧', '闪避', '重伤阈值', '严重阈值'],
+    top: ['敏捷', '力量', '本能', '知识', '风度', '灵巧', '生命', '压力', '希望', '护甲', '恐惧', '闪避', '阈值'],
     sortBy: 'name',
     // st show 时隐藏的属性
-    ignores: ['生命上限', '压力上限', '希望上限', '护甲上限', '恐惧上限'],
+    ignores: ['生命上限', '压力上限', '希望上限', '护甲上限', '恐惧上限', '严重阈值'],
     // st show 时的特殊显示格式
     showAs: {
       生命: '{生命}/{生命上限}',
@@ -163,7 +171,7 @@ const DAGGERHEART_TEMPLATE = {
       希望: '{希望}/{希望上限}',
       护甲: '{护甲}/{护甲上限}',
       恐惧: '{恐惧}/{恐惧上限}',
-      阈值: '{重伤阈值}/{严重阈值}'
+      阈值: '{阈值}/{严重阈值}'
     }
   },
 
@@ -186,31 +194,31 @@ const DAGGERHEART_TEMPLATE = {
     恐惧: 0,
     恐惧上限: 12,
     闪避: 0,
-    重伤阈值: 0,
+    阈值: 0,
     严重阈值: 0
   },
 
   // 属性别名 - 支持 st 指令的多种输入方式
   alias: {
-    敏捷: ['agility', 'agi', '敏'],
-    力量: ['strength', 'str', '力'],
-    本能: ['instinct', 'ins', '本'],
-    知识: ['knowledge', 'knw', '智', '知'],
-    风度: ['presence', 'pre', '魅', '风'],
-    灵巧: ['finesse', 'fin', '巧', '灵'],
-    生命: ['生命值', '血量', 'health', '血', '命', 'hp'],
-    生命上限: ['生命值上限', 'hpmax', '血量上限', 'maxhp'],
-    压力: ['stress', '压力值', 's'],
-    压力上限: ['stressmax', '压力上限值', 'maxstress', 'maxs'],
-    希望: ['hope', '希望值', 'h'],
-    希望上限: ['hopemax', '希望上限值', 'maxhope', 'maxh'],
-    护甲: ['armor', '防御', 'armour', 'a'],
-    护甲上限: ['armormax', '防御上限', 'maxarmor', 'maxa'],
-    恐惧: ['fear', '恐惧值', 'f'],
-    恐惧上限: ['fearmax', '恐惧上限值', 'maxfear', 'maxf'],
-    闪避: ['evasion', '回避', '闪', '避', 'e'],
-    重伤阈值: ['major', 'majorthreshold', '重伤', '阈值一', 'mjr'],
-    严重阈值: ['severe', 'severethreshold', '严重', '阈值二', 'svr']
+    敏捷: ['agility', 'agi', '敏', 'mj'],  // mj = 敏捷
+    力量: ['strength', 'str', '力', 'll'],  // ll = 力量
+    本能: ['instinct', 'ins', '本', 'bn'],  // bn = 本能
+    知识: ['knowledge', 'knw', '智', '知', 'zs'],  // zs = 知识
+    风度: ['presence', 'pre', '魅', '风', 'fd'],  // fd = 风度
+    灵巧: ['finesse', 'fin', '巧', '灵', 'lq'],  // lq = 灵巧
+    生命: ['生命值', '血量', 'health', '血', '命', 'hp', 'sm'],  // sm = 生命
+    生命上限: ['生命值上限', 'hpmax', '血量上限', 'maxhp', 'smsx'],  // smsx = 生命上限
+    压力: ['stress', '压力值', 's', 'yl'],  // yl = 压力
+    压力上限: ['stressmax', '压力上限值', 'maxstress', 'maxs', 'ylsx'],  // ylsx = 压力上限
+    希望: ['hope', '希望值', 'h', 'xw'],  // xw = 希望
+    希望上限: ['hopemax', '希望上限值', 'maxhope', 'maxh', 'xwsx'],  // xwsx = 希望上限
+    护甲: ['armor', '防御', 'armour', 'a', 'hj'],  // hj = 护甲
+    护甲上限: ['armormax', '防御上限', 'maxarmor', 'maxa', 'hjsx'],  // hjsx = 护甲上限
+    恐惧: ['fear', '恐惧值', 'f', 'kj'],  // kj = 恐惧
+    恐惧上限: ['fearmax', '恐惧上限值', 'maxfear', 'maxf', 'kjsx'],  // kjsx = 恐惧上限
+    闪避: ['evasion', '回避', '闪', '避', 'e', 'sb'],  // sb = 闪避
+    阈值: ['major', 'majorthreshold', '重伤阈值', '重伤', '阈值一', 'mjr', 'zsyz'],  // zsyz = 重伤阈值
+    严重阈值: ['severe', 'severethreshold', '严重阈值', '严重', '阈值二', 'svr', 'yzyz']  // yzyz = 严重阈值
   }
 };
 
@@ -322,12 +330,23 @@ function setAttributeAndUpdateCard(ctx, attrName, value) {
  * @returns {boolean} 是否为有效修饰符
  */
 function isValidModifier(token, ctx) {
-  if (!token.startsWith('+') && !token.startsWith('-')) {
-    return false;
+  // 处理带符号的参数
+  if (token.startsWith('+') || token.startsWith('-')) {
+    const content = token.slice(1).toLowerCase();
+    return isValidModifierContent(content, ctx);
   }
 
-  const content = token.slice(1).toLowerCase();
+  // 处理不带符号的参数
+  return isValidModifierContent(token.toLowerCase(), ctx);
+}
 
+/**
+ * 检查内容是否为有效的修饰符
+ * @param {string} content - 不带符号的内容
+ * @param {Object} ctx - SealDice上下文
+ * @returns {boolean} 是否为有效修饰符
+ */
+function isValidModifierContent(content, ctx) {
   // 检查是否为属性名
   if (getAttributeName(content)) {
     return true;
@@ -342,18 +361,33 @@ function isValidModifier(token, ctx) {
     }
   }
 
-  // 检查优势/劣势格式
+  // 检查优势格式（优势、优势2、2优势、adv、adv2、2adv等）
   for (const keyword of CONFIG.syntax.advantageKeywords) {
-    if (content.includes(keyword)) {
-      const numPart = content.replace(keyword, '').trim();
-      return /^\d*$/.test(numPart); // 允许空字符串（代表1）
+    if (content === keyword) {
+      return true; // 单独的优势关键词
+    }
+    if (content.startsWith(keyword)) {
+      const numPart = content.slice(keyword.length).trim();
+      if (/^\d*$/.test(numPart)) return true;
+    }
+    if (content.endsWith(keyword)) {
+      const numPart = content.slice(0, -keyword.length).trim();
+      if (/^\d+$/.test(numPart)) return true;
     }
   }
 
+  // 检查劣势格式（劣势、劣势2、2劣势、dis、dis2、2dis等）
   for (const keyword of CONFIG.syntax.disadvantageKeywords) {
-    if (content.includes(keyword)) {
-      const numPart = content.replace(keyword, '').trim();
-      return /^\d*$/.test(numPart); // 允许空字符串（代表1）
+    if (content === keyword) {
+      return true; // 单独的劣势关键词
+    }
+    if (content.startsWith(keyword)) {
+      const numPart = content.slice(keyword.length).trim();
+      if (/^\d*$/.test(numPart)) return true;
+    }
+    if (content.endsWith(keyword)) {
+      const numPart = content.slice(0, -keyword.length).trim();
+      if (/^\d+$/.test(numPart)) return true;
     }
   }
 
@@ -376,8 +410,14 @@ function isValidModifier(token, ctx) {
  * @returns {Object|null} 解析结果或null
  */
 function parseModifier(token, ctx) {
-  const sign = token.startsWith('+') ? 1 : -1;
-  const content = token.slice(1).toLowerCase().trim();
+  let sign = 1; // 默认为正向
+  let content = token.toLowerCase().trim();
+
+  // 如果有显式符号，提取符号和内容
+  if (token.startsWith('+') || token.startsWith('-')) {
+    sign = token.startsWith('+') ? 1 : -1;
+    content = token.slice(1).toLowerCase().trim();
+  }
 
   // 首先检查是否为预设属性名
   const attrName = getAttributeName(content);
@@ -404,9 +444,28 @@ function parseModifier(token, ctx) {
 
   // 解析优势
   for (const keyword of CONFIG.syntax.advantageKeywords) {
-    if (content.includes(keyword)) {
-      const numStr = content.replace(keyword, '').trim();
-      const count = numStr === '' ? 1 : parseInt(numStr); // 默认为1
+    if (content === keyword) {
+      // 单独的优势关键词
+      return {
+        type: 'advantage',
+        count: sign
+      };
+    }
+    if (content.startsWith(keyword)) {
+      // 优势2、adv3 等格式
+      const numStr = content.slice(keyword.length).trim();
+      const count = numStr === '' ? 1 : parseInt(numStr);
+      if (!isNaN(count)) {
+        return {
+          type: 'advantage',
+          count: clampValue(count * sign, -CONFIG.syntax.limits.advantage.max, CONFIG.syntax.limits.advantage.max)
+        };
+      }
+    }
+    if (content.endsWith(keyword)) {
+      // 2优势、3adv 等格式
+      const numStr = content.slice(0, -keyword.length).trim();
+      const count = parseInt(numStr);
       if (!isNaN(count)) {
         return {
           type: 'advantage',
@@ -418,9 +477,28 @@ function parseModifier(token, ctx) {
 
   // 解析劣势
   for (const keyword of CONFIG.syntax.disadvantageKeywords) {
-    if (content.includes(keyword)) {
-      const numStr = content.replace(keyword, '').trim();
-      const count = numStr === '' ? 1 : parseInt(numStr); // 默认为1
+    if (content === keyword) {
+      // 单独的劣势关键词
+      return {
+        type: 'disadvantage',
+        count: sign
+      };
+    }
+    if (content.startsWith(keyword)) {
+      // 劣势2、dis3 等格式
+      const numStr = content.slice(keyword.length).trim();
+      const count = numStr === '' ? 1 : parseInt(numStr);
+      if (!isNaN(count)) {
+        return {
+          type: 'disadvantage',
+          count: clampValue(count * sign, -CONFIG.syntax.limits.advantage.max, CONFIG.syntax.limits.advantage.max)
+        };
+      }
+    }
+    if (content.endsWith(keyword)) {
+      // 2劣势、3dis 等格式
+      const numStr = content.slice(0, -keyword.length).trim();
+      const count = parseInt(numStr);
       if (!isNaN(count)) {
         return {
           type: 'disadvantage',
@@ -500,40 +578,53 @@ function parseCommandArgs(args, ctx) {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    // 不以+/-开头，直接作为原因
-    if (!arg.startsWith('+') && !arg.startsWith('-')) {
-      reasonStartIndex = i;
-      break;
-    }
+    // 处理带符号的参数（可能是复合修饰符）
+    if (arg.startsWith('+') || arg.startsWith('-')) {
+      // 处理可能的复合修饰符
+      const splitModifiers = splitCompoundModifier(arg);
+      let allValid = true;
+      const parsedModifiers = [];
 
-    // 处理可能的复合修饰符
-    const splitModifiers = splitCompoundModifier(arg);
-    let allValid = true;
-    const parsedModifiers = [];
-
-    // 验证并解析所有拆分出的修饰符
-    for (const mod of splitModifiers) {
-      if (isValidModifier(mod, ctx)) {
-        const parsed = parseModifier(mod, ctx);
-        if (parsed) {
-          parsedModifiers.push(parsed);
+      // 验证并解析所有拆分出的修饰符
+      for (const mod of splitModifiers) {
+        if (isValidModifier(mod, ctx)) {
+          const parsed = parseModifier(mod, ctx);
+          if (parsed) {
+            parsedModifiers.push(parsed);
+          } else {
+            allValid = false;
+            break;
+          }
         } else {
           allValid = false;
           break;
         }
+      }
+
+      if (allValid && parsedModifiers.length > 0) {
+        // 所有修饰符都有效，添加到结果中
+        modifiers.push(...parsedModifiers);
       } else {
-        allValid = false;
+        // 无效修饰符，从这里开始都是原因
+        reasonStartIndex = i;
         break;
       }
-    }
-
-    if (allValid && parsedModifiers.length > 0) {
-      // 所有修饰符都有效，添加到结果中
-      modifiers.push(...parsedModifiers);
     } else {
-      // 无效修饰符，从这里开始都是原因
-      reasonStartIndex = i;
-      break;
+      // 不带符号的参数，尝试解析为修饰符
+      if (isValidModifier(arg, ctx)) {
+        const parsed = parseModifier(arg, ctx);
+        if (parsed) {
+          modifiers.push(parsed);
+        } else {
+          // 无法解析，作为原因的开始
+          reasonStartIndex = i;
+          break;
+        }
+      } else {
+        // 不是有效修饰符，作为原因的开始
+        reasonStartIndex = i;
+        break;
+      }
     }
   }
 
@@ -1093,11 +1184,13 @@ class DualityDiceLogic {
     const attributes = parsedCommand.modifiers.filter(m => m.type === 'attribute');
     for (const attr of attributes) {
       const [attrValue, hasAttr] = seal.vars.intGet(ctx, attr.name);
-      const value = (hasAttr ? attrValue : 0) * attr.sign;
+      const actualValue = hasAttr ? attrValue : 0;
+      const value = actualValue * attr.sign;
       modifierTotal += value;
 
       const sign = attr.sign > 0 ? '+' : '-';
-      const detailText = `${sign}${attr.name}[${Math.abs(hasAttr ? attrValue : 0)}]=${value >= 0 ? '+' : ''}${value}`;
+      // 简化显示格式：直接显示 +属性名[值]，负数值自带负号
+      const detailText = `${sign}${attr.name}[${actualValue}]`;
       modifierDetails.push(detailText);
       calculationParts.push(`${value >= 0 ? '+' : ''}${value}`);
     }
@@ -1583,6 +1676,89 @@ const commandHandlers = {
       console.log(`GM名片更新出错：${error.message}`);
       return seal.ext.newCmdExecuteResult(false);
     }
+  },
+
+  /**
+   * 别名查询命令处理器 - 显示关键词的所有别名
+   * @param {Object} ctx - SealDice上下文
+   * @param {Object} msg - 消息对象
+   * @param {Object} cmdArgs - 命令参数
+   * @returns {Object} 命令执行结果
+   */
+  aliasQuery: (ctx, msg, cmdArgs) => {
+    try {
+      // 如果没有参数，显示所有关键词
+      if (!cmdArgs.args || cmdArgs.args.length === 0) {
+        let helpText = '【Daggerheart关键词别名查询】\n\n';
+        helpText += '使用方法: .dhalias [关键词或别名]\n';
+        helpText += '例如: .dhalias 敏捷 或 .dhalias agi\n\n';
+        helpText += '可查询的关键词:\n';
+
+        // 显示所有可查询的关键词（来自alias配置）
+        const allAttributes = Object.keys(DAGGERHEART_TEMPLATE.alias);
+        for (const attr of allAttributes) {
+          helpText += `• ${attr}\n`;
+        }
+
+        seal.replyToSender(ctx, msg, helpText);
+        return seal.ext.newCmdExecuteResult(true);
+      }
+
+      // 获取查询参数
+      const query = cmdArgs.args[0].toLowerCase();
+
+      // 查找匹配的关键词
+      let foundAttr = null;
+      let foundAliases = [];
+
+      // 遍历所有关键词
+      for (const [attrName, aliases] of Object.entries(DAGGERHEART_TEMPLATE.alias)) {
+        // 检查是否匹配主关键词名
+        if (attrName.toLowerCase() === query) {
+          foundAttr = attrName;
+          foundAliases = aliases;
+          break;
+        }
+
+        // 检查是否匹配别名
+        for (const alias of aliases) {
+          if (alias.toLowerCase() === query) {
+            foundAttr = attrName;
+            foundAliases = aliases;
+            break;
+          }
+        }
+
+        if (foundAttr) break;
+      }
+
+      // 如果找到了关键词
+      if (foundAttr) {
+        let response = `【${foundAttr}】的所有有效输入:\n\n`;
+        response += `主名称: ${foundAttr}\n`;
+        response += `别名: ${foundAliases.join(', ')}\n\n`;
+
+        // 显示示例
+        response += '使用示例:\n';
+        response += `• .dd ${foundAttr} 检定\n`;
+        response += `• .dd +${foundAliases[0]} 检定\n`;
+        if (foundAliases.length > 1) {
+          response += `• .dd ${foundAliases[foundAliases.length - 1]} 检定`;
+        }
+
+        seal.replyToSender(ctx, msg, response);
+      } else {
+        // 未找到关键词
+        let response = `未找到关键词或别名: ${query}\n\n`;
+        response += '请输入 .dhalias 查看所有可查询的关键词';
+        seal.replyToSender(ctx, msg, response);
+      }
+
+      return seal.ext.newCmdExecuteResult(true);
+
+    } catch (error) {
+      return ErrorHandler.handle(error, ctx, msg);
+    }
   }
 };
 
@@ -1663,6 +1839,19 @@ cmdGMFearUpdate.help = '内部命令，用于自动更新GM恐惧值';
 cmdGMFearUpdate.allowDelegate = true; // 关键：启用代骰功能
 cmdGMFearUpdate.solve = commandHandlers.gmFearUpdate;
 
+// 创建并注册别名查询命令
+const cmdAlias = seal.ext.newCmdItemInfo();
+cmdAlias.name = 'dhalias';
+cmdAlias.help = `.dhalias [关键词或别名] // 查询Daggerheart关键词的所有别名
+无参数: 显示所有可查询的关键词
+有参数: 显示指定关键词的所有别名和使用示例
+示例:
+  .dhalias - 显示所有关键词
+  .dhalias 敏捷 - 查询敏捷的所有别名
+  .dhalias agi - 查询agi对应的关键词和所有别名
+  .dhalias mj - 查询拼音缩写mj对应的关键词`;
+cmdAlias.solve = commandHandlers.aliasQuery;
+
 // 创建并注册帮助命令 - 显示所有可用命令
 const cmdHelp = seal.ext.newCmdItemInfo();
 cmdHelp.name = 'dh';
@@ -1673,10 +1862,11 @@ cmdHelp.solve = (ctx, msg) => {
 
     // 定义要显示的命令顺序和说明
     const commands = [
+      { name: 'dh', description: '显示所有命令列表' },
       { name: 'dd', description: '二元骰检定（结果修改属性）' },
       { name: 'ddr', description: '反应二元骰（结果不修改属性，仅经历消耗属性）' },
-      { name: 'dh', description: '显示所有命令列表' },
       { name: 'gm', description: 'GM管理（设置/卸任）' },
+      { name: 'dhalias', description: '查询关键词别名' },
       { name: 'test', description: '测试命令（指定骰子点数）' }
     ];
 
@@ -1703,6 +1893,7 @@ cmdHelp.solve = (ctx, msg) => {
 // 注册命令到扩展
 daggerheartExt.cmdMap['dd'] = cmdDuality;
 daggerheartExt.cmdMap['ddr'] = cmdDualityRollOnly;
+daggerheartExt.cmdMap['dhalias'] = cmdAlias;
 daggerheartExt.cmdMap['test'] = cmdTest;
 daggerheartExt.cmdMap['gm'] = cmdGM;
 daggerheartExt.cmdMap['gmfearupdate'] = cmdGMFearUpdate;

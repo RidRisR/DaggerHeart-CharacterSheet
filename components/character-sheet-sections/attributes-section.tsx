@@ -43,7 +43,7 @@ export function AttributesSection() {
           { name: "知识", key: "knowledge", skills: ["回忆", "分析", "理解"] },
         ].map((attr) => (
           <div key={attr.name} className="flex flex-col items-center">
-            <div className="flex items-center justify-between w-full mb-0">
+            <div className="flex items-center justify-between w-full bg-gray-800 text-white px-1 rounded-t-md py-0.5">
               <div className="flex items-center">
                 <div className="text-[12px] font-bold">{attr.name}</div>
                 {(() => {
@@ -57,7 +57,7 @@ export function AttributesSection() {
                     <button
                       type="button"
                       onClick={() => handleSpellcastingToggle(attr.key as keyof SheetData)}
-                      className={`ml-1 text-[14px] font-bold cursor-pointer transition-colors hover:scale-110 ${isSpellcasting ? "text-gray-800" : "text-gray-200 print:hidden"
+                      className={`ml-1 text-[14px] font-bold cursor-pointer transition-colors hover:scale-110 ${isSpellcasting ? "text-white" : "text-gray-400 print:hidden"
                         }`}
                       title="施法属性标记"
                       aria-label="施法属性标记"
@@ -75,17 +75,17 @@ export function AttributesSection() {
 
                 return (
                   <div
-                    className={`w-3 h-3 rounded-full border border-gray-800 flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-gray-800" : "bg-white"
+                    className={`w-3 h-3 rounded-full border border-white flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-white" : "bg-transparent"
                       }`}
                     onClick={() => handleBooleanChange(attr.key as keyof SheetData)}
                   >
-                    {isAttributeValue(attrValue) && attrValue.checked && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                    {isAttributeValue(attrValue) && attrValue.checked && <div className="w-1.5 h-1.5 bg-gray-800 rounded-full"></div>}
                   </div>
                 );
               })()}
             </div>
             <div className="w-full h-14 relative">
-              <div className="absolute inset-0 rounded-md bg-gray-800 flex flex-col items-center justify-center text-white">
+              <div className="absolute inset-0 rounded-b-md bg-white border border-t-0 border-gray-800 flex flex-col items-center justify-center">
                 <input
                   type="text"
                   value={(() => {
@@ -96,10 +96,10 @@ export function AttributesSection() {
                     return isAttributeValue(attrValue) ? attrValue.value : "";
                   })()}
                   onChange={(e) => handleAttributeValueChange(attr.key as keyof SheetData, e.target.value)}
-                  className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold print-empty-hide"
+                  className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold text-gray-800 print-empty-hide"
                   placeholder="#"
                 />
-                <div className="text-[10px] text-center ">{attr.skills.join(", ")}</div>
+                <div className="text-[10px] text-center text-gray-800">{attr.skills.join(", ")}</div>
               </div>
             </div>
           </div>

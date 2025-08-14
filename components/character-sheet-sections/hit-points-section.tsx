@@ -117,7 +117,7 @@ export function HitPointsSection() {
           <span className="font-bold mr-2 text-xs">
             HP
             {formData.cards?.[0]?.professionSpecial?.["起始生命"] && (
-              <span className="text-[10px] text-gray-600 ml-1 print:hidden">
+              <span className="text-[10px] text-gray-600 ml-1">
                 (职业初始: {formData.cards?.[0]?.professionSpecial?.["起始生命"] ?? "未知"})
               </span>
             )}

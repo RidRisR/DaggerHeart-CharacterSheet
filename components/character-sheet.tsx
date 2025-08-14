@@ -676,31 +676,47 @@ export default function CharacterSheet() {
 
                   {/* Evasion Box */}
                   <div className="flex flex-col items-center justify-start">
-                    <div className="w-24 h-24 border-2 border-gray-800 bg-gray-800 flex flex-col items-center justify-center text-white rounded-lg">
-                      <div className="text-ms font-bold">闪避值</div>
-                      <input
-                        type="text"
-                        name="evasion"
-                        value={safeFormData.evasion}
-                        onChange={handleInputChange}
-                        placeholder={safeFormData.cards[0]?.professionSpecial?.["起始闪避"]?.toString() || ""}
-                        className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
-                      />
+                    <div className="w-24 h-24 flex flex-col rounded-lg overflow-hidden border border-gray-800">
+                      <div className="bg-gray-800 text-white text-center py-1">
+                        <div className="text-ms font-bold">闪避值</div>
+                      </div>
+                      <div className="flex-1 bg-white flex flex-col items-center justify-start px-1 pt-1">
+                        {safeFormData.cards[0]?.professionSpecial?.["起始闪避"] ? (
+                          <div className="text-[8px] text-gray-500 mb-1.5">
+                            职业初始：{safeFormData.cards[0].professionSpecial["起始闪避"]}
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-white"> </div>
+                        )}
+                        <input
+                          type="text"
+                          name="evasion"
+                          value={safeFormData.evasion}
+                          onChange={handleInputChange}
+                          placeholder={safeFormData.cards[0]?.professionSpecial?.["起始闪避"]?.toString() || ""}
+                          className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold text-gray-800 placeholder-gray-400 print-empty-hide"
+                        />
+                      </div>
                     </div>
                   </div>
 
                   {/* Armor Box and Grid */}
                   <div className="flex flex-col">
                     <div className="flex gap-2">
-                      <div className="w-24 h-24 border-2 border-gray-800 bg-gray-800 flex flex-col items-center justify-center text-white rounded-lg">
-                        <div className="text-ms font-bold">护甲值</div>
-                        <input
-                          type="text"
-                          name="armorValue"
-                          value={safeFormData.armorValue}
-                          onChange={handleInputChange}
-                          className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
-                        />
+                      <div className="w-24 h-24 flex flex-col rounded-lg overflow-hidden border border-gray-800">
+                        <div className="bg-gray-800 text-white text-center py-1">
+                          <div className="text-ms font-bold">护甲值</div>
+                        </div>
+                        <div className="flex-1 bg-white flex flex-col items-center justify-start px-1 pt-1">
+                          <div className="text-[8px] text-transparent  mb-1.5">占位</div>
+                          <input
+                            type="text"
+                            name="armorValue"
+                            value={safeFormData.armorValue}
+                            onChange={handleInputChange}
+                            className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold text-gray-800 print-empty-hide"
+                          />
+                        </div>
                       </div>
                       <div className="flex flex-col">
                         <div className="flex items-center">

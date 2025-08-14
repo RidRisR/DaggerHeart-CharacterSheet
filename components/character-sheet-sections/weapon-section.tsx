@@ -38,7 +38,7 @@ export function WeaponSection({
 
   return (
     <div className="mb-2">
-      <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-md">
+      <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">
         {isPrimary ? "主武器" : "副武器"}
       </h4>
       <div className="grid grid-cols-3 gap-1 mt-1">

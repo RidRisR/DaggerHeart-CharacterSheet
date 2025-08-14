@@ -10,7 +10,7 @@ interface ArmorSectionProps {
 
 export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
   const { sheetData: formData, setSheetData } = useSheetStore()
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setSheetData((prev) => ({ ...prev, [name]: value }))
@@ -26,7 +26,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
   })
 
   return (
-    <div className="mb-2">
+    <div>
       <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">护甲</h4>
       <div className="grid grid-cols-3 gap-1 mt-1">
         <div className="col-span-1">

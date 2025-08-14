@@ -112,7 +112,7 @@ export function HitPointsSection() {
         </div>
       </div>
 
-      <div className="mt-3 print:mt-0 space-y-1.5 print:space-y-1">
+      <div className=" space-y-1.5 print:space-y-1">
         <div className="flex items-center justify-between">
           <span className="font-bold mr-2 text-xs">
             HP

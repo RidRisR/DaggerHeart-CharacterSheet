@@ -31,9 +31,8 @@ export function AttributesSection() {
   }
 
   return (
-    <div>
-      <h3 className="text-xs font-bold text-center mt-1">属性</h3>
-      <div className="grid grid-cols-3 gap-x-2 gap-y-0.5">
+    <div className="mt-3">
+      <div className="grid grid-cols-3 gap-x-2 gap-y-1">
         {[
           { name: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },
           { name: "力量", key: "strength", skills: ["举起", "猛击", "擒抱"] },
@@ -97,7 +96,6 @@ export function AttributesSection() {
                   })()}
                   onChange={(e) => handleAttributeValueChange(attr.key as keyof SheetData, e.target.value)}
                   className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold text-gray-800 print-empty-hide"
-                  placeholder="#"
                 />
                 <div className="text-[10px] text-center text-gray-800">{attr.skills.join(", ")}</div>
               </div>

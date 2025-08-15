@@ -73,7 +73,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
                 onClick={openArmorModal}
                 className="flex-1 text-sm text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none"
               >
-                {formData.armorName || "选择护甲"}
+                {formData.armorName || <span className="print:hidden">选择护甲</span>}
               </button>
               <div className="w-px bg-gray-300 hidden group-hover:block"></div>
               <button

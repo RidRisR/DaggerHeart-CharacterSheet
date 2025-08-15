@@ -82,7 +82,7 @@ export function HeaderSection({
           >
             {formData.professionRef?.name
               ? `${formData.professionRef.name}${formData.cards[0]?.cardSelectDisplay?.item1 && formData.cards[0]?.cardSelectDisplay?.item2 ? `  -  ${formData.cards[0].cardSelectDisplay.item1}&${formData.cards[0].cardSelectDisplay.item2}` : ''}`
-              : "选择职业"}
+              : <span className="print:hidden">选择职业</span>}
           </button>
         </div>
         <PageHeader />
@@ -109,7 +109,7 @@ export function HeaderSection({
               onMouseLeave={handleMouseLeave}
               className="header-selection-button printable-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
             >
-              {formData.communityRef?.name || "选择社群"}
+              {formData.communityRef?.name || <span className="print:hidden">选择社群</span>}
             </button>
           </div>
         </div>
@@ -124,7 +124,7 @@ export function HeaderSection({
                 onMouseLeave={handleMouseLeave}
                 className="header-selection-button printable-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
               >
-                {formData.ancestry1Ref?.name || "选择血统"}
+                {formData.ancestry1Ref?.name || <span className="print:hidden">选择血统</span>}
               </button>
               <span className="flex items-center text-white text-xs">+</span>
               <button
@@ -134,7 +134,7 @@ export function HeaderSection({
                 onMouseLeave={handleMouseLeave}
                 className="header-selection-button printable-selection-button w-20 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
               >
-                {formData.ancestry2Ref?.name || "选择血统"}
+                {formData.ancestry2Ref?.name || <span className="print:hidden">选择血统</span>}
               </button>
             </div>
           </div>
@@ -147,7 +147,7 @@ export function HeaderSection({
               onMouseLeave={handleMouseLeave}
               className="header-selection-button printable-selection-button w-40 bg-white text-gray-800 border-gray-400 rounded p-1 h-7 text-xs print:bg-white print:text-black text-left px-2"
             >
-              {formData.subclassRef?.name || "选择子职业"}
+              {formData.subclassRef?.name || <span className="print:hidden">选择子职业</span>}
             </button>
           </div>
         </div>

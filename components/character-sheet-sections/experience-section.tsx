@@ -28,7 +28,6 @@ export function ExperienceSection() {
                 updateExperience(i, e.target.value)
               }}
               {...getElementProps(exp, `exp-${i}`, "flex-grow border-b border-gray-400 p-1 focus:outline-none print-empty-hide")}
-              placeholder="Experience description"
             />
             <input
               type="text"

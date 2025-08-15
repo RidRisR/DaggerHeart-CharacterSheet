@@ -86,7 +86,7 @@ export function InventoryWeaponSection({
                 onClick={() => openWeaponModal(nameField, "inventory")}
                 className="flex-1 text-sm text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none"
               >
-                {(formData as any)[nameField] || "选择武器"}
+                {(formData as any)[nameField] || <span className="print:hidden">选择武器</span>}
               </button>
               <div className="w-px bg-gray-300 hidden group-hover:block"></div>
               <button

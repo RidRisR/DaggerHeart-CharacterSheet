@@ -21,12 +21,17 @@ export function HeaderSection({
   onOpenCommunityModal,
   onOpenSubclassModal
 }: HeaderSectionProps) {
-  const { sheetData: formData, setSheetData } = useSheetStore()
+  const { sheetData: formData, setSheetData, updateLevelWithThreshold } = useSheetStore()
   const containerRef = useRef<HTMLDivElement>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setSheetData((prev) => ({ ...prev, [name]: value }))
+    if (name === 'level') {
+      // 使用新的等级更新函数，自动计算伤害阈值
+      updateLevelWithThreshold(value)
+    } else {
+      setSheetData((prev) => ({ ...prev, [name]: value }))
+    }
   }
 
   const openProfessionModal = () => {
@@ -174,7 +179,7 @@ export function HeaderSection({
             } else if (currentLevel >= 10) {
               newLevel = 10
             }
-            setSheetData((prev) => ({ ...prev, level: String(newLevel) }))
+            updateLevelWithThreshold(String(newLevel))
           }}
           className="mt-1 px-2 py-0.5 bg-gray-600 hover:bg-gray-500 text-white text-[10px] font-bold rounded print:hidden transition-colors disabled:bg-gray-700 disabled:cursor-not-allowed"
           disabled={parseInt(formData.level) >= 10}

@@ -5,7 +5,6 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
-import { ArmorItem, armorItems } from "@/data/list/armor"
 import {
   CardType, // Import CardType
 } from "@/card"
@@ -33,7 +32,7 @@ import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 
 export default function CharacterSheet() {
-  const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency } = useSheetStore();
+  const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor } = useSheetStore();
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
   const safeFormData = useSafeSheetData();
@@ -493,53 +492,7 @@ export default function CharacterSheet() {
   }
 
   const handleArmorChange = (value: string) => {
-    const armor = armorItems.find((a: ArmorItem) => a.名称 === value)
-    if (armor) {
-      setFormData((prev) => ({
-        ...prev,
-        armorName: armor.名称,
-        armorBaseScore: String(armor.护甲值),
-        armorThreshold: armor.伤害阈值,
-        armorFeature: `${armor.特性名称}${armor.特性名称 && armor.描述 ? ": " : ""}${armor.描述}`,
-      }))
-    } else if (value === "none") {
-      setFormData((prev) => ({
-        ...prev,
-        armorName: "",
-        armorBaseScore: "",
-        armorThreshold: "",
-        armorFeature: "",
-      }))
-    } else if (value) { // 处理自定义护甲
-      let armorDetails;
-
-      // 尝试解析JSON格式的自定义护甲数据
-      try {
-        const customArmorData = JSON.parse(value);
-        armorDetails = {
-          name: customArmorData.名称 || value,
-          baseScore: String(customArmorData.护甲值 || ""),
-          threshold: customArmorData.伤害阈值 || "",
-          feature: `${customArmorData.特性名称 ? customArmorData.特性名称 + ': ' : ''}${customArmorData.描述 || ''}`.trim(),
-        };
-      } catch (e) {
-        // 如果不是JSON格式，按旧方式处理（只有名称）
-        armorDetails = {
-          name: value,
-          baseScore: "",
-          threshold: "",
-          feature: "",
-        };
-      }
-
-      setFormData((prev) => ({
-        ...prev,
-        armorName: armorDetails.name,
-        armorBaseScore: armorDetails.baseScore,
-        armorThreshold: armorDetails.threshold,
-        armorFeature: armorDetails.feature,
-      }))
-    }
+    selectArmor(value);
   }
 
   // 使用useEffect监听特殊字段的变化，并在需要时同步卡牌

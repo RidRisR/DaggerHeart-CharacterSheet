@@ -100,7 +100,7 @@ export function HitPointsSection() {
                 const minorThreshold = thresholds[0]?.trim()
                 return minorThreshold ? String(Number(minorThreshold) + Number(formData.level)) : ""
               })()
-              : "NaN"
+              : ""
           }
           className="w-10 text-center text-m border border-gray-400 rounded mx-1 placeholder-gray-400 print-empty-hide"
         />
@@ -120,7 +120,7 @@ export function HitPointsSection() {
                 const majorThreshold = thresholds[1]?.trim()
                 return majorThreshold ? String(Number(majorThreshold) + Number(formData.level)) : ""
               })()
-              : "NaN"
+              : ""
           }
           className="w-10 text-center text-m border border-gray-400 rounded mx-1 placeholder-gray-400 print-empty-hide"
         />

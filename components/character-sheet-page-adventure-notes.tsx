@@ -20,6 +20,7 @@ export default function CharacterSheetPageAdventureNotes() {
         type="text"
         className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide"
         placeholder={placeholder}
+        maxLength={500}
       />
     </div>
   )
@@ -29,10 +30,11 @@ export default function CharacterSheetPageAdventureNotes() {
       <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
       <textarea
         rows={rows}
-        className="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-gray-50 
+        className="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-white 
                  print:bg-white print:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-200 
-                 resize-none shadow-inner print-empty-hide"
+                 resize-none print-empty-hide"
         placeholder={placeholder}
+        maxLength={500}
       />
     </div>
   )
@@ -46,14 +48,15 @@ export default function CharacterSheetPageAdventureNotes() {
         >
           <PageHeader />
 
-          {/* 角色名称与角色信息标题 */}
+          {/* 角色名称与角色简介标题 */}
           <div className="flex justify-between items-end mb-3 border-b-2 border-gray-800 pb-2">
             <input
               type="text"
               className="w-2/3 bg-transparent focus:outline-none text-4xl font-bold text-gray-800 print-empty-hide"
               placeholder="角色姓名"
+              maxLength={500}
             />
-            <h1 className="text-xl font-bold text-gray-600 tracking-wider">角色冒险笔记</h1>
+            <h1 className="text-xl font-bold text-gray-600 tracking-wider">冒险笔记</h1>
           </div>
 
           {/* 主要内容区域 - 左侧栏由内容决定宽度 */}
@@ -74,9 +77,9 @@ export default function CharacterSheetPageAdventureNotes() {
                 inputId="adventure-character-image-upload"
               />
 
-              {/* 角色信息区块 */}
+              {/* 角色简介区块 */}
               <div className={sectionContainerClass} style={{ width: "12rem" }}>
-                <h4 className={sectionBannerClass}>角色信息</h4>
+                <h4 className={sectionBannerClass}>角色简介</h4>
                 <div className={`${sectionContentClass} space-y-3`}>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                     <LabeledInput label="种族" placeholder="种族" />
@@ -91,6 +94,7 @@ export default function CharacterSheetPageAdventureNotes() {
                   <div className="space-y-2">
                     <LabeledInput label="出生地" placeholder="翡翠海岸" />
                     <LabeledInput label="信仰/理念" placeholder="保护弱者" />
+                    <LabeledTextarea label="其他信息" placeholder="特殊背景、家族关系等..." rows={3} />
                   </div>
                 </div>
               </div>
@@ -99,10 +103,10 @@ export default function CharacterSheetPageAdventureNotes() {
               <div className={sectionContainerClass} style={{ width: "12rem" }}>
                 <h4 className={sectionBannerClass}>玩家信息</h4>
                 <div className={`${sectionContentClass} space-y-3`}>
-                  <LabeledInput label="玩家昵称" placeholder="输入你的昵称" />
-                  <LabeledInput label="跑团偏好" placeholder="文字团/语音团/面团" />
-                  <LabeledTextarea label="活动时间" placeholder="周末下午、工作日晚上..." rows={2} />
-                  <LabeledTextarea label="游戏风格" placeholder="喜欢角色扮演、重视战术配合..." rows={6} />
+                  <LabeledInput label="昵称" placeholder="输入你的昵称" />
+                  <LabeledInput label="偏好" placeholder="文字团/语音团/面团" />
+                  <LabeledTextarea label="活动时间" placeholder="周末下午、工作日晚上..." rows={3} />
+                  <LabeledTextarea label="游戏风格" placeholder="轻度角色扮演、擅长数值构建、解密苦手..." rows={6} />
                 </div>
               </div>
             </div>
@@ -110,15 +114,30 @@ export default function CharacterSheetPageAdventureNotes() {
             {/* 右栏 */}
             <div className="flex flex-col h-full">
 
-              {/* 角色传记 - 占用所有可用空间 */}
+              {/* 背景故事 - 占用所有可用空间 */}
               <div className={`${sectionContainerClass} flex-1 mb-4`}>
-                <h4 className={sectionBannerClass}>角色传记</h4>
+                <h4 className={sectionBannerClass}>背景故事</h4>
                 <div className={sectionContentClass} style={{ height: "calc(100% - 2rem)" }}>
                   <textarea
-                    className="w-full h-full text-xs border border-gray-300 rounded px-2 py-1 bg-gray-50 
+                    className="w-full h-full text-xs border border-gray-300 rounded px-2 py-1 bg-white 
                              print:bg-white print:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-200 
-                             resize-none shadow-inner print-empty-hide"
+                             resize-none print-empty-hide"
                     placeholder="在这里记录你角色的详细背景故事...&#10;&#10;• 出生地和家庭背景&#10;• 成长经历和重要事件&#10;• 性格形成的关键因素&#10;• 目标和动机..."
+                    maxLength={10000}
+                  />
+                </div>
+              </div>
+
+              {/* 大事记 */}
+              <div className={`${sectionContainerClass} mb-4`}>
+                <h4 className={sectionBannerClass}>大事记</h4>
+                <div className={sectionContentClass}>
+                  <textarea
+                    className="w-full h-40 text-xs border border-gray-300 rounded px-2 py-1 bg-white 
+                             print:bg-white print:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-200 
+                             resize-none print-empty-hide"
+                    placeholder="记录角色生涯中的重要事件和转折点...&#10;&#10;• 重要的人生决定&#10;• 关键的转折时刻&#10;• 获得的荣誉或声望&#10;• 失去的重要事物..."
+                    maxLength={5000}
                   />
                 </div>
               </div>
@@ -127,44 +146,71 @@ export default function CharacterSheetPageAdventureNotes() {
               <div className={sectionContainerClass}>
                 <h4 className={sectionBannerClass}>冒险履历</h4>
                 <div className={sectionContentClass}>
-                  {/* 履历条目1 */}
-                  <div className="border border-gray-200 rounded p-2 mb-2 bg-gray-50">
-                    <div className="grid grid-cols-3 gap-2 mb-2">
-                      <LabeledInput label="模组名称" placeholder="失落的矿坑" />
-                      <LabeledInput label="等级跨度" placeholder="1-5级" />
-                      <LabeledInput label="时间" placeholder="2024年3月" />
-                    </div>
-                    <LabeledInput label="重要事件" placeholder="击败了巨龙、获得传奇武器..." />
+                  {/* 表头 */}
+                  <div className="grid grid-cols-4 gap-1.5 mb-2 text-xs font-medium text-gray-600">
+                    <div>冒险名称</div>
+                    <div>等级跨度</div>
+                    <div>创伤</div>
+                    <div>时间</div>
                   </div>
 
-                  {/* 履历条目2 */}
-                  <div className="border border-gray-200 rounded p-2 mb-2 bg-gray-50">
-                    <div className="grid grid-cols-3 gap-2 mb-2">
-                      <LabeledInput label="模组名称" placeholder="模组名称" />
-                      <LabeledInput label="等级跨度" placeholder="等级范围" />
-                      <LabeledInput label="时间" placeholder="时间" />
+                  {/* 履历条目 */}
+                  <div className="space-y-1">
+                    <div className="grid grid-cols-4 gap-1.5">
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="檀木林的信使" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="1-5级" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="失去希望" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="2024年3月" maxLength={500} />
                     </div>
-                    <LabeledInput label="重要事件" placeholder="记录重要事件..." />
-                  </div>
 
-                  {/* 履历条目3 */}
-                  <div className="border border-gray-200 rounded p-2 mb-2 bg-gray-50">
-                    <div className="grid grid-cols-3 gap-2 mb-2">
-                      <LabeledInput label="模组名称" placeholder="模组名称" />
-                      <LabeledInput label="等级跨度" placeholder="等级范围" />
-                      <LabeledInput label="时间" placeholder="时间" />
+                    <div className="grid grid-cols-4 gap-1.5">
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
                     </div>
-                    <LabeledInput label="重要事件" placeholder="记录重要事件..." />
-                  </div>
 
-                  {/* 履历条目4 */}
-                  <div className="border border-gray-200 rounded p-2 bg-gray-50">
-                    <div className="grid grid-cols-3 gap-2 mb-2">
-                      <LabeledInput label="模组名称" placeholder="模组名称" />
-                      <LabeledInput label="等级跨度" placeholder="等级范围" />
-                      <LabeledInput label="时间" placeholder="时间" />
+                    <div className="grid grid-cols-4 gap-1.5">
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
                     </div>
-                    <LabeledInput label="重要事件" placeholder="记录重要事件..." />
+
+                    <div className="grid grid-cols-4 gap-1.5">
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-1.5">
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-1.5">
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-1.5">
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-1.5">
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                      <input type="text" className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" placeholder="" maxLength={500} />
+                    </div>
                   </div>
                 </div>
               </div>

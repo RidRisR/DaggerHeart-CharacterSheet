@@ -124,7 +124,7 @@ registerPages([
     label: '冒险笔记',
     component: CharacterSheetPageAdventureNotes,
     printClass: 'page-adventure-notes',
-    visibility: { type: 'always' },
+    visibility: { type: 'config', configKey: 'adventureNotes' },
     printOrder: 3.5,
     showInTabs: true
   },

@@ -116,7 +116,8 @@ export const defaultSheetData: SheetData = {
     includePageThreeInExport: true, // @deprecated 向后兼容
     pageVisibility: {
         rangerCompanion: false,  // 默认隐藏游侠伙伴页
-        armorTemplate: false     // 默认隐藏护甲模板页
+        armorTemplate: false,    // 默认隐藏护甲模板页
+        adventureNotes: false    // 默认隐藏冒险笔记页
     },
 
     // 护甲模板默认数据

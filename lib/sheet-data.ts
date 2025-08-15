@@ -176,6 +176,7 @@ export interface SheetData {
   pageVisibility?: {
     rangerCompanion: boolean  // 游侠伙伴页
     armorTemplate: boolean    // 护甲模板页
+    adventureNotes: boolean   // 冒险笔记页
     // 未来可添加更多页面
   }
 

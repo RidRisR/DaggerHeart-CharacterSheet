@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-ranger-companion"
+import CharacterSheetPageAdventureNotes from "@/components/character-sheet-page-adventure-notes"
 import {
   getStandardCardById,
 } from "@/card"
@@ -116,6 +117,15 @@ registerPages([
     printClass: 'page-three',
     visibility: { type: 'config', configKey: 'rangerCompanion' },
     printOrder: 3,
+    showInTabs: true
+  },
+  {
+    id: 'adventure-notes',
+    label: '冒险笔记',
+    component: CharacterSheetPageAdventureNotes,
+    printClass: 'page-adventure-notes',
+    visibility: { type: 'always' },
+    printOrder: 3.5,
     showInTabs: true
   },
   {

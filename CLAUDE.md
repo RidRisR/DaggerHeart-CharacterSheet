@@ -153,3 +153,131 @@ When adding new fields to SheetData:
 - Import HTML files
 - Duplicate existing characters
 - Create new characters
+
+## Page Layout System
+
+### A4 Page Layout Standards
+
+All pages follow a consistent A4 paper layout pattern for print compatibility:
+
+```typescript
+// Standard page container structure
+<div className="w-full max-w-[210mm] mx-auto">
+  <div
+    className="a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+    style={{ width: "210mm" }}
+  >
+    <PageHeader />
+    {/* Page content */}
+  </div>
+</div>
+```
+
+**Key Layout Elements:**
+- **Outer container**: `w-full max-w-[210mm] mx-auto` - Centers page with A4 max-width
+- **Page body**: `a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md`
+- **Fixed width**: `style={{ width: "210mm" }}` - Ensures strict A4 paper width
+- **Print optimization**: `print:shadow-none` removes shadows when printing
+
+### Design Language Standards
+
+All pages maintain visual consistency through:
+
+- **Color scheme**: White background + gray text (`bg-white text-gray-800`)
+- **Visual effects**: Shadow (`shadow-lg`) + rounded corners (`rounded-md`)
+- **Spacing**: Standard padding (`p-2`)
+- **Print compatibility**: Automatic style adjustments for print media
+
+### Page Registration System
+
+Pages are managed through a centralized registration system in `app/page.tsx`:
+
+```typescript
+registerPages([
+  {
+    id: 'page1',                    // Unique identifier
+    label: '第一页',                // Display label in tabs
+    component: CharacterSheet,      // React component
+    printClass: 'page-one',        // CSS class for print styles
+    visibility: { type: 'always' }, // Visibility rules
+    printOrder: 1,                 // Order in print output
+    showInTabs: true               // Show in tab navigation
+  }
+])
+```
+
+### Page Visibility Control
+
+Three types of visibility rules:
+
+1. **Always visible** (`type: 'always'`)
+   - Pages that should always be shown (e.g., main character sheet pages)
+
+2. **Config-based** (`type: 'config'`)
+   - Pages shown based on user configuration
+   - Uses `configKey` to check against user settings
+   - Example: Ranger Companion page, Iknis Armor page
+
+3. **Data-based** (`type: 'data'`)
+   - Pages shown when specific data conditions are met
+   - Uses `dataCheck` function to evaluate character data
+   - Example: Card deck pages only show when cards are present
+
+### Page Navigation System
+
+**Tab System:**
+- Dynamic tab generation based on visibility rules
+- Responsive layout with overflow scrolling on mobile
+- Page management dropdown for toggling page visibility
+
+**Keyboard Shortcuts:**
+- `←` `→` Arrow keys: Cycle through pages
+- `1` `2` `3` ... Number keys: Jump directly to pages
+- `Ctrl + 1-9/0`: Switch between character saves
+- `ESC`: Exit print preview mode
+
+### Requirements for New Pages
+
+When creating a new page component:
+
+1. **Layout Structure**: Must use the standard A4 layout container
+2. **Component Format**: React component following existing patterns
+3. **Page Registration**: Add entry to `registerPages()` array
+4. **Visibility Rules**: Define appropriate visibility conditions
+5. **Print Styles**: Specify `printClass` for print-specific styling
+6. **Design Consistency**: Follow the established design language
+7. **Header Component**: Use `<PageHeader />` for consistent page tops
+
+### Example Page Implementation
+
+```typescript
+// components/my-new-page.tsx
+export default function MyNewPage() {
+  return (
+    <>
+      <div className="w-full max-w-[210mm] mx-auto">
+        <div
+          className="a4-page p-2 bg-white text-gray-800 shadow-lg print:shadow-none rounded-md"
+          style={{ width: "210mm" }}
+        >
+          <PageHeader />
+          {/* Your page content here */}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// In app/page.tsx - Register the new page
+{
+  id: 'my-new-page',
+  label: '我的新页面',
+  component: MyNewPage,
+  printClass: 'page-my-new',
+  visibility: { type: 'config', configKey: 'myNewFeature' },
+  printOrder: 6,
+  showInTabs: true
+}
+```
+
+This system ensures all pages maintain consistent layout, navigation, and user experience while allowing for flexible content and visibility management.

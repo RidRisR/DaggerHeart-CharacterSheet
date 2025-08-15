@@ -74,11 +74,10 @@ export function AttributesSection() {
 
                 return (
                   <div
-                    className={`w-3 h-3 rounded-full border border-white flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-transparent" : "bg-white"
+                    className={`w-2 h-2 rounded-full border border-white cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-gray-800" : "bg-white"
                       }`}
                     onClick={() => handleBooleanChange(attr.key as keyof SheetData)}
                   >
-                    {isAttributeValue(attrValue) && !attrValue.checked && <div className="w-1.5 h-1.5 bg-gray-800 rounded-full"></div>}
                   </div>
                 );
               })()}
@@ -95,9 +94,9 @@ export function AttributesSection() {
                     return isAttributeValue(attrValue) ? attrValue.value : "";
                   })()}
                   onChange={(e) => handleAttributeValueChange(attr.key as keyof SheetData, e.target.value)}
-                  className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-base font-bold text-gray-800 print-empty-hide"
+                  className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-lg font-bold text-gray-800 print-empty-hide"
                 />
-                <div className="text-[10px] text-center text-gray-800">{attr.skills.join(", ")}</div>
+                <div className="text-[8px] text-center text-gray-600">{attr.skills.join(", ")}</div>
               </div>
             </div>
           </div>

@@ -687,10 +687,10 @@ export default function CharacterSheet() {
                           value={safeFormData.evasion}
                           onChange={handleInputChange}
                           placeholder={safeFormData.cards[0]?.professionSpecial?.["起始闪避"]?.toString() || ""}
-                          className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold text-gray-800 placeholder-gray-400 print-empty-hide"
+                          className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold text-gray-800 placeholder-gray-400 print-empty-hide pb-1"
                         />
                         {safeFormData.cards[0]?.professionSpecial?.["起始闪避"] ? (
-                          <div className="text-[8px] text-gray-500">
+                          <div className="text-[8px] text-gray-600">
                             职业初始：{safeFormData.cards[0].professionSpecial["起始闪避"]}
                           </div>
                         ) : (
@@ -714,7 +714,7 @@ export default function CharacterSheet() {
                             value={safeFormData.armorValue}
                             onChange={handleInputChange}
                             placeholder={safeFormData.armorBaseScore || ""}
-                            className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold text-gray-800 placeholder-gray-400 print-empty-hide"
+                            className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold text-gray-800 placeholder-gray-400 print-empty-hide pb-1"
                           />
                           <div className="text-[8px] text-transparent">占位</div>
                         </div>

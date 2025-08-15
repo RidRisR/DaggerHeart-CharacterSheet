@@ -56,7 +56,7 @@ export function AttributesSection() {
                     <button
                       type="button"
                       onClick={() => handleSpellcastingToggle(attr.key as keyof SheetData)}
-                      className={`ml-1 text-[14px] font-bold cursor-pointer transition-colors hover:scale-110 ${isSpellcasting ? "text-white" : "text-gray-400 print:hidden"
+                      className={`ml-1 text-[14px] font-bold cursor-pointer transition-colors hover:scale-110 ${isSpellcasting ? "text-white" : "text-gray-600 print:hidden"
                         }`}
                       title="施法属性标记"
                       aria-label="施法属性标记"
@@ -74,11 +74,11 @@ export function AttributesSection() {
 
                 return (
                   <div
-                    className={`w-3 h-3 rounded-full border border-white flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-white" : "bg-transparent"
+                    className={`w-3 h-3 rounded-full border border-white flex items-center justify-center cursor-pointer ${isAttributeValue(attrValue) && attrValue.checked ? "bg-transparent" : "bg-white"
                       }`}
                     onClick={() => handleBooleanChange(attr.key as keyof SheetData)}
                   >
-                    {isAttributeValue(attrValue) && attrValue.checked && <div className="w-1.5 h-1.5 bg-gray-800 rounded-full"></div>}
+                    {isAttributeValue(attrValue) && !attrValue.checked && <div className="w-1.5 h-1.5 bg-gray-800 rounded-full"></div>}
                   </div>
                 );
               })()}

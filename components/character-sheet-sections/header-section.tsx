@@ -161,6 +161,26 @@ export function HeaderSection({
             />
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            const currentLevel = parseInt(formData.level) || 0
+            // 如果当前等级为空、不是数字或小于1，设置为1
+            // 如果当前等级大于等于10，保持为10
+            // 否则加1
+            let newLevel = 1
+            if (currentLevel >= 1 && currentLevel < 10) {
+              newLevel = currentLevel + 1
+            } else if (currentLevel >= 10) {
+              newLevel = 10
+            }
+            setSheetData((prev) => ({ ...prev, level: String(newLevel) }))
+          }}
+          className="mt-1 px-2 py-0.5 bg-gray-600 hover:bg-gray-500 text-white text-[10px] font-bold rounded print:hidden transition-colors disabled:bg-gray-700 disabled:cursor-not-allowed"
+          disabled={parseInt(formData.level) >= 10}
+        >
+          Level Up!
+        </button>
       </div>
 
       {/* 卡牌悬停预览 */}

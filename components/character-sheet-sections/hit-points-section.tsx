@@ -83,7 +83,7 @@ export function HitPointsSection() {
     <div className="py-1 mb-1">
       <h3 className="text-xs font-bold text-center mb-2.5 print:mb-2">生命值与压力</h3>
 
-      <div className="flex justify-between items-center mb-1 gap-1">
+      <div className="flex justify-between items-center mb-2 gap-1">
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div>轻度伤害</div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 1 HP</div>
@@ -93,7 +93,16 @@ export function HitPointsSection() {
           name="minorThreshold"
           value={formData.minorThreshold}
           onChange={handleInputChange}
-          className="w-10 text-center text-m border border-gray-400 rounded mx-1 print-empty-hide"
+          placeholder={
+            formData.armorThreshold && formData.level
+              ? (() => {
+                const thresholds = formData.armorThreshold.split('/')
+                const minorThreshold = thresholds[0]?.trim()
+                return minorThreshold ? String(Number(minorThreshold) + Number(formData.level)) : ""
+              })()
+              : "NaN"
+          }
+          className="w-10 text-center text-m border border-gray-400 rounded mx-1 placeholder-gray-400 print-empty-hide"
         />
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div>重度伤害</div>
@@ -104,7 +113,16 @@ export function HitPointsSection() {
           name="majorThreshold"
           value={formData.majorThreshold}
           onChange={handleInputChange}
-          className="w-10 text-center text-m border border-gray-400 rounded mx-1 print-empty-hide"
+          placeholder={
+            formData.armorThreshold && formData.level
+              ? (() => {
+                const thresholds = formData.armorThreshold.split('/')
+                const majorThreshold = thresholds[1]?.trim()
+                return majorThreshold ? String(Number(majorThreshold) + Number(formData.level)) : ""
+              })()
+              : "NaN"
+          }
+          className="w-10 text-center text-m border border-gray-400 rounded mx-1 placeholder-gray-400 print-empty-hide"
         />
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div>严重伤害</div>
@@ -112,7 +130,7 @@ export function HitPointsSection() {
         </div>
       </div>
 
-      <div className=" space-y-1.5 print:space-y-1">
+      <div className="mt-2.5 space-y-1.5 print:space-y-1">
         <div className="flex items-center justify-between">
           <span className="font-bold mr-2 text-xs">
             HP
@@ -136,7 +154,7 @@ export function HitPointsSection() {
         </div>
         {renderBoxes("hp", Number(formData.hpMax || formData.cards?.[0]?.professionSpecial?.["起始生命"] || 6), 18)}
 
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-between">
           <span className="font-bold mr-2 text-xs">压力</span>
           <div className="flex items-center">
             <span className="text-[9px] mr-1 print:hidden">最大值:</span> {/* 打印时隐藏 */}

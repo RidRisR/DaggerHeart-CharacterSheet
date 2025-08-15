@@ -5,7 +5,7 @@ export const defaultSheetData: SheetData = {
     name: "",
     characterImage: "",
     level: "",
-    proficiency: [false, false, false, false, false, false], // Default as boolean array
+    proficiency: [true, false, false, false, false, false], // Default as boolean array, first one lit
     ancestry1: "",
     ancestry2: "",
     profession: "",

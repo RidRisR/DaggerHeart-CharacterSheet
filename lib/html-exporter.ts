@@ -998,6 +998,17 @@ function generateInlineCSS(extractedStyles: string): string {
     /* 提取的原始样式 */
     ${extractedStyles}
 
+    /* 补充缺失的CSS规则 */
+    .grid-cols-10 {
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+    }
+    .col-span-3 {
+      grid-column: span 3 / span 3;
+    }
+    .col-span-4 {
+      grid-column: span 4 / span 4;
+    }
+
     /* 字体大小自动调整 */
     .auto-resize-font,
     input[data-min-font],

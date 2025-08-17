@@ -182,6 +182,33 @@ function migrateArmorTemplate(data: SheetData): SheetData {
 }
 
 /**
+ * 冒险笔记字段迁移
+ * 为缺少冒险笔记字段的旧数据添加默认结构
+ */
+function migrateAdventureNotes(data: SheetData): SheetData {
+  if (data.adventureNotes) {
+    return data
+  }
+
+  const migrated = { ...data }
+  migrated.adventureNotes = {
+    characterProfile: {},
+    playerInfo: {},
+    backstory: '',
+    milestones: '',
+    adventureLog: Array(8).fill(null).map(() => ({
+      name: '',
+      levelRange: '',
+      trauma: '',
+      date: ''
+    }))
+  }
+  
+  console.log('[Migration] Added adventureNotes field')
+  return migrated
+}
+
+/**
  * 清理废弃字段
  * 移除不再使用的字段，保持数据结构清洁
  */
@@ -221,6 +248,7 @@ export function migrateSheetData(
   migrated = migratePageVisibilityRename(migrated)
   migrated = migratePageVisibilityFields(migrated)
   migrated = migrateArmorTemplate(migrated)
+  migrated = migrateAdventureNotes(migrated)
   
   // 3. 清理废弃字段（最后执行）
   migrated = cleanupDeprecatedFields(migrated)

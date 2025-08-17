@@ -72,6 +72,51 @@ export interface ArmorTemplateData {
   electronicCoins?: number
 }
 
+// ===== 冒险笔记相关类型定义 =====
+
+export interface AdventureNotesCharacterProfile {
+  race?: string          // 种族
+  age?: string           // 年龄  
+  gender?: string        // 性别
+  height?: string        // 身高
+  weight?: string        // 体重
+  skinColor?: string     // 肤色
+  eyeColor?: string      // 瞳色
+  hairColor?: string     // 发色
+  birthplace?: string    // 出生地
+  faith?: string         // 信仰/理念
+  otherInfo?: string     // 其他信息
+}
+
+export interface AdventureNotesPlayerInfo {
+  nickname?: string      // 昵称
+  preference?: string    // 偏好
+  activeTime?: string    // 活动时间
+  playStyle?: string     // 游戏风格
+}
+
+export interface AdventureLogEntry {
+  name?: string          // 冒险名称
+  levelRange?: string    // 等级跨度
+  trauma?: string        // 创伤
+  date?: string          // 时间
+}
+
+export interface AdventureNotesData {
+  // 角色简介（左栏上部）
+  characterProfile?: AdventureNotesCharacterProfile
+  
+  // 玩家信息（左栏下部）
+  playerInfo?: AdventureNotesPlayerInfo
+  
+  // 故事内容（右栏）
+  backstory?: string       // 背景故事
+  milestones?: string      // 大事记
+  
+  // 冒险履历（右栏底部，动态数组）
+  adventureLog?: AdventureLogEntry[]
+}
+
 export interface SheetData {
   // 通用属性
   name: string
@@ -182,6 +227,9 @@ export interface SheetData {
 
   // ===== 护甲模板数据 =====
   armorTemplate?: ArmorTemplateData
+
+  // ===== 冒险笔记数据 =====
+  adventureNotes?: AdventureNotesData
 
   // ===== 临时索引签名，兼容动态key访问，后续逐步收敛类型安全 =====
   // [key: string]: any // 已废弃，彻底类型安全后移除

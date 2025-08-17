@@ -139,4 +139,18 @@ export const defaultSheetData: SheetData = {
         },
         electronicCoins: 0
     },
+
+    // 冒险笔记默认数据
+    adventureNotes: {
+        characterProfile: {},
+        playerInfo: {},
+        backstory: '',
+        milestones: '',
+        adventureLog: Array(8).fill(null).map(() => ({
+            name: '',
+            levelRange: '',
+            trauma: '',
+            date: ''
+        }))
+    },
 };

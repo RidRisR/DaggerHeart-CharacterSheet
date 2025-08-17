@@ -143,7 +143,7 @@ function getBasicFallbackStyles(): string {
     input, textarea { border: 1px solid #ccc; padding: 4px; }
     input[type="checkbox"] { width: 16px; height: 16px; }
     button { padding: 8px 12px; border: 1px solid #ccc; background: #f5f5f5; cursor: pointer; }
-    .page-one, .page-two, .page-three, .page-four { page-break-after: always; }
+    .page-one, .page-two, .page-three, .page-four, .page-adventure-notes { page-break-after: always; }
   `
 }
 
@@ -989,7 +989,8 @@ function generateInlineCSS(extractedStyles: string): string {
     .print-all-pages .page-one,
     .print-all-pages .page-two,
     .print-all-pages .page-three,
-    .print-all-pages .page-four {
+    .print-all-pages .page-four,
+    .print-all-pages .page-adventure-notes {
       display: block;
       padding: 0;
       min-height: auto;
@@ -1095,7 +1096,8 @@ function generateInlineCSS(extractedStyles: string): string {
       .print-all-pages .page-two,
       .print-all-pages .page-three,
       .print-all-pages .page-four,
-      .print-all-pages .page-five {
+      .print-all-pages .page-five,
+      .print-all-pages .page-adventure-notes {
         display: block;
         padding: 0;
         min-height: auto;

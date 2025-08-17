@@ -186,7 +186,7 @@ const CharacterSheetPageThree: React.FC = () => {
         );
     };
 
-    const sectionBannerClass = "bg-gray-700 text-white font-bold py-1 px-3 text-center text-sm tracking-wider uppercase";
+    const sectionBannerClass = "bg-gray-700 text-white font-bold py-1 px-3 text-center text-sm tracking-wider uppercase rounded-t-lg";
 
     return (
         <>
@@ -232,7 +232,7 @@ const CharacterSheetPageThree: React.FC = () => {
                     {/* Attack & Damage */}
                     <div>
                         <h4 className={sectionBannerClass}>攻击与伤害</h4>
-                        <div className="p-1.5 border border-gray-300 dark:border-gray-700 border-t-0 space-y-1">
+                        <div className="p-1.5 border border-gray-300 dark:border-gray-700 border-t-0 rounded-b-lg space-y-1">
                             <div>
                                 <label htmlFor="companionWeapon" className="block text-xs font-medium text-gray-600 dark:text-gray-400">攻击方式与范围</label>
                                 <Input
@@ -255,7 +255,7 @@ const CharacterSheetPageThree: React.FC = () => {
                     {/* Stress */}
                     <div>
                         <h4 className={sectionBannerClass}>压力</h4>
-                        <div className="p-1.5 border border-gray-300 dark:border-gray-700 border-t-0">
+                        <div className="p-1.5 border border-gray-300 dark:border-gray-700 border-t-0 rounded-b-lg">
                             <div className="flex items-center mb-1 gap-2">
                                 <span className="text-xs mr-1 font-semibold text-gray-700 dark:text-gray-300">压力：</span>
                                 {renderStressBoxes()}
@@ -280,7 +280,7 @@ const CharacterSheetPageThree: React.FC = () => {
                 <div className="order-2 md:order-2 print:order-2 mt-4 md:mt-0 print:mt-0">
                     <div>
                         <h4 className={sectionBannerClass}>训练</h4>
-                        <div className="p-2 border border-gray-300 dark:border-gray-700 border-t-0">
+                        <div className="p-2 border border-gray-300 dark:border-gray-700 border-t-0 rounded-b-lg">
                             <p className="text-xs mb-2 text-gray-600 dark:text-gray-400">每当你的角色升级时，也从下面的列表中为你的伙伴选择一个选项并标记它。</p>
                             <div className="space-y-1">
                                 {renderTrainingOption("聪慧：一项经历获得 +1。", "intelligent", 3)}

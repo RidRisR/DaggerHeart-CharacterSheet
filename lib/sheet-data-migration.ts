@@ -36,14 +36,16 @@ function migratePageVisibility(data: SheetData): SheetData {
   if ('includePageThreeInExport' in data && data.includePageThreeInExport !== undefined) {
     migrated.pageVisibility = {
       rangerCompanion: data.includePageThreeInExport,
-      armorTemplate: false // 默认隐藏护甲模板页
+      armorTemplate: false, // 默认隐藏护甲模板页
+      adventureNotes: false // 默认隐藏冒险笔记页
     }
     console.log('[Migration] Migrated includePageThreeInExport to pageVisibility')
   } else {
     // 如果没有相关字段，使用默认值
     migrated.pageVisibility = {
       rangerCompanion: false,
-      armorTemplate: false
+      armorTemplate: false,
+      adventureNotes: false
     }
     console.log('[Migration] Added default pageVisibility')
   }
@@ -120,6 +122,33 @@ function migratePageVisibilityRename(data: SheetData): SheetData {
 }
 
 /**
+ * pageVisibility 字段补充迁移
+ * 确保所有必需的字段都存在
+ */
+function migratePageVisibilityFields(data: SheetData): SheetData {
+  if (!data.pageVisibility) {
+    return data
+  }
+
+  const migrated = { ...data }
+  let needsSave = false
+
+  // 确保 adventureNotes 字段存在
+  if (!('adventureNotes' in data.pageVisibility)) {
+    const currentVisibility = data.pageVisibility as Record<string, boolean>
+    migrated.pageVisibility = {
+      rangerCompanion: currentVisibility.rangerCompanion ?? false,
+      armorTemplate: currentVisibility.armorTemplate ?? false,
+      adventureNotes: false // 默认隐藏冒险笔记页
+    }
+    needsSave = true
+    console.log('[Migration] Added missing adventureNotes field to pageVisibility')
+  }
+
+  return migrated
+}
+
+/**
  * 护甲模板字段迁移
  * 为缺少护甲模板字段的旧数据添加默认结构
  */
@@ -153,6 +182,33 @@ function migrateArmorTemplate(data: SheetData): SheetData {
 }
 
 /**
+ * 冒险笔记字段迁移
+ * 为缺少冒险笔记字段的旧数据添加默认结构
+ */
+function migrateAdventureNotes(data: SheetData): SheetData {
+  if (data.adventureNotes) {
+    return data
+  }
+
+  const migrated = { ...data }
+  migrated.adventureNotes = {
+    characterProfile: {},
+    playerInfo: {},
+    backstory: '',
+    milestones: '',
+    adventureLog: Array(8).fill(null).map(() => ({
+      name: '',
+      levelRange: '',
+      trauma: '',
+      date: ''
+    }))
+  }
+  
+  console.log('[Migration] Added adventureNotes field')
+  return migrated
+}
+
+/**
  * 清理废弃字段
  * 移除不再使用的字段，保持数据结构清洁
  */
@@ -177,7 +233,7 @@ function cleanupDeprecatedFields(data: SheetData): SheetData {
  */
 export function migrateSheetData(
   data: Partial<SheetData> | any, 
-  options: MigrationOptions = {}
+  _options: MigrationOptions = {}
 ): SheetData {
   // 1. 确保基本结构，与默认数据合并
   let migrated: SheetData = {
@@ -190,7 +246,9 @@ export function migrateSheetData(
   migrated = migrateInventoryCards(migrated)
   migrated = migrateAttributeSpellcasting(migrated)
   migrated = migratePageVisibilityRename(migrated)
+  migrated = migratePageVisibilityFields(migrated)
   migrated = migrateArmorTemplate(migrated)
+  migrated = migrateAdventureNotes(migrated)
   
   // 3. 清理废弃字段（最后执行）
   migrated = cleanupDeprecatedFields(migrated)

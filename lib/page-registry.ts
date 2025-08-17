@@ -15,7 +15,7 @@ export interface PageDefinition {
   // 显示条件
   visibility: 
     | { type: 'always' }
-    | { type: 'config'; configKey: 'rangerCompanion' | 'armorTemplate' }
+    | { type: 'config'; configKey: 'rangerCompanion' | 'armorTemplate' | 'adventureNotes' }
     | { type: 'data'; dataCheck: (data: SheetData) => boolean }
   
   // 打印顺序（数字越小越靠前）

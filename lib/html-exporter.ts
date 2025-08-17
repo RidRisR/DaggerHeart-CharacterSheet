@@ -1002,11 +1002,32 @@ function generateInlineCSS(extractedStyles: string): string {
     .grid-cols-10 {
       grid-template-columns: repeat(10, minmax(0, 1fr));
     }
+    .grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .grid-cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .grid-cols-\\[auto_1fr\\] {
+      grid-template-columns: auto 1fr;
+    }
     .col-span-3 {
       grid-column: span 3 / span 3;
     }
     .col-span-4 {
       grid-column: span 4 / span 4;
+    }
+    .gap-x-4 {
+      column-gap: 1rem;
+    }
+    .gap-x-2 {
+      column-gap: 0.5rem;
+    }
+    .gap-y-2 {
+      row-gap: 0.5rem;
+    }
+    .gap-y-3 {
+      row-gap: 0.75rem;
     }
 
     /* 字体大小自动调整 */

@@ -52,6 +52,7 @@ html {
 .print-all-pages .page-one,
 .print-all-pages .page-two,
 .print-all-pages .page-three,
+.print-all-pages .page-adventure-notes,
 .print-all-pages .page-four,
 .print-all-pages .page-five,
 .print-all-pages .page-iknis {
@@ -67,6 +68,7 @@ html {
 .print-all-pages .page-one,
 .print-all-pages .page-two,
 .print-all-pages .page-three,
+.print-all-pages .page-adventure-notes,
 .print-all-pages .page-four,
 .print-all-pages .page-five,
 .print-all-pages .page-iknis {
@@ -139,6 +141,7 @@ html {
   .print-all-pages .page-one,
   .print-all-pages .page-two,
   .print-all-pages .page-three,
+  .print-all-pages .page-adventure-notes,
   .print-all-pages .page-four,
   .print-all-pages .page-five,
   .print-all-pages .page-iknis {

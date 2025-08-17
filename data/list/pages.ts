@@ -3,11 +3,11 @@
  */
 
 export interface PageConfig {
-  id: 'page1' | 'page2' | 'page3' | 'page4'
+  id: 'page1' | 'page2' | 'page3' | 'adventure-notes' | 'page4'
   label: string
   description: string
   alwaysVisible: boolean
-  visibilityKey?: 'rangerCompanion' | 'armorTemplate' // 对应 pageVisibility 中的键
+  visibilityKey?: 'rangerCompanion' | 'armorTemplate' | 'adventureNotes' // 对应 pageVisibility 中的键
 }
 
 export const pageConfigs: PageConfig[] = [
@@ -33,16 +33,23 @@ export const pageConfigs: PageConfig[] = [
   {
     id: 'page4',
     label: '主板扩展',
-    description: '伊科尼斯护甲表',
+    description: '伊科尼斯武装表',
     alwaysVisible: false,
     visibilityKey: 'armorTemplate'
+  },
+  {
+    id: 'adventure-notes',
+    label: '冒险笔记',
+    description: '角色背景与冒险记录',
+    alwaysVisible: false,
+    visibilityKey: 'adventureNotes'
   }
 ]
 
 /**
  * 获取可见的页面配置
  */
-export function getVisiblePageConfigs(pageVisibility?: { rangerCompanion?: boolean; armorTemplate?: boolean }) {
+export function getVisiblePageConfigs(pageVisibility?: { rangerCompanion?: boolean; armorTemplate?: boolean; adventureNotes?: boolean }) {
   return pageConfigs.filter(config => {
     if (config.alwaysVisible) return true
     if (!config.visibilityKey) return false

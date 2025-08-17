@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-ranger-companion"
+import CharacterSheetPageAdventureNotes from "@/components/character-sheet-page-adventure-notes"
 import {
   getStandardCardById,
 } from "@/card"
@@ -128,6 +129,15 @@ registerPages([
     showInTabs: true
   },
   {
+    id: 'adventure-notes',
+    label: '冒险笔记',
+    component: CharacterSheetPageAdventureNotes,
+    printClass: 'page-adventure-notes',
+    visibility: { type: 'config', configKey: 'adventureNotes' },
+    printOrder: 5,
+    showInTabs: true
+  },
+  {
     id: 'focused-cards',
     label: '聚焦卡组',
     component: CharacterSheetPageFour,
@@ -140,7 +150,7 @@ registerPages([
           data.cards.slice(1).some(card => card && !isEmptyCard(card))
       }
     },
-    printOrder: 5,
+    printOrder: 6,
     showInTabs: false  // 不在Tab中显示
   },
   {
@@ -156,7 +166,7 @@ registerPages([
           data.inventory_cards.some(card => card && !isEmptyCard(card)))
       }
     },
-    printOrder: 6,
+    printOrder: 7,
     showInTabs: false  // 不在Tab中显示
   }
 ])

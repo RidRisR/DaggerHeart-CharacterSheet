@@ -13,14 +13,14 @@ export default function CharacterSheetPageAdventureNotes() {
   const sectionContainerClass = "border-2 border-gray-800 rounded-md"
   const sectionContentClass = "p-2"
 
-  const LabeledInput = ({ 
-    label, 
-    placeholder, 
+  const LabeledInput = ({
+    label,
+    placeholder,
     value,
     onChange,
     className,
     maxLength = 500
-  }: { 
+  }: {
     label: string
     placeholder?: string
     value?: string
@@ -41,14 +41,14 @@ export default function CharacterSheetPageAdventureNotes() {
     </div>
   )
 
-  const LabeledTextarea = ({ 
-    label, 
-    placeholder, 
+  const LabeledTextarea = ({
+    label,
+    placeholder,
     value,
     onChange,
     rows = 2,
     maxLength = 500
-  }: { 
+  }: {
     label: string
     placeholder?: string
     value?: string
@@ -116,8 +116,8 @@ export default function CharacterSheetPageAdventureNotes() {
                 <h4 className={sectionBannerClass}>角色简介</h4>
                 <div className={`${sectionContentClass} space-y-3`}>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-                    <LabeledInput 
-                      label="种族" 
+                    <LabeledInput
+                      label="种族"
                       placeholder="种族"
                       value={safeFormData.adventureNotes?.characterProfile?.race}
                       onChange={(value) => setFormData(prev => ({
@@ -131,8 +131,8 @@ export default function CharacterSheetPageAdventureNotes() {
                         }
                       }))}
                     />
-                    <LabeledInput 
-                      label="年龄" 
+                    <LabeledInput
+                      label="年龄"
                       placeholder="25"
                       value={safeFormData.adventureNotes?.characterProfile?.age}
                       onChange={(value) => setFormData(prev => ({
@@ -146,8 +146,8 @@ export default function CharacterSheetPageAdventureNotes() {
                         }
                       }))}
                     />
-                    <LabeledInput 
-                      label="性别" 
+                    <LabeledInput
+                      label="性别"
                       placeholder="男/女"
                       value={safeFormData.adventureNotes?.characterProfile?.gender}
                       onChange={(value) => setFormData(prev => ({
@@ -161,8 +161,8 @@ export default function CharacterSheetPageAdventureNotes() {
                         }
                       }))}
                     />
-                    <LabeledInput 
-                      label="身高" 
+                    <LabeledInput
+                      label="身高"
                       placeholder="175cm"
                       value={safeFormData.adventureNotes?.characterProfile?.height}
                       onChange={(value) => setFormData(prev => ({
@@ -176,8 +176,8 @@ export default function CharacterSheetPageAdventureNotes() {
                         }
                       }))}
                     />
-                    <LabeledInput 
-                      label="体重" 
+                    <LabeledInput
+                      label="体重"
                       placeholder="70kg"
                       value={safeFormData.adventureNotes?.characterProfile?.weight}
                       onChange={(value) => setFormData(prev => ({
@@ -191,8 +191,8 @@ export default function CharacterSheetPageAdventureNotes() {
                         }
                       }))}
                     />
-                    <LabeledInput 
-                      label="肤色" 
+                    <LabeledInput
+                      label="肤色"
                       placeholder="白皙"
                       value={safeFormData.adventureNotes?.characterProfile?.skinColor}
                       onChange={(value) => setFormData(prev => ({
@@ -206,8 +206,8 @@ export default function CharacterSheetPageAdventureNotes() {
                         }
                       }))}
                     />
-                    <LabeledInput 
-                      label="瞳色" 
+                    <LabeledInput
+                      label="瞳色"
                       placeholder="蓝色"
                       value={safeFormData.adventureNotes?.characterProfile?.eyeColor}
                       onChange={(value) => setFormData(prev => ({
@@ -221,8 +221,8 @@ export default function CharacterSheetPageAdventureNotes() {
                         }
                       }))}
                     />
-                    <LabeledInput 
-                      label="发色" 
+                    <LabeledInput
+                      label="发色"
                       placeholder="棕色"
                       value={safeFormData.adventureNotes?.characterProfile?.hairColor}
                       onChange={(value) => setFormData(prev => ({
@@ -238,8 +238,8 @@ export default function CharacterSheetPageAdventureNotes() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <LabeledInput 
-                      label="出生地" 
+                    <LabeledInput
+                      label="出生地"
                       placeholder="翡翠海岸"
                       value={safeFormData.adventureNotes?.characterProfile?.birthplace}
                       onChange={(value) => setFormData(prev => ({
@@ -253,8 +253,8 @@ export default function CharacterSheetPageAdventureNotes() {
                         }
                       }))}
                     />
-                    <LabeledInput 
-                      label="信仰/理念" 
+                    <LabeledInput
+                      label="信仰/理念"
                       placeholder="保护弱者"
                       value={safeFormData.adventureNotes?.characterProfile?.faith}
                       onChange={(value) => setFormData(prev => ({
@@ -268,9 +268,9 @@ export default function CharacterSheetPageAdventureNotes() {
                         }
                       }))}
                     />
-                    <LabeledTextarea 
-                      label="其他信息" 
-                      placeholder="特殊背景、家族关系等..." 
+                    <LabeledTextarea
+                      label="其他信息"
+                      placeholder="特殊背景、家族关系等..."
                       rows={3}
                       value={safeFormData.adventureNotes?.characterProfile?.otherInfo}
                       onChange={(value) => setFormData(prev => ({
@@ -292,8 +292,8 @@ export default function CharacterSheetPageAdventureNotes() {
               <div className={sectionContainerClass} style={{ width: "12rem" }}>
                 <h4 className={sectionBannerClass}>玩家信息</h4>
                 <div className={`${sectionContentClass} space-y-3`}>
-                  <LabeledInput 
-                    label="昵称" 
+                  <LabeledInput
+                    label="昵称"
                     placeholder="输入你的昵称"
                     value={safeFormData.adventureNotes?.playerInfo?.nickname}
                     onChange={(value) => setFormData(prev => ({
@@ -307,8 +307,8 @@ export default function CharacterSheetPageAdventureNotes() {
                       }
                     }))}
                   />
-                  <LabeledInput 
-                    label="偏好" 
+                  <LabeledInput
+                    label="偏好"
                     placeholder="文字团/语音团/面团"
                     value={safeFormData.adventureNotes?.playerInfo?.preference}
                     onChange={(value) => setFormData(prev => ({
@@ -322,9 +322,9 @@ export default function CharacterSheetPageAdventureNotes() {
                       }
                     }))}
                   />
-                  <LabeledTextarea 
-                    label="活动时间" 
-                    placeholder="周末下午、工作日晚上..." 
+                  <LabeledTextarea
+                    label="活动时间"
+                    placeholder="周末下午、工作日晚上..."
                     rows={3}
                     value={safeFormData.adventureNotes?.playerInfo?.activeTime}
                     onChange={(value) => setFormData(prev => ({
@@ -338,9 +338,9 @@ export default function CharacterSheetPageAdventureNotes() {
                       }
                     }))}
                   />
-                  <LabeledTextarea 
-                    label="游戏风格" 
-                    placeholder="轻度角色扮演、擅长数值构建、解密苦手..." 
+                  <LabeledTextarea
+                    label="游戏风格"
+                    placeholder="轻度角色扮演、擅长数值构建、解密苦手..."
                     rows={6}
                     value={safeFormData.adventureNotes?.playerInfo?.playStyle}
                     onChange={(value) => setFormData(prev => ({
@@ -363,7 +363,7 @@ export default function CharacterSheetPageAdventureNotes() {
 
               {/* 背景故事 - 占用所有可用空间 */}
               <div className={`${sectionContainerClass} flex-1 mb-4`}>
-                <h4 className={sectionBannerClass}>背景故事</h4>
+                <h4 className={sectionBannerClass}>人物小传</h4>
                 <div className={sectionContentClass} style={{ height: "calc(100% - 2rem)" }}>
                   <textarea
                     className="w-full h-full text-xs border border-gray-300 rounded px-2 py-1 bg-white 
@@ -378,7 +378,7 @@ export default function CharacterSheetPageAdventureNotes() {
                         backstory: e.target.value
                       }
                     }))}
-                    maxLength={10000}
+                    maxLength={5000}
                   />
                 </div>
               </div>
@@ -400,7 +400,7 @@ export default function CharacterSheetPageAdventureNotes() {
                         milestones: e.target.value
                       }
                     }))}
-                    maxLength={5000}
+                    maxLength={2000}
                   />
                 </div>
               </div>
@@ -421,25 +421,25 @@ export default function CharacterSheetPageAdventureNotes() {
                   <div className="space-y-1">
                     {Array(8).fill(null).map((_, index) => {
                       const logEntry = safeFormData.adventureNotes?.adventureLog?.[index]
-                      const placeholders = index === 0 
+                      const placeholders = index === 0
                         ? ["檀木林的信使", "1-5级", "失去希望", "2025年5月20日"]
                         : ["", "", "", ""]
-                      
+
                       const handleLogChange = (field: 'name' | 'levelRange' | 'trauma' | 'date', value: string) => {
                         setFormData(prev => {
                           const currentLog = prev.adventureNotes?.adventureLog || []
                           const newLog = [...currentLog]
-                          
+
                           // 确保数组有足够的元素
                           while (newLog.length <= index) {
                             newLog.push({ name: '', levelRange: '', trauma: '', date: '' })
                           }
-                          
+
                           newLog[index] = {
                             ...newLog[index],
                             [field]: value
                           }
-                          
+
                           return {
                             ...prev,
                             adventureNotes: {
@@ -449,40 +449,40 @@ export default function CharacterSheetPageAdventureNotes() {
                           }
                         })
                       }
-                      
+
                       return (
                         <div key={index} className="grid grid-cols-4 gap-1.5">
-                          <input 
-                            type="text" 
-                            className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" 
+                          <input
+                            type="text"
+                            className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide"
                             placeholder={placeholders[0]}
                             value={logEntry?.name || ''}
                             onChange={(e) => handleLogChange('name', e.target.value)}
-                            maxLength={500} 
+                            maxLength={500}
                           />
-                          <input 
-                            type="text" 
-                            className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" 
+                          <input
+                            type="text"
+                            className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide"
                             placeholder={placeholders[1]}
                             value={logEntry?.levelRange || ''}
                             onChange={(e) => handleLogChange('levelRange', e.target.value)}
-                            maxLength={500} 
+                            maxLength={500}
                           />
-                          <input 
-                            type="text" 
-                            className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" 
+                          <input
+                            type="text"
+                            className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide"
                             placeholder={placeholders[2]}
                             value={logEntry?.trauma || ''}
                             onChange={(e) => handleLogChange('trauma', e.target.value)}
-                            maxLength={500} 
+                            maxLength={500}
                           />
-                          <input 
-                            type="text" 
-                            className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide" 
+                          <input
+                            type="text"
+                            className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide"
                             placeholder={placeholders[3]}
                             value={logEntry?.date || ''}
                             onChange={(e) => handleLogChange('date', e.target.value)}
-                            maxLength={500} 
+                            maxLength={500}
                           />
                         </div>
                       )

@@ -120,21 +120,21 @@ registerPages([
     showInTabs: true
   },
   {
-    id: 'adventure-notes',
-    label: '冒险笔记',
-    component: CharacterSheetPageAdventureNotes,
-    printClass: 'page-adventure-notes',
-    visibility: { type: 'config', configKey: 'adventureNotes' },
-    printOrder: 3.5,
-    showInTabs: true
-  },
-  {
     id: 'page4',
     label: '主板扩展',
     component: ArmorTemplatePage,
     printClass: 'page-iknis',
     visibility: { type: 'config', configKey: 'armorTemplate' },
     printOrder: 4,
+    showInTabs: true
+  },
+  {
+    id: 'adventure-notes',
+    label: '冒险笔记',
+    component: CharacterSheetPageAdventureNotes,
+    printClass: 'page-adventure-notes',
+    visibility: { type: 'config', configKey: 'adventureNotes' },
+    printOrder: 5,
     showInTabs: true
   },
   {
@@ -150,7 +150,7 @@ registerPages([
           data.cards.slice(1).some(card => card && !isEmptyCard(card))
       }
     },
-    printOrder: 5,
+    printOrder: 6,
     showInTabs: false  // 不在Tab中显示
   },
   {
@@ -166,7 +166,7 @@ registerPages([
           data.inventory_cards.some(card => card && !isEmptyCard(card)))
       }
     },
-    printOrder: 6,
+    printOrder: 7,
     showInTabs: false  // 不在Tab中显示
   }
 ])

@@ -31,18 +31,18 @@ export const pageConfigs: PageConfig[] = [
     visibilityKey: 'rangerCompanion'
   },
   {
+    id: 'page4',
+    label: '主板扩展',
+    description: '伊科尼斯武装表',
+    alwaysVisible: false,
+    visibilityKey: 'armorTemplate'
+  },
+  {
     id: 'adventure-notes',
     label: '冒险笔记',
     description: '角色背景与冒险记录',
     alwaysVisible: false,
     visibilityKey: 'adventureNotes'
-  },
-  {
-    id: 'page4',
-    label: '主板扩展',
-    description: '伊科尼斯护甲表',
-    alwaysVisible: false,
-    visibilityKey: 'armorTemplate'
   }
 ]
 

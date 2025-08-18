@@ -31,7 +31,7 @@ export function AttributesSection() {
   }
 
   return (
-    <div className="mt-3">
+    <div className="mt-2.5">
       <div className="grid grid-cols-3 gap-x-2 gap-y-1">
         {[
           { name: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },

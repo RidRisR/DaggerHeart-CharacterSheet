@@ -198,7 +198,16 @@ export function cleanAndNormalizeData(data: any): SheetData {
       resilient: [],
       bonded: [],
       aware: []
-    }
+    },
+
+    // 页面可见性
+    pageVisibility: data.pageVisibility || undefined,
+
+    // 护甲模板数据 - 直接传递，让迁移函数处理
+    armorTemplate: data.armorTemplate || undefined,
+
+    // 冒险笔记数据 - 直接传递，让迁移函数处理  
+    adventureNotes: data.adventureNotes || undefined
   }
 
   return cleaned

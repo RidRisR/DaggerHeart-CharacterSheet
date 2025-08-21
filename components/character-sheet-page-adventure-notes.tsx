@@ -5,6 +5,64 @@ import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store"
 import { PageHeader } from "@/components/page-header"
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 
+const LabeledInput = ({
+  label,
+  placeholder,
+  value,
+  onChange,
+  className,
+  maxLength = 500
+}: {
+  label: string
+  placeholder?: string
+  value?: string
+  onChange: (value: string) => void
+  className?: string
+  maxLength?: number
+}) => (
+  <div className={className}>
+    <label className="block text-xs font-medium text-gray-600 mb-0.5">{label}</label>
+    <input
+      type="text"
+      className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide"
+      placeholder={placeholder}
+      value={value || ''}
+      onChange={(e) => onChange(e.target.value)}
+      maxLength={maxLength}
+    />
+  </div>
+)
+
+const LabeledTextarea = ({
+  label,
+  placeholder,
+  value,
+  onChange,
+  rows = 2,
+  maxLength = 500
+}: {
+  label: string
+  placeholder?: string
+  value?: string
+  onChange: (value: string) => void
+  rows?: number
+  maxLength?: number
+}) => (
+  <div>
+    <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+    <textarea
+      rows={rows}
+      className="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-white 
+               print:bg-white print:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-200 
+               resize-none print-empty-hide"
+      placeholder={placeholder}
+      value={value || ''}
+      onChange={(e) => onChange(e.target.value)}
+      maxLength={maxLength}
+    />
+  </div>
+)
+
 export default function CharacterSheetPageAdventureNotes() {
   const { setSheetData: setFormData } = useSheetStore()
   const safeFormData = useSafeSheetData()
@@ -12,64 +70,6 @@ export default function CharacterSheetPageAdventureNotes() {
   const sectionBannerClass = "bg-gray-700 text-white font-bold py-1 px-3 text-center text-sm tracking-wider uppercase rounded-t-md -mx-px -mt-px"
   const sectionContainerClass = "border-2 border-gray-800 rounded-md"
   const sectionContentClass = "p-2"
-
-  const LabeledInput = ({
-    label,
-    placeholder,
-    value,
-    onChange,
-    className,
-    maxLength = 500
-  }: {
-    label: string
-    placeholder?: string
-    value?: string
-    onChange: (value: string) => void
-    className?: string
-    maxLength?: number
-  }) => (
-    <div className={className}>
-      <label className="block text-xs font-medium text-gray-600 mb-0.5">{label}</label>
-      <input
-        type="text"
-        className="w-full border-b border-gray-400 bg-transparent focus:outline-none focus:border-blue-500 transition-all duration-150 text-sm print-empty-hide"
-        placeholder={placeholder}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        maxLength={maxLength}
-      />
-    </div>
-  )
-
-  const LabeledTextarea = ({
-    label,
-    placeholder,
-    value,
-    onChange,
-    rows = 2,
-    maxLength = 500
-  }: {
-    label: string
-    placeholder?: string
-    value?: string
-    onChange: (value: string) => void
-    rows?: number
-    maxLength?: number
-  }) => (
-    <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-      <textarea
-        rows={rows}
-        className="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-white 
-                 print:bg-white print:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-200 
-                 resize-none print-empty-hide"
-        placeholder={placeholder}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        maxLength={maxLength}
-      />
-    </div>
-  )
 
   return (
     <>

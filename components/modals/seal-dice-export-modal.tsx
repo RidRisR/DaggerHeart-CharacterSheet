@@ -67,14 +67,28 @@ export function SealDiceExportModal({ isOpen, onClose, sheetData }: SealDiceExpo
               placeholder="生成的导出内容将显示在这里..."
             />
 
-            {/* 复制按钮 */}
-            <div className="flex justify-center">
+            {/* 下载和复制按钮 */}
+            <div className="flex justify-center gap-3">
+              <Button
+                onClick={() => {
+                  const link = document.createElement('a')
+                  link.href = '/配套骰子（适用于海豹骰子）/daggerheart.js'
+                  link.download = 'daggerheart.js'
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                }}
+                className="px-6 py-2"
+                variant="outline"
+              >
+                📥 下载骰子
+              </Button>
               <Button
                 onClick={handleCopy}
                 className="px-6 py-2"
                 variant={copySuccess ? "default" : "outline"}
               >
-                {copySuccess ? "✓ 已复制到剪贴板" : "📋 复制命令"}
+                {copySuccess ? "✓ 已复制到剪贴板" : "📋 复制文本"}
               </Button>
             </div>
           </div>

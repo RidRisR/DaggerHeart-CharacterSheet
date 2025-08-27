@@ -82,7 +82,15 @@ const CONFIG = {
     // 系统消息文案
     error: '操作失败，请稍后重试',
     unknownResult: '未知结果',
-    testDice: '测试投掷d{sides}: {result}'
+    testDice: '测试投掷d{sides}: {result}',
+
+    // 帮助系统文案
+    help: {
+      provided: '{helperName} 提供帮助（希望 {oldHope}→{newHope}）',
+      insufficient: '{helperName} 希望不足，无法提供帮助',
+      summary: '获得{count}个帮助优势',
+      selfHelp: '无法帮助自己进行检定'
+    }
   },
 
   // 语法解析规则
@@ -90,13 +98,15 @@ const CONFIG = {
     // 修饰符关键词映射
     advantageKeywords: ['优势', 'adv', 'advantage'],
     disadvantageKeywords: ['劣势', 'dis', 'disadvantage'],
+    anonymousExperienceKeywords: ['经历', 'exp', 'experience'],
 
     // 数值限制
     limits: {
       diceCount: { min: 1, max: 10 },
       diceSides: { min: 2, max: 100 },
       constant: { min: -999, max: 999 },
-      advantage: { min: -10, max: 10 }
+      advantage: { min: -10, max: 10 },
+      anonymousExperience: { min: 1, max: 10, default: 2 }
     }
   },
 
@@ -110,6 +120,14 @@ const CONFIG = {
   hopeSystem: {
     enabled: true, // 是否启用希望值自动更新
     hopeWinBonus: 1 // 希望结果时的奖励值
+  },
+
+  // 帮助系统配置
+  helpSystem: {
+    enabled: true,              // 是否启用帮助系统
+    hopeCostPerHelp: 1,         // 每次帮助消耗希望值
+    advantagePerHelp: 1,        // 每次帮助提供优势数
+    maxHelpers: 5               // 最大帮助人数限制
   },
 
   // 插件配置
@@ -383,6 +401,21 @@ function isValidModifierContent(content, ctx) {
     }
   }
 
+  // 检查匿名经历格式（经历、经历3、3经历、exp、exp5、5exp等）
+  for (const keyword of CONFIG.syntax.anonymousExperienceKeywords) {
+    if (content === keyword) {
+      return true; // 单独的经历关键词
+    }
+    if (content.startsWith(keyword)) {
+      const numPart = content.slice(keyword.length).trim();
+      if (/^\d*$/.test(numPart)) return true;
+    }
+    if (content.endsWith(keyword)) {
+      const numPart = content.slice(0, -keyword.length).trim();
+      if (/^\d+$/.test(numPart)) return true;
+    }
+  }
+
   // 检查骰子格式 (如 3d6 或 d6)
   if (/^\d*d\d+$/.test(content)) {
     return true;
@@ -431,6 +464,42 @@ function parseModifier(token, ctx) {
         name: content,  // 使用小写版本
         sign: sign
       };
+    }
+  }
+
+  // 解析匿名经历（经历、经历3、3经历等）
+  for (const keyword of CONFIG.syntax.anonymousExperienceKeywords) {
+    if (content === keyword) {
+      // 单独的经历关键词，使用默认值
+      return {
+        type: 'anonymousExperience',
+        value: CONFIG.syntax.limits.anonymousExperience.default * sign,
+        sign: sign
+      };
+    }
+    if (content.startsWith(keyword)) {
+      // 经历3、exp5 等格式
+      const numStr = content.slice(keyword.length).trim();
+      const value = numStr === '' ? CONFIG.syntax.limits.anonymousExperience.default : parseInt(numStr);
+      if (!isNaN(value)) {
+        return {
+          type: 'anonymousExperience',
+          value: clampValue(value * sign, -CONFIG.syntax.limits.anonymousExperience.max, CONFIG.syntax.limits.anonymousExperience.max),
+          sign: sign
+        };
+      }
+    }
+    if (content.endsWith(keyword)) {
+      // 3经历、5exp 等格式
+      const numStr = content.slice(0, -keyword.length).trim();
+      const value = parseInt(numStr);
+      if (!isNaN(value)) {
+        return {
+          type: 'anonymousExperience',
+          value: clampValue(value * sign, -CONFIG.syntax.limits.anonymousExperience.max, CONFIG.syntax.limits.anonymousExperience.max),
+          sign: sign
+        };
+      }
     }
   }
 
@@ -561,13 +630,40 @@ function splitCompoundModifier(compoundModifier) {
 /**
  * 主命令解析函数
  * @param {string[]} args - 命令参数数组
- * @returns {Object} 解析结果 {modifiers, reason}
+ * @returns {Object} 解析结果 {modifiers, reason, customDiceSides}
  */
 function parseCommandArgs(args, ctx) {
   const modifiers = [];
   let reasonStartIndex = args.length;
+  let customDiceSides = null;
+  let startIndex = 0;
 
-  for (let i = 0; i < args.length; i++) {
+  // 检查第一个参数是否为 n/m 格式的骰子面数设置
+  if (args.length > 0) {
+    const dicePattern = /^(\d*)\/?(\d*)$/;
+    const match = args[0].match(dicePattern);
+
+    if (match && (match[1] || match[2]) && args[0].includes('/')) {
+      // 解析希望骰和恐惧骰面数
+      const hopeSidesStr = match[1];
+      const fearSidesStr = match[2];
+
+      const hopeSides = hopeSidesStr ? parseInt(hopeSidesStr) : CONFIG.rules.baseDiceSides;
+      const fearSides = fearSidesStr ? parseInt(fearSidesStr) : CONFIG.rules.baseDiceSides;
+
+      // 验证面数范围
+      const minSides = CONFIG.syntax.limits.diceSides.min;
+      const maxSides = CONFIG.syntax.limits.diceSides.max;
+
+      if (hopeSides >= minSides && hopeSides <= maxSides &&
+        fearSides >= minSides && fearSides <= maxSides) {
+        customDiceSides = { hope: hopeSides, fear: fearSides };
+        startIndex = 1; // 跳过第一个参数
+      }
+    }
+  }
+
+  for (let i = startIndex; i < args.length; i++) {
     const arg = args[i];
 
     // 处理带符号的参数（可能是复合修饰符）
@@ -602,26 +698,61 @@ function parseCommandArgs(args, ctx) {
         break;
       }
     } else {
-      // 不带符号的参数，尝试解析为修饰符
-      if (isValidModifier(arg, ctx)) {
-        const parsed = parseModifier(arg, ctx);
-        if (parsed) {
-          modifiers.push(parsed);
+      // 不带符号的参数，检查是否包含内部符号（复合修饰符）
+      if (arg.match(/[+-]/)) {
+        // 包含内部符号，可能是复合修饰符如 "风度+2"
+        // 为第一个修饰符添加默认的 + 符号
+        const modifiedArg = '+' + arg;
+        const splitModifiers = splitCompoundModifier(modifiedArg);
+        let allValid = true;
+        const parsedModifiers = [];
+
+        // 验证并解析所有拆分出的修饰符
+        for (const mod of splitModifiers) {
+          if (isValidModifier(mod, ctx)) {
+            const parsed = parseModifier(mod, ctx);
+            if (parsed) {
+              parsedModifiers.push(parsed);
+            } else {
+              allValid = false;
+              break;
+            }
+          } else {
+            allValid = false;
+            break;
+          }
+        }
+
+        if (allValid && parsedModifiers.length > 0) {
+          // 所有修饰符都有效，添加到结果中
+          modifiers.push(...parsedModifiers);
         } else {
-          // 无法解析，作为原因的开始
+          // 无效修饰符，从这里开始都是原因
           reasonStartIndex = i;
           break;
         }
       } else {
-        // 不是有效修饰符，作为原因的开始
-        reasonStartIndex = i;
-        break;
+        // 不包含内部符号，尝试作为单一修饰符解析
+        if (isValidModifier(arg, ctx)) {
+          const parsed = parseModifier(arg, ctx);
+          if (parsed) {
+            modifiers.push(parsed);
+          } else {
+            // 无法解析，作为原因的开始
+            reasonStartIndex = i;
+            break;
+          }
+        } else {
+          // 不是有效修饰符，作为原因的开始
+          reasonStartIndex = i;
+          break;
+        }
       }
     }
   }
 
   const reason = args.slice(reasonStartIndex).join(' ');
-  return { modifiers, reason };
+  return { modifiers, reason, customDiceSides };
 }
 
 /**
@@ -682,6 +813,107 @@ function rollDisadvantage(count) {
     value: -minRoll,
     details: `劣势${count}d6[${rolls.join(',')}]=${-minRoll}`
   };
+}
+
+/**
+ * 处理@mention帮助请求
+ * @param {Object} ctx - 原始上下文
+ * @param {Object} cmdArgs - 命令参数包含at数组
+ * @returns {Object} {helpers: Array, advantageCount: number}
+ */
+function processHelpRequests(ctx, cmdArgs) {
+  const helpers = [];
+  let advantageCount = 0;
+
+  if (!CONFIG.helpSystem.enabled || !cmdArgs.at || cmdArgs.at.length === 0) {
+    return { helpers, advantageCount };
+  }
+
+  for (const mentioned of cmdArgs.at) {
+    // 构造代理参数
+    const proxyArgs = {
+      command: cmdArgs.command,
+      args: cmdArgs.args,
+      kwargs: cmdArgs.kwargs,
+      at: [mentioned],
+      rawArgs: cmdArgs.rawArgs
+    };
+
+    const helperCtx = seal.getCtxProxyFirst(ctx, proxyArgs);
+
+    // 验证不是自己
+    if (helperCtx.player.userId === ctx.player.userId) {
+      continue;
+    }
+
+    // 检查希望值
+    const [currentHope] = seal.vars.intGet(helperCtx, '希望');
+    const [maxHope] = seal.vars.intGet(helperCtx, '希望上限');
+
+    if (currentHope >= CONFIG.helpSystem.hopeCostPerHelp) {
+      // 扣除希望
+      const newHope = currentHope - CONFIG.helpSystem.hopeCostPerHelp;
+      setAttributeAndUpdateCard(helperCtx, '希望', newHope);
+
+      helpers.push({
+        name: helperCtx.player.name,
+        oldHope: currentHope,
+        newHope: newHope,
+        maxHope: maxHope || 6,
+        success: true
+      });
+
+      advantageCount += CONFIG.helpSystem.advantagePerHelp;
+
+      // 检查是否达到上限
+      if (helpers.filter(h => h.success).length >= CONFIG.helpSystem.maxHelpers) {
+        break;
+      }
+    } else {
+      helpers.push({
+        name: helperCtx.player.name,
+        currentHope: currentHope,
+        maxHope: maxHope || 6,
+        success: false
+      });
+    }
+  }
+
+  return { helpers, advantageCount };
+}
+
+/**
+ * 格式化帮助信息显示
+ * @param {Array} helpers - 帮助者数组
+ * @param {number} advantageCount - 总优势数
+ * @returns {string} 格式化的帮助信息文本
+ */
+function formatHelpInfo(helpers, advantageCount) {
+  if (helpers.length === 0) {
+    return '';
+  }
+
+  let helpText = '';
+
+  // 显示成功的帮助
+  const successHelpers = helpers.filter(h => h.success);
+  for (const helper of successHelpers) {
+    helpText += `\n• ${CONFIG.messages.help.provided
+      .replace('{helperName}', helper.name)
+      .replace('{oldHope}', helper.oldHope)
+      .replace('{newHope}', helper.newHope)}`;
+  }
+
+  // 显示失败的帮助
+  const failedHelpers = helpers.filter(h => !h.success);
+  for (const helper of failedHelpers) {
+    helpText += `\n• ${CONFIG.messages.help.insufficient
+      .replace('{helperName}', helper.name)
+      .replace('{currentHope}', helper.currentHope)
+      .replace('{maxHope}', helper.maxHope)}`;
+  }
+
+  return helpText;
 }
 
 
@@ -1089,9 +1321,13 @@ class DualityDiceLogic {
    * @returns {Object} 完整的检定结果
    */
   static processComplexRoll(ctx, msg, parsedCommand, presetRolls = null, updateAttributes = true) {
+    // 决定使用的骰子面数
+    const hopeSides = parsedCommand.customDiceSides ? parsedCommand.customDiceSides.hope : CONFIG.rules.baseDiceSides;
+    const fearSides = parsedCommand.customDiceSides ? parsedCommand.customDiceSides.fear : CONFIG.rules.baseDiceSides;
+
     // 基础骰子 - 如果有预设点数就使用，否则随机投掷
-    const hopeRoll = presetRolls ? presetRolls.hope : parseInt(seal.format(ctx, `{d${CONFIG.rules.baseDiceSides}}`));
-    const fearRoll = presetRolls ? presetRolls.fear : parseInt(seal.format(ctx, `{d${CONFIG.rules.baseDiceSides}}`));
+    const hopeRoll = presetRolls ? presetRolls.hope : parseInt(seal.format(ctx, `{d${hopeSides}}`));
+    const fearRoll = presetRolls ? presetRolls.fear : parseInt(seal.format(ctx, `{d${fearSides}}`));
     const baseTotal = hopeRoll + fearRoll;
 
     // 创建希望值变化追踪器 - dr模式下也需要创建来处理经历的希望消耗
@@ -1172,6 +1408,32 @@ class DualityDiceLogic {
       }
     }
 
+    // 处理匿名经历修饰符（需要消耗希望）
+    const anonymousExperiences = parsedCommand.modifiers.filter(m => m.type === 'anonymousExperience');
+    
+    for (const anonExp of anonymousExperiences) {
+      // 检查是否还有希望值可用（考虑已记录的消耗）
+      const alreadyConsumed = hopeTracker ? hopeTracker.components.filter(c => c.type === 'consume').length : 0;
+      const [currentHope] = seal.vars.intGet(ctx, '希望');
+      
+      if (currentHope - alreadyConsumed > 0) {
+        // 有希望值，使用匿名经历
+        if (hopeTracker) {
+          hopeTracker.addComponent('consume', 1, '经历');
+        }
+        
+        modifierTotal += anonExp.value;
+        
+        const sign = anonExp.value >= 0 ? '+' : '-';
+        const detailText = `${sign}经历[${Math.abs(anonExp.value)}]`;
+        modifierDetails.push(detailText);
+        calculationParts.push(`${anonExp.value >= 0 ? '+' : ''}${anonExp.value}`);
+      } else {
+        // 希望不足，标记为忽略
+        modifierDetails.push(`~经历[希望不足]`);
+      }
+    }
+
     // 处理属性修饰符
     const attributes = parsedCommand.modifiers.filter(m => m.type === 'attribute');
     for (const attr of attributes) {
@@ -1215,7 +1477,8 @@ class DualityDiceLogic {
       hopeUpdate: rollResult.hopeUpdate, // 希望值更新信息
       stressUpdate: rollResult.stressUpdate, // 压力值更新信息
       gmFearUpdate: rollResult.gmFearUpdate, // GM恐惧值更新信息
-      hopeTracker: hopeTracker // 希望值变化追踪器
+      hopeTracker: hopeTracker, // 希望值变化追踪器
+      customDiceSides: parsedCommand.customDiceSides // 自定义骰子面数
     };
   }
 
@@ -1266,8 +1529,15 @@ class ResponseFormatter {
   static buildComplexResponse(title, rollResult, updateAttributes = true) {
     let response = `${title}\n`;
 
-    // 先显示希望骰和恐惧骰的详细信息
-    response += `希望骰: ${rollResult.hopeRoll}  恐惧骰: ${rollResult.fearRoll}`;
+    // 先显示希望骰和恐惧骰的详细信息，包含自定义面数
+    const hopeSides = rollResult.customDiceSides ? rollResult.customDiceSides.hope : CONFIG.rules.baseDiceSides;
+    const fearSides = rollResult.customDiceSides ? rollResult.customDiceSides.fear : CONFIG.rules.baseDiceSides;
+
+    if (rollResult.customDiceSides) {
+      response += `希望骰(d${hopeSides}): ${rollResult.hopeRoll}  恐惧骰(d${fearSides}): ${rollResult.fearRoll}`;
+    } else {
+      response += `希望骰: ${rollResult.hopeRoll}  恐惧骰: ${rollResult.fearRoll}`;
+    }
 
     if (rollResult.modifierDetails.length > 0) {
       response += `\n调整值: ${rollResult.modifierDetails.join(', ')}`;
@@ -1329,6 +1599,11 @@ class ResponseFormatter {
         const maxHope = rollResult.hopeUpdate.maxHope;
         response += `\n希望值: ${currentHope} (${currentHope}/${maxHope})`;
       }
+    }
+
+    // 显示帮助信息（在希望值变化区域）
+    if (rollResult.helpInfo) {
+      response += rollResult.helpInfo;
     }
 
 
@@ -1462,6 +1737,18 @@ const commandHandlers = {
       const userName = seal.format(ctx, '{$t玩家}');
       const parsedCommand = CommandParser.parseDualityArgs(cmdArgs, ctx);
 
+      // 处理@mention帮助
+      const helpResult = processHelpRequests(ctx, cmdArgs);
+
+      // 将帮助优势加入修饰符
+      if (helpResult.advantageCount > 0) {
+        parsedCommand.modifiers.push({
+          type: 'advantage',
+          count: helpResult.advantageCount,
+          fromHelp: true
+        });
+      }
+
       // 处理复杂检定
       const rollResult = DualityDiceLogic.processComplexRoll(ctx, msg, parsedCommand);
 
@@ -1470,6 +1757,8 @@ const commandHandlers = {
 
       // 构建回复
       const titleText = formatTitle(userName, parsedCommand.reason);
+      // 将帮助信息添加到rollResult中，让ResponseFormatter在希望值变化区域显示
+      rollResult.helpInfo = helpResult.helpers.length > 0 ? formatHelpInfo(helpResult.helpers, helpResult.advantageCount) : '';
       const response = ResponseFormatter.buildComplexResponse(titleText, rollResult, true);
 
       seal.replyToSender(ctx, msg, response);
@@ -1492,6 +1781,18 @@ const commandHandlers = {
       const userName = seal.format(ctx, '{$t玩家}');
       const parsedCommand = CommandParser.parseDualityArgs(cmdArgs, ctx);
 
+      // 处理@mention帮助（帮助者仍需消耗希望）
+      const helpResult = processHelpRequests(ctx, cmdArgs);
+
+      // 将帮助优势加入修饰符
+      if (helpResult.advantageCount > 0) {
+        parsedCommand.modifiers.push({
+          type: 'advantage',
+          count: helpResult.advantageCount,
+          fromHelp: true
+        });
+      }
+
       // 使用不更新属性的 processComplexRoll
       const rollResult = DualityDiceLogic.processComplexRoll(ctx, msg, parsedCommand, null, false);
 
@@ -1500,6 +1801,8 @@ const commandHandlers = {
 
       // 构建回复
       const titleText = formatTitle(userName, parsedCommand.reason);
+      // 将帮助信息添加到rollResult中，让ResponseFormatter在希望值变化区域显示
+      rollResult.helpInfo = helpResult.helpers.length > 0 ? formatHelpInfo(helpResult.helpers, helpResult.advantageCount) : '';
       const response = ResponseFormatter.buildComplexResponse(titleText, rollResult, false);
 
       seal.replyToSender(ctx, msg, response);
@@ -1761,40 +2064,55 @@ const commandHandlers = {
 // 创建并注册主要命令
 const cmdDuality = seal.ext.newCmdItemInfo();
 cmdDuality.name = 'dd';
-cmdDuality.help = `.dd [修饰符...] [原因] // 二元骰检定
+cmdDuality.help = `.dd [n/m] [修饰符...] [原因] // 二元骰检定
+骰子面数:
+  n/m - 希望骰n面/恐惧骰m面 (如12/20, 20/, /20)
 修饰符支持:
   ±属性名 - 使用属性值(如+敏捷 +力量 +agi +str)
-  ±经历名 - 使用经历值(消耗1点希望，如+锻造 +魔法学)
+  ±经历名 - 使用具名经历值(消耗1点希望，如+锻造 +魔法学)
+  ±经历[N]/exp[N] - 使用匿名经历(消耗1点希望，N默认为2，如经历、经历3、3经历)
   ±[N]优势/adv - 优势骰(N个d6取最高,默认1)
   ±[N]劣势/dis - 劣势骰(N个d6取最低,默认1)  
   ±[N]dM - 额外骰子(N个M面骰,默认1)
   ±N - 常量修饰符
+  @玩家名 - 请求玩家帮助(消耗其1点希望，获得1个优势骰)
 示例:
   .dd +敏捷 攀爬检定
-  .dd +力量+优势 破门
-  .dd +本能+2d6-劣势 复杂检定
-  .dd +锻造+优势 制作装备(使用经历)
+  .dd @Alice @Bob +力量 推门 (Alice和Bob各消耗1希望，获得2个帮助优势)
+  .dd 12/20 +力量+优势 破门 (希望骰12面，恐惧骰20面)
+  .dd 20/ +本能+2d6-劣势 复杂检定 (希望骰20面，恐惧骰默认12面)
+  .dd /20 +锻造+优势 制作装备 (希望骰默认12面，恐惧骰20面)
+  .dd 经历 快速行动 (使用默认+2的匿名经历)
+  .dd 风度+经历5 社交检定 (风度+5的匿名经历)
 
 角色管理: 使用 .set daggerheart 切换规则，然后用 st 指令设置属性，.sn dh 应用名片`;
+cmdDuality.allowDelegate = true;
 cmdDuality.solve = commandHandlers.dualityDice;
 
 // 创建并注册纯检定命令
 const cmdDualityRollOnly = seal.ext.newCmdItemInfo();
 cmdDualityRollOnly.name = 'ddr';
-cmdDualityRollOnly.help = `.ddr [修饰符...] [原因] // 反应二元骰，仅消耗希望不获得希望
+cmdDualityRollOnly.help = `.ddr [n/m] [修饰符...] [原因] // 反应二元骰，仅消耗希望不获得希望
+骰子面数:
+  n/m - 希望骰n面/恐惧骰m面 (如12/20, 20/, /20)
 修饰符支持:
   ±属性名 - 使用属性值(如+敏捷 +力量 +agi +str)
-  ±经历名 - 使用经历值(消耗1点希望，如+锻造 +魔法学)
+  ±经历名 - 使用具名经历值(消耗1点希望，如+锻造 +魔法学)
+  ±经历[N]/exp[N] - 使用匿名经历(消耗1点希望，N默认为2，如经历、经历3、3经历)
   ±[N]优势/adv - 优势骰(N个d6取最高,默认1)
   ±[N]劣势/dis - 劣势骰(N个d6取最低,默认1)  
   ±[N]dM - 额外骰子(N个M面骰,默认1)
   ±N - 常量修饰符
+  @玩家名 - 请求玩家帮助(消耗其1点希望，获得1个优势骰)
 示例:
   .ddr +敏捷 攀爬检定
-  .ddr +力量+优势 破门
-  .ddr +锻造 制作检定(使用经历)
+  .ddr @Alice +力量 推门 (Alice消耗1希望，获得1个帮助优势)
+  .ddr 12/20 +力量+优势 破门 (希望骰12面，恐惧骰20面)
+  .ddr 20/ +锻造 制作检定 (希望骰20面，恐惧骰默认12面)
+  .ddr 经历4 临时增强 (使用+4的匿名经历)
 
 注意: .ddr命令仅在使用经历时会消耗希望，不会获得希望或更新其他属性`;
+cmdDualityRollOnly.allowDelegate = true;
 cmdDualityRollOnly.solve = commandHandlers.dualityDiceRollOnly;
 
 // 创建并注册测试命令

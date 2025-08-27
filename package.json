@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && rm -f out/*.txt && node scripts/extract-css.js",
-    "build:local": "LOCAL_BUILD=true next build && rm -f out/*.txt && mv out/index.html \"out/车卡器入口.html\" && node scripts/extract-css.js",
+    "build": "npm run optimize:images && next build && rm -f out/*.txt && node scripts/extract-css.js",
+    "build:local": "npm run optimize:images && LOCAL_BUILD=true next build && rm -f out/*.txt && mv out/index.html \"out/车卡器入口.html\" && node scripts/extract-css.js",
     "extract-css": "node scripts/extract-css.js",
     "start": "next start",
     "lint": "next lint",
@@ -15,7 +15,8 @@
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run tests/unit",
-    "test:integration": "vitest run tests/integration"
+    "test:integration": "vitest run tests/integration",
+    "optimize:images": "node scripts/optimize-images.js"
   },
   "dependencies": {
     "@dnd-kit/core": "latest",

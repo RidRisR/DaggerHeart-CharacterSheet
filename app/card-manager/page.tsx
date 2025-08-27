@@ -412,18 +412,18 @@ export default function CardImportTestPage() {
                 <span className="text-xs text-muted-foreground mt-1 block">
                   支持卡牌类型格式：profession (职业), ancestry (血统), community (社群), subclass (子职业), domain (领域)，variant（任意）
                 </span>
-                <div className="mt-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setDocumentModalOpen(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    查看用户指南和示例
-                  </Button>
-                </div>
               </CardDescription>
+              <div className="mt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setDocumentModalOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  查看用户指南和示例
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* 拖拽上传区域 */}

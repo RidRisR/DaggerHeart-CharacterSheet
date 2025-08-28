@@ -53,7 +53,6 @@ const specialMarkCommand = {
 const simplifiedCommands = [
   commands.bold,           // 加粗
   commands.italic,         // 斜体
-  boldItalicCommand,       // 加粗+斜体
   specialMarkCommand,      // 特殊标记 (*__文本__*)
   commands.unorderedListCommand,  // 无序列表
 ]
@@ -115,7 +114,7 @@ export default function MarkdownEditor({
   )
 }
 
-// 简化的Markdown编辑器，只有编辑模式
+// 简化的Markdown编辑器，左右两栏模式
 export function SimpleMarkdownEditor({
   value = '',
   onChange,
@@ -130,7 +129,7 @@ export function SimpleMarkdownEditor({
       placeholder={placeholder}
       className={className}
       height={height}
-      preview="edit"
+      preview="live"
       hideToolbar={false}
     />
   )

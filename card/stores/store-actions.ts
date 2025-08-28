@@ -76,6 +76,31 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
   },
 
   resetSystem: () => {
+    // Clean up all batch keys from localStorage first
+    if (typeof window !== 'undefined' && !isServer) {
+      try {
+        // Get all keys from localStorage
+        const keysToRemove: string[] = [];
+        for (const key of Object.keys(localStorage)) {
+          // Remove all batch data and index
+          if (key.startsWith(STORAGE_KEYS.BATCH_PREFIX) || key === STORAGE_KEYS.INDEX) {
+            keysToRemove.push(key);
+          }
+        }
+        
+        // Remove all identified keys
+        keysToRemove.forEach(key => {
+          localStorage.removeItem(key);
+          console.log(`[UnifiedCardStore] Removed ${key} from localStorage during system reset`);
+        });
+        
+        console.log(`[UnifiedCardStore] System reset: removed ${keysToRemove.length} keys from localStorage`);
+      } catch (error) {
+        console.error('[UnifiedCardStore] Error cleaning localStorage during reset:', error);
+      }
+    }
+
+    // Reset in-memory state
     set({
       cards: new Map(),
       batches: new Map(),
@@ -338,7 +363,17 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       cacheValid: false
     });
 
-    // Sync to localStorage
+    // Remove the batch from localStorage explicitly
+    if (typeof window !== 'undefined' && !isServer) {
+      try {
+        localStorage.removeItem(`${STORAGE_KEYS.BATCH_PREFIX}${batchId}`);
+        console.log(`[UnifiedCardStore] Removed batch ${batchId} from localStorage`);
+      } catch (error) {
+        console.error(`[UnifiedCardStore] Failed to remove batch ${batchId} from localStorage:`, error);
+      }
+    }
+
+    // Sync to localStorage (updates index and remaining batches)
     get()._syncToLocalStorage();
 
     // Rebuild cardsByType map after removing cards
@@ -351,6 +386,21 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     const state = get();
     const newBatches = new Map();
     const newCards = new Map();
+
+    // First, remove all custom batch keys from localStorage
+    if (typeof window !== 'undefined' && !isServer) {
+      for (const [batchId] of state.batches) {
+        // Skip builtin batch
+        if (batchId === BUILTIN_BATCH_ID) continue;
+        
+        try {
+          localStorage.removeItem(`${STORAGE_KEYS.BATCH_PREFIX}${batchId}`);
+          console.log(`[UnifiedCardStore] Removed custom batch ${batchId} from localStorage`);
+        } catch (error) {
+          console.error(`[UnifiedCardStore] Failed to remove batch ${batchId} from localStorage:`, error);
+        }
+      }
+    }
 
     // Keep only builtin batch
     const builtinBatch = state.batches.get(BUILTIN_BATCH_ID);
@@ -526,7 +576,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     const missingBatches: string[] = [];
     const corruptedBatches: string[] = [];
 
-    // Basic validation - can be enhanced later
+    // Basic validation
     if (state.cards.size !== state.index.totalCards) {
       issues.push(`Card count mismatch: ${state.cards.size} vs ${state.index.totalCards}`);
     }
@@ -535,8 +585,56 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       issues.push(`Batch count mismatch: ${state.batches.size} vs ${state.index.totalBatches}`);
     }
 
+    // Check for orphaned batch keys in localStorage
+    if (typeof window !== 'undefined' && !isServer) {
+      try {
+        const indexBatchIds = new Set(Object.keys(state.index.batches));
+        
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith(STORAGE_KEYS.BATCH_PREFIX)) {
+            const batchId = key.replace(STORAGE_KEYS.BATCH_PREFIX, '');
+            
+            // Check if this batch is not in the index (orphaned)
+            if (!indexBatchIds.has(batchId)) {
+              orphanedKeys.push(key);
+              issues.push(`Orphaned batch found in localStorage: ${batchId}`);
+            }
+          }
+        }
+
+        // Check for missing batches (in index but not in localStorage)
+        for (const batchId of indexBatchIds) {
+          if (batchId === BUILTIN_BATCH_ID) continue; // Skip builtin batch check
+          
+          const key = `${STORAGE_KEYS.BATCH_PREFIX}${batchId}`;
+          if (!localStorage.getItem(key)) {
+            missingBatches.push(batchId);
+            issues.push(`Batch in index but missing from localStorage: ${batchId}`);
+          }
+        }
+
+        // Check for corrupted batches (exists but can't be parsed)
+        for (const batchId of indexBatchIds) {
+          if (batchId === BUILTIN_BATCH_ID) continue; // Skip builtin batch check
+          
+          const key = `${STORAGE_KEYS.BATCH_PREFIX}${batchId}`;
+          const dataStr = localStorage.getItem(key);
+          if (dataStr) {
+            try {
+              JSON.parse(dataStr);
+            } catch {
+              corruptedBatches.push(batchId);
+              issues.push(`Corrupted batch data in localStorage: ${batchId}`);
+            }
+          }
+        }
+      } catch (error) {
+        issues.push(`Failed to validate localStorage integrity: ${error}`);
+      }
+    }
+
     return {
-      isValid: issues.length === 0,
+      isValid: issues.length === 0 && orphanedKeys.length === 0 && missingBatches.length === 0 && corruptedBatches.length === 0,
       issues,
       orphanedKeys,
       missingBatches,
@@ -549,7 +647,54 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     const errors: string[] = [];
     let freedSpace = 0;
 
-    // Simple cleanup - can be enhanced later
+    if (typeof window === 'undefined' || isServer) {
+      return { removedKeys, errors, freedSpace };
+    }
+
+    try {
+      // Get current index to know which batches are valid
+      const indexStr = localStorage.getItem(STORAGE_KEYS.INDEX);
+      const index: CustomCardIndex = indexStr ? JSON.parse(indexStr) : { batches: {} };
+      const validBatchIds = new Set(Object.keys(index.batches));
+
+      // Scan localStorage for orphaned batch keys
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith(STORAGE_KEYS.BATCH_PREFIX)) {
+          const batchId = key.replace(STORAGE_KEYS.BATCH_PREFIX, '');
+          
+          // Check if this batch is not in the index (orphaned)
+          if (!validBatchIds.has(batchId)) {
+            try {
+              // Calculate size before removal
+              const dataStr = localStorage.getItem(key);
+              if (dataStr) {
+                freedSpace += new Blob([dataStr]).size;
+              }
+              
+              // Remove orphaned batch
+              localStorage.removeItem(key);
+              removedKeys.push(key);
+              console.log(`[UnifiedCardStore] Cleaned up orphaned batch: ${batchId}`);
+            } catch (error) {
+              const errorMsg = `Failed to remove orphaned batch ${batchId}: ${error}`;
+              errors.push(errorMsg);
+              console.error(`[UnifiedCardStore] ${errorMsg}`);
+            }
+          }
+        }
+      }
+
+      if (removedKeys.length > 0) {
+        console.log(`[UnifiedCardStore] Cleanup completed: removed ${removedKeys.length} orphaned keys, freed ${freedSpace} bytes`);
+      } else {
+        console.log('[UnifiedCardStore] No orphaned data found during cleanup');
+      }
+    } catch (error) {
+      const errorMsg = `Cleanup failed: ${error instanceof Error ? error.message : String(error)}`;
+      errors.push(errorMsg);
+      console.error(`[UnifiedCardStore] ${errorMsg}`);
+    }
+
     return {
       removedKeys,
       errors,
@@ -899,6 +1044,24 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
       let customBatchCount = 0;
       let customCardCount = 0;
+
+      // Detect orphaned batch keys (keys in localStorage but not in index)
+      const orphanedKeys: string[] = [];
+      const indexBatchIds = new Set(Object.keys(index.batches));
+      
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith(STORAGE_KEYS.BATCH_PREFIX)) {
+          const batchId = key.replace(STORAGE_KEYS.BATCH_PREFIX, '');
+          if (!indexBatchIds.has(batchId)) {
+            orphanedKeys.push(key);
+            console.warn(`[UnifiedCardStore] Found orphaned batch key: ${key} (batch ID: ${batchId})`);
+          }
+        }
+      }
+      
+      if (orphanedKeys.length > 0) {
+        console.warn(`[UnifiedCardStore] Detected ${orphanedKeys.length} orphaned batch keys. Run cleanupOrphanedData() to remove them.`);
+      }
 
       // Load custom batches only (skip builtin which is already loaded)
       for (const batchId of Object.keys(index.batches)) {

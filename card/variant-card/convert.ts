@@ -15,7 +15,7 @@ export interface RawVariantCard {
   等级?: number;         // 可选的等级
   效果: string;          // 卡牌效果描述
   imageUrl?: string;     // 图片URL
-  简略信息: {           // 卡牌选择时显示的简要信息
+  简略信息?: {          // 卡牌选择时显示的简要信息（选填）
     item1?: string;
     item2?: string;
     item3?: string;

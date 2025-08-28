@@ -22,6 +22,7 @@ import {
   CustomCardStats,
   BatchStats
 } from './store-types';
+import { preprocessVariantFormat } from '../variant-format-preprocessor';
 
 // Type for Zustand's set and get functions
 type SetFunction = (partial: Partial<UnifiedCardState> | ((state: UnifiedCardState) => Partial<UnifiedCardState>)) => void;
@@ -167,8 +168,11 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
         }
       }
 
+      // 🎯 预处理新格式：将新的 variants 数组转换为旧的 variantTypes 对象
+      const processedData = preprocessVariantFormat(importData);
+
       // Validate import data
-      const validation = get()._validateImportData(importData);
+      const validation = get()._validateImportData(processedData);
       if (!validation.isValid) {
         return {
           success: false,
@@ -183,7 +187,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       const allImportedCards: any[] = [];
 
       // Collect all cards from import data
-      Object.entries(importData).forEach(([, cards]) => {
+      Object.entries(processedData).forEach(([, cards]) => {
         if (Array.isArray(cards)) {
           allImportedCards.push(...cards);
         }
@@ -204,7 +208,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       }
 
       // Convert import data to standard cards
-      const convertResult = await get()._convertImportData(importData);
+      const convertResult = await get()._convertImportData(processedData);
       if (!convertResult.success) {
         return {
           success: false,
@@ -217,7 +221,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       // Generate batch ID and create batch info
       const batchId = get().generateBatchId();
       const cardTypes = [...new Set(convertResult.cards.map(card => card.type))];
-      const batchDisplayName = importData.name || batchName || `Import ${new Date().toLocaleDateString()}`;
+      const batchDisplayName = processedData.name || batchName || `Import ${new Date().toLocaleDateString()}`;
 
       // Create batch info
       const batchInfo: BatchInfo = {
@@ -231,12 +235,12 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
         isSystemBatch: false,
         disabled: false,
         cardIds: convertResult.cards.map(card => card.id),
-        customFieldDefinitions: importData.customFieldDefinitions ?
+        customFieldDefinitions: processedData.customFieldDefinitions ?
           Object.fromEntries(
-            Object.entries(importData.customFieldDefinitions)
+            Object.entries(processedData.customFieldDefinitions)
               .filter(([key, value]) => key !== 'variantTypes' && Array.isArray(value))
           ) as CustomFieldsForBatch : undefined,
-        variantTypes: importData.customFieldDefinitions?.variantTypes
+        variantTypes: processedData.customFieldDefinitions?.variantTypes
       };
 
       // Update store state

@@ -174,7 +174,8 @@ export interface ImportData {
     community?: string[];
     subclass?: string[];
     domain?: string[];
-    variantTypes?: Record<string, VariantTypeDefinition>; // 变体类型定义
+    variants?: string[]; // 新的简化变体格式 (优先级高于 variantTypes)
+    variantTypes?: Record<string, VariantTypeDefinition>; // 变体类型定义 (旧格式，向后兼容)
     [key: string]: string[] | Record<string, VariantTypeDefinition> | undefined; // Allows for other potential categories
   };
 

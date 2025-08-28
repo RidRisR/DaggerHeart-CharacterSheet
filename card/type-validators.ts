@@ -388,8 +388,8 @@ export function validateVariantCard(card: any, index: number, variantTypes?: Rec
         });
     }
 
-    // 子类别验证（如果提供）
-    if (card.子类别) {
+    // 子类别验证（如果提供）- 统一空值检查
+    if (card.子类别 !== undefined && card.子类别 !== null && card.子类别 !== '') {
         if (typeof card.子类别 !== 'string') {
             errors.push({ 
                 path: `${prefix}.子类别`, 
@@ -407,8 +407,8 @@ export function validateVariantCard(card: any, index: number, variantTypes?: Rec
         }
     }
 
-    // 等级验证（如果提供）
-    if (card.等级 !== undefined) {
+    // 等级验证（如果提供）- 统一空值检查  
+    if (card.等级 !== undefined && card.等级 !== null) {
         if (typeof card.等级 !== 'number' || card.等级 < 0) {
             errors.push({ 
                 path: `${prefix}.等级`, 
@@ -435,12 +435,15 @@ export function validateVariantCard(card: any, index: number, variantTypes?: Rec
         });
     }
 
-    // 简略信息验证
-    if (!card.简略信息 || typeof card.简略信息 !== 'object') {
-        errors.push({ 
-            path: `${prefix}.简略信息`, 
-            message: '简略信息字段是必需的，且必须是对象' 
-        });
+    // 简略信息验证（如果提供）- 统一空值检查
+    if (card.简略信息 !== undefined && card.简略信息 !== null) {
+        if (typeof card.简略信息 !== 'object' || Array.isArray(card.简略信息)) {
+            errors.push({ 
+                path: `${prefix}.简略信息`, 
+                message: '简略信息字段必须是对象（如果提供的话）',
+                value: card.简略信息
+            });
+        }
     }
 
     return {

@@ -7,14 +7,12 @@ import { Separator } from '@/components/ui/separator'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
-import type { 
-  ProfessionCard,
-  AncestryCard,
-  CommunityCard,
-  SubClassCard,
-  DomainCard,
-  RawVariantCard
-} from '@/card/card-types'
+import type { ProfessionCard } from '@/card/profession-card/convert'
+import type { AncestryCard } from '@/card/ancestry-card/convert'
+import type { CommunityCard } from '@/card/community-card/convert'
+import type { SubClassCard } from '@/card/subclass-card/convert'
+import type { DomainCard } from '@/card/domain-card/convert'
+import type { RawVariantCard } from '@/card/variant-card/convert'
 
 // 通用卡牌预览属性
 interface BaseCardPreviewProps<T> {
@@ -27,20 +25,21 @@ function MarkdownContent({ content }: { content: string }) {
   if (!content) return <span className="text-muted-foreground">暂无内容</span>
   
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkBreaks]}
-      className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground"
-      components={{
-        // 自定义渲染组件以匹配卡牌样式
-        strong: ({ children }) => <span className="font-bold text-foreground">{children}</span>,
-        em: ({ children }) => <span className="italic text-foreground">{children}</span>,
-        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-        ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
-        li: ({ children }) => <li className="mb-1">{children}</li>,
-      }}
-    >
-      {content}
-    </ReactMarkdown>
+    <div className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkBreaks]}
+        components={{
+          // 自定义渲染组件以匹配卡牌样式
+          strong: ({ children }) => <span className="font-bold text-foreground">{children}</span>,
+          em: ({ children }) => <span className="italic text-foreground">{children}</span>,
+          p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+          ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+          li: ({ children }) => <li className="mb-1">{children}</li>,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   )
 }
 
@@ -310,17 +309,17 @@ export function CardPreview({ card, cardType, className }: {
 }) {
   switch (cardType) {
     case 'profession':
-      return <ProfessionCardPreview card={card} className={className} />
+      return <ProfessionCardPreview card={card as ProfessionCard} className={className} />
     case 'ancestry':
-      return <AncestryCardPreview card={card} className={className} />
+      return <AncestryCardPreview card={card as AncestryCard} className={className} />
     case 'community':
-      return <CommunityCardPreview card={card} className={className} />
+      return <CommunityCardPreview card={card as CommunityCard} className={className} />
     case 'subclass':
-      return <SubclassCardPreview card={card} className={className} />
+      return <SubclassCardPreview card={card as SubClassCard} className={className} />
     case 'domain':
-      return <DomainCardPreview card={card} className={className} />
+      return <DomainCardPreview card={card as DomainCard} className={className} />
     case 'variant':
-      return <VariantCardPreview card={card} className={className} />
+      return <VariantCardPreview card={card as RawVariantCard} className={className} />
     default:
       return (
         <Card className={className}>

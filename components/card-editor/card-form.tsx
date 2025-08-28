@@ -18,11 +18,10 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import MarkdownEditor, { SimpleMarkdownEditor } from './markdown-editor'
-import type { 
-  ProfessionCard,
-  AncestryCard,
-  RawVariantCard
-} from '@/card/card-types'
+import { KeywordSelectField } from './keyword-select-field'
+import type { ProfessionCard } from '@/card/profession-card/convert'
+import type { AncestryCard } from '@/card/ancestry-card/convert'
+import type { RawVariantCard } from '@/card/variant-card/convert'
 
 // 通用卡牌编辑器属性
 interface BaseCardFormProps<T> {
@@ -31,10 +30,25 @@ interface BaseCardFormProps<T> {
   onCancel?: () => void
   onPreview?: (card: T) => void
   customFields?: string[]
+  keywordLists?: {
+    professions?: string[]
+    ancestries?: string[]
+    communities?: string[]
+    domains?: string[]
+    variants?: string[]
+  }
+  onAddKeyword?: (category: string, keyword: string) => void
 }
 
 // 职业卡牌编辑器
-export function ProfessionCardForm({ card, onSave, onCancel, onPreview }: BaseCardFormProps<ProfessionCard>) {
+export function ProfessionCardForm({ 
+  card, 
+  onSave, 
+  onCancel, 
+  onPreview, 
+  keywordLists, 
+  onAddKeyword 
+}: BaseCardFormProps<ProfessionCard>) {
   const form = useForm<ProfessionCard>({
     defaultValues: card
   })
@@ -82,7 +96,13 @@ export function ProfessionCardForm({ card, onSave, onCancel, onPreview }: BaseCa
                   <FormItem>
                     <FormLabel>职业名称 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="请输入职业名称" {...field} />
+                      <KeywordSelectField
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        keywords={keywordLists?.professions || []}
+                        onAddKeyword={(keyword) => onAddKeyword?.('professions', keyword)}
+                        placeholder="选择或添加职业"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -113,11 +133,9 @@ export function ProfessionCardForm({ card, onSave, onCancel, onPreview }: BaseCa
                 <FormItem>
                   <FormLabel>职业简介 *</FormLabel>
                   <FormControl>
-                    <SimpleMarkdownEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="请输入职业的背景和风味描述"
-                      height={100}
+                    <Input 
+                      placeholder="请输入职业的背景和风味描述" 
+                      {...field} 
                     />
                   </FormControl>
                   <FormMessage />
@@ -133,7 +151,13 @@ export function ProfessionCardForm({ card, onSave, onCancel, onPreview }: BaseCa
                   <FormItem>
                     <FormLabel>领域1 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="例如：星辰" {...field} />
+                      <KeywordSelectField
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        keywords={keywordLists?.domains || []}
+                        onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
+                        placeholder="选择或添加领域"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -146,7 +170,13 @@ export function ProfessionCardForm({ card, onSave, onCancel, onPreview }: BaseCa
                   <FormItem>
                     <FormLabel>领域2 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="例如：预言" {...field} />
+                      <KeywordSelectField
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        keywords={keywordLists?.domains || []}
+                        onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
+                        placeholder="选择或添加领域"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -263,7 +293,14 @@ export function ProfessionCardForm({ card, onSave, onCancel, onPreview }: BaseCa
 }
 
 // 血统卡牌编辑器
-export function AncestryCardForm({ card, onSave, onCancel, onPreview }: BaseCardFormProps<AncestryCard>) {
+export function AncestryCardForm({ 
+  card, 
+  onSave, 
+  onCancel, 
+  onPreview, 
+  keywordLists, 
+  onAddKeyword 
+}: BaseCardFormProps<AncestryCard>) {
   const form = useForm<AncestryCard>({
     defaultValues: card
   })
@@ -327,7 +364,13 @@ export function AncestryCardForm({ card, onSave, onCancel, onPreview }: BaseCard
                   <FormItem>
                     <FormLabel>种族 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="例如：星裔" {...field} />
+                      <KeywordSelectField
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        keywords={keywordLists?.ancestries || []}
+                        onAddKeyword={(keyword) => onAddKeyword?.('ancestries', keyword)}
+                        placeholder="选择或添加种族"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -432,7 +475,14 @@ export function AncestryCardForm({ card, onSave, onCancel, onPreview }: BaseCard
 }
 
 // 变体卡牌编辑器
-export function VariantCardForm({ card, onSave, onCancel, onPreview }: BaseCardFormProps<RawVariantCard>) {
+export function VariantCardForm({ 
+  card, 
+  onSave, 
+  onCancel, 
+  onPreview, 
+  keywordLists, 
+  onAddKeyword 
+}: BaseCardFormProps<RawVariantCard>) {
   const form = useForm<RawVariantCard>({
     defaultValues: card
   })
@@ -496,10 +546,16 @@ export function VariantCardForm({ card, onSave, onCancel, onPreview }: BaseCardF
                   <FormItem>
                     <FormLabel>卡牌类型 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="例如：神器、盟友、法术书" {...field} />
+                      <KeywordSelectField
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        keywords={keywordLists?.variants || []}
+                        onAddKeyword={(keyword) => onAddKeyword?.('variants', keyword)}
+                        placeholder="选择或添加卡牌类型"
+                      />
                     </FormControl>
                     <FormDescription>
-                      必须在customFieldDefinitions.variants中定义
+                      从预定义列表中选择或添加新的变体类型
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

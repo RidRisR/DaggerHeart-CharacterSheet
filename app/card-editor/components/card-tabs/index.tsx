@@ -1,0 +1,148 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Eye, Settings, FileText } from 'lucide-react'
+import type { UseFormReturn } from 'react-hook-form'
+import type { CardPackageState, CurrentCardIndex, CardType } from '../../types'
+import { MetadataTab } from './metadata-tab'
+import { CardEditorTab } from './card-editor-tab'
+
+interface CardTabsProps {
+  selectedTab: string
+  onSelectedTabChange: (tab: string) => void
+  form: UseFormReturn<CardPackageState>
+  currentPackage: CardPackageState
+  currentCardIndex: CurrentCardIndex
+  onSetCurrentCardIndex: (updater: (prev: CurrentCardIndex) => CurrentCardIndex) => void
+  onShowAllCards: (type: string) => void
+  onShowKeywords: () => void
+  onAddCard: (type: CardType) => void
+  onPreviewCard: (card: unknown, type: string) => void
+  onDeleteCard: (type: CardType, index: number) => void
+  onUpdateCard: (type: CardType, index: number, card: unknown) => void
+  onUpdatePackage: (updater: (prev: CardPackageState) => CardPackageState) => void
+}
+
+export function CardTabs({
+  selectedTab,
+  onSelectedTabChange,
+  form,
+  currentPackage,
+  currentCardIndex,
+  onSetCurrentCardIndex,
+  onShowAllCards,
+  onShowKeywords,
+  onAddCard,
+  onPreviewCard,
+  onDeleteCard,
+  onUpdateCard,
+  onUpdatePackage
+}: CardTabsProps) {
+  
+  const cardEditorProps = {
+    currentPackage,
+    currentCardIndex,
+    onSetCurrentCardIndex,
+    onShowAllCards,
+    onShowKeywords,
+    onAddCard,
+    onPreviewCard,
+    onDeleteCard,
+    onUpdateCard,
+    onUpdatePackage
+  }
+
+  return (
+    <Tabs value={selectedTab} onValueChange={onSelectedTabChange}>
+      <TabsList className="grid w-full grid-cols-8">
+        <TabsTrigger value="metadata" className="flex items-center gap-1">
+          <Settings className="h-4 w-4" />
+          基础信息
+        </TabsTrigger>
+        <TabsTrigger value="profession">职业</TabsTrigger>
+        <TabsTrigger value="ancestry">血统</TabsTrigger>
+        <TabsTrigger value="community">社群</TabsTrigger>
+        <TabsTrigger value="subclass">子职业</TabsTrigger>
+        <TabsTrigger value="domain">领域</TabsTrigger>
+        <TabsTrigger value="variant">变体</TabsTrigger>
+        <TabsTrigger value="preview" className="flex items-center gap-1">
+          <Eye className="h-4 w-4" />
+          预览
+        </TabsTrigger>
+      </TabsList>
+
+      {/* 基础信息选项卡 */}
+      <TabsContent value="metadata">
+        <MetadataTab form={form} />
+      </TabsContent>
+
+      {/* 职业卡牌选项卡 */}
+      <TabsContent value="profession">
+        <CardEditorTab
+          {...cardEditorProps}
+          cardType="profession"
+          title="职业卡牌"
+        />
+      </TabsContent>
+
+      {/* 血统卡牌选项卡 */}
+      <TabsContent value="ancestry">
+        <CardEditorTab
+          {...cardEditorProps}
+          cardType="ancestry"
+          title="血统卡牌"
+        />
+      </TabsContent>
+
+      {/* 变体卡牌选项卡 */}
+      <TabsContent value="variant">
+        <CardEditorTab
+          {...cardEditorProps}
+          cardType="variant"
+          title="变体卡牌"
+        />
+      </TabsContent>
+
+      {/* 其他选项卡的占位符 */}
+      {(['community', 'subclass', 'domain'] as const).map((cardType) => (
+        <TabsContent key={cardType} value={cardType}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="capitalize">{cardType}卡牌编辑</CardTitle>
+              <CardDescription>
+                管理和编辑{cardType}类型的卡牌
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  {cardType}卡牌编辑功能正在开发中...
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      ))}
+
+      {/* 预览选项卡 */}
+      <TabsContent value="preview">
+        <Card>
+          <CardHeader>
+            <CardTitle>卡包预览</CardTitle>
+            <CardDescription>
+              预览当前卡包的结构和内容
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <Eye className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">
+                预览功能正在开发中...
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  )
+}

@@ -34,7 +34,9 @@ export function CardEditorTab({
 }: CardEditorTabProps) {
   const cards = currentPackage[cardType] as any[] || []
   const currentIndex = currentCardIndex[cardType]
-  const currentCard = cards[currentIndex]
+  // 确保索引在有效范围内
+  const safeIndex = Math.min(Math.max(0, currentIndex), Math.max(0, cards.length - 1))
+  const currentCard = cards.length > 0 ? cards[safeIndex] : null
 
   const getActionText = () => {
     switch (cardType) {
@@ -65,7 +67,7 @@ export function CardEditorTab({
 
     const commonProps = {
       card: currentCard,
-      onSave: (updatedCard: unknown) => onUpdateCard(cardType, currentIndex, updatedCard),
+      onSave: (updatedCard: unknown) => onUpdateCard(cardType, safeIndex, updatedCard),
       onPreview: (previewCard: unknown) => onPreviewCard(previewCard, cardType),
       keywordLists: currentPackage.customFieldDefinitions,
       onAddKeyword: handleAddKeyword
@@ -89,7 +91,7 @@ export function CardEditorTab({
         <div>
           <h3 className="text-lg font-semibold">{title}编辑</h3>
           <p className="text-sm text-muted-foreground">
-            当前: {currentIndex + 1} / {cards.length} 张
+            当前: {safeIndex + 1} / {cards.length} 张
           </p>
         </div>
         <div className="flex gap-2">
@@ -128,7 +130,7 @@ export function CardEditorTab({
                   ...prev,
                   [cardType]: Math.max(0, prev[cardType] - 1)
                 }))}
-                disabled={currentIndex === 0}
+                disabled={safeIndex === 0}
               >
                 上一张
               </Button>
@@ -139,7 +141,7 @@ export function CardEditorTab({
                   ...prev,
                   [cardType]: Math.min(cards.length - 1, prev[cardType] + 1)
                 }))}
-                disabled={currentIndex >= cards.length - 1}
+                disabled={safeIndex >= cards.length - 1}
               >
                 下一张
               </Button>
@@ -190,7 +192,7 @@ export function CardEditorTab({
                     variant="destructive"
                     size="sm"
                     onClick={() => {
-                      onDeleteCard(cardType, currentIndex)
+                      onDeleteCard(cardType, safeIndex)
                       onSetCurrentCardIndex(prev => ({
                         ...prev,
                         [cardType]: Math.max(0, prev[cardType] - 1)

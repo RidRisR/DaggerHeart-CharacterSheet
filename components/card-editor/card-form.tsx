@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,6 +52,11 @@ export function ProfessionCardForm({
   const form = useForm<ProfessionCard>({
     defaultValues: card
   })
+
+  // 当卡牌数据变化时重置表单
+  useEffect(() => {
+    form.reset(card)
+  }, [card, form])
 
   const handleSubmit = (data: ProfessionCard) => {
     onSave(data)
@@ -305,6 +310,11 @@ export function AncestryCardForm({
     defaultValues: card
   })
 
+  // 当卡牌数据变化时重置表单
+  useEffect(() => {
+    form.reset(card)
+  }, [card, form])
+
   const handleSubmit = (data: AncestryCard) => {
     onSave(data)
   }
@@ -486,6 +496,11 @@ export function VariantCardForm({
   const form = useForm<RawVariantCard>({
     defaultValues: card
   })
+
+  // 当卡牌数据变化时重置表单
+  useEffect(() => {
+    form.reset(card)
+  }, [card, form])
 
   const handleSubmit = (data: RawVariantCard) => {
     onSave(data)

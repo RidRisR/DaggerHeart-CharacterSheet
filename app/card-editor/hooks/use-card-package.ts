@@ -68,6 +68,16 @@ export function useCardPackage() {
     if (importedPackage) {
       setCurrentPackage(importedPackage)
       form.reset(importedPackage)
+      
+      // 重置卡牌索引为0，避免索引超出新卡包范围
+      setCurrentCardIndex({
+        profession: 0,
+        ancestry: 0,
+        variant: 0,
+        community: 0,
+        subclass: 0,
+        domain: 0
+      })
     }
   }
 
@@ -80,6 +90,16 @@ export function useCardPackage() {
     const newPackage = { ...defaultPackage }
     setCurrentPackage(newPackage)
     form.reset(newPackage)
+    
+    // 重置卡牌索引为0
+    setCurrentCardIndex({
+      profession: 0,
+      ancestry: 0,
+      variant: 0,
+      community: 0,
+      subclass: 0,
+      domain: 0
+    })
     toast.success('已创建新卡包')
   }
 

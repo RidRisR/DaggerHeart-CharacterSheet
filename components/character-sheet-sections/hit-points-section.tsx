@@ -14,7 +14,19 @@ export function HitPointsSection() {
   const handleMaxChange = (field: "hp" | "stress", value: string) => {
     const maxField = `${field}Max` as "hpMax" | "stressMax"
     const currentField = field
+    // Allow empty string for easier editing
+    if (value === "") {
+      setSheetData((prev) => ({ ...prev, [maxField]: undefined }))
+      return
+    }
+    
+    // Only allow numeric input
+    if (!/^\d+$/.test(value)) return
+    
     const intValue = parseInt(value) || 0
+    // Enforce max limits
+    const maxLimit = field === "hp" ? 18 : 12
+    if (intValue > maxLimit) return
 
     setSheetData((prev) => {
       const newSheetData = { ...prev, [maxField]: intValue }
@@ -143,11 +155,12 @@ export function HitPointsSection() {
           <div className="flex items-center">
             <span className="text-[9px] mr-1 print:hidden">最大值:</span> {/* 打印时隐藏 */}
             <input
-              type="number"
-              min="1"
-              max="18"
-              value={formData.hpMax || 6} // 默认值为职业起始生命或6
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={formData.hpMax ?? ""} // 使用空值合并运算符
               onChange={(e) => handleMaxChange("hp", e.target.value)}
+              placeholder="6"
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>
@@ -159,11 +172,12 @@ export function HitPointsSection() {
           <div className="flex items-center">
             <span className="text-[9px] mr-1 print:hidden">最大值:</span> {/* 打印时隐藏 */}
             <input
-              type="number"
-              min="1"
-              max="12"
-              value={formData.stressMax || 6} // 默认值为6
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={formData.stressMax ?? ""} // 使用空值合并运算符
               onChange={(e) => handleMaxChange("stress", e.target.value)}
+              placeholder="6"
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>

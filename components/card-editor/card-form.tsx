@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Save, Eye } from 'lucide-react'
+import { Save, Eye, RefreshCw } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -29,6 +29,7 @@ interface BaseCardFormProps<T> {
   onSave: (card: T) => void
   onCancel?: () => void
   onPreview?: (card: T) => void
+  onChange?: (card: T) => void  // 新增：实时变化回调
   customFields?: string[]
   keywordLists?: {
     professions?: string[]
@@ -38,6 +39,26 @@ interface BaseCardFormProps<T> {
     variants?: string[]
   }
   onAddKeyword?: (category: string, keyword: string) => void
+  packageInfo?: {
+    name: string
+    author: string
+  }
+}
+
+// 生成ID的工具函数
+function generateCardId(packageName: string, author: string, cardType: string, cardName: string): string {
+  // 类型缩写映射
+  const typeAbbreviation = {
+    'profession': 'prof',
+    'ancestry': 'ance', 
+    'community': 'comm',
+    'subclass': 'subc',
+    'domain': 'doma',
+    'variant': 'vari'
+  } as const
+
+  const typeCode = typeAbbreviation[cardType as keyof typeof typeAbbreviation] || cardType
+  return `${packageName}-${author}-${typeCode}-${cardName}`
 }
 
 // 职业卡牌编辑器
@@ -45,9 +66,11 @@ export function ProfessionCardForm({
   card, 
   onSave, 
   onCancel, 
-  onPreview, 
+  onPreview,
+  onChange, 
   keywordLists, 
-  onAddKeyword 
+  onAddKeyword,
+  packageInfo
 }: BaseCardFormProps<ProfessionCard>) {
   const form = useForm<ProfessionCard>({
     defaultValues: card
@@ -58,41 +81,35 @@ export function ProfessionCardForm({
     form.reset(card)
   }, [card, form])
 
+  // 监听表单变化并触发onChange回调
+  useEffect(() => {
+    if (!onChange) return
+    
+    const subscription = form.watch((value) => {
+      onChange(value as ProfessionCard)
+    })
+    
+    return () => subscription.unsubscribe()
+  }, [form, onChange])
+
   const handleSubmit = (data: ProfessionCard) => {
     onSave(data)
   }
 
+  // 自动生成ID
+  const generateId = () => {
+    const currentValues = form.getValues()
+    const packageName = packageInfo?.name || '卡包名'
+    const author = packageInfo?.author || '作者名'
+    const cardName = currentValues.名称 || '卡牌名'
+    
+    const newId = generateCardId(packageName, author, 'profession', cardName)
+    form.setValue('id', newId)
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          职业卡牌编辑
-          <div className="flex gap-2">
-            {onPreview && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => onPreview(form.getValues())}
-              >
-                <Eye className="h-4 w-4 mr-1" />
-                预览
-              </Button>
-            )}
-            <Button
-              type="submit"
-              size="sm"
-              form="profession-form"
-            >
-              <Save className="h-4 w-4 mr-1" />
-              保存
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
         <Form {...form}>
-          <form id="profession-form" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -120,10 +137,21 @@ export function ProfessionCardForm({
                   <FormItem>
                     <FormLabel>ID *</FormLabel>
                     <FormControl>
-                      <Input placeholder="例如：pack-author-prof-职业名" {...field} />
+                      <div className="flex gap-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={generateId}
+                          className="px-3"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                        <Input placeholder="例如：pack-author-prof-职业名" {...field} />
+                      </div>
                     </FormControl>
                     <FormDescription>
-                      格式：包名-作者-prof-职业标识
+                      格式：包名-作者-prof-职业标识。点击按钮自动生成
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -289,11 +317,10 @@ export function ProfessionCardForm({
                   取消
                 </Button>
               )}
+              <Button type="button" onClick={() => handleSubmit(form.getValues())}>保存</Button>
             </div>
-          </form>
+          </div>
         </Form>
-      </CardContent>
-    </Card>
   )
 }
 
@@ -302,9 +329,11 @@ export function AncestryCardForm({
   card, 
   onSave, 
   onCancel, 
-  onPreview, 
+  onPreview,
+  onChange, 
   keywordLists, 
-  onAddKeyword 
+  onAddKeyword,
+  packageInfo
 }: BaseCardFormProps<AncestryCard>) {
   const form = useForm<AncestryCard>({
     defaultValues: card
@@ -315,44 +344,35 @@ export function AncestryCardForm({
     form.reset(card)
   }, [card, form])
 
+  // 监听表单变化并触发onChange回调
+  useEffect(() => {
+    if (!onChange) return
+    
+    const subscription = form.watch((value) => {
+      onChange(value as AncestryCard)
+    })
+    
+    return () => subscription.unsubscribe()
+  }, [form, onChange])
+
   const handleSubmit = (data: AncestryCard) => {
     onSave(data)
   }
 
+  // 自动生成ID
+  const generateId = () => {
+    const currentValues = form.getValues()
+    const packageName = packageInfo?.name || '卡包名'
+    const author = packageInfo?.author || '作者名'
+    const cardName = currentValues.名称 || '卡牌名'
+    
+    const newId = generateCardId(packageName, author, 'ancestry', cardName)
+    form.setValue('id', newId)
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          血统卡牌编辑
-          <div className="flex gap-2">
-            {onPreview && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => onPreview(form.getValues())}
-              >
-                <Eye className="h-4 w-4 mr-1" />
-                预览
-              </Button>
-            )}
-            <Button
-              type="submit"
-              size="sm"
-              form="ancestry-form"
-            >
-              <Save className="h-4 w-4 mr-1" />
-              保存
-            </Button>
-          </div>
-        </CardTitle>
-        <CardDescription>
-          每个种族必须有且仅有两张血统卡牌（类别1和类别2）
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
         <Form {...form}>
-          <form id="ancestry-form" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
@@ -416,10 +436,21 @@ export function AncestryCardForm({
                 <FormItem>
                   <FormLabel>ID *</FormLabel>
                   <FormControl>
-                    <Input placeholder="例如：pack-author-ance-星光血脉" {...field} />
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={generateId}
+                        className="px-3"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                      <Input placeholder="例如：pack-author-ance-星光血脉" {...field} />
+                    </div>
                   </FormControl>
                   <FormDescription>
-                    格式：包名-作者-ance-能力标识
+                    格式：包名-作者-ance-能力标识。点击按钮自动生成
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -476,11 +507,10 @@ export function AncestryCardForm({
                   取消
                 </Button>
               )}
+              <Button type="button" onClick={() => handleSubmit(form.getValues())}>保存</Button>
             </div>
-          </form>
+          </div>
         </Form>
-      </CardContent>
-    </Card>
   )
 }
 
@@ -489,9 +519,11 @@ export function VariantCardForm({
   card, 
   onSave, 
   onCancel, 
-  onPreview, 
+  onPreview,
+  onChange, 
   keywordLists, 
-  onAddKeyword 
+  onAddKeyword,
+  packageInfo
 }: BaseCardFormProps<RawVariantCard>) {
   const form = useForm<RawVariantCard>({
     defaultValues: card
@@ -502,44 +534,35 @@ export function VariantCardForm({
     form.reset(card)
   }, [card, form])
 
+  // 监听表单变化并触发onChange回调
+  useEffect(() => {
+    if (!onChange) return
+    
+    const subscription = form.watch((value) => {
+      onChange(value as RawVariantCard)
+    })
+    
+    return () => subscription.unsubscribe()
+  }, [form, onChange])
+
   const handleSubmit = (data: RawVariantCard) => {
     onSave(data)
   }
 
+  // 自动生成ID
+  const generateId = () => {
+    const currentValues = form.getValues()
+    const packageName = packageInfo?.name || '卡包名'
+    const author = packageInfo?.author || '作者名'
+    const cardName = currentValues.名称 || '卡牌名'
+    
+    const newId = generateCardId(packageName, author, 'variant', cardName)
+    form.setValue('id', newId)
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          变体卡牌编辑
-          <div className="flex gap-2">
-            {onPreview && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => onPreview(form.getValues())}
-              >
-                <Eye className="h-4 w-4 mr-1" />
-                预览
-              </Button>
-            )}
-            <Button
-              type="submit"
-              size="sm"
-              form="variant-form"
-            >
-              <Save className="h-4 w-4 mr-1" />
-              保存
-            </Button>
-          </div>
-        </CardTitle>
-        <CardDescription>
-          变体卡牌可以是任意类型的扩展内容，如物品、NPC、法术书等
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
         <Form {...form}>
-          <form id="variant-form" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -621,10 +644,21 @@ export function VariantCardForm({
                 <FormItem>
                   <FormLabel>ID *</FormLabel>
                   <FormControl>
-                    <Input placeholder="例如：pack-author-vari-星辰王冠" {...field} />
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={generateId}
+                        className="px-3"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                      <Input placeholder="例如：pack-author-vari-星辰王冠" {...field} />
+                    </div>
                   </FormControl>
                   <FormDescription>
-                    格式：包名-作者-vari-卡牌标识
+                    格式：包名-作者-vari-卡牌标识。点击按钮自动生成
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -702,10 +736,9 @@ export function VariantCardForm({
                   取消
                 </Button>
               )}
+              <Button type="button" onClick={() => handleSubmit(form.getValues())}>保存</Button>
             </div>
-          </form>
+          </div>
         </Form>
-      </CardContent>
-    </Card>
   )
 }

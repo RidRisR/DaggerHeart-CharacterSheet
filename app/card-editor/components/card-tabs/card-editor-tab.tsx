@@ -1,7 +1,11 @@
 import { Button } from '@/components/ui/button'
-import { FileText, Plus, Eye, Trash2 } from 'lucide-react'
+import { FileText, Plus, Eye, Trash2, Smartphone } from 'lucide-react'
 import { ProfessionCardForm, AncestryCardForm, VariantCardForm } from '@/components/card-editor/card-form'
+import { ImageCard } from '@/components/ui/image-card'
+import { transformCardToStandard } from '../../utils/card-transformer'
+import { useState, useEffect } from 'react'
 import type { CardPackageState, CurrentCardIndex, CardType } from '../../types'
+import type { StandardCard } from '@/card/card-types'
 
 interface CardEditorTabProps {
   cardType: CardType
@@ -37,6 +41,21 @@ export function CardEditorTab({
   // 确保索引在有效范围内
   const safeIndex = Math.min(Math.max(0, currentIndex), Math.max(0, cards.length - 1))
   const currentCard = cards.length > 0 ? cards[safeIndex] : null
+  
+  // 实时预览卡牌状态
+  const [previewCard, setPreviewCard] = useState<StandardCard | null>(null)
+  // 移动端预览开关
+  const [showMobilePreview, setShowMobilePreview] = useState(false)
+  
+  // 初始化预览卡牌
+  useEffect(() => {
+    if (currentCard) {
+      const standardCard = transformCardToStandard(currentCard, cardType)
+      setPreviewCard(standardCard)
+    } else {
+      setPreviewCard(null)
+    }
+  }, [currentCard, cardType])
 
   const getActionText = () => {
     switch (cardType) {
@@ -61,6 +80,12 @@ export function CardEditorTab({
       }
     })
   }
+  
+  // 处理表单变化，更新预览
+  const handleFormChange = (formData: any) => {
+    const standardCard = transformCardToStandard(formData, cardType)
+    setPreviewCard(standardCard)
+  }
 
   const getCardForm = () => {
     if (!currentCard) return null
@@ -69,8 +94,13 @@ export function CardEditorTab({
       card: currentCard,
       onSave: (updatedCard: unknown) => onUpdateCard(cardType, safeIndex, updatedCard),
       onPreview: (previewCard: unknown) => onPreviewCard(previewCard, cardType),
+      onChange: handleFormChange,  // 添加onChange回调
       keywordLists: currentPackage.customFieldDefinitions,
-      onAddKeyword: handleAddKeyword
+      onAddKeyword: handleAddKeyword,
+      packageInfo: {
+        name: currentPackage.name,
+        author: currentPackage.author
+      }
     }
 
     switch (cardType) {
@@ -165,46 +195,92 @@ export function CardEditorTab({
             </div>
           </div>
           
-          {/* 当前卡牌编辑 */}
+          {/* 当前卡牌编辑 - 左右两栏布局 */}
           {currentCard && (
-            <div className="border rounded-lg p-4">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <h4 className="font-medium text-lg">
-                    {currentCard.名称 || '未命名'}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {cardType === 'profession' && `ID: ${currentCard.id}`}
-                    {cardType === 'ancestry' && `种族: ${currentCard.种族} | 类别: ${currentCard.类别}`}
-                    {cardType === 'variant' && `类型: ${currentCard.类型}${currentCard.子类别 ? ` | 子类别: ${currentCard.子类别}` : ''}`}
-                  </p>
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-4">
+              {/* 左侧：编辑表单 */}
+              <div className="border rounded-lg p-4">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-lg">
+                      {currentCard.名称 || '未命名'}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {cardType === 'profession' && `ID: ${currentCard.id}`}
+                      {cardType === 'ancestry' && `种族: ${currentCard.种族} | 类别: ${currentCard.类别}`}
+                      {cardType === 'variant' && `类型: ${currentCard.类型}${currentCard.子类别 ? ` | 子类别: ${currentCard.子类别}` : ''}`}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onPreviewCard(currentCard, cardType)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      预览
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="lg:hidden"
+                      onClick={() => setShowMobilePreview(!showMobilePreview)}
+                    >
+                      <Smartphone className="h-4 w-4 mr-1" />
+                      {showMobilePreview ? '隐藏' : '显示'}预览
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        onDeleteCard(cardType, safeIndex)
+                        onSetCurrentCardIndex(prev => ({
+                          ...prev,
+                          [cardType]: Math.max(0, prev[cardType] - 1)
+                        }))
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      删除
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onPreviewCard(currentCard, cardType)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    预览
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      onDeleteCard(cardType, safeIndex)
-                      onSetCurrentCardIndex(prev => ({
-                        ...prev,
-                        [cardType]: Math.max(0, prev[cardType] - 1)
-                      }))
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    删除
-                  </Button>
+                {getCardForm()}
+                
+                {/* 移动端预览区域 */}
+                {showMobilePreview && (
+                  <div className="mt-4 lg:hidden">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">实时预览</h4>
+                    {previewCard && (
+                      <div className="flex justify-center">
+                        <ImageCard
+                          card={previewCard}
+                          onClick={() => {}}
+                          isSelected={false}
+                          showSource={false}
+                          priority={true}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {/* 右侧：实时预览（桌面端） */}
+              <div className="hidden lg:block">
+                <div className="sticky top-4">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">实时预览</h4>
+                  {previewCard && (
+                    <ImageCard
+                      card={previewCard}
+                      onClick={() => {}}
+                      isSelected={false}
+                      showSource={false}
+                      priority={true}
+                    />
+                  )}
                 </div>
               </div>
-              {getCardForm()}
             </div>
           )}
         </>

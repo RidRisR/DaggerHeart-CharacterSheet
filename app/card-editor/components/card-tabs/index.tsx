@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Eye, Settings, FileText } from 'lucide-react'
-import type { UseFormReturn } from 'react-hook-form'
 import type { CardPackageState, CurrentCardIndex, CardType } from '../../types'
 import { MetadataTab } from './metadata-tab'
 import { CardEditorTab } from './card-editor-tab'
@@ -9,7 +8,6 @@ import { CardEditorTab } from './card-editor-tab'
 interface CardTabsProps {
   selectedTab: string
   onSelectedTabChange: (tab: string) => void
-  form: UseFormReturn<CardPackageState>
   currentPackage: CardPackageState
   currentCardIndex: CurrentCardIndex
   onSetCurrentCardIndex: (updater: (prev: CurrentCardIndex) => CurrentCardIndex) => void
@@ -19,13 +17,12 @@ interface CardTabsProps {
   onPreviewCard: (card: unknown, type: string) => void
   onDeleteCard: (type: CardType, index: number) => void
   onUpdateCard: (type: CardType, index: number, card: unknown) => void
-  onUpdatePackage: (updater: (prev: CardPackageState) => CardPackageState) => void
+  onUpdateMetadata: (field: keyof CardPackageState, value: any) => void
 }
 
 export function CardTabs({
   selectedTab,
   onSelectedTabChange,
-  form,
   currentPackage,
   currentCardIndex,
   onSetCurrentCardIndex,
@@ -35,7 +32,7 @@ export function CardTabs({
   onPreviewCard,
   onDeleteCard,
   onUpdateCard,
-  onUpdatePackage
+  onUpdateMetadata
 }: CardTabsProps) {
   
   const cardEditorProps = {
@@ -47,8 +44,7 @@ export function CardTabs({
     onAddCard,
     onPreviewCard,
     onDeleteCard,
-    onUpdateCard,
-    onUpdatePackage
+    onUpdateCard
   }
 
   return (
@@ -72,7 +68,10 @@ export function CardTabs({
 
       {/* 基础信息选项卡 */}
       <TabsContent value="metadata">
-        <MetadataTab form={form} />
+        <MetadataTab 
+          packageData={currentPackage} 
+          onUpdateMetadata={onUpdateMetadata} 
+        />
       </TabsContent>
 
       {/* 职业卡牌选项卡 */}

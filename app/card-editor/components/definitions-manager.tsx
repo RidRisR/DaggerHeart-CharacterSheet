@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,69 +9,60 @@ import type { CardPackageState } from '../types'
 interface DefinitionsManagerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  currentPackage: CardPackageState
-  onUpdatePackage: (updater: (prev: CardPackageState) => CardPackageState) => void
+  packageData: CardPackageState
+  onAddDefinition: (category: keyof NonNullable<CardPackageState['customFieldDefinitions']>, value: string) => void
+  onRemoveDefinition: (category: keyof NonNullable<CardPackageState['customFieldDefinitions']>, index: number) => void
 }
 
 export function DefinitionsManager({ 
   open, 
   onOpenChange, 
-  currentPackage, 
-  onUpdatePackage 
+  packageData, 
+  onAddDefinition,
+  onRemoveDefinition 
 }: DefinitionsManagerProps) {
+  // 使用受控组件管理输入状态
+  const [inputValues, setInputValues] = useState<Record<string, string>>({
+    professions: '',
+    ancestries: '',
+    communities: '',
+    domains: '',
+    variants: ''
+  })
   
   // 通用的添加条目函数
-  const addDefinition = (category: keyof typeof currentPackage.customFieldDefinitions, inputId: string) => {
-    const input = document.getElementById(inputId) as HTMLInputElement
-    if (input?.value.trim()) {
-      const newDefs = { ...currentPackage.customFieldDefinitions }
-      const currentArray = newDefs[category] as string[] || []
-      newDefs[category] = [...currentArray, input.value.trim()] as any
-      onUpdatePackage(prev => ({ 
-        ...prev, 
-        customFieldDefinitions: newDefs, 
-        isModified: true 
-      }))
-      input.value = ''
+  const addDefinition = (category: keyof NonNullable<CardPackageState['customFieldDefinitions']>) => {
+    const value = inputValues[category]
+    if (value?.trim()) {
+      onAddDefinition(category, value.trim())
+      setInputValues(prev => ({ ...prev, [category]: '' }))
     }
   }
 
-  // 通用的删除条目函数
-  const removeDefinition = (category: keyof typeof currentPackage.customFieldDefinitions, index: number) => {
-    const newDefs = { ...currentPackage.customFieldDefinitions }
-    const currentArray = newDefs[category] as string[]
-    newDefs[category] = currentArray?.filter((_, i) => i !== index) || [] as any
-    onUpdatePackage(prev => ({ 
-      ...prev, 
-      customFieldDefinitions: newDefs, 
-      isModified: true 
-    }))
-  }
-
   // 通用的键盘事件处理
-  const handleKeyDown = (e: React.KeyboardEvent, category: keyof typeof currentPackage.customFieldDefinitions, inputId: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, category: keyof NonNullable<CardPackageState['customFieldDefinitions']>) => {
     if (e.key === 'Enter') {
-      addDefinition(category, inputId)
+      e.preventDefault()
+      addDefinition(category)
     }
   }
 
   // 渲染定义类别
   const renderCategory = (
     title: string, 
-    category: keyof typeof currentPackage.customFieldDefinitions,
-    inputId: string,
+    category: keyof NonNullable<CardPackageState['customFieldDefinitions']>,
     placeholder: string
   ) => (
     <div>
       <label className="text-base font-semibold mb-2 block">{title}</label>
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2 min-h-[40px] p-3 border rounded-md bg-muted/30">
-          {((currentPackage.customFieldDefinitions?.[category] as string[]) || []).map((item, index) => (
+          {((packageData.customFieldDefinitions?.[category] as string[]) || []).map((item, index) => (
             <Badge key={index} variant="secondary" className="px-3 py-1">
               {item}
               <button
                 type="button"
-                onClick={() => removeDefinition(category, index)}
+                onClick={() => onRemoveDefinition(category, index)}
                 className="ml-2 hover:text-destructive"
               >
                 ×
@@ -80,15 +72,16 @@ export function DefinitionsManager({
         </div>
         <div className="flex gap-2">
           <Input
-            id={inputId}
+            value={inputValues[category]}
+            onChange={(e) => setInputValues(prev => ({ ...prev, [category]: e.target.value }))}
             placeholder={placeholder}
-            onKeyDown={(e) => handleKeyDown(e, category, inputId)}
+            onKeyDown={(e) => handleKeyDown(e, category)}
           />
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => addDefinition(category, inputId)}
+            onClick={() => addDefinition(category)}
           >
             <Plus className="h-4 w-4" />
             添加
@@ -108,11 +101,11 @@ export function DefinitionsManager({
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {renderCategory('职业列表', 'professions', 'modal-new-profession', '输入新职业名称')}
-          {renderCategory('种族列表', 'ancestries', 'modal-new-ancestry', '输入新种族名称')}
-          {renderCategory('社群列表', 'communities', 'modal-new-community', '输入新社群名称')}
-          {renderCategory('领域列表', 'domains', 'modal-new-domain', '输入新领域名称')}
-          {renderCategory('变体类型列表', 'variants', 'modal-new-variant-type', '输入新变体类型（如：武器、道具、食物）')}
+          {renderCategory('职业列表', 'professions', '输入新职业名称')}
+          {renderCategory('种族列表', 'ancestries', '输入新种族名称')}
+          {renderCategory('社群列表', 'communities', '输入新社群名称')}
+          {renderCategory('领域列表', 'domains', '输入新领域名称')}
+          {renderCategory('变体类型列表', 'variants', '输入新变体类型（如：武器、道具、食物）')}
 
           {/* 提示信息 */}
           <div className="mt-6 p-4 bg-muted/50 rounded-lg">

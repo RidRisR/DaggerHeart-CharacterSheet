@@ -19,7 +19,6 @@ interface CardEditorTabProps {
   onPreviewCard: (card: unknown, type: string) => void
   onDeleteCard: (type: CardType, index: number) => void
   onUpdateCard: (type: CardType, index: number, card: unknown) => void
-  onUpdatePackage: (updater: (prev: CardPackageState) => CardPackageState) => void
 }
 
 export function CardEditorTab({
@@ -33,8 +32,7 @@ export function CardEditorTab({
   onAddCard,
   onPreviewCard,
   onDeleteCard,
-  onUpdateCard,
-  onUpdatePackage
+  onUpdateCard
 }: CardEditorTabProps) {
   const cards = currentPackage[cardType] as any[] || []
   const currentIndex = currentCardIndex[cardType]

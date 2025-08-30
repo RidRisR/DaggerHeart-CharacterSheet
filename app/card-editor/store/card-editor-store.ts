@@ -1,0 +1,244 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { toast } from 'sonner'
+import type { 
+  CardPackageState, 
+  CurrentCardIndex, 
+  PreviewDialogState, 
+  CardListDialogState, 
+  CardType 
+} from '../types'
+import { defaultPackage } from '../types'
+import { createDefaultCard } from '../utils/card-factory'
+import { exportCardPackage, importCardPackage } from '../utils/import-export'
+
+interface CardEditorStore {
+  // 状态
+  packageData: CardPackageState
+  currentCardIndex: CurrentCardIndex
+  previewDialog: PreviewDialogState
+  cardListDialog: CardListDialogState
+  definitionsDialog: boolean
+  
+  // 元数据更新
+  updateMetadata: (field: keyof CardPackageState, value: any) => void
+  
+  // 卡牌操作
+  addCard: (type: CardType) => void
+  deleteCard: (type: CardType, index: number) => void
+  updateCard: (type: CardType, index: number, card: unknown) => void
+  
+  // 卡包操作
+  exportPackage: () => void
+  importPackage: () => Promise<void>
+  newPackage: () => void
+  
+  // UI状态
+  setPreviewDialog: (state: PreviewDialogState | ((prev: PreviewDialogState) => PreviewDialogState)) => void
+  setCardListDialog: (state: CardListDialogState | ((prev: CardListDialogState) => CardListDialogState)) => void
+  setDefinitionsDialog: (open: boolean) => void
+  setCurrentCardIndex: (updater: (prev: CurrentCardIndex) => CurrentCardIndex) => void
+  
+  // 自定义字段定义
+  addDefinition: (category: keyof NonNullable<CardPackageState['customFieldDefinitions']>, value: string) => void
+  removeDefinition: (category: keyof NonNullable<CardPackageState['customFieldDefinitions']>, index: number) => void
+  updateDefinitions: (definitions: CardPackageState['customFieldDefinitions']) => void
+}
+
+export const useCardEditorStore = create<CardEditorStore>()(
+  persist(
+    (set, get) => ({
+      // 初始状态
+      packageData: defaultPackage,
+      currentCardIndex: {
+        profession: 0,
+        ancestry: 0,
+        variant: 0,
+        community: 0,
+        subclass: 0,
+        domain: 0
+      },
+      previewDialog: {
+        open: false,
+        card: null,
+        type: ''
+      },
+      cardListDialog: {
+        open: false,
+        type: ''
+      },
+      definitionsDialog: false,
+      
+      // 元数据更新
+      updateMetadata: (field, value) => 
+        set(state => ({
+          packageData: { ...state.packageData, [field]: value }
+        })),
+        
+      // 卡牌操作
+      addCard: (type) => 
+        set(state => {
+          const newCard = createDefaultCard(type, state.packageData)
+          const existingCards = (state.packageData[type] as any[]) || []
+          const newIndex = existingCards.length
+          
+          return {
+            packageData: {
+              ...state.packageData,
+              [type]: [...existingCards, newCard]
+            },
+            currentCardIndex: {
+              ...state.currentCardIndex,
+              [type]: newIndex
+            }
+          }
+        }),
+        
+      deleteCard: (type, index) => 
+        set(state => {
+          const cards = state.packageData[type] as any[]
+          const newCards = cards?.filter((_, i) => i !== index) || []
+          
+          // 调整当前索引
+          const currentIndex = state.currentCardIndex[type]
+          const newIndex = currentIndex >= newCards.length ? Math.max(0, newCards.length - 1) : currentIndex
+          
+          return {
+            packageData: {
+              ...state.packageData,
+              [type]: newCards
+            },
+            currentCardIndex: {
+              ...state.currentCardIndex,
+              [type]: newIndex
+            }
+          }
+        }),
+        
+      updateCard: (type, index, card) => 
+        set(state => {
+          const cards = state.packageData[type] as any[]
+          return {
+            packageData: {
+              ...state.packageData,
+              [type]: cards?.map((c, i) => i === index ? card : c) || []
+            }
+          }
+        }),
+        
+      // 卡包操作
+      exportPackage: () => {
+        const { packageData } = get()
+        // 清理导出数据，移除编辑器状态字段
+        const exportData = { ...packageData }
+        delete exportData.isModified
+        delete exportData.lastSaved
+        exportCardPackage(exportData)
+      },
+      
+      importPackage: async () => {
+        const importedPackage = await importCardPackage()
+        if (importedPackage) {
+          set({
+            packageData: importedPackage,
+            currentCardIndex: {
+              profession: 0,
+              ancestry: 0,
+              variant: 0,
+              community: 0,
+              subclass: 0,
+              domain: 0
+            }
+          })
+        }
+      },
+      
+      newPackage: () => {
+        const state = get()
+        if (state.packageData.isModified) {
+          const confirmed = confirm('您有未保存的更改，确定要创建新卡包吗？')
+          if (!confirmed) return
+        }
+        
+        set({
+          packageData: { ...defaultPackage },
+          currentCardIndex: {
+            profession: 0,
+            ancestry: 0,
+            variant: 0,
+            community: 0,
+            subclass: 0,
+            domain: 0
+          }
+        })
+        toast.success('已创建新卡包')
+      },
+      
+      // UI状态
+      setPreviewDialog: (state) => 
+        set(prev => ({
+          previewDialog: typeof state === 'function' ? state(prev.previewDialog) : state
+        })),
+        
+      setCardListDialog: (state) => 
+        set(prev => ({
+          cardListDialog: typeof state === 'function' ? state(prev.cardListDialog) : state
+        })),
+        
+      setDefinitionsDialog: (open) => 
+        set({ definitionsDialog: open }),
+        
+      setCurrentCardIndex: (updater) => 
+        set(state => ({
+          currentCardIndex: updater(state.currentCardIndex)
+        })),
+        
+      // 自定义字段定义
+      addDefinition: (category, value) => 
+        set(state => {
+          const customFieldDefinitions = state.packageData.customFieldDefinitions || {}
+          const currentArray = (customFieldDefinitions[category] as string[]) || []
+          
+          return {
+            packageData: {
+              ...state.packageData,
+              customFieldDefinitions: {
+                ...customFieldDefinitions,
+                [category]: [...currentArray, value]
+              }
+            }
+          }
+        }),
+        
+      removeDefinition: (category, index) => 
+        set(state => {
+          const customFieldDefinitions = state.packageData.customFieldDefinitions || {}
+          const currentArray = (customFieldDefinitions[category] as string[]) || []
+          
+          return {
+            packageData: {
+              ...state.packageData,
+              customFieldDefinitions: {
+                ...customFieldDefinitions,
+                [category]: currentArray.filter((_, i) => i !== index)
+              }
+            }
+          }
+        }),
+        
+      updateDefinitions: (definitions) => 
+        set(state => ({
+          packageData: {
+            ...state.packageData,
+            customFieldDefinitions: definitions
+          }
+        }))
+    }),
+    {
+      name: 'card-editor-storage',
+      partialize: (state) => ({
+        packageData: state.packageData // 只持久化包数据
+      })
+    }
+  )
+)

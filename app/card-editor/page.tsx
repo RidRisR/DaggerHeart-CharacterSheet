@@ -2,15 +2,13 @@
 
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { BookOpen, Home } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Form } from '@/components/ui/form'
 import { CardPreview } from '@/components/card-editor/card-preview'
 
-// 导入新的组件和hooks
-import { useCardPackage } from './hooks/use-card-package'
+// 导入新的组件和store
+import { useCardEditorStore } from './store/card-editor-store'
 import { Toolbar } from './components/toolbar'
 import { DefinitionsManager } from './components/definitions-manager'
 import { CardTabs } from './components/card-tabs'
@@ -22,31 +20,30 @@ export default function CardEditorPage() {
   const [selectedTab, setSelectedTab] = useState('metadata')
   const [isClient, setIsClient] = useState(false)
 
-  // 使用新的hook管理所有状态和逻辑
+  // 使用新的Zustand store管理所有状态和逻辑
   const {
     // 状态
-    currentPackage,
-    setCurrentPackage,
+    packageData,
     currentCardIndex,
-    setCurrentCardIndex,
     previewDialog,
-    setPreviewDialog,
     cardListDialog,
-    setCardListDialog,
     definitionsDialog,
-    setDefinitionsDialog,
-    form,
     
     // 方法
-    handleExport,
-    handleImport,
-    handleNew,
-    handleFormChange,
-    handlePreviewCard,
-    handleAddCard,
-    handleDeleteCard,
-    handleUpdateCard
-  } = useCardPackage()
+    updateMetadata,
+    addCard,
+    deleteCard,
+    updateCard,
+    exportPackage,
+    importPackage,
+    newPackage,
+    setPreviewDialog,
+    setCardListDialog,
+    setDefinitionsDialog,
+    setCurrentCardIndex,
+    addDefinition,
+    removeDefinition
+  } = useCardEditorStore()
 
   // 客户端初始化
   useEffect(() => {
@@ -55,16 +52,21 @@ export default function CardEditorPage() {
 
   // 返回主站
   const goBackToMain = () => {
-    if (currentPackage.isModified) {
-      const confirmed = confirm('您有未保存的更改，确定要离开吗？')
-      if (!confirmed) return
-    }
     router.push('/')
   }
 
   // 显示卡牌列表
   const handleShowAllCards = (type: string) => {
     setCardListDialog({ open: true, type })
+  }
+
+  // 预览卡牌
+  const handlePreviewCard = (card: unknown, type: string) => {
+    setPreviewDialog({
+      open: true,
+      card,
+      type
+    })
   }
 
   if (!isClient) {
@@ -80,9 +82,6 @@ export default function CardEditorPage() {
             <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
               <BookOpen className="h-8 w-8" />
               卡包编辑器
-              {currentPackage.isModified && (
-                <Badge variant="secondary" className="ml-2">未保存</Badge>
-              )}
             </h1>
             <p className="text-muted-foreground">
               可视化编辑DaggerHeart卡包，支持富文本编辑和实时预览
@@ -103,34 +102,29 @@ export default function CardEditorPage() {
 
         {/* 工具栏 */}
         <Toolbar
-          currentPackage={currentPackage}
-          onNew={handleNew}
-          onImport={handleImport}
-          onExport={handleExport}
+          currentPackage={packageData}
+          onNew={newPackage}
+          onImport={importPackage}
+          onExport={exportPackage}
           onShowKeywords={() => setDefinitionsDialog(true)}
         />
       </div>
 
       {/* 主编辑区域 */}
-      <Form {...form}>
-        <form onChange={handleFormChange} onSubmit={(e) => e.preventDefault()}>
-          <CardTabs
-            selectedTab={selectedTab}
-            onSelectedTabChange={setSelectedTab}
-            form={form}
-            currentPackage={currentPackage}
-            currentCardIndex={currentCardIndex}
-            onSetCurrentCardIndex={setCurrentCardIndex}
-            onShowAllCards={handleShowAllCards}
-            onShowKeywords={() => setDefinitionsDialog(true)}
-            onAddCard={handleAddCard}
-            onPreviewCard={handlePreviewCard}
-            onDeleteCard={handleDeleteCard}
-            onUpdateCard={handleUpdateCard}
-            onUpdatePackage={setCurrentPackage}
-          />
-        </form>
-      </Form>
+      <CardTabs
+        selectedTab={selectedTab}
+        onSelectedTabChange={setSelectedTab}
+        currentPackage={packageData}
+        currentCardIndex={currentCardIndex}
+        onSetCurrentCardIndex={setCurrentCardIndex}
+        onShowAllCards={handleShowAllCards}
+        onShowKeywords={() => setDefinitionsDialog(true)}
+        onAddCard={addCard}
+        onPreviewCard={handlePreviewCard}
+        onDeleteCard={deleteCard}
+        onUpdateCard={updateCard}
+        onUpdateMetadata={updateMetadata}
+      />
 
       {/* 卡牌预览对话框 */}
       <Dialog open={previewDialog.open} onOpenChange={(open) => setPreviewDialog(prev => ({ ...prev, open }))}>
@@ -157,20 +151,21 @@ export default function CardEditorPage() {
       <CardListDialog
         dialog={cardListDialog}
         onDialogChange={setCardListDialog}
-        currentPackage={currentPackage}
+        currentPackage={packageData}
         currentCardIndex={currentCardIndex}
         onSetCurrentCardIndex={setCurrentCardIndex}
         onSetSelectedTab={setSelectedTab}
         onPreviewCard={handlePreviewCard}
-        onDeleteCard={(type, index) => handleDeleteCard(type as CardType, index)}
+        onDeleteCard={(type, index) => deleteCard(type as CardType, index)}
       />
 
       {/* 预定义字段管理对话框 */}
       <DefinitionsManager
         open={definitionsDialog}
         onOpenChange={setDefinitionsDialog}
-        currentPackage={currentPackage}
-        onUpdatePackage={setCurrentPackage}
+        packageData={packageData}
+        onAddDefinition={addDefinition}
+        onRemoveDefinition={removeDefinition}
       />
     </div>
   )

@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Eye, RefreshCw } from 'lucide-react'
+import { Eye, RefreshCw, Edit2, RotateCcw } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -22,6 +22,7 @@ import { KeywordSelectField } from './keyword-select-field'
 import type { ProfessionCard } from '@/card/profession-card/convert'
 import type { AncestryCard } from '@/card/ancestry-card/convert'
 import type { RawVariantCard } from '@/card/variant-card/convert'
+import { generateSmartCardId, generateCardId as generateBasicCardId } from '@/app/card-editor/utils/id-generator'
 
 // 通用卡牌编辑器属性
 interface BaseCardFormProps<T> {
@@ -43,6 +44,7 @@ interface BaseCardFormProps<T> {
     name: string
     author: string
   }
+  packageData?: any // 完整的包数据，用于ID去重检查
 }
 
 // 生成ID的工具函数
@@ -70,8 +72,12 @@ export function ProfessionCardForm({
   onChange, 
   keywordLists, 
   onAddKeyword,
-  packageInfo
+  packageInfo,
+  packageData
 }: BaseCardFormProps<ProfessionCard>) {
+  const [isEditingId, setIsEditingId] = useState(false)
+  const [autoGenerateId, setAutoGenerateId] = useState(true)
+  
   const form = useForm<ProfessionCard>({
     defaultValues: card
   })
@@ -92,6 +98,35 @@ export function ProfessionCardForm({
     return () => subscription.unsubscribe()
   }, [form, onChange])
 
+  // 监听名称字段变化，自动更新ID
+  useEffect(() => {
+    if (!autoGenerateId) return
+    
+    const subscription = form.watch((value, { name }) => {
+      if (name === '名称' && value.名称) {
+        const packageName = packageInfo?.name || '新建卡包'
+        const author = packageInfo?.author || '作者'
+        const newId = generateSmartCardId(packageName, author, 'profession', value.名称, packageData)
+        form.setValue('id', newId)
+      }
+    })
+    
+    return () => subscription.unsubscribe()
+  }, [form, autoGenerateId, packageInfo])
+
+  // 初始化时如果没有ID或ID为默认值，则自动生成
+  useEffect(() => {
+    const currentId = form.getValues('id')
+    const currentName = form.getValues('名称')
+    
+    if (autoGenerateId && currentName && (!currentId || currentId.includes('新职业'))) {
+      const packageName = packageInfo?.name || '新建卡包'
+      const author = packageInfo?.author || '作者'
+      const newId = generateSmartCardId(packageName, author, 'profession', currentName, packageData)
+      form.setValue('id', newId)
+    }
+  }, [form, autoGenerateId, packageInfo])
+
   // 添加表单字段失去焦点时自动保存
   const handleFieldBlur = () => {
     // 使用 setTimeout 确保字段值已经更新
@@ -110,11 +145,11 @@ export function ProfessionCardForm({
     onSave(currentData)
   }
 
-  // 自动生成ID
+  // 手动生成ID
   const generateId = () => {
     const currentValues = form.getValues()
-    const packageName = packageInfo?.name || '卡包名'
-    const author = packageInfo?.author || '作者名'
+    const packageName = packageInfo?.name || '新建卡包'
+    const author = packageInfo?.author || '作者'
     const cardName = currentValues.名称 || '卡牌名'
     
     const newId = generateCardId(packageName, author, 'profession', cardName)
@@ -140,36 +175,75 @@ export function ProfessionCardForm({
                         placeholder="选择或添加职业"
                       />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID *</FormLabel>
-                    <FormControl>
-                      <div className="flex gap-2">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={generateId}
-                          className="px-3"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                        <Input 
-                          placeholder="例如：pack-author-prof-职业名" 
-                          {...field} 
-                          onBlur={handleFieldBlur}
-                        />
+                    <FormDescription className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">ID:</span>
+                        {!isEditingId ? (
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {form.watch('id') || '未设置'}
+                          </span>
+                        ) : (
+                          <FormField
+                            control={form.control}
+                            name="id"
+                            render={({ field }) => (
+                              <Input 
+                                className="h-6 text-xs font-mono px-2 py-0 w-48"
+                                placeholder="例如：pack-author-prof-职业名" 
+                                {...field} 
+                                onBlur={() => {
+                                  setIsEditingId(false)
+                                  handleFieldBlur()
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === 'Escape') {
+                                    setIsEditingId(false)
+                                    handleFieldBlur()
+                                  }
+                                }}
+                                autoFocus
+                              />
+                            )}
+                          />
+                        )}
+                        {autoGenerateId && (
+                          <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
+                            自动
+                          </span>
+                        )}
                       </div>
-                    </FormControl>
-                    <FormDescription>
-                      格式：包名-作者-prof-职业标识。点击按钮自动生成
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={generateId}
+                          className="h-6 w-6 p-0"
+                          title="重新生成ID"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsEditingId(true)}
+                          className="h-6 w-6 p-0"
+                          title="编辑ID"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setAutoGenerateId(!autoGenerateId)}
+                          className="h-6 w-6 p-0"
+                          title={autoGenerateId ? "关闭自动生成" : "开启自动生成"}
+                        >
+                          <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
+                        </Button>
+                      </div>
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -353,8 +427,12 @@ export function AncestryCardForm({
   onChange, 
   keywordLists, 
   onAddKeyword,
-  packageInfo
+  packageInfo,
+  packageData
 }: BaseCardFormProps<AncestryCard>) {
+  const [isEditingId, setIsEditingId] = useState(false)
+  const [autoGenerateId, setAutoGenerateId] = useState(true)
+  
   const form = useForm<AncestryCard>({
     defaultValues: card
   })
@@ -375,6 +453,35 @@ export function AncestryCardForm({
     return () => subscription.unsubscribe()
   }, [form, onChange])
 
+  // 监听名称字段变化，自动更新ID
+  useEffect(() => {
+    if (!autoGenerateId) return
+    
+    const subscription = form.watch((value, { name }) => {
+      if (name === '名称' && value.名称) {
+        const packageName = packageInfo?.name || '新建卡包'
+        const author = packageInfo?.author || '作者'
+        const newId = generateSmartCardId(packageName, author, 'ancestry', value.名称, packageData)
+        form.setValue('id', newId)
+      }
+    })
+    
+    return () => subscription.unsubscribe()
+  }, [form, autoGenerateId, packageInfo])
+
+  // 初始化时如果没有ID或ID为默认值，则自动生成
+  useEffect(() => {
+    const currentId = form.getValues('id')
+    const currentName = form.getValues('名称')
+    
+    if (autoGenerateId && currentName && (!currentId || currentId.includes('新能力'))) {
+      const packageName = packageInfo?.name || '新建卡包'
+      const author = packageInfo?.author || '作者'
+      const newId = generateSmartCardId(packageName, author, 'ancestry', currentName, packageData)
+      form.setValue('id', newId)
+    }
+  }, [form, autoGenerateId, packageInfo])
+
   const handleSubmit = (data: AncestryCard) => {
     onSave(data)
   }
@@ -393,11 +500,11 @@ export function AncestryCardForm({
     }, 100)
   }
 
-  // 自动生成ID
+  // 手动生成ID
   const generateId = () => {
     const currentValues = form.getValues()
-    const packageName = packageInfo?.name || '卡包名'
-    const author = packageInfo?.author || '作者名'
+    const packageName = packageInfo?.name || '新建卡包'
+    const author = packageInfo?.author || '作者'
     const cardName = currentValues.名称 || '卡牌名'
     
     const newId = generateCardId(packageName, author, 'ancestry', cardName)
@@ -417,6 +524,76 @@ export function AncestryCardForm({
                     <FormControl>
                       <Input placeholder="例如：星光血脉" {...field} />
                     </FormControl>
+                    <FormDescription className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">ID:</span>
+                        {!isEditingId ? (
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {form.watch('id') || '未设置'}
+                          </span>
+                        ) : (
+                          <FormField
+                            control={form.control}
+                            name="id"
+                            render={({ field }) => (
+                              <Input 
+                                className="h-6 text-xs font-mono px-2 py-0 w-48"
+                                placeholder="例如：pack-author-ance-星光血脉" 
+                                {...field} 
+                                onBlur={() => {
+                                  setIsEditingId(false)
+                                  handleFieldBlur()
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === 'Escape') {
+                                    setIsEditingId(false)
+                                    handleFieldBlur()
+                                  }
+                                }}
+                                autoFocus
+                              />
+                            )}
+                          />
+                        )}
+                        {autoGenerateId && (
+                          <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
+                            自动
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={generateId}
+                          className="h-6 w-6 p-0"
+                          title="重新生成ID"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsEditingId(true)}
+                          className="h-6 w-6 p-0"
+                          title="编辑ID"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setAutoGenerateId(!autoGenerateId)}
+                          className="h-6 w-6 p-0"
+                          title={autoGenerateId ? "关闭自动生成" : "开启自动生成"}
+                        >
+                          <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
+                        </Button>
+                      </div>
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -462,34 +639,6 @@ export function AncestryCardForm({
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ID *</FormLabel>
-                  <FormControl>
-                    <div className="flex gap-2">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={generateId}
-                        className="px-3"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                      <Input placeholder="例如：pack-author-ance-星光血脉" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormDescription>
-                    格式：包名-作者-ance-能力标识。点击按钮自动生成
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}
@@ -558,8 +707,12 @@ export function VariantCardForm({
   onChange, 
   keywordLists, 
   onAddKeyword,
-  packageInfo
+  packageInfo,
+  packageData
 }: BaseCardFormProps<RawVariantCard>) {
+  const [isEditingId, setIsEditingId] = useState(false)
+  const [autoGenerateId, setAutoGenerateId] = useState(true)
+  
   const form = useForm<RawVariantCard>({
     defaultValues: card
   })
@@ -580,6 +733,35 @@ export function VariantCardForm({
     return () => subscription.unsubscribe()
   }, [form, onChange])
 
+  // 监听名称字段变化，自动更新ID
+  useEffect(() => {
+    if (!autoGenerateId) return
+    
+    const subscription = form.watch((value, { name }) => {
+      if (name === '名称' && value.名称) {
+        const packageName = packageInfo?.name || '新建卡包'
+        const author = packageInfo?.author || '作者'
+        const newId = generateSmartCardId(packageName, author, 'variant', value.名称, packageData)
+        form.setValue('id', newId)
+      }
+    })
+    
+    return () => subscription.unsubscribe()
+  }, [form, autoGenerateId, packageInfo])
+
+  // 初始化时如果没有ID或ID为默认值，则自动生成
+  useEffect(() => {
+    const currentId = form.getValues('id')
+    const currentName = form.getValues('名称')
+    
+    if (autoGenerateId && currentName && (!currentId || currentId.includes('新物品'))) {
+      const packageName = packageInfo?.name || '新建卡包'
+      const author = packageInfo?.author || '作者'
+      const newId = generateSmartCardId(packageName, author, 'variant', currentName, packageData)
+      form.setValue('id', newId)
+    }
+  }, [form, autoGenerateId, packageInfo])
+
   const handleSubmit = (data: RawVariantCard) => {
     onSave(data)
   }
@@ -598,11 +780,11 @@ export function VariantCardForm({
     }, 100)
   }
 
-  // 自动生成ID
+  // 手动生成ID
   const generateId = () => {
     const currentValues = form.getValues()
-    const packageName = packageInfo?.name || '卡包名'
-    const author = packageInfo?.author || '作者名'
+    const packageName = packageInfo?.name || '新建卡包'
+    const author = packageInfo?.author || '作者'
     const cardName = currentValues.名称 || '卡牌名'
     
     const newId = generateCardId(packageName, author, 'variant', cardName)
@@ -622,6 +804,76 @@ export function VariantCardForm({
                     <FormControl>
                       <Input placeholder="例如：星辰王冠" {...field} />
                     </FormControl>
+                    <FormDescription className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">ID:</span>
+                        {!isEditingId ? (
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {form.watch('id') || '未设置'}
+                          </span>
+                        ) : (
+                          <FormField
+                            control={form.control}
+                            name="id"
+                            render={({ field }) => (
+                              <Input 
+                                className="h-6 text-xs font-mono px-2 py-0 w-48"
+                                placeholder="例如：pack-author-vari-星辰王冠" 
+                                {...field} 
+                                onBlur={() => {
+                                  setIsEditingId(false)
+                                  handleFieldBlur()
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === 'Escape') {
+                                    setIsEditingId(false)
+                                    handleFieldBlur()
+                                  }
+                                }}
+                                autoFocus
+                              />
+                            )}
+                          />
+                        )}
+                        {autoGenerateId && (
+                          <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
+                            自动
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={generateId}
+                          className="h-6 w-6 p-0"
+                          title="重新生成ID"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsEditingId(true)}
+                          className="h-6 w-6 p-0"
+                          title="编辑ID"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setAutoGenerateId(!autoGenerateId)}
+                          className="h-6 w-6 p-0"
+                          title={autoGenerateId ? "关闭自动生成" : "开启自动生成"}
+                        >
+                          <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
+                        </Button>
+                      </div>
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -685,38 +937,6 @@ export function VariantCardForm({
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ID *</FormLabel>
-                  <FormControl>
-                    <div className="flex gap-2">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={generateId}
-                        className="px-3"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                      <Input 
-                        placeholder="例如：pack-author-vari-星辰王冠" 
-                        {...field} 
-                        onBlur={handleFieldBlur}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormDescription>
-                    格式：包名-作者-vari-卡牌标识。点击按钮自动生成
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}

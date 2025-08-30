@@ -1,15 +1,16 @@
 import type { ProfessionCard, AncestryCard, RawVariantCard } from '@/card/card-types'
-import type { CardPackageState } from '../types'
+import type { CardPackageState, CardType } from '../types'
+import { generateSmartCardId } from './id-generator'
 
 // 创建默认卡牌
 export function createDefaultCard(type: string, packageData: CardPackageState): unknown {
-  const baseId = `${packageData.name || '新建卡包'}-${packageData.author || '作者'}`
   
   switch (type) {
     case 'profession':
+      const professionName = '新职业'
       return {
-        id: `${baseId}-prof-新职业`,
-        名称: '新职业',
+        id: generateSmartCardId(packageData.name || '新建卡包', packageData.author || '作者', 'profession', professionName, packageData),
+        名称: professionName,
         简介: '',
         领域1: '',
         领域2: '',
@@ -20,18 +21,20 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
         职业特性: ''
       } as ProfessionCard
     case 'ancestry':
+      const ancestryName = '新能力'
       return {
-        id: `${baseId}-ance-新能力`,
-        名称: '新能力',
+        id: generateSmartCardId(packageData.name || '新建卡包', packageData.author || '作者', 'ancestry', ancestryName, packageData),
+        名称: ancestryName,
         种族: '',
         简介: '',
         效果: '',
         类别: 1
       } as AncestryCard
     case 'variant':
+      const variantName = '新物品'
       return {
-        id: `${baseId}-vari-新物品`,
-        名称: '新物品',
+        id: generateSmartCardId(packageData.name || '新建卡包', packageData.author || '作者', 'variant', variantName, packageData),
+        名称: variantName,
         类型: '',
         效果: '',
         子类别: '',

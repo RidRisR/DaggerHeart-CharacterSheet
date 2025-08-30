@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { BookOpen, Home } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { CardPreview } from '@/components/card-editor/card-preview'
+import { ImageCard } from '@/components/ui/image-card'
+import { transformCardToStandard } from './utils/card-transformer'
 
 // 导入新的组件和store
 import { useCardEditorStore } from './store/card-editor-store'
@@ -142,7 +143,6 @@ export default function CardEditorPage() {
         onShowAllCards={handleShowAllCards}
         onShowKeywords={() => setDefinitionsDialog(true)}
         onAddCard={addCard}
-        onPreviewCard={handlePreviewCard}
         onDeleteCard={deleteCard}
         onUpdateCard={updateCard}
         onUpdateMetadata={updateMetadata}
@@ -158,11 +158,13 @@ export default function CardEditorPage() {
             </DialogDescription>
           </DialogHeader>
           {previewDialog.card && previewDialog.type ? (
-            <div className="mt-4">
-              <CardPreview 
-                card={previewDialog.card} 
-                cardType={previewDialog.type}
-                className="w-full"
+            <div className="mt-4 flex justify-center">
+              <ImageCard
+                card={transformCardToStandard(previewDialog.card, previewDialog.type as any)}
+                onClick={() => {}}
+                isSelected={false}
+                showSource={false}
+                priority={true}
               />
             </div>
           ) : null}

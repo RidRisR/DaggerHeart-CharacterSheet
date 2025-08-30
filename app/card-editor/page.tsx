@@ -13,6 +13,7 @@ import { Toolbar } from './components/toolbar'
 import { DefinitionsManager } from './components/definitions-manager'
 import { CardTabs } from './components/card-tabs'
 import { CardListDialog } from './components/card-list-dialog'
+import { ValidationResults } from './components/validation-results'
 import type { CardType } from './types'
 
 export default function CardEditorPage() {
@@ -28,6 +29,8 @@ export default function CardEditorPage() {
     previewDialog,
     cardListDialog,
     definitionsDialog,
+    validationResult,
+    isValidating,
     
     // 方法
     updateMetadata,
@@ -37,6 +40,8 @@ export default function CardEditorPage() {
     exportPackage,
     importPackage,
     newPackage,
+    validatePackage,
+    clearValidationResult,
     setPreviewDialog,
     setCardListDialog,
     setDefinitionsDialog,
@@ -67,6 +72,21 @@ export default function CardEditorPage() {
       card,
       type
     })
+  }
+
+  // 跳转到指定卡片
+  const handleJumpToCard = (cardType: CardType, cardIndex: number) => {
+    // 设置当前卡片索引
+    setCurrentCardIndex(prev => ({
+      ...prev,
+      [cardType]: cardIndex
+    }))
+    
+    // 切换到对应的标签页
+    setSelectedTab(cardType)
+    
+    // 关闭验证对话框
+    clearValidationResult()
   }
 
   if (!isClient) {
@@ -107,6 +127,8 @@ export default function CardEditorPage() {
           onImport={importPackage}
           onExport={exportPackage}
           onShowKeywords={() => setDefinitionsDialog(true)}
+          onValidate={validatePackage}
+          isValidating={isValidating}
         />
       </div>
 
@@ -166,6 +188,14 @@ export default function CardEditorPage() {
         packageData={packageData}
         onAddDefinition={addDefinition}
         onRemoveDefinition={removeDefinition}
+      />
+
+      {/* 验证结果对话框 */}
+      <ValidationResults
+        validationResult={validationResult}
+        open={!!validationResult}
+        onClose={clearValidationResult}
+        onJumpToCard={handleJumpToCard}
       />
     </div>
   )

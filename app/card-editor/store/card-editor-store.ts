@@ -11,6 +11,7 @@ import type {
 import { defaultPackage } from '../types'
 import { createDefaultCard } from '../utils/card-factory'
 import { exportCardPackage, importCardPackage } from '../utils/import-export'
+import { validationService, type ValidationResult } from '../services/validation-service'
 
 interface CardEditorStore {
   // 状态
@@ -19,6 +20,10 @@ interface CardEditorStore {
   previewDialog: PreviewDialogState
   cardListDialog: CardListDialogState
   definitionsDialog: boolean
+  
+  // 验证相关状态
+  validationResult: ValidationResult | null
+  isValidating: boolean
   
   // 元数据更新
   updateMetadata: (field: keyof CardPackageState, value: any) => void
@@ -32,6 +37,11 @@ interface CardEditorStore {
   exportPackage: () => void
   importPackage: () => Promise<void>
   newPackage: () => void
+  
+  // 验证操作
+  validatePackage: () => Promise<void>
+  clearValidationResult: () => void
+  validateField: (type: CardType, index: number, fieldName: string) => Promise<ValidationError | null>
   
   // UI状态
   setPreviewDialog: (state: PreviewDialogState | ((prev: PreviewDialogState) => PreviewDialogState)) => void
@@ -68,6 +78,10 @@ export const useCardEditorStore = create<CardEditorStore>()(
         type: ''
       },
       definitionsDialog: false,
+      
+      // 验证相关初始状态
+      validationResult: null,
+      isValidating: false,
       
       // 元数据更新
       updateMetadata: (field, value) => 
@@ -172,6 +186,62 @@ export const useCardEditorStore = create<CardEditorStore>()(
           }
         })
         toast.success('已创建新卡包')
+      },
+      
+      // 验证操作
+      validatePackage: async () => {
+        set({ isValidating: true })
+        try {
+          const { packageData } = get()
+          const result = await validationService.validatePackage(packageData)
+          set({ 
+            validationResult: result,
+            isValidating: false 
+          })
+          
+          if (result.isValid) {
+            toast.success('卡包验证通过！')
+          } else {
+            toast.error(`验证失败：发现 ${result.summary.totalErrors} 个错误`)
+          }
+        } catch (error) {
+          console.error('验证过程中发生错误:', error)
+          set({
+            validationResult: {
+              isValid: false,
+              errors: [{ path: 'system', message: '验证系统错误' }],
+              totalCards: 0,
+              errorsByType: {} as Record<CardType, ValidationError[]>,
+              summary: { totalErrors: 1, errorsByType: {} as Record<CardType, number> }
+            },
+            isValidating: false
+          })
+          toast.error('验证过程中发生错误')
+        }
+      },
+      
+      clearValidationResult: () => {
+        set({ validationResult: null })
+      },
+      
+      validateField: async (type: CardType, index: number, fieldName: string) => {
+        const { packageData } = get()
+        const cards = packageData[type] as any[]
+        
+        if (!cards || !cards[index]) {
+          return null
+        }
+        
+        try {
+          const fieldError = await validationService.validateCardField(type, cards[index], fieldName, packageData)
+          return fieldError
+        } catch (error) {
+          console.error('字段验证错误:', error)
+          return {
+            path: `${type}[${index}].${fieldName}`,
+            message: '验证过程中发生错误'
+          }
+        }
       },
       
       // UI状态

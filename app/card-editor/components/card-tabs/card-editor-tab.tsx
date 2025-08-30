@@ -4,6 +4,7 @@ import { ProfessionCardForm, AncestryCardForm, VariantCardForm } from '@/compone
 import { ImageCard } from '@/components/ui/image-card'
 import { transformCardToStandard } from '../../utils/card-transformer'
 import { useState, useEffect } from 'react'
+import { useCardEditorStore } from '../../store/card-editor-store'
 import type { CardPackageState, CurrentCardIndex, CardType } from '../../types'
 import type { StandardCard } from '@/card/card-types'
 
@@ -64,19 +65,13 @@ export function CardEditorTab({
     }
   }
 
+  // 从 Zustand store 获取添加定义的方法
+  const { addDefinition } = useCardEditorStore()
+  
   const handleAddKeyword = (category: string, keyword: string) => {
-    onUpdatePackage(prev => {
-      const newDefs = { ...prev.customFieldDefinitions }
-      const currentArray = newDefs[category as keyof typeof newDefs] as string[] || []
-      if (!currentArray.includes(keyword)) {
-        newDefs[category as keyof typeof newDefs] = [...currentArray, keyword] as any
-      }
-      return {
-        ...prev,
-        customFieldDefinitions: newDefs,
-        isModified: true
-      }
-    })
+    // 使用 store 的 addDefinition 方法
+    const categoryKey = category as keyof NonNullable<CardPackageState['customFieldDefinitions']>
+    addDefinition(categoryKey, keyword)
   }
   
   // 处理表单变化，更新预览

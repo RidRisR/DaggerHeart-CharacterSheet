@@ -92,8 +92,22 @@ export function ProfessionCardForm({
     return () => subscription.unsubscribe()
   }, [form, onChange])
 
+  // 添加表单字段失去焦点时自动保存
+  const handleFieldBlur = () => {
+    // 使用 setTimeout 确保字段值已经更新
+    setTimeout(() => {
+      handleAutoSave()
+    }, 100)
+  }
+
   const handleSubmit = (data: ProfessionCard) => {
     onSave(data)
+  }
+
+  // 自动保存函数
+  const handleAutoSave = () => {
+    const currentData = form.getValues()
+    onSave(currentData)
   }
 
   // 自动生成ID
@@ -147,7 +161,11 @@ export function ProfessionCardForm({
                         >
                           <RefreshCw className="h-4 w-4" />
                         </Button>
-                        <Input placeholder="例如：pack-author-prof-职业名" {...field} />
+                        <Input 
+                          placeholder="例如：pack-author-prof-职业名" 
+                          {...field} 
+                          onBlur={handleFieldBlur}
+                        />
                       </div>
                     </FormControl>
                     <FormDescription>
@@ -169,6 +187,7 @@ export function ProfessionCardForm({
                     <Input 
                       placeholder="请输入职业的背景和风味描述" 
                       {...field} 
+                      onBlur={handleFieldBlur}
                     />
                   </FormControl>
                   <FormMessage />
@@ -280,6 +299,7 @@ export function ProfessionCardForm({
                     <SimpleMarkdownEditor
                       value={field.value}
                       onChange={field.onChange}
+                      onBlur={handleFieldBlur}
                       placeholder="描述希望点的使用效果"
                       height={100}
                     />
@@ -299,6 +319,7 @@ export function ProfessionCardForm({
                     <MarkdownEditor
                       value={field.value}
                       onChange={field.onChange}
+                      onBlur={handleFieldBlur}
                       placeholder="核心职业能力，支持Markdown格式"
                       height={200}
                     />
@@ -356,6 +377,20 @@ export function AncestryCardForm({
 
   const handleSubmit = (data: AncestryCard) => {
     onSave(data)
+  }
+
+  // 自动保存函数
+  const handleAutoSave = () => {
+    const currentData = form.getValues()
+    onSave(currentData)
+  }
+
+  // 添加表单字段失去焦点时自动保存
+  const handleFieldBlur = () => {
+    // 使用 setTimeout 确保字段值已经更新
+    setTimeout(() => {
+      handleAutoSave()
+    }, 100)
   }
 
   // 自动生成ID
@@ -466,6 +501,7 @@ export function AncestryCardForm({
                     <SimpleMarkdownEditor
                       value={field.value}
                       onChange={field.onChange}
+                      onBlur={handleFieldBlur}
                       placeholder="种族的风味描述。同一种族的两张卡，此字段必须完全相同"
                       height={100}
                     />
@@ -488,6 +524,7 @@ export function AncestryCardForm({
                     <MarkdownEditor
                       value={field.value}
                       onChange={field.onChange}
+                      onBlur={handleFieldBlur}
                       placeholder="该项能力的具体效果，支持Markdown"
                       height={200}
                     />
@@ -545,6 +582,20 @@ export function VariantCardForm({
 
   const handleSubmit = (data: RawVariantCard) => {
     onSave(data)
+  }
+
+  // 自动保存函数
+  const handleAutoSave = () => {
+    const currentData = form.getValues()
+    onSave(currentData)
+  }
+
+  // 添加表单字段失去焦点时自动保存
+  const handleFieldBlur = () => {
+    // 使用 setTimeout 确保字段值已经更新
+    setTimeout(() => {
+      handleAutoSave()
+    }, 100)
   }
 
   // 自动生成ID
@@ -652,7 +703,11 @@ export function VariantCardForm({
                       >
                         <RefreshCw className="h-4 w-4" />
                       </Button>
-                      <Input placeholder="例如：pack-author-vari-星辰王冠" {...field} />
+                      <Input 
+                        placeholder="例如：pack-author-vari-星辰王冠" 
+                        {...field} 
+                        onBlur={handleFieldBlur}
+                      />
                     </div>
                   </FormControl>
                   <FormDescription>
@@ -673,6 +728,7 @@ export function VariantCardForm({
                     <MarkdownEditor
                       value={field.value}
                       onChange={field.onChange}
+                      onBlur={handleFieldBlur}
                       placeholder="卡牌效果的详细描述，支持Markdown"
                       height={200}
                     />

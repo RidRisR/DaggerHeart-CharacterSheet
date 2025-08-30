@@ -60,6 +60,7 @@ const simplifiedCommands = [
 interface MarkdownEditorProps {
   value?: string
   onChange?: (value: string) => void
+  onBlur?: () => void
   placeholder?: string
   className?: string
   height?: number
@@ -71,6 +72,7 @@ interface MarkdownEditorProps {
 export default function MarkdownEditor({
   value = '',
   onChange,
+  onBlur,
   placeholder = '请输入内容...',
   className,
   height = 200,
@@ -97,6 +99,7 @@ export default function MarkdownEditor({
         commands={simplifiedCommands}
         textareaProps={{
           placeholder,
+          onBlur,
           style: {
             fontSize: '14px',
             lineHeight: '1.5',
@@ -118,6 +121,7 @@ export default function MarkdownEditor({
 export function SimpleMarkdownEditor({
   value = '',
   onChange,
+  onBlur,
   placeholder = '请输入内容...',
   className,
   height = 120
@@ -126,6 +130,7 @@ export function SimpleMarkdownEditor({
     <MarkdownEditor
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
       placeholder={placeholder}
       className={className}
       height={height}

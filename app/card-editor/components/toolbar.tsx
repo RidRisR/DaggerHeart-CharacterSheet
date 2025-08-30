@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button'
 import { 
-  Save, 
   Download, 
   Upload, 
   Plus, 
@@ -12,7 +11,6 @@ interface ToolbarProps {
   currentPackage: CardPackageState
   onNew: () => void
   onImport: () => void
-  onSave: () => void
   onExport: () => void
   onShowKeywords: () => void
 }
@@ -21,7 +19,6 @@ export function Toolbar({
   currentPackage, 
   onNew, 
   onImport, 
-  onSave, 
   onExport, 
   onShowKeywords 
 }: ToolbarProps) {
@@ -48,28 +45,12 @@ export function Toolbar({
       <Button
         variant="outline"
         size="sm"
-        onClick={onSave}
-        className="flex items-center gap-2"
-      >
-        <Save className="h-4 w-4" />
-        保存
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
         onClick={onExport}
         className="flex items-center gap-2"
       >
         <Download className="h-4 w-4" />
         导出JSON
       </Button>
-      <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
-        {currentPackage.lastSaved && (
-          <span>
-            最后保存: {currentPackage.lastSaved.toLocaleTimeString()}
-          </span>
-        )}
-      </div>
     </div>
   )
 }

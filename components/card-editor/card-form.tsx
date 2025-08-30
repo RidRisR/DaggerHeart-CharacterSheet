@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Save, Eye, RefreshCw } from 'lucide-react'
+import { Eye, RefreshCw } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -317,7 +317,6 @@ export function ProfessionCardForm({
                   取消
                 </Button>
               )}
-              <Button type="button" onClick={() => handleSubmit(form.getValues())}>保存</Button>
             </div>
           </div>
         </Form>
@@ -507,7 +506,6 @@ export function AncestryCardForm({
                   取消
                 </Button>
               )}
-              <Button type="button" onClick={() => handleSubmit(form.getValues())}>保存</Button>
             </div>
           </div>
         </Form>
@@ -736,7 +734,6 @@ export function VariantCardForm({
                   取消
                 </Button>
               )}
-              <Button type="button" onClick={() => handleSubmit(form.getValues())}>保存</Button>
             </div>
           </div>
         </Form>

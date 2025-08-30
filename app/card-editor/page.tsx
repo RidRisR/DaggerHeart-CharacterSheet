@@ -38,7 +38,6 @@ export default function CardEditorPage() {
     form,
     
     // 方法
-    handleSave,
     handleExport,
     handleImport,
     handleNew,
@@ -107,7 +106,6 @@ export default function CardEditorPage() {
           currentPackage={currentPackage}
           onNew={handleNew}
           onImport={handleImport}
-          onSave={handleSave}
           onExport={handleExport}
           onShowKeywords={() => setDefinitionsDialog(true)}
         />

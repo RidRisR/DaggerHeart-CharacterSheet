@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -26,16 +26,22 @@ export function KeywordSelectField({
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [newKeywordValue, setNewKeywordValue] = useState('')
 
-  const handleSelectChange = (selectedValue: string) => {
+  const handleSelectChange = useCallback((selectedValue: string) => {
+    // 防止重复调用 - 如果新值与当前值相同，直接返回
+    if (selectedValue === value && selectedValue !== '__add_new__') {
+      return
+    }
+
     if (selectedValue === '__add_new__') {
       setIsAddingNew(true)
       setNewKeywordValue('')
     } else {
+      // 仅在值实际改变时调用 onChange
       onChange(selectedValue)
     }
-  }
+  }, [value, onChange])
 
-  const handleAddNewKeyword = () => {
+  const handleAddNewKeyword = useCallback(() => {
     const trimmedValue = newKeywordValue.trim()
     
     if (!trimmedValue) {
@@ -44,23 +50,27 @@ export function KeywordSelectField({
 
     if (keywords.includes(trimmedValue)) {
       // 如果关键字已存在，直接选择它
-      onChange(trimmedValue)
+      if (trimmedValue !== value) {
+        onChange(trimmedValue)
+      }
     } else {
       // 添加新关键字到列表
       onAddKeyword(trimmedValue)
       // 设置为当前选中值
-      onChange(trimmedValue)
+      if (trimmedValue !== value) {
+        onChange(trimmedValue)
+      }
     }
     
     // 重置状态
     setIsAddingNew(false)
     setNewKeywordValue('')
-  }
+  }, [newKeywordValue, keywords, value, onChange, onAddKeyword])
 
-  const handleCancelAddNew = () => {
+  const handleCancelAddNew = useCallback(() => {
     setIsAddingNew(false)
     setNewKeywordValue('')
-  }
+  }, [])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -103,8 +113,11 @@ export function KeywordSelectField({
     )
   }
 
+  // 确保 value 在有效范围内，避免 Select 组件出错
+  const validValue = value && (keywords.includes(value) || value === '') ? value : ''
+
   return (
-    <Select value={value} onValueChange={handleSelectChange} disabled={disabled}>
+    <Select value={validValue} onValueChange={handleSelectChange} disabled={disabled}>
       <SelectTrigger>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

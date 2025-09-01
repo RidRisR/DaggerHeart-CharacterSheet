@@ -11,20 +11,18 @@ import { Eye, RefreshCw, Edit2, RotateCcw } from 'lucide-react'
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 import MarkdownEditor, { SimpleMarkdownEditor } from './markdown-editor'
-import { KeywordSelectField } from './keyword-select-field'
 import { KeywordCombobox } from './keyword-combobox'
 import type { ProfessionCard } from '@/card/profession-card/convert'
 import type { AncestryCard } from '@/card/ancestry-card/convert'
 import type { CommunityCard } from '@/card/community-card/convert'
 import type { RawVariantCard } from '@/card/variant-card/convert'
-import { generateSmartCardId, generateCardId as generateBasicCardId } from '@/app/card-editor/utils/id-generator'
+import { generateSmartCardId } from '@/app/card-editor/utils/id-generator'
 
 // 通用卡牌编辑器属性
 interface BaseCardFormProps<T> {
@@ -129,9 +127,13 @@ export function ProfessionCardForm({
       const packageName = packageInfo?.name || '新建卡包'
       const author = packageInfo?.author || '作者'
       const newId = generateSmartCardId(packageName, author, 'profession', currentName, packageData)
-      form.setValue('id', newId)
+      
+      // 只在ID实际需要更新时才设置，避免无限循环
+      if (currentId !== newId) {
+        form.setValue('id', newId)
+      }
     }
-  }, [form, autoGenerateId, packageInfo])
+  }, [form, autoGenerateId, packageInfo, packageData])
 
   // 添加表单字段失去焦点时自动保存
   const handleFieldBlur = () => {
@@ -181,7 +183,7 @@ export function ProfessionCardForm({
                         placeholder="输入或选择职业"
                       />
                     </FormControl>
-                    <FormDescription className="flex items-center justify-between">
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">ID:</span>
                         {!isEditingId ? (
@@ -250,7 +252,7 @@ export function ProfessionCardForm({
                           <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
                         </Button>
                       </div>
-                    </FormDescription>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -265,12 +267,12 @@ export function ProfessionCardForm({
               <FormItem>
                     <FormLabel>领域1 *</FormLabel>
                     <FormControl>
-                  <KeywordSelectField
+                  <KeywordCombobox
                     value={field.value || ''}
                     onChange={field.onChange}
                     keywords={keywordLists?.domains || []}
                     onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
-                    placeholder="选择或添加领域"
+                    placeholder="输入或选择领域"
                   />
                 </FormControl>
                 <FormMessage />
@@ -313,9 +315,9 @@ export function ProfessionCardForm({
                       height={200}
                     />
                   </FormControl>
-                  <FormDescription>
+              <div className="text-sm text-muted-foreground">
                     支持Markdown格式，可以使用 *__特性名__* 来标记特性标题
-                  </FormDescription>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -492,9 +494,13 @@ export function AncestryCardForm({
       const packageName = packageInfo?.name || '新建卡包'
       const author = packageInfo?.author || '作者'
       const newId = generateSmartCardId(packageName, author, 'ancestry', currentName, packageData)
-      form.setValue('id', newId)
+      
+      // 只在ID实际需要更新时才设置，避免无限循环
+      if (currentId !== newId) {
+        form.setValue('id', newId)
+      }
     }
-  }, [form, autoGenerateId, packageInfo])
+  }, [form, autoGenerateId, packageInfo, packageData])
 
   const handleSubmit = (data: AncestryCard) => {
     onSave(data)
@@ -539,7 +545,7 @@ export function AncestryCardForm({
                 <FormControl>
                   <Input placeholder="例如：星光血脉" {...field} />
                 </FormControl>
-                <FormDescription className="flex items-center justify-between">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">ID:</span>
                     {!isEditingId ? (
@@ -608,7 +614,7 @@ export function AncestryCardForm({
                       <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
                     </Button>
                   </div>
-                </FormDescription>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -642,7 +648,15 @@ export function AncestryCardForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>类别 *</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                    <Select 
+                      value={field.value?.toString() || ''} 
+                      onValueChange={(value) => {
+                        const numValue = parseInt(value)
+                        if (!isNaN(numValue) && numValue !== field.value) {
+                          field.onChange(numValue)
+                        }
+                      }}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="选择类别" />
@@ -675,9 +689,9 @@ export function AncestryCardForm({
                       height={200}
                     />
                   </FormControl>
-                  <FormDescription>
+                  <div className="text-sm text-muted-foreground">
                     支持Markdown格式，可以使用 *__能力名__* 来标记能力标题
-                  </FormDescription>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -699,9 +713,9 @@ export function AncestryCardForm({
                       height={100}
                     />
                   </FormControl>
-                  <FormDescription>
+                  <div className="text-sm text-muted-foreground">
                     该种族的风味描述
-                  </FormDescription>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -783,9 +797,13 @@ export function VariantCardForm({
       const packageName = packageInfo?.name || '新建卡包'
       const author = packageInfo?.author || '作者'
       const newId = generateSmartCardId(packageName, author, 'variant', currentName, packageData)
-      form.setValue('id', newId)
+      
+      // 只在ID实际需要更新时才设置，避免无限循环
+      if (currentId !== newId) {
+        form.setValue('id', newId)
+      }
     }
-  }, [form, autoGenerateId, packageInfo])
+  }, [form, autoGenerateId, packageInfo, packageData])
 
   const handleSubmit = (data: RawVariantCard) => {
     onSave(data)
@@ -829,7 +847,7 @@ export function VariantCardForm({
                     <FormControl>
                       <Input placeholder="例如：星辰王冠" {...field} />
                     </FormControl>
-                    <FormDescription className="flex items-center justify-between">
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">ID:</span>
                         {!isEditingId ? (
@@ -898,7 +916,7 @@ export function VariantCardForm({
                           <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
                         </Button>
                       </div>
-                    </FormDescription>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -918,9 +936,9 @@ export function VariantCardForm({
                         placeholder="输入或选择卡牌类型"
                       />
                     </FormControl>
-                    <FormDescription>
+                    <div className="text-sm text-muted-foreground">
                       从预定义列表中选择或添加新的变体类型
-                    </FormDescription>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -937,7 +955,7 @@ export function VariantCardForm({
                     <FormControl>
                       <Input placeholder="例如：饰品、武器（可选）" {...field} />
                     </FormControl>
-                    <FormDescription>选填字段</FormDescription>
+                    <div className="text-sm text-muted-foreground">选填字段</div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -956,7 +974,7 @@ export function VariantCardForm({
                         onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                       />
                     </FormControl>
-                    <FormDescription>选填字段</FormDescription>
+                    <div className="text-sm text-muted-foreground">选填字段</div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -978,9 +996,9 @@ export function VariantCardForm({
                       height={200}
                     />
                   </FormControl>
-                  <FormDescription>
+                  <div className="text-sm text-muted-foreground">
                     支持Markdown格式，可以使用 *__效果名__* 来标记效果标题
-                  </FormDescription>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1104,7 +1122,11 @@ export function CommunityCardForm({
       const packageName = packageInfo?.name || '新建卡包'
       const author = packageInfo?.author || '作者'
       const newId = generateSmartCardId(packageName, author, 'community', currentName, packageData)
-      form.setValue('id', newId)
+      
+      // 只在ID实际需要更新时才设置，避免无限循环
+      if (currentId !== newId) {
+        form.setValue('id', newId)
+      }
     }
   }, [form, autoGenerateId, packageInfo, packageData])
 
@@ -1145,7 +1167,7 @@ export function CommunityCardForm({
                     placeholder="输入或选择社群"
                   />
                 </FormControl>
-                <FormDescription className="flex items-center justify-between">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">ID:</span>
                     {!isEditingId ? (
@@ -1214,7 +1236,7 @@ export function CommunityCardForm({
                       <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
                     </Button>
                   </div>
-                </FormDescription>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -1235,9 +1257,9 @@ export function CommunityCardForm({
                   onBlur={handleFieldBlur}
                 />
               </FormControl>
-              <FormDescription>
+              <div className="text-sm text-muted-foreground">
                 描述社群提供的核心能力和优势
-              </FormDescription>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -1259,9 +1281,9 @@ export function CommunityCardForm({
                   height={200}
                 />
               </FormControl>
-              <FormDescription>
+              <div className="text-sm text-muted-foreground">
                 支持Markdown格式，可以使用 *__特性名__* 来标记特性标题
-              </FormDescription>
+              </div>
               <FormMessage />
             </FormItem>
           )}

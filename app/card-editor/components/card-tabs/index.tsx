@@ -89,6 +89,15 @@ export function CardTabs({
         />
       </TabsContent>
 
+      {/* 社群卡牌选项卡 */}
+      <TabsContent value="community">
+        <CardEditorTab
+          {...cardEditorProps}
+          cardType="community"
+          title="社群卡牌"
+        />
+      </TabsContent>
+
       {/* 变体卡牌选项卡 */}
       <TabsContent value="variant">
         <CardEditorTab
@@ -99,7 +108,7 @@ export function CardTabs({
       </TabsContent>
 
       {/* 其他选项卡的占位符 */}
-      {(['community', 'subclass', 'domain'] as const).map((cardType) => (
+      {(['subclass', 'domain'] as const).map((cardType) => (
         <TabsContent key={cardType} value={cardType}>
           <Card>
             <CardHeader>

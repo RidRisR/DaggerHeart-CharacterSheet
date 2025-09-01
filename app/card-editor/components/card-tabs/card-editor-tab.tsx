@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { FileText, Plus, Eye, Trash2 } from 'lucide-react'
-import { ProfessionCardForm, AncestryCardForm, VariantCardForm } from '@/components/card-editor/card-form'
+import { ProfessionCardForm, AncestryCardForm, CommunityCardForm, VariantCardForm } from '@/components/card-editor/card-form'
 import { ImageCard } from '@/components/ui/image-card'
 import { transformCardToStandard } from '../../utils/card-transformer'
 import { useState, useEffect } from 'react'
@@ -57,7 +57,8 @@ export function CardEditorTab({
   const getActionText = () => {
     switch (cardType) {
       case 'profession': return '职业'
-      case 'ancestry': return '血统'  
+      case 'ancestry': return '血统'
+      case 'community': return '社群'
       case 'variant': return '变体'
       default: return cardType
     }
@@ -98,6 +99,8 @@ export function CardEditorTab({
         return <ProfessionCardForm {...commonProps} />
       case 'ancestry':
         return <AncestryCardForm {...commonProps} />
+      case 'community':
+        return <CommunityCardForm {...commonProps} />
       case 'variant':
         return <VariantCardForm {...commonProps} />
       default:

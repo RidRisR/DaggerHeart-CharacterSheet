@@ -4,6 +4,7 @@ import type {
   AncestryCard,
   RawVariantCard
 } from '@/card/card-types'
+import type { CommunityCard } from '@/card/community-card/convert'
 
 // 卡包编辑器的状态接口
 export interface CardPackageState extends ImportData {
@@ -40,7 +41,7 @@ export interface CardListDialogState {
 export type CardType = 'profession' | 'ancestry' | 'variant' | 'community' | 'subclass' | 'domain'
 
 // 卡牌数据类型联合
-export type CardData = ProfessionCard | AncestryCard | RawVariantCard
+export type CardData = ProfessionCard | AncestryCard | CommunityCard | RawVariantCard
 
 // 默认卡包数据类型
 export const defaultPackage: CardPackageState = {

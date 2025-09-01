@@ -22,6 +22,7 @@ import { KeywordSelectField } from './keyword-select-field'
 import { KeywordCombobox } from './keyword-combobox'
 import type { ProfessionCard } from '@/card/profession-card/convert'
 import type { AncestryCard } from '@/card/ancestry-card/convert'
+import type { CommunityCard } from '@/card/community-card/convert'
 import type { RawVariantCard } from '@/card/variant-card/convert'
 import { generateSmartCardId, generateCardId as generateBasicCardId } from '@/app/card-editor/utils/id-generator'
 
@@ -1037,5 +1038,262 @@ export function VariantCardForm({
             </div>
           </div>
         </Form>
+  )
+}
+
+// 社群卡牌编辑器
+export function CommunityCardForm({
+  card,
+  onSave,
+  onCancel,
+  onChange,
+  keywordLists,
+  onAddKeyword,
+  packageInfo,
+  packageData
+}: BaseCardFormProps<CommunityCard>) {
+  const [isEditingId, setIsEditingId] = useState(false)
+  const [autoGenerateId, setAutoGenerateId] = useState(true)
+
+  const form = useForm<CommunityCard>({
+    defaultValues: card
+  })
+
+  // 当卡牌数据变化时重置表单
+  useEffect(() => {
+    form.reset(card)
+  }, [card, form])
+
+  // 监听表单变化并触发onChange回调
+  useEffect(() => {
+    if (!onChange) return
+
+    const subscription = form.watch((value) => {
+      onChange(value as CommunityCard)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form, onChange])
+
+  // 监听名称字段变化，自动更新ID
+  useEffect(() => {
+    if (!autoGenerateId) return
+
+    const subscription = form.watch((value, { name }) => {
+      if (name === '名称' && value.名称) {
+        const packageName = packageInfo?.name || '新建卡包'
+        const author = packageInfo?.author || '作者'
+        const newId = generateSmartCardId(packageName, author, 'community', value.名称, packageData)
+
+        // 只在ID实际需要更新时才设置，避免无限循环
+        if (form.getValues('id') !== newId) {
+          form.setValue('id', newId, { shouldValidate: false, shouldDirty: false, shouldTouch: false })
+        }
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form, autoGenerateId, packageInfo, packageData])
+
+  // 初始化时如果没有ID或ID为默认值，则自动生成
+  useEffect(() => {
+    const currentId = form.getValues('id')
+    const currentName = form.getValues('名称')
+
+    if (autoGenerateId && currentName && (!currentId || currentId.includes('新社群'))) {
+      const packageName = packageInfo?.name || '新建卡包'
+      const author = packageInfo?.author || '作者'
+      const newId = generateSmartCardId(packageName, author, 'community', currentName, packageData)
+      form.setValue('id', newId)
+    }
+  }, [form, autoGenerateId, packageInfo, packageData])
+
+  // 处理字段失焦事件
+  const handleFieldBlur = () => {
+    const currentValues = form.getValues()
+    onChange?.(currentValues as CommunityCard)
+  }
+
+  // 手动生成ID
+  const generateId = () => {
+    const currentValues = form.getValues()
+    const packageName = packageInfo?.name || '新建卡包'
+    const author = packageInfo?.author || '作者'
+    const cardName = currentValues.名称 || '卡牌名'
+
+    const newId = generateCardId(packageName, author, 'community', cardName)
+    form.setValue('id', newId)
+  }
+
+  return (
+    <Form {...form}>
+      <div className="space-y-4">
+        {/* 第一行：社群名称 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="名称"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>社群名称 *</FormLabel>
+                <FormControl>
+                  <KeywordCombobox
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    keywords={keywordLists?.communities || []}
+                    onAddKeyword={(keyword) => onAddKeyword?.('communities', keyword)}
+                    placeholder="输入或选择社群"
+                  />
+                </FormControl>
+                <FormDescription className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">ID:</span>
+                    {!isEditingId ? (
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {form.watch('id') || '未设置'}
+                      </span>
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="id"
+                        render={({ field }) => (
+                          <Input
+                            className="h-6 text-xs font-mono px-2 py-0 w-48"
+                            placeholder="例如：pack-author-comm-星辰学院"
+                            {...field}
+                            onBlur={() => {
+                              setIsEditingId(false)
+                              handleFieldBlur()
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === 'Escape') {
+                                setIsEditingId(false)
+                                handleFieldBlur()
+                              }
+                            }}
+                            autoFocus
+                          />
+                        )}
+                      />
+                    )}
+                    {autoGenerateId && (
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
+                        自动
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={generateId}
+                      className="h-6 w-6 p-0"
+                      title="重新生成ID"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingId(true)}
+                      className="h-6 w-6 p-0"
+                      title="编辑ID"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAutoGenerateId(!autoGenerateId)}
+                      className="h-6 w-6 p-0"
+                      title={autoGenerateId ? "关闭自动生成" : "开启自动生成"}
+                    >
+                      <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
+                    </Button>
+                  </div>
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* 第二行：社群能力 */}
+        <FormField
+          control={form.control}
+          name="特性"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>社群能力 *</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="请输入社群的核心能力"
+                  {...field}
+                  onBlur={handleFieldBlur}
+                />
+              </FormControl>
+              <FormDescription>
+                描述社群提供的核心能力和优势
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 第三行：社群描述 */}
+        <FormField
+          control={form.control}
+          name="描述"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>社群描述 *</FormLabel>
+              <FormControl>
+                <MarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={handleFieldBlur}
+                  placeholder="详细描述社群带来的能力和关系，支持Markdown"
+                  height={200}
+                />
+              </FormControl>
+              <FormDescription>
+                支持Markdown格式，可以使用 *__特性名__* 来标记特性标题
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 第四行：社群简介 */}
+        <FormField
+          control={form.control}
+          name="简介"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>社群简介 *</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="请输入社群的背景和风味描述"
+                  {...field}
+                  onBlur={handleFieldBlur}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              取消
+            </Button>
+          )}
+        </div>
+      </div>
+    </Form>
   )
 }

@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/form'
 import MarkdownEditor, { SimpleMarkdownEditor } from './markdown-editor'
 import { KeywordSelectField } from './keyword-select-field'
+import { KeywordCombobox } from './keyword-combobox'
 import type { ProfessionCard } from '@/card/profession-card/convert'
 import type { AncestryCard } from '@/card/ancestry-card/convert'
 import type { RawVariantCard } from '@/card/variant-card/convert'
@@ -171,12 +172,12 @@ export function ProfessionCardForm({
                   <FormItem>
                     <FormLabel>职业名称 *</FormLabel>
                     <FormControl>
-                      <KeywordSelectField
+                      <KeywordCombobox
                         value={field.value || ''}
                         onChange={field.onChange}
                         keywords={keywordLists?.professions || []}
                         onAddKeyword={(keyword) => onAddKeyword?.('professions', keyword)}
-                        placeholder="选择或添加职业"
+                        placeholder="输入或选择职业"
                       />
                     </FormControl>
                     <FormDescription className="flex items-center justify-between">
@@ -282,12 +283,12 @@ export function ProfessionCardForm({
                   <FormItem>
                     <FormLabel>领域2 *</FormLabel>
                     <FormControl>
-                      <KeywordSelectField
+                      <KeywordCombobox
                         value={field.value || ''}
                         onChange={field.onChange}
                         keywords={keywordLists?.domains || []}
                         onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
-                        placeholder="选择或添加领域"
+                        placeholder="输入或选择领域"
                       />
                     </FormControl>
                     <FormMessage />
@@ -617,12 +618,12 @@ export function AncestryCardForm({
                   <FormItem>
                     <FormLabel>种族 *</FormLabel>
                     <FormControl>
-                      <KeywordSelectField
+                      <KeywordCombobox
                         value={field.value || ''}
                         onChange={field.onChange}
                         keywords={keywordLists?.ancestries || []}
                         onAddKeyword={(keyword) => onAddKeyword?.('ancestries', keyword)}
-                        placeholder="选择或添加种族"
+                        placeholder="输入或选择种族"
                       />
                     </FormControl>
                     <FormMessage />
@@ -901,12 +902,12 @@ export function VariantCardForm({
                   <FormItem>
                     <FormLabel>卡牌类型 *</FormLabel>
                     <FormControl>
-                      <KeywordSelectField
+                      <KeywordCombobox
                         value={field.value || ''}
                         onChange={field.onChange}
                         keywords={keywordLists?.variants || []}
                         onAddKeyword={(keyword) => onAddKeyword?.('variants', keyword)}
-                        placeholder="选择或添加卡牌类型"
+                        placeholder="输入或选择卡牌类型"
                       />
                     </FormControl>
                     <FormDescription>

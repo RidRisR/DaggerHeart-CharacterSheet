@@ -731,13 +731,45 @@ export function VariantCardForm({
   const [isEditingId, setIsEditingId] = useState(false)
   const [autoGenerateId, setAutoGenerateId] = useState(true)
   
+  // 规范化卡牌数据，确保简略信息字段结构完整
+  const normalizeCard = (cardData: RawVariantCard): RawVariantCard => {
+    const normalized = { ...cardData }
+    
+    // 确保简略信息字段存在且结构完整
+    if (!normalized.简略信息 || typeof normalized.简略信息 !== 'object') {
+      normalized.简略信息 = {
+        item1: '',
+        item2: '',
+        item3: '',
+        item4: ''
+      }
+    } else {
+      normalized.简略信息 = {
+        item1: normalized.简略信息.item1 || '',
+        item2: normalized.简略信息.item2 || '',
+        item3: normalized.简略信息.item3 || '',
+        item4: normalized.简略信息.item4 || ''
+      }
+    }
+    
+    // 确保等级字段不为undefined
+    if (normalized.等级 === undefined) {
+      normalized.等级 = ''
+    }
+    
+    return normalized
+  }
+  
+  const normalizedCard = normalizeCard(card)
+  
   const form = useForm<RawVariantCard>({
-    defaultValues: card
+    defaultValues: normalizedCard
   })
 
   // 当卡牌数据变化时重置表单
   useEffect(() => {
-    form.reset(card)
+    const normalized = normalizeCard(card)
+    form.reset(normalized)
   }, [card, form])
 
   // 监听表单变化并触发onChange回调

@@ -41,8 +41,13 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
         类型: '',
         效果: '',
         子类别: '',
-        等级: undefined,
-        简略信息: {}
+        等级: '',
+        简略信息: {
+          item1: '',
+          item2: '',
+          item3: '',
+          item4: ''
+        }
       } as RawVariantCard
     case 'community':
       const communityName = '新社群'
@@ -104,6 +109,26 @@ export function copyCard(originalCard: unknown, type: CardType, packageData: Car
     newName, 
     packageData
   )
+  
+  // 特殊处理变体卡牌的简略信息字段，确保结构完整
+  if (type === 'variant') {
+    if (!copiedCard.简略信息 || typeof copiedCard.简略信息 !== 'object') {
+      copiedCard.简略信息 = {
+        item1: '',
+        item2: '',
+        item3: '',
+        item4: ''
+      }
+    } else {
+      // 确保所有必需的item字段都存在
+      copiedCard.简略信息 = {
+        item1: copiedCard.简略信息.item1 || '',
+        item2: copiedCard.简略信息.item2 || '',
+        item3: copiedCard.简略信息.item3 || '',
+        item4: copiedCard.简略信息.item4 || ''
+      }
+    }
+  }
   
   return copiedCard
 }

@@ -740,21 +740,19 @@ export function VariantCardForm({
       normalized.简略信息 = {
         item1: '',
         item2: '',
-        item3: '',
-        item4: ''
+        item3: ''
       }
     } else {
       normalized.简略信息 = {
         item1: normalized.简略信息.item1 || '',
         item2: normalized.简略信息.item2 || '',
-        item3: normalized.简略信息.item3 || '',
-        item4: normalized.简略信息.item4 || ''
+        item3: normalized.简略信息.item3 || ''
       }
     }
     
     // 确保等级字段不为undefined
-    if (normalized.等级 === undefined) {
-      normalized.等级 = ''
+    if (normalized.等级 === undefined || normalized.等级 === null) {
+      normalized.等级 = undefined
     }
     
     return normalized

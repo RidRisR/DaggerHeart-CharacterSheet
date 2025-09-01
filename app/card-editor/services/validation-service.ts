@@ -1,6 +1,9 @@
 import type { CardPackageState, CardType } from '../types'
 import type { ValidationError, ValidationContext } from '@/card/type-validators'
 
+// Re-export ValidationError for use in other modules
+export type { ValidationError }
+
 export interface ValidationResult {
   isValid: boolean
   errors: ValidationError[]
@@ -176,13 +179,24 @@ class ValidationService implements CardValidationService {
     // 从卡包数据中提取自定义字段定义
     const customFieldDefinitions = packageData.customFieldDefinitions || {}
     
+    // 确保自定义字段定义是字符串数组格式
+    const ensureStringArray = (field: string[] | Record<string, any> | undefined): string[] => {
+      if (Array.isArray(field)) {
+        return field
+      }
+      if (field && typeof field === 'object') {
+        return Object.keys(field)
+      }
+      return []
+    }
+    
     return {
       customFields: {
-        professions: customFieldDefinitions.professions || [],
-        ancestries: customFieldDefinitions.ancestries || [],
-        communities: customFieldDefinitions.communities || [],
-        domains: customFieldDefinitions.domains || [],
-        variants: customFieldDefinitions.variants || []
+        professions: ensureStringArray(customFieldDefinitions.professions),
+        ancestries: ensureStringArray(customFieldDefinitions.ancestries),
+        communities: ensureStringArray(customFieldDefinitions.communities),
+        domains: ensureStringArray(customFieldDefinitions.domains),
+        variants: ensureStringArray(customFieldDefinitions.variants)
       },
       variantTypes: customFieldDefinitions.variantTypes || {},
       tempBatchId: 'validation_context'

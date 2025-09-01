@@ -93,8 +93,8 @@ export function CardEditorTab({
       keywordLists: currentPackage.customFieldDefinitions,
       onAddKeyword: handleAddKeyword,
       packageInfo: {
-        name: currentPackage.name,
-        author: currentPackage.author
+        name: currentPackage.name || '未命名卡包',
+        author: currentPackage.author || '未知作者'
       }
     }
 

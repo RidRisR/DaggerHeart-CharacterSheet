@@ -1,4 +1,4 @@
-import type { ValidationError } from '../services/validation-service'
+import type { ValidationError } from '@/card/type-validators'
 import type { CardType } from '../types'
 
 export interface FriendlyError {

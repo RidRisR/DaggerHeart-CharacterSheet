@@ -527,90 +527,95 @@ export function AncestryCardForm({
   return (
         <Form {...form}>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="名称"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>能力名称 *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例如：星光血脉" {...field} />
-                    </FormControl>
-                    <FormDescription className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">ID:</span>
-                        {!isEditingId ? (
-                          <span className="text-xs font-mono text-muted-foreground">
-                            {form.watch('id') || '未设置'}
-                          </span>
-                        ) : (
-                          <FormField
-                            control={form.control}
-                            name="id"
-                            render={({ field }) => (
-                              <Input 
-                                className="h-6 text-xs font-mono px-2 py-0 w-48"
-                                placeholder="例如：pack-author-ance-星光血脉" 
-                                {...field} 
-                                onBlur={() => {
-                                  setIsEditingId(false)
-                                  handleFieldBlur()
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === 'Escape') {
-                                    setIsEditingId(false)
-                                    handleFieldBlur()
-                                  }
-                                }}
-                                autoFocus
-                              />
-                            )}
+        {/* 第一行：卡牌名称 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="名称"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>卡牌名称 *</FormLabel>
+                <FormControl>
+                  <Input placeholder="例如：星光血脉" {...field} />
+                </FormControl>
+                <FormDescription className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">ID:</span>
+                    {!isEditingId ? (
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {form.watch('id') || '未设置'}
+                      </span>
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="id"
+                        render={({ field }) => (
+                          <Input
+                            className="h-6 text-xs font-mono px-2 py-0 w-48"
+                            placeholder="例如：pack-author-ance-星光血脉"
+                            {...field}
+                            onBlur={() => {
+                              setIsEditingId(false)
+                              handleFieldBlur()
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === 'Escape') {
+                                setIsEditingId(false)
+                                handleFieldBlur()
+                              }
+                            }}
+                            autoFocus
                           />
                         )}
-                        {autoGenerateId && (
-                          <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
-                            自动
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={generateId}
-                          className="h-6 w-6 p-0"
-                          title="重新生成ID"
-                        >
-                          <RefreshCw className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setIsEditingId(true)}
-                          className="h-6 w-6 p-0"
-                          title="编辑ID"
-                        >
-                          <Edit2 className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setAutoGenerateId(!autoGenerateId)}
-                          className="h-6 w-6 p-0"
-                          title={autoGenerateId ? "关闭自动生成" : "开启自动生成"}
-                        >
-                          <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
-                        </Button>
-                      </div>
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      />
+                    )}
+                    {autoGenerateId && (
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
+                        自动
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={generateId}
+                      className="h-6 w-6 p-0"
+                      title="重新生成ID"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingId(true)}
+                      className="h-6 w-6 p-0"
+                      title="编辑ID"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAutoGenerateId(!autoGenerateId)}
+                      className="h-6 w-6 p-0"
+                      title={autoGenerateId ? "关闭自动生成" : "开启自动生成"}
+                    >
+                      <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
+                    </Button>
+                  </div>
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* 第二行：种族和类别 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="种族"
@@ -653,32 +658,10 @@ export function AncestryCardForm({
               />
             </div>
 
+        {/* 第三行：能力效果 */}
             <FormField
               control={form.control}
-              name="简介"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>种族简介 *</FormLabel>
-                  <FormControl>
-                    <SimpleMarkdownEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={handleFieldBlur}
-                      placeholder="种族的风味描述。同一种族的两张卡，此字段必须完全相同"
-                      height={100}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    同一种族的两张卡，此字段必须完全相同
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="效果"
+          name="效果"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>能力效果 *</FormLabel>
@@ -693,6 +676,30 @@ export function AncestryCardForm({
                   </FormControl>
                   <FormDescription>
                     支持Markdown格式，可以使用 *__能力名__* 来标记能力标题
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+        {/* 第四行：种族简介 */}
+            <FormField
+              control={form.control}
+          name="简介"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>种族简介 *</FormLabel>
+                  <FormControl>
+                    <SimpleMarkdownEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={handleFieldBlur}
+                      placeholder="种族的风味描述。"
+                      height={100}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    该种族的风味描述
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

@@ -14,6 +14,7 @@ interface CardTabsProps {
   onShowAllCards: (type: string) => void
   onShowKeywords: () => void
   onAddCard: (type: CardType) => void
+  onCopyCard: (type: CardType, index: number) => void
   onDeleteCard: (type: CardType, index: number) => void
   onUpdateCard: (type: CardType, index: number, card: unknown) => void
   onUpdateMetadata: (field: keyof CardPackageState, value: any) => void
@@ -28,6 +29,7 @@ export function CardTabs({
   onShowAllCards,
   onShowKeywords,
   onAddCard,
+  onCopyCard,
   onDeleteCard,
   onUpdateCard,
   onUpdateMetadata
@@ -40,6 +42,7 @@ export function CardTabs({
     onShowAllCards,
     onShowKeywords,
     onAddCard,
+    onCopyCard,
     onDeleteCard,
     onUpdateCard
   }

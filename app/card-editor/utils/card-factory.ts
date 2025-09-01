@@ -1,4 +1,7 @@
 import type { ProfessionCard, AncestryCard, RawVariantCard } from '@/card/card-types'
+import type { CommunityCard } from '@/card/community-card/convert'
+import type { SubClassCard } from '@/card/subclass-card/convert'
+import type { DomainCard } from '@/card/domain-card/convert'
 import type { CardPackageState, CardType } from '../types'
 import { generateSmartCardId } from './id-generator'
 
@@ -41,7 +44,66 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
         等级: undefined,
         简略信息: {}
       } as RawVariantCard
+    case 'community':
+      const communityName = '新社群'
+      return {
+        id: generateSmartCardId(packageData.name || '新建卡包', packageData.author || '作者', 'community', communityName, packageData),
+        名称: communityName,
+        社群: '',
+        社群能力: '',
+        简介: '',
+        效果: ''
+      } as CommunityCard
+    case 'subclass':
+      const subclassName = '新子职业'
+      return {
+        id: generateSmartCardId(packageData.name || '新建卡包', packageData.author || '作者', 'subclass', subclassName, packageData),
+        名称: subclassName,
+        主职业: '',
+        等级: '基石',
+        施法属性: '',
+        简介: '',
+        效果: ''
+      } as SubClassCard
+    case 'domain':
+      const domainName = '新领域'
+      return {
+        id: generateSmartCardId(packageData.name || '新建卡包', packageData.author || '作者', 'domain', domainName, packageData),
+        名称: domainName,
+        领域: '',
+        属性: '',
+        等级: 1,
+        回想: '',
+        简介: '',
+        效果: ''
+      } as DomainCard
     default:
       return {}
   }
+}
+
+// 复制现有卡牌，生成新的ID和名称
+export function copyCard(originalCard: unknown, type: CardType, packageData: CardPackageState): unknown {
+  if (!originalCard || typeof originalCard !== 'object') {
+    return createDefaultCard(type, packageData)
+  }
+
+  // 深拷贝原卡牌数据
+  const copiedCard = JSON.parse(JSON.stringify(originalCard)) as any
+  
+  // 生成新的ID
+  const originalName = copiedCard.名称 || '未命名'
+  const newName = `${originalName} - 副本`
+  copiedCard.名称 = newName
+  
+  // 生成新的唯一ID
+  copiedCard.id = generateSmartCardId(
+    packageData.name || '新建卡包', 
+    packageData.author || '作者', 
+    type, 
+    newName, 
+    packageData
+  )
+  
+  return copiedCard
 }

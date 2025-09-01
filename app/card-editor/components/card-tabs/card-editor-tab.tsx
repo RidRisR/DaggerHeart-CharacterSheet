@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { FileText, Plus, Eye, Trash2 } from 'lucide-react'
+import { FileText, Plus, Eye, Trash2, Copy } from 'lucide-react'
 import { ProfessionCardForm, AncestryCardForm, CommunityCardForm, VariantCardForm, SubclassCardForm, DomainCardForm } from '@/components/card-editor/card-form'
 import { ImageCard } from '@/components/ui/image-card'
 import { transformCardToStandard } from '../../utils/card-transformer'
@@ -17,6 +17,7 @@ interface CardEditorTabProps {
   onShowAllCards: (type: string) => void
   onShowKeywords: () => void
   onAddCard: (type: CardType) => void
+  onCopyCard: (type: CardType, index: number) => void
   onDeleteCard: (type: CardType, index: number) => void
   onUpdateCard: (type: CardType, index: number, card: unknown) => void
 }
@@ -30,6 +31,7 @@ export function CardEditorTab({
   onShowAllCards,
   onShowKeywords,
   onAddCard,
+  onCopyCard,
   onDeleteCard,
   onUpdateCard
 }: CardEditorTabProps) {
@@ -208,6 +210,14 @@ export function CardEditorTab({
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     {showMobilePreview ? '隐藏' : '显示'}预览
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onCopyCard(cardType, safeIndex)}
+                  >
+                    <Copy className="h-4 w-4 mr-1" />
+                    复制
                   </Button>
                   <Button
                     variant="destructive"

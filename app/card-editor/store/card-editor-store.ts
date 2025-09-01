@@ -9,7 +9,7 @@ import type {
   CardType 
 } from '../types'
 import { defaultPackage } from '../types'
-import { createDefaultCard } from '../utils/card-factory'
+import { createDefaultCard, copyCard } from '../utils/card-factory'
 import { exportCardPackage, importCardPackage } from '../utils/import-export'
 import { validationService, type ValidationResult } from '../services/validation-service'
 
@@ -30,6 +30,7 @@ interface CardEditorStore {
   
   // 卡牌操作
   addCard: (type: CardType) => void
+  copyCard: (type: CardType, index: number) => void
   deleteCard: (type: CardType, index: number) => void
   updateCard: (type: CardType, index: number, card: unknown) => void
   
@@ -100,6 +101,34 @@ export const useCardEditorStore = create<CardEditorStore>()(
             packageData: {
               ...state.packageData,
               [type]: [...existingCards, newCard]
+            },
+            currentCardIndex: {
+              ...state.currentCardIndex,
+              [type]: newIndex
+            }
+          }
+        }),
+        
+      copyCard: (type, index) =>
+        set(state => {
+          const cards = state.packageData[type] as any[]
+          const originalCard = cards?.[index]
+          
+          if (!originalCard) {
+            console.warn(`无法复制卡牌: ${type}[${index}] 不存在`)
+            return state
+          }
+          
+          const copiedCard = copyCard(originalCard, type, state.packageData)
+          const existingCards = cards || []
+          const newIndex = existingCards.length
+          
+          toast.success(`已复制卡牌: ${(copiedCard as any)?.名称 || '未命名'}`)
+          
+          return {
+            packageData: {
+              ...state.packageData,
+              [type]: [...existingCards, copiedCard]
             },
             currentCardIndex: {
               ...state.currentCardIndex,

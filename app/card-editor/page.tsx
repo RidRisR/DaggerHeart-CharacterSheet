@@ -36,6 +36,7 @@ export default function CardEditorPage() {
     // 方法
     updateMetadata,
     addCard,
+    copyCard,
     deleteCard,
     updateCard,
     exportPackage,
@@ -143,6 +144,7 @@ export default function CardEditorPage() {
         onShowAllCards={handleShowAllCards}
         onShowKeywords={() => setDefinitionsDialog(true)}
         onAddCard={addCard}
+        onCopyCard={copyCard}
         onDeleteCard={deleteCard}
         onUpdateCard={updateCard}
         onUpdateMetadata={updateMetadata}

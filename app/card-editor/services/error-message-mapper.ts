@@ -13,8 +13,8 @@ export interface FriendlyError {
 
 const CARD_TYPE_NAMES: Record<CardType, string> = {
   profession: '职业',
-  ancestry: '祖先',
-  community: '群体',
+  ancestry: '血统',
+  community: '社群',
   subclass: '子职业',
   domain: '领域',
   variant: '变体'
@@ -201,6 +201,7 @@ export function groupFriendlyErrors(friendlyErrors: FriendlyError[]): {
   critical: FriendlyError[]
   warnings: FriendlyError[]
   byCardType: Record<string, FriendlyError[]>
+  bySpecificCard: Record<string, FriendlyError[]>
 } {
   const critical = friendlyErrors.filter(error => error.severity === 'error')
   const warnings = friendlyErrors.filter(error => error.severity === 'warning')
@@ -214,7 +215,36 @@ export function groupFriendlyErrors(friendlyErrors: FriendlyError[]): {
     byCardType[key].push(error)
   })
   
-  return { critical, warnings, byCardType }
+  // 按具体卡片分组
+  const bySpecificCard: Record<string, FriendlyError[]> = {}
+  friendlyErrors.forEach(error => {
+    if (error.cardType === 'general') {
+      // 系统错误单独分组
+      const key = '系统问题'
+      if (!bySpecificCard[key]) {
+        bySpecificCard[key] = []
+      }
+      bySpecificCard[key].push(error)
+    } else if (error.cardIndex !== undefined) {
+      // 按具体卡片分组：第X张[类型]卡片
+      const cardTypeName = CARD_TYPE_NAMES[error.cardType as CardType]
+      const key = `第${error.cardIndex + 1}张${cardTypeName}卡片`
+      if (!bySpecificCard[key]) {
+        bySpecificCard[key] = []
+      }
+      bySpecificCard[key].push(error)
+    } else {
+      // 无法确定具体卡片索引的错误
+      const cardTypeName = CARD_TYPE_NAMES[error.cardType as CardType] || error.cardType
+      const key = `${cardTypeName}卡片（位置未知）`
+      if (!bySpecificCard[key]) {
+        bySpecificCard[key] = []
+      }
+      bySpecificCard[key].push(error)
+    }
+  })
+
+  return { critical, warnings, byCardType, bySpecificCard }
 }
 
 /**

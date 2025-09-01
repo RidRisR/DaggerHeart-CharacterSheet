@@ -51,12 +51,22 @@ function ErrorGroup({ title, errors, severity, onJumpToCard }: ErrorGroupProps) 
       <CollapsibleContent className="mt-2">
         <div className="space-y-3">
           {errors.map((error, index) => (
-            <div key={index} className="ml-8 p-3 bg-white border rounded-lg shadow-sm">
-              <div className="flex items-start justify-between">
+            <div key={index} className="ml-4 md:ml-8 p-3 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-1">{error.title}</h4>
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <h4 className="font-medium text-gray-900 text-sm md:text-base">{error.title}</h4>
+                    {error.field && (
+                      <Badge variant="outline" className="text-xs">
+                        字段: {error.field}
+                      </Badge>
+                    )}
+                    <Badge variant={error.severity === 'error' ? 'destructive' : 'secondary'} className="text-xs">
+                      {error.severity === 'error' ? '错误' : '警告'}
+                    </Badge>
+                  </div>
                   <p className="text-gray-600 text-sm mb-2">{error.description}</p>
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-2 bg-blue-50 p-2 rounded">
                     <Lightbulb className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
                     <p className="text-blue-700 text-sm">{error.suggestion}</p>
                   </div>
@@ -66,7 +76,7 @@ function ErrorGroup({ title, errors, severity, onJumpToCard }: ErrorGroupProps) 
                     variant="outline"
                     size="sm"
                     onClick={() => onJumpToCard(error.cardType as CardType, error.cardIndex!)}
-                    className="ml-3 flex-shrink-0"
+                    className="self-start md:ml-3 md:flex-shrink-0 hover:bg-blue-50 w-full md:w-auto"
                   >
                     定位卡片
                   </Button>
@@ -87,12 +97,12 @@ export function ValidationResults({ validationResult, open, onClose, onJumpToCar
   
   // 转换为用户友好的错误信息
   const friendlyErrors = mapValidationErrorsToFriendly(errors)
-  const { critical, warnings, byCardType } = groupFriendlyErrors(friendlyErrors)
+  const { critical, warnings, byCardType, bySpecificCard } = groupFriendlyErrors(friendlyErrors)
   const fixSummary = generateFixSummary(friendlyErrors)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[85vh]">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <div className="flex items-center gap-3">
             {isValid ? (
@@ -115,32 +125,41 @@ export function ValidationResults({ validationResult, open, onClose, onJumpToCar
         </DialogHeader>
 
         {!isValid && (
-          <div className="space-y-4">
+          <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
             {/* 快速概览 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 p-3 md:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border">
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{fixSummary.criticalIssues}</div>
-                <div className="text-sm text-gray-600">必须修复的问题</div>
+                <div className="text-xl md:text-2xl font-bold text-red-600">{fixSummary.criticalIssues}</div>
+                <div className="text-xs md:text-sm text-gray-600">关键错误</div>
+                <div className="text-xs text-red-500 mt-1 hidden md:block">必须修复</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-amber-600">{fixSummary.warningIssues}</div>
-                <div className="text-sm text-gray-600">建议修复的问题</div>
+                <div className="text-xl md:text-2xl font-bold text-amber-600">{fixSummary.warningIssues}</div>
+                <div className="text-xs md:text-sm text-gray-600">警告</div>
+                <div className="text-xs text-amber-500 mt-1 hidden md:block">建议修复</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{fixSummary.affectedCardTypes.length}</div>
-                <div className="text-sm text-gray-600">受影响的卡片类型</div>
+                <div className="text-xl md:text-2xl font-bold text-blue-600">{fixSummary.affectedCardTypes.length}</div>
+                <div className="text-xs md:text-sm text-gray-600">问题类型</div>
+                <div className="text-xs text-blue-500 mt-1 hidden md:block">{fixSummary.affectedCardTypes.join('、')}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl md:text-2xl font-bold text-green-600">{validationResult.totalCards}</div>
+                <div className="text-xs md:text-sm text-gray-600">检查总数</div>
+                <div className="text-xs text-green-500 mt-1 hidden md:block">已验证</div>
               </div>
             </div>
 
-            <Tabs defaultValue="priority" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="priority">按优先级</TabsTrigger>
-                <TabsTrigger value="cardtype">按卡片类型</TabsTrigger>
-                <TabsTrigger value="all">全部问题</TabsTrigger>
+            <Tabs defaultValue="specificcard" className="w-full flex-1 flex flex-col overflow-hidden">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+                <TabsTrigger value="priority" className="text-xs md:text-sm">按优先级</TabsTrigger>
+                <TabsTrigger value="specificcard" className="text-xs md:text-sm">按卡片</TabsTrigger>
+                <TabsTrigger value="cardtype" className="text-xs md:text-sm">按类型</TabsTrigger>
+                <TabsTrigger value="all" className="text-xs md:text-sm">全部</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="priority">
-                <ScrollArea className="max-h-[50vh] w-full">
+              <TabsContent value="priority" className="flex-1 overflow-hidden">
+                <ScrollArea className="h-[60vh]">
                   <div className="space-y-4 pr-4">
                     {critical.length > 0 && (
                       <ErrorGroup
@@ -162,8 +181,24 @@ export function ValidationResults({ validationResult, open, onClose, onJumpToCar
                 </ScrollArea>
               </TabsContent>
 
-              <TabsContent value="cardtype">
-                <ScrollArea className="max-h-[50vh] w-full">
+              <TabsContent value="specificcard" className="flex-1 overflow-hidden">
+                <ScrollArea className="h-[60vh]">
+                  <div className="space-y-4 pr-4">
+                    {Object.entries(bySpecificCard).map(([cardName, errors]) => (
+                      <ErrorGroup
+                        key={cardName}
+                        title={cardName}
+                        errors={errors}
+                        severity={errors.some(e => e.severity === 'error') ? 'error' : 'warning'}
+                        onJumpToCard={onJumpToCard}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+
+              <TabsContent value="cardtype" className="flex-1 overflow-hidden">
+                <ScrollArea className="h-[60vh]">
                   <div className="space-y-4 pr-4">
                     {Object.entries(byCardType).map(([cardTypeName, errors]) => (
                       <ErrorGroup
@@ -178,8 +213,8 @@ export function ValidationResults({ validationResult, open, onClose, onJumpToCar
                 </ScrollArea>
               </TabsContent>
 
-              <TabsContent value="all">
-                <ScrollArea className="max-h-[50vh] w-full">
+              <TabsContent value="all" className="flex-1 overflow-hidden">
+                <ScrollArea className="h-[60vh]">
                   <div className="space-y-4 pr-4">
                     <ErrorGroup
                       title="所有问题"
@@ -195,27 +230,32 @@ export function ValidationResults({ validationResult, open, onClose, onJumpToCar
         )}
 
         {isValid && (
-          <div className="text-center py-12">
-            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-6" />
-            <h3 className="text-2xl font-semibold text-green-800 mb-3">所有检查通过！</h3>
-            <p className="text-green-700 text-lg">
-              您的卡包质量优秀，可以放心导出和使用
+          <div className="text-center py-12 bg-gradient-to-b from-green-50 to-green-100 rounded-lg border border-green-200">
+            <div className="bg-green-500 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <CheckCircle2 className="h-10 w-10 text-white" />
+            </div>
+            <h3 className="text-2xl font-semibold text-green-800 mb-3">🎉 验证完成！</h3>
+            <p className="text-green-700 text-lg mb-4">
+              您的卡包包含 <span className="font-semibold">{validationResult.totalCards}</span> 张卡牌，所有内容都符合规范
             </p>
+            <div className="bg-white rounded-lg p-4 inline-block shadow-sm border border-green-200">
+              <p className="text-green-600 font-medium">✨ 卡包质量优秀，可以放心导出和使用</p>
+            </div>
           </div>
         )}
 
-        <div className="flex justify-between items-center pt-6 border-t">
-          <div className="text-sm text-gray-500">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-6 border-t">
+          <div className="text-xs md:text-sm text-gray-500 text-center md:text-left">
             {!isValid && (
               <>修复问题后，点击工具栏的"验证卡包"按钮重新检查</>
             )}
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex gap-3 w-full md:w-auto">
+            <Button variant="outline" onClick={onClose} className="flex-1 md:flex-none">
               关闭
             </Button>
             {isValid && (
-              <Button onClick={onClose} className="bg-green-600 hover:bg-green-700">
+              <Button onClick={onClose} className="bg-green-600 hover:bg-green-700 flex-1 md:flex-none">
                 <CheckCircle2 className="h-4 w-4 mr-2" />
                 开始导出
               </Button>

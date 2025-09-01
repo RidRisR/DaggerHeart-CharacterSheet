@@ -107,12 +107,16 @@ export function ProfessionCardForm({
         const packageName = packageInfo?.name || '新建卡包'
         const author = packageInfo?.author || '作者'
         const newId = generateSmartCardId(packageName, author, 'profession', value.名称, packageData)
-        form.setValue('id', newId)
+
+        // 只在ID实际需要更新时才设置，避免无限循环
+        if (form.getValues('id') !== newId) {
+          form.setValue('id', newId, { shouldValidate: false, shouldDirty: false, shouldTouch: false })
+        }
       }
     })
     
     return () => subscription.unsubscribe()
-  }, [form, autoGenerateId, packageInfo])
+  }, [form, autoGenerateId, packageInfo, packageData])
 
   // 初始化时如果没有ID或ID为默认值，则自动生成
   useEffect(() => {
@@ -251,47 +255,29 @@ export function ProfessionCardForm({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="简介"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>职业简介 *</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="请输入职业的背景和风味描述" 
-                      {...field} 
-                      onBlur={handleFieldBlur}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="领域1"
-                render={({ field }) => (
-                  <FormItem>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="领域1"
+            render={({ field }) => (
+              <FormItem>
                     <FormLabel>领域1 *</FormLabel>
                     <FormControl>
-                      <KeywordSelectField
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        keywords={keywordLists?.domains || []}
-                        onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
-                        placeholder="选择或添加领域"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <KeywordSelectField
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    keywords={keywordLists?.domains || []}
+                    onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
+                    placeholder="选择或添加领域"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
               <FormField
                 control={form.control}
-                name="领域2"
+            name="领域2"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>领域2 *</FormLabel>
@@ -308,7 +294,52 @@ export function ProfessionCardForm({
                   </FormItem>
                 )}
               />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="职业特性"
+          render={({ field }) => (
+            <FormItem>
+                  <FormLabel>职业特性 *</FormLabel>
+                  <FormControl>
+                    <MarkdownEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={handleFieldBlur}
+                      placeholder="核心职业能力，支持Markdown格式"
+                      height={200}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    支持Markdown格式，可以使用 *__特性名__* 来标记特性标题
+                  </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 分割线 - 卡面内容与其他内容的分隔 */}
+        <div className="border-t border-gray-300 my-6 pt-4">
             </div>
+
+        <FormField
+          control={form.control}
+          name="简介"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>职业简介 *</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="请输入职业的背景和风味描述"
+                  {...field}
+                  onBlur={handleFieldBlur}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
@@ -383,29 +414,6 @@ export function ProfessionCardForm({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="职业特性"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>职业特性 *</FormLabel>
-                  <FormControl>
-                    <MarkdownEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={handleFieldBlur}
-                      placeholder="核心职业能力，支持Markdown格式"
-                      height={200}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    支持Markdown格式，可以使用 *__特性名__* 来标记特性标题
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="flex justify-end gap-2 pt-4 border-t">
               {onCancel && (
                 <Button type="button" variant="outline" onClick={onCancel}>
@@ -462,12 +470,16 @@ export function AncestryCardForm({
         const packageName = packageInfo?.name || '新建卡包'
         const author = packageInfo?.author || '作者'
         const newId = generateSmartCardId(packageName, author, 'ancestry', value.名称, packageData)
-        form.setValue('id', newId)
+
+        // 只在ID实际需要更新时才设置，避免无限循环
+        if (form.getValues('id') !== newId) {
+          form.setValue('id', newId, { shouldValidate: false, shouldDirty: false, shouldTouch: false })
+        }
       }
     })
     
     return () => subscription.unsubscribe()
-  }, [form, autoGenerateId, packageInfo])
+  }, [form, autoGenerateId, packageInfo, packageData])
 
   // 初始化时如果没有ID或ID为默认值，则自动生成
   useEffect(() => {
@@ -742,12 +754,16 @@ export function VariantCardForm({
         const packageName = packageInfo?.name || '新建卡包'
         const author = packageInfo?.author || '作者'
         const newId = generateSmartCardId(packageName, author, 'variant', value.名称, packageData)
-        form.setValue('id', newId)
+
+        // 只在ID实际需要更新时才设置，避免无限循环
+        if (form.getValues('id') !== newId) {
+          form.setValue('id', newId, { shouldValidate: false, shouldDirty: false, shouldTouch: false })
+        }
       }
     })
     
     return () => subscription.unsubscribe()
-  }, [form, autoGenerateId, packageInfo])
+  }, [form, autoGenerateId, packageInfo, packageData])
 
   // 初始化时如果没有ID或ID为默认值，则自动生成
   useEffect(() => {

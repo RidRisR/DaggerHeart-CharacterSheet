@@ -8,10 +8,14 @@ import type { ProfessionCard } from '@/card/profession-card/convert'
 import type { AncestryCard } from '@/card/ancestry-card/convert'
 import type { CommunityCard } from '@/card/community-card/convert'
 import type { RawVariantCard } from '@/card/variant-card/convert'
+import type { SubClassCard } from '@/card/subclass-card/convert'
+import type { DomainCard } from '@/card/domain-card/convert'
 import { professionCardConverter } from '@/card/profession-card/convert'
 import { ancestryCardConverter } from '@/card/ancestry-card/convert'
 import { communityCardConverter } from '@/card/community-card/convert'
 import { variantCardConverter } from '@/card/variant-card/convert'
+import { subclassCardConverter } from '@/card/subclass-card/convert'
+import { domainCardConverter } from '@/card/domain-card/convert'
 import { createEmptyCard } from '@/card/card-converter'
 
 /**
@@ -67,11 +71,37 @@ export function transformVariantCard(card: RawVariantCard): StandardCard {
 }
 
 /**
+ * 转换子职业卡牌数据为标准格式
+ */
+export function transformSubclassCard(card: SubClassCard): StandardCard {
+  try {
+    if (!card) return createEmptyCard('subclass')
+    return subclassCardConverter.toStandard(card)
+  } catch (error) {
+    console.error('[transformSubclassCard] 转换失败:', error)
+    return createEmptyCard('subclass')
+  }
+}
+
+/**
+ * 转换领域卡牌数据为标准格式
+ */
+export function transformDomainCard(card: DomainCard): StandardCard {
+  try {
+    if (!card) return createEmptyCard('domain')
+    return domainCardConverter.toStandard(card)
+  } catch (error) {
+    console.error('[transformDomainCard] 转换失败:', error)
+    return createEmptyCard('domain')
+  }
+}
+
+/**
  * 通用转换函数，根据卡牌类型自动选择转换器
  */
 export function transformCardToStandard(
-  card: ProfessionCard | AncestryCard | CommunityCard | RawVariantCard | any,
-  cardType: 'profession' | 'ancestry' | 'community' | 'variant'
+  card: ProfessionCard | AncestryCard | CommunityCard | RawVariantCard | SubClassCard | DomainCard | any,
+  cardType: 'profession' | 'ancestry' | 'community' | 'variant' | 'subclass' | 'domain'
 ): StandardCard {
   switch (cardType) {
     case 'profession':
@@ -82,6 +112,10 @@ export function transformCardToStandard(
       return transformCommunityCard(card as CommunityCard)
     case 'variant':
       return transformVariantCard(card as RawVariantCard)
+    case 'subclass':
+      return transformSubclassCard(card as SubClassCard)
+    case 'domain':
+      return transformDomainCard(card as DomainCard)
     default:
       console.warn(`[transformCardToStandard] 未知的卡牌类型: ${cardType}`)
       return createEmptyCard(cardType)

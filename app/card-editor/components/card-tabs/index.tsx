@@ -107,27 +107,23 @@ export function CardTabs({
         />
       </TabsContent>
 
-      {/* 其他选项卡的占位符 */}
-      {(['subclass', 'domain'] as const).map((cardType) => (
-        <TabsContent key={cardType} value={cardType}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="capitalize">{cardType}卡牌编辑</CardTitle>
-              <CardDescription>
-                管理和编辑{cardType}类型的卡牌
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  {cardType}卡牌编辑功能正在开发中...
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      ))}
+      {/* 子职业卡牌选项卡 */}
+      <TabsContent value="subclass">
+        <CardEditorTab
+          {...cardEditorProps}
+          cardType="subclass"
+          title="子职业卡牌"
+        />
+      </TabsContent>
+
+      {/* 领域卡牌选项卡 */}
+      <TabsContent value="domain">
+        <CardEditorTab
+          {...cardEditorProps}
+          cardType="domain"
+          title="领域卡牌"
+        />
+      </TabsContent>
 
       {/* 预览选项卡 */}
       <TabsContent value="preview">

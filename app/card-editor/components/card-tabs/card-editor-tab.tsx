@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { FileText, Plus, Eye, Trash2 } from 'lucide-react'
-import { ProfessionCardForm, AncestryCardForm, CommunityCardForm, VariantCardForm } from '@/components/card-editor/card-form'
+import { ProfessionCardForm, AncestryCardForm, CommunityCardForm, VariantCardForm, SubclassCardForm, DomainCardForm } from '@/components/card-editor/card-form'
 import { ImageCard } from '@/components/ui/image-card'
 import { transformCardToStandard } from '../../utils/card-transformer'
 import { useState, useEffect } from 'react'
@@ -60,6 +60,8 @@ export function CardEditorTab({
       case 'ancestry': return '血统'
       case 'community': return '社群'
       case 'variant': return '变体'
+      case 'subclass': return '子职业'
+      case 'domain': return '领域'
       default: return cardType
     }
   }
@@ -103,6 +105,10 @@ export function CardEditorTab({
         return <CommunityCardForm {...commonProps} />
       case 'variant':
         return <VariantCardForm {...commonProps} />
+      case 'subclass':
+        return <SubclassCardForm {...commonProps} />
+      case 'domain':
+        return <DomainCardForm {...commonProps} />
       default:
         return <div>该卡牌类型的编辑功能正在开发中...</div>
     }

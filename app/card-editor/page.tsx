@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { BookOpen, Home, FileText } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { ImageCard } from '@/components/ui/image-card'
 import { transformCardToStandard } from './utils/card-transformer'
+import { navigateToPage } from '@/lib/utils'
 
 // 导入新的组件和store
 import { useCardEditorStore } from './store/card-editor-store'
@@ -18,7 +18,6 @@ import { ValidationResults } from './components/validation-results'
 import type { CardType } from './types'
 
 export default function CardEditorPage() {
-  const router = useRouter()
   const [selectedTab, setSelectedTab] = useState('metadata')
   const [isClient, setIsClient] = useState(false)
 
@@ -61,7 +60,7 @@ export default function CardEditorPage() {
 
   // 返回主站
   const goBackToMain = () => {
-    router.push('/')
+    navigateToPage('/')
   }
 
   // 显示卡牌列表
@@ -115,7 +114,7 @@ export default function CardEditorPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push('/card-manager')}
+              onClick={() => navigateToPage('/card-manager')}
               className="flex items-center gap-2"
             >
               <FileText className="h-4 w-4" />

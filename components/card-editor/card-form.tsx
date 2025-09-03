@@ -426,7 +426,8 @@ export function ProfessionCardForm({
                   <FormLabel>卡图链接</FormLabel>
                   <FormControl>
                     <Input 
-                      {...field} 
+                      {...field}
+                      value={field.value || ''}
                       placeholder="输入图片URL（可选）" 
                       onBlur={handleFieldBlur}
                       type="url"
@@ -741,7 +742,8 @@ export function AncestryCardForm({
                   <FormLabel>卡图链接</FormLabel>
                   <FormControl>
                     <Input 
-                      {...field} 
+                      {...field}
+                      value={field.value || ''}
                       placeholder="输入图片URL（可选）" 
                       onBlur={handleFieldBlur}
                       type="url"
@@ -1116,7 +1118,8 @@ export function VariantCardForm({
                   <FormLabel>卡图链接</FormLabel>
                   <FormControl>
                     <Input 
-                      {...field} 
+                      {...field}
+                      value={field.value || ''}
                       placeholder="输入图片URL（可选）" 
                       onBlur={handleFieldBlur}
                       type="url"
@@ -1391,7 +1394,8 @@ export function CommunityCardForm({
               <FormLabel>卡图链接</FormLabel>
               <FormControl>
                 <Input 
-                  {...field} 
+                  {...field}
+                  value={field.value || ''}
                   placeholder="输入图片URL（可选）" 
                   onBlur={handleFieldBlur}
                   type="url"
@@ -1735,7 +1739,8 @@ export function SubclassCardForm({
               <FormLabel>卡图链接</FormLabel>
               <FormControl>
                 <Input 
-                  {...field} 
+                  {...field}
+                  value={field.value || ''}
                   placeholder="输入图片URL（可选）" 
                   onBlur={handleFieldBlur}
                   type="url"
@@ -2050,7 +2055,8 @@ export function DomainCardForm({
               <FormLabel>卡图链接</FormLabel>
               <FormControl>
                 <Input 
-                  {...field} 
+                  {...field}
+                  value={field.value || ''}
                   placeholder="输入图片URL（可选）" 
                   onBlur={handleFieldBlur}
                   type="url"

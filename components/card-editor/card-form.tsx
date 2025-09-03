@@ -1665,6 +1665,10 @@ export function DomainCardForm({
     defaultValues: card,
   })
 
+  // ID编辑状态
+  const [isEditingId, setIsEditingId] = useState(false)
+  const [autoGenerateId, setAutoGenerateId] = useState(true)
+
   // 当卡牌数据变化时重置表单
   useEffect(() => {
     form.reset(card)
@@ -1694,6 +1698,17 @@ export function DomainCardForm({
       form.setValue('id', newId, { shouldValidate: false, shouldDirty: false, shouldTouch: false })
     }
   }, [form.watch('名称'), packageInfo, form])
+
+  // 生成ID函数
+  const generateId = () => {
+    const currentValues = form.getValues()
+    const packageName = packageInfo?.name || '新建卡包'
+    const author = packageInfo?.author || '作者'
+    const cardName = currentValues.名称 || '卡牌名'
+    
+    const newId = generateCardId(packageName, author, 'domain', cardName)
+    form.setValue('id', newId)
+  }
 
   // 自动保存函数
   const handleAutoSave = () => {
@@ -1726,6 +1741,70 @@ export function DomainCardForm({
                 <FormControl>
                   <Input {...field} placeholder="输入领域卡牌名称" onBlur={handleFieldBlur} />
                 </FormControl>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">ID:</span>
+                    {!isEditingId ? (
+                      <span 
+                        className="text-xs font-mono text-muted-foreground cursor-pointer hover:text-foreground" 
+                        onClick={() => setIsEditingId(true)}
+                        title="点击编辑ID"
+                      >
+                        {form.watch('id') || '未设置'}
+                      </span>
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="id"
+                        render={({ field }) => (
+                          <Input 
+                            className="h-6 text-xs font-mono px-2 py-0 w-48"
+                            placeholder="例如：pack-author-domain-领域名" 
+                            {...field} 
+                            onBlur={() => {
+                              setIsEditingId(false)
+                              handleFieldBlur()
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === 'Escape') {
+                                setIsEditingId(false)
+                                handleFieldBlur()
+                              }
+                            }}
+                            autoFocus
+                          />
+                        )}
+                      />
+                    )}
+                    {autoGenerateId && (
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
+                        自动
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={generateId}
+                      className="h-6 w-6 p-0"
+                      title="重新生成ID"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAutoGenerateId(!autoGenerateId)}
+                      className="h-6 px-2 text-[10px]"
+                      title={autoGenerateId ? "切换到手动模式" : "切换到自动模式"}
+                    >
+                      {autoGenerateId ? '自动' : '手动'}
+                    </Button>
+                  </div>
+                </div>
                 <FormMessage />
               </FormItem>
             )}

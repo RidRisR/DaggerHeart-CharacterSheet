@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { BookOpen, Home } from 'lucide-react'
+import { BookOpen, Home, FileText } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ImageCard } from '@/components/ui/image-card'
 import { transformCardToStandard } from './utils/card-transformer'
@@ -33,7 +33,7 @@ export default function CardEditorPage() {
     confirmDialog,
     validationResult,
     isValidating,
-    
+
     // 方法
     updateMetadata,
     addCard,
@@ -85,10 +85,10 @@ export default function CardEditorPage() {
       ...prev,
       [cardType]: cardIndex
     }))
-    
+
     // 切换到对应的标签页
     setSelectedTab(cardType)
-    
+
     // 关闭验证对话框
     clearValidationResult()
   }
@@ -112,6 +112,15 @@ export default function CardEditorPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/card-manager')}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              卡包管理
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -165,7 +174,7 @@ export default function CardEditorPage() {
             <div className="mt-4 flex justify-center">
               <ImageCard
                 card={transformCardToStandard(previewDialog.card, previewDialog.type as any)}
-                onClick={() => {}}
+                onClick={() => { }}
                 isSelected={false}
                 showSource={false}
                 priority={true}

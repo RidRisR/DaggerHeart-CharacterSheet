@@ -55,7 +55,7 @@ export function Toolbar({
         className="flex items-center gap-2"
       >
         <Download className="h-4 w-4" />
-        导出JSON
+        导出卡包
       </Button>
       <Button
         variant="outline"

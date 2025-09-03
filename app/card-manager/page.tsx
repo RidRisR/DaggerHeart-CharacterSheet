@@ -352,6 +352,15 @@ export default function CardImportTestPage() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => navigateToPage('/card-editor')}
+              className="flex items-center gap-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              卡牌编辑器
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={goBackToMain}
               className="flex items-center gap-2 bg-blue-700 hover:bg-blue-600 text-white border-green-700"
             >

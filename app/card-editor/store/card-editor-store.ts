@@ -11,7 +11,7 @@ import type {
 import { defaultPackage } from '../types'
 import { createDefaultCard, copyCard } from '../utils/card-factory'
 import { exportCardPackage, importCardPackage } from '../utils/import-export'
-import { validationService, type ValidationResult } from '../services/validation-service'
+import { validationService, type ValidationResult, type ValidationError } from '../services/validation-service'
 
 interface CardEditorStore {
   // 状态
@@ -20,6 +20,12 @@ interface CardEditorStore {
   previewDialog: PreviewDialogState
   cardListDialog: CardListDialogState
   definitionsDialog: boolean
+  confirmDialog: {
+    open: boolean
+    title: string
+    message: string
+    onConfirm: () => void
+  }
   
   // 验证相关状态
   validationResult: ValidationResult | null
@@ -48,6 +54,7 @@ interface CardEditorStore {
   setPreviewDialog: (state: PreviewDialogState | ((prev: PreviewDialogState) => PreviewDialogState)) => void
   setCardListDialog: (state: CardListDialogState | ((prev: CardListDialogState) => CardListDialogState)) => void
   setDefinitionsDialog: (open: boolean) => void
+  setConfirmDialog: (state: { open: boolean; title?: string; message?: string; onConfirm?: () => void }) => void
   setCurrentCardIndex: (updater: (prev: CurrentCardIndex) => CurrentCardIndex) => void
   
   // 自定义字段定义
@@ -79,6 +86,12 @@ export const useCardEditorStore = create<CardEditorStore>()(
         type: ''
       },
       definitionsDialog: false,
+      confirmDialog: {
+        open: false,
+        title: '',
+        message: '',
+        onConfirm: () => {}
+      },
       
       // 验证相关初始状态
       validationResult: null,
@@ -198,23 +211,31 @@ export const useCardEditorStore = create<CardEditorStore>()(
       
       newPackage: () => {
         const state = get()
-        if (state.packageData.isModified) {
-          const confirmed = confirm('您有未保存的更改，确定要创建新卡包吗？')
-          if (!confirmed) return
+        const { setConfirmDialog } = get()
+        
+        const createNewPackage = () => {
+          set({
+            packageData: { ...defaultPackage },
+            currentCardIndex: {
+              profession: 0,
+              ancestry: 0,
+              variant: 0,
+              community: 0,
+              subclass: 0,
+              domain: 0
+            },
+            confirmDialog: { ...state.confirmDialog, open: false }
+          })
+          toast.success('已创建新卡包')
         }
         
-        set({
-          packageData: { ...defaultPackage },
-          currentCardIndex: {
-            profession: 0,
-            ancestry: 0,
-            variant: 0,
-            community: 0,
-            subclass: 0,
-            domain: 0
-          }
+        // 总是显示确认对话框，警告会删除现有内容
+        setConfirmDialog({
+          open: true,
+          title: '创建新卡包',
+          message: '创建新卡包将会清空当前所有卡片内容，确定要继续吗？',
+          onConfirm: createNewPackage
         })
-        toast.success('已创建新卡包')
       },
       
       // 验证操作
@@ -286,6 +307,14 @@ export const useCardEditorStore = create<CardEditorStore>()(
         
       setDefinitionsDialog: (open) => 
         set({ definitionsDialog: open }),
+        
+      setConfirmDialog: (state) => 
+        set(prev => ({
+          confirmDialog: {
+            ...prev.confirmDialog,
+            ...state
+          }
+        })),
         
       setCurrentCardIndex: (updater) => 
         set(state => ({

@@ -30,6 +30,7 @@ export default function CardEditorPage() {
     previewDialog,
     cardListDialog,
     definitionsDialog,
+    confirmDialog,
     validationResult,
     isValidating,
     
@@ -47,6 +48,7 @@ export default function CardEditorPage() {
     setPreviewDialog,
     setCardListDialog,
     setDefinitionsDialog,
+    setConfirmDialog,
     setCurrentCardIndex,
     addDefinition,
     removeDefinition
@@ -201,6 +203,32 @@ export default function CardEditorPage() {
         onClose={clearValidationResult}
         onJumpToCard={handleJumpToCard}
       />
+
+      {/* 确认对话框 */}
+      <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ open })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{confirmDialog.title}</DialogTitle>
+            <DialogDescription>
+              {confirmDialog.message}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialog({ open: false })}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDialog.onConfirm}
+            >
+              确定
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

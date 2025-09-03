@@ -416,6 +416,26 @@ export function ProfessionCardForm({
                 </FormItem>
               )}
             />
+
+            {/* 卡图链接 */}
+            <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>卡图链接</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="输入图片URL（可选）" 
+                      onBlur={handleFieldBlur}
+                      type="url"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </Form>
   )
@@ -707,6 +727,26 @@ export function AncestryCardForm({
                   <div className="text-sm text-muted-foreground">
                     该种族的风味描述
                   </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* 卡图链接 */}
+            <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>卡图链接</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="输入图片URL（可选）" 
+                      onBlur={handleFieldBlur}
+                      type="url"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1066,6 +1106,26 @@ export function VariantCardForm({
             )}
           />
             </div>
+
+            {/* 卡图链接 */}
+            <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>卡图链接</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="输入图片URL（可选）" 
+                      onBlur={handleFieldBlur}
+                      type="url"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </Form>
   )
@@ -1315,6 +1375,26 @@ export function CommunityCardForm({
                   placeholder="请输入社群的背景和风味描述"
                   {...field}
                   onBlur={handleFieldBlur}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 卡图链接 */}
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>卡图链接</FormLabel>
+              <FormControl>
+                <Input 
+                  {...field} 
+                  placeholder="输入图片URL（可选）" 
+                  onBlur={handleFieldBlur}
+                  type="url"
                 />
               </FormControl>
               <FormMessage />
@@ -1645,6 +1725,26 @@ export function SubclassCardForm({
             </FormItem>
           )}
         />
+
+        {/* 卡图链接 */}
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>卡图链接</FormLabel>
+              <FormControl>
+                <Input 
+                  {...field} 
+                  placeholder="输入图片URL（可选）" 
+                  onBlur={handleFieldBlur}
+                  type="url"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </Form>
   )
@@ -1936,6 +2036,26 @@ export function DomainCardForm({
               <div className="text-sm text-muted-foreground">
                 支持 Markdown 语法，可使用 **粗体**、*斜体*、`代码` 等格式
               </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 卡图链接 */}
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>卡图链接</FormLabel>
+              <FormControl>
+                <Input 
+                  {...field} 
+                  placeholder="输入图片URL（可选）" 
+                  onBlur={handleFieldBlur}
+                  type="url"
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

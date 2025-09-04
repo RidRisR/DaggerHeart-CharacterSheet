@@ -93,7 +93,7 @@ export function HitPointsSection() {
   }
   return (
     <div className="py-1 mb-1">
-      <h3 className="text-xs font-bold text-center mb-2.5 print:mb-1.5">生命值与压力</h3>
+      <h3 className="text-xs font-bold text-center mb-2.5">生命值与压力</h3>
 
       <div className="flex justify-between items-center mb-2 gap-1">
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
@@ -142,7 +142,7 @@ export function HitPointsSection() {
         </div>
       </div>
 
-      <div className="mt-2 space-y-1.5 print:space-y-1">
+      <div className="mt-2 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="font-bold mr-2 text-xs">
             HP

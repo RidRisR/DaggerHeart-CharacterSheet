@@ -118,10 +118,8 @@ export function WeaponSection({
         <DualLineInput
           name={featureField}
           value={(formData as any)[featureField] || ""}
-          placeholder="特性"
           onChange={handleInputChange}
-          maxLength={29}
-        />
+          maxLength={29} placeholder={""} />
       </div>
     </div>
   )

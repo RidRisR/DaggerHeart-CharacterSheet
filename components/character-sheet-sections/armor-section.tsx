@@ -117,10 +117,8 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
         <DualLineInput
           name="armorFeature"
           value={formData.armorFeature || ""}
-          placeholder="特性"
           onChange={handleInputChange}
-          maxLength={29}
-        />
+          maxLength={29} placeholder={""} />
       </div>
     </div>
   )

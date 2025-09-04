@@ -129,10 +129,8 @@ export function InventoryWeaponSection({
         <DualLineInput
           name={featureField}
           value={(formData as any)[featureField] || ""}
-          placeholder="特征"
           onChange={handleInputChange}
-          maxLength={29}
-        />
+          maxLength={29} placeholder={""} />
       </div>
 
       <div className="flex gap-4 mt-1">

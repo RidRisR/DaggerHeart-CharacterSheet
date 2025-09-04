@@ -4,6 +4,7 @@ import { Eye, Settings, FileText } from 'lucide-react'
 import type { CardPackageState, CurrentCardIndex, CardType } from '../../types'
 import { MetadataTab } from './metadata-tab'
 import { CardEditorTab } from './card-editor-tab'
+import { AncestryEditorTab } from './ancestry-editor-tab'
 
 interface CardTabsProps {
   selectedTab: string
@@ -83,12 +84,16 @@ export function CardTabs({
         />
       </TabsContent>
 
-      {/* 血统卡牌选项卡 */}
+      {/* 血统卡牌选项卡 - 使用专门的双卡编辑器 */}
       <TabsContent value="ancestry">
-        <CardEditorTab
-          {...cardEditorProps}
-          cardType="ancestry"
-          title="血统卡牌"
+        <AncestryEditorTab
+          currentPackage={currentPackage}
+          currentCardIndex={currentCardIndex}
+          onSetCurrentCardIndex={onSetCurrentCardIndex}
+          onShowAllCards={onShowAllCards}
+          onShowKeywords={onShowKeywords}
+          onAddCard={onAddCard}
+          onDeleteCard={onDeleteCard}
         />
       </TabsContent>
 

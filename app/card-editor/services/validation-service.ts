@@ -52,6 +52,13 @@ class ValidationService implements CardValidationService {
       // 使用现有的验证器
       const validationResult = CardTypeValidator.validateImportData(importData, context)
       
+      // 添加血统卡配对验证
+      const ancestryPairErrors = this.validateAncestryPairs(packageData.ancestry as any[] || [])
+      if (ancestryPairErrors.length > 0) {
+        validationResult.errors.push(...ancestryPairErrors)
+        validationResult.isValid = false
+      }
+      
       // 将验证结果转换为我们的格式
       return this.formatValidationResult(validationResult)
       
@@ -204,6 +211,55 @@ class ValidationService implements CardValidationService {
   }
 
   /**
+   * 验证血统卡配对
+   */
+  private validateAncestryPairs(ancestryCards: any[]): ValidationError[] {
+    const errors: ValidationError[] = []
+    const pairMap = new Map<string, any[]>()
+    
+    // 只按种族分组（不再检查简介一致性）
+    ancestryCards.forEach((card, index) => {
+      const key = card.种族
+      if (!pairMap.has(key)) {
+        pairMap.set(key, [])
+      }
+      pairMap.get(key)!.push({ ...card, originalIndex: index })
+    })
+    
+    // 检查每个分组
+    pairMap.forEach((cards, 种族) => {
+      // 检查是否有两张卡
+      if (cards.length !== 2) {
+        if (cards.length === 1) {
+          errors.push({
+            path: `ancestry[${cards[0].originalIndex}]`,
+            message: `血统"${种族}"缺少配对卡片。每个种族必须有类别1和类别2两张卡片`
+          })
+        } else if (cards.length > 2) {
+          cards.forEach(card => {
+            errors.push({
+              path: `ancestry[${card.originalIndex}]`,
+              message: `血统"${种族}"有${cards.length}张卡片，但应该只有2张（类别1和类别2）`
+            })
+          })
+        }
+        return
+      }
+      
+      // 检查类别
+      const categories = cards.map(c => c.类别).sort()
+      if (categories[0] !== 1 || categories[1] !== 2) {
+        errors.push({
+          path: `ancestry.${种族}`,
+          message: `血统"${种族}"的两张卡片类别不正确。应该分别为1和2，实际为${categories.join('和')}`
+        })
+      }
+    })
+    
+    return errors
+  }
+
+  /**
    * 格式化验证结果
    */
   private formatValidationResult(validationResult: { isValid: boolean; errors: ValidationError[]; totalCards: number }): ValidationResult {
@@ -228,13 +284,9 @@ class ValidationService implements CardValidationService {
         errorsByType[cardType].push(error)
         errorsByTypeCount[cardType]++
       } else {
-        // 如果无法识别类型，放到general类别
-        if (!errorsByType.general) {
-          errorsByType.general = []
-          errorsByTypeCount.general = 0
-        }
-        (errorsByType as any).general.push(error);
-        (errorsByTypeCount as any).general++
+        // 如果无法识别类型，放到variant类别作为默认
+        errorsByType.variant.push(error)
+        errorsByTypeCount.variant++
       }
     })
     

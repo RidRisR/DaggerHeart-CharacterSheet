@@ -40,6 +40,10 @@ interface CardEditorStore {
   deleteCard: (type: CardType, index: number) => void
   updateCard: (type: CardType, index: number, card: unknown) => void
   
+  // 血统卡配对操作
+  updateAncestryPair: (index1: number, card1: unknown, index2: number, card2: unknown) => void
+  deleteAncestryPair: (index: number) => void
+  
   // 卡包操作
   exportPackage: () => void
   importPackage: () => Promise<void>
@@ -106,6 +110,36 @@ export const useCardEditorStore = create<CardEditorStore>()(
       // 卡牌操作
       addCard: (type) => 
         set(state => {
+          // 血统卡特殊处理：创建配对
+          if (type === 'ancestry') {
+            const baseName = '新血统能力'
+            const card1 = createDefaultCard(type, state.packageData) as any
+            const card2 = createDefaultCard(type, state.packageData) as any
+            
+            // 设置配对卡片属性
+            card1.名称 = `${baseName}1`
+            card1.类别 = 1
+            card2.名称 = `${baseName}2`
+            card2.类别 = 2
+            card2.种族 = card1.种族
+            card2.简介 = card1.简介
+            
+            const existingCards = (state.packageData.ancestry as any[]) || []
+            const newIndex = existingCards.length
+            
+            return {
+              packageData: {
+                ...state.packageData,
+                ancestry: [...existingCards, card1, card2]
+              },
+              currentCardIndex: {
+                ...state.currentCardIndex,
+                ancestry: newIndex
+              }
+            }
+          }
+          
+          // 其他类型卡片正常处理
           const newCard = createDefaultCard(type, state.packageData)
           const existingCards = (state.packageData[type] as any[]) || []
           const newIndex = existingCards.length
@@ -178,6 +212,62 @@ export const useCardEditorStore = create<CardEditorStore>()(
             packageData: {
               ...state.packageData,
               [type]: cards?.map((c, i) => i === index ? card : c) || []
+            }
+          }
+        }),
+        
+      // 血统卡配对操作
+      updateAncestryPair: (index1, card1, index2, card2) =>
+        set(state => {
+          const cards = [...(state.packageData.ancestry as any[] || [])]
+          
+          // 更新两张配对的卡片
+          if (cards[index1]) cards[index1] = card1
+          if (cards[index2]) cards[index2] = card2
+          
+          return {
+            packageData: {
+              ...state.packageData,
+              ancestry: cards
+            }
+          }
+        }),
+      
+      deleteAncestryPair: (index) =>
+        set(state => {
+          const cards = state.packageData.ancestry as any[]
+          if (!cards || cards.length === 0) return state
+          
+          // 找到配对的另一张卡
+          const card = cards[index]
+          if (!card) return state
+          
+          const pairedIndex = cards.findIndex((c, i) => 
+            i !== index && 
+            c.种族 === card.种族 && 
+            c.简介 === card.简介 &&
+            c.类别 !== card.类别
+          )
+          
+          // 删除两张配对的卡片
+          const indicesToDelete = pairedIndex !== -1 ? [index, pairedIndex].sort((a, b) => b - a) : [index]
+          let newCards = [...cards]
+          indicesToDelete.forEach(i => newCards.splice(i, 1))
+          
+          // 调整当前索引
+          const currentIndex = state.currentCardIndex.ancestry
+          const newIndex = currentIndex >= newCards.length ? Math.max(0, newCards.length - 1) : currentIndex
+          
+          toast.info(`已删除血统配对：${card.种族}`)
+          
+          return {
+            packageData: {
+              ...state.packageData,
+              ancestry: newCards
+            },
+            currentCardIndex: {
+              ...state.currentCardIndex,
+              ancestry: newIndex
             }
           }
         }),

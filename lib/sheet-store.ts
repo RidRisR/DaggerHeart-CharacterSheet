@@ -17,6 +17,46 @@ const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
     "知识": "knowledge"
 };
 
+// 按显示长度智能分割文本到两行的函数
+const splitFeatureText = (text: string): [string, string] => {
+    if (!text) return ["", ""];
+
+    // 估算每行可容纳的字符数（基于输入框宽度和字体大小）
+    const maxCharsPerLine = 29; // 匹配输入框的maxLength
+
+    // 如果文本长度小于等于一行容量，全部放在第一行
+    if (text.length <= maxCharsPerLine) {
+        return [text, ""];
+    }
+
+    // 寻找合适的分割点
+    let splitIndex = maxCharsPerLine;
+
+    // 只在空格处分割，或者下一行开头是标点符号时才在标点符号处分割
+    for (let i = maxCharsPerLine; i >= Math.max(0, maxCharsPerLine - 5); i--) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+        
+        // 在空格处分割
+        if (char === ' ') {
+            splitIndex = i + 1;
+            break;
+        }
+        
+        // 只有当下一行开头是标点符号时，才在标点符号处分割
+        const punctuation = ['，', '。', '：', ';', ',', ':'];
+        if (punctuation.includes(char) && nextChar && punctuation.includes(nextChar)) {
+            splitIndex = i + 1;
+            break;
+        }
+    }
+
+    return [
+        text.substring(0, splitIndex).trim(),
+        text.substring(splitIndex).trim()
+    ];
+};
+
 // 同步子职业施法属性的函数
 const syncSubclassSpellcasting = (newData: SheetData, oldData: SheetData): SheetData => {
     // 获取旧的和新的子职业施法属性
@@ -453,7 +493,9 @@ export const useSheetStore = create<SheetState>((set) => ({
                 updates.armorName = customArmorData.名称 || armorId;
                 updates.armorBaseScore = String(customArmorData.护甲值 || "");
                 updates.armorThreshold = customArmorData.伤害阈值 || "";
-                updates.armorFeature = `${customArmorData.特性名称 ? customArmorData.特性名称 + ': ' : ''}${customArmorData.描述 || ''}`.trim();
+                const featureText = `${customArmorData.特性名称 ? customArmorData.特性名称 + ': ' : ''}${customArmorData.描述 || ''}`.trim();
+                const [feature1, feature2] = splitFeatureText(featureText);
+                updates.armorFeature = feature2 ? `${feature1}\n${feature2}` : feature1;
                 
                 // 计算伤害阈值
                 if (customArmorData.伤害阈值) {
@@ -486,7 +528,9 @@ export const useSheetStore = create<SheetState>((set) => ({
                     updates.armorName = armor.名称;
                     updates.armorBaseScore = String(armor.护甲值);
                     updates.armorThreshold = armor.伤害阈值;
-                    updates.armorFeature = `${armor.特性名称}${armor.特性名称 && armor.描述 ? ": " : ""}${armor.描述}`;
+                    const featureText = `${armor.特性名称}${armor.特性名称 && armor.描述 ? ": " : ""}${armor.描述}`;
+                    const [feature1, feature2] = splitFeatureText(featureText);
+                    updates.armorFeature = feature2 ? `${feature1}\n${feature2}` : feature1;
                     
                     // 计算伤害阈值
                     const thresholds = armor.伤害阈值.split('/');

@@ -4,6 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
+import { DualLineInput } from "@/components/ui/dual-line-input"
 
 interface InventoryWeaponSectionProps {
   index: number
@@ -125,14 +126,12 @@ export function InventoryWeaponSection({
       </div>
 
       <div className="mt-1">
-        <label className="text-[8px] text-gray-600">特征</label>
-        <input
-          type="text"
+        <DualLineInput
           name={featureField}
-          value={(formData as any)[featureField]}
+          value={(formData as any)[featureField] || ""}
+          placeholder="特征"
           onChange={handleInputChange}
-          {...getElementProps((formData as any)[featureField] || "", `inventory-weapon-${index}-feature`)}
-          className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
+          maxLength={29}
         />
       </div>
 

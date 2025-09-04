@@ -387,6 +387,8 @@ export default function CharacterSheet() {
         damage: `${weapon.检定 || ""}: ${weapon.伤害 || ""}`,
         feature: weapon.特性名称 ? `${weapon.特性名称}: ${weapon.描述}` : weapon.描述,
       }
+
+
       if (field === "primaryWeaponName") {
         setFormData((prev) => ({
           ...prev,
@@ -461,6 +463,7 @@ export default function CharacterSheet() {
           feature: "",
         };
       }
+
 
       if (field === "primaryWeaponName") {
         setFormData((prev) => ({

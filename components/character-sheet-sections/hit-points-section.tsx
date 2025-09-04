@@ -103,7 +103,7 @@ export function HitPointsSection() {
         <input
           type="text"
           name="minorThreshold"
-          value={formData.minorThreshold}
+          value={formData.minorThreshold || ""}
           onChange={handleInputChange}
           placeholder={
             formData.armorThreshold && formData.level
@@ -123,7 +123,7 @@ export function HitPointsSection() {
         <input
           type="text"
           name="majorThreshold"
-          value={formData.majorThreshold}
+          value={formData.majorThreshold || ""}
           onChange={handleInputChange}
           placeholder={
             formData.armorThreshold && formData.level

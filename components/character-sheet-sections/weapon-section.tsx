@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
+import { DualLineInput } from "@/components/ui/dual-line-input"
 
 interface WeaponSectionProps {
   isPrimary?: boolean
@@ -46,10 +46,6 @@ export function WeaponSection({
     }
   }
 
-  const { getElementProps } = useAutoResizeFont({
-    maxFontSize: 14,
-    minFontSize: 10
-  })
 
   const nameField = `${fieldPrefix}Name`
   const traitField = `${fieldPrefix}Trait`
@@ -57,7 +53,7 @@ export function WeaponSection({
   const featureField = `${fieldPrefix}Feature`
 
   return (
-    <div className="mb-2 print:mb-3">
+    <div className="mb-2">
       <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">
         {isPrimary ? "主武器" : "副武器"}
       </h4>
@@ -119,14 +115,12 @@ export function WeaponSection({
         </div>
       </div>
       <div className="mt-1">
-        <label className="text-[8px] text-gray-600">特性</label>
-        <input
-          type="text"
+        <DualLineInput
           name={featureField}
-          value={(formData as any)[featureField]}
+          value={(formData as any)[featureField] || ""}
+          placeholder="特性"
           onChange={handleInputChange}
-          {...getElementProps((formData as any)[featureField] || "", `${fieldPrefix}-feature`)}
-          className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
+          maxLength={29}
         />
       </div>
     </div>

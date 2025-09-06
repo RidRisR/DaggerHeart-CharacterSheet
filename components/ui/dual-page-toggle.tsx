@@ -1,13 +1,14 @@
 "use client"
 
+import { Button } from '@/components/ui/button'
 import { useDualPageStore } from '@/lib/dual-page-store'
 
 // 双页模式图标
 const DualPageIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -24,8 +25,8 @@ const DualPageIcon = () => (
 const SinglePageIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -42,36 +43,12 @@ export function DualPageToggle() {
   const { isDualPageMode, toggleDualPageMode } = useDualPageStore()
 
   return (
-    <div
-      className="bg-gray-200 dark:bg-gray-700 rounded-full p-0.5 shadow-md cursor-pointer transition-all duration-200 hover:shadow-lg scale-90"
+    <Button
       onClick={toggleDualPageMode}
+      className="bg-gray-800 hover:bg-gray-700 text-white rounded-full p-0 flex items-center justify-center w-12 h-12 text-base"
+      title={isDualPageMode ? "切换到单页模式" : "切换到双页模式"}
     >
-      <div className="flex items-center">
-        <div
-          className={`
-            px-2 py-1 rounded-full flex items-center gap-1 transition-all duration-300 text-xs
-            ${!isDualPageMode
-              ? 'bg-white dark:bg-gray-900 shadow-sm'
-              : 'text-gray-500 dark:text-gray-400'
-            }
-          `}
-        >
-          <SinglePageIcon />
-          <span className="font-medium">单页</span>
-        </div>
-        <div
-          className={`
-            px-2 py-1 rounded-full flex items-center gap-1 transition-all duration-300 text-xs
-            ${isDualPageMode
-              ? 'bg-white dark:bg-gray-900 shadow-sm'
-              : 'text-gray-500 dark:text-gray-400'
-            }
-          `}
-        >
-          <DualPageIcon />
-          <span className="font-medium">双页</span>
-        </div>
-      </div>
-    </div>
+      {isDualPageMode ? <SinglePageIcon /> : <DualPageIcon />}
+    </Button>
   )
 }

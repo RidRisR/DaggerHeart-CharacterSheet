@@ -1055,12 +1055,8 @@ export default function Home() {
 
           </div>
 
-          {/* 文字模式和双页模式切换开关 - 胶囊型，在容器外右下角 */}
+          {/* 文字模式切换开关 - 胶囊型，在容器外右下角 */}
           <div className={`print:hidden mt-3 flex justify-end gap-3 transition-all duration-300 ${isDualPageMode && !isMobile ? 'w-[425mm]' : 'w-[210mm]'}`}>
-            {/* 双页模式开关 - 仅桌面端显示 */}
-            <div className="hidden md:block">
-              <DualPageToggle />
-            </div>
             <div
               className="bg-gray-200 dark:bg-gray-700 rounded-full p-0.5 shadow-md cursor-pointer transition-all duration-200 hover:shadow-lg scale-90"
               onClick={toggleTextMode}
@@ -1100,7 +1096,11 @@ export default function Home() {
       <div className={`fixed left-0 right-0 z-30 print:hidden ${isMobile ? 'bottom-8' : 'bottom-4'
         }`}>
         <div className="flex justify-center">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 relative">
+            {/* 双页模式切换按钮 - 绝对定位到最右边，仅桌面端显示 */}
+            <div className="hidden md:block absolute right-[-60px]">
+              <DualPageToggle />
+            </div>
             <Button
               onClick={() => setIsCardDrawerOpen(!isCardDrawerOpen)}
               className={`bg-gray-800 hover:bg-gray-700 text-white rounded-full p-0 flex items-center justify-center ${isMobile ? 'w-14 h-14 text-lg' : 'w-12 h-12 text-base'

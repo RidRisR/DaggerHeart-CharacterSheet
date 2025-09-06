@@ -46,11 +46,11 @@ export function PageDisplay({
   }
 
   return (
-    <div className={`relative w-full transition-all duration-300 ${isDualPageMode && !isMobile ? 'md:max-w-[425mm]' : 'md:max-w-[210mm]'}`}>
+    <div className={`relative w-full mx-auto transition-all duration-300 ${isDualPageMode && !isMobile ? 'md:max-w-[425mm]' : 'md:max-w-[210mm]'}`}>
       
       {/* 双页模式布局 */}
       {isDualPageMode && !isMobile ? (
-        <div className="grid grid-cols-2 gap-1 w-[425mm]">
+        <div className="grid grid-cols-2 gap-1 w-[425mm] mx-auto">
           {/* 左页 */}
           <div className="w-[210mm]">
             <Tabs value={leftTabValue} onValueChange={onSetLeftTab} className="w-[210mm]">

@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
-import { DualLineInput } from "@/components/ui/dual-line-input"
+import { EditableDualLine } from "@/components/ui/editable-dual-line"
 
 interface WeaponSectionProps {
   isPrimary?: boolean
@@ -115,11 +115,13 @@ export function WeaponSection({
         </div>
       </div>
       <div className="mt-1">
-        <DualLineInput
+        <EditableDualLine
           name={featureField}
           value={(formData as any)[featureField] || ""}
           onChange={handleInputChange}
-          maxLength={29} placeholder={""} />
+          maxLength={59}
+          placeholder=""
+        />
       </div>
     </div>
   )

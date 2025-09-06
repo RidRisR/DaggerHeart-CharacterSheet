@@ -460,3 +460,42 @@ html {
     scrollbar-width: none; /* Firefox */
   }
 }
+
+/* 双页模式样式 */
+.dual-page-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  max-width: 425mm;
+  margin: 0 auto;
+}
+
+/* 确保双页模式在移动端禁用 */
+@media (max-width: 768px) {
+  .dual-page-container {
+    display: block !important;
+    grid-template-columns: none !important;
+    gap: 0 !important;
+    max-width: 210mm !important;
+  }
+}
+
+/* 打印时双页模式自动恢复为单页布局 */
+@media print {
+  .dual-page-container {
+    display: block !important;
+    grid-template-columns: none !important;
+    gap: 0 !important;
+    max-width: 210mm !important;
+  }
+  
+  .dual-page-container > div {
+    width: 210mm !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* 隐藏双页模式控件 */
+  .dual-page-controls {
+    display: none !important;
+  }
+}

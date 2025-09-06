@@ -27,6 +27,9 @@ import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
 import { PinnedCardWindow } from "@/components/ui/pinned-card-window"
 import { PageVisibilityDropdown } from "@/components/ui/page-visibility-dropdown"
 import { useTextModeStore } from "@/lib/text-mode-store"
+import { useDualPageStore } from "@/lib/dual-page-store"
+import { PageSelector } from "@/components/ui/page-selector"
+import { DualPageToggle } from "@/components/ui/dual-page-toggle"
 import { registerPages, getTabPages } from "@/lib/page-registry"
 import { PrintPageRenderer } from "@/components/print/print-page-renderer"
 import { SaveSwitcher } from "@/components/ui/save-switcher"
@@ -185,6 +188,8 @@ export default function Home() {
   const { deleteCard, moveCard } = useCardActions();
   // 文字模式状态
   const { isTextMode, toggleTextMode } = useTextModeStore();
+  // 双页模式状态
+  const { isDualPageMode, leftPageId, rightPageId, setLeftPage, setRightPage } = useDualPageStore();
   const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null)
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -1012,11 +1017,11 @@ export default function Home() {
       </div>
 
       <div className="flex justify-center px-0">
-        <div className="w-full md:max-w-[220mm]">
+        <div className={`w-full transition-all duration-300 ${isDualPageMode && !isMobile ? 'md:max-w-[445mm]' : 'md:max-w-[220mm]'}`}>
           {/* 角色卡区域 - 带相对定位 */}
-          <div className="relative w-full md:max-w-[210mm]">
+          <div className={`relative w-full transition-all duration-300 ${isDualPageMode && !isMobile ? 'md:max-w-[425mm]' : 'md:max-w-[210mm]'}`}>
             {/* 页面标题 - 打印时隐藏 */}
-            <div className="print:hidden w-[210mm] mb-3 text-center">
+            <div className={`print:hidden mb-3 text-center transition-all duration-300 ${isDualPageMode && !isMobile ? 'w-[425mm]' : 'w-[210mm]'}`}>
               <SaveSwitcher
                 characterList={characterList}
                 currentCharacterId={currentCharacterId}
@@ -1024,52 +1029,99 @@ export default function Home() {
               />
             </div>
 
-            <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-[210mm]">
-              {/* 支持移动端滚动的Tab容器 */}
-              <div className="w-full overflow-x-auto tabs-container">
-                <TabsList className={`grid w-full transition-all duration-300 ease-in-out ${isMobile ? 'h-12' : 'h-10'}`}
-                  style={{
-                    gridTemplateColumns: `repeat(${getVisibleTabs().length}, 1fr) auto`
-                  }}>
-                  {/* 动态渲染可见的tabs - 填满可用空间 */}
-                  {getVisibleTabs().map((tab, index) => (
-                    <TabsTrigger
-                      key={tab.id}
-                      value={tab.id}
-                      className={`transition-all duration-200 ease-in-out animate-in slide-in-from-right-2 ${isMobile ? 'py-2.5 text-sm' : 'py-1.5 text-sm'}`}
-                      style={{
-                        animationDelay: `${index * 50}ms`
-                      }}
-                    >
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-
-                  {/* 页面管理下拉菜单 - 固定宽度 */}
-                  <div className="flex items-center justify-center min-w-[44px]">
-                    <PageVisibilityDropdown />
+            {/* 双页模式布局 */}
+            {isDualPageMode && !isMobile ? (
+              <div className="grid grid-cols-2 gap-1 w-[425mm]">
+                {/* 左页 */}
+                <div className="w-[210mm]">
+                  <div className="print:hidden mb-3 text-center">
+                    <PageSelector
+                      value={leftPageId}
+                      onValueChange={setLeftPage}
+                      label="左页"
+                      className="justify-center"
+                    />
                   </div>
-                </TabsList>
+                  {(() => {
+                    const leftPage = getTabPages(formData).find(p => p.id === leftPageId)
+                    if (leftPage) {
+                      const Component = leftPage.component
+                      return <Component />
+                    }
+                    return <div className="h-full flex items-center justify-center text-gray-400">请选择页面</div>
+                  })()}
+                </div>
+                
+                {/* 右页 */}
+                <div className="w-[210mm]">
+                  <div className="print:hidden mb-3 text-center">
+                    <PageSelector
+                      value={rightPageId}
+                      onValueChange={setRightPage}
+                      label="右页"
+                      className="justify-center"
+                    />
+                  </div>
+                  {(() => {
+                    const rightPage = getTabPages(formData).find(p => p.id === rightPageId)
+                    if (rightPage) {
+                      const Component = rightPage.component
+                      return <Component />
+                    }
+                    return <div className="h-full flex items-center justify-center text-gray-400">请选择页面</div>
+                  })()}
+                </div>
               </div>
+            ) : (
+              /* 单页模式布局（原有布局） */
+              <Tabs value={currentTabValue} onValueChange={setCurrentTabValue} className="w-[210mm]">
+                {/* 支持移动端滚动的Tab容器 */}
+                <div className="w-full overflow-x-auto tabs-container">
+                  <TabsList className={`grid w-full transition-all duration-300 ease-in-out ${isMobile ? 'h-12' : 'h-10'}`}
+                    style={{
+                      gridTemplateColumns: `repeat(${getVisibleTabs().length}, 1fr) auto`
+                    }}>
+                    {/* 动态渲染可见的tabs - 填满可用空间 */}
+                    {getVisibleTabs().map((tab, index) => (
+                      <TabsTrigger
+                        key={tab.id}
+                        value={tab.id}
+                        className={`transition-all duration-200 ease-in-out animate-in slide-in-from-right-2 ${isMobile ? 'py-2.5 text-sm' : 'py-1.5 text-sm'}`}
+                        style={{
+                          animationDelay: `${index * 50}ms`
+                        }}
+                      >
+                        {tab.label}
+                      </TabsTrigger>
+                    ))}
 
-              {/* 动态渲染Tab内容 */}
-              {getVisibleTabs().map((tab) => {
-                const Component = tab.component
-                return (
-                  <TabsContent key={tab.id} value={tab.tabValue || tab.id}>
-                    <Component />
-                  </TabsContent>
-                )
-              })}
-            </Tabs>
+                    {/* 页面管理下拉菜单 - 固定宽度 */}
+                    <div className="flex items-center justify-center min-w-[44px]">
+                      <PageVisibilityDropdown />
+                    </div>
+                  </TabsList>
+                </div>
 
-            {/* 左侧切换区域 - 仅桌面端显示 */}
-            <div
-              className="print:hidden hidden md:block absolute -left-20 w-16 flex items-center justify-center cursor-pointer group z-20"
-              style={{ top: '48px', bottom: 0 }}
-              onClick={switchToPrevPage}
-              title="上一页 (←) - 循环切换"
-            >
+                {/* 动态渲染Tab内容 */}
+                {getVisibleTabs().map((tab) => {
+                  const Component = tab.component
+                  return (
+                    <TabsContent key={tab.id} value={tab.tabValue || tab.id}>
+                      <Component />
+                    </TabsContent>
+                  )
+                })}
+              </Tabs>
+            )}
+
+            {/* 左侧切换区域 - 仅桌面端单页模式显示 */}
+            {!isDualPageMode && (
+              <div
+                className="print:hidden hidden md:block absolute -left-20 w-16 flex items-center justify-center cursor-pointer group z-20"
+                style={{ top: '48px', bottom: 0 }}
+                onClick={switchToPrevPage}
+                title="上一页 (←) - 循环切换"
+              >
               {/* 悬停时显示的背景 */}
               <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-l-lg"></div>
               {/* 箭头图标 */}
@@ -1078,15 +1130,17 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </div>
-            </div>
+              </div>
+            )}
 
-            {/* 右侧切换区域 - 仅桌面端显示 */}
-            <div
-              className="print:hidden hidden md:block absolute -right-20 w-16 flex items-center justify-center cursor-pointer group z-20"
-              style={{ top: '48px', bottom: 0 }}
-              onClick={switchToNextPage}
-              title="下一页 (→) - 循环切换"
-            >
+            {/* 右侧切换区域 - 仅桌面端单页模式显示 */}
+            {!isDualPageMode && (
+              <div
+                className="print:hidden hidden md:block absolute -right-20 w-16 flex items-center justify-center cursor-pointer group z-20"
+                style={{ top: '48px', bottom: 0 }}
+                onClick={switchToNextPage}
+                title="下一页 (→) - 循环切换"
+              >
               {/* 悬停时显示的背景 */}
               <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-r-lg"></div>
               {/* 箭头图标 */}
@@ -1095,12 +1149,17 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
-            </div>
+              </div>
+            )}
 
           </div>
 
-          {/* 文字模式切换开关 - 胶囊型，在容器外右下角 */}
-          <div className="print:hidden mt-3 flex justify-end w-[210mm]">
+          {/* 文字模式和双页模式切换开关 - 胶囊型，在容器外右下角 */}
+          <div className={`print:hidden mt-3 flex justify-end gap-3 transition-all duration-300 ${isDualPageMode && !isMobile ? 'w-[425mm]' : 'w-[210mm]'}`}>
+            {/* 双页模式开关 - 仅桌面端显示 */}
+            <div className="hidden md:block">
+              <DualPageToggle />
+            </div>
             <div
               className="bg-gray-200 dark:bg-gray-700 rounded-full p-0.5 shadow-md cursor-pointer transition-all duration-200 hover:shadow-lg scale-90"
               onClick={toggleTextMode}

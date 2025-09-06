@@ -291,11 +291,17 @@ export default function CharacterSheet() {
       }
       const professionCard = store.getCardById(value);
       if (professionCard && professionCard.type === CardType.Profession) {
+        // 构建完整的职业名称，包含卡牌选择信息
+        let fullName = professionCard.name;
+        if (professionCard.cardSelectDisplay?.item1 && professionCard.cardSelectDisplay?.item2) {
+          fullName = `${professionCard.name}  -  ${professionCard.cardSelectDisplay.item1}&${professionCard.cardSelectDisplay.item2}`;
+        }
+        
         setFormData((prev) => {
           const updatedFormData = {
             ...prev,
             profession: professionCard.id,
-            professionRef: { id: professionCard.id, name: professionCard.name },
+            professionRef: { id: professionCard.id, name: fullName },
             subclass: "",
             subclassRef: { id: "", name: "" },
           };

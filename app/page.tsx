@@ -9,7 +9,6 @@ import {
   getStandardCardById,
 } from "@/card"
 import { isEmptyCard } from "@/card/card-types"
-import { defaultSheetData } from "@/lib/default-sheet-data"
 import { CardDrawer } from "@/components/card-drawer"
 import { CharacterSheetPageFour, CharacterSheetPageFive } from "@/components/character-sheet-page-card-print"
 import ArmorTemplatePage from "@/components/character-sheet-page-iknis"
@@ -72,23 +71,8 @@ const ImageIcon = () => (
     <polyline points="21 15 16 10 5 21"></polyline>
   </svg>
 )
-import { CharacterMetadata } from "@/lib/sheet-data"
 import { exportCharacterData } from "@/lib/storage"
-import {
-  migrateToMultiCharacterStorage,
-  loadCharacterList,
-  loadCharacterById,
-  saveCharacterById,
-  getActiveCharacterId,
-  setActiveCharacterId,
-  createNewCharacter,
-  addCharacterToMetadataList,
-  updateCharacterInMetadataList,
-  removeCharacterFromMetadataList,
-  deleteCharacterById,
-  duplicateCharacter,
-  MAX_CHARACTERS
-} from "@/lib/multi-character-storage"
+import { useCharacterManagement } from "@/hooks/use-character-management"
 import PrintHelper from "./print-helper"
 import { exportToHTML } from "@/lib/html-exporter"
 
@@ -177,8 +161,7 @@ export default function Home() {
   // 多角色系统状态
   const {
     sheetData: formData,
-    setSheetData: setFormData,
-    replaceSheetData
+    setSheetData: setFormData
   } = useSheetStore();
 
   // 钉住卡牌状态
@@ -197,15 +180,11 @@ export default function Home() {
     setLeftTab, 
     setRightTab 
   } = useDualPageStore();
-  const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null)
-  const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isMigrationCompleted, setIsMigrationCompleted] = useState(false)
   // 添加客户端挂载状态
   const [isClient, setIsClient] = useState(false)
   // 添加移动设备检测
   const [isMobile, setIsMobile] = useState(false)
-
+  
   // UI状态
   const [isPrintingAll, setIsPrintingAll] = useState(false)
   const [isGuideOpen, setIsGuideOpen] = useState(false)
@@ -214,9 +193,25 @@ export default function Home() {
   const [currentTabValue, setCurrentTabValue] = useState("page1")
   const [showShortcutHint, setShowShortcutHint] = useState(false)
   const [isCardDrawerOpen, setIsCardDrawerOpen] = useState(false)
+  
+  // 使用角色管理Hook
+  const {
+    currentCharacterId,
+    characterList,
+    isLoading,
+    switchToCharacter,
+    createNewCharacterHandler,
+    deleteCharacterHandler,
+    duplicateCharacterHandler,
+    renameCharacterHandler,
+    handleQuickCreateArchive,
+  } = useCharacterManagement({ isClient, setCurrentTabValue })
 
   // 打印图片加载状态
   const { allImagesLoaded } = usePrintContext()
+  
+  // 额外需要的MAX_CHARACTERS常量
+  const MAX_CHARACTERS = 10
 
   // 客户端挂载检测
   useEffect(() => {
@@ -261,113 +256,15 @@ export default function Home() {
     return getTabPages(formData)
   }
 
-  // 数据迁移处理 - 只在客户端执行
-  useEffect(() => {
-    if (!isClient) return
-
-    const performMigration = async () => {
-      try {
-        console.log('[App] Starting data migration check...')
-        migrateToMultiCharacterStorage()
-        setIsMigrationCompleted(true)
-        console.log('[App] Migration completed successfully')
-      } catch (error) {
-        console.error('[App] Migration failed:', error)
-        // 迁移失败时保持在加载状态，显示错误
-        return
-      }
-    }
-
-    performMigration()
-  }, [isClient])
-
-  // 加载角色列表和活动角色 - 只在迁移完成且在客户端时执行
-  useEffect(() => {
-    if (!isMigrationCompleted || !isClient) return
-
-    const loadInitialData = () => {
-      try {
-        console.log('[App] Loading initial character data...')
-
-        // 加载角色列表
-        const list = loadCharacterList()
-        setCharacterList(list.characters)
-
-        // 获取活动角色ID
-        const activeId = getActiveCharacterId()
-
-        if (activeId && list.characters.some(char => char.id === activeId)) {
-          // 加载活动角色数据
-          const characterData = loadCharacterById(activeId)
-          if (characterData) {
-            setCurrentCharacterId(activeId)
-            replaceSheetData(characterData)
-            console.log(`[App] Loaded active character: ${activeId}`)
-          } else {
-            console.warn(`[App] Active character data not found: ${activeId}`)
-            // 如果活动角色数据不存在，创建新角色
-            createFirstCharacter()
-          }
-        } else if (list.characters.length > 0) {
-          // 如果没有活动角色但有角色列表，选择第一个
-          const firstCharacter = list.characters[0]
-          const characterData = loadCharacterById(firstCharacter.id)
-          if (characterData) {
-            setCurrentCharacterId(firstCharacter.id)
-            setActiveCharacterId(firstCharacter.id)
-            replaceSheetData(characterData)
-            console.log(`[App] Set first character as active: ${firstCharacter.id}`)
-          }
-        } else {
-          // 没有任何角色，创建第一个
-          createFirstCharacter()
-        }
-      } catch (error) {
-        console.error('[App] Error loading initial data:', error)
-        createFirstCharacter()
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadInitialData()
-  }, [isMigrationCompleted, isClient])
-
-  const createFirstCharacter = () => {
-    try {
-      console.log('[App] Creating first character...')
-      const newCharacterData = createNewCharacter("") // 空白角色名，用户后续填写
-      const metadata = addCharacterToMetadataList("我的存档") // 默认存档名
-
-      if (metadata) {
-        saveCharacterById(metadata.id, newCharacterData)
-        setActiveCharacterId(metadata.id)
-        setCurrentCharacterId(metadata.id)
-        replaceSheetData(newCharacterData)
-        setCharacterList([metadata])
-        console.log(`[App] Created first character: ${metadata.id}`)
-      }
-    } catch (error) {
-      console.error('[App] Error creating first character:', error)
-      // 最后的退路：使用默认数据
-      setFormData(defaultSheetData)
-    }
-  }
 
   // 自动保存当前角色数据（带防抖和更深层的变更检测）
   useEffect(() => {
-    if (!isLoading && isMigrationCompleted && currentCharacterId && formData) {
+    if (!isLoading && currentCharacterId && formData) {
       const saveTimeout = setTimeout(() => {
         try {
-          // 检查是否真的需要保存 - 与localStorage中的数据比较
-          const existingData = loadCharacterById(currentCharacterId)
-          const formDataStr = JSON.stringify(formData)
-          const existingDataStr = JSON.stringify(existingData)
-
-          if (existingDataStr !== formDataStr) {
-            saveCharacterById(currentCharacterId, formData)
-            console.log(`[App] Auto-saved character: ${currentCharacterId}`)
-          }
+          // 保存到localStorage
+          localStorage.setItem(`dh_character_${currentCharacterId}`, JSON.stringify(formData))
+          console.log(`[App] Auto-saved character: ${currentCharacterId}`)
         } catch (error) {
           console.error(`[App] Error auto-saving character ${currentCharacterId}:`, error)
         }
@@ -375,152 +272,10 @@ export default function Home() {
 
       return () => clearTimeout(saveTimeout)
     }
-  }, [formData, currentCharacterId, isLoading, isMigrationCompleted])
+  }, [formData, currentCharacterId, isLoading])
 
-  // 切换角色
-  const switchToCharacter = (characterId: string) => {
-    try {
-      console.log(`[App] Switching to character: ${characterId}`)
-      const characterData = loadCharacterById(characterId)
 
-      if (characterData) {
-        setCurrentCharacterId(characterId)
-        setActiveCharacterId(characterId)
-        replaceSheetData(characterData)
-        console.log(`[App] Successfully switched to character: ${characterId}`)
-      } else {
-        console.error(`[App] Character data not found: ${characterId}`)
-        alert('角色数据加载失败')
-      }
-    } catch (error) {
-      console.error(`[App] Error switching to character ${characterId}:`, error)
-      alert('切换角色失败')
-    }
-  }
 
-  // 创建新角色
-  const createNewCharacterHandler = (saveName: string) => {
-    try {
-      if (characterList.length >= MAX_CHARACTERS) {
-        alert(`最多只能创建${MAX_CHARACTERS}个角色`)
-        return false
-      }
-
-      console.log(`[App] Creating new save: ${saveName}`)
-      const newCharacterData = createNewCharacter("") // 空白角色名，用户后续填写
-      const metadata = addCharacterToMetadataList(saveName) // 使用存档名
-
-      if (metadata) {
-        saveCharacterById(metadata.id, newCharacterData)
-        setCharacterList(prev => [...prev, metadata])
-        switchToCharacter(metadata.id)
-        console.log(`[App] Successfully created new save: ${metadata.id}`)
-        return true
-      } else {
-        console.error('[App] Failed to create character metadata')
-        alert('创建存档失败')
-        return false
-      }
-    } catch (error) {
-      console.error(`[App] Error creating new save:`, error)
-      alert('创建存档失败')
-      return false
-    }
-  }
-
-  // 删除角色
-  const deleteCharacterHandler = (characterId: string) => {
-    try {
-      if (characterList.length <= 1) {
-        alert('至少需要保留一个角色')
-        return false
-      }
-
-      if (!confirm('确定要删除这个角色吗？此操作不可撤销。')) {
-        return false
-      }
-
-      console.log(`[App] Deleting character: ${characterId}`)
-
-      // 删除数据
-      deleteCharacterById(characterId)
-      removeCharacterFromMetadataList(characterId)
-
-      // 更新状态
-      const updatedList = characterList.filter(char => char.id !== characterId)
-      setCharacterList(updatedList)
-
-      // 如果删除的是当前角色，切换到第一个
-      if (currentCharacterId === characterId && updatedList.length > 0) {
-        switchToCharacter(updatedList[0].id)
-      }
-
-      console.log(`[App] Successfully deleted character: ${characterId}`)
-      return true
-    } catch (error) {
-      console.error(`[App] Error deleting character ${characterId}:`, error)
-      alert('删除角色失败')
-      return false
-    }
-  }
-
-  // 复制角色
-  const duplicateCharacterHandler = (characterId: string, newSaveName: string) => {
-    try {
-      if (characterList.length >= MAX_CHARACTERS) {
-        alert(`最多只能创建${MAX_CHARACTERS}个角色`)
-        return false
-      }
-
-      console.log(`[App] Duplicating character: ${characterId}`)
-      const duplicatedData = duplicateCharacter(characterId, "") // 复制角色数据，但角色名清空
-
-      if (duplicatedData) {
-        const metadata = addCharacterToMetadataList(newSaveName) // 使用新的存档名
-        if (metadata) {
-          saveCharacterById(metadata.id, duplicatedData)
-          setCharacterList(prev => [...prev, metadata])
-          switchToCharacter(metadata.id)
-          console.log(`[App] Successfully duplicated character: ${metadata.id}`)
-          return true
-        }
-      }
-
-      console.error('[App] Failed to duplicate character')
-      alert('复制角色失败')
-      return false
-    } catch (error) {
-      console.error(`[App] Error duplicating character ${characterId}:`, error)
-      alert('复制角色失败')
-      return false
-    }
-  }
-
-  // 重命名角色
-  const renameCharacterHandler = (characterId: string, newSaveName: string) => {
-    try {
-      console.log(`[App] Renaming character: ${characterId} to "${newSaveName}"`)
-
-      // 更新存档名称
-      updateCharacterInMetadataList(characterId, { saveName: newSaveName })
-
-      // 更新本地状态
-      setCharacterList(prev =>
-        prev.map(char =>
-          char.id === characterId
-            ? { ...char, saveName: newSaveName, lastModified: new Date().toISOString() }
-            : char
-        )
-      )
-
-      console.log(`[App] Successfully renamed character: ${characterId}`)
-      return true
-    } catch (error) {
-      console.error(`[App] Error renaming character ${characterId}:`, error)
-      alert('重命名存档失败')
-      return false
-    }
-  }
 
   const handlePrintAll = async () => {
     const getCardClass = (cardId: string | undefined): string => {
@@ -734,12 +489,6 @@ export default function Home() {
 
 
   // 快速新建存档
-  const handleQuickCreateArchive = () => {
-    const saveName = prompt('请输入存档名称:')
-    if (saveName && saveName.trim()) {
-      createNewCharacterHandler(saveName.trim())
-    }
-  }
 
   // 页面切换逻辑 - 基于页面注册系统
   const getAvailablePages = () => {
@@ -915,15 +664,15 @@ export default function Home() {
   }
 
   // 客户端已挂载，但数据还在加载
-  if (!isMigrationCompleted || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
         <div className="text-lg">
-          {!isMigrationCompleted ? '正在迁移数据...' : '加载中...'}
+          加载中...
         </div>
         <div className="text-sm text-gray-500 mt-2">
-          {!isMigrationCompleted ? '首次运行需要迁移存储格式，请稍候' : '正在加载角色数据'}
+          正在加载角色数据
         </div>
       </div>
     )

@@ -188,7 +188,15 @@ export default function Home() {
   // 文字模式状态
   const { isTextMode, toggleTextMode } = useTextModeStore();
   // 双页模式状态
-  const { isDualPageMode, leftPageId, rightPageId, setLeftPage, setRightPage } = useDualPageStore();
+  const { 
+    isDualPageMode, 
+    leftPageId, 
+    rightPageId, 
+    leftTabValue, 
+    rightTabValue, 
+    setLeftTab, 
+    setRightTab 
+  } = useDualPageStore();
   const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null)
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -1034,10 +1042,12 @@ export default function Home() {
               isMobile={isMobile}
               leftPageId={leftPageId}
               rightPageId={rightPageId}
+              leftTabValue={leftTabValue}
+              rightTabValue={rightTabValue}
               currentTabValue={currentTabValue}
               formData={formData}
-              onSetLeftPage={setLeftPage}
-              onSetRightPage={setRightPage}
+              onSetLeftTab={setLeftTab}
+              onSetRightTab={setRightTab}
               onSetCurrentTab={setCurrentTabValue}
               onSwitchToPrevPage={switchToPrevPage}
               onSwitchToNextPage={switchToNextPage}

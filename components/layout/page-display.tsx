@@ -1,7 +1,6 @@
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PageSelector } from "@/components/ui/page-selector"
 import { PageVisibilityDropdown } from "@/components/ui/page-visibility-dropdown"
 import { getTabPages } from "@/lib/page-registry"
 import type { SheetData } from "@/lib/sheet-data"
@@ -11,10 +10,12 @@ interface PageDisplayProps {
   isMobile: boolean
   leftPageId: string
   rightPageId: string
+  leftTabValue: string
+  rightTabValue: string
   currentTabValue: string
   formData: SheetData
-  onSetLeftPage: (id: string) => void
-  onSetRightPage: (id: string) => void
+  onSetLeftTab: (tabValue: string) => void
+  onSetRightTab: (tabValue: string) => void
   onSetCurrentTab: (id: string) => void
   onSwitchToPrevPage: () => void
   onSwitchToNextPage: () => void
@@ -25,10 +26,12 @@ export function PageDisplay({
   isMobile,
   leftPageId,
   rightPageId,
+  leftTabValue,
+  rightTabValue,
   currentTabValue,
   formData,
-  onSetLeftPage,
-  onSetRightPage,
+  onSetLeftTab,
+  onSetRightTab,
   onSetCurrentTab,
   onSwitchToPrevPage,
   onSwitchToNextPage,
@@ -50,42 +53,86 @@ export function PageDisplay({
         <div className="grid grid-cols-2 gap-1 w-[425mm]">
           {/* 左页 */}
           <div className="w-[210mm]">
-            <div className="print:hidden mb-3 text-center">
-              <PageSelector
-                value={leftPageId}
-                onValueChange={onSetLeftPage}
-                label="左页"
-                className="justify-center"
-              />
-            </div>
-            {(() => {
-              const leftPage = getTabPages(formData).find(p => p.id === leftPageId)
-              if (leftPage) {
-                const Component = leftPage.component
-                return <Component />
-              }
-              return <div className="h-full flex items-center justify-center text-gray-400">请选择页面</div>
-            })()}
+            <Tabs value={leftTabValue} onValueChange={onSetLeftTab} className="w-[210mm]">
+              {/* 左页Tab导航 */}
+              <div className="w-full overflow-x-auto tabs-container">
+                <TabsList className="grid w-full transition-all duration-300 ease-in-out h-10"
+                  style={{
+                    gridTemplateColumns: `repeat(${getVisibleTabs().length}, 1fr) auto`
+                  }}>
+                  {/* 左页tabs */}
+                  {getVisibleTabs().map((tab, index) => (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className="transition-all duration-200 ease-in-out animate-in slide-in-from-right-2 py-1.5 text-sm"
+                      style={{
+                        animationDelay: `${index * 50}ms`
+                      }}
+                    >
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+
+                  {/* 页面管理下拉菜单 */}
+                  <div className="flex items-center justify-center min-w-[44px]">
+                    <PageVisibilityDropdown />
+                  </div>
+                </TabsList>
+              </div>
+
+              {/* 左页Tab内容 */}
+              {getVisibleTabs().map((tab) => {
+                const Component = tab.component
+                return (
+                  <TabsContent key={tab.id} value={tab.tabValue || tab.id}>
+                    <Component />
+                  </TabsContent>
+                )
+              })}
+            </Tabs>
           </div>
           
           {/* 右页 */}
           <div className="w-[210mm]">
-            <div className="print:hidden mb-3 text-center">
-              <PageSelector
-                value={rightPageId}
-                onValueChange={onSetRightPage}
-                label="右页"
-                className="justify-center"
-              />
-            </div>
-            {(() => {
-              const rightPage = getTabPages(formData).find(p => p.id === rightPageId)
-              if (rightPage) {
-                const Component = rightPage.component
-                return <Component />
-              }
-              return <div className="h-full flex items-center justify-center text-gray-400">请选择页面</div>
-            })()}
+            <Tabs value={rightTabValue} onValueChange={onSetRightTab} className="w-[210mm]">
+              {/* 右页Tab导航 */}
+              <div className="w-full overflow-x-auto tabs-container">
+                <TabsList className="grid w-full transition-all duration-300 ease-in-out h-10"
+                  style={{
+                    gridTemplateColumns: `repeat(${getVisibleTabs().length}, 1fr) auto`
+                  }}>
+                  {/* 右页tabs */}
+                  {getVisibleTabs().map((tab, index) => (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className="transition-all duration-200 ease-in-out animate-in slide-in-from-right-2 py-1.5 text-sm"
+                      style={{
+                        animationDelay: `${index * 50}ms`
+                      }}
+                    >
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+
+                  {/* 页面管理下拉菜单 */}
+                  <div className="flex items-center justify-center min-w-[44px]">
+                    <PageVisibilityDropdown />
+                  </div>
+                </TabsList>
+              </div>
+
+              {/* 右页Tab内容 */}
+              {getVisibleTabs().map((tab) => {
+                const Component = tab.component
+                return (
+                  <TabsContent key={tab.id} value={tab.tabValue || tab.id}>
+                    <Component />
+                  </TabsContent>
+                )
+              })}
+            </Tabs>
           </div>
         </div>
       ) : (

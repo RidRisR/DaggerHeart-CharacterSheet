@@ -250,10 +250,18 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
   // 快速创建存档
   const handleQuickCreateArchive = useCallback(() => {
     const nextNumber = characterList.length + 1
-    const newSaveName = `存档 ${nextNumber}`
-    createNewCharacterHandler(newSaveName)
-    setCurrentTabValue("page1")
-    alert(`已创建新存档: ${newSaveName}`)
+    const defaultName = `存档 ${nextNumber}`
+    
+    const saveName = prompt('请输入存档名称:', defaultName)
+    
+    if (saveName && saveName.trim()) {
+      const success = createNewCharacterHandler(saveName.trim())
+      if (success) {
+        setCurrentTabValue("page1")
+        alert(`已创建新存档: ${saveName.trim()}`)
+      }
+    }
+    // 如果用户取消或输入空名称，则不创建存档
   }, [characterList.length, createNewCharacterHandler, setCurrentTabValue])
 
   return {

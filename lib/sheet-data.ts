@@ -12,7 +12,7 @@ export interface CharacterMetadata {
 }
 
 export interface CharacterList {
-  characters: CharacterMetadata[]  // 最多20个
+  characters: CharacterMetadata[]  // 最多10个
   activeCharacterId: string | null // 当前活动角色ID
   lastUpdated: string             // ISO 日期字符串
 }

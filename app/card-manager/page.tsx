@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SelectableCard } from '@/components/ui/selectable-card'
-import { AlertCircle, Upload, FileText, CheckCircle, XCircle, Info, Eye, RefreshCw, Home, Power, PowerOff, BookOpen } from 'lucide-react'
+import { AlertCircle, Upload, FileText, CheckCircle, XCircle, Info, Eye, RefreshCw, Home, Power, PowerOff, BookOpen, Edit3 } from 'lucide-react'
 import {
   importCustomCards,
   getCustomCardBatches,
@@ -358,7 +358,7 @@ export default function CardImportTestPage() {
                   onClick={() => navigateToPage('/card-editor')}
                   className="flex items-center gap-2"
                 >
-                  <BookOpen className="h-4 w-4" />
+                  <Edit3 className="h-4 w-4" />
                   卡包编辑器
                 </Button>
                 <Button

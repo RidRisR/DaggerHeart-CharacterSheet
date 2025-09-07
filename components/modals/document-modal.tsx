@@ -14,12 +14,33 @@ interface DocumentModalProps {
   exampleJsonContent: string
 }
 
+// 从React节点中提取纯文本
+const extractText = (children: any): string => {
+  if (typeof children === 'string') return children
+  if (Array.isArray(children)) {
+    return children.map(child => {
+      if (typeof child === 'string') return child
+      if (child?.props?.children) return extractText(child.props.children)
+      return ''
+    }).join('')
+  }
+  if (children?.props?.children) return extractText(children.props.children)
+  return ''
+}
+
 // 生成标题锚点ID的函数
 const generateHeadingId = (text: string): string => {
-  return text
+  // 先移除Markdown格式标记
+  const cleanText = text
+    .replace(/\*\*/g, '') // 移除粗体标记
+    .replace(/\*/g, '')   // 移除斜体标记
+    .replace(/^#+\s+/, '') // 移除标题标记
+    
+  return cleanText
     .toLowerCase()
-    .replace(/[^\w\u4e00-\u9fff\s-]/g, '') // 保留中文、英文、数字、空格和连字符
-    .replace(/\s+/g, '-') // 空格替换为连字符
+    .replace(/[：——]/g, '') // 移除中文特殊标记
+    .replace(/\s+/g, '-')    // 空格替换为连字符
+    .replace(/[^\w\u4e00-\u9fff-]/g, '') // 保留中文、英文、数字和连字符
     .replace(/^-+|-+$/g, '') // 移除首尾连字符
 }
 
@@ -205,19 +226,50 @@ export function DocumentModal({ isOpen, onClose, userGuideContent, aiGuideConten
                     components={{
                       // 自定义样式，为标题添加锚点ID
                       h1: ({children}) => {
-                        const text = children?.toString() || ''
+                        const text = extractText(children)
                         const id = generateHeadingId(text)
-                        return <h1 id={id} className="text-2xl font-bold mb-6 mt-8 text-gray-900 scroll-mt-6">{children}</h1>
+                        return (
+                          <h1 id={id} className="text-3xl font-bold mb-8 mt-12 text-gray-900 pb-4 border-b-2 border-gray-300 scroll-mt-6">
+                            {children}
+                          </h1>
+                        )
                       },
                       h2: ({children}) => {
-                        const text = children?.toString() || ''
+                        const text = extractText(children)
                         const id = generateHeadingId(text)
-                        return <h2 id={id} className="text-xl font-semibold mb-4 mt-8 text-gray-800 border-b pb-2 scroll-mt-6">{children}</h2>
+                        return (
+                          <h2 id={id} className="text-2xl font-bold mb-6 mt-10 text-gray-900 bg-blue-50 px-4 py-3 rounded-md border-l-4 border-blue-500 border-b-2 border-b-blue-200 shadow-sm scroll-mt-6">
+                            {children}
+                          </h2>
+                        )
                       },
                       h3: ({children}) => {
-                        const text = children?.toString() || ''
+                        const text = extractText(children)
                         const id = generateHeadingId(text)
-                        return <h3 id={id} className="text-lg font-medium mb-3 mt-6 text-gray-700 scroll-mt-6">{children}</h3>
+                        return (
+                          <h3 id={id} className="text-xl font-semibold mb-4 mt-8 text-gray-800 bg-gray-50 px-3 py-2 rounded border-l-4 border-gray-400 scroll-mt-6">
+                            {children}
+                          </h3>
+                        )
+                      },
+                      h4: ({children}) => {
+                        const text = extractText(children)
+                        const id = generateHeadingId(text)
+                        return (
+                          <h4 id={id} className="text-lg font-medium mb-3 mt-6 text-gray-700 bg-gray-100 px-2 py-1.5 rounded border-l-2 border-gray-400 scroll-mt-6">
+                            {children}
+                          </h4>
+                        )
+                      },
+                      h5: ({children}) => {
+                        const text = extractText(children)
+                        const id = generateHeadingId(text)
+                        return (
+                          <h5 id={id} className="text-base font-medium mb-2 mt-4 text-gray-600 pl-3 border-l-2 border-gray-200 scroll-mt-6">
+                            <span className="inline-block w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                            {children}
+                          </h5>
+                        )
                       },
                       p: ({children}) => <p className="mb-3 text-gray-600 leading-relaxed">{children}</p>,
                       code: ({children, className}) => {
@@ -233,6 +285,47 @@ export function DocumentModal({ isOpen, onClose, userGuideContent, aiGuideConten
                       table: ({children}) => <div className="overflow-x-auto mb-4"><table className="min-w-full border border-gray-300">{children}</table></div>,
                       th: ({children}) => <th className="border border-gray-300 px-3 py-2 bg-gray-100 font-medium text-left">{children}</th>,
                       td: ({children}) => <td className="border border-gray-300 px-3 py-2">{children}</td>,
+                      // 自定义链接处理，修复内部锚点跳转
+                      a: ({href, children}) => {
+                        // 检查是否为内部锚点链接
+                        if (href?.startsWith('#')) {
+                          const handleClick = (e: React.MouseEvent) => {
+                            e.preventDefault() // 阻止默认行为，防止URL改变
+                            // 解码URL编码的ID
+                            const encodedId = href.substring(1)
+                            const decodedId = decodeURIComponent(encodedId)
+                            
+                            // 直接查找元素
+                            const element = document.getElementById(decodedId)
+                            
+                            if (element) {
+                              element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                            } else {
+                              console.warn('Element not found for ID:', decodedId)
+                            }
+                          }
+                          return (
+                            <a 
+                              href={href} 
+                              onClick={handleClick}
+                              className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                            >
+                              {children}
+                            </a>
+                          )
+                        }
+                        // 外部链接保持默认行为
+                        return (
+                          <a 
+                            href={href} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 underline"
+                          >
+                            {children}
+                          </a>
+                        )
+                      },
                     }}
                   >
                     {activeTabData?.content || ''}

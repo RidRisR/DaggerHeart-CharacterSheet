@@ -359,7 +359,7 @@ export default function CardImportTestPage() {
                   className="flex items-center gap-2"
                 >
                   <BookOpen className="h-4 w-4" />
-                  卡牌编辑器
+                  卡包编辑器
                 </Button>
                 <Button
                   size="default"

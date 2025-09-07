@@ -331,77 +331,60 @@ export default function CardImportTestPage() {
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       {/* 页面头部 */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">卡牌管理</h1>
-            <p className="text-muted-foreground">
-              自定义卡牌导入功能，支持卡牌包管理，所有的数据在您的本地保存
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refreshData}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              刷新数据
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigateToPage('/card-editor')}
-              className="flex items-center gap-2"
-            >
-              <BookOpen className="h-4 w-4" />
-              卡牌编辑器
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goBackToMain}
-              className="flex items-center gap-2 bg-blue-700 hover:bg-blue-600 text-white border-green-700"
-            >
-              <Home className="h-4 w-4" />
-              返回主站
-            </Button>
-          </div>
-        </div>
-
-        {/* 快速操作栏 */}
-        <div className="flex flex-wrap gap-2 p-4 bg-muted/30 rounded-lg">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleViewCards()}
-            disabled={stats.totalCards === 0}
-            className="flex items-center gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            查看所有卡牌 ({stats.totalCards})
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleClearAllLocalStorage}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            强制初始化
-          </Button>
-          <div className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              id="autoRefresh"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="rounded"
-            />
-            <label htmlFor="autoRefresh" className="text-muted-foreground">
-              自动刷新数据
-            </label>
+      <div className="mb-6">
+        {/* 标题和导航 */}
+        <div className="bg-white border rounded-lg p-4 mb-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">卡牌管理</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                管理您的自定义卡牌包，所有数据都在本地保存
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-3">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => setDocumentModalOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  高级卡包创作指南
+                </Button>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => navigateToPage('/card-editor')}
+                  className="flex items-center gap-2"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  卡牌编辑器
+                </Button>
+                <Button
+                  size="default"
+                  onClick={goBackToMain}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Home className="h-4 w-4" />
+                  返回主站
+                </Button>
+              </div>
+              {/* 自动刷新开关 */}
+              <div className="flex items-center gap-2 text-sm">
+                <label htmlFor="autoRefresh" className="text-muted-foreground cursor-pointer flex items-center gap-1">
+                  <RefreshCw className="h-3 w-3" />
+                  自动刷新
+                </label>
+                <input
+                  type="checkbox"
+                  id="autoRefresh"
+                  checked={autoRefresh}
+                  onChange={(e) => setAutoRefresh(e.target.checked)}
+                  className="w-4 h-4 rounded cursor-pointer"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -422,17 +405,6 @@ export default function CardImportTestPage() {
                   支持卡牌类型格式：profession (职业), ancestry (血统), community (社群), subclass (子职业), domain (领域)，variant（任意）
                 </span>
               </CardDescription>
-              <div className="mt-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setDocumentModalOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  查看用户指南和示例
-                </Button>
-              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* 拖拽上传区域 */}
@@ -628,6 +600,33 @@ export default function CardImportTestPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* 危险操作区域 */}
+          <Card className="border-red-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <AlertCircle className="h-5 w-5" />
+                强制初始化
+              </CardTitle>
+              <CardDescription>
+                彻底重置所有本地数据，包括卡牌、角色和系统设置
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleClearAllLocalStorage}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                强制初始化所有数据
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                ⚠️ 此操作不可恢复，请确保您已备份重要数据 ⚠️
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* 右侧：批次管理 */}
@@ -635,22 +634,39 @@ export default function CardImportTestPage() {
           {/* 批次管理 */}
           <Card>
             <CardHeader>
-              <CardTitle>卡牌包管理</CardTitle>
-              <CardDescription>管理已导入的卡牌包</CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <CardTitle>卡牌包管理</CardTitle>
+                  <CardDescription>管理已导入的卡牌包</CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewCards()}
+                  disabled={stats.totalCards === 0}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  查看所有卡牌
+                  <Badge variant="secondary" className="ml-1">
+                    {stats.totalCards}
+                  </Badge>
+                </Button>
+              </div>
             </CardHeader>
             {/* 修改卡牌包管理部分的布局 */}
             <CardContent>
               {batches.length === 0 ? (
-                <div className="text-center py-8">
-                  <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">暂无导入的批次</p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    导入一些卡牌来开始使用卡牌包管理功能
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {batches.map((batch) => (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">暂无导入的批次</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      导入一些卡牌来开始使用卡牌包管理功能
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {batches.map((batch) => (
                     <div key={batch.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
                       {/* 调整按钮位置，将三个小图标放在名称同一行最右边 */}
                       <div className="flex items-start justify-between mb-3">
@@ -722,21 +738,21 @@ export default function CardImportTestPage() {
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
 
-              {batches.length > 0 && (
-                <div className="pt-4 border-t mt-4">
-                  <Button
-                    className="w-full"
-                    variant="destructive"
-                    onClick={handleClearAll}
-                  >
-                    清空所有自定义卡牌
-                  </Button>
-                </div>
-              )}
+                {batches.length > 0 && (
+                  <div className="pt-4 border-t mt-4">
+                    <Button
+                      className="w-full"
+                      variant="destructive"
+                      onClick={handleClearAll}
+                    >
+                      清空所有自定义卡牌
+                    </Button>
+                  </div>
+                )}
             </CardContent>
           </Card>
         </div>

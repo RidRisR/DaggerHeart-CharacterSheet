@@ -442,7 +442,7 @@ export function ProfessionCardForm({
   )
 }
 
-// 血统卡牌编辑器
+// 种族卡牌编辑器
 export function AncestryCardForm({ 
   card, 
   onSave, 

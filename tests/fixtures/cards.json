@@ -2,10 +2,10 @@
   "smallDataset": [
     {
       "id": "test-card-1",
-      "name": "测试血统卡 1",
+      "name": "测试种族卡 1",
       "type": "ancestry",
       "class": "test-ancestry",
-      "description": "这是一张测试用的血统卡",
+      "description": "这是一张测试用的种族卡",
       "source": "BUILTIN"
     },
     {

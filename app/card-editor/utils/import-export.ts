@@ -2,7 +2,7 @@ import { toast } from 'sonner'
 import type { ImportData, AncestryCard } from '@/card/card-types'
 import type { CardPackageState } from '../types'
 
-// 修复血统卡配对的简介不一致问题
+// 修复种族卡配对的简介不一致问题
 function fixAncestryPairs(ancestryCards: AncestryCard[]): AncestryCard[] {
   if (!ancestryCards || ancestryCards.length === 0) return ancestryCards
   
@@ -29,7 +29,7 @@ function fixAncestryPairs(ancestryCards: AncestryCard[]): AncestryCard[] {
       if (card1 && card2) {
         // 如果简介不同，用类别1的简介覆盖类别2
         if (card1.简介 !== card2.简介) {
-          console.log(`[Import] 同步血统"${card1.种族}"的简介：从类别1覆盖类别2`)
+          console.log(`[Import] 同步种族"${card1.种族}"的简介：从类别1覆盖类别2`)
           card2.简介 = card1.简介
         }
       }
@@ -80,7 +80,7 @@ export function importCardPackage(): Promise<CardPackageState | null> {
         const text = await file.text()
         const importedData = JSON.parse(text) as ImportData
         
-        // 修复血统卡配对的简介不一致问题
+        // 修复种族卡配对的简介不一致问题
         if (importedData.ancestry && Array.isArray(importedData.ancestry)) {
           importedData.ancestry = fixAncestryPairs(importedData.ancestry as AncestryCard[])
         }

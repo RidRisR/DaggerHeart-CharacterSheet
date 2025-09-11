@@ -180,11 +180,11 @@ function cleanupExtractedHTML(htmlContent: string): string {
  */
 function transformSelectButtons(html: string): string {
   return html.replace(
-    /<button([^>]*?)>([^<]*?(?:选择武器|选择护甲|选择职业|选择子职业|选择血统|选择社群)[^<]*?)<\/button>/g,
+    /<button([^>]*?)>([^<]*?(?:选择武器|选择护甲|选择职业|选择子职业|选择种族|选择社群)[^<]*?)<\/button>/g,
     (match, attributes, content) => {
       const classMatch = attributes.match(/class="([^"]*?)"/);
       const classStr = classMatch ? classMatch[1] : '';
-      const isPlaceholder = /^选择(武器|护甲|职业|子职业|血统|社群)$/.test(content.trim());
+      const isPlaceholder = /^选择(武器|护甲|职业|子职业|种族|社群)$/.test(content.trim());
       const value = isPlaceholder ? '' : content.trim();
       const placeholder = content.trim();
       return `<input type="text" value="${value}" placeholder="${placeholder}" class="${classStr} converted-from-button" />`;
@@ -717,7 +717,7 @@ function extractPrintPreviewHTML(onProgress?: ProgressCallback): Promise<string>
       allButtons.forEach(btn => {
         btn.removeAttribute('onclick')
         const buttonText = btn.textContent?.trim() || ''
-        if (!/选择(武器|护甲|职业|子职业|血统|社群)/.test(buttonText)) {
+        if (!/选择(武器|护甲|职业|子职业|种族|社群)/.test(buttonText)) {
           btn.removeAttribute('disabled')
         }
       })

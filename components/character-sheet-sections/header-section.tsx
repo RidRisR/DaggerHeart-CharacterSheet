@@ -209,7 +209,7 @@ export function HeaderSection({
         </div>
         <div className="flex gap-2">
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">血统</label>
+            <label className="text-[9px] text-gray-300">种族</label>
             <div className="flex gap-1">
               {editingField === 'ancestry1Ref' ? (
                 <input
@@ -232,7 +232,7 @@ export function HeaderSection({
                       onClick={() => openAncestryModal("ancestry1")}
                       className="flex-1 text-gray-800 text-xs text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none truncate"
                     >
-                      {formData.ancestry1Ref?.name || <span className="print:hidden">选择血统</span>}
+                      {formData.ancestry1Ref?.name || <span className="print:hidden">选择种族</span>}
                     </button>
                     {formData.ancestry1Ref?.name && (
                       <button
@@ -270,7 +270,7 @@ export function HeaderSection({
                       onClick={() => openAncestryModal("ancestry2")}
                       className="flex-1 text-gray-800 text-xs text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none truncate"
                     >
-                      {formData.ancestry2Ref?.name || <span className="print:hidden">选择血统</span>}
+                      {formData.ancestry2Ref?.name || <span className="print:hidden">选择种族</span>}
                     </button>
                     {formData.ancestry2Ref?.name && (
                       <button

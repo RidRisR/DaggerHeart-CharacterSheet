@@ -13,7 +13,7 @@ export interface FriendlyError {
 
 const CARD_TYPE_NAMES: Record<CardType, string> = {
   profession: '职业',
-  ancestry: '血统',
+  ancestry: '种族',
   community: '社群',
   subclass: '子职业',
   domain: '领域',

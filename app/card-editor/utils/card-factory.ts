@@ -123,7 +123,7 @@ export function copyCard(originalCard: unknown, type: CardType, packageData: Car
       break
       
     case 'ancestry':
-      // 血统卡牌字段验证
+      // 种族卡牌字段验证
       copiedCard.种族 = copiedCard.种族 || ''
       copiedCard.简介 = copiedCard.简介 || ''
       copiedCard.效果 = copiedCard.效果 || ''

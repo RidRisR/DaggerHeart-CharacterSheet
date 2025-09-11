@@ -124,7 +124,7 @@ export default function CharacterSheet() {
       newCards[1] = createEmptyCard();
     }
 
-    // 同步血统卡1（位置2）
+    // 同步种族卡1（位置2）
     if (safeFormData.ancestry1Ref?.id) {
       // 仅在ID不匹配时才更新
       if (newCards[2]?.id !== safeFormData.ancestry1Ref.id) {
@@ -135,7 +135,7 @@ export default function CharacterSheet() {
       newCards[2] = createEmptyCard();
     }
 
-    // 同步血统卡2（位置3）
+    // 同步种族卡2（位置3）
     if (safeFormData.ancestry2Ref?.id) {
       // 仅在ID不匹配时才更新
       if (newCards[3]?.id !== safeFormData.ancestry2Ref.id) {
@@ -206,7 +206,7 @@ export default function CharacterSheet() {
     return (card && card.type === CardType.Profession) ? card : createEmptyCard();
   }
 
-  // 根据ID获取血统名称
+  // 根据ID获取种族名称
   const getAncestryById = (id: string): StandardCard => {
     if (cardsLoading) {
       return createEmptyCard();
@@ -866,7 +866,7 @@ export default function CharacterSheet() {
             currentModal.type === "profession"
               ? "选择职业"
               : currentModal.type === "ancestry"
-                ? "选择血统"
+                ? "选择种族"
                 : currentModal.type === "community"
                   ? "选择社群"
                   : "选择子职业"

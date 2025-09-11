@@ -28,7 +28,7 @@ export function CardListDialog({
   const getDialogTitle = () => {
     switch (dialog.type) {
       case 'profession': return '所有职业卡牌'
-      case 'ancestry': return '所有血统卡牌'
+      case 'ancestry': return '所有种族卡牌'
       case 'variant': return '所有变体卡牌'
       default: return '所有卡牌'
     }

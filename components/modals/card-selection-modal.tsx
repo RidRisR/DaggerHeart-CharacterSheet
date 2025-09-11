@@ -82,7 +82,7 @@ export function CardSelectionModal({
       CardType.Domain,      // 领域
       CardType.Profession,  // 职业
       CardType.Subclass,    // 子职业
-      CardType.Ancestry,    // 血统
+      CardType.Ancestry,    // 种族
       CardType.Community,   // 社群
     ];
 

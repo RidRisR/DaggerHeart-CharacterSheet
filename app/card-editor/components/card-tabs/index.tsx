@@ -56,7 +56,7 @@ export function CardTabs({
           基础信息
         </TabsTrigger>
         <TabsTrigger value="profession">职业</TabsTrigger>
-        <TabsTrigger value="ancestry">血统</TabsTrigger>
+        <TabsTrigger value="ancestry">种族</TabsTrigger>
         <TabsTrigger value="community">社群</TabsTrigger>
         <TabsTrigger value="subclass">子职业</TabsTrigger>
         <TabsTrigger value="domain">领域</TabsTrigger>
@@ -84,7 +84,7 @@ export function CardTabs({
         />
       </TabsContent>
 
-      {/* 血统卡牌选项卡 - 使用专门的双卡编辑器 */}
+      {/* 种族卡牌选项卡 - 使用专门的双卡编辑器 */}
       <TabsContent value="ancestry">
         <AncestryEditorTab
           currentPackage={currentPackage}

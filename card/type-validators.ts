@@ -140,7 +140,7 @@ export function validateProfessionCard(card: any, index: number, tempFields?: Te
 }
 
 /**
- * 血统卡牌验证器
+ * 种族卡牌验证器
  */
 export function validateAncestryCard(card: any, index: number, tempFields?: TemporaryCustomFields, context?: ValidationContext): TypeValidationResult {
     const errors: ValidationError[] = [];
@@ -165,7 +165,7 @@ export function validateAncestryCard(card: any, index: number, tempFields?: Temp
     if (!card.种族 || !validAncestries.includes(card.种族 as any)) {
         errors.push({
             path: `${prefix}.种族`,
-            message: `种族字段必须是有效的血统名称。有效选项: ${validAncestries.join(', ')} (或用户自定义)`,
+            message: `种族字段必须是有效的种族名称。有效选项: ${validAncestries.join(', ')} (或用户自定义)`,
             value: card.种族
         });
     }
@@ -518,9 +518,9 @@ export class CardTypeValidator {
             });
         }
 
-        // 验证血统卡牌
+        // 验证种族卡牌
         if (importData.ancestry && Array.isArray(importData.ancestry)) {
-            console.log('[DEBUG] 验证血统卡牌，数量:', importData.ancestry.length);
+            console.log('[DEBUG] 验证种族卡牌，数量:', importData.ancestry.length);
             totalCards += importData.ancestry.length;
             importData.ancestry.forEach((card: any, index: number) => {
                 const result = validateAncestryCard(card, index, tempFields, context);

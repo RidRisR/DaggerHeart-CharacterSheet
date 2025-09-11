@@ -39,7 +39,7 @@ export function AncestryEditorTab({
   const cards = (currentPackage.ancestry as AncestryCard[]) || []
   const { updateAncestryPair, deleteAncestryPair, addDefinition } = useCardEditorStore()
   
-  // 将血统卡组织成配对
+  // 将种族卡组织成配对
   const ancestryPairs = useMemo(() => {
     const pairs: AncestryPair[] = []
     const processedIndices = new Set<number>()
@@ -266,11 +266,11 @@ export function AncestryEditorTab({
           ) : (
             <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg">
               <Users className="h-16 w-16 text-muted-foreground mb-4" />
-              <p className="text-lg font-medium mb-2">暂无血统卡配对</p>
-              <p className="text-sm text-muted-foreground mb-4">血统卡需要成对创建，每对包含类别1和类别2两张卡片</p>
+                <p className="text-lg font-medium mb-2">暂无种族卡配对</p>
+                <p className="text-sm text-muted-foreground mb-4">种族卡需要成对创建，每对包含类别1和类别2两张卡片</p>
               <Button onClick={() => onAddCard('ancestry')}>
                 <Plus className="h-4 w-4 mr-2" />
-                创建第一对血统卡
+                  创建第一对种族卡
               </Button>
             </div>
           )}

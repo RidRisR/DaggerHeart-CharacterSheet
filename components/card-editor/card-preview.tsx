@@ -104,7 +104,7 @@ export function ProfessionCardPreview({ card, className }: BaseCardPreviewProps<
   )
 }
 
-// 血统卡牌预览
+// 种族卡牌预览
 export function AncestryCardPreview({ card, className }: BaseCardPreviewProps<AncestryCard>) {
   return (
     <Card className={className}>
@@ -112,7 +112,7 @@ export function AncestryCardPreview({ card, className }: BaseCardPreviewProps<An
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{card.名称 || '能力名称'}</CardTitle>
           <div className="flex gap-2">
-            <Badge variant="secondary">血统</Badge>
+            <Badge variant="secondary">种族</Badge>
             <Badge variant="outline" className="text-xs">
               类别 {card.类别 || 1}
             </Badge>

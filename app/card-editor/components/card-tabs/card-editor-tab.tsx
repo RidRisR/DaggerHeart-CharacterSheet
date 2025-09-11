@@ -59,7 +59,7 @@ export function CardEditorTab({
   const getActionText = () => {
     switch (cardType) {
       case 'profession': return '职业'
-      case 'ancestry': return '血统'
+      case 'ancestry': return '种族'
       case 'community': return '社群'
       case 'variant': return '变体'
       case 'subclass': return '子职业'

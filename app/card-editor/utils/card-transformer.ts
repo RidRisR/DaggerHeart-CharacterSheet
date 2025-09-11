@@ -32,7 +32,7 @@ export function transformProfessionCard(card: ProfessionCard): StandardCard {
 }
 
 /**
- * 转换血统卡牌数据为标准格式
+ * 转换种族卡牌数据为标准格式
  */
 export function transformAncestryCard(card: AncestryCard): StandardCard {
   try {

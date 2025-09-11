@@ -65,7 +65,7 @@ export enum CardCategory {
 // 所有卡牌类型
 export const ALL_CARD_TYPES = new Map<string, string>([
   [CardType.Profession, "职业"],
-  [CardType.Ancestry, "血统"],
+  [CardType.Ancestry, "种族"],
   [CardType.Community, "社群"],
   [CardType.Subclass, "子职业"],
   [CardType.Domain, "领域"], // 添加领域卡牌类型

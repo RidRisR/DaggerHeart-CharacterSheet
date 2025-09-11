@@ -52,7 +52,7 @@ class ValidationService implements CardValidationService {
       // 使用现有的验证器
       const validationResult = CardTypeValidator.validateImportData(importData, context)
       
-      // 添加血统卡配对验证
+      // 添加种族卡配对验证
       const ancestryPairErrors = this.validateAncestryPairs(packageData.ancestry as any[] || [])
       if (ancestryPairErrors.length > 0) {
         validationResult.errors.push(...ancestryPairErrors)
@@ -211,7 +211,7 @@ class ValidationService implements CardValidationService {
   }
 
   /**
-   * 验证血统卡配对
+   * 验证种族卡配对
    */
   private validateAncestryPairs(ancestryCards: any[]): ValidationError[] {
     const errors: ValidationError[] = []
@@ -233,13 +233,13 @@ class ValidationService implements CardValidationService {
         if (cards.length === 1) {
           errors.push({
             path: `ancestry[${cards[0].originalIndex}]`,
-            message: `血统"${种族}"缺少配对卡片。每个种族必须有类别1和类别2两张卡片`
+            message: `种族"${种族}"缺少配对卡片。每个种族必须有类别1和类别2两张卡片`
           })
         } else if (cards.length > 2) {
           cards.forEach(card => {
             errors.push({
               path: `ancestry[${card.originalIndex}]`,
-              message: `血统"${种族}"有${cards.length}张卡片，但应该只有2张（类别1和类别2）`
+              message: `种族"${种族}"有${cards.length}张卡片，但应该只有2张（类别1和类别2）`
             })
           })
         }
@@ -251,7 +251,7 @@ class ValidationService implements CardValidationService {
       if (categories[0] !== 1 || categories[1] !== 2) {
         errors.push({
           path: `ancestry.${种族}`,
-          message: `血统"${种族}"的两张卡片类别不正确。应该分别为1和2，实际为${categories.join('和')}`
+          message: `种族"${种族}"的两张卡片类别不正确。应该分别为1和2，实际为${categories.join('和')}`
         })
       }
     })

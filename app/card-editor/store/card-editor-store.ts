@@ -40,7 +40,7 @@ interface CardEditorStore {
   deleteCard: (type: CardType, index: number) => void
   updateCard: (type: CardType, index: number, card: unknown) => void
   
-  // 血统卡配对操作
+  // 种族卡配对操作
   updateAncestryPair: (index1: number, card1: unknown, index2: number, card2: unknown) => void
   deleteAncestryPair: (index: number) => void
   
@@ -110,9 +110,9 @@ export const useCardEditorStore = create<CardEditorStore>()(
       // 卡牌操作
       addCard: (type) => 
         set(state => {
-          // 血统卡特殊处理：创建配对
+          // 种族卡特殊处理：创建配对
           if (type === 'ancestry') {
-            const baseName = '新血统能力'
+            const baseName = '新种族能力'
             const card1 = createDefaultCard(type, state.packageData) as any
             const card2 = createDefaultCard(type, state.packageData) as any
             
@@ -216,7 +216,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
           }
         }),
         
-      // 血统卡配对操作
+      // 种族卡配对操作
       updateAncestryPair: (index1, card1, index2, card2) =>
         set(state => {
           const cards = [...(state.packageData.ancestry as any[] || [])]
@@ -258,7 +258,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
           const currentIndex = state.currentCardIndex.ancestry
           const newIndex = currentIndex >= newCards.length ? Math.max(0, newCards.length - 1) : currentIndex
           
-          toast.info(`已删除血统配对：${card.种族}`)
+          toast.info(`已删除种族配对：${card.种族}`)
           
           return {
             packageData: {

@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { CardType, processCardDescription, type StandardCard } from "@/card/card-types";
 
-// 血统卡牌类型
+// 种族卡牌类型
 export type AncestryCardClass = string;
 
 export interface AncestryCard {

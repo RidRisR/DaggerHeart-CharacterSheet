@@ -24,7 +24,7 @@
 {
     "customFieldDefinitions": {
         "professions": ["职业1", "职业2"],
-        "ancestries": ["血统1", "血统2"],
+        "ancestries": ["种族1", "种族2"],
         "communities": ["社群1", "社群2"],
         "domains": ["领域1", "领域2"],
         "variants": ["食物", "武器", "药剂", "神器"]  // 统一为数组格式！

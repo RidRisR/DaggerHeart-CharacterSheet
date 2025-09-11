@@ -402,7 +402,7 @@ export default function CardImportTestPage() {
               <CardDescription>
                 拖拽或选择 JSON 文件导入自定义卡牌数据<br />
                 <span className="text-xs text-muted-foreground mt-1 block">
-                  支持卡牌类型格式：profession (职业), ancestry (血统), community (社群), subclass (子职业), domain (领域)，variant（任意）
+                  支持卡牌类型格式：profession (职业), ancestry (种族), community (社群), subclass (子职业), domain (领域)，variant（任意）
                 </span>
               </CardDescription>
             </CardHeader>

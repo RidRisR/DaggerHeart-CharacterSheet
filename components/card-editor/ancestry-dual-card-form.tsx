@@ -604,7 +604,7 @@ export function AncestryDualCardForm({
         {/* 提示信息 */}
         <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-xs text-yellow-800">
-            <strong>提示：</strong>血统卡必须成对创建。每个种族需要两张卡片（类别一和类别二），
+            <strong>提示：</strong>种族卡必须成对创建。每个种族需要两张卡片（类别一和类别二），
             它们共享相同的种族和简介，但有不同的名称和效果。
           </p>
         </div>

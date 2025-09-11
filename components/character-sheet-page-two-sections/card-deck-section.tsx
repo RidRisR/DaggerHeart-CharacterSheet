@@ -43,9 +43,9 @@ const getSpecialSlotLabel = (index: number): string => {
     case 1:
       return "子职业";
     case 2:
-      return "血统一";
+      return "种族一";
     case 3:
-      return "血统二";
+      return "种族二";
     case 4:
       return "社群";
     default:

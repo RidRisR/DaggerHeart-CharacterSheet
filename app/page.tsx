@@ -593,11 +593,11 @@ export default function Home() {
       </div>
 
       <div className="flex justify-center px-0">
-        <div className={`w-full transition-all duration-300 ${isDualPageMode && !isMobile ? 'md:max-w-[445mm]' : 'md:max-w-[220mm]'}`}>
+        <div className={`w-full transition-all duration-300 ${isDualPageMode && !isMobile ? 'overflow-x-auto' : 'md:max-w-[220mm]'}`}>
           {/* 角色卡区域 - 带相对定位 */}
           <div>
             {/* 页面标题 - 打印时隐藏 */}
-            <div className={`print:hidden mb-3 text-center transition-all duration-300 ${isDualPageMode && !isMobile ? 'w-[425mm]' : 'w-[210mm]'}`}>
+            <div className={`print:hidden mb-3 text-center transition-all duration-300 ${isDualPageMode && !isMobile ? 'w-[425mm] min-w-[425mm]' : 'w-[210mm]'}`}>
               <SaveSwitcher
                 characterList={characterList}
                 currentCharacterId={currentCharacterId}
@@ -625,7 +625,7 @@ export default function Home() {
           </div>
 
           {/* 文字模式切换开关 - 胶囊型，在容器外右下角 */}
-          <div className={`print:hidden mt-3 flex justify-end gap-3 transition-all duration-300 ${isDualPageMode && !isMobile ? 'w-[425mm]' : 'w-[210mm]'}`}>
+          <div className={`print:hidden mt-3 flex justify-end gap-3 transition-all duration-300 ${isDualPageMode && !isMobile ? 'w-[425mm] min-w-[425mm]' : 'w-[210mm]'}`}>
             <div
               className="bg-gray-200 dark:bg-gray-700 rounded-full p-0.5 shadow-md cursor-pointer transition-all duration-200 hover:shadow-lg scale-90"
               onClick={toggleTextMode}

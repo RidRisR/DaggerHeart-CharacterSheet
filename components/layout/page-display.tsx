@@ -50,7 +50,8 @@ export function PageDisplay({
       
       {/* 双页模式布局 */}
       {isDualPageMode && !isMobile ? (
-        <div className="grid grid-cols-2 gap-1 w-[425mm] mx-auto">
+        <div className="overflow-x-auto w-full">
+          <div className="grid grid-cols-2 gap-1 w-[425mm] mx-auto min-w-[425mm]">
           {/* 左页 */}
           <div className="w-[210mm]">
             <Tabs value={leftTabValue} onValueChange={onSetLeftTab} className="w-[210mm]">
@@ -134,6 +135,7 @@ export function PageDisplay({
               })}
             </Tabs>
           </div>
+        </div>
         </div>
       ) : (
         /* 单页模式布局（原有布局） */

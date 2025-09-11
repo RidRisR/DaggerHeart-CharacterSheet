@@ -44,6 +44,10 @@ interface CardEditorStore {
   updateAncestryPair: (index1: number, card1: unknown, index2: number, card2: unknown) => void
   deleteAncestryPair: (index: number) => void
   
+  // 子职业三卡操作
+  updateSubclassTriple: (index1: number, card1: unknown, index2: number, card2: unknown, index3: number, card3: unknown) => void
+  deleteSubclassTriple: (index: number) => void
+  
   // 卡包操作
   exportPackage: () => void
   importPackage: () => Promise<void>
@@ -135,6 +139,48 @@ export const useCardEditorStore = create<CardEditorStore>()(
               currentCardIndex: {
                 ...state.currentCardIndex,
                 ancestry: newIndex
+              }
+            }
+          }
+          
+          // 子职业卡特殊处理：创建三卡组
+          if (type === 'subclass') {
+            const subclassName = '新子职业'
+            const card1 = createDefaultCard(type, state.packageData) as any
+            const card2 = createDefaultCard(type, state.packageData) as any
+            const card3 = createDefaultCard(type, state.packageData) as any
+            
+            // 设置三卡组属性
+            card1.名称 = `${subclassName}基石`
+            card1.子职业 = subclassName
+            card1.等级 = '基石'
+            card1.描述 = '基石等级能力描述'
+            
+            card2.名称 = `${subclassName}专精`
+            card2.子职业 = subclassName
+            card2.主职 = card1.主职
+            card2.施法 = card1.施法
+            card2.等级 = '专精'
+            card2.描述 = '专精等级能力描述'
+            
+            card3.名称 = `${subclassName}大师`
+            card3.子职业 = subclassName
+            card3.主职 = card1.主职
+            card3.施法 = card1.施法
+            card3.等级 = '大师'
+            card3.描述 = '大师等级能力描述'
+            
+            const existingCards = (state.packageData.subclass as any[]) || []
+            const newIndex = existingCards.length
+            
+            return {
+              packageData: {
+                ...state.packageData,
+                subclass: [...existingCards, card1, card2, card3]
+              },
+              currentCardIndex: {
+                ...state.currentCardIndex,
+                subclass: newIndex
               }
             }
           }
@@ -268,6 +314,78 @@ export const useCardEditorStore = create<CardEditorStore>()(
             currentCardIndex: {
               ...state.currentCardIndex,
               ancestry: newIndex
+            }
+          }
+        }),
+      
+      // 子职业三卡操作
+      updateSubclassTriple: (index1, card1, index2, card2, index3, card3) =>
+        set(state => {
+          const cards = [...(state.packageData.subclass as any[] || [])]
+          
+          // 更新三张配对的卡片
+          if (index1 < cards.length) {
+            cards[index1] = card1
+          } else {
+            cards.push(card1)
+          }
+          
+          if (index2 < cards.length) {
+            cards[index2] = card2
+          } else {
+            cards.push(card2)
+          }
+          
+          if (index3 < cards.length) {
+            cards[index3] = card3
+          } else {
+            cards.push(card3)
+          }
+          
+          return {
+            packageData: {
+              ...state.packageData,
+              subclass: cards
+            }
+          }
+        }),
+      
+      deleteSubclassTriple: (index) =>
+        set(state => {
+          const cards = state.packageData.subclass as any[]
+          if (!cards || cards.length === 0) return state
+          
+          // 找到同一子职业的其他两张卡
+          const card = cards[index]
+          if (!card) return state
+          
+          const relatedIndices = cards
+            .map((c, i) => ({ card: c, index: i }))
+            .filter(item => 
+              item.card.子职业 === card.子职业 && 
+              item.card.主职 === card.主职
+            )
+            .map(item => item.index)
+            .sort((a, b) => b - a)
+          
+          // 删除三张相关的卡片
+          let newCards = [...cards]
+          relatedIndices.forEach(i => newCards.splice(i, 1))
+          
+          // 调整当前索引
+          const currentIndex = state.currentCardIndex.subclass
+          const newIndex = currentIndex >= newCards.length ? Math.max(0, newCards.length - 1) : currentIndex
+          
+          toast.info(`已删除子职业组：${card.子职业}`)
+          
+          return {
+            packageData: {
+              ...state.packageData,
+              subclass: newCards
+            },
+            currentCardIndex: {
+              ...state.currentCardIndex,
+              subclass: newIndex
             }
           }
         }),

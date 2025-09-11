@@ -41,7 +41,7 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
         类型: '',
         效果: '',
         子类别: '',
-        等级: '',
+        等级: undefined,
         简略信息: {
           item1: '',
           item2: '',
@@ -135,7 +135,8 @@ export function copyCard(originalCard: unknown, type: CardType, packageData: Car
       copiedCard.类型 = copiedCard.类型 || ''
       copiedCard.效果 = copiedCard.效果 || ''
       copiedCard.子类别 = copiedCard.子类别 || ''
-      copiedCard.等级 = copiedCard.等级 !== undefined ? copiedCard.等级 : ''
+      // 等级字段应该保持 undefined 如果原来是空的，或者保持原来的数字值
+      copiedCard.等级 = copiedCard.等级 !== undefined ? copiedCard.等级 : undefined
       
       // 确保简略信息字段结构完整
       if (!copiedCard.简略信息 || typeof copiedCard.简略信息 !== 'object') {

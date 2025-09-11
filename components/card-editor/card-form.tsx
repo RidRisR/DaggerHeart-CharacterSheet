@@ -792,9 +792,23 @@ export function VariantCardForm({
       }
     }
     
-    // 确保等级字段不为undefined
-    if (normalized.等级 === undefined || normalized.等级 === null) {
+    // 确保等级字段的正确类型处理
+    if (normalized.等级 === undefined || normalized.等级 === null || (normalized.等级 as any) === '') {
       normalized.等级 = undefined
+    } else if (typeof normalized.等级 === 'string') {
+      const trimmedValue = (normalized.等级 as string).trim()
+      if (trimmedValue === '') {
+        normalized.等级 = undefined
+      } else {
+        // 验证是否为有效数字
+        const numValue = parseInt(trimmedValue)
+        if (isNaN(numValue) || numValue < 0) {
+          // 保持原始无效值，让验证器处理错误
+          normalized.等级 = normalized.等级
+        } else {
+          normalized.等级 = numValue
+        }
+      }
     }
     
     return normalized
@@ -1105,6 +1119,7 @@ export function VariantCardForm({
                     {...field}
                     value={field.value?.toString() || ''}
                     onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                    onBlur={handleFieldBlur}
                   />
                 </FormControl>
                 <div className="text-sm text-muted-foreground">选填字段</div>

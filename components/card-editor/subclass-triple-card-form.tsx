@@ -443,6 +443,7 @@ export function SubclassTripleCardForm({
               <FormControl>
                 <Input
                   {...field}
+                  value={field.value || ''}
                   onBlur={handleFieldBlur}
                   placeholder="输入图片URL"
                   type="url"
@@ -476,7 +477,7 @@ export function SubclassTripleCardForm({
                         field.onChange(value)
                         handleFieldBlur()
                       }}
-                      keywords={keywordLists?.professions || []}
+                      keywords={Array.isArray(keywordLists?.professions) ? keywordLists.professions : []}
                       onAddKeyword={(keyword) => onAddKeyword?.('professions', keyword)}
                       placeholder="选择主职业"
                     />

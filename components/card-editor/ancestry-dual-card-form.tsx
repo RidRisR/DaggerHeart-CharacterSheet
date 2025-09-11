@@ -10,7 +10,7 @@ import { KeywordCombobox } from '@/components/card-editor/keyword-combobox'
 import { Card } from '@/components/ui/card'
 import MarkdownEditor from '@/components/card-editor/markdown-editor'
 import { generateSmartCardId } from '@/app/card-editor/utils/id-generator'
-import type { AncestryCard } from '@/card/card-types'
+import type { AncestryCard } from '@/card/ancestry-card/convert'
 import type { CardPackageState } from '@/app/card-editor/types'
 import { RefreshCw, Edit2, RotateCcw, Eye } from 'lucide-react'
 
@@ -252,7 +252,7 @@ export function AncestryDualCardForm({
                           field.onChange(value)
                           handleFieldBlur()
                         }}
-                        keywords={keywordLists?.ancestries || []}
+                        keywords={Array.isArray(keywordLists?.ancestries) ? keywordLists.ancestries : []}
                         onAddKeyword={(keyword) => onAddKeyword?.('ancestries', keyword)}
                         placeholder="输入或选择种族"
                       />
@@ -422,6 +422,7 @@ export function AncestryDualCardForm({
                   <FormControl>
                     <Input
                       {...field}
+                      value={field.value || ''}
                       onBlur={handleFieldBlur}
                       placeholder="输入图片URL"
                       type="url"
@@ -573,6 +574,7 @@ export function AncestryDualCardForm({
                   <FormControl>
                     <Input
                       {...field}
+                      value={field.value || ''}
                       onBlur={handleFieldBlur}
                       placeholder="输入图片URL"
                       type="url"

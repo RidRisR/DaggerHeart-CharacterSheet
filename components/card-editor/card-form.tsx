@@ -1015,7 +1015,7 @@ export function VariantCardForm({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input placeholder="信息1" {...field} />
+                    <Input placeholder="信息1" {...field} value={field.value || ''} />
                   </FormControl>
                 </FormItem>
               )}
@@ -1026,7 +1026,7 @@ export function VariantCardForm({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input placeholder="信息2" {...field} />
+                    <Input placeholder="信息2" {...field} value={field.value || ''} />
                   </FormControl>
                 </FormItem>
               )}
@@ -1037,7 +1037,7 @@ export function VariantCardForm({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input placeholder="信息3" {...field} />
+                    <Input placeholder="信息3" {...field} value={field.value || ''} />
                   </FormControl>
                 </FormItem>
               )}
@@ -1081,7 +1081,11 @@ export function VariantCardForm({
               <FormItem>
                 <FormLabel>子类别</FormLabel>
                 <FormControl>
-                  <Input placeholder="例如：饰品、武器（可选）" {...field} />
+                  <Input 
+                    placeholder="例如：饰品、武器（可选）" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
                 </FormControl>
                 <div className="text-sm text-muted-foreground">选填字段</div>
                 <FormMessage />
@@ -1099,6 +1103,7 @@ export function VariantCardForm({
                     type="number"
                     placeholder="例如：8（可选）"
                     {...field}
+                    value={field.value?.toString() || ''}
                     onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                   />
                 </FormControl>

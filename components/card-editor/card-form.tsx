@@ -1209,6 +1209,8 @@ export function CommunityCardForm({
   const handleFieldBlur = () => {
     const currentValues = form.getValues()
     onChange?.(currentValues as CommunityCard)
+    // 自动保存
+    onSave(currentValues as CommunityCard)
   }
 
   // 手动生成ID
@@ -1514,6 +1516,8 @@ export function SubclassCardForm({
   const handleFieldBlur = () => {
     const currentValues = form.getValues()
     onChange?.(currentValues as SubClassCard)
+    // 自动保存
+    onSave(currentValues as SubClassCard)
   }
 
   // 手动生成ID
@@ -1947,7 +1951,7 @@ export function DomainCardForm({
               <FormItem>
                 <FormLabel>属性 *</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="能力/法术..." onBlur={handleFieldBlur} />
+                  <Input {...field} placeholder="能力/法术/术典..." onBlur={handleFieldBlur} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

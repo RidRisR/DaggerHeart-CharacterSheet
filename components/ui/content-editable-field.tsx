@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, useCallback, useEffect } from "react"
-import ContentEditable from "react-contenteditable"
+import { useState } from "react"
+import TextareaAutosize from "react-textarea-autosize"
 
 interface ContentEditableFieldProps {
   name: string
@@ -23,177 +23,218 @@ export function ContentEditableField({
   className = "",
   maxLines = 2
 }: ContentEditableFieldProps) {
-  const [html, setHtml] = useState(value)
   const [isFocused, setIsFocused] = useState(false)
-  const contentEditableRef = useRef<HTMLElement>(null!)
   
-  useEffect(() => {
-    setHtml(value)
-  }, [value])
-  
-  const stripHtml = (html: string): string => {
-    const tmp = document.createElement("DIV")
-    tmp.innerHTML = html
-    return tmp.textContent || tmp.innerText || ""
-  }
-  
-  const handleChange = useCallback((evt: any) => {
-    let newHtml = evt.target.value
+  // 智能分割文本为两行显示（用于打印）
+  const splitValueToLines = (value: string): [string, string] => {
+    if (!value) return ["", ""];
     
-    const plainText = stripHtml(newHtml)
+    // 如果包含换行符，按换行符分割
+    if (value.includes('\n')) {
+      const parts = value.split('\n', 2);
+      return [parts[0] || "", parts[1] || ""];
+    }
     
-    if (maxLength && plainText.length > maxLength) {
+    // 如果长度超过29字符，智能分割
+    const maxCharsPerLine = 29;
+    if (value.length <= maxCharsPerLine) {
+      return [value, ""];
+    }
+    
+    // 寻找合适的分割点
+    let splitIndex = maxCharsPerLine;
+    for (let i = maxCharsPerLine; i >= Math.max(0, maxCharsPerLine - 5); i--) {
+      const char = value[i];
+      const nextChar = value[i + 1];
+      
+      if (char === ' ') {
+        splitIndex = i + 1;
+        break;
+      }
+      
+      const punctuation = ['，', '。', '：', ';', ',', ':'];
+      if (punctuation.includes(char) && nextChar && punctuation.includes(nextChar)) {
+        splitIndex = i + 1;
+        break;
+      }
+    }
+    
+    return [
+      value.substring(0, splitIndex).trim(),
+      value.substring(splitIndex).trim()
+    ];
+  };
+  
+  const [line1, line2] = splitValueToLines(value)
+  
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value
+    
+    // 限制字符数量（如果设置了）
+    if (maxLength && newValue.length > maxLength) {
       return
     }
     
-    setHtml(plainText)
+    // 限制行数
+    const lines = newValue.split('\n')
+    if (maxLines && lines.length > maxLines) {
+      return
+    }
     
+    // 转换为标准的 input change 事件
     const syntheticEvent = {
       target: {
         name,
-        value: plainText
+        value: newValue
       }
     } as React.ChangeEvent<HTMLInputElement>
     
     onChange(syntheticEvent)
-  }, [name, onChange, maxLength])
+  }
   
-  const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    e.preventDefault()
-    
-    const text = e.clipboardData.getData('text/plain')
-    const selection = window.getSelection()
-    
-    if (!selection?.rangeCount) return
-    
-    selection.deleteFromDocument()
-    
-    const textNode = document.createTextNode(text)
-    selection.getRangeAt(0).insertNode(textNode)
-    
-    selection.collapseToEnd()
-    
-    if (contentEditableRef.current) {
-      const evt = {
-        target: {
-          value: contentEditableRef.current.innerHTML
-        }
-      }
-      handleChange(evt)
-    }
-  }, [handleChange])
-  
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // 限制换行
     if (e.key === 'Enter') {
-      // 阻止换行，保持单行文本输入
-      e.preventDefault()
+      const currentLines = value.split('\n').length
+      if (maxLines && currentLines >= maxLines) {
+        e.preventDefault()
+        return
+      }
     }
-  }, [])
+  }
   
+  // 记事本样式  
   const notebookStyles = {
     backgroundImage: `repeating-linear-gradient(
-        to bottom,
-        transparent 0,
-        transparent 24px,
-        #9ca3af 24px,
-        #9ca3af 25px
-      )`,
+      to bottom,
+      transparent 0,
+      transparent 24px,
+      #9ca3af 24px,
+      #9ca3af 25px
+    )`,
     lineHeight: '25px',
     padding: '0 3px',
     paddingTop: '0',
-    minHeight: maxLines ? `${maxLines * 25}px` : '50px',
-    maxHeight: maxLines ? `${maxLines * 25}px` : '50px',
-    overflow: 'hidden',
+    resize: 'none' as const,
+    overflow: 'hidden' as const,
     wordWrap: 'break-word' as const,
-    whiteSpace: 'normal' as const,
+    whiteSpace: 'pre-wrap' as const,
     backgroundColor: 'transparent',
     backgroundSize: '100% 25px',
-    backgroundPosition: '0 0'
+    backgroundPosition: '0 0',
+    border: 'none',
+    outline: 'none'
   }
   
-  // 打印时的样式优化
+  // 屏幕和打印样式
   const printStyles = `
+    /* 屏幕模式：重置 textarea 样式 */
+    .notebook-textarea {
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+    }
+    
+    /* 焦点时的蓝色环形边框 */
+    .notebook-textarea:focus,
+    textarea.notebook-textarea:focus {
+      border: 0 !important;
+      outline: 0 !important;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+    }
+    
     @media print {
-      .notebook-field {
-        background-image: repeating-linear-gradient(
-          to bottom,
-          transparent 0,
-          transparent 24px,
-          #9ca3af 24px,
-          #9ca3af 25px
-        ) !important;
-        -webkit-print-color-adjust: exact !important;
-        color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        overflow: visible !important;
-        outline: 0 !important;
-        border: 0 !important;
-        border-width: 0 !important;
-        border-top: 0 !important;
-        border-bottom: 0 !important;
-        border-left: 0 !important;
-        border-right: 0 !important;
-        border-color: transparent !important;
-        border-style: none !important;
-        box-shadow: none !important;
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-        border-radius: 0 !important;
-        -webkit-appearance: none !important;
-        appearance: none !important;
-        background-clip: padding-box !important;
-        background-color: transparent !important;
-        text-shadow: none !important;
-        -webkit-box-shadow: none !important;
-        -moz-box-shadow: none !important;
+      .notebook-textarea {
+        display: none !important;
       }
-      .notebook-field * {
-        outline: none !important;
+      
+      .notebook-print-div {
+        display: block !important;
+      }
+      
+      /* 强制重置打印模式的input样式 */
+      .notebook-print-div input {
         border: none !important;
+        border-bottom: 1px solid #9ca3af !important; /* 只保留底部边框 */
+        border-top: none !important;
+        border-left: none !important;  
+        border-right: none !important;
+        outline: none !important;
         box-shadow: none !important;
-        -webkit-box-shadow: none !important;
-        -moz-box-shadow: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        background: transparent !important;
+        padding: 0 3px !important;
+        margin: 0 !important;
+        line-height: 25px !important;
+        height: 25px !important;
+      }
+    }
+    
+    @media screen {
+      .notebook-print-div {
+        display: none !important;
       }
     }
   `
   
   const combinedClassName = `
-    ${className} 
-    ${isFocused ? 'outline outline-2 outline-blue-500' : 'outline-none'}
-    cursor-text 
-    hover:bg-gray-50 
-    transition-colors 
-    text-sm 
-    block 
+    ${className}
+    cursor-text
+    hover:bg-gray-50
+    transition-colors
+    text-sm
+    block
     w-full
     ${!value && !isFocused ? 'text-gray-400' : 'text-gray-800'}
-    notebook-field
+    notebook-textarea
+    resize-none
+    border-none
+    outline-none
   `.trim()
   
   return (
     <div className="relative">
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
-      <ContentEditable
-        innerRef={contentEditableRef}
-        html={isFocused || value ? html : `<span style="color: #9ca3af">${placeholder}</span>`}
-        disabled={false}
+      
+      {/* 屏幕显示：textarea */}
+      <TextareaAutosize
+        name={name}
+        value={value}
+        placeholder={placeholder}
         onChange={handleChange}
-        onPaste={handlePaste}
         onKeyDown={handleKeyDown}
-        onFocus={() => {
-          setIsFocused(true)
-          if (!value && contentEditableRef.current) {
-            contentEditableRef.current.innerHTML = ''
-          }
-        }}
+        onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        tagName="div"
+        minRows={maxLines}
+        maxRows={maxLines}
         className={combinedClassName}
         style={notebookStyles}
       />
+      
+      {/* 打印显示：两个input模拟双行效果 */}
+      <div className="notebook-print-div space-y-1">
+        <input 
+          type="text" 
+          value={line1} 
+          readOnly
+          className="w-full border-b border-gray-400 text-sm bg-transparent outline-none block print-empty-hide"
+        />
+        <input 
+          type="text" 
+          value={line2} 
+          readOnly
+          className="w-full border-b border-gray-400 text-sm bg-transparent outline-none block print-empty-hide"
+        />
+      </div>
+      
       {isFocused && maxLength && (
         <div className="absolute -bottom-5 right-0 text-xs text-gray-500">
-          {stripHtml(html).length}/{maxLength}
+          {value.length}/{maxLength}
         </div>
       )}
     </div>

@@ -72,6 +72,7 @@
     "react-infinite-scroll-component": "^6.1.0",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "latest",
+    "react-textarea-autosize": "^8.5.9",
     "recharts": "latest",
     "rehype-raw": "^7.0.0",
     "remark-breaks": "^4.0.0",

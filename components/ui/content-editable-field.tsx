@@ -19,7 +19,7 @@ export function ContentEditableField({
   value,
   placeholder = "",
   onChange,
-  maxLength = 59,
+  maxLength,
   className = "",
   maxLines = 2
 }: ContentEditableFieldProps) {

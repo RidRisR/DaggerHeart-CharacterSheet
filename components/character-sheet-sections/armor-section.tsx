@@ -118,7 +118,6 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
           name="armorFeature"
           value={formData.armorFeature || ""}
           onChange={handleInputChange}
-          maxLength={59}
           placeholder=""
           maxLines={2}
         />

@@ -130,7 +130,6 @@ export function InventoryWeaponSection({
           name={featureField}
           value={(formData as any)[featureField] || ""}
           onChange={handleInputChange}
-          maxLength={59}
           placeholder=""
           maxLines={2}
         />

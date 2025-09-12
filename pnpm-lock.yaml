@@ -143,6 +143,9 @@ importers:
       react:
         specifier: ^19
         version: 19.1.0
+      react-contenteditable:
+        specifier: ^3.3.7
+        version: 3.3.7(react@19.1.0)
       react-day-picker:
         specifier: latest
         version: 9.7.0(react@19.1.0)
@@ -3809,6 +3812,11 @@ packages:
     engines: {node: '>= 10.13.0'}
     peerDependencies:
       webpack: ^4.0.0 || ^5.0.0
+
+  react-contenteditable@3.3.7:
+    resolution: {integrity: sha512-GA9NbC0DkDdpN3iGvib/OMHWTJzDX2cfkgy5Tt98JJAbA3kLnyrNbBIpsSpPpq7T8d3scD39DHP+j8mAM7BIfQ==}
+    peerDependencies:
+      react: '>=16.3'
 
   react-day-picker@9.7.0:
     resolution: {integrity: sha512-urlK4C9XJZVpQ81tmVgd2O7lZ0VQldZeHzNejbwLWZSkzHH498KnArT0EHNfKBOWwKc935iMLGZdxXPRISzUxQ==}
@@ -8616,6 +8624,12 @@ snapshots:
       loader-utils: 2.0.4
       schema-utils: 3.3.0
       webpack: 5.100.2
+
+  react-contenteditable@3.3.7(react@19.1.0):
+    dependencies:
+      fast-deep-equal: 3.1.3
+      prop-types: 15.8.1
+      react: 19.1.0
 
   react-day-picker@9.7.0(react@19.1.0):
     dependencies:

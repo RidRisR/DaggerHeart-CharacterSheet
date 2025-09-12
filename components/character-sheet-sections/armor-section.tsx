@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
-import { EditableDualLine } from "@/components/ui/editable-dual-line"
+import { ContentEditableField } from "@/components/ui/content-editable-field"
 
 interface ArmorSectionProps {
   onOpenArmorModal: () => void;
@@ -114,12 +114,13 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
         </div>
       </div>
       <div className="mt-1">
-        <EditableDualLine
+        <ContentEditableField
           name="armorFeature"
           value={formData.armorFeature || ""}
           onChange={handleInputChange}
           maxLength={59}
           placeholder=""
+          maxLines={2}
         />
       </div>
     </div>

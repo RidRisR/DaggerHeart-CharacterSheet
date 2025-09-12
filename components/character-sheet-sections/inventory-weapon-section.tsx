@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
-import { EditableDualLine } from "@/components/ui/editable-dual-line"
+import { ContentEditableField } from "@/components/ui/content-editable-field"
 
 interface InventoryWeaponSectionProps {
   index: number
@@ -17,7 +17,7 @@ export function InventoryWeaponSection({
 }: InventoryWeaponSectionProps) {
   const { sheetData: formData, setSheetData } = useSheetStore()
   const [isEditingName, setIsEditingName] = useState(false)
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setSheetData((prev) => ({ ...prev, [name]: value }))
@@ -97,7 +97,7 @@ export function InventoryWeaponSection({
                 title="编辑名称"
               >
                 <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z"/>
+                  <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
                 </svg>
               </button>
             </div>
@@ -126,12 +126,13 @@ export function InventoryWeaponSection({
       </div>
 
       <div className="mt-1">
-        <EditableDualLine
+        <ContentEditableField
           name={featureField}
           value={(formData as any)[featureField] || ""}
           onChange={handleInputChange}
           maxLength={59}
           placeholder=""
+          maxLines={2}
         />
       </div>
 

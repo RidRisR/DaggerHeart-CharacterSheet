@@ -91,18 +91,13 @@ export function ContentEditableField({
   }, [])
   
   const notebookStyles = {
-    backgroundImage: `
-      linear-gradient(
+    backgroundImage: `repeating-linear-gradient(
         to bottom,
-        transparent calc(25px - 1px),
-        #9ca3af calc(25px - 1px),
-        #9ca3af 25px,
-        transparent 25px,
-        transparent calc(50px - 1px),
-        #9ca3af calc(50px - 1px),
-        #9ca3af 50px
-      )
-    `,
+        transparent 0,
+        transparent 24px,
+        #9ca3af 24px,
+        #9ca3af 25px
+      )`,
     lineHeight: '25px',
     padding: '0 3px',
     paddingTop: '0',
@@ -116,9 +111,55 @@ export function ContentEditableField({
     backgroundPosition: '0 0'
   }
   
+  // 打印时的样式优化
+  const printStyles = `
+    @media print {
+      .notebook-field {
+        background-image: repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent 24px,
+          #9ca3af 24px,
+          #9ca3af 25px
+        ) !important;
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        overflow: visible !important;
+        outline: 0 !important;
+        border: 0 !important;
+        border-width: 0 !important;
+        border-top: 0 !important;
+        border-bottom: 0 !important;
+        border-left: 0 !important;
+        border-right: 0 !important;
+        border-color: transparent !important;
+        border-style: none !important;
+        box-shadow: none !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        border-radius: 0 !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        background-clip: padding-box !important;
+        background-color: transparent !important;
+        text-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
+      }
+      .notebook-field * {
+        outline: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
+      }
+    }
+  `
+  
   const combinedClassName = `
     ${className} 
-    ${isFocused ? 'outline outline-2 outline-blue-500' : ''}
+    ${isFocused ? 'outline outline-2 outline-blue-500' : 'outline-none'}
     cursor-text 
     hover:bg-gray-50 
     transition-colors 
@@ -126,10 +167,12 @@ export function ContentEditableField({
     block 
     w-full
     ${!value && !isFocused ? 'text-gray-400' : 'text-gray-800'}
+    notebook-field
   `.trim()
   
   return (
     <div className="relative">
+      <style dangerouslySetInnerHTML={{ __html: printStyles }} />
       <ContentEditable
         innerRef={contentEditableRef}
         html={isFocused || value ? html : `<span style="color: #9ca3af">${placeholder}</span>`}

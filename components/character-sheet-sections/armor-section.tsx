@@ -54,7 +54,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
   return (
     <div>
       <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">护甲</h4>
-      <div className="grid grid-cols-10 gap-1 mt-1">
+      <div className="grid grid-cols-10 gap-1 -mt-0.5">
         <div className="col-span-4">
           <label className="text-[8px] text-gray-600">名称</label>
           {isEditingName ? (

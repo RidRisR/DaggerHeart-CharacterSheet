@@ -53,11 +53,11 @@ export function WeaponSection({
   const featureField = `${fieldPrefix}Feature`
 
   return (
-    <div className="mb-1.5">
+    <div className="mb-2.5">
       <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">
         {isPrimary ? "主武器" : "副武器"}
       </h4>
-      <div className="grid grid-cols-10 gap-1 mt-1">
+      <div className="grid grid-cols-10 gap-1 -mt-0.5">
         <div className="col-span-4">
           <label className="text-[8px] text-gray-600">名称</label>
           {isEditingName ? (

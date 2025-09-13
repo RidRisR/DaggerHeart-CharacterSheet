@@ -55,7 +55,7 @@ function generateCardId(packageName: string, author: string, cardType: string, c
   // 类型缩写映射
   const typeAbbreviation = {
     'profession': 'prof',
-    'ancestry': 'ance', 
+    'ancestry': 'ance',
     'community': 'comm',
     'subclass': 'subc',
     'domain': 'doma',
@@ -67,20 +67,20 @@ function generateCardId(packageName: string, author: string, cardType: string, c
 }
 
 // 职业卡牌编辑器
-export function ProfessionCardForm({ 
-  card, 
-  onSave, 
-  onCancel, 
+export function ProfessionCardForm({
+  card,
+  onSave,
+  onCancel,
   onPreview,
-  onChange, 
-  keywordLists, 
+  onChange,
+  keywordLists,
   onAddKeyword,
   packageInfo,
   packageData
 }: BaseCardFormProps<ProfessionCard>) {
   const [isEditingId, setIsEditingId] = useState(false)
   const [autoGenerateId, setAutoGenerateId] = useState(true)
-  
+
   const form = useForm<ProfessionCard>({
     defaultValues: card
   })
@@ -93,18 +93,18 @@ export function ProfessionCardForm({
   // 监听表单变化并触发onChange回调
   useEffect(() => {
     if (!onChange) return
-    
+
     const subscription = form.watch((value) => {
       onChange(value as ProfessionCard)
     })
-    
+
     return () => subscription.unsubscribe()
   }, [form, onChange])
 
   // 监听名称字段变化，自动更新ID
   useEffect(() => {
     if (!autoGenerateId) return
-    
+
     const subscription = form.watch((value, { name }) => {
       if (name === '名称' && value.名称) {
         const packageName = packageInfo?.name || '新建卡包'
@@ -117,7 +117,7 @@ export function ProfessionCardForm({
         }
       }
     })
-    
+
     return () => subscription.unsubscribe()
   }, [form, autoGenerateId, packageInfo, packageData])
 
@@ -125,12 +125,12 @@ export function ProfessionCardForm({
   useEffect(() => {
     const currentId = form.getValues('id')
     const currentName = form.getValues('名称')
-    
+
     if (autoGenerateId && currentName && (!currentId || currentId.includes('新职业'))) {
       const packageName = packageInfo?.name || '新建卡包'
       const author = packageInfo?.author || '作者'
       const newId = generateSmartCardId(packageName, author, 'profession', currentName, packageData)
-      
+
       // 只在ID实际需要更新时才设置，避免无限循环
       if (currentId !== newId) {
         form.setValue('id', newId)
@@ -162,105 +162,106 @@ export function ProfessionCardForm({
     const packageName = packageInfo?.name || '新建卡包'
     const author = packageInfo?.author || '作者'
     const cardName = currentValues.名称 || '卡牌名'
-    
+
     const newId = generateCardId(packageName, author, 'profession', cardName)
     form.setValue('id', newId)
   }
 
   return (
-        <Form {...form}>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="名称"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>职业名称 *</FormLabel>
-                    <FormControl>
-                      <KeywordCombobox
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        keywords={keywordLists?.professions || []}
-                        onAddKeyword={(keyword) => onAddKeyword?.('professions', keyword)}
-                        placeholder="输入或选择职业"
-                      />
-                    </FormControl>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">ID:</span>
-                        {!isEditingId ? (
-                          <span className="text-xs font-mono text-muted-foreground">
-                            {form.watch('id') || '未设置'}
-                          </span>
-                        ) : (
-                          <FormField
-                            control={form.control}
-                            name="id"
-                            render={({ field }) => (
-                              <Input 
-                                className="h-6 text-xs font-mono px-2 py-0 w-48"
-                                placeholder="例如：pack-author-prof-职业名" 
-                                {...field} 
-                                onBlur={() => {
-                                  setIsEditingId(false)
-                                  handleFieldBlur()
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === 'Escape') {
-                                    setIsEditingId(false)
-                                    handleFieldBlur()
-                                  }
-                                }}
-                                autoFocus
-                              />
-                            )}
+    <Form {...form}>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="名称"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>职业名称 *</FormLabel>
+                <FormControl>
+                  <KeywordCombobox
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={handleFieldBlur}
+                    keywords={keywordLists?.professions || []}
+                    onAddKeyword={(keyword) => onAddKeyword?.('professions', keyword)}
+                    placeholder="输入或选择职业"
+                  />
+                </FormControl>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">ID:</span>
+                    {!isEditingId ? (
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {form.watch('id') || '未设置'}
+                      </span>
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="id"
+                        render={({ field }) => (
+                          <Input
+                            className="h-6 text-xs font-mono px-2 py-0 w-48"
+                            placeholder="例如：pack-author-prof-职业名"
+                            {...field}
+                            onBlur={() => {
+                              setIsEditingId(false)
+                              handleFieldBlur()
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === 'Escape') {
+                                setIsEditingId(false)
+                                handleFieldBlur()
+                              }
+                            }}
+                            autoFocus
                           />
                         )}
-                        {autoGenerateId && (
-                          <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
-                            自动
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={generateId}
-                          className="h-6 w-6 p-0"
-                          title="重新生成ID"
-                        >
-                          <RefreshCw className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setIsEditingId(true)}
-                          className="h-6 w-6 p-0"
-                          title="编辑ID"
-                        >
-                          <Edit2 className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setAutoGenerateId(!autoGenerateId)}
-                          className="h-6 w-6 p-0"
-                          title={autoGenerateId ? "关闭自动生成" : "开启自动生成"}
-                        >
-                          <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
-                        </Button>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                      />
+                    )}
+                    {autoGenerateId && (
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
+                        自动
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={generateId}
+                      className="h-6 w-6 p-0"
+                      title="重新生成ID"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingId(true)}
+                      className="h-6 w-6 p-0"
+                      title="编辑ID"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAutoGenerateId(!autoGenerateId)}
+                      className="h-6 w-6 p-0"
+                      title={autoGenerateId ? "关闭自动生成" : "开启自动生成"}
+                    >
+                      <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
+                    </Button>
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -268,11 +269,12 @@ export function ProfessionCardForm({
             name="领域1"
             render={({ field }) => (
               <FormItem>
-                    <FormLabel>领域1 *</FormLabel>
-                    <FormControl>
+                <FormLabel>领域1 *</FormLabel>
+                <FormControl>
                   <KeywordCombobox
                     value={field.value || ''}
                     onChange={field.onChange}
+                    onBlur={handleFieldBlur}
                     keywords={keywordLists?.domains || []}
                     onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
                     placeholder="输入或选择领域"
@@ -282,25 +284,26 @@ export function ProfessionCardForm({
               </FormItem>
             )}
           />
-              <FormField
-                control={form.control}
+          <FormField
+            control={form.control}
             name="领域2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>领域2 *</FormLabel>
-                    <FormControl>
-                      <KeywordCombobox
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        keywords={keywordLists?.domains || []}
-                        onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
-                        placeholder="输入或选择领域"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>领域2 *</FormLabel>
+                <FormControl>
+                  <KeywordCombobox
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={handleFieldBlur}
+                    keywords={keywordLists?.domains || []}
+                    onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
+                    placeholder="输入或选择领域"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <FormField
@@ -308,19 +311,78 @@ export function ProfessionCardForm({
           name="职业特性"
           render={({ field }) => (
             <FormItem>
-                  <FormLabel>职业特性 *</FormLabel>
-                  <FormControl>
-                    <MarkdownEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={handleFieldBlur}
-                      placeholder="核心职业能力，支持Markdown格式"
-                      height={200}
-                    />
-                  </FormControl>
+              <FormLabel>职业特性 *</FormLabel>
+              <FormControl>
+                <MarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={handleFieldBlur}
+                  placeholder="核心职业能力，支持Markdown格式"
+                  height={200}
+                />
+              </FormControl>
               <div className="text-sm text-muted-foreground">
-                    支持Markdown格式，可以使用 *__特性名__* 来标记特性标题
+                支持Markdown格式，可以使用 *__特性名__* 来标记特性标题
               </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="起始生命"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>起始生命 *</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="例如：6"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      field.onChange(value === '' ? '' : parseInt(value) || 0)
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="起始闪避"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>起始闪避 *</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="例如：11"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      field.onChange(value === '' ? '' : parseInt(value) || 0)
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="起始物品"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>起始物品 *</FormLabel>
+              <FormControl>
+                <Input placeholder="例如：星图卷轴、观星镜、预言水晶" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -328,15 +390,17 @@ export function ProfessionCardForm({
 
         <FormField
           control={form.control}
-          name="简介"
+          name="希望特性"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>职业简介 *</FormLabel>
+              <FormLabel>希望特性 *</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="请输入职业的背景和风味描述"
-                  {...field}
+                <SimpleMarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
                   onBlur={handleFieldBlur}
+                  placeholder="描述希望点的使用效果"
+                  height={100}
                 />
               </FormControl>
               <FormMessage />
@@ -344,119 +408,69 @@ export function ProfessionCardForm({
           )}
         />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="起始生命"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>起始生命 *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number"
-                        placeholder="例如：11"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="起始闪避"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>起始闪避 *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number"
-                        placeholder="例如：9"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+        {/* 职业简介 - 非必填 */}
+        <FormField
+          control={form.control}
+          name="简介"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>职业简介</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="请输入职业的背景和风味描述"
+                  {...field}
+                  value={field.value || ''}
+                  onBlur={handleFieldBlur}
+                />
+              </FormControl>
+              <div className="text-sm text-muted-foreground">
+                只用于建卡指引，不会出现在卡牌上
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            <FormField
-              control={form.control}
-              name="起始物品"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>起始物品 *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="例如：星图卷轴、观星镜、预言水晶" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="希望特性"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>希望特性 *</FormLabel>
-                  <FormControl>
-                    <SimpleMarkdownEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={handleFieldBlur}
-                      placeholder="描述希望点的使用效果"
-                      height={100}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* 卡图链接 */}
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>卡图链接</FormLabel>
-                  <FormControl>
-                    <Input 
-                      {...field}
-                      value={field.value || ''}
-                      placeholder="输入图片URL（可选）" 
-                      onBlur={handleFieldBlur}
-                      type="url"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </Form>
+        {/* 卡图链接 */}
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>卡图链接</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="输入图片URL（可选）"
+                  onBlur={handleFieldBlur}
+                  type="url"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </Form>
   )
 }
 
 // 种族卡牌编辑器
-export function AncestryCardForm({ 
-  card, 
-  onSave, 
-  onCancel, 
+export function AncestryCardForm({
+  card,
+  onSave,
+  onCancel,
   onPreview,
-  onChange, 
-  keywordLists, 
+  onChange,
+  keywordLists,
   onAddKeyword,
   packageInfo,
   packageData
 }: BaseCardFormProps<AncestryCard>) {
   const [isEditingId, setIsEditingId] = useState(false)
   const [autoGenerateId, setAutoGenerateId] = useState(true)
-  
+
   const form = useForm<AncestryCard>({
     defaultValues: card
   })
@@ -469,18 +483,18 @@ export function AncestryCardForm({
   // 监听表单变化并触发onChange回调
   useEffect(() => {
     if (!onChange) return
-    
+
     const subscription = form.watch((value) => {
       onChange(value as AncestryCard)
     })
-    
+
     return () => subscription.unsubscribe()
   }, [form, onChange])
 
   // 监听名称字段变化，自动更新ID
   useEffect(() => {
     if (!autoGenerateId) return
-    
+
     const subscription = form.watch((value, { name }) => {
       if (name === '名称' && value.名称) {
         const packageName = packageInfo?.name || '新建卡包'
@@ -493,7 +507,7 @@ export function AncestryCardForm({
         }
       }
     })
-    
+
     return () => subscription.unsubscribe()
   }, [form, autoGenerateId, packageInfo, packageData])
 
@@ -501,12 +515,12 @@ export function AncestryCardForm({
   useEffect(() => {
     const currentId = form.getValues('id')
     const currentName = form.getValues('名称')
-    
+
     if (autoGenerateId && currentName && (!currentId || currentId.includes('新能力'))) {
       const packageName = packageInfo?.name || '新建卡包'
       const author = packageInfo?.author || '作者'
       const newId = generateSmartCardId(packageName, author, 'ancestry', currentName, packageData)
-      
+
       // 只在ID实际需要更新时才设置，避免无限循环
       if (currentId !== newId) {
         form.setValue('id', newId)
@@ -538,14 +552,14 @@ export function AncestryCardForm({
     const packageName = packageInfo?.name || '新建卡包'
     const author = packageInfo?.author || '作者'
     const cardName = currentValues.名称 || '卡牌名'
-    
+
     const newId = generateCardId(packageName, author, 'ancestry', cardName)
     form.setValue('id', newId)
   }
 
   return (
-        <Form {...form}>
-          <div className="space-y-4">
+    <Form {...form}>
+      <div className="space-y-4">
         {/* 第一行：卡牌名称 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -635,148 +649,149 @@ export function AncestryCardForm({
 
         {/* 第二行：种族和类别 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="种族"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>种族 *</FormLabel>
-                    <FormControl>
-                      <KeywordCombobox
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        keywords={keywordLists?.ancestries || []}
-                        onAddKeyword={(keyword) => onAddKeyword?.('ancestries', keyword)}
-                        placeholder="输入或选择种族"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="类别"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>类别 *</FormLabel>
-                    <Select 
-                      value={field.value?.toString() || ''} 
-                      onValueChange={(value) => {
-                        const numValue = parseInt(value)
-                        if (!isNaN(numValue) && numValue !== field.value) {
-                          field.onChange(numValue)
-                        }
-                      }}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="选择类别" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">类别 1</SelectItem>
-                        <SelectItem value="2">类别 2</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <FormField
+            control={form.control}
+            name="种族"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>种族 *</FormLabel>
+                <FormControl>
+                  <KeywordCombobox
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={handleFieldBlur}
+                    keywords={keywordLists?.ancestries || []}
+                    onAddKeyword={(keyword) => onAddKeyword?.('ancestries', keyword)}
+                    placeholder="输入或选择种族"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="类别"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>类别 *</FormLabel>
+                <Select
+                  value={field.value?.toString() || ''}
+                  onValueChange={(value) => {
+                    const numValue = parseInt(value)
+                    if (!isNaN(numValue) && numValue !== field.value) {
+                      field.onChange(numValue)
+                    }
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择类别" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="1">类别 1</SelectItem>
+                    <SelectItem value="2">类别 2</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* 第三行：能力效果 */}
-            <FormField
-              control={form.control}
+        <FormField
+          control={form.control}
           name="效果"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>能力效果 *</FormLabel>
-                  <FormControl>
-                    <MarkdownEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={handleFieldBlur}
-                      placeholder="该项能力的具体效果，支持Markdown"
-                      height={200}
-                    />
-                  </FormControl>
-                  <div className="text-sm text-muted-foreground">
-                    支持Markdown格式，可以使用 *__能力名__* 来标记能力标题
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>能力效果 *</FormLabel>
+              <FormControl>
+                <MarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={handleFieldBlur}
+                  placeholder="该项能力的具体效果，支持Markdown"
+                  height={200}
+                />
+              </FormControl>
+              <div className="text-sm text-muted-foreground">
+                支持Markdown格式，可以使用 *__能力名__* 来标记能力标题
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* 第四行：种族简介 */}
-            <FormField
-              control={form.control}
+        <FormField
+          control={form.control}
           name="简介"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>种族简介 *</FormLabel>
-                  <FormControl>
-                    <SimpleMarkdownEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={handleFieldBlur}
-                      placeholder="种族的风味描述。"
-                      height={100}
-                    />
-                  </FormControl>
-                  <div className="text-sm text-muted-foreground">
-                    该种族的风味描述
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>种族简介 *</FormLabel>
+              <FormControl>
+                <SimpleMarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={handleFieldBlur}
+                  placeholder="种族的风味描述。"
+                  height={100}
+                />
+              </FormControl>
+              <div className="text-sm text-muted-foreground">
+                该种族的风味描述
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            {/* 卡图链接 */}
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>卡图链接</FormLabel>
-                  <FormControl>
-                    <Input 
-                      {...field}
-                      value={field.value || ''}
-                      placeholder="输入图片URL（可选）" 
-                      onBlur={handleFieldBlur}
-                      type="url"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </Form>
+        {/* 卡图链接 */}
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>卡图链接</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="输入图片URL（可选）"
+                  onBlur={handleFieldBlur}
+                  type="url"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </Form>
   )
 }
 
 // 变体卡牌编辑器
-export function VariantCardForm({ 
-  card, 
-  onSave, 
-  onCancel, 
+export function VariantCardForm({
+  card,
+  onSave,
+  onCancel,
   onPreview,
-  onChange, 
-  keywordLists, 
+  onChange,
+  keywordLists,
   onAddKeyword,
   packageInfo,
   packageData
 }: BaseCardFormProps<RawVariantCard>) {
   const [isEditingId, setIsEditingId] = useState(false)
   const [autoGenerateId, setAutoGenerateId] = useState(true)
-  
+
   // 规范化卡牌数据，确保简略信息字段结构完整
   const normalizeCard = (cardData: RawVariantCard): RawVariantCard => {
     const normalized = { ...cardData }
-    
+
     // 确保简略信息字段存在且结构完整
     if (!normalized.简略信息 || typeof normalized.简略信息 !== 'object') {
       normalized.简略信息 = {
@@ -791,7 +806,7 @@ export function VariantCardForm({
         item3: normalized.简略信息.item3 || ''
       }
     }
-    
+
     // 确保等级字段的正确类型处理
     if (normalized.等级 === undefined || normalized.等级 === null || (normalized.等级 as any) === '') {
       normalized.等级 = undefined
@@ -810,12 +825,12 @@ export function VariantCardForm({
         }
       }
     }
-    
+
     return normalized
   }
-  
+
   const normalizedCard = normalizeCard(card)
-  
+
   const form = useForm<RawVariantCard>({
     defaultValues: normalizedCard
   })
@@ -829,18 +844,18 @@ export function VariantCardForm({
   // 监听表单变化并触发onChange回调
   useEffect(() => {
     if (!onChange) return
-    
+
     const subscription = form.watch((value) => {
       onChange(value as RawVariantCard)
     })
-    
+
     return () => subscription.unsubscribe()
   }, [form, onChange])
 
   // 监听名称字段变化，自动更新ID
   useEffect(() => {
     if (!autoGenerateId) return
-    
+
     const subscription = form.watch((value, { name }) => {
       if (name === '名称' && value.名称) {
         const packageName = packageInfo?.name || '新建卡包'
@@ -853,7 +868,7 @@ export function VariantCardForm({
         }
       }
     })
-    
+
     return () => subscription.unsubscribe()
   }, [form, autoGenerateId, packageInfo, packageData])
 
@@ -861,12 +876,12 @@ export function VariantCardForm({
   useEffect(() => {
     const currentId = form.getValues('id')
     const currentName = form.getValues('名称')
-    
+
     if (autoGenerateId && currentName && (!currentId || currentId.includes('新物品'))) {
       const packageName = packageInfo?.name || '新建卡包'
       const author = packageInfo?.author || '作者'
       const newId = generateSmartCardId(packageName, author, 'variant', currentName, packageData)
-      
+
       // 只在ID实际需要更新时才设置，避免无限循环
       if (currentId !== newId) {
         form.setValue('id', newId)
@@ -898,126 +913,127 @@ export function VariantCardForm({
     const packageName = packageInfo?.name || '新建卡包'
     const author = packageInfo?.author || '作者'
     const cardName = currentValues.名称 || '卡牌名'
-    
+
     const newId = generateCardId(packageName, author, 'variant', cardName)
     form.setValue('id', newId)
   }
 
   return (
-        <Form {...form}>
-          <div className="space-y-4">
+    <Form {...form}>
+      <div className="space-y-4">
         {/* 第一行：名称 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="名称"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>卡牌名称 *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例如：星辰王冠" {...field} />
-                    </FormControl>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">ID:</span>
-                        {!isEditingId ? (
-                          <span className="text-xs font-mono text-muted-foreground">
-                            {form.watch('id') || '未设置'}
-                          </span>
-                        ) : (
-                          <FormField
-                            control={form.control}
-                            name="id"
-                            render={({ field }) => (
-                              <Input 
-                                className="h-6 text-xs font-mono px-2 py-0 w-48"
-                                placeholder="例如：pack-author-vari-星辰王冠" 
-                                {...field} 
-                                onBlur={() => {
-                                  setIsEditingId(false)
-                                  handleFieldBlur()
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === 'Escape') {
-                                    setIsEditingId(false)
-                                    handleFieldBlur()
-                                  }
-                                }}
-                                autoFocus
-                              />
-                            )}
+          <FormField
+            control={form.control}
+            name="名称"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>卡牌名称 *</FormLabel>
+                <FormControl>
+                  <Input placeholder="例如：星辰王冠" {...field} />
+                </FormControl>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">ID:</span>
+                    {!isEditingId ? (
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {form.watch('id') || '未设置'}
+                      </span>
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="id"
+                        render={({ field }) => (
+                          <Input
+                            className="h-6 text-xs font-mono px-2 py-0 w-48"
+                            placeholder="例如：pack-author-vari-星辰王冠"
+                            {...field}
+                            onBlur={() => {
+                              setIsEditingId(false)
+                              handleFieldBlur()
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === 'Escape') {
+                                setIsEditingId(false)
+                                handleFieldBlur()
+                              }
+                            }}
+                            autoFocus
                           />
                         )}
-                        {autoGenerateId && (
-                          <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
-                            自动
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={generateId}
-                          className="h-6 w-6 p-0"
-                          title="重新生成ID"
-                        >
-                          <RefreshCw className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setIsEditingId(true)}
-                          className="h-6 w-6 p-0"
-                          title="编辑ID"
-                        >
-                          <Edit2 className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setAutoGenerateId(!autoGenerateId)}
-                          className="h-6 w-6 p-0"
-                          title={autoGenerateId ? "关闭自动生成" : "开启自动生成"}
-                        >
-                          <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
-                        </Button>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      />
+                    )}
+                    {autoGenerateId && (
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-[10px]">
+                        自动
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={generateId}
+                      className="h-6 w-6 p-0"
+                      title="重新生成ID"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingId(true)}
+                      className="h-6 w-6 p-0"
+                      title="编辑ID"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAutoGenerateId(!autoGenerateId)}
+                      className="h-6 w-6 p-0"
+                      title={autoGenerateId ? "关闭自动生成" : "开启自动生成"}
+                    >
+                      <RotateCcw className={`h-3 w-3 ${autoGenerateId ? 'text-green-600' : 'text-muted-foreground'}`} />
+                    </Button>
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         {/* 第二行：卡牌类型 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="类型"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>卡牌类型 *</FormLabel>
-                    <FormControl>
-                      <KeywordCombobox
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        keywords={keywordLists?.variants || []}
-                        onAddKeyword={(keyword) => onAddKeyword?.('variants', keyword)}
-                        placeholder="输入或选择卡牌类型"
-                      />
-                    </FormControl>
-                    <div className="text-sm text-muted-foreground">
-                      从预定义列表中选择或添加新的变体类型
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <FormField
+            control={form.control}
+            name="类型"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>卡牌类型 *</FormLabel>
+                <FormControl>
+                  <KeywordCombobox
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={handleFieldBlur}
+                    keywords={keywordLists?.variants || []}
+                    onAddKeyword={(keyword) => onAddKeyword?.('variants', keyword)}
+                    placeholder="输入或选择卡牌类型"
+                  />
+                </FormControl>
+                <div className="text-sm text-muted-foreground">
+                  从预定义列表中选择或添加新的变体类型
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* 第三行：简略信息 */}
         <div className="space-y-2">
@@ -1063,28 +1079,28 @@ export function VariantCardForm({
         </div>
 
         {/* 第四行：卡牌效果 */}
-            <FormField
-              control={form.control}
-              name="效果"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>卡牌效果 *</FormLabel>
-                  <FormControl>
-                    <MarkdownEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={handleFieldBlur}
-                      placeholder="卡牌效果的详细描述，支持Markdown"
-                      height={200}
-                    />
-                  </FormControl>
-                  <div className="text-sm text-muted-foreground">
-                    支持Markdown格式，可以使用 *__效果名__* 来标记效果标题
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <FormField
+          control={form.control}
+          name="效果"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>卡牌效果 *</FormLabel>
+              <FormControl>
+                <MarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={handleFieldBlur}
+                  placeholder="卡牌效果的详细描述，支持Markdown"
+                  height={200}
+                />
+              </FormControl>
+              <div className="text-sm text-muted-foreground">
+                支持Markdown格式，可以使用 *__效果名__* 来标记效果标题
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* 第五行：子类别和等级 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1095,9 +1111,9 @@ export function VariantCardForm({
               <FormItem>
                 <FormLabel>子类别</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="例如：饰品、武器（可选）" 
-                    {...field} 
+                  <Input
+                    placeholder="例如：饰品、武器（可选）"
+                    {...field}
                     value={field.value || ''}
                   />
                 </FormControl>
@@ -1127,30 +1143,30 @@ export function VariantCardForm({
               </FormItem>
             )}
           />
-            </div>
+        </div>
 
-            {/* 卡图链接 */}
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>卡图链接</FormLabel>
-                  <FormControl>
-                    <Input 
-                      {...field}
-                      value={field.value || ''}
-                      placeholder="输入图片URL（可选）" 
-                      onBlur={handleFieldBlur}
-                      type="url"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </Form>
+        {/* 卡图链接 */}
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>卡图链接</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="输入图片URL（可选）"
+                  onBlur={handleFieldBlur}
+                  type="url"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </Form>
   )
 }
 
@@ -1217,7 +1233,7 @@ export function CommunityCardForm({
       const packageName = packageInfo?.name || '新建卡包'
       const author = packageInfo?.author || '作者'
       const newId = generateSmartCardId(packageName, author, 'community', currentName, packageData)
-      
+
       // 只在ID实际需要更新时才设置，避免无限循环
       if (currentId !== newId) {
         form.setValue('id', newId)
@@ -1259,6 +1275,7 @@ export function CommunityCardForm({
                   <KeywordCombobox
                     value={field.value || ''}
                     onChange={field.onChange}
+                    onBlur={handleFieldBlur}
                     keywords={keywordLists?.communities || []}
                     onAddKeyword={(keyword) => onAddKeyword?.('communities', keyword)}
                     placeholder="输入或选择社群"
@@ -1415,10 +1432,10 @@ export function CommunityCardForm({
             <FormItem>
               <FormLabel>卡图链接</FormLabel>
               <FormControl>
-                <Input 
+                <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="输入图片URL（可选）" 
+                  placeholder="输入图片URL（可选）"
                   onBlur={handleFieldBlur}
                   type="url"
                 />
@@ -1657,6 +1674,7 @@ export function SubclassCardForm({
                   <KeywordCombobox
                     value={field.value || ''}
                     onChange={field.onChange}
+                    onBlur={handleFieldBlur}
                     keywords={keywordLists?.professions || []}
                     onAddKeyword={(keyword) => onAddKeyword?.('professions', keyword)}
                     placeholder="选择主职业"
@@ -1762,10 +1780,10 @@ export function SubclassCardForm({
             <FormItem>
               <FormLabel>卡图链接</FormLabel>
               <FormControl>
-                <Input 
+                <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="输入图片URL（可选）" 
+                  placeholder="输入图片URL（可选）"
                   onBlur={handleFieldBlur}
                   type="url"
                 />
@@ -1834,7 +1852,7 @@ export function DomainCardForm({
     const packageName = packageInfo?.name || '新建卡包'
     const author = packageInfo?.author || '作者'
     const cardName = currentValues.名称 || '卡牌名'
-    
+
     const newId = generateCardId(packageName, author, 'domain', cardName)
     form.setValue('id', newId)
   }
@@ -1874,8 +1892,8 @@ export function DomainCardForm({
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">ID:</span>
                     {!isEditingId ? (
-                      <span 
-                        className="text-xs font-mono text-muted-foreground cursor-pointer hover:text-foreground" 
+                      <span
+                        className="text-xs font-mono text-muted-foreground cursor-pointer hover:text-foreground"
                         onClick={() => setIsEditingId(true)}
                         title="点击编辑ID"
                       >
@@ -1886,10 +1904,10 @@ export function DomainCardForm({
                         control={form.control}
                         name="id"
                         render={({ field }) => (
-                          <Input 
+                          <Input
                             className="h-6 text-xs font-mono px-2 py-0 w-48"
-                            placeholder="例如：pack-author-domain-领域名" 
-                            {...field} 
+                            placeholder="例如：pack-author-domain-领域名"
+                            {...field}
                             onBlur={() => {
                               setIsEditingId(false)
                               handleFieldBlur()
@@ -1955,6 +1973,7 @@ export function DomainCardForm({
                       field.onChange(value)
                       handleAutoSave()
                     }}
+                    onBlur={handleFieldBlur}
                     keywords={domainOptions}
                     placeholder="选择或创建领域"
                     onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
@@ -2078,10 +2097,10 @@ export function DomainCardForm({
             <FormItem>
               <FormLabel>卡图链接</FormLabel>
               <FormControl>
-                <Input 
+                <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="输入图片URL（可选）" 
+                  placeholder="输入图片URL（可选）"
                   onBlur={handleFieldBlur}
                   type="url"
                 />

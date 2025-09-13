@@ -477,6 +477,7 @@ export function SubclassTripleCardForm({
                         field.onChange(value)
                         handleFieldBlur()
                       }}
+                      onBlur={handleFieldBlur}
                       keywords={Array.isArray(keywordLists?.professions) ? keywordLists.professions : []}
                       onAddKeyword={(keyword) => onAddKeyword?.('professions', keyword)}
                       placeholder="选择主职业"

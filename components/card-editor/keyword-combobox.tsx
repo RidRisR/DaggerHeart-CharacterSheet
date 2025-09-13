@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 interface KeywordComboboxProps {
   value: string
   onChange: (value: string) => void
+  onBlur?: () => void
   keywords: string[]
   onAddKeyword: (newKeyword: string) => void
   placeholder?: string
@@ -17,6 +18,7 @@ interface KeywordComboboxProps {
 export function KeywordCombobox({
   value,
   onChange,
+  onBlur,
   keywords,
   onAddKeyword,
   placeholder = "输入或选择...",
@@ -161,21 +163,27 @@ export function KeywordCombobox({
 
   // 处理输入框失焦
   const handleBlur = () => {
-    // 延迟执行，让点击事件先触发
+    // 立即保存输入值，不延迟
+    if (inputValue && inputValue !== value) {
+      if (keywords.includes(inputValue)) {
+        onChange(inputValue)
+      } else if (inputValue.trim()) {
+        // 自动创建新选项
+        onAddKeyword(inputValue.trim())
+        onChange(inputValue.trim())
+      }
+    }
+
+    // 触发外部的 onBlur 回调
+    if (onBlur) {
+      onBlur()
+    }
+
+    // 延迟关闭下拉框，让点击事件先触发
     setTimeout(() => {
       if (!containerRef.current?.contains(document.activeElement)) {
         setShowDropdown(false)
         setHighlightedIndex(-1)
-        // 如果输入值有效，触发onChange
-        if (inputValue && inputValue !== value) {
-          if (keywords.includes(inputValue)) {
-            onChange(inputValue)
-          } else if (inputValue.trim()) {
-            // 自动创建新选项
-            onAddKeyword(inputValue.trim())
-            onChange(inputValue.trim())
-          }
-        }
       }
     }, 200)
   }

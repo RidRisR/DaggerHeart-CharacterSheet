@@ -252,6 +252,7 @@ export function AncestryDualCardForm({
                           field.onChange(value)
                           handleFieldBlur()
                         }}
+                        onBlur={handleFieldBlur}
                         keywords={Array.isArray(keywordLists?.ancestries) ? keywordLists.ancestries : []}
                         onAddKeyword={(keyword) => onAddKeyword?.('ancestries', keyword)}
                         placeholder="输入或选择种族"

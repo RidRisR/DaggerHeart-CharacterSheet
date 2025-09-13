@@ -1,17 +1,18 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { toast } from 'sonner'
-import type { 
-  CardPackageState, 
-  CurrentCardIndex, 
-  PreviewDialogState, 
-  CardListDialogState, 
-  CardType 
+import type {
+  CardPackageState,
+  CurrentCardIndex,
+  PreviewDialogState,
+  CardListDialogState,
+  CardType
 } from '../types'
 import { defaultPackage } from '../types'
 import { createDefaultCard, copyCard } from '../utils/card-factory'
 import { exportCardPackage, importCardPackage } from '../utils/import-export'
 import { validationService, type ValidationResult, type ValidationError } from '../services/validation-service'
+import { generateSmartCardId } from '../utils/id-generator'
 
 interface CardEditorStore {
   // 状态
@@ -106,10 +107,32 @@ export const useCardEditorStore = create<CardEditorStore>()(
       isValidating: false,
       
       // 元数据更新
-      updateMetadata: (field, value) => 
-        set(state => ({
-          packageData: { ...state.packageData, [field]: value }
-        })),
+      updateMetadata: (field, value) =>
+        set(state => {
+          const newPackageData = { ...state.packageData, [field]: value }
+
+          // 如果修改的是包名或作者，重新生成所有卡牌ID
+          if (field === 'name' || field === 'author') {
+            const cardTypes: CardType[] = ['profession', 'ancestry', 'community', 'subclass', 'domain', 'variant']
+
+            cardTypes.forEach(cardType => {
+              if (newPackageData[cardType] && Array.isArray(newPackageData[cardType])) {
+                newPackageData[cardType] = (newPackageData[cardType] as any[]).map(card => ({
+                  ...card,
+                  id: generateSmartCardId(
+                    newPackageData.name || '新建卡包',
+                    newPackageData.author || '未知作者',
+                    cardType,
+                    card.名称 || '未命名',
+                    newPackageData
+                  )
+                }))
+              }
+            })
+          }
+
+          return { packageData: newPackageData }
+        }),
         
       // 卡牌操作
       addCard: (type) => 
@@ -251,13 +274,28 @@ export const useCardEditorStore = create<CardEditorStore>()(
           }
         }),
         
-      updateCard: (type, index, card) => 
+      updateCard: (type, index, updates) =>
         set(state => {
           const cards = state.packageData[type] as any[]
+          if (!cards || !cards[index]) return state
+
+          const newCard = { ...cards[index], ...updates }
+
+          // 自动处理ID生成 - 当名称变化时重新生成ID
+          if (updates.名称 && updates.名称 !== cards[index].名称) {
+            newCard.id = generateSmartCardId(
+              state.packageData.name || '新建卡包',
+              state.packageData.author || '未知作者',
+              type,
+              updates.名称,
+              state.packageData
+            )
+          }
+
           return {
             packageData: {
               ...state.packageData,
-              [type]: cards?.map((c, i) => i === index ? card : c) || []
+              [type]: cards.map((c, i) => i === index ? newCard : c)
             }
           }
         }),

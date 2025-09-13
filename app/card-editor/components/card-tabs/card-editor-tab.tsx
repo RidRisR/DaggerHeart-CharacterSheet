@@ -88,14 +88,10 @@ export function CardEditorTab({
 
     const commonProps = {
       card: currentCard,
-      onSave: (updatedCard: unknown) => onUpdateCard(cardType, safeIndex, updatedCard),
-      onChange: handleFormChange,  // 添加onChange回调
+      cardIndex: safeIndex,
+      cardType: cardType,
       keywordLists: currentPackage.customFieldDefinitions,
-      onAddKeyword: handleAddKeyword,
-      packageInfo: {
-        name: currentPackage.name || '未命名卡包',
-        author: currentPackage.author || '未知作者'
-      }
+      onAddKeyword: handleAddKeyword
     }
 
     switch (cardType) {

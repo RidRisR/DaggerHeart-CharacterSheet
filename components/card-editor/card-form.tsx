@@ -2,11 +2,7 @@
 
 import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -23,16 +19,15 @@ import type { CommunityCard } from '@/card/community-card/convert'
 import type { RawVariantCard } from '@/card/variant-card/convert'
 import type { SubClassCard } from '@/card/subclass-card/convert'
 import type { DomainCard } from '@/card/domain-card/convert'
-import { ATTRIBUTE_CLASS_NAMES, SUBCLASS_LEVEL_NAMES } from '@/card/card-types'
+
+import { useCardEditorStore } from '@/app/card-editor/store/card-editor-store'
+import { CardType } from '@/app/card-editor/types'
 
 // 通用卡牌编辑器属性
 interface BaseCardFormProps<T> {
   card: T
-  onSave: (card: T) => void
-  onCancel?: () => void
-  onPreview?: (card: T) => void
-  onChange?: (card: T) => void
-  customFields?: string[]
+  cardIndex: number
+  cardType: CardType
   keywordLists?: {
     professions?: string[]
     ancestries?: string[]
@@ -41,21 +36,17 @@ interface BaseCardFormProps<T> {
     variants?: string[]
   }
   onAddKeyword?: (category: string, keyword: string) => void
-  packageInfo?: {
-    name: string
-    author: string
-  }
-  packageData?: any
 }
 
 // 职业卡牌编辑器
 export function ProfessionCardForm({
   card,
-  onSave,
-  onChange,
+  cardIndex,
+  cardType,
   keywordLists,
   onAddKeyword
 }: BaseCardFormProps<ProfessionCard>) {
+  const { updateCard } = useCardEditorStore()
 
   const form = useForm<ProfessionCard>({
     defaultValues: card
@@ -66,26 +57,19 @@ export function ProfessionCardForm({
     form.reset(card)
   }, [card, form])
 
-  // 监听表单变化并触发onChange回调
+  // 监听表单变化并实时保存到store
   useEffect(() => {
-    if (!onChange) return
-
     const subscription = form.watch((value) => {
-      onChange(value as ProfessionCard)
+      updateCard(cardType, cardIndex, value)
     })
 
     return () => subscription.unsubscribe()
-  }, [form, onChange])
+  }, [form, cardType, cardIndex, updateCard])
 
-  // 自动保存函数
-  const handleAutoSave = () => {
-    const currentData = form.getValues()
-    onSave(currentData)
-  }
-
-  // 添加表单字段失去焦点时自动保存
+  // 手动保存函数（用于特定场景）
   const handleFieldBlur = () => {
-    handleAutoSave()
+    const currentData = form.getValues()
+    updateCard(cardType, cardIndex, currentData)
   }
 
   return (
@@ -308,22 +292,22 @@ export function ProfessionCardForm({
 }
 
 // 其他表单组件占位符，暂时使用简化版本
-export function AncestryCardForm(props: BaseCardFormProps<AncestryCard>) {
+export function AncestryCardForm(_props: BaseCardFormProps<AncestryCard>) {
   return <div>AncestryCardForm - 待实现</div>
 }
 
-export function CommunityCardForm(props: BaseCardFormProps<CommunityCard>) {
+export function CommunityCardForm(_props: BaseCardFormProps<CommunityCard>) {
   return <div>CommunityCardForm - 待实现</div>
 }
 
-export function VariantCardForm(props: BaseCardFormProps<RawVariantCard>) {
+export function VariantCardForm(_props: BaseCardFormProps<RawVariantCard>) {
   return <div>VariantCardForm - 待实现</div>
 }
 
-export function SubclassCardForm(props: BaseCardFormProps<SubClassCard>) {
+export function SubclassCardForm(_props: BaseCardFormProps<SubClassCard>) {
   return <div>SubclassCardForm - 待实现</div>
 }
 
-export function DomainCardForm(props: BaseCardFormProps<DomainCard>) {
+export function DomainCardForm(_props: BaseCardFormProps<DomainCard>) {
   return <div>DomainCardForm - 待实现</div>
 }

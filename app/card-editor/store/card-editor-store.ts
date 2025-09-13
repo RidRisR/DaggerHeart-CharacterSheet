@@ -279,15 +279,15 @@ export const useCardEditorStore = create<CardEditorStore>()(
           const cards = state.packageData[type] as any[]
           if (!cards || !cards[index]) return state
 
-          const newCard = { ...cards[index], ...updates }
+          const newCard = { ...cards[index], ...(updates as any) }
 
           // 自动处理ID生成 - 当名称变化时重新生成ID
-          if (updates.名称 && updates.名称 !== cards[index].名称) {
+          if ((updates as any).名称 && (updates as any).名称 !== cards[index].名称) {
             newCard.id = generateSmartCardId(
               state.packageData.name || '新建卡包',
               state.packageData.author || '未知作者',
               type,
-              updates.名称,
+              (updates as any).名称,
               state.packageData
             )
           }

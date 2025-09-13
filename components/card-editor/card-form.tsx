@@ -289,15 +289,504 @@ export function ProfessionCardForm({
   )
 }
 
-// 其他表单组件占位符，暂时使用简化版本
-export function CommunityCardForm(_props: BaseCardFormProps<CommunityCard>) {
-  return <div>CommunityCardForm - 待实现</div>
+export function CommunityCardForm({
+  card,
+  cardIndex,
+  cardType,
+  keywordLists,
+  onAddKeyword
+}: BaseCardFormProps<CommunityCard>) {
+  const { updateCard } = useCardEditorStore()
+
+  const form = useForm<CommunityCard>({
+    defaultValues: card
+  })
+
+  // 当卡牌数据变化时重置表单
+  useEffect(() => {
+    form.reset(card)
+  }, [card, form])
+
+  // 监听表单变化并实时保存到store
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      updateCard(cardType, cardIndex, value)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form, cardType, cardIndex, updateCard])
+
+  // 手动保存函数（用于特定场景）
+  const handleFieldBlur = () => {
+    const currentData = form.getValues()
+    updateCard(cardType, cardIndex, currentData)
+  }
+
+  return (
+    <Form {...form}>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="名称"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>社群名称 *</FormLabel>
+                <FormControl>
+                  <KeywordCombobox
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={handleFieldBlur}
+                    keywords={keywordLists?.communities || []}
+                    onAddKeyword={(keyword) => onAddKeyword?.('communities', keyword)}
+                    placeholder="输入或选择社群"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="特性"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>社群特性 *</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="社群的核心特性"
+                    onBlur={handleFieldBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="简介"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>简介</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="社群的简要介绍"
+                  onBlur={handleFieldBlur}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="描述"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>详细描述 *</FormLabel>
+              <FormControl>
+                <MarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={handleFieldBlur}
+                  placeholder="社群的详细描述，支持Markdown格式"
+                  height={200}
+                />
+              </FormControl>
+              <div className="text-sm text-muted-foreground">
+                支持Markdown格式，可以使用 *__特性名__* 来标记特性标题
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </Form>
+  )
 }
 
-export function VariantCardForm(_props: BaseCardFormProps<RawVariantCard>) {
-  return <div>VariantCardForm - 待实现</div>
+export function VariantCardForm({
+  card,
+  cardIndex,
+  cardType,
+  keywordLists,
+  onAddKeyword
+}: BaseCardFormProps<RawVariantCard>) {
+  const { updateCard } = useCardEditorStore()
+
+  const form = useForm<RawVariantCard>({
+    defaultValues: card
+  })
+
+  // 当卡牌数据变化时重置表单
+  useEffect(() => {
+    form.reset(card)
+  }, [card, form])
+
+  // 监听表单变化并实时保存到store
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      updateCard(cardType, cardIndex, value)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form, cardType, cardIndex, updateCard])
+
+  // 手动保存函数（用于特定场景）
+  const handleFieldBlur = () => {
+    const currentData = form.getValues()
+    updateCard(cardType, cardIndex, currentData)
+  }
+
+  return (
+    <Form {...form}>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="名称"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>变体名称 *</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="输入变体卡名称"
+                    onBlur={handleFieldBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="类型"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>变体类型 *</FormLabel>
+                <FormControl>
+                  <KeywordCombobox
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={handleFieldBlur}
+                    keywords={keywordLists?.variants || []}
+                    onAddKeyword={(keyword) => onAddKeyword?.('variants', keyword)}
+                    placeholder="例如：食物、人物、装备"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="子类别"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>子类别（可选）</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="例如：饮料、盟友、武器"
+                    onBlur={handleFieldBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="等级"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>等级（可选）</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="例如：1"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      field.onChange(value === '' ? undefined : parseInt(value) || 0)
+                    }}
+                    onBlur={handleFieldBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="效果"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>卡牌效果 *</FormLabel>
+              <FormControl>
+                <MarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={handleFieldBlur}
+                  placeholder="卡牌的详细效果描述，支持Markdown格式"
+                  height={200}
+                />
+              </FormControl>
+              <div className="text-sm text-muted-foreground">
+                支持Markdown格式，可以使用 *__关键词__* 来标记重要信息
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 简略信息区域 */}
+        <div className="space-y-4 border-t pt-4">
+          <h4 className="text-sm font-medium">简略信息（卡牌选择时显示）</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="简略信息.item1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>简略信息 1</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="第一行简略信息"
+                      onBlur={handleFieldBlur}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="简略信息.item2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>简略信息 2</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="第二行简略信息"
+                      onBlur={handleFieldBlur}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="简略信息.item3"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>简略信息 3</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="第三行简略信息"
+                      onBlur={handleFieldBlur}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="text-xs text-muted-foreground">
+            这些信息会在角色选择卡牌时显示在卡牌预览中，帮助玩家快速了解卡牌特性
+          </div>
+        </div>
+      </div>
+    </Form>
+  )
 }
 
-export function DomainCardForm(_props: BaseCardFormProps<DomainCard>) {
-  return <div>DomainCardForm - 待实现</div>
+export function DomainCardForm({
+  card,
+  cardIndex,
+  cardType,
+  keywordLists,
+  onAddKeyword
+}: BaseCardFormProps<DomainCard>) {
+  const { updateCard } = useCardEditorStore()
+
+  const form = useForm<DomainCard>({
+    defaultValues: card
+  })
+
+  // 当卡牌数据变化时重置表单
+  useEffect(() => {
+    form.reset(card)
+  }, [card, form])
+
+  // 监听表单变化并实时保存到store
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      updateCard(cardType, cardIndex, value)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form, cardType, cardIndex, updateCard])
+
+  // 手动保存函数（用于特定场景）
+  const handleFieldBlur = () => {
+    const currentData = form.getValues()
+    updateCard(cardType, cardIndex, currentData)
+  }
+
+  return (
+    <Form {...form}>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="名称"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>法术名称 *</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="输入法术名称"
+                    onBlur={handleFieldBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="领域"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>法术领域 *</FormLabel>
+                <FormControl>
+                  <KeywordCombobox
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={handleFieldBlur}
+                    keywords={keywordLists?.domains || []}
+                    onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
+                    placeholder="输入或选择领域"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="等级"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>法术等级 *</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="例如：1"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      field.onChange(value === '' ? '' : parseInt(value) || 0)
+                    }}
+                    onBlur={handleFieldBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="属性"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>施法属性 *</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="例如：知识"
+                    onBlur={handleFieldBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="回想"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>回想值 *</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="例如：2"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      field.onChange(value === '' ? '' : parseInt(value) || 0)
+                    }}
+                    onBlur={handleFieldBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="描述"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>法术描述 *</FormLabel>
+              <FormControl>
+                <MarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={handleFieldBlur}
+                  placeholder="法术的详细效果描述，支持Markdown格式"
+                  height={200}
+                />
+              </FormControl>
+              <div className="text-sm text-muted-foreground">
+                支持Markdown格式，可以使用 *__关键词__* 来标记重要信息
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </Form>
+  )
 }

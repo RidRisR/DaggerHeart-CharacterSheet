@@ -38,7 +38,6 @@ export default function CardEditorPage() {
     addCard,
     copyCard,
     deleteCard,
-    updateCard,
     exportPackage,
     importPackage,
     newPackage,
@@ -156,7 +155,6 @@ export default function CardEditorPage() {
         onAddCard={addCard}
         onCopyCard={copyCard}
         onDeleteCard={deleteCard}
-        onUpdateCard={updateCard}
         onUpdateMetadata={updateMetadata}
       />
 

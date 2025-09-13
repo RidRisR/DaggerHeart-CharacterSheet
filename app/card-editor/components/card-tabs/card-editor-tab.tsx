@@ -19,7 +19,6 @@ interface CardEditorTabProps {
   onAddCard: (type: CardType) => void
   onCopyCard: (type: CardType, index: number) => void
   onDeleteCard: (type: CardType, index: number) => void
-  onUpdateCard: (type: CardType, index: number, card: unknown) => void
 }
 
 export function CardEditorTab({
@@ -32,8 +31,7 @@ export function CardEditorTab({
   onShowKeywords,
   onAddCard,
   onCopyCard,
-  onDeleteCard,
-  onUpdateCard
+  onDeleteCard
 }: CardEditorTabProps) {
   const cards = currentPackage[cardType] as any[] || []
   const currentIndex = currentCardIndex[cardType]
@@ -77,11 +75,6 @@ export function CardEditorTab({
     addDefinition(categoryKey, keyword)
   }
   
-  // 处理表单变化，更新预览
-  const handleFormChange = (formData: any) => {
-    const standardCard = transformCardToStandard(formData, cardType)
-    setPreviewCard(standardCard)
-  }
 
   const getCardForm = () => {
     if (!currentCard) return null

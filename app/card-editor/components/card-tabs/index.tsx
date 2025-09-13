@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Eye, Settings, FileText } from 'lucide-react'
+import { Eye, Settings } from 'lucide-react'
 import type { CardPackageState, CurrentCardIndex, CardType } from '../../types'
 import { MetadataTab } from './metadata-tab'
 import { CardEditorTab } from './card-editor-tab'
@@ -18,7 +18,6 @@ interface CardTabsProps {
   onAddCard: (type: CardType) => void
   onCopyCard: (type: CardType, index: number) => void
   onDeleteCard: (type: CardType, index: number) => void
-  onUpdateCard: (type: CardType, index: number, card: unknown) => void
   onUpdateMetadata: (field: keyof CardPackageState, value: any) => void
 }
 
@@ -33,7 +32,6 @@ export function CardTabs({
   onAddCard,
   onCopyCard,
   onDeleteCard,
-  onUpdateCard,
   onUpdateMetadata
 }: CardTabsProps) {
   
@@ -45,8 +43,7 @@ export function CardTabs({
     onShowKeywords,
     onAddCard,
     onCopyCard,
-    onDeleteCard,
-    onUpdateCard
+    onDeleteCard
   }
 
   return (

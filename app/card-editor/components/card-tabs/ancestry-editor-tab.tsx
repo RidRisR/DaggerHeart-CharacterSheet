@@ -252,16 +252,10 @@ export function AncestryEditorTab({
             <AncestryDualCardForm
               card1={currentPair.card1}
               card2={currentPair.card2}
-              onSave={handleSave}
-              onPreview={handlePreview}
-              onChange={handleFormChange}
+              cardIndex1={currentPair.index1}
+              cardIndex2={currentPair.index2}
               keywordLists={currentPackage.customFieldDefinitions}
               onAddKeyword={handleAddKeyword}
-              packageInfo={{
-                name: currentPackage.name || '未命名卡包',
-                author: currentPackage.author || '未知作者'
-              }}
-              packageData={currentPackage}
             />
           ) : (
             <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg">

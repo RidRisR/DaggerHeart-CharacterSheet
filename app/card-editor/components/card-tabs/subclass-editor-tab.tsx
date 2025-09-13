@@ -264,16 +264,11 @@ export function SubclassEditorTab({
               card1={currentTriple.card1}
               card2={currentTriple.card2}
               card3={currentTriple.card3}
-              onSave={handleSave}
-              onPreview={handlePreview}
-              onChange={handleFormChange}
+              cardIndex1={currentTriple.index1}
+              cardIndex2={currentTriple.index2}
+              cardIndex3={currentTriple.index3}
               keywordLists={currentPackage.customFieldDefinitions}
               onAddKeyword={handleAddKeyword}
-              packageInfo={{
-                name: currentPackage.name || '未命名卡包',
-                author: currentPackage.author || '未知作者'
-              }}
-              packageData={currentPackage}
             />
           ) : (
             <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg">

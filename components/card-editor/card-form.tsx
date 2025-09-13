@@ -14,10 +14,8 @@ import {
 import MarkdownEditor, { SimpleMarkdownEditor } from './markdown-editor'
 import { KeywordCombobox } from './keyword-combobox'
 import type { ProfessionCard } from '@/card/profession-card/convert'
-import type { AncestryCard } from '@/card/ancestry-card/convert'
 import type { CommunityCard } from '@/card/community-card/convert'
 import type { RawVariantCard } from '@/card/variant-card/convert'
-import type { SubClassCard } from '@/card/subclass-card/convert'
 import type { DomainCard } from '@/card/domain-card/convert'
 
 import { useCardEditorStore } from '@/app/card-editor/store/card-editor-store'
@@ -292,20 +290,12 @@ export function ProfessionCardForm({
 }
 
 // 其他表单组件占位符，暂时使用简化版本
-export function AncestryCardForm(_props: BaseCardFormProps<AncestryCard>) {
-  return <div>AncestryCardForm - 待实现</div>
-}
-
 export function CommunityCardForm(_props: BaseCardFormProps<CommunityCard>) {
   return <div>CommunityCardForm - 待实现</div>
 }
 
 export function VariantCardForm(_props: BaseCardFormProps<RawVariantCard>) {
   return <div>VariantCardForm - 待实现</div>
-}
-
-export function SubclassCardForm(_props: BaseCardFormProps<SubClassCard>) {
-  return <div>SubclassCardForm - 待实现</div>
 }
 
 export function DomainCardForm(_props: BaseCardFormProps<DomainCard>) {

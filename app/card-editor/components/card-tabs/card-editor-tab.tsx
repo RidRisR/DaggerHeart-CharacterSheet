@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { FileText, Plus, Eye, Trash2, Copy } from 'lucide-react'
-import { ProfessionCardForm, AncestryCardForm, CommunityCardForm, VariantCardForm, SubclassCardForm, DomainCardForm } from '@/components/card-editor/card-form'
+import { ProfessionCardForm, CommunityCardForm, VariantCardForm, DomainCardForm } from '@/components/card-editor/card-form'
 import { ImageCard } from '@/components/ui/image-card'
 import { transformCardToStandard } from '../../utils/card-transformer'
 import { useState, useEffect } from 'react'
@@ -98,14 +98,10 @@ export function CardEditorTab({
     switch (cardType) {
       case 'profession':
         return <ProfessionCardForm {...commonProps} />
-      case 'ancestry':
-        return <AncestryCardForm {...commonProps} />
       case 'community':
         return <CommunityCardForm {...commonProps} />
       case 'variant':
         return <VariantCardForm {...commonProps} />
-      case 'subclass':
-        return <SubclassCardForm {...commonProps} />
       case 'domain':
         return <DomainCardForm {...commonProps} />
       default:

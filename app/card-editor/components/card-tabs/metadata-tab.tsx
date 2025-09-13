@@ -2,14 +2,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { useCardEditorStore } from '../../store/card-editor-store'
 import type { CardPackageState } from '../../types'
 
-interface MetadataTabProps {
-  packageData: CardPackageState
-  onUpdateMetadata: (field: keyof CardPackageState, value: any) => void
-}
 
-export function MetadataTab({ packageData, onUpdateMetadata }: MetadataTabProps) {
+export function MetadataTab() {
+  // 直接从store获取数据和方法
+  const { packageData, updateMetadata } = useCardEditorStore()
   return (
     <Card>
       <CardHeader>
@@ -26,7 +25,7 @@ export function MetadataTab({ packageData, onUpdateMetadata }: MetadataTabProps)
               id="name"
               placeholder="请输入卡包名称" 
               value={packageData.name || ''}
-              onChange={(e) => onUpdateMetadata('name', e.target.value)}
+              onChange={(e) => updateMetadata('name', e.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -35,7 +34,7 @@ export function MetadataTab({ packageData, onUpdateMetadata }: MetadataTabProps)
               id="version"
               placeholder="例如: 1.0.0" 
               value={packageData.version || ''}
-              onChange={(e) => onUpdateMetadata('version', e.target.value)}
+              onChange={(e) => updateMetadata('version', e.target.value)}
             />
           </div>
         </div>
@@ -45,7 +44,7 @@ export function MetadataTab({ packageData, onUpdateMetadata }: MetadataTabProps)
             id="author"
             placeholder="请输入作者信息" 
             value={packageData.author || ''}
-            onChange={(e) => onUpdateMetadata('author', e.target.value)}
+            onChange={(e) => updateMetadata('author', e.target.value)}
           />
         </div>
         <div className="space-y-2">
@@ -55,7 +54,7 @@ export function MetadataTab({ packageData, onUpdateMetadata }: MetadataTabProps)
             placeholder="请输入卡包描述"
             className="min-h-[100px]"
             value={packageData.description || ''}
-            onChange={(e) => onUpdateMetadata('description', e.target.value)}
+            onChange={(e) => updateMetadata('description', e.target.value)}
           />
           <p className="text-sm text-muted-foreground">
             简要描述这个卡包的内容和特色

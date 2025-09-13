@@ -9,16 +9,6 @@ import type { CardPackageState, CurrentCardIndex } from '../../types'
 import type { StandardCard, AncestryCard } from '@/card/card-types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
-interface AncestryEditorTabProps {
-  currentPackage: CardPackageState
-  currentCardIndex: CurrentCardIndex
-  onSetCurrentCardIndex: (updater: (prev: CurrentCardIndex) => CurrentCardIndex) => void
-  onShowAllCards: (type: string) => void
-  onShowKeywords: () => void
-  onAddCard: (type: 'ancestry') => void
-  onDeleteCard: (type: 'ancestry', index: number) => void
-}
-
 interface AncestryPair {
   card1: AncestryCard | null
   card2: AncestryCard | null
@@ -27,17 +17,22 @@ interface AncestryPair {
   种族: string
 }
 
-export function AncestryEditorTab({
-  currentPackage,
-  currentCardIndex,
-  onSetCurrentCardIndex,
-  onShowAllCards,
-  onShowKeywords,
-  onAddCard,
-  onDeleteCard
-}: AncestryEditorTabProps) {
-  const cards = (currentPackage.ancestry as AncestryCard[]) || []
-  const { updateAncestryPair, deleteAncestryPair, addDefinition } = useCardEditorStore()
+export function AncestryEditorTab() {
+  // 直接从store获取所有数据和方法
+  const {
+    packageData,
+    currentCardIndex,
+    setCurrentCardIndex,
+    addCard,
+    deleteCard,
+    updateAncestryPair,
+    deleteAncestryPair,
+    addDefinition,
+    setCardListDialog,
+    setDefinitionsDialog
+  } = useCardEditorStore()
+
+  const cards = (packageData.ancestry as AncestryCard[]) || []
   
   // 将种族卡组织成配对
   const ancestryPairs = useMemo(() => {
@@ -152,7 +147,7 @@ export function AncestryEditorTab({
   
   const handlePrevious = () => {
     if (safePairIndex > 0) {
-      onSetCurrentCardIndex(prev => ({
+      setCurrentCardIndex(prev => ({
         ...prev,
         ancestry: (safePairIndex - 1) * 2
       }))
@@ -161,7 +156,7 @@ export function AncestryEditorTab({
   
   const handleNext = () => {
     if (safePairIndex < ancestryPairs.length - 1) {
-      onSetCurrentCardIndex(prev => ({
+      setCurrentCardIndex(prev => ({
         ...prev,
         ancestry: (safePairIndex + 1) * 2
       }))
@@ -207,7 +202,7 @@ export function AncestryEditorTab({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onShowAllCards('ancestry')}
+            onClick={() => setCardListDialog({ open: true, type: 'ancestry' })}
             className="flex items-center gap-1"
           >
             <FileText className="h-4 w-4" />
@@ -216,7 +211,7 @@ export function AncestryEditorTab({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onAddCard('ancestry')}
+            onClick={() => addCard('ancestry')}
             className="flex items-center gap-1"
           >
             <Plus className="h-4 w-4" />
@@ -254,7 +249,7 @@ export function AncestryEditorTab({
               card2={currentPair.card2}
               cardIndex1={currentPair.index1}
               cardIndex2={currentPair.index2}
-              keywordLists={currentPackage.customFieldDefinitions}
+              keywordLists={packageData.customFieldDefinitions}
               onAddKeyword={handleAddKeyword}
             />
           ) : (
@@ -262,7 +257,7 @@ export function AncestryEditorTab({
               <Users className="h-16 w-16 text-muted-foreground mb-4" />
                 <p className="text-lg font-medium mb-2">暂无种族卡配对</p>
                 <p className="text-sm text-muted-foreground mb-4">种族卡需要成对创建，每对包含类别1和类别2两张卡片</p>
-              <Button onClick={() => onAddCard('ancestry')}>
+              <Button onClick={() => addCard('ancestry')}>
                 <Plus className="h-4 w-4 mr-2" />
                   创建第一对种族卡
               </Button>

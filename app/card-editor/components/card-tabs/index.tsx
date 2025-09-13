@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Eye, Settings } from 'lucide-react'
-import type { CardPackageState, CurrentCardIndex, CardType } from '../../types'
 import { MetadataTab } from './metadata-tab'
 import { CardEditorTab } from './card-editor-tab'
 import { AncestryEditorTab } from './ancestry-editor-tab'
@@ -10,41 +9,12 @@ import { SubclassEditorTab } from './subclass-editor-tab'
 interface CardTabsProps {
   selectedTab: string
   onSelectedTabChange: (tab: string) => void
-  currentPackage: CardPackageState
-  currentCardIndex: CurrentCardIndex
-  onSetCurrentCardIndex: (updater: (prev: CurrentCardIndex) => CurrentCardIndex) => void
-  onShowAllCards: (type: string) => void
-  onShowKeywords: () => void
-  onAddCard: (type: CardType) => void
-  onCopyCard: (type: CardType, index: number) => void
-  onDeleteCard: (type: CardType, index: number) => void
-  onUpdateMetadata: (field: keyof CardPackageState, value: any) => void
 }
 
 export function CardTabs({
   selectedTab,
-  onSelectedTabChange,
-  currentPackage,
-  currentCardIndex,
-  onSetCurrentCardIndex,
-  onShowAllCards,
-  onShowKeywords,
-  onAddCard,
-  onCopyCard,
-  onDeleteCard,
-  onUpdateMetadata
+  onSelectedTabChange
 }: CardTabsProps) {
-  
-  const cardEditorProps = {
-    currentPackage,
-    currentCardIndex,
-    onSetCurrentCardIndex,
-    onShowAllCards,
-    onShowKeywords,
-    onAddCard,
-    onCopyCard,
-    onDeleteCard
-  }
 
   return (
     <Tabs value={selectedTab} onValueChange={onSelectedTabChange}>
@@ -67,16 +37,12 @@ export function CardTabs({
 
       {/* 基础信息选项卡 */}
       <TabsContent value="metadata">
-        <MetadataTab 
-          packageData={currentPackage} 
-          onUpdateMetadata={onUpdateMetadata} 
-        />
+        <MetadataTab />
       </TabsContent>
 
       {/* 职业卡牌选项卡 */}
       <TabsContent value="profession">
         <CardEditorTab
-          {...cardEditorProps}
           cardType="profession"
           title="职业卡牌"
         />
@@ -84,21 +50,12 @@ export function CardTabs({
 
       {/* 种族卡牌选项卡 - 使用专门的双卡编辑器 */}
       <TabsContent value="ancestry">
-        <AncestryEditorTab
-          currentPackage={currentPackage}
-          currentCardIndex={currentCardIndex}
-          onSetCurrentCardIndex={onSetCurrentCardIndex}
-          onShowAllCards={onShowAllCards}
-          onShowKeywords={onShowKeywords}
-          onAddCard={onAddCard}
-          onDeleteCard={onDeleteCard}
-        />
+        <AncestryEditorTab />
       </TabsContent>
 
       {/* 社群卡牌选项卡 */}
       <TabsContent value="community">
         <CardEditorTab
-          {...cardEditorProps}
           cardType="community"
           title="社群卡牌"
         />
@@ -107,7 +64,6 @@ export function CardTabs({
       {/* 变体卡牌选项卡 */}
       <TabsContent value="variant">
         <CardEditorTab
-          {...cardEditorProps}
           cardType="variant"
           title="变体卡牌"
         />
@@ -115,21 +71,12 @@ export function CardTabs({
 
       {/* 子职业卡牌选项卡 - 使用专门的三卡编辑器 */}
       <TabsContent value="subclass">
-        <SubclassEditorTab
-          currentPackage={currentPackage}
-          currentCardIndex={currentCardIndex}
-          onSetCurrentCardIndex={onSetCurrentCardIndex}
-          onShowAllCards={onShowAllCards}
-          onShowKeywords={onShowKeywords}
-          onAddCard={onAddCard}
-          onDeleteCard={onDeleteCard}
-        />
+        <SubclassEditorTab />
       </TabsContent>
 
       {/* 领域卡牌选项卡 */}
       <TabsContent value="domain">
         <CardEditorTab
-          {...cardEditorProps}
           cardType="domain"
           title="领域卡牌"
         />

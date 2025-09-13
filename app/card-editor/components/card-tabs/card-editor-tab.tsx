@@ -5,45 +5,42 @@ import { ImageCard } from '@/components/ui/image-card'
 import { transformCardToStandard } from '../../utils/card-transformer'
 import { useState, useEffect } from 'react'
 import { useCardEditorStore } from '../../store/card-editor-store'
-import type { CardPackageState, CurrentCardIndex, CardType } from '../../types'
+import type { CardType } from '../../types'
 import type { StandardCard } from '@/card/card-types'
 
 interface CardEditorTabProps {
   cardType: CardType
   title: string
-  currentPackage: CardPackageState
-  currentCardIndex: CurrentCardIndex
-  onSetCurrentCardIndex: (updater: (prev: CurrentCardIndex) => CurrentCardIndex) => void
-  onShowAllCards: (type: string) => void
-  onShowKeywords: () => void
-  onAddCard: (type: CardType) => void
-  onCopyCard: (type: CardType, index: number) => void
-  onDeleteCard: (type: CardType, index: number) => void
 }
 
 export function CardEditorTab({
   cardType,
-  title,
-  currentPackage,
-  currentCardIndex,
-  onSetCurrentCardIndex,
-  onShowAllCards,
-  onShowKeywords,
-  onAddCard,
-  onCopyCard,
-  onDeleteCard
+  title
 }: CardEditorTabProps) {
-  const cards = currentPackage[cardType] as any[] || []
+  // 直接从store获取所有数据和方法
+  const {
+    packageData,
+    currentCardIndex,
+    setCurrentCardIndex,
+    addCard,
+    copyCard,
+    deleteCard,
+    addDefinition,
+    setCardListDialog,
+    setDefinitionsDialog
+  } = useCardEditorStore()
+
+  const cards = packageData[cardType] as any[] || []
   const currentIndex = currentCardIndex[cardType]
   // 确保索引在有效范围内
   const safeIndex = Math.min(Math.max(0, currentIndex), Math.max(0, cards.length - 1))
   const currentCard = cards.length > 0 ? cards[safeIndex] : null
-  
+
   // 实时预览卡牌状态
   const [previewCard, setPreviewCard] = useState<StandardCard | null>(null)
   // 移动端预览开关
   const [showMobilePreview, setShowMobilePreview] = useState(false)
-  
+
   // 初始化预览卡牌
   useEffect(() => {
     if (currentCard) {
@@ -66,15 +63,26 @@ export function CardEditorTab({
     }
   }
 
-  // 从 Zustand store 获取添加定义的方法
-  const { addDefinition } = useCardEditorStore()
-  
   const handleAddKeyword = (category: string, keyword: string) => {
     // 使用 store 的 addDefinition 方法
-    const categoryKey = category as keyof NonNullable<CardPackageState['customFieldDefinitions']>
+    const categoryKey = category as keyof NonNullable<typeof packageData.customFieldDefinitions>
     addDefinition(categoryKey, keyword)
   }
-  
+
+  const handleShowAllCards = () => {
+    setCardListDialog({
+      open: true,
+      type: cardType
+    })
+  }
+
+  const handleShowKeywords = () => {
+    setDefinitionsDialog(true)
+  }
+
+  const handleSetCurrentCardIndex = (updater: (prev: typeof currentCardIndex) => typeof currentCardIndex) => {
+    setCurrentCardIndex(updater)
+  }
 
   const getCardForm = () => {
     if (!currentCard) return null
@@ -83,7 +91,7 @@ export function CardEditorTab({
       card: currentCard,
       cardIndex: safeIndex,
       cardType: cardType,
-      keywordLists: currentPackage.customFieldDefinitions,
+      keywordLists: packageData.customFieldDefinitions,
       onAddKeyword: handleAddKeyword
     }
 
@@ -115,29 +123,29 @@ export function CardEditorTab({
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => onShowAllCards(cardType)}
+          <Button
+            variant="outline"
+            onClick={handleShowAllCards}
             className="flex items-center gap-2"
           >
             <FileText className="h-4 w-4" />
             查看所有卡牌
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={onShowKeywords}
+          <Button
+            variant="outline"
+            onClick={handleShowKeywords}
             className="flex items-center gap-2"
           >
             <FileText className="h-4 w-4" />
             查看关键字列表
           </Button>
-          <Button onClick={() => onAddCard(cardType)} className="flex items-center gap-2">
+          <Button onClick={() => addCard(cardType)} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             添加新{getActionText()}
           </Button>
         </div>
       </div>
-      
+
       {cards.length > 0 ? (
         <>
           {/* 卡牌导航 */}
@@ -146,7 +154,7 @@ export function CardEditorTab({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onSetCurrentCardIndex(prev => ({
+                onClick={() => handleSetCurrentCardIndex(prev => ({
                   ...prev,
                   [cardType]: Math.max(0, prev[cardType] - 1)
                 }))}
@@ -157,7 +165,7 @@ export function CardEditorTab({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onSetCurrentCardIndex(prev => ({
+                onClick={() => handleSetCurrentCardIndex(prev => ({
                   ...prev,
                   [cardType]: Math.min(cards.length - 1, prev[cardType] + 1)
                 }))}
@@ -170,7 +178,7 @@ export function CardEditorTab({
               <span>快速跳转:</span>
               <select
                 value={currentIndex}
-                onChange={(e) => onSetCurrentCardIndex(prev => ({
+                onChange={(e) => handleSetCurrentCardIndex(prev => ({
                   ...prev,
                   [cardType]: Number(e.target.value)
                 }))}
@@ -184,7 +192,7 @@ export function CardEditorTab({
               </select>
             </div>
           </div>
-          
+
           {/* 当前卡牌编辑 - 左右两栏布局 */}
           {currentCard && (
             <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-4">
@@ -203,7 +211,7 @@ export function CardEditorTab({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onCopyCard(cardType, safeIndex)}
+                    onClick={() => copyCard(cardType, safeIndex)}
                   >
                     <Copy className="h-4 w-4 mr-1" />
                     复制
@@ -212,8 +220,8 @@ export function CardEditorTab({
                     variant="destructive"
                     size="sm"
                     onClick={() => {
-                      onDeleteCard(cardType, safeIndex)
-                      onSetCurrentCardIndex(prev => ({
+                      deleteCard(cardType, safeIndex)
+                      handleSetCurrentCardIndex(prev => ({
                         ...prev,
                         [cardType]: Math.max(0, prev[cardType] - 1)
                       }))
@@ -224,7 +232,7 @@ export function CardEditorTab({
                   </Button>
                 </div>
                 {getCardForm()}
-                
+
                 {/* 移动端预览区域 */}
                 {showMobilePreview && (
                   <div className="mt-4 lg:hidden">
@@ -243,7 +251,7 @@ export function CardEditorTab({
                   </div>
                 )}
               </div>
-              
+
               {/* 右侧：实时预览（桌面端） */}
               <div className="hidden lg:block">
                 <div className="sticky top-4">
@@ -268,7 +276,7 @@ export function CardEditorTab({
           <p className="text-muted-foreground mb-4">
             还没有{getActionText()}卡牌
           </p>
-          <Button onClick={() => onAddCard(cardType)} variant="outline">
+          <Button onClick={() => addCard(cardType)} variant="outline">
             创建第一张{getActionText()}卡牌
           </Button>
         </div>

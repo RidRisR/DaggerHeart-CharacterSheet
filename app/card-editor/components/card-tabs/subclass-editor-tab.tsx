@@ -10,15 +10,6 @@ import type { StandardCard } from '@/card/card-types'
 import type { SubclassCard } from '@/card/subclass-card/convert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
-interface SubclassEditorTabProps {
-  currentPackage: CardPackageState
-  currentCardIndex: CurrentCardIndex
-  onSetCurrentCardIndex: (updater: (prev: CurrentCardIndex) => CurrentCardIndex) => void
-  onShowAllCards: (type: string) => void
-  onShowKeywords: () => void
-  onAddCard: (type: 'subclass') => void
-  onDeleteCard: (type: 'subclass', index: number) => void
-}
 
 interface SubclassTriple {
   card1: SubclassCard | null  // 基石
@@ -31,17 +22,22 @@ interface SubclassTriple {
   主职: string
 }
 
-export function SubclassEditorTab({
-  currentPackage,
-  currentCardIndex,
-  onSetCurrentCardIndex,
-  onShowAllCards,
-  onShowKeywords,
-  onAddCard,
-  onDeleteCard
-}: SubclassEditorTabProps) {
-  const cards = (currentPackage.subclass as SubclassCard[]) || []
-  const { updateSubclassTriple, deleteSubclassTriple, addDefinition } = useCardEditorStore()
+export function SubclassEditorTab() {
+  // 直接从store获取所有数据和方法
+  const {
+    packageData,
+    currentCardIndex,
+    setCurrentCardIndex,
+    addCard,
+    deleteCard,
+    updateSubclassTriple,
+    deleteSubclassTriple,
+    addDefinition,
+    setCardListDialog,
+    setDefinitionsDialog
+  } = useCardEditorStore()
+
+  const cards = (packageData.subclass as SubclassCard[]) || []
   
   // 将子职业卡组织成三卡组
   const subclassTriples = useMemo(() => {
@@ -157,7 +153,7 @@ export function SubclassEditorTab({
   
   const handlePrevious = () => {
     if (safeTripleIndex > 0) {
-      onSetCurrentCardIndex(prev => ({
+      setCurrentCardIndex(prev => ({
         ...prev,
         subclass: (safeTripleIndex - 1) * 3
       }))
@@ -166,7 +162,7 @@ export function SubclassEditorTab({
   
   const handleNext = () => {
     if (safeTripleIndex < subclassTriples.length - 1) {
-      onSetCurrentCardIndex(prev => ({
+      setCurrentCardIndex(prev => ({
         ...prev,
         subclass: (safeTripleIndex + 1) * 3
       }))
@@ -218,7 +214,7 @@ export function SubclassEditorTab({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onShowAllCards('subclass')}
+            onClick={() => setCardListDialog({ open: true, type: 'subclass' })}
             className="flex items-center gap-1"
           >
             <FileText className="h-4 w-4" />
@@ -227,7 +223,7 @@ export function SubclassEditorTab({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onAddCard('subclass')}
+            onClick={() => addCard('subclass')}
             className="flex items-center gap-1"
           >
             <Plus className="h-4 w-4" />
@@ -267,7 +263,7 @@ export function SubclassEditorTab({
               cardIndex1={currentTriple.index1}
               cardIndex2={currentTriple.index2}
               cardIndex3={currentTriple.index3}
-              keywordLists={currentPackage.customFieldDefinitions}
+              keywordLists={packageData.customFieldDefinitions}
               onAddKeyword={handleAddKeyword}
             />
           ) : (
@@ -275,7 +271,7 @@ export function SubclassEditorTab({
               <Users className="h-16 w-16 text-muted-foreground mb-4" />
               <p className="text-lg font-medium mb-2">暂无子职业组</p>
               <p className="text-sm text-muted-foreground mb-4">子职业需要三张卡片（基石、专精、大师）</p>
-              <Button onClick={() => onAddCard('subclass')}>
+              <Button onClick={() => addCard('subclass')}>
                 <Plus className="h-4 w-4 mr-2" />
                 创建第一个子职业组
               </Button>

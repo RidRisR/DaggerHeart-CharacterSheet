@@ -62,10 +62,6 @@ export default function CardEditorPage() {
     navigateToPage('/')
   }
 
-  // 显示卡牌列表
-  const handleShowAllCards = (type: string) => {
-    setCardListDialog({ open: true, type })
-  }
 
   // 预览卡牌
   const handlePreviewCard = (card: unknown, type: string) => {
@@ -147,15 +143,6 @@ export default function CardEditorPage() {
       <CardTabs
         selectedTab={selectedTab}
         onSelectedTabChange={setSelectedTab}
-        currentPackage={packageData}
-        currentCardIndex={currentCardIndex}
-        onSetCurrentCardIndex={setCurrentCardIndex}
-        onShowAllCards={handleShowAllCards}
-        onShowKeywords={() => setDefinitionsDialog(true)}
-        onAddCard={addCard}
-        onCopyCard={copyCard}
-        onDeleteCard={deleteCard}
-        onUpdateMetadata={updateMetadata}
       />
 
       {/* 卡牌预览对话框 */}

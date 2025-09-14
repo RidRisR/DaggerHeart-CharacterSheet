@@ -231,7 +231,7 @@ export function DomainCardPreview({ card, className }: BaseCardPreviewProps<Doma
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <h4 className="text-sm font-medium mb-2">法术描述</h4>
+          <h4 className="text-sm font-medium mb-2">卡牌描述</h4>
           <div className="text-sm">
             <MarkdownContent content={card.描述 || ''} />
           </div>

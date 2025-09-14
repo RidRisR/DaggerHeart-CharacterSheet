@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { KeywordCombobox } from '@/components/card-editor/keyword-combobox'
 import { Card } from '@/components/ui/card'
 import MarkdownEditor from '@/components/card-editor/markdown-editor'
+import { CompactCardIdEditor } from '@/components/card-editor/compact-card-id-editor'
 import type { AncestryCard } from '@/card/ancestry-card/convert'
 import type { CardPackageState } from '@/app/card-editor/types'
 import { useCardEditorStore } from '@/app/card-editor/store/card-editor-store'
@@ -45,7 +46,7 @@ export function AncestryDualCardForm({
   keywordLists,
   onAddKeyword
 }: AncestryDualCardFormProps) {
-  const { updateCard } = useCardEditorStore()
+  const { updateCard, packageData } = useCardEditorStore()
 
   // 初始化表单数据
   const getInitialValues = (): AncestryCardPair => {
@@ -251,6 +252,15 @@ export function AncestryDualCardForm({
                         placeholder="输入能力名称"
                       />
                     </FormControl>
+                    {card1 && (
+                      <CompactCardIdEditor
+                        card={card1}
+                        cardType="ancestry"
+                        cardIndex={cardIndex1}
+                        packageName={packageData.name || '新建卡包'}
+                        author={packageData.author || '作者'}
+                      />
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -315,6 +325,15 @@ export function AncestryDualCardForm({
                         placeholder="输入能力名称"
                       />
                     </FormControl>
+                    {card2 && (
+                      <CompactCardIdEditor
+                        card={card2}
+                        cardType="ancestry"
+                        cardIndex={cardIndex2}
+                        packageName={packageData.name || '新建卡包'}
+                        author={packageData.author || '作者'}
+                      />
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

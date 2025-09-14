@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { KeywordCombobox } from '@/components/card-editor/keyword-combobox'
 import { Card } from '@/components/ui/card'
 import MarkdownEditor from '@/components/card-editor/markdown-editor'
+import { CompactCardIdEditor } from '@/components/card-editor/compact-card-id-editor'
 import type { SubclassCard } from '@/card/subclass-card/convert'
 import type { CardPackageState } from '@/app/card-editor/types'
 import { SUBCLASS_LEVEL_NAMES, ATTRIBUTE_CLASS_NAMES } from '@/card/card-types'
@@ -55,7 +56,7 @@ export function SubclassTripleCardForm({
   keywordLists,
   onAddKeyword
 }: SubclassTripleCardFormProps) {
-  const { updateCard } = useCardEditorStore()
+  const { updateCard, packageData } = useCardEditorStore()
 
   // 初始化表单数据
   const getInitialValues = (): SubclassCardTriple => {
@@ -203,7 +204,9 @@ export function SubclassTripleCardForm({
   const renderLevelCard = (
     level: '基石' | '专精' | '大师',
     fieldPrefix: '基石' | '专精' | '大师',
-    colorScheme: { bg: string; border: string; text: string }
+    colorScheme: { bg: string; border: string; text: string },
+    card: SubclassCard | null,
+    cardIndex: number
   ) => (
     <Card className={`p-4 ${colorScheme.bg} ${colorScheme.border}`}>
       <h3 className={`text-sm font-semibold ${colorScheme.text} mb-3`}>{level}等级</h3>
@@ -222,6 +225,15 @@ export function SubclassTripleCardForm({
                   placeholder={`输入${level}卡牌名称`}
                 />
               </FormControl>
+              {card && (
+                <CompactCardIdEditor
+                  card={card}
+                  cardType="subclass"
+                  cardIndex={cardIndex}
+                  packageName={packageData.name || '新建卡包'}
+                  author={packageData.author || '作者'}
+                />
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -355,19 +367,25 @@ export function SubclassTripleCardForm({
         {renderLevelCard(
           '基石',
           '基石',
-          { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900' }
+          { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900' },
+          card1,
+          cardIndex1
         )}
 
         {renderLevelCard(
           '专精',
           '专精',
-          { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-900' }
+          { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-900' },
+          card2,
+          cardIndex2
         )}
 
         {renderLevelCard(
           '大师',
           '大师',
-          { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-900' }
+          { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-900' },
+          card3,
+          cardIndex3
         )}
 
         {/* 提示信息 */}

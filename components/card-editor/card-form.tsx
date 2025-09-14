@@ -533,75 +533,8 @@ export function VariantCardForm({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="子类别"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>子类别（可选）</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="例如：饮料、盟友、武器"
-                    onBlur={handleFieldBlur}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="等级"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>等级（可选）</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="例如：1"
-                    {...field}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      field.onChange(value === '' ? undefined : parseInt(value) || 0)
-                    }}
-                    onBlur={handleFieldBlur}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="效果"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>卡牌效果 *</FormLabel>
-              <FormControl>
-                <MarkdownEditor
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={handleFieldBlur}
-                  placeholder="卡牌的详细效果描述，支持Markdown格式"
-                  height={200}
-                />
-              </FormControl>
-              <div className="text-sm text-muted-foreground">
-                支持Markdown格式，可以使用 *__关键词__* 来标记重要信息
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         {/* 简略信息区域 */}
         <div className="space-y-4 border-t pt-4">
-          <h4 className="text-sm font-medium">简略信息（卡牌选择时显示）</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField
               control={form.control}
@@ -658,8 +591,77 @@ export function VariantCardForm({
             />
           </div>
           <div className="text-xs text-muted-foreground">
-            这些信息会在角色选择卡牌时显示在卡牌预览中，帮助玩家快速了解卡牌特性
+            这些信息会出现在卡牌的标签栏，帮助玩家快速了解卡牌特性
           </div>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="效果"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>卡牌效果 *</FormLabel>
+              <FormControl>
+                <MarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={handleFieldBlur}
+                  placeholder="卡牌的详细效果描述，支持Markdown格式"
+                  height={200}
+                />
+              </FormControl>
+              <div className="text-sm text-muted-foreground">
+                支持Markdown格式，可以使用 *__关键词__* 来标记重要信息
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="子类别"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>子类别（可选）</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="例如：饮料、盟友、武器"
+                    onBlur={handleFieldBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="等级"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>等级（可选）</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="例如：1"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      field.onChange(value === '' ? undefined : parseInt(value) || 0)
+                    }}
+                    onBlur={handleFieldBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="text-xs text-muted-foreground">
+          类别和等级用于在卡牌选择界面筛选卡牌，不会出现在卡牌上。
         </div>
       </div>
     </Form>
@@ -715,11 +717,11 @@ export function DomainCardForm({
             name="名称"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>法术名称 *</FormLabel>
+                <FormLabel>卡牌名称 *</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="输入法术名称"
+                    placeholder="输入卡牌名称"
                     onBlur={handleFieldBlur}
                   />
                 </FormControl>
@@ -740,7 +742,7 @@ export function DomainCardForm({
             name="领域"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>法术领域 *</FormLabel>
+                <FormLabel>所属领域 *</FormLabel>
                 <FormControl>
                   <KeywordCombobox
                     value={field.value || ''}
@@ -748,7 +750,7 @@ export function DomainCardForm({
                     onBlur={handleFieldBlur}
                     keywords={keywordLists?.domains || []}
                     onAddKeyword={(keyword) => onAddKeyword?.('domains', keyword)}
-                    placeholder="输入或选择领域"
+                    placeholder="输入或选择卡牌所属的领域"
                   />
                 </FormControl>
                 <FormMessage />
@@ -763,7 +765,7 @@ export function DomainCardForm({
             name="等级"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>法术等级 *</FormLabel>
+                <FormLabel>卡牌等级 *</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -786,11 +788,11 @@ export function DomainCardForm({
             name="属性"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>施法属性 *</FormLabel>
+                <FormLabel>卡牌类型 *</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="例如：知识"
+                    placeholder="例如：能力、法术、仪式、术典"
                     onBlur={handleFieldBlur}
                   />
                 </FormControl>
@@ -804,7 +806,7 @@ export function DomainCardForm({
             name="回想"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>回想值 *</FormLabel>
+                <FormLabel>回想费用 *</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -828,13 +830,13 @@ export function DomainCardForm({
           name="描述"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>法术描述 *</FormLabel>
+              <FormLabel>卡牌描述 *</FormLabel>
               <FormControl>
                 <MarkdownEditor
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={handleFieldBlur}
-                  placeholder="法术的详细效果描述，支持Markdown格式"
+                  placeholder="卡牌的详细效果描述，支持Markdown格式"
                   height={200}
                 />
               </FormControl>

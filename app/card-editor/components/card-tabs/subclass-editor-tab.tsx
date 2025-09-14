@@ -41,9 +41,6 @@ export function SubclassEditorTab() {
   
   // 将子职业卡组织成三卡组 - 仿照种族卡的简单做法
   const subclassTriples = useMemo(() => {
-    console.log('=== 子职业三卡组计算开始（简化版）===')
-    console.log('总卡片数量:', cards.length)
-
     const triples: SubclassTriple[] = []
     const processedIndices = new Set<number>()
 
@@ -52,8 +49,6 @@ export function SubclassEditorTab() {
 
       // 只从基石卡开始组建三卡组，仿照种族卡从类别1开始
       if (card.等级 !== '基石') return
-
-      console.log(`\n处理基石卡 ${index}: ${card.名称}`)
 
       // 寻找对应的专精卡和大师卡
       const 专精Index = cards.findIndex((c, i) =>
@@ -71,12 +66,6 @@ export function SubclassEditorTab() {
         c.主职 === card.主职 &&
         c.等级 === '大师'
       )
-
-      console.log('  找到配套卡片:', {
-        基石: `${index}:${card.名称}`,
-        专精: 专精Index !== -1 ? `${专精Index}:${cards[专精Index].名称}` : '无',
-        大师: 大师Index !== -1 ? `${大师Index}:${cards[大师Index].名称}` : '无'
-      })
 
       // 标记已处理的卡片
       processedIndices.add(index)
@@ -96,11 +85,8 @@ export function SubclassEditorTab() {
       }
 
       triples.push(triple)
-      console.log(`  添加三卡组: ${triple.子职业}`)
     })
 
-    console.log('=== 三卡组计算完成 ===')
-    console.log('最终三卡组数量:', triples.length)
     return triples
   }, [cards])
   

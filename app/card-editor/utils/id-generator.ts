@@ -1,19 +1,31 @@
 import type { CardPackageState, CardType } from '../types'
 
 /**
- * 生成唯一的卡牌ID
+ * 生成防碰撞的短ID
+ * 组合时间戳和随机数，确保唯一性
+ */
+function generateShortId(): string {
+  // 时间戳部分（base36，约6-7个字符）
+  const timestamp = Date.now().toString(36)
+
+  // 随机部分（6个字符，增加长度以补偿移除的计数器）
+  const random = Math.random().toString(36).substring(2, 8).padEnd(6, '0')
+
+  return `${timestamp}-${random}`
+}
+
+/**
+ * 生成唯一的卡牌ID（新版本，不依赖卡牌名称）
  * @param packageName 卡包名称
  * @param author 作者名称
  * @param cardType 卡牌类型
- * @param cardName 卡牌名称
  * @param existingCards 已存在的卡牌数据，用于去重检查
  * @returns 唯一的卡牌ID
  */
-export function generateUniqueCardId(
-  packageName: string, 
-  author: string, 
-  cardType: CardType, 
-  cardName: string,
+export function generateRobustCardId(
+  packageName: string,
+  author: string,
+  cardType: CardType,
   existingCards?: CardPackageState
 ): string {
   // 类型缩写映射
@@ -26,33 +38,39 @@ export function generateUniqueCardId(
     'variant': 'vari'
   } as const
 
+  const cleanPackageName = sanitizeIdString(packageName) || '新建卡包'
+  const cleanAuthor = sanitizeIdString(author) || '作者'
   const typeCode = typeAbbreviation[cardType] || cardType
-  const baseId = `${packageName}-${author}-${typeCode}-${cardName}`
-  
-  // 如果没有提供已存在的卡牌数据，直接返回基础ID
-  if (!existingCards) {
-    return baseId
+
+  // 生成防碰撞的短ID
+  const shortId = generateShortId()
+
+  // 组合成完整ID
+  const baseId = `${cleanPackageName}-${cleanAuthor}-${typeCode}-${shortId}`
+
+  // 额外的唯一性检查（如果有已存在的卡牌）
+  if (existingCards && !isIdUniqueInPackage(baseId, existingCards)) {
+    // 极小概率事件：添加额外的随机后缀
+    const extraRandom = Math.random().toString(36).substring(2, 6)
+    return `${baseId}-${extraRandom}`
   }
-  
-  // 检查ID是否已存在
-  const allCards = getAllCardsFromPackage(existingCards)
-  const existingIds = new Set(allCards.map(card => card.id).filter(Boolean))
-  
-  // 如果基础ID不冲突，直接返回
-  if (!existingIds.has(baseId)) {
-    return baseId
-  }
-  
-  // 如果冲突，添加数字后缀
-  let counter = 2
-  let uniqueId = `${baseId}-${counter}`
-  
-  while (existingIds.has(uniqueId) && counter < 100) { // 防止无限循环
-    counter++
-    uniqueId = `${baseId}-${counter}`
-  }
-  
-  return uniqueId
+
+  return baseId
+}
+
+/**
+ * 生成唯一的卡牌ID（保留旧版本兼容）
+ * @deprecated 请使用 generateRobustCardId
+ */
+export function generateUniqueCardId(
+  packageName: string,
+  author: string,
+  cardType: CardType,
+  _cardName: string,  // 前缀下划线表示参数未使用
+  existingCards?: CardPackageState
+): string {
+  // 直接调用新版本，忽略cardName参数
+  return generateRobustCardId(packageName, author, cardType, existingCards)
 }
 
 /**
@@ -120,20 +138,81 @@ export function sanitizeIdString(str: string): string {
 }
 
 /**
+ * 获取卡牌类型缩写
+ */
+function getTypeAbbreviation(cardType: CardType): string {
+  const typeAbbreviation = {
+    'profession': 'prof',
+    'ancestry': 'ance',
+    'community': 'comm',
+    'subclass': 'subc',
+    'domain': 'doma',
+    'variant': 'vari'
+  } as const
+
+  return typeAbbreviation[cardType] || cardType
+}
+
+/**
+ * 解析卡牌ID，分离前缀和后缀
+ */
+export function parseCardId(
+  id: string,
+  packageName: string,
+  author: string,
+  cardType: CardType
+): { isStandard: boolean; customSuffix: string; prefix: string } {
+  const cleanPackageName = sanitizeIdString(packageName) || '新建卡包'
+  const cleanAuthor = sanitizeIdString(author) || '作者'
+  const typeCode = getTypeAbbreviation(cardType)
+
+  const expectedPrefix = `${cleanPackageName}-${cleanAuthor}-${typeCode}-`
+
+  if (id.startsWith(expectedPrefix)) {
+    // 标准格式：提取后缀
+    return {
+      isStandard: true,
+      customSuffix: id.substring(expectedPrefix.length),
+      prefix: expectedPrefix
+    }
+  } else {
+    // 非标准格式：整个ID作为后缀（向后兼容）
+    return {
+      isStandard: false,
+      customSuffix: id,
+      prefix: expectedPrefix
+    }
+  }
+}
+
+/**
+ * 组合前缀和后缀为完整ID
+ */
+export function buildCardId(
+  packageName: string,
+  author: string,
+  cardType: CardType,
+  customSuffix: string
+): string {
+  const cleanPackageName = sanitizeIdString(packageName) || '新建卡包'
+  const cleanAuthor = sanitizeIdString(author) || '作者'
+  const typeCode = getTypeAbbreviation(cardType)
+  const cleanSuffix = sanitizeIdString(customSuffix) || 'unnamed'
+
+  return `${cleanPackageName}-${cleanAuthor}-${typeCode}-${cleanSuffix}`
+}
+
+/**
  * 根据卡牌名称智能生成ID
+ * @deprecated 新版本不再依赖卡牌名称
  */
 export function generateSmartCardId(
   packageName: string,
   author: string,
   cardType: CardType,
-  cardName: string,
+  _cardName: string,  // 前缀下划线表示参数未使用
   packageData?: CardPackageState
 ): string {
-  // 清理输入字符串
-  const cleanPackageName = sanitizeIdString(packageName) || '新建卡包'
-  const cleanAuthor = sanitizeIdString(author) || '作者'
-  const cleanCardName = sanitizeIdString(cardName) || '卡牌名'
-  
-  // 生成唯一ID
-  return generateUniqueCardId(cleanPackageName, cleanAuthor, cardType, cleanCardName, packageData)
+  // 使用新的ID生成策略，不再依赖卡牌名称
+  return generateRobustCardId(packageName, author, cardType, packageData)
 }

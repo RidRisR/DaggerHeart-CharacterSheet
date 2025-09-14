@@ -12,7 +12,7 @@ import { defaultPackage } from '../types'
 import { createDefaultCard, copyCard } from '../utils/card-factory'
 import { exportCardPackage, importCardPackage } from '../utils/import-export'
 import { validationService, type ValidationResult, type ValidationError } from '../services/validation-service'
-import { generateSmartCardId } from '../utils/id-generator'
+import { generateSmartCardId, parseCardId, buildCardId, generateRobustCardId } from '../utils/id-generator'
 
 interface CardEditorStore {
   // 状态
@@ -117,16 +117,38 @@ export const useCardEditorStore = create<CardEditorStore>()(
 
             cardTypes.forEach(cardType => {
               if (newPackageData[cardType] && Array.isArray(newPackageData[cardType])) {
-                newPackageData[cardType] = (newPackageData[cardType] as any[]).map(card => ({
-                  ...card,
-                  id: generateSmartCardId(
-                    newPackageData.name || '新建卡包',
-                    newPackageData.author || '未知作者',
-                    cardType,
-                    card.名称 || '未命名',
-                    newPackageData
+                newPackageData[cardType] = (newPackageData[cardType] as any[]).map(card => {
+                  const parsed = parseCardId(
+                    card.id || '',
+                    state.packageData.name || '新建卡包',
+                    state.packageData.author || '未知作者',
+                    cardType
                   )
-                }))
+
+                  if (parsed.isStandard) {
+                    // 标准格式：保留用户自定义后缀，更新前缀
+                    return {
+                      ...card,
+                      id: buildCardId(
+                        newPackageData.name || '新建卡包',
+                        newPackageData.author || '未知作者',
+                        cardType,
+                        parsed.customSuffix
+                      )
+                    }
+                  } else {
+                    // 非标准格式：重新生成
+                    return {
+                      ...card,
+                      id: generateRobustCardId(
+                        newPackageData.name || '新建卡包',
+                        newPackageData.author || '未知作者',
+                        cardType,
+                        newPackageData
+                      )
+                    }
+                  }
+                })
               }
             })
           }
@@ -281,16 +303,8 @@ export const useCardEditorStore = create<CardEditorStore>()(
 
           const newCard = { ...cards[index], ...(updates as any) }
 
-          // 自动处理ID生成 - 当名称变化时重新生成ID
-          if ((updates as any).名称 && (updates as any).名称 !== cards[index].名称) {
-            newCard.id = generateSmartCardId(
-              state.packageData.name || '新建卡包',
-              state.packageData.author || '未知作者',
-              type,
-              (updates as any).名称,
-              state.packageData
-            )
-          }
+          // 不再根据名称变化重新生成ID
+          // ID只在创建新卡牌时生成，保持稳定性
 
           return {
             packageData: {

@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/form'
 import MarkdownEditor, { SimpleMarkdownEditor } from './markdown-editor'
 import { KeywordCombobox } from './keyword-combobox'
+import { CardIdEditor } from './card-id-editor'
 import type { ProfessionCard } from '@/card/profession-card/convert'
 import type { CommunityCard } from '@/card/community-card/convert'
 import type { RawVariantCard } from '@/card/variant-card/convert'
@@ -46,7 +47,7 @@ export function ProfessionCardForm({
   keywordLists,
   onAddKeyword
 }: BaseCardFormProps<ProfessionCard>) {
-  const { updateCard } = useCardEditorStore()
+  const { updateCard, packageData } = useCardEditorStore()
 
   const form = useForm<ProfessionCard>({
     defaultValues: card
@@ -102,6 +103,13 @@ export function ProfessionCardForm({
                 <FormMessage />
               </FormItem>
             )}
+/>
+          <CardIdEditor
+            card={card}
+            cardType={cardType}
+            cardIndex={cardIndex}
+            packageName={packageData.name || '新建卡包'}
+            author={packageData.author || '作者'}
           />
         </div>
 
@@ -305,7 +313,7 @@ export function CommunityCardForm({
   keywordLists,
   onAddKeyword
 }: BaseCardFormProps<CommunityCard>) {
-  const { updateCard } = useCardEditorStore()
+  const { updateCard, packageData } = useCardEditorStore()
 
   const form = useForm<CommunityCard>({
     defaultValues: card
@@ -379,6 +387,16 @@ export function CommunityCardForm({
                 <FormMessage />
               </FormItem>
             )}
+/>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+<CardIdEditor
+            card={card}
+            cardType={cardType}
+            cardIndex={cardIndex}
+            packageName={packageData.name || '新建卡包'}
+            author={packageData.author || '作者'}
           />
         </div>
 
@@ -434,7 +452,7 @@ export function VariantCardForm({
   keywordLists,
   onAddKeyword
 }: BaseCardFormProps<RawVariantCard>) {
-  const { updateCard } = useCardEditorStore()
+  const { updateCard, packageData } = useCardEditorStore()
 
   const form = useForm<RawVariantCard>({
     defaultValues: card
@@ -508,6 +526,16 @@ export function VariantCardForm({
                 <FormMessage />
               </FormItem>
             )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+<CardIdEditor
+            card={card}
+            cardType={cardType}
+            cardIndex={cardIndex}
+            packageName={packageData.name || '新建卡包'}
+            author={packageData.author || '作者'}
           />
         </div>
 
@@ -651,7 +679,7 @@ export function DomainCardForm({
   keywordLists,
   onAddKeyword
 }: BaseCardFormProps<DomainCard>) {
-  const { updateCard } = useCardEditorStore()
+  const { updateCard, packageData } = useCardEditorStore()
 
   const form = useForm<DomainCard>({
     defaultValues: card
@@ -725,6 +753,16 @@ export function DomainCardForm({
                 <FormMessage />
               </FormItem>
             )}
+/>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+<CardIdEditor
+            card={card}
+            cardType={cardType}
+            cardIndex={cardIndex}
+            packageName={packageData.name || '新建卡包'}
+            author={packageData.author || '作者'}
           />
         </div>
 

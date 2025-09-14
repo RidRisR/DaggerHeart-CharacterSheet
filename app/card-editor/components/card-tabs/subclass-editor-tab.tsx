@@ -183,79 +183,127 @@ export function SubclassEditorTab() {
 
   return (
     <div className="space-y-4">
-      {/* 工具栏 */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevious}
-            disabled={safeTripleIndex === 0}
-          >
-            上一组
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            子职业组 {subclassTriples.length > 0 ? safeTripleIndex + 1 : 0} / {subclassTriples.length}
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-semibold">子职业编辑</h3>
+          <p className="text-sm text-muted-foreground">
+            当前: {subclassTriples.length > 0 ? safeTripleIndex + 1 : 0} / {subclassTriples.length} 组
             {currentTriple && !isTripleComplete && (
               <span className="text-yellow-600 ml-2">（不完整）</span>
             )}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNext}
-            disabled={safeTripleIndex >= subclassTriples.length - 1}
-          >
-            下一组
-          </Button>
+          </p>
         </div>
-        
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex gap-2">
           <Button
             variant="outline"
-            size="sm"
             onClick={() => setCardListDialog({ open: true, type: 'subclass' })}
-            className="flex items-center gap-1"
+            className="flex items-center gap-2"
           >
             <FileText className="h-4 w-4" />
-            查看所有
+            查看所有卡牌
           </Button>
           <Button
             variant="outline"
-            size="sm"
-            onClick={() => addCard('subclass')}
-            className="flex items-center gap-1"
+            onClick={() => setDefinitionsDialog(true)}
+            className="flex items-center gap-2"
           >
-            <Plus className="h-4 w-4" />
-            新建子职业组
-          </Button>
-          {currentTriple && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDelete}
-              className="flex items-center gap-1 text-red-600"
-            >
-              <Trash2 className="h-4 w-4" />
-              删除子职业组
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowMobilePreview(!showMobilePreview)}
-            className="sm:hidden flex items-center gap-1"
-          >
-            <Eye className="h-4 w-4" />
-            {showMobilePreview ? '隐藏' : '预览'}
+            <FileText className="h-4 w-4" />
+            查看关键字列表
           </Button>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* 编辑器区域 */}
-        <div className="lg:col-span-8">
-          {currentTriple ? (
+
+      {subclassTriples.length > 0 ? (
+        <>
+          {/* 卡牌导航 */}
+          <div className="flex items-center justify-between border-b pb-3">
+            <div className="flex gap-2 items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevious}
+                disabled={safeTripleIndex === 0}
+              >
+                上一组
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNext}
+                disabled={safeTripleIndex >= subclassTriples.length - 1}
+              >
+                下一组
+              </Button>
+
+              <div className="h-4 w-px bg-border mx-2"></div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => addCard('subclass')}
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                新建
+              </Button>
+              {currentTriple && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="flex items-center gap-1"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  删除
+                </Button>
+              )}
+
+              <div className="h-4 w-px bg-border mx-2 lg:hidden"></div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowMobilePreview(!showMobilePreview)}
+                className="lg:hidden flex items-center gap-1"
+              >
+                <Eye className="h-4 w-4" />
+                {showMobilePreview ? '隐藏' : '预览'}
+              </Button>
+
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span>快速跳转:</span>
+              <select
+                value={safeTripleIndex}
+                onChange={(e) => setCurrentCardIndex(prev => ({
+                  ...prev,
+                  subclass: Number(e.target.value) * 3
+                }))}
+                className="border rounded px-2 py-1"
+              >
+                {subclassTriples.map((triple, index) => (
+                  <option key={index} value={index}>
+                    {index + 1}. {triple.子职业 || '未命名'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-4">还没有子职业卡牌</p>
+          <Button onClick={() => addCard('subclass')} className="flex items-center gap-2 mx-auto">
+            <Plus className="h-4 w-4" />
+            创建第一个子职业组
+          </Button>
+        </div>
+      )}
+
+      {subclassTriples.length > 0 && currentTriple && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* 编辑器区域 */}
+          <div className="lg:col-span-8">
             <SubclassTripleCardForm
               card1={currentTriple.card1}
               card2={currentTriple.card2}
@@ -266,19 +314,8 @@ export function SubclassEditorTab() {
               keywordLists={packageData.customFieldDefinitions}
               onAddKeyword={handleAddKeyword}
             />
-          ) : (
-            <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg">
-              <Users className="h-16 w-16 text-muted-foreground mb-4" />
-              <p className="text-lg font-medium mb-2">暂无子职业组</p>
-              <p className="text-sm text-muted-foreground mb-4">子职业需要三张卡片（基石、专精、大师）</p>
-              <Button onClick={() => addCard('subclass')}>
-                <Plus className="h-4 w-4 mr-2" />
-                创建第一个子职业组
-              </Button>
-            </div>
-          )}
-        </div>
-        
+          </div>
+
         {/* 预览区域 - 桌面端 */}
         <div className="hidden lg:block lg:col-span-4 space-y-4">
           <h3 className="text-sm font-medium text-muted-foreground">实时预览</h3>
@@ -300,7 +337,7 @@ export function SubclassEditorTab() {
                 基石等级预览
               </div>
             )}
-            
+
             {/* 专精卡预览 */}
             {previewCard2 ? (
               <div>
@@ -318,7 +355,7 @@ export function SubclassEditorTab() {
                 专精等级预览
               </div>
             )}
-            
+
             {/* 大师卡预览 */}
             {previewCard3 ? (
               <div>
@@ -338,7 +375,7 @@ export function SubclassEditorTab() {
             )}
           </div>
         </div>
-        
+
         {/* 预览区域 - 移动端 */}
         {showMobilePreview && (
           <div className="lg:hidden col-span-1 space-y-4">
@@ -360,7 +397,7 @@ export function SubclassEditorTab() {
                   基石预览
                 </div>
               )}
-              
+
               {previewCard2 ? (
                 <div>
                   <p className="text-xs text-muted-foreground mb-2">专精</p>
@@ -377,7 +414,7 @@ export function SubclassEditorTab() {
                   专精预览
                 </div>
               )}
-              
+
               {previewCard3 ? (
                 <div>
                   <p className="text-xs text-muted-foreground mb-2">大师</p>
@@ -397,7 +434,8 @@ export function SubclassEditorTab() {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      )}
       
       {/* 预览对话框 */}
       <Dialog open={!!previewDialogCard} onOpenChange={() => setPreviewDialogCard(null)}>

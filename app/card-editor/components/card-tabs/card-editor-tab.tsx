@@ -135,10 +135,6 @@ export function CardEditorTab({
             <FileText className="h-4 w-4" />
             查看关键字列表
           </Button>
-          <Button onClick={() => addCard(cardType)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            添加新{getActionText()}
-          </Button>
         </div>
       </div>
 
@@ -146,7 +142,7 @@ export function CardEditorTab({
         <>
           {/* 卡牌导航 */}
           <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <Button
                 variant="outline"
                 size="sm"
@@ -168,6 +164,54 @@ export function CardEditorTab({
                 disabled={safeIndex >= cards.length - 1}
               >
                 下一张
+              </Button>
+
+              <div className="h-4 w-px bg-border mx-2"></div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => addCard(cardType)}
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                新建
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => copyCard(cardType, safeIndex)}
+                className="flex items-center gap-1"
+              >
+                <Copy className="h-4 w-4" />
+                复制
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  deleteCard(cardType, safeIndex)
+                  handleSetCurrentCardIndex(prev => ({
+                    ...prev,
+                    [cardType]: Math.max(0, prev[cardType] - 1)
+                  }))
+                }}
+                className="flex items-center gap-1"
+              >
+                <Trash2 className="h-4 w-4" />
+                删除
+              </Button>
+
+              <div className="h-4 w-px bg-border mx-2 lg:hidden"></div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden"
+                onClick={() => setShowMobilePreview(!showMobilePreview)}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                {showMobilePreview ? '隐藏' : '显示'}预览
               </Button>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -194,39 +238,6 @@ export function CardEditorTab({
             <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-4">
               {/* 左侧：编辑表单 */}
               <div className="border rounded-lg p-4 relative">
-                <div className="absolute top-4 right-4 z-10 flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="lg:hidden"
-                    onClick={() => setShowMobilePreview(!showMobilePreview)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    {showMobilePreview ? '隐藏' : '显示'}预览
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyCard(cardType, safeIndex)}
-                  >
-                    <Copy className="h-4 w-4 mr-1" />
-                    复制
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      deleteCard(cardType, safeIndex)
-                      handleSetCurrentCardIndex(prev => ({
-                        ...prev,
-                        [cardType]: Math.max(0, prev[cardType] - 1)
-                      }))
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    删除
-                  </Button>
-                </div>
                 {getCardForm()}
 
                 {/* 移动端预览区域 */}

@@ -21,6 +21,23 @@ const getDisplayTypeName = (card: StandardCard) => {
             return getCardTypeName(realType);
         }
     }
+
+    // 领域卡特殊处理：只显示领域名称，等级通过徽章显示
+    if (card.type === CardType.Domain) {
+        const domainName = card.class || '未知';
+        return `${domainName}领域`;
+    }
+
+    // 子职业卡特殊处理：显示 "xx施法" 格式
+    if (card.type === CardType.Subclass) {
+        const castingAttribute = card.cardSelectDisplay?.item3 || '不可施法';
+        if (castingAttribute && castingAttribute !== '不可施法') {
+            return `${castingAttribute}施法`;
+        } else {
+            return '不可施法';
+        }
+    }
+
     return getCardTypeName(card.type);
 };
 
@@ -92,19 +109,19 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
     useEffect(() => {
         setImageLoaded(false);
         setImageError(false);
-        
+
         // 轻微缩放动画
         setCardScale('scale(0.99)');
-        
+
         // 获取图片URL
         const url = getCardImageUrl(card, false); // 重置时不传递错误状态
         setImageSrc(url);
-        
+
         // 100ms后恢复正常大小
         const timer = setTimeout(() => {
             setCardScale('scale(1)');
         }, 100);
-        
+
         return () => clearTimeout(timer);
     }, [card]); // 移除 imageError 依赖，避免无限循环
 
@@ -121,11 +138,11 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         if (refreshTrigger) {
             // 触发缩放动画反馈
             setCardScale('scale(0.99)');
-            
+
             const timer = setTimeout(() => {
                 setCardScale('scale(1)');
             }, 100);
-            
+
             return () => clearTimeout(timer);
         }
     }, [refreshTrigger]);
@@ -181,7 +198,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
             ref={cardRef}
             key={cardId}
             className={`group relative flex w-full max-w-sm flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all duration-300 ease-in-out hover:shadow-xl min-h-[520px] ${isSelected ? 'ring-2 ring-blue-500' : 'border'}`}
-            style={{ 
+            style={{
                 transform: cardScale,
                 transition: 'transform 100ms ease-out'
             }}
@@ -209,13 +226,13 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
                 )}
 
                 {/* Level badge for Domain cards with frosted glass effect */}
-                {/* {card.type !== (CardType.Ancestry) && card.level && (
-                    <div className="absolute top-2 right-2 bg-black/25 backdrop-blur-md text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-lg border border-white/20 pointer-events-none">
+                {card.type === CardType.Domain && card.level && card.level > 0 && (
+                    <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-md text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-lg border border-white/20 pointer-events-none">
                         <span style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
-                            LV.  {card.level}
+                            Lv.{card.level}
                         </span>
                     </div>
-                )} */}
+                )}
 
 
                 {/* 轻度遮罩 + 文字阴影 */}

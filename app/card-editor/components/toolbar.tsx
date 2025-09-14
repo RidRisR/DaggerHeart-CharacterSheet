@@ -78,7 +78,7 @@ export function Toolbar({
         className="flex items-center gap-2"
       >
         <FileText className="h-4 w-4" />
-        自定义字段
+        查看关键字列表
       </Button>
     </div>
   )

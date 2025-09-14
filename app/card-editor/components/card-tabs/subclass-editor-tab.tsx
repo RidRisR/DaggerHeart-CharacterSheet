@@ -39,44 +39,68 @@ export function SubclassEditorTab() {
 
   const cards = (packageData.subclass as SubclassCard[]) || []
   
-  // 将子职业卡组织成三卡组
+  // 将子职业卡组织成三卡组 - 仿照种族卡的简单做法
   const subclassTriples = useMemo(() => {
+    console.log('=== 子职业三卡组计算开始（简化版）===')
+    console.log('总卡片数量:', cards.length)
+
     const triples: SubclassTriple[] = []
     const processedIndices = new Set<number>()
-    
+
     cards.forEach((card, index) => {
       if (processedIndices.has(index)) return
-      
-      // 找同一子职业的其他等级卡片
-      const relatedCards = cards.map((c, i) => ({ card: c, index: i }))
-        .filter((item, i) => 
-          !processedIndices.has(i) &&
-          item.card.子职业 === card.子职业 &&
-          item.card.主职 === card.主职
-        )
-      
-      if (relatedCards.length > 0) {
-        // 标记所有相关卡片为已处理
-        relatedCards.forEach(item => processedIndices.add(item.index))
-        
-        // 按等级分类
-        const 基石Card = relatedCards.find(item => item.card.等级 === '基石')
-        const 专精Card = relatedCards.find(item => item.card.等级 === '专精')
-        const 大师Card = relatedCards.find(item => item.card.等级 === '大师')
-        
-        triples.push({
-          card1: 基石Card?.card || null,
-          card2: 专精Card?.card || null,
-          card3: 大师Card?.card || null,
-          index1: 基石Card?.index ?? -1,
-          index2: 专精Card?.index ?? -1,
-          index3: 大师Card?.index ?? -1,
-          子职业: card.子职业 || '未命名子职业',
-          主职: card.主职 || '未指定主职'
-        })
+
+      // 只从基石卡开始组建三卡组，仿照种族卡从类别1开始
+      if (card.等级 !== '基石') return
+
+      console.log(`\n处理基石卡 ${index}: ${card.名称}`)
+
+      // 寻找对应的专精卡和大师卡
+      const 专精Index = cards.findIndex((c, i) =>
+        i !== index &&
+        !processedIndices.has(i) &&
+        c.子职业 === card.子职业 &&
+        c.主职 === card.主职 &&
+        c.等级 === '专精'
+      )
+
+      const 大师Index = cards.findIndex((c, i) =>
+        i !== index &&
+        !processedIndices.has(i) &&
+        c.子职业 === card.子职业 &&
+        c.主职 === card.主职 &&
+        c.等级 === '大师'
+      )
+
+      console.log('  找到配套卡片:', {
+        基石: `${index}:${card.名称}`,
+        专精: 专精Index !== -1 ? `${专精Index}:${cards[专精Index].名称}` : '无',
+        大师: 大师Index !== -1 ? `${大师Index}:${cards[大师Index].名称}` : '无'
+      })
+
+      // 标记已处理的卡片
+      processedIndices.add(index)
+      if (专精Index !== -1) processedIndices.add(专精Index)
+      if (大师Index !== -1) processedIndices.add(大师Index)
+
+      // 创建三卡组（即使不完整也创建）
+      const triple = {
+        card1: card,
+        card2: 专精Index !== -1 ? cards[专精Index] : null,
+        card3: 大师Index !== -1 ? cards[大师Index] : null,
+        index1: index,
+        index2: 专精Index !== -1 ? 专精Index : -1,
+        index3: 大师Index !== -1 ? 大师Index : -1,
+        子职业: card.子职业 || '未命名子职业',
+        主职: card.主职 || '未指定主职'
       }
+
+      triples.push(triple)
+      console.log(`  添加三卡组: ${triple.子职业}`)
     })
-    
+
+    console.log('=== 三卡组计算完成 ===')
+    console.log('最终三卡组数量:', triples.length)
     return triples
   }, [cards])
   

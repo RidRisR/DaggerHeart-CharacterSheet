@@ -190,32 +190,35 @@ export const useCardEditorStore = create<CardEditorStore>()(
           
           // 子职业卡特殊处理：创建三卡组
           if (type === 'subclass') {
-            const subclassName = '新子职业'
+            const existingCards = (state.packageData.subclass as any[]) || []
+            const existingTripleCount = Math.ceil(existingCards.length / 3)
+            const subclassName = `新子职业${existingTripleCount + 1}`
             const card1 = createDefaultCard(type, state.packageData) as any
             const card2 = createDefaultCard(type, state.packageData) as any
             const card3 = createDefaultCard(type, state.packageData) as any
-            
-            // 设置三卡组属性
+
+            // 设置三卡组属性 - 仿照种族卡模式，明确设置所有关键字段
             card1.名称 = `${subclassName}基石`
             card1.子职业 = subclassName
+            card1.主职 = subclassName  // 使用子职业名称作为主职，确保不为空
             card1.等级 = '基石'
             card1.描述 = '基石等级能力描述'
-            
+
+            // 仿照种族卡的做法：明确从card1复制关键字段
             card2.名称 = `${subclassName}专精`
-            card2.子职业 = subclassName
-            card2.主职 = card1.主职
+            card2.子职业 = card1.子职业  // 明确从card1复制
+            card2.主职 = card1.主职      // 明确从card1复制
             card2.施法 = card1.施法
             card2.等级 = '专精'
             card2.描述 = '专精等级能力描述'
-            
+
             card3.名称 = `${subclassName}大师`
-            card3.子职业 = subclassName
-            card3.主职 = card1.主职
+            card3.子职业 = card1.子职业  // 明确从card1复制
+            card3.主职 = card1.主职      // 明确从card1复制
             card3.施法 = card1.施法
             card3.等级 = '大师'
             card3.描述 = '大师等级能力描述'
             
-            const existingCards = (state.packageData.subclass as any[]) || []
             const newIndex = existingCards.length
             
             return {

@@ -63,8 +63,8 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
       return {
         id: generateSmartCardId(packageData.name || '新建卡包', packageData.author || '作者', 'subclass', subclassName, packageData),
         名称: subclassName,
-        主职: '',
-        子职业: '',
+        主职: subclassName,  // 使用子职业名称作为默认主职，而不是空字符串
+        子职业: subclassName, // 使用子职业名称作为默认值，而不是空字符串
         等级: '基石',
         施法: '',
         描述: ''

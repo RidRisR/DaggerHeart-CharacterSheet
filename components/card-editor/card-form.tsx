@@ -1,7 +1,9 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import React, { useEffect, useRef } from 'react'
+import { useForm, UseFormReturn } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import {
   Form,
@@ -49,16 +51,23 @@ export function ProfessionCardForm({
   const form = useForm<ProfessionCard>({
     defaultValues: card
   })
+  const isResetting = useRef(false)
 
   // 当卡牌数据变化时重置表单
   useEffect(() => {
+    isResetting.current = true
     form.reset(card)
-  }, [card, form])
+    setTimeout(() => {
+      isResetting.current = false
+    }, 0)
+  }, [card])
 
   // 监听表单变化并实时保存到store
   useEffect(() => {
     const subscription = form.watch((value) => {
-      updateCard(cardType, cardIndex, value)
+      if (!isResetting.current) {
+        updateCard(cardType, cardIndex, value)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -301,16 +310,23 @@ export function CommunityCardForm({
   const form = useForm<CommunityCard>({
     defaultValues: card
   })
+  const isResetting = useRef(false)
 
   // 当卡牌数据变化时重置表单
   useEffect(() => {
+    isResetting.current = true
     form.reset(card)
-  }, [card, form])
+    setTimeout(() => {
+      isResetting.current = false
+    }, 0)
+  }, [card])
 
   // 监听表单变化并实时保存到store
   useEffect(() => {
     const subscription = form.watch((value) => {
-      updateCard(cardType, cardIndex, value)
+      if (!isResetting.current) {
+        updateCard(cardType, cardIndex, value)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -423,16 +439,23 @@ export function VariantCardForm({
   const form = useForm<RawVariantCard>({
     defaultValues: card
   })
+  const isResetting = useRef(false)
 
   // 当卡牌数据变化时重置表单
   useEffect(() => {
+    isResetting.current = true
     form.reset(card)
-  }, [card, form])
+    setTimeout(() => {
+      isResetting.current = false
+    }, 0)
+  }, [card])
 
   // 监听表单变化并实时保存到store
   useEffect(() => {
     const subscription = form.watch((value) => {
-      updateCard(cardType, cardIndex, value)
+      if (!isResetting.current) {
+        updateCard(cardType, cardIndex, value)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -633,16 +656,23 @@ export function DomainCardForm({
   const form = useForm<DomainCard>({
     defaultValues: card
   })
+  const isResetting = useRef(false)
 
   // 当卡牌数据变化时重置表单
   useEffect(() => {
+    isResetting.current = true
     form.reset(card)
-  }, [card, form])
+    setTimeout(() => {
+      isResetting.current = false
+    }, 0)
+  }, [card])
 
   // 监听表单变化并实时保存到store
   useEffect(() => {
     const subscription = form.watch((value) => {
-      updateCard(cardType, cardIndex, value)
+      if (!isResetting.current) {
+        updateCard(cardType, cardIndex, value)
+      }
     })
 
     return () => subscription.unsubscribe()

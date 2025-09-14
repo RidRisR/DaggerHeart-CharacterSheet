@@ -75,6 +75,21 @@ export function CardListDialog({
                         种族: {card.种族} | 类别: {card.类别}
                       </p>
                     )}
+                    {dialog.type === 'subclass' && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        子职业: {card.子职业} | 主职: {card.主职} | 等级: {card.等级}
+                      </p>
+                    )}
+                    {dialog.type === 'community' && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        特性: {card.特性}
+                      </p>
+                    )}
+                    {dialog.type === 'domain' && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        领域: {card.领域} | 等级: {card.等级}
+                      </p>
+                    )}
                     {dialog.type === 'variant' && (
                       <p className="text-sm text-muted-foreground mt-1">
                         类型: {card.类型} {card.子类别 && `| ${card.子类别}`}
@@ -92,22 +107,34 @@ export function CardListDialog({
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDeleteCard(dialog.type, index)
-                        if (currentCardIndex[dialog.type] >= index) {
-                          onSetCurrentCardIndex(prev => ({
-                            ...prev,
-                            [dialog.type]: Math.max(0, prev[dialog.type] - 1)
-                          }))
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    {/* 种族卡和子职业卡不允许单独删除，必须批量删除整组 */}
+                    {dialog.type !== 'ancestry' && dialog.type !== 'subclass' ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDeleteCard(dialog.type, index)
+                          if (currentCardIndex[dialog.type] >= index) {
+                            onSetCurrentCardIndex(prev => ({
+                              ...prev,
+                              [dialog.type]: Math.max(0, prev[dialog.type] - 1)
+                            }))
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled
+                        title="组合卡牌不可单独删除，请在编辑器中删除整组"
+                      >
+                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

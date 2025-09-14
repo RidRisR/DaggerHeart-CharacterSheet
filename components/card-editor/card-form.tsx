@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form'
 import MarkdownEditor, { SimpleMarkdownEditor } from './markdown-editor'
 import { KeywordCombobox } from './keyword-combobox'
-import { CardIdEditor } from './card-id-editor'
+import { CompactCardIdEditor } from './compact-card-id-editor'
 import type { ProfessionCard } from '@/card/profession-card/convert'
 import type { CommunityCard } from '@/card/community-card/convert'
 import type { RawVariantCard } from '@/card/variant-card/convert'
@@ -100,17 +100,17 @@ export function ProfessionCardForm({
                     placeholder="输入或选择职业"
                   />
                 </FormControl>
+                <CompactCardIdEditor
+                  card={card}
+                  cardType={cardType}
+                  cardIndex={cardIndex}
+                  packageName={packageData.name || '新建卡包'}
+                  author={packageData.author || '作者'}
+                />
                 <FormMessage />
               </FormItem>
             )}
 />
-          <CardIdEditor
-            card={card}
-            cardType={cardType}
-            cardIndex={cardIndex}
-            packageName={packageData.name || '新建卡包'}
-            author={packageData.author || '作者'}
-          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -366,6 +366,13 @@ export function CommunityCardForm({
                     placeholder="输入或选择社群"
                   />
                 </FormControl>
+                <CompactCardIdEditor
+                  card={card}
+                  cardType={cardType}
+                  cardIndex={cardIndex}
+                  packageName={packageData.name || '新建卡包'}
+                  author={packageData.author || '作者'}
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -388,16 +395,6 @@ export function CommunityCardForm({
               </FormItem>
             )}
 />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-<CardIdEditor
-            card={card}
-            cardType={cardType}
-            cardIndex={cardIndex}
-            packageName={packageData.name || '新建卡包'}
-            author={packageData.author || '作者'}
-          />
         </div>
 
         <FormField
@@ -502,6 +499,13 @@ export function VariantCardForm({
                     onBlur={handleFieldBlur}
                   />
                 </FormControl>
+                <CompactCardIdEditor
+                  card={card}
+                  cardType={cardType}
+                  cardIndex={cardIndex}
+                  packageName={packageData.name || '新建卡包'}
+                  author={packageData.author || '作者'}
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -526,16 +530,6 @@ export function VariantCardForm({
                 <FormMessage />
               </FormItem>
             )}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-<CardIdEditor
-            card={card}
-            cardType={cardType}
-            cardIndex={cardIndex}
-            packageName={packageData.name || '新建卡包'}
-            author={packageData.author || '作者'}
           />
         </div>
 
@@ -729,6 +723,13 @@ export function DomainCardForm({
                     onBlur={handleFieldBlur}
                   />
                 </FormControl>
+                <CompactCardIdEditor
+                  card={card}
+                  cardType={cardType}
+                  cardIndex={cardIndex}
+                  packageName={packageData.name || '新建卡包'}
+                  author={packageData.author || '作者'}
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -754,16 +755,6 @@ export function DomainCardForm({
               </FormItem>
             )}
 />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-<CardIdEditor
-            card={card}
-            cardType={cardType}
-            cardIndex={cardIndex}
-            packageName={packageData.name || '新建卡包'}
-            author={packageData.author || '作者'}
-          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

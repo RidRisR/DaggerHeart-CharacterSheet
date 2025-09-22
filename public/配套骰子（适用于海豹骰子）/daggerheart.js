@@ -133,7 +133,7 @@ const CONFIG = {
   // 插件配置
   plugin: {
     name: 'daggerheart',
-    author: 'SealDice社区',
+    author: 'RidRisR',
     version: '2.1.0'
   }
 };
@@ -142,7 +142,7 @@ const CONFIG = {
 const DAGGERHEART_TEMPLATE = {
   name: 'daggerheart',
   fullName: 'Daggerheart二元骰规则',
-  authors: ['SealDice社区'],
+  authors: ['RidRisR'],
   version: '2.0.0',
   updatedTime: '20250801',
   templateVer: '1.0',
@@ -1437,8 +1437,40 @@ class DualityDiceLogic {
     // 处理属性修饰符
     const attributes = parsedCommand.modifiers.filter(m => m.type === 'attribute');
     for (const attr of attributes) {
-      const [attrValue, hasAttr] = seal.vars.intGet(ctx, attr.name);
-      const actualValue = hasAttr ? attrValue : 0;
+      let actualValue = 0;
+
+      // 特殊处理知识属性
+      // SealDice的 .st 命令对"知识"这个属性有特殊处理：
+      // - 其他属性同时写入 intGet 和 format 存储
+      // - 知识只写入 format 存储，不写入 intGet
+      // 因此需要智能判断从哪里读取
+      if (attr.name === '知识') {
+        // 先尝试从 format 获取（.st 命令设置的值）
+        const formatValue = seal.format(ctx, `{${attr.name}}`);
+        let foundInFormat = false;
+
+        // 检查format是否返回了有效的数字（包括0）
+        if (formatValue && formatValue !== `{${attr.name}}` && formatValue !== attr.name) {
+          const parsed = parseInt(formatValue);
+          if (!isNaN(parsed)) {
+            actualValue = parsed;
+            foundInFormat = true;
+          }
+        }
+
+        // 如果format没有找到值，尝试intGet（可能是通过intSet设置的）
+        if (!foundInFormat) {
+          const [attrValue, hasAttr] = seal.vars.intGet(ctx, attr.name);
+          if (hasAttr) {
+            actualValue = attrValue;
+          }
+        }
+      } else {
+      // 其他属性正常使用 intGet
+        const [attrValue, hasAttr] = seal.vars.intGet(ctx, attr.name);
+        actualValue = hasAttr ? attrValue : 0;
+      }
+
       const value = actualValue * attr.sign;
       modifierTotal += value;
 

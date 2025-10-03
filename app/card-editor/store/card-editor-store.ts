@@ -13,6 +13,7 @@ import { createDefaultCard, copyCard } from '../utils/card-factory'
 import { exportCardPackage, importCardPackage } from '../utils/import-export'
 import { validationService, type ValidationResult, type ValidationError } from '../services/validation-service'
 import { generateSmartCardId, parseCardId, buildCardId, generateRobustCardId } from '../utils/id-generator'
+import { clearAllEditorImages } from '../utils/image-db-helpers'
 
 // Image upload status
 interface ImageUploadStatus {
@@ -526,8 +527,16 @@ export const useCardEditorStore = create<CardEditorStore>()(
       newPackage: () => {
         const state = get()
         const { setConfirmDialog } = get()
-        
-        const createNewPackage = () => {
+
+        const createNewPackage = async () => {
+          // 清空 IndexedDB 中的所有编辑器图片
+          try {
+            await clearAllEditorImages()
+            console.log('[EditorStore] Cleared all editor images')
+          } catch (error) {
+            console.error('[EditorStore] Failed to clear editor images:', error)
+          }
+
           set({
             packageData: { ...defaultPackage },
             currentCardIndex: {
@@ -542,7 +551,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
           })
           toast.success('已创建新卡包')
         }
-        
+
         // 总是显示确认对话框，警告会删除现有内容
         setConfirmDialog({
           open: true,

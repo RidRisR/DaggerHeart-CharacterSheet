@@ -15,8 +15,10 @@ interface ImageCropModalProps {
 
 const ASPECT_RATIO = 1.4 // Card aspect ratio (width / height = 1.4)
 const MAX_FILE_SIZE = 100 * 1024 // Maximum file size: 100KB
+const MAX_DIMENSION = 1200 // Maximum width or height in pixels
 const INITIAL_QUALITY = 0.85 // Initial WebP compression quality
 const MIN_QUALITY = 0.3 // Minimum acceptable quality
+const QUALITY_STEP = 0.1 // Quality reduction step (larger = faster)
 
 /**
  * Image Crop Modal for Card Images
@@ -78,12 +80,24 @@ export function ImageCropModal({
       const scaleX = image.naturalWidth / image.width
       const scaleY = image.naturalHeight / image.height
 
-      // Use the actual crop dimensions (no resizing)
+      // Calculate crop dimensions at original resolution
       const cropWidth = crop.width * scaleX
       const cropHeight = crop.height * scaleY
 
-      canvas.width = cropWidth
-      canvas.height = cropHeight
+      // Smart resize: if crop is too large, scale down to MAX_DIMENSION while maintaining aspect ratio
+      let targetWidth = cropWidth
+      let targetHeight = cropHeight
+
+      const maxDimension = Math.max(cropWidth, cropHeight)
+      if (maxDimension > MAX_DIMENSION) {
+        const scale = MAX_DIMENSION / maxDimension
+        targetWidth = Math.round(cropWidth * scale)
+        targetHeight = Math.round(cropHeight * scale)
+        console.log(`[ImageCrop] Resizing from ${Math.round(cropWidth)}×${Math.round(cropHeight)} to ${targetWidth}×${targetHeight}`)
+      }
+
+      canvas.width = targetWidth
+      canvas.height = targetHeight
 
       const ctx = canvas.getContext('2d')
       if (!ctx) {
@@ -92,7 +106,7 @@ export function ImageCropModal({
 
       ctx.imageSmoothingQuality = 'high'
 
-      // Draw cropped image at original resolution
+      // Draw cropped image with optional scaling
       ctx.drawImage(
         image,
         crop.x * scaleX,
@@ -101,15 +115,17 @@ export function ImageCropModal({
         cropHeight,
         0,
         0,
-        cropWidth,
-        cropHeight
+        targetWidth,
+        targetHeight
       )
 
-      // Try to compress to under MAX_FILE_SIZE
+      // Try to compress to under MAX_FILE_SIZE with optimized loop
       let quality = INITIAL_QUALITY
       let blob: Blob | null = null
+      let attempts = 0
 
       while (quality >= MIN_QUALITY) {
+        attempts++
         blob = await new Promise<Blob | null>((resolve) => {
           canvas.toBlob(
             (b) => resolve(b),
@@ -124,18 +140,16 @@ export function ImageCropModal({
 
         // Check if size is acceptable
         if (blob.size <= MAX_FILE_SIZE) {
-          const width = Math.round(crop.width * (image.naturalWidth / image.width))
-          const height = Math.round(crop.height * (image.naturalHeight / image.height))
-          console.log(`[ImageCrop] Output: ${width}×${height}, ${(blob.size / 1024).toFixed(1)}KB, quality: ${quality.toFixed(2)}`)
+          console.log(`[ImageCrop] Output: ${targetWidth}×${targetHeight}, ${(blob.size / 1024).toFixed(1)}KB, quality: ${quality.toFixed(2)}, attempts: ${attempts}`)
           return blob
         }
 
-        // Reduce quality for next iteration
-        quality -= 0.05
+        // Reduce quality with larger step for faster convergence
+        quality -= QUALITY_STEP
       }
 
       // If we can't get under MAX_FILE_SIZE, return the smallest we got
-      console.warn(`[ImageCrop] Could not compress below ${MAX_FILE_SIZE / 1024}KB. Final size: ${(blob!.size / 1024).toFixed(1)}KB`)
+      console.warn(`[ImageCrop] Could not compress below ${MAX_FILE_SIZE / 1024}KB. Final size: ${(blob!.size / 1024).toFixed(1)}KB after ${attempts} attempts`)
       return blob!
     },
     []

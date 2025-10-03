@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ImageUploadProps {
@@ -15,7 +15,7 @@ interface ImageUploadProps {
 
 /**
  * Image Upload Component
- * Allows users to upload images for cards with preview
+ * Allows users to upload images for cards
  */
 export function ImageUpload({
   cardId,
@@ -26,7 +26,12 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl || null)
+  const [hasImage, setHasImage] = useState<boolean>(!!currentImageUrl)
+
+  // Sync hasImage state with currentImageUrl prop
+  useEffect(() => {
+    setHasImage(!!currentImageUrl)
+  }, [currentImageUrl])
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -51,9 +56,8 @@ export function ImageUpload({
       // Upload to IndexedDB
       await onUpload(cardId, file)
 
-      // Update preview
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
+      // Mark as having image
+      setHasImage(true)
 
       toast.success('图片上传成功')
     } catch (error) {
@@ -74,11 +78,8 @@ export function ImageUpload({
     try {
       await onDelete(cardId)
 
-      // Revoke preview URL
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl)
-        setPreviewUrl(null)
-      }
+      // Mark as no image
+      setHasImage(false)
 
       toast.success('图片已删除')
     } catch (error) {
@@ -88,59 +89,38 @@ export function ImageUpload({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileSelect}
-          className="hidden"
-          disabled={disabled || uploading}
-        />
+    <div className="flex items-center gap-2">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+        disabled={disabled || uploading}
+      />
 
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={disabled || uploading}
+      >
+        <Upload className="mr-2 h-4 w-4" />
+        {uploading ? '上传中...' : hasImage ? '更换图片' : '上传图片'}
+      </Button>
+
+      {hasImage && onDelete && (
         <Button
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={handleDelete}
           disabled={disabled || uploading}
         >
-          <Upload className="mr-2 h-4 w-4" />
-          {uploading ? '上传中...' : previewUrl ? '更换图片' : '上传图片'}
+          <X className="mr-2 h-4 w-4" />
+          删除图片
         </Button>
-
-        {previewUrl && onDelete && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleDelete}
-            disabled={disabled || uploading}
-          >
-            <X className="mr-2 h-4 w-4" />
-            删除图片
-          </Button>
-        )}
-      </div>
-
-      {previewUrl && (
-        <div className="relative w-full h-40 border rounded-md overflow-hidden bg-gray-50">
-          <img
-            src={previewUrl}
-            alt="Preview"
-            className="w-full h-full object-contain"
-          />
-        </div>
-      )}
-
-      {!previewUrl && (
-        <div className="flex items-center justify-center w-full h-40 border border-dashed rounded-md bg-gray-50">
-          <div className="text-center text-gray-400">
-            <ImageIcon className="mx-auto h-8 w-8 mb-2" />
-            <p className="text-sm">未上传图片</p>
-          </div>
-        </div>
       )}
     </div>
   )

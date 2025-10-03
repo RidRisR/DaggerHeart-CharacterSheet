@@ -132,3 +132,48 @@ export async function getTotalEditorImageSize(): Promise<number> {
   const records = await db.editorImages.toArray();
   return records.reduce((total, record) => total + record.size, 0);
 }
+
+/**
+ * Rename an image key in IndexedDB (migrate image from old cardId to new cardId)
+ * @param oldCardId - Old card identifier
+ * @param newCardId - New card identifier
+ * @returns Promise<boolean> - True if migration succeeded, false if no image found
+ */
+export async function renameImageKey(oldCardId: string, newCardId: string): Promise<boolean> {
+  if (!isIndexedDBAvailable()) {
+    console.warn('[ImageDB] IndexedDB not available, cannot rename image key');
+    return false;
+  }
+
+  if (oldCardId === newCardId) {
+    return true; // No change needed
+  }
+
+  try {
+    // Get the old image record
+    const oldRecord = await db.editorImages.get(oldCardId);
+
+    if (!oldRecord) {
+      // No image to migrate
+      return false;
+    }
+
+    // Create new record with updated key
+    const newRecord: ImageRecord = {
+      ...oldRecord,
+      key: newCardId
+    };
+
+    // Use transaction to ensure atomicity
+    await db.transaction('rw', db.editorImages, async () => {
+      await db.editorImages.put(newRecord);
+      await db.editorImages.delete(oldCardId);
+    });
+
+    console.log(`[ImageDB] Successfully renamed image key: ${oldCardId} → ${newCardId}`);
+    return true;
+  } catch (error) {
+    console.error(`[ImageDB] Failed to rename image key from ${oldCardId} to ${newCardId}:`, error);
+    throw error;
+  }
+}

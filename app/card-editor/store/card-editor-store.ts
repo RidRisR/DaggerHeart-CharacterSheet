@@ -143,6 +143,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
           // 如果修改的是包名或作者，重新生成所有卡牌ID
           if (field === 'name' || field === 'author') {
             const cardTypes: CardType[] = ['profession', 'ancestry', 'community', 'subclass', 'domain', 'variant']
+            const idMappings: Array<{ oldId: string; newId: string }> = []
 
             cardTypes.forEach(cardType => {
               if (newPackageData[cardType] && Array.isArray(newPackageData[cardType])) {
@@ -154,32 +155,53 @@ export const useCardEditorStore = create<CardEditorStore>()(
                     cardType
                   )
 
+                  const oldId = card.id
+                  let newId: string
+
                   if (parsed.isStandard) {
                     // 标准格式：保留用户自定义后缀，更新前缀
-                    return {
-                      ...card,
-                      id: buildCardId(
-                        newPackageData.name || '新建卡包',
-                        newPackageData.author || '未知作者',
-                        cardType,
-                        parsed.customSuffix
-                      )
-                    }
+                    newId = buildCardId(
+                      newPackageData.name || '新建卡包',
+                      newPackageData.author || '未知作者',
+                      cardType,
+                      parsed.customSuffix
+                    )
                   } else {
                     // 非标准格式：重新生成
-                    return {
-                      ...card,
-                      id: generateRobustCardId(
-                        newPackageData.name || '新建卡包',
-                        newPackageData.author || '未知作者',
-                        cardType,
-                        newPackageData
-                      )
-                    }
+                    newId = generateRobustCardId(
+                      newPackageData.name || '新建卡包',
+                      newPackageData.author || '未知作者',
+                      cardType,
+                      newPackageData
+                    )
+                  }
+
+                  // Collect ID mapping for image migration
+                  if (oldId !== newId) {
+                    idMappings.push({ oldId, newId })
+                  }
+
+                  return {
+                    ...card,
+                    id: newId
                   }
                 })
               }
             })
+
+            // Migrate images asynchronously (don't block the UI)
+            if (idMappings.length > 0) {
+              (async () => {
+                const { renameImageKey } = await import('../utils/image-db-helpers')
+                for (const { oldId, newId } of idMappings) {
+                  try {
+                    await renameImageKey(oldId, newId)
+                  } catch (error) {
+                    console.error(`[EditorStore] Failed to migrate image ${oldId} → ${newId}:`, error)
+                  }
+                }
+              })()
+            }
           }
 
           return { packageData: newPackageData }

@@ -67,13 +67,23 @@ export function CompactCardIdEditor({
     setError(validationError)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newId = buildCardId(packageName, author, cardType, customSuffix)
     const validationError = validateId(newId)
 
     if (validationError) {
       setError(validationError)
       return
+    }
+
+    // Migrate image if ID changed
+    if (card.id !== newId) {
+      try {
+        const { renameImageKey } = await import('@/app/card-editor/utils/image-db-helpers')
+        await renameImageKey(card.id, newId)
+      } catch (error) {
+        console.error('[CompactCardIdEditor] Failed to migrate image:', error)
+      }
     }
 
     updateCard(cardType, cardIndex, { id: newId })
@@ -118,8 +128,19 @@ export function CompactCardIdEditor({
     }
   }, [isEditing, customSuffix, error])
 
-  const handleRegenerate = () => {
+  const handleRegenerate = async () => {
     const newId = generateRobustCardId(packageName, author, cardType, packageData)
+
+    // Migrate image if ID changed
+    if (card.id !== newId) {
+      try {
+        const { renameImageKey } = await import('@/app/card-editor/utils/image-db-helpers')
+        await renameImageKey(card.id, newId)
+      } catch (error) {
+        console.error('[CompactCardIdEditor] Failed to migrate image:', error)
+      }
+    }
+
     updateCard(cardType, cardIndex, { id: newId })
     setIsEditing(false)
     setError('')

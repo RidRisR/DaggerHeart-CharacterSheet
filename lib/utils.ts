@@ -83,3 +83,51 @@ export function getCardImageUrl(
   // 返回完整的图片路径
   return `${basePath}/image${normalizedUrl}`;
 }
+
+/**
+ * Get card image URL (async version with IndexedDB support)
+ * @param card - Card to get image for
+ * @param isError - Whether an error occurred
+ * @returns Promise<string> - Image URL or default
+ */
+export async function getCardImageUrlAsync(
+  card: StandardCard | undefined,
+  isError: boolean = false
+): Promise<string> {
+  const basePath = getBasePath();
+
+  // 如果出错或没有卡片，返回默认图片
+  if (isError || !card) {
+    return `${basePath}/image/empty-card.webp`;
+  }
+
+  // Check if card has local image in IndexedDB
+  if (card.hasLocalImage && card.id) {
+    // Determine which table to query based on batchId
+    const extendedCard = card as any;
+    if (!extendedCard.batchId) {
+      // Editor branch: query editorImages table
+      try {
+        const { getImageUrlFromDB } = await import('@/app/card-editor/utils/image-db-helpers');
+        const blobUrl = await getImageUrlFromDB(card.id);
+        if (blobUrl) return blobUrl;
+      } catch (error) {
+        console.error(`[getCardImageUrlAsync] Failed to load editor image:`, error);
+      }
+    } else {
+      // Real batch branch: query images table via UnifiedStore
+      try {
+        const store = useUnifiedCardStore.getState();
+        if (store.imageService.initialized) {
+          const blobUrl = await store.getImageUrl(card.id);
+          if (blobUrl) return blobUrl;
+        }
+      } catch (error) {
+        console.error(`[getCardImageUrlAsync] Failed to load batch image:`, error);
+      }
+    }
+  }
+
+  // Fallback to regular imageUrl
+  return getCardImageUrl(card, isError);
+}

@@ -113,9 +113,21 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
         // 轻微缩放动画
         setCardScale('scale(0.99)');
 
-        // 获取图片URL
-        const url = getCardImageUrl(card, false); // 重置时不传递错误状态
-        setImageSrc(url);
+        // 获取图片URL (异步支持IndexedDB)
+        const loadImageUrl = async () => {
+            try {
+                const { getCardImageUrlAsync } = await import('@/lib/utils');
+                const url = await getCardImageUrlAsync(card, false);
+                setImageSrc(url);
+            } catch (error) {
+                console.error('[ImageCard] Failed to load image URL:', error);
+                // Fallback to sync version
+                const url = getCardImageUrl(card, false);
+                setImageSrc(url);
+            }
+        };
+
+        loadImageUrl();
 
         // 100ms后恢复正常大小
         const timer = setTimeout(() => {

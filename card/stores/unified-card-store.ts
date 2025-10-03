@@ -37,6 +37,16 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
         config: DEFAULT_CONFIG,
         stats: null,
 
+        // Image service initial state
+        imageService: {
+          initialized: false,
+          cache: new Map(),
+          cacheOrder: [],
+          loadingImages: new Set(),
+          failedImages: new Set(),
+          maxCacheSize: 100
+        },
+
         // Actions (created from store-actions.ts)
         ...createStoreActions(set, get)
       }),

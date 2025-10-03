@@ -23,12 +23,15 @@ import {
   BatchStats
 } from './store-types';
 import { preprocessVariantFormat } from '../variant-format-preprocessor';
+import { createImageServiceActions } from './image-service/actions';
 
 // Type for Zustand's set and get functions
 type SetFunction = (partial: Partial<UnifiedCardState> | ((state: UnifiedCardState) => Partial<UnifiedCardState>)) => void;
 type GetFunction = () => UnifiedCardState & UnifiedCardActions;
 
 export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedCardActions => ({
+  // Image service actions
+  ...createImageServiceActions(set as any, get as any),
   // System lifecycle
   initializeSystem: async () => {
     const state = get();
@@ -53,6 +56,9 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
       // 现在所有卡牌都已加载完毕，统一进行图片预处理
       get()._preprocessCardImages();
+
+      // Initialize image service
+      await get().initializeImageService();
 
       // 统一同步到 localStorage（避免数据不一致）
       get()._syncToLocalStorage();
@@ -338,6 +344,13 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     const state = get();
     const batch = state.batches.get(batchId);
     if (!batch) return false;
+
+    // Delete batch images from IndexedDB if they exist
+    if (batch.imageCardIds && batch.imageCardIds.length > 0) {
+      get().deleteBatchImages(batch.imageCardIds).catch(error => {
+        console.error(`[UnifiedCardStore] Failed to delete images for batch ${batchId}:`, error);
+      });
+    }
 
     // Remove batch and its cards
     const newBatches = new Map(state.batches);

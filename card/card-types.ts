@@ -24,6 +24,7 @@ export interface StandardCard {
   description?: string
   hint?: string
   imageUrl?: string
+  hasLocalImage?: boolean // 是否有本地IndexedDB存储的图片
   headerDisplay?: string
   cardSelectDisplay: {
     item1?: string

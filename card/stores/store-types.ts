@@ -112,6 +112,8 @@ export interface BatchInfo {
   cardIds: string[];
   customFieldDefinitions?: CustomFieldsForBatch;
   variantTypes?: VariantTypesForBatch;
+  // 有本地图片的卡牌ID列表（用于批量删除时清理IndexedDB）
+  imageCardIds?: string[];
 }
 
 // Main store state
@@ -119,28 +121,38 @@ export interface UnifiedCardState {
   // Core data
   cards: Map<string, ExtendedStandardCard>;
   batches: Map<string, BatchInfo>;
-  
+
   // 按类型预构建的卡牌ID Map，包含所有卡牌ID（不管启用禁用状态）
   cardsByType: Map<CardType, string[]>;
-  
+
   // Index data
   index: CustomCardIndex;
-  
+
   // Aggregated cache (computed from batches)
   aggregatedCustomFields: CustomFieldNamesStore | null;
   aggregatedVariantTypes: VariantTypesForBatch | null;
   cacheValid: boolean;
-  
+
   // System state
   initialized: boolean;
   loading: boolean;
   error: string | null;
-  
+
   // Configuration
   config: StorageConfig;
-  
+
   // Statistics
   stats: CustomCardStats | null;
+
+  // Image service state
+  imageService: {
+    initialized: boolean;
+    cache: Map<string, string>;           // LRU cache: cardId -> blob URL
+    cacheOrder: string[];                 // LRU order tracking
+    loadingImages: Set<string>;           // Deduplication: currently loading image IDs
+    failedImages: Set<string>;            // Failed to load image IDs
+    maxCacheSize: number;                 // Maximum cache entries (default: 100)
+  };
 }
 
 // Store actions
@@ -192,7 +204,15 @@ export interface UnifiedCardActions {
   getBatchName: (batchId: string) => string | null;
   generateBatchId: () => string;
   invalidateCache: () => void;
-  
+
+  // Image service actions
+  initializeImageService: () => Promise<void>;
+  getImageUrl: (cardId: string) => Promise<string | null>;
+  importBatchImages: (batchId: string, images: Map<string, Blob>) => Promise<void>;
+  deleteBatchImages: (imageCardIds: string[]) => Promise<void>;
+  clearImageCache: () => void;
+  revokeImageUrl: (cardId: string) => void;
+
   // Internal helpers
   _rebuildCardsByType: () => void;
   _addCardToTypeMap: (card: ExtendedStandardCard) => void;

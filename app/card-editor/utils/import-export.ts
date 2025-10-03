@@ -152,31 +152,46 @@ export function ensureSubclassTriples(subclassCards: SubClassCard[], packageData
   return completeCards
 }
 
-// 导出卡包
-export function exportCardPackage(data: CardPackageState): void {
-  const exportData = { ...data }
-  // 移除编辑器状态字段
-  delete exportData.isModified
-  delete exportData.lastSaved
-  
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-    type: 'application/json'
-  })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${data.name || '卡包'}.json`
-  a.click()
-  URL.revokeObjectURL(url)
-  toast.success('卡包已导出')
+// 导出卡包 (支持ZIP格式)
+export async function exportCardPackage(data: CardPackageState, exportWithImages: boolean = true): Promise<void> {
+  if (exportWithImages) {
+    // Export as .dhcb/.zip with images
+    try {
+      const { exportCardPackageWithImages, downloadZipFile } = await import('./zip-export');
+      toast.info('正在导出卡包...');
+      const zipBlob = await exportCardPackageWithImages(data, data.name || '卡包');
+      downloadZipFile(zipBlob, data.name || '卡包');
+      toast.success('卡包已导出（含图片）');
+    } catch (error) {
+      console.error('[Export] Failed to export with images:', error);
+      toast.error('导出失败');
+    }
+  } else {
+    // Export as JSON (legacy format)
+    const exportData = { ...data }
+    // 移除编辑器状态字段
+    delete exportData.isModified
+    delete exportData.lastSaved
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: 'application/json'
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${data.name || '卡包'}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('卡包已导出')
+  }
 }
 
-// 导入卡包
+// 导入卡包 (支持 .json 和 .dhcb/.zip)
 export function importCardPackage(): Promise<CardPackageState | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.json'
+    input.accept = '.json,.dhcb,.zip'
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) {
@@ -185,8 +200,21 @@ export function importCardPackage(): Promise<CardPackageState | null> {
       }
 
       try {
+        let importedData: any;
+
+        // Check if file is ZIP (.dhcb/.zip)
+        if (file.name.endsWith('.dhcb') || file.name.endsWith('.zip')) {
+          const { importCardPackageWithImages } = await import('./zip-import');
+          toast.info('正在导入卡包...');
+          const packageData = await importCardPackageWithImages(file);
+          resolve(packageData);
+          toast.success('卡包已导入（含图片）');
+          return;
+        }
+
+        // Otherwise, parse as JSON
         const text = await file.text()
-        const importedData = JSON.parse(text) as ImportData
+        importedData = JSON.parse(text) as ImportData
         
         // 创建临时的包数据用于生成ID
         const tempPackageData: CardPackageState = {

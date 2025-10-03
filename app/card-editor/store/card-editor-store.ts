@@ -14,6 +14,14 @@ import { exportCardPackage, importCardPackage } from '../utils/import-export'
 import { validationService, type ValidationResult, type ValidationError } from '../services/validation-service'
 import { generateSmartCardId, parseCardId, buildCardId, generateRobustCardId } from '../utils/id-generator'
 
+// Image upload status
+interface ImageUploadStatus {
+  cardId: string
+  status: 'uploading' | 'success' | 'error'
+  progress: number
+  errorMessage?: string
+}
+
 interface CardEditorStore {
   // 状态
   packageData: CardPackageState
@@ -27,10 +35,17 @@ interface CardEditorStore {
     message: string
     onConfirm: () => void
   }
-  
+
   // 验证相关状态
   validationResult: ValidationResult | null
   isValidating: boolean
+
+  // Image manager state
+  imageManager: {
+    uploadingImages: Map<string, ImageUploadStatus>
+    previewCache: Map<string, string>  // cardId -> blob URL
+    totalImageSize: number
+  }
   
   // 元数据更新
   updateMetadata: (field: keyof CardPackageState, value: any) => void
@@ -70,6 +85,13 @@ interface CardEditorStore {
   addDefinition: (category: keyof NonNullable<CardPackageState['customFieldDefinitions']>, value: string) => void
   removeDefinition: (category: keyof NonNullable<CardPackageState['customFieldDefinitions']>, index: number) => void
   updateDefinitions: (definitions: CardPackageState['customFieldDefinitions']) => void
+
+  // Image manager actions
+  uploadImage: (cardId: string, file: File) => Promise<void>
+  deleteImage: (cardId: string) => Promise<void>
+  getPreviewUrl: (cardId: string) => Promise<string | null>
+  clearPreviewCache: () => void
+  getTotalImageSize: () => Promise<number>
 }
 
 export const useCardEditorStore = create<CardEditorStore>()(
@@ -105,6 +127,13 @@ export const useCardEditorStore = create<CardEditorStore>()(
       // 验证相关初始状态
       validationResult: null,
       isValidating: false,
+
+      // Image manager initial state
+      imageManager: {
+        uploadingImages: new Map(),
+        previewCache: new Map(),
+        totalImageSize: 0
+      },
       
       // 元数据更新
       updateMetadata: (field, value) =>
@@ -617,13 +646,174 @@ export const useCardEditorStore = create<CardEditorStore>()(
           }
         }),
         
-      updateDefinitions: (definitions) => 
+      updateDefinitions: (definitions) =>
         set(state => ({
           packageData: {
             ...state.packageData,
             customFieldDefinitions: definitions
           }
-        }))
+        })),
+
+      // Image manager actions
+      uploadImage: async (cardId: string, file: File) => {
+        const { saveImageToDB, hasImageInDB } = await import('../utils/image-db-helpers');
+
+        // Update upload status to uploading
+        set(state => ({
+          imageManager: {
+            ...state.imageManager,
+            uploadingImages: new Map(state.imageManager.uploadingImages).set(cardId, {
+              cardId,
+              status: 'uploading',
+              progress: 0
+            })
+          }
+        }));
+
+        try {
+          // Save to IndexedDB
+          await saveImageToDB(cardId, file);
+
+          // Create preview URL
+          const previewUrl = URL.createObjectURL(file);
+
+          // Update status to success and add to preview cache
+          set(state => {
+            const newUploadingImages = new Map(state.imageManager.uploadingImages);
+            newUploadingImages.set(cardId, {
+              cardId,
+              status: 'success',
+              progress: 100
+            });
+
+            const newPreviewCache = new Map(state.imageManager.previewCache);
+            newPreviewCache.set(cardId, previewUrl);
+
+            return {
+              imageManager: {
+                ...state.imageManager,
+                uploadingImages: newUploadingImages,
+                previewCache: newPreviewCache,
+                totalImageSize: state.imageManager.totalImageSize + file.size
+              }
+            };
+          });
+
+          // Remove from uploading after a delay
+          setTimeout(() => {
+            set(state => {
+              const newUploadingImages = new Map(state.imageManager.uploadingImages);
+              newUploadingImages.delete(cardId);
+              return {
+                imageManager: {
+                  ...state.imageManager,
+                  uploadingImages: newUploadingImages
+                }
+              };
+            });
+          }, 2000);
+        } catch (error) {
+          // Update status to error
+          set(state => ({
+            imageManager: {
+              ...state.imageManager,
+              uploadingImages: new Map(state.imageManager.uploadingImages).set(cardId, {
+                cardId,
+                status: 'error',
+                progress: 0,
+                errorMessage: error instanceof Error ? error.message : 'Upload failed'
+              })
+            }
+          }));
+
+          throw error;
+        }
+      },
+
+      deleteImage: async (cardId: string) => {
+        const { deleteImageFromDB } = await import('../utils/image-db-helpers');
+
+        try {
+          // Delete from IndexedDB
+          await deleteImageFromDB(cardId);
+
+          // Remove from preview cache and revoke URL
+          set(state => {
+            const url = state.imageManager.previewCache.get(cardId);
+            if (url) {
+              URL.revokeObjectURL(url);
+            }
+
+            const newPreviewCache = new Map(state.imageManager.previewCache);
+            newPreviewCache.delete(cardId);
+
+            return {
+              imageManager: {
+                ...state.imageManager,
+                previewCache: newPreviewCache
+              }
+            };
+          });
+        } catch (error) {
+          console.error(`[EditorStore] Failed to delete image for ${cardId}:`, error);
+          throw error;
+        }
+      },
+
+      getPreviewUrl: async (cardId: string): Promise<string | null> => {
+        const state = get();
+
+        // Check preview cache first
+        if (state.imageManager.previewCache.has(cardId)) {
+          return state.imageManager.previewCache.get(cardId) || null;
+        }
+
+        // Load from IndexedDB
+        const { getImageUrlFromDB } = await import('../utils/image-db-helpers');
+        const url = await getImageUrlFromDB(cardId);
+
+        if (url) {
+          // Add to preview cache
+          set(state => ({
+            imageManager: {
+              ...state.imageManager,
+              previewCache: new Map(state.imageManager.previewCache).set(cardId, url)
+            }
+          }));
+        }
+
+        return url;
+      },
+
+      clearPreviewCache: () => {
+        const state = get();
+
+        // Revoke all blob URLs
+        for (const url of state.imageManager.previewCache.values()) {
+          URL.revokeObjectURL(url);
+        }
+
+        set(state => ({
+          imageManager: {
+            ...state.imageManager,
+            previewCache: new Map()
+          }
+        }));
+      },
+
+      getTotalImageSize: async (): Promise<number> => {
+        const { getTotalEditorImageSize } = await import('../utils/image-db-helpers');
+        const size = await getTotalEditorImageSize();
+
+        set(state => ({
+          imageManager: {
+            ...state.imageManager,
+            totalImageSize: size
+          }
+        }));
+
+        return size;
+      }
     }),
     {
       name: 'card-editor-storage',

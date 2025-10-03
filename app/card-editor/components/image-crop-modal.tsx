@@ -159,10 +159,14 @@ export function ImageCropModal({
 
   return (
     <Dialog open={open} onOpenChange={(open) => !processing && !open && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto" aria-describedby="crop-dialog-description">
         <DialogHeader>
           <DialogTitle>裁剪卡牌图片</DialogTitle>
         </DialogHeader>
+
+        <div id="crop-dialog-description" className="sr-only">
+          裁剪图片以适应卡牌尺寸比例 1.4:1
+        </div>
 
         <div className="space-y-4">
           {imageSrc ? (

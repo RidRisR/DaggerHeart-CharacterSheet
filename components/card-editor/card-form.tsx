@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useForm, UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -16,6 +16,7 @@ import {
 import MarkdownEditor, { SimpleMarkdownEditor } from './markdown-editor'
 import { KeywordCombobox } from './keyword-combobox'
 import { CompactCardIdEditor } from './compact-card-id-editor'
+import { ImageUpload } from '@/app/card-editor/components/image-upload'
 import type { ProfessionCard } from '@/card/profession-card/convert'
 import type { CommunityCard } from '@/card/community-card/convert'
 import type { RawVariantCard } from '@/card/variant-card/convert'
@@ -313,7 +314,8 @@ export function CommunityCardForm({
   keywordLists,
   onAddKeyword
 }: BaseCardFormProps<CommunityCard>) {
-  const { updateCard, packageData } = useCardEditorStore()
+  const { updateCard, packageData, uploadImage, deleteImage, getPreviewUrl } = useCardEditorStore()
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null)
 
   const form = useForm<CommunityCard>({
     defaultValues: card
@@ -344,6 +346,42 @@ export function CommunityCardForm({
   const handleFieldBlur = () => {
     const currentData = form.getValues()
     updateCard(cardType, cardIndex, currentData)
+  }
+
+  // 加载图片预览
+  useEffect(() => {
+    const loadImagePreview = async () => {
+      if (card.id) {
+        const url = await getPreviewUrl(card.id)
+        setCurrentImageUrl(url)
+      }
+    }
+    loadImagePreview()
+  }, [card.id, getPreviewUrl])
+
+  // 处理图片上传
+  const handleUploadImage = async (cardId: string, file: File) => {
+    await uploadImage(cardId, file)
+
+    // 上传成功后，更新卡牌的 hasLocalImage 标记
+    const updatedCard = { ...card, hasLocalImage: true }
+    updateCard(cardType, cardIndex, updatedCard)
+
+    // 刷新预览 URL
+    const url = await getPreviewUrl(cardId)
+    setCurrentImageUrl(url)
+  }
+
+  // 处理图片删除
+  const handleDeleteImage = async (cardId: string) => {
+    await deleteImage(cardId)
+
+    // 删除成功后，更新卡牌的 hasLocalImage 标记
+    const updatedCard = { ...card, hasLocalImage: false }
+    updateCard(cardType, cardIndex, updatedCard)
+
+    // 删除后，清除预览 URL
+    setCurrentImageUrl(null)
   }
 
   return (
@@ -437,6 +475,21 @@ export function CommunityCardForm({
             </FormItem>
           )}
         />
+
+        {/* 图片上传区域 */}
+        <div className="space-y-2">
+          <FormLabel>卡牌图片</FormLabel>
+          <ImageUpload
+            cardId={card.id}
+            currentImageUrl={currentImageUrl}
+            onUpload={handleUploadImage}
+            onDelete={handleDeleteImage}
+            disabled={false}
+          />
+          <p className="text-xs text-muted-foreground">
+            上传的图片将保存在浏览器 IndexedDB 中，导出时会打包到 .dhcb 文件
+          </p>
+        </div>
       </div>
     </Form>
   )

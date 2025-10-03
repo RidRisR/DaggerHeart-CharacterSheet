@@ -10,6 +10,7 @@ export interface CommunityCard {
   简介: string
   描述: string
   imageUrl?: string
+  hasLocalImage?: boolean
 }
 
 class CommunityCardConverter {
@@ -23,6 +24,7 @@ class CommunityCardConverter {
       description: processCardDescription(card.描述) || "",
       hint: card.简介,
       imageUrl: card.imageUrl || "",
+      hasLocalImage: card.hasLocalImage,
       class: card.名称,
       headerDisplay: card.名称,
       cardSelectDisplay: {

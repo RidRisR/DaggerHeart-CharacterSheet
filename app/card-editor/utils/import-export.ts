@@ -213,9 +213,13 @@ export function importCardPackage(): Promise<CardPackageState | null> {
         }
 
         // Otherwise, parse as JSON
+        const { clearAllEditorImages } = await import('./image-db-helpers');
+        await clearAllEditorImages();
+        console.log('[Import] Cleared all editor images for JSON import');
+
         const text = await file.text()
         importedData = JSON.parse(text) as ImportData
-        
+
         // 创建临时的包数据用于生成ID
         const tempPackageData: CardPackageState = {
           ...importedData,

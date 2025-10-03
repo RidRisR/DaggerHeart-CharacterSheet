@@ -15,6 +15,7 @@ export interface RawVariantCard {
   等级?: number;         // 可选的等级
   效果: string;          // 卡牌效果描述
   imageUrl?: string;     // 图片URL
+  hasLocalImage?: boolean;
   简略信息?: {          // 卡牌选择时显示的简要信息（选填）
     item1?: string;
     item2?: string;
@@ -40,6 +41,7 @@ export class VariantCardConverter {
       level: card.等级,
       description: processCardDescription(card.效果) || "",
       imageUrl: card.imageUrl || "",
+      hasLocalImage: card.hasLocalImage,
       headerDisplay: card.名称,
       cardSelectDisplay: {
         item1: card.简略信息?.item1 || "",

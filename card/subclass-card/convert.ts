@@ -7,6 +7,7 @@ export interface SubClassCard {
   名称: string
   描述: string
   imageUrl?: string
+  hasLocalImage?: boolean
   主职: SubClassClass
   子职业: string
   等级: SubClassLevel
@@ -39,6 +40,7 @@ class SubClassCardConverter {
       type: CardType.Subclass,
       description: processCardDescription(card.描述) || "",
       imageUrl: card.imageUrl || "",
+      hasLocalImage: card.hasLocalImage,
       class: card.主职,
       level: levelNum,
       headerDisplay: card.子职业,

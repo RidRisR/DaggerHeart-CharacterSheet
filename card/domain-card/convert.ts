@@ -15,6 +15,7 @@ export interface DomainCard {
   领域: DomainClass
   描述: string
   imageUrl?: string
+  hasLocalImage?: boolean
   等级: number
   属性: string
   回想: number
@@ -31,6 +32,7 @@ class DomainCardConverter {
       type: CardType.Domain,
       description: processCardDescription(card.描述) || "",
       imageUrl: card.imageUrl || "",
+      hasLocalImage: card.hasLocalImage,
       class: card.领域,
       level: card.等级,
       cardSelectDisplay: {

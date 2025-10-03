@@ -48,7 +48,8 @@ export function ProfessionCardForm({
   keywordLists,
   onAddKeyword
 }: BaseCardFormProps<ProfessionCard>) {
-  const { updateCard, packageData } = useCardEditorStore()
+  const { updateCard, packageData, uploadImage, deleteImage, getPreviewUrl } = useCardEditorStore()
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null)
 
   const form = useForm<ProfessionCard>({
     defaultValues: card
@@ -79,6 +80,42 @@ export function ProfessionCardForm({
   const handleFieldBlur = () => {
     const currentData = form.getValues()
     updateCard(cardType, cardIndex, currentData)
+  }
+
+  // 加载图片预览
+  useEffect(() => {
+    const loadImagePreview = async () => {
+      if (card.id) {
+        const url = await getPreviewUrl(card.id)
+        setCurrentImageUrl(url)
+      }
+    }
+    loadImagePreview()
+  }, [card.id, getPreviewUrl])
+
+  // 处理图片上传
+  const handleUploadImage = async (cardId: string, file: File | Blob) => {
+    await uploadImage(cardId, file)
+
+    // 上传成功后，更新卡牌的 hasLocalImage 标记
+    const updatedCard = { ...card, hasLocalImage: true }
+    updateCard(cardType, cardIndex, updatedCard)
+
+    // 刷新预览 URL
+    const url = await getPreviewUrl(cardId)
+    setCurrentImageUrl(url)
+  }
+
+  // 处理图片删除
+  const handleDeleteImage = async (cardId: string) => {
+    await deleteImage(cardId)
+
+    // 删除成功后，更新卡牌的 hasLocalImage 标记
+    const updatedCard = { ...card, hasLocalImage: false }
+    updateCard(cardType, cardIndex, updatedCard)
+
+    // 删除后，清除预览 URL
+    setCurrentImageUrl(null)
   }
 
   return (
@@ -282,13 +319,28 @@ export function ProfessionCardForm({
           )}
         />
 
-        {/* 卡图链接 */}
+        {/* 图片上传区域 */}
+        <div className="space-y-2">
+          <FormLabel>卡牌图片</FormLabel>
+          <ImageUpload
+            cardId={card.id}
+            currentImageUrl={currentImageUrl}
+            onUpload={handleUploadImage}
+            onDelete={handleDeleteImage}
+            disabled={false}
+          />
+          <p className="text-xs text-muted-foreground">
+            上传的图片将保存在浏览器 IndexedDB 中，导出时会打包到 .dhcb 文件
+          </p>
+        </div>
+
+        {/* 卡图链接（备用） */}
         <FormField
           control={form.control}
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>卡图链接</FormLabel>
+              <FormLabel>或者手动输入图片URL</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -490,6 +542,27 @@ export function CommunityCardForm({
             上传的图片将保存在浏览器 IndexedDB 中，导出时会打包到 .dhcb 文件
           </p>
         </div>
+
+        {/* 卡图链接（备用） */}
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>或者手动输入图片URL</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="输入图片URL（可选）"
+                  onBlur={handleFieldBlur}
+                  type="url"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </Form>
   )
@@ -502,7 +575,8 @@ export function VariantCardForm({
   keywordLists,
   onAddKeyword
 }: BaseCardFormProps<RawVariantCard>) {
-  const { updateCard, packageData } = useCardEditorStore()
+  const { updateCard, packageData, uploadImage, deleteImage, getPreviewUrl } = useCardEditorStore()
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null)
 
   const form = useForm<RawVariantCard>({
     defaultValues: card
@@ -533,6 +607,42 @@ export function VariantCardForm({
   const handleFieldBlur = () => {
     const currentData = form.getValues()
     updateCard(cardType, cardIndex, currentData)
+  }
+
+  // 加载图片预览
+  useEffect(() => {
+    const loadImagePreview = async () => {
+      if (card.id) {
+        const url = await getPreviewUrl(card.id)
+        setCurrentImageUrl(url)
+      }
+    }
+    loadImagePreview()
+  }, [card.id, getPreviewUrl])
+
+  // 处理图片上传
+  const handleUploadImage = async (cardId: string, file: File | Blob) => {
+    await uploadImage(cardId, file)
+
+    // 上传成功后，更新卡牌的 hasLocalImage 标记
+    const updatedCard = { ...card, hasLocalImage: true }
+    updateCard(cardType, cardIndex, updatedCard)
+
+    // 刷新预览 URL
+    const url = await getPreviewUrl(cardId)
+    setCurrentImageUrl(url)
+  }
+
+  // 处理图片删除
+  const handleDeleteImage = async (cardId: string) => {
+    await deleteImage(cardId)
+
+    // 删除成功后，更新卡牌的 hasLocalImage 标记
+    const updatedCard = { ...card, hasLocalImage: false }
+    updateCard(cardType, cardIndex, updatedCard)
+
+    // 删除后，清除预览 URL
+    setCurrentImageUrl(null)
   }
 
   return (
@@ -716,6 +826,42 @@ export function VariantCardForm({
         <div className="text-xs text-muted-foreground">
           类别和等级用于在卡牌选择界面筛选卡牌，不会出现在卡牌上。
         </div>
+
+        {/* 图片上传区域 */}
+        <div className="space-y-2">
+          <FormLabel>卡牌图片</FormLabel>
+          <ImageUpload
+            cardId={card.id}
+            currentImageUrl={currentImageUrl}
+            onUpload={handleUploadImage}
+            onDelete={handleDeleteImage}
+            disabled={false}
+          />
+          <p className="text-xs text-muted-foreground">
+            上传的图片将保存在浏览器 IndexedDB 中，导出时会打包到 .dhcb 文件
+          </p>
+        </div>
+
+        {/* 卡图链接（备用） */}
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>或者手动输入图片URL</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="输入图片URL（可选）"
+                  onBlur={handleFieldBlur}
+                  type="url"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </Form>
   )
@@ -728,7 +874,8 @@ export function DomainCardForm({
   keywordLists,
   onAddKeyword
 }: BaseCardFormProps<DomainCard>) {
-  const { updateCard, packageData } = useCardEditorStore()
+  const { updateCard, packageData, uploadImage, deleteImage, getPreviewUrl } = useCardEditorStore()
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null)
 
   const form = useForm<DomainCard>({
     defaultValues: card
@@ -759,6 +906,42 @@ export function DomainCardForm({
   const handleFieldBlur = () => {
     const currentData = form.getValues()
     updateCard(cardType, cardIndex, currentData)
+  }
+
+  // 加载图片预览
+  useEffect(() => {
+    const loadImagePreview = async () => {
+      if (card.id) {
+        const url = await getPreviewUrl(card.id)
+        setCurrentImageUrl(url)
+      }
+    }
+    loadImagePreview()
+  }, [card.id, getPreviewUrl])
+
+  // 处理图片上传
+  const handleUploadImage = async (cardId: string, file: File | Blob) => {
+    await uploadImage(cardId, file)
+
+    // 上传成功后，更新卡牌的 hasLocalImage 标记
+    const updatedCard = { ...card, hasLocalImage: true }
+    updateCard(cardType, cardIndex, updatedCard)
+
+    // 刷新预览 URL
+    const url = await getPreviewUrl(cardId)
+    setCurrentImageUrl(url)
+  }
+
+  // 处理图片删除
+  const handleDeleteImage = async (cardId: string) => {
+    await deleteImage(cardId)
+
+    // 删除成功后，更新卡牌的 hasLocalImage 标记
+    const updatedCard = { ...card, hasLocalImage: false }
+    updateCard(cardType, cardIndex, updatedCard)
+
+    // 删除后，清除预览 URL
+    setCurrentImageUrl(null)
   }
 
   return (
@@ -896,6 +1079,42 @@ export function DomainCardForm({
               <div className="text-sm text-muted-foreground">
                 支持Markdown格式，可以使用 *__关键词__* 来标记重要信息
               </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 图片上传区域 */}
+        <div className="space-y-2">
+          <FormLabel>卡牌图片</FormLabel>
+          <ImageUpload
+            cardId={card.id}
+            currentImageUrl={currentImageUrl}
+            onUpload={handleUploadImage}
+            onDelete={handleDeleteImage}
+            disabled={false}
+          />
+          <p className="text-xs text-muted-foreground">
+            上传的图片将保存在浏览器 IndexedDB 中，导出时会打包到 .dhcb 文件
+          </p>
+        </div>
+
+        {/* 卡图链接（备用） */}
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>或者手动输入图片URL</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="输入图片URL（可选）"
+                  onBlur={handleFieldBlur}
+                  type="url"
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

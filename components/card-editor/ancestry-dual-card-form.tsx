@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -9,6 +9,7 @@ import { KeywordCombobox } from '@/components/card-editor/keyword-combobox'
 import { Card } from '@/components/ui/card'
 import MarkdownEditor from '@/components/card-editor/markdown-editor'
 import { CompactCardIdEditor } from '@/components/card-editor/compact-card-id-editor'
+import { ImageUpload } from '@/app/card-editor/components/image-upload'
 import type { AncestryCard } from '@/card/ancestry-card/convert'
 import type { CardPackageState } from '@/app/card-editor/types'
 import { useCardEditorStore } from '@/app/card-editor/store/card-editor-store'
@@ -46,7 +47,9 @@ export function AncestryDualCardForm({
   keywordLists,
   onAddKeyword
 }: AncestryDualCardFormProps) {
-  const { updateCard, packageData } = useCardEditorStore()
+  const { updateCard, packageData, uploadImage, deleteImage, getPreviewUrl } = useCardEditorStore()
+  const [currentImageUrl1, setCurrentImageUrl1] = useState<string | null>(null)
+  const [currentImageUrl2, setCurrentImageUrl2] = useState<string | null>(null)
 
   // 初始化表单数据
   const getInitialValues = (): AncestryCardPair => {
@@ -184,6 +187,63 @@ export function AncestryDualCardForm({
     }
   }
 
+  // 加载图片预览
+  useEffect(() => {
+    const loadImagePreviews = async () => {
+      if (card1?.id) {
+        const url1 = await getPreviewUrl(card1.id)
+        setCurrentImageUrl1(url1)
+      }
+      if (card2?.id) {
+        const url2 = await getPreviewUrl(card2.id)
+        setCurrentImageUrl2(url2)
+      }
+    }
+    loadImagePreviews()
+  }, [card1?.id, card2?.id, getPreviewUrl])
+
+  // 处理卡片1图片上传
+  const handleUploadImage1 = async (cardId: string, file: File | Blob) => {
+    await uploadImage(cardId, file)
+    if (card1) {
+      const updatedCard = { ...card1, hasLocalImage: true }
+      updateCard('ancestry', cardIndex1, updatedCard)
+      const url = await getPreviewUrl(cardId)
+      setCurrentImageUrl1(url)
+    }
+  }
+
+  // 处理卡片1图片删除
+  const handleDeleteImage1 = async (cardId: string) => {
+    await deleteImage(cardId)
+    if (card1) {
+      const updatedCard = { ...card1, hasLocalImage: false }
+      updateCard('ancestry', cardIndex1, updatedCard)
+      setCurrentImageUrl1(null)
+    }
+  }
+
+  // 处理卡片2图片上传
+  const handleUploadImage2 = async (cardId: string, file: File | Blob) => {
+    await uploadImage(cardId, file)
+    if (card2) {
+      const updatedCard = { ...card2, hasLocalImage: true }
+      updateCard('ancestry', cardIndex2, updatedCard)
+      const url = await getPreviewUrl(cardId)
+      setCurrentImageUrl2(url)
+    }
+  }
+
+  // 处理卡片2图片删除
+  const handleDeleteImage2 = async (cardId: string) => {
+    await deleteImage(cardId)
+    if (card2) {
+      const updatedCard = { ...card2, hasLocalImage: false }
+      updateCard('ancestry', cardIndex2, updatedCard)
+      setCurrentImageUrl2(null)
+    }
+  }
+
   return (
     <Form {...form}>
       <div className="space-y-4">
@@ -285,18 +345,35 @@ export function AncestryDualCardForm({
                 </FormItem>
               )}
             />
+            {/* 图片上传区域 */}
+            {card1 && (
+              <div className="space-y-2">
+                <FormLabel>卡牌图片</FormLabel>
+                <ImageUpload
+                  cardId={card1.id}
+                  currentImageUrl={currentImageUrl1}
+                  onUpload={handleUploadImage1}
+                  onDelete={handleDeleteImage1}
+                  disabled={false}
+                />
+                <p className="text-xs text-muted-foreground">
+                  上传的图片将保存在浏览器 IndexedDB 中，导出时会打包到 .dhcb 文件
+                </p>
+              </div>
+            )}
+
             <FormField
               control={form.control}
               name="card1.imageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>图片URL（可选）</FormLabel>
+                  <FormLabel>或者手动输入图片URL</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       value={field.value || ''}
                       onBlur={handleFieldBlur}
-                      placeholder="输入图片URL"
+                      placeholder="输入图片URL（可选）"
                       type="url"
                     />
                   </FormControl>
@@ -358,18 +435,35 @@ export function AncestryDualCardForm({
                 </FormItem>
               )}
             />
+            {/* 图片上传区域 */}
+            {card2 && (
+              <div className="space-y-2">
+                <FormLabel>卡牌图片</FormLabel>
+                <ImageUpload
+                  cardId={card2.id}
+                  currentImageUrl={currentImageUrl2}
+                  onUpload={handleUploadImage2}
+                  onDelete={handleDeleteImage2}
+                  disabled={false}
+                />
+                <p className="text-xs text-muted-foreground">
+                  上传的图片将保存在浏览器 IndexedDB 中，导出时会打包到 .dhcb 文件
+                </p>
+              </div>
+            )}
+
             <FormField
               control={form.control}
               name="card2.imageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>图片URL（可选）</FormLabel>
+                  <FormLabel>或者手动输入图片URL</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       value={field.value || ''}
                       onBlur={handleFieldBlur}
-                      placeholder="输入图片URL"
+                      placeholder="输入图片URL（可选）"
                       type="url"
                     />
                   </FormControl>

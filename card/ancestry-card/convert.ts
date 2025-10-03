@@ -12,6 +12,7 @@ export interface AncestryCard {
   效果: string;
   类别: number
   imageUrl?: string;
+  hasLocalImage?: boolean;
 }
 
 class AncestryCardConverter {
@@ -25,6 +26,7 @@ class AncestryCardConverter {
       description: processCardDescription(rawCard.效果) || "",
       hint: rawCard.简介,
       imageUrl: rawCard.imageUrl || "",
+      hasLocalImage: rawCard.hasLocalImage,
       level: rawCard.类别,
       class: rawCard.种族, // Map 种族 to class
       headerDisplay: rawCard.名称,

@@ -8,6 +8,7 @@ export interface ProfessionCard {
   名称: ProfessionClass
   简介: string
   imageUrl?: string
+  hasLocalImage?: boolean
   领域1: DomainClass
   领域2: DomainClass
   起始生命: number
@@ -28,6 +29,7 @@ class ProfessionCardConverter {
       description: processCardDescription(card.职业特性) || "",
       hint: card.简介,
       imageUrl: card.imageUrl || "",
+      hasLocalImage: card.hasLocalImage,
       class: card.名称,
       headerDisplay: card.名称,
       cardSelectDisplay: {

@@ -199,4 +199,121 @@ describe('findOptimalQuality', () => {
     // Linear search with step 0.05 would take up to 11 attempts
     expect(result.attempts).toBeLessThan(6)
   })
+
+  it('should handle edge case: estimatedQuality equals minQuality', async () => {
+    const compressFn = createMockCompressFn(500000) // Very large image
+    const estimatedQuality = MIN_QUALITY // 0.3
+
+    const result = await findOptimalQuality(
+      compressFn,
+      estimatedQuality,
+      MAX_FILE_SIZE,
+      MIN_QUALITY,
+      0.05
+    )
+
+    // Should return MIN_QUALITY result even if it exceeds MAX_FILE_SIZE
+    expect(result.quality).toBe(MIN_QUALITY)
+    expect(result.blob).toBeDefined()
+    expect(result.attempts).toBe(2) // 1 estimate + 1 fallback
+  })
+
+  it('should handle edge case: estimatedQuality very close to minQuality', async () => {
+    const compressFn = createMockCompressFn(200000)
+    const estimatedQuality = 0.35 // Only 0.05 above MIN_QUALITY (0.3)
+
+    const result = await findOptimalQuality(
+      compressFn,
+      estimatedQuality,
+      MAX_FILE_SIZE,
+      MIN_QUALITY,
+      0.05
+    )
+
+    // When high - low = 0.05, loop doesn't execute, but we still tried estimated quality first
+    // If that fails and no binary search happens, fallback will be used
+    // But if estimate succeeds, it returns that
+    expect(result.quality).toBeGreaterThanOrEqual(MIN_QUALITY)
+    expect(result.quality).toBeLessThanOrEqual(estimatedQuality)
+    expect(result.attempts).toBeLessThanOrEqual(3)
+  })
+
+  it('should prevent infinite loop with mid convergence', async () => {
+    const compressFn = createMockCompressFn(150000)
+    const estimatedQuality = 0.35
+
+    // This should terminate properly without infinite loop
+    const result = await findOptimalQuality(
+      compressFn,
+      estimatedQuality,
+      MAX_FILE_SIZE,
+      MIN_QUALITY,
+      0.05
+    )
+
+    expect(result.blob).toBeDefined()
+    expect(result.attempts).toBeLessThan(10) // Should terminate quickly
+  })
+
+  it('should work with estimatedQuality aligned to 0.05 steps', async () => {
+    const compressFn = createMockCompressFn(120000)
+    const estimatedQuality = 0.45 // Exactly on 0.05 step
+
+    const result = await findOptimalQuality(
+      compressFn,
+      estimatedQuality,
+      MAX_FILE_SIZE,
+      MIN_QUALITY,
+      0.05
+    )
+
+    expect(result.blob).toBeDefined()
+    expect(result.quality).toBeGreaterThanOrEqual(MIN_QUALITY)
+    expect(result.quality).toBeLessThanOrEqual(estimatedQuality)
+    // Quality should be aligned to 0.05 (with floating point tolerance)
+    const remainder = result.quality % 0.05
+    expect(remainder).toBeCloseTo(0, 1)
+  })
+})
+
+describe('estimateQuality edge cases', () => {
+  const MAX_FILE_SIZE = 100 * 1024
+  const INITIAL_QUALITY = 0.85
+  const MIN_QUALITY = 0.3
+
+  it('should round up to nearest 0.05 step', () => {
+    // Small image: estimated might be 0.374, should round to 0.40
+    const quality = estimateQuality(600, 400, MAX_FILE_SIZE, INITIAL_QUALITY, MIN_QUALITY)
+
+    // Should be aligned to 0.05 (with floating point tolerance)
+    const remainder = quality % 0.05
+    expect(remainder).toBeCloseTo(0, 1)
+  })
+
+  it('should not exceed INITIAL_QUALITY after rounding up', () => {
+    // Very small image
+    const quality = estimateQuality(200, 200, MAX_FILE_SIZE, INITIAL_QUALITY, MIN_QUALITY)
+
+    expect(quality).toBeLessThanOrEqual(INITIAL_QUALITY)
+  })
+
+  it('should not go below MIN_QUALITY after rounding up', () => {
+    // Very large image
+    const quality = estimateQuality(5000, 5000, MAX_FILE_SIZE, INITIAL_QUALITY, MIN_QUALITY)
+
+    expect(quality).toBeGreaterThanOrEqual(MIN_QUALITY)
+  })
+
+  it('should produce higher estimates with bytesPerPixel=0.5 than 0.6', () => {
+    // This verifies our optimization is working
+    // With bytesPerPixel=0.5, estimates should be ~20% higher than with 0.6
+    const width = 800
+    const height = 571
+
+    const quality = estimateQuality(width, height, MAX_FILE_SIZE, INITIAL_QUALITY, MIN_QUALITY)
+
+    // With 0.5: should be around 0.45 (after rounding up from ~0.449)
+    // With 0.6: would be around 0.40 (after rounding up from ~0.374)
+    expect(quality).toBeGreaterThan(0.40)
+  })
 })

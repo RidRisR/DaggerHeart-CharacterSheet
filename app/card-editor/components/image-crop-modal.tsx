@@ -169,6 +169,10 @@ export function ImageCropModal({
     if (!imgRef.current || !completedCrop) return
 
     setProcessing(true)
+
+    // Yield to browser to update UI before heavy computation
+    await new Promise(resolve => setTimeout(resolve, 0))
+
     try {
       const blob = await getCroppedBlob(imgRef.current, completedCrop)
       await onCropComplete(blob)
@@ -195,21 +199,35 @@ export function ImageCropModal({
         <div className="space-y-4">
           {imageSrc ? (
             <div className="flex justify-center">
-              <ReactCrop
-                crop={crop}
-                onChange={(c) => setCrop(c)}
-                onComplete={(c) => setCompletedCrop(c)}
-                aspect={ASPECT_RATIO}
-                className="max-h-[60vh]"
-              >
-                <img
-                  ref={imgRef}
-                  src={imageSrc}
-                  alt="裁剪源图片"
-                  onLoad={onImageLoad}
-                  className="max-w-full"
-                />
-              </ReactCrop>
+              {!processing ? (
+                <ReactCrop
+                  crop={crop}
+                  onChange={(c) => setCrop(c)}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  aspect={ASPECT_RATIO}
+                  className="max-h-[60vh]"
+                >
+                  <img
+                    ref={imgRef}
+                    src={imageSrc}
+                    alt="裁剪源图片"
+                    onLoad={onImageLoad}
+                    className="max-w-full"
+                  />
+                </ReactCrop>
+              ) : (
+                <div className="relative max-h-[60vh]">
+                  <img
+                    ref={imgRef}
+                    src={imageSrc}
+                    alt="裁剪源图片"
+                    className="max-w-full opacity-50"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center text-white text-lg font-semibold">
+                    压缩中...
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -232,8 +250,9 @@ export function ImageCropModal({
             <Button
               onClick={handleCropComplete}
               disabled={!completedCrop || processing}
+              className="min-w-[80px]"
             >
-              {processing ? '处理中...' : '确定'}
+              {processing ? '压缩中...' : '确定'}
             </Button>
           </div>
         </div>

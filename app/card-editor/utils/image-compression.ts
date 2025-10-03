@@ -43,10 +43,18 @@ export function estimateQuality(
   minQuality: number
 ): number {
   const pixelCount = width * height
-  // WebP compression: approximately 0.8 bytes per pixel at quality=0.8
-  const bytesPerPixel = 0.8
-  const estimated = (maxFileSize / (pixelCount * bytesPerPixel)) * 0.85
-  return Math.min(initialQuality, Math.max(minQuality, estimated))
+  // WebP compression: approximately 0.5 bytes per pixel at quality=0.8
+  // Use lower bytesPerPixel (0.5) to estimate higher quality
+  // This makes estimation slightly optimistic, triggering binary search downward
+  // which is better than being too conservative and missing quality headroom
+  const bytesPerPixel = 0.5
+  const estimated = (maxFileSize / (pixelCount * bytesPerPixel)) * 1.0
+
+  // Round up to nearest 0.05 step to align with binary search precision
+  // This ensures first attempt uses a quality value that binary search would try
+  const roundedEstimate = Math.ceil(estimated / 0.05) * 0.05
+
+  return Math.min(initialQuality, Math.max(minQuality, roundedEstimate))
 }
 
 /**

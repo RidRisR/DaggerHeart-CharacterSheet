@@ -29,67 +29,56 @@ export async function exportCardPackageWithImages(
   };
   zip.file('manifest.json', JSON.stringify(manifest, null, 2));
 
-  // Collect all cards and track which have images
-  const allCards: StandardCard[] = [];
-  const cardTypes: (keyof CardPackageState)[] = [
-    'profession',
-    'ancestry',
-    'community',
-    'subclass',
-    'domain',
-    'variant'
-  ];
-
-  for (const type of cardTypes) {
-    const cards = packageData[type];
-    if (Array.isArray(cards) && cards.length > 0) {
-      allCards.push(...(cards as any[]));
-    }
-  }
-
   // Get all available images from IndexedDB
   const imageKeys = await getAllEditorImageKeys();
   const imageKeysSet = new Set(imageKeys);
 
-  // Mark cards with hasLocalImage: true if they have images in IndexedDB
-  const cardsForExport = allCards.map(card => {
-    const hasImage = imageKeysSet.has(card.id);
-    return {
-      ...card,
-      hasLocalImage: hasImage ? true : undefined,
-      // Remove imageUrl if hasLocalImage is true
-      imageUrl: hasImage ? undefined : card.imageUrl
-    };
-  });
+  // Helper function to mark cards with local images
+  const markCardsWithLocalImages = (cards: any[] | undefined) => {
+    if (!cards || !Array.isArray(cards)) return [];
+    return cards.map(card => {
+      const hasImage = imageKeysSet.has(card.id);
+      return {
+        ...card,
+        hasLocalImage: hasImage ? true : undefined,
+        // Remove imageUrl if hasLocalImage is true to save space
+        imageUrl: hasImage ? undefined : card.imageUrl
+      };
+    });
+  };
 
-  // Create cards.json with card data
-  const cardsJSON = {
+  // Create cards.json with native format (same as JSON export)
+  const exportData = {
     name: packageData.name,
     version: packageData.version,
     description: packageData.description,
     author: packageData.author,
     customFieldDefinitions: packageData.customFieldDefinitions,
-    cards: cardsForExport
+    profession: markCardsWithLocalImages(packageData.profession),
+    ancestry: markCardsWithLocalImages(packageData.ancestry),
+    community: markCardsWithLocalImages(packageData.community),
+    subclass: markCardsWithLocalImages(packageData.subclass),
+    domain: markCardsWithLocalImages(packageData.domain),
+    variant: markCardsWithLocalImages(packageData.variant)
   };
-  zip.file('cards.json', JSON.stringify(cardsJSON, null, 2));
+
+  zip.file('cards.json', JSON.stringify(exportData, null, 2));
 
   // Add images to ZIP
   const imagesFolder = zip.folder('images');
   if (imagesFolder) {
     let imageCount = 0;
-    for (const card of allCards) {
-      if (imageKeysSet.has(card.id)) {
-        try {
-          const blob = await getImageBlobFromDB(card.id);
-          if (blob) {
-            // Infer file extension from MIME type
-            const ext = getExtensionFromMimeType(blob.type);
-            imagesFolder.file(`${card.id}${ext}`, blob);
-            imageCount++;
-          }
-        } catch (error) {
-          console.warn(`[ZipExport] Failed to get image for ${card.id}:`, error);
+    for (const cardId of imageKeys) {
+      try {
+        const blob = await getImageBlobFromDB(cardId);
+        if (blob) {
+          // Infer file extension from MIME type
+          const ext = getExtensionFromMimeType(blob.type);
+          imagesFolder.file(`${cardId}${ext}`, blob);
+          imageCount++;
         }
+      } catch (error) {
+        console.warn(`[ZipExport] Failed to get image for ${cardId}:`, error);
       }
     }
     console.log(`[ZipExport] Added ${imageCount} images to ZIP`);

@@ -87,7 +87,7 @@ interface CardEditorStore {
   updateDefinitions: (definitions: CardPackageState['customFieldDefinitions']) => void
 
   // Image manager actions
-  uploadImage: (cardId: string, file: File) => Promise<void>
+  uploadImage: (cardId: string, file: File | Blob) => Promise<void>
   deleteImage: (cardId: string) => Promise<void>
   getPreviewUrl: (cardId: string) => Promise<string | null>
   clearPreviewCache: () => void
@@ -677,7 +677,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
         })),
 
       // Image manager actions
-      uploadImage: async (cardId: string, file: File) => {
+      uploadImage: async (cardId: string, file: File | Blob) => {
         const { saveImageToDB, hasImageInDB } = await import('../utils/image-db-helpers');
 
         // Update upload status to uploading

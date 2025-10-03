@@ -4,18 +4,19 @@ import React, { useRef, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { ImageCropModal } from './image-crop-modal'
 
 interface ImageUploadProps {
   cardId: string
   currentImageUrl?: string | null
-  onUpload: (cardId: string, file: File) => Promise<void>
+  onUpload: (cardId: string, file: File | Blob) => Promise<void>
   onDelete?: (cardId: string) => Promise<void>
   disabled?: boolean
 }
 
 /**
  * Image Upload Component
- * Allows users to upload images for cards
+ * Allows users to upload images for cards with cropping
  */
 export function ImageUpload({
   cardId,
@@ -27,13 +28,15 @@ export function ImageUpload({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [hasImage, setHasImage] = useState<boolean>(!!currentImageUrl)
+  const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [sourceFile, setSourceFile] = useState<File | null>(null)
 
   // Sync hasImage state with currentImageUrl prop
   useEffect(() => {
     setHasImage(!!currentImageUrl)
   }, [currentImageUrl])
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -43,18 +46,28 @@ export function ImageUpload({
       return
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024
+    // Validate file size (max 10MB for original image)
+    const maxSize = 10 * 1024 * 1024
     if (file.size > maxSize) {
-      toast.error('图片文件不能超过 5MB')
+      toast.error('图片文件不能超过 10MB')
       return
     }
 
-    setUploading(true)
+    // Open crop modal
+    setSourceFile(file)
+    setCropModalOpen(true)
 
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleCropComplete = async (blob: Blob) => {
+    setUploading(true)
     try {
-      // Upload to IndexedDB
-      await onUpload(cardId, file)
+      // Upload cropped WebP blob to IndexedDB
+      await onUpload(cardId, blob)
 
       // Mark as having image
       setHasImage(true)
@@ -65,10 +78,7 @@ export function ImageUpload({
       toast.error('图片上传失败')
     } finally {
       setUploading(false)
-      // Reset input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+      setSourceFile(null)
     }
   }
 
@@ -89,39 +99,51 @@ export function ImageUpload({
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        className="hidden"
-        disabled={disabled || uploading}
-      />
+    <>
+      <div className="flex items-center gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+          disabled={disabled || uploading}
+        />
 
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={disabled || uploading}
-      >
-        <Upload className="mr-2 h-4 w-4" />
-        {uploading ? '上传中...' : hasImage ? '更换图片' : '上传图片'}
-      </Button>
-
-      {hasImage && onDelete && (
         <Button
           type="button"
           variant="outline"
           size="sm"
-          onClick={handleDelete}
+          onClick={() => fileInputRef.current?.click()}
           disabled={disabled || uploading}
         >
-          <X className="mr-2 h-4 w-4" />
-          删除图片
+          <Upload className="mr-2 h-4 w-4" />
+          {uploading ? '上传中...' : hasImage ? '更换图片' : '上传图片'}
         </Button>
-      )}
-    </div>
+
+        {hasImage && onDelete && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleDelete}
+            disabled={disabled || uploading}
+          >
+            <X className="mr-2 h-4 w-4" />
+            删除图片
+          </Button>
+        )}
+      </div>
+
+      <ImageCropModal
+        open={cropModalOpen}
+        onClose={() => {
+          setCropModalOpen(false)
+          setSourceFile(null)
+        }}
+        onCropComplete={handleCropComplete}
+        sourceFile={sourceFile}
+      />
+    </>
   )
 }

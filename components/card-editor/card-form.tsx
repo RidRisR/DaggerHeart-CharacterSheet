@@ -360,7 +360,7 @@ export function CommunityCardForm({
   }, [card.id, getPreviewUrl])
 
   // 处理图片上传
-  const handleUploadImage = async (cardId: string, file: File) => {
+  const handleUploadImage = async (cardId: string, file: File | Blob) => {
     await uploadImage(cardId, file)
 
     // 上传成功后，更新卡牌的 hasLocalImage 标记

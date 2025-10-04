@@ -42,6 +42,9 @@ export interface BatchData {
     version?: string;
     description?: string;
     author?: string;
+    imageCardIds?: string[];      // 有图片的卡牌ID列表
+    imageCount?: number;           // 图片数量
+    totalImageSize?: number;       // 图片总大小 (bytes)
   };
   cards: ExtendedStandardCard[];
   customFieldDefinitions?: CustomFieldsForBatch;

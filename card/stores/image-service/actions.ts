@@ -188,6 +188,37 @@ export function createImageServiceActions<T extends UnifiedCardState>(
         });
 
         console.log(`[ImageService] Imported ${images.size} images for batch ${batchId}`);
+
+        // ✅ 关键修改: 更新批次元信息中的 imageCardIds
+        set((state: any) => {
+          const batch = state.batches.get(batchId);
+          if (!batch) {
+            console.warn(`[ImageService] Batch ${batchId} not found when updating imageCardIds`);
+            return state;
+          }
+
+          const imageCardIds = Array.from(images.keys());
+          const totalImageSize = Array.from(images.values()).reduce((sum, b) => sum + b.size, 0);
+
+          const updatedBatch = {
+            ...batch,
+            imageCardIds,           // ← 保存图片ID列表
+            imageCount: images.size,
+            totalImageSize
+          };
+
+          const newBatches = new Map(state.batches);
+          newBatches.set(batchId, updatedBatch);
+
+          console.log(`[ImageService] Updated batch ${batchId} with ${imageCardIds.length} imageCardIds`);
+
+          return { batches: newBatches };
+        });
+
+        // ✅ 同步到 localStorage
+        const currentState = get() as any;
+        currentState._syncToLocalStorage();
+
       } catch (error) {
         console.error(`[ImageService] Failed to import batch images:`, error);
         throw error;

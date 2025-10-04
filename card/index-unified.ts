@@ -314,3 +314,9 @@ export {
   useCardSystem,
   useCardById
 } from './stores/unified-card-store';
+
+// Export .dhcb import functionality
+export {
+  importDhcbCardPackage,
+  type DhcbImportResult
+} from './utils/dhcb-importer';

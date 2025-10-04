@@ -1001,7 +1001,10 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
             importTime: batch.importTime,
             version: batch.version,
             description: batch.description,
-            author: batch.author
+            author: batch.author,
+            imageCardIds: batch.imageCardIds,        // ✅ 保存图片ID列表
+            imageCount: batch.imageCount,            // ✅ 保存图片数量
+            totalImageSize: batch.totalImageSize     // ✅ 保存图片总大小
           },
           cards: batchCards,
           customFieldDefinitions: batch.customFieldDefinitions,
@@ -1104,7 +1107,10 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
             disabled: batchInfo.disabled,
             cardIds: batchData.cards.map(card => card.id),
             customFieldDefinitions: batchData.customFieldDefinitions,
-            variantTypes: batchData.variantTypes
+            variantTypes: batchData.variantTypes,
+            imageCardIds: batchData.metadata.imageCardIds,        // ✅ 读取图片ID列表
+            imageCount: batchData.metadata.imageCount,            // ✅ 读取图片数量
+            totalImageSize: batchData.metadata.totalImageSize     // ✅ 读取图片总大小
           };
 
           batches.set(batchId, batch);

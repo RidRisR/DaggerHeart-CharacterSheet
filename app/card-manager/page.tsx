@@ -21,6 +21,7 @@ import {
   type ImportResult,
   type ExtendedStandardCard
 } from '@/card/index'
+import { importDhcbCardPackage, type DhcbImportResult } from '@/card/utils/dhcb-importer'
 import { useUnifiedCardStore } from '@/card/stores/unified-card-store'
 import { getBasePath, navigateToPage } from '@/lib/utils'
 import { DocumentModal } from '@/components/modals/document-modal'
@@ -80,6 +81,8 @@ function ViewCardModal({ cards, isOpen, onClose }: ViewCardModalProps) {
 // 新增：用于UI显示的导入结果类型
 interface ImportResultWithFileName extends ImportResult {
   fileName: string
+  imageCount?: number
+  validationWarnings?: string[]
 }
 
 export default function CardImportTestPage() {
@@ -183,13 +186,18 @@ export default function CardImportTestPage() {
     if (!files || files.length === 0) return
 
     const fileArr = Array.from(files)
+
     // 检查所有文件类型
-    const invalid = fileArr.find(f => !f.name.endsWith('.json'))
+    const invalid = fileArr.find(f =>
+      !f.name.endsWith('.json') &&
+      !f.name.endsWith('.dhcb') &&
+      !f.name.endsWith('.zip')
+    )
     if (invalid) {
       setImportStatus({
         isImporting: false,
         result: null,
-        error: '请选择 JSON 文件（可多选）'
+        error: '请选择 JSON、DHCB 或 ZIP 文件（可多选）'
       })
       return
     }
@@ -202,14 +210,29 @@ export default function CardImportTestPage() {
     setImportStatus({ isImporting: true, result: null, error: null })
     let allResults: ImportResultWithFileName[] = []
     let anyError = false
+
     for (const file of files) {
       try {
-        const text = await file.text()
-        const importData: ImportData = JSON.parse(text)
-        // 只用文件名作为批次名
-        const result = await importCustomCards(importData, file.name)
-        allResults.push({ ...result, fileName: file.name })
-        if (!result.success) anyError = true
+        // 判断文件类型
+        if (file.name.endsWith('.dhcb') || file.name.endsWith('.zip')) {
+          // .dhcb/.zip 导入
+          const dhcbResult = await importDhcbCardPackage(file)
+          allResults.push({
+            success: true,
+            imported: dhcbResult.totalCards,
+            errors: dhcbResult.validationErrors,
+            fileName: file.name,
+            batchId: dhcbResult.batchId,
+            imageCount: dhcbResult.imageCount
+          })
+        } else {
+          // JSON 导入
+          const text = await file.text()
+          const importData: ImportData = JSON.parse(text)
+          const result = await importCustomCards(importData, file.name)
+          allResults.push({ ...result, fileName: file.name })
+          if (!result.success) anyError = true
+        }
       } catch (error) {
         allResults.push({
           success: false,
@@ -220,6 +243,7 @@ export default function CardImportTestPage() {
         anyError = true
       }
     }
+
     setImportStatus({
       isImporting: false,
       result: allResults.length === 1 ? allResults[0] : allResults,
@@ -441,9 +465,10 @@ export default function CardImportTestPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".json"
+                  accept=".json,.dhcb,.zip"
                   onChange={(e) => handleFileSelect(e.target.files)}
                   className="hidden"
+                  multiple
                 />
               </div>
 
@@ -474,10 +499,17 @@ export default function CardImportTestPage() {
                         <span className="ml-2 text-xs text-muted-foreground">{res.fileName}</span>
                       </div>
                       {res.success && (
-                        <p className="text-green-600 text-sm">
-                          成功导入 {res.imported} 张卡牌
-                          {res.batchId && ` (批次ID: ${res.batchId})`}
-                        </p>
+                        <div className="space-y-1">
+                          <p className="text-green-600 text-sm">
+                            ✅ 成功导入 {res.imported} 张卡牌
+                            {res.batchId && ` (批次ID: ${res.batchId})`}
+                          </p>
+                          {res.imageCount !== undefined && res.imageCount > 0 && (
+                            <p className="text-green-600 text-sm">
+                              🖼️ 导入 {res.imageCount} 张图片
+                            </p>
+                          )}
+                        </div>
                       )}
                       {res.errors && res.errors.length > 0 && (
                         <div className="mt-2">
@@ -525,10 +557,17 @@ export default function CardImportTestPage() {
                       )}
                     </div>
                     {importStatus.result.success && (
-                      <p className="text-green-600 text-sm">
-                        成功导入 {importStatus.result.imported} 张卡牌
-                        {importStatus.result.batchId && ` (批次ID: ${importStatus.result.batchId})`}
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-green-600 text-sm">
+                          ✅ 成功导入 {importStatus.result.imported} 张卡牌
+                          {importStatus.result.batchId && ` (批次ID: ${importStatus.result.batchId})`}
+                        </p>
+                        {('imageCount' in importStatus.result) && (importStatus.result as any).imageCount > 0 && (
+                          <p className="text-green-600 text-sm">
+                            🖼️ 导入 {(importStatus.result as any).imageCount} 张图片
+                          </p>
+                        )}
+                      </div>
                     )}
                     {importStatus.result.errors.length > 0 && (
                       <div className="mt-2">

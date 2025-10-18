@@ -424,7 +424,7 @@ export default function CardImportTestPage() {
                 卡牌导入
               </CardTitle>
               <CardDescription>
-                拖拽或选择 JSON 文件导入自定义卡牌数据<br />
+                拖拽或选择卡包（JSON/DHCB格式）导入自定义卡牌数据<br />
                 <span className="text-xs text-muted-foreground mt-1 block">
                   支持卡牌类型格式：profession (职业), ancestry (种族), community (社群), subclass (子职业), domain (领域)，variant（任意）
                 </span>
@@ -444,7 +444,7 @@ export default function CardImportTestPage() {
               >
                 <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-lg font-medium mb-2">
-                  拖拽 JSON 文件到此处
+                  拖拽卡包文件到此处（JSON/DHCB格式）
                 </p>
                 <p className="text-muted-foreground mb-4">
                   或点击下方按钮选择文件

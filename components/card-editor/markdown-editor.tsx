@@ -4,35 +4,13 @@ import React from 'react'
 import MDEditor, { commands } from '@uiw/react-md-editor'
 import { cn } from '@/lib/utils'
 
-// 创建自定义的加粗+斜体命令
-const boldItalicCommand = {
-  name: "bold-italic",
-  keyCommand: "bold-italic",
-  buttonProps: { 
-    "aria-label": "Add bold italic text", 
-    title: "Bold Italic (***text***)" 
-  },
-  icon: (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 4H9a3 3 0 0 0-3 3v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3z" />
-      <path d="M14 6v14" />
-      <path d="M10 10h4" />
-      <path d="M10 14h4" />
-    </svg>
-  ),
-  execute: (state: any, api: any) => {
-    const modifyText = `***${state.selectedText || 'Bold Italic Text'}***`;
-    api.replaceSelection(modifyText);
-  },
-}
-
-// 创建自定义的特殊标记命令 (*__文本__*)
+// 创建自定义的加粗+斜体命令 (***文本***)
 const specialMarkCommand = {
   name: "special-mark",
   keyCommand: "special-mark",
   buttonProps: {
-    "aria-label": "Add special marked text",
-    title: "Special Mark (*__text__*)"
+    "aria-label": "Add bold italic text",
+    title: "Bold Italic (***text***)"
   },
   icon: (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -44,7 +22,7 @@ const specialMarkCommand = {
     </svg>
   ),
   execute: (state: any, api: any) => {
-    const modifyText = `*__${state.selectedText || '标题'}__*`;
+    const modifyText = `***${state.selectedText || '标题'}***`;
     api.replaceSelection(modifyText);
   },
 }
@@ -53,7 +31,7 @@ const specialMarkCommand = {
 const simplifiedCommands = [
   commands.bold,           // 加粗
   commands.italic,         // 斜体
-  specialMarkCommand,      // 特殊标记 (*__文本__*)
+  specialMarkCommand,      // 加粗+斜体 (***文本***)
   commands.unorderedListCommand,  // 无序列表
 ]
 

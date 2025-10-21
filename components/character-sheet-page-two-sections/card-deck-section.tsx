@@ -248,8 +248,6 @@ export function CardDeckSection({
   const [cardSelectionModalOpen, setCardSelectionModalOpen] = useState(false)
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
 
-  // 移除：防止循环更新的ref，因为已不需要聚焦功能
-
   // 获取当前卡组数据的辅助函数
   const getCurrentDeckCards = (deckType: 'focused' | 'inventory'): StandardCard[] => {
     const sourceCards = deckType === 'focused' 

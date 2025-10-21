@@ -210,7 +210,7 @@ export function ProfessionCardForm({
                 />
               </FormControl>
               <div className="text-sm text-muted-foreground">
-                支持Markdown格式，可以使用 *__特性名__* 来标记特性标题
+                支持Markdown格式，可以使用 *__特性名__* 或者 ***特性名*** 来标记特性标题
               </div>
               <FormMessage />
             </FormItem>
@@ -521,7 +521,7 @@ export function CommunityCardForm({
                 />
               </FormControl>
               <div className="text-sm text-muted-foreground">
-                支持Markdown格式，可以使用 *__特性名__* 来标记特性标题
+                支持Markdown格式，可以使用 *__特性名__* 或者 ***特性名*** 来标记特性标题
               </div>
               <FormMessage />
             </FormItem>

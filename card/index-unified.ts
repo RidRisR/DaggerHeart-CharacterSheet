@@ -34,6 +34,7 @@ export type {
 export {
   getCardClassOptionsByType as CARD_CLASS_OPTIONS_BY_TYPE,
   getCardClassOptionsByType,
+  getCardClassOptionsForType,  // 🚀 新增：按需计算单个类型的选项
   getCardTypeName,
   getLevelOptions,
   getVariantSubclassOptions,

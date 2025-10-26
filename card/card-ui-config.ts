@@ -5,8 +5,26 @@
 
 import { ALL_CARD_TYPES, CardType, isVariantType } from "./card-types";
 import { CARD_LEVEL_OPTIONS } from "./card-types"; // Assuming CARD_LEVEL_OPTIONS from card-types is still valid
+import { useUnifiedCardStore } from "./stores/unified-card-store";
+
+/**
+ * 🚀 优化：按需获取指定卡牌类型的类别选项（直接从 subclassCountIndex 读取）
+ * 性能提升：从计算 5 种类型降至仅计算 1 种类型
+ */
+export function getCardClassOptionsForType(cardType: string): { value: string; label: string }[] {
+  const store = useUnifiedCardStore.getState();
+  const subclasses = store.subclassCountIndex?.[cardType];
+
+  if (!subclasses) return [];
+
+  // 从已有的 subclassCountIndex 缓存中读取，过滤计数为 0 的子类别
+  return Object.entries(subclasses)
+    .filter(([subclass, count]) => count > 0 && subclass !== '__no_subclass__')
+    .map(([subclass]) => ({ value: subclass, label: subclass }));
+}
 
 // 按类型分组的卡牌类别选项 - 动态生成以避免循环依赖
+// ⚠️ 性能警告：此函数会计算所有 5 种卡牌类型，建议使用 getCardClassOptionsForType 按需计算
 export function getCardClassOptionsByType(tempBatchId?: string, tempDefinitions?: any) {
   // Import functions dynamically to avoid circular dependencies
   const {

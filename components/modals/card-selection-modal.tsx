@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react" // Added useState
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {
   getCardClassOptionsByType,
+  getCardClassOptionsForType,  // 🚀 新增：按需计算优化
   getLevelOptions,
   getVariantSubclassOptions,
   getCardTypeName,
@@ -151,10 +152,9 @@ export function CardSelectionModal({
       return getVariantSubclassOptions(activeTab);
     }
 
-    // 否则返回标准卡牌类型的class选项
-    const options = getCardClassOptionsByType();
-    return options[activeTab as keyof typeof options] || []
-  }, [activeTab]);
+    // 🚀 优化：按需计算当前类型的选项，而不是计算所有 5 种类型
+    return getCardClassOptionsForType(activeTab);
+  }, [activeTab, cardStore.subclassCountIndex]); // ✅ 添加 subclassCountIndex 作为依赖，确保数据更新时重新计算
 
   const levelOptions = useMemo(() => {
     // 如果是变体类型，返回该变体类型的等级选项

@@ -31,6 +31,8 @@ export const useUnifiedCardStore = create<UnifiedCardStore>()(
         aggregatedCustomFields: null,
         aggregatedVariantTypes: null,
         subclassCountIndex: null,
+        subclassCardIndex: null,
+        levelCardIndex: null,
         cacheValid: false,
         initialized: false,
         loading: false,

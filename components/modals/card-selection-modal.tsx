@@ -178,58 +178,160 @@ export function CardSelectionModal({
 
   const fullyFilteredCards = useMemo(() => {
     // 提前检查必要条件
-    if (!activeTab || !isOpen || !cardsForActiveTab.length) {
+    if (!activeTab || !isOpen) {
       return [];
     }
-    
-    let filtered = cardsForActiveTab;
 
-    // 如果当前选中的是variant类型，需要按照真实的variant类型过滤
-    if (isVariantType(activeTab)) {
-      // 只显示匹配当前variant类型的卡牌
-      filtered = filtered.filter(card => {
-        // 对于variant卡牌，检查variantSpecial.realType是否匹配当前选中的variant类型
-        return card.variantSpecial?.realType === activeTab;
-      });
-      // 如果过滤后没有卡牌，提前返回
-      if (filtered.length === 0) return [];
-    }
+    const isVariant = isVariantType(activeTab);
+    const hasClassFilter = selectedClasses.length > 0 && classOptions.length > 0;
+    const hasLevelFilter = selectedLevels.length > 0 && levelOptions.length > 0;
+    const hasSearchTerm = !!debouncedSearchTerm;
 
-    // 搜索过滤
-    if (debouncedSearchTerm) {
-      const term = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter((card) => {
-        // 优化：使用短路求值，一旦匹配就返回
-        return (card.name?.toLowerCase().includes(term)) ||
-               (card.description?.toLowerCase().includes(term)) ||
-               (card.cardSelectDisplay?.item1?.toLowerCase().includes(term)) ||
-               (card.cardSelectDisplay?.item2?.toLowerCase().includes(term)) ||
-               (card.cardSelectDisplay?.item3?.toLowerCase().includes(term));
-      });
-      // 如果搜索后没有结果，提前返回
-      if (filtered.length === 0) return [];
-    }
+    // 🚀 优化：只在有筛选条件时使用索引，否则直接用原始数组
+    const shouldUseIndex = hasClassFilter || hasLevelFilter;
 
-    // 类别过滤
-    if (selectedClasses.length > 0 && classOptions.length > 0) {
-      if (isVariantType(activeTab)) {
-        filtered = filtered.filter((card) =>
-          card.variantSpecial?.subCategory && selectedClasses.includes(card.variantSpecial.subCategory)
-        );
-      } else {
-        filtered = filtered.filter((card) => card.class && selectedClasses.includes(card.class));
+    if (!shouldUseIndex) {
+      // 没有类别/等级筛选，直接对原始数组进行 variant/搜索过滤
+      let filtered = cardsForActiveTab;
+
+      if (!filtered.length) return [];
+
+      // 合并 variant 和搜索过滤为单次遍历
+      if (isVariant || hasSearchTerm) {
+        const term = hasSearchTerm ? debouncedSearchTerm.toLowerCase() : '';
+
+        filtered = filtered.filter(card => {
+          // Variant 类型检查
+          if (isVariant && card.variantSpecial?.realType !== activeTab) {
+            return false;
+          }
+
+          // 搜索检查
+          if (hasSearchTerm) {
+            const matches =
+              (card.name?.toLowerCase().includes(term)) ||
+              (card.description?.toLowerCase().includes(term)) ||
+              (card.cardSelectDisplay?.item1?.toLowerCase().includes(term)) ||
+              (card.cardSelectDisplay?.item2?.toLowerCase().includes(term)) ||
+              (card.cardSelectDisplay?.item3?.toLowerCase().includes(term));
+            if (!matches) return false;
+          }
+
+          return true;
+        });
       }
-      // 如果类别过滤后没有结果，提前返回
-      if (filtered.length === 0) return [];
+
+      return filtered;
     }
 
-    // 等级过滤
-    if (selectedLevels.length > 0 && levelOptions.length > 0) {
-      filtered = filtered.filter((card) => card.level && selectedLevels.includes(card.level.toString()));
+    // 🚀 Step 1: 使用索引快速获取候选卡牌 ID
+    let candidateIds: Set<string> | null = null;
+
+    // 类别筛选 - 使用 subclassCardIndex
+    if (hasClassFilter) {
+      if (!cardStore.subclassCardIndex) {
+        // 索引未初始化（理论上不应该发生，因为 Modal 打开时 store 已初始化）
+        console.warn('[CardSelectionModal] subclassCardIndex not initialized');
+        return [];
+      }
+
+      const typeIndex = cardStore.subclassCardIndex[activeTab];
+      if (!typeIndex) {
+        // 这个类型在索引中不存在 = 没有卡牌
+        return [];
+      }
+
+      // 合并所有选中类别的卡牌 ID
+      const idsFromClasses = selectedClasses.flatMap(cls => typeIndex[cls] || []);
+      candidateIds = new Set(idsFromClasses);
+
+      if (candidateIds.size === 0) {
+        // 选中的类别没有卡牌
+        return [];
+      }
     }
-    
+
+    // 等级筛选 - 使用 levelCardIndex
+    if (hasLevelFilter) {
+      if (!cardStore.levelCardIndex) {
+        console.warn('[CardSelectionModal] levelCardIndex not initialized');
+        return [];
+      }
+
+      const levelIndex = cardStore.levelCardIndex[activeTab];
+      if (!levelIndex) {
+        // 这个类型没有等级信息 = 没有卡牌
+        return [];
+      }
+
+      const idsFromLevels = selectedLevels.flatMap(lvl => levelIndex[lvl] || []);
+
+      if (candidateIds) {
+        // 计算交集：只保留同时在两个集合中的 ID
+        const levelSet = new Set(idsFromLevels);
+        for (const id of candidateIds) {
+          if (!levelSet.has(id)) {
+            candidateIds.delete(id);
+          }
+        }
+
+        if (candidateIds.size === 0) {
+          // 交集为空
+          return [];
+        }
+      } else {
+        // 只有等级筛选
+        candidateIds = new Set(idsFromLevels);
+        if (candidateIds.size === 0) {
+          return [];
+        }
+      }
+    }
+
+    // 🚀 Step 2: 通过 ID 获取卡牌对象
+    let filtered: StandardCard[];
+    if (candidateIds) {
+      // 从索引获取的 ID 集合中提取卡牌对象
+      filtered = [];
+      for (const id of candidateIds) {
+        const card = cardStore.cards.get(id);
+        if (card) {
+          filtered.push(card);
+        }
+      }
+    } else {
+      // 没有类别/等级筛选，使用全部卡牌
+      filtered = cardsForActiveTab;
+    }
+
+    // 🚀 Step 3: 应用其他过滤（variant 类型、搜索）- 合并为单次遍历
+    if (isVariant || hasSearchTerm) {
+      const term = hasSearchTerm ? debouncedSearchTerm.toLowerCase() : '';
+
+      filtered = filtered.filter(card => {
+        // Variant 类型检查
+        if (isVariant && card.variantSpecial?.realType !== activeTab) {
+          return false;
+        }
+
+        // 搜索检查
+        if (hasSearchTerm) {
+          const matches =
+            (card.name?.toLowerCase().includes(term)) ||
+            (card.description?.toLowerCase().includes(term)) ||
+            (card.cardSelectDisplay?.item1?.toLowerCase().includes(term)) ||
+            (card.cardSelectDisplay?.item2?.toLowerCase().includes(term)) ||
+            (card.cardSelectDisplay?.item3?.toLowerCase().includes(term));
+          if (!matches) return false;
+        }
+
+        return true;
+      });
+    }
+
     return filtered;
-  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses, selectedLevels, isOpen, activeTab, classOptions.length, levelOptions.length]);
+  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses, selectedLevels, isOpen, activeTab,
+      classOptions.length, levelOptions.length, cardStore.subclassCardIndex, cardStore.levelCardIndex]);
 
   useEffect(() => {
     setFilteredCards(fullyFilteredCards);

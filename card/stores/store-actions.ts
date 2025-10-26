@@ -997,8 +997,10 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     const state = get();
     const { isVariantCard } = require('../card-types');
 
-    // Initialize the index object
-    const index: Record<string, Record<string, number>> = {};
+    // Initialize the index objects
+    const countIndex: Record<string, Record<string, number>> = {};
+    const cardIndex: Record<string, Record<string, string[]>> = {};
+    const levelIndex: Record<string, Record<string, string[]>> = {};
 
     // Iterate through all cards
     for (const card of state.cards.values()) {
@@ -1028,19 +1030,42 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
       if (!indexKey || !subclass) continue;
 
-      // Initialize the index key entry if it doesn't exist
-      if (!index[indexKey]) {
-        index[indexKey] = {};
+      // 🚀 Build count index (existing logic)
+      if (!countIndex[indexKey]) {
+        countIndex[indexKey] = {};
       }
+      countIndex[indexKey][subclass] = (countIndex[indexKey][subclass] || 0) + 1;
 
-      // Increment the count for this subclass
-      index[indexKey][subclass] = (index[indexKey][subclass] || 0) + 1;
+      // 🚀 Build card ID index (new - for O(1) filtering)
+      if (!cardIndex[indexKey]) {
+        cardIndex[indexKey] = {};
+      }
+      if (!cardIndex[indexKey][subclass]) {
+        cardIndex[indexKey][subclass] = [];
+      }
+      cardIndex[indexKey][subclass].push(card.id);
+
+      // 🚀 Build level index (new - for O(1) level filtering)
+      if (card.level) {
+        if (!levelIndex[indexKey]) {
+          levelIndex[indexKey] = {};
+        }
+        const levelKey = card.level.toString();
+        if (!levelIndex[indexKey][levelKey]) {
+          levelIndex[indexKey][levelKey] = [];
+        }
+        levelIndex[indexKey][levelKey].push(card.id);
+      }
     }
 
-    console.log('[UnifiedCardStore] Rebuilt subclass count index:', index);
+    console.log('[UnifiedCardStore] Rebuilt subclass count index:', countIndex);
+    console.log('[UnifiedCardStore] Rebuilt subclass card index - sample:', Object.keys(cardIndex));
+    console.log('[UnifiedCardStore] Rebuilt level card index - sample:', Object.keys(levelIndex));
 
     set({
-      subclassCountIndex: index
+      subclassCountIndex: countIndex,
+      subclassCardIndex: cardIndex,
+      levelCardIndex: levelIndex
     });
   },
 

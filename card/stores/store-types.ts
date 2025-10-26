@@ -90,6 +90,20 @@ export interface SubclassCountIndex {
   };
 }
 
+// Subclass card ID index for O(1) filtering by class
+export interface SubclassCardIndex {
+  [cardType: string]: {
+    [subclass: string]: string[];  // Array of card IDs
+  };
+}
+
+// Level card ID index for O(1) filtering by level
+export interface LevelCardIndex {
+  [cardType: string]: {
+    [level: string]: string[];  // Array of card IDs
+  };
+}
+
 export interface CleanupReport {
   removedKeys: string[];
   errors: string[];
@@ -142,6 +156,8 @@ export interface UnifiedCardState {
   aggregatedCustomFields: CustomFieldNamesStore | null;
   aggregatedVariantTypes: VariantTypesForBatch | null;
   subclassCountIndex: SubclassCountIndex | null;
+  subclassCardIndex: SubclassCardIndex | null;  // 🚀 New: Card ID index by subclass
+  levelCardIndex: LevelCardIndex | null;        // 🚀 New: Card ID index by level
   cacheValid: boolean;
 
   // System state

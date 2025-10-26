@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { FadeNotificationContainer } from "@/components/ui/fade-notification"
 import { PrintProvider } from "@/contexts/print-context"
 import { ProgressModalProvider } from "@/components/ui/unified-progress-modal"
+import { ChunkLoadErrorHandler } from "@/components/chunk-load-error-handler"
 import PrintHelper from "./print-helper"
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
+        <ChunkLoadErrorHandler />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <ProgressModalProvider>
             <PrintProvider>

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react" // Added useState
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {
-  getCardClassOptionsByType,
   getCardClassOptionsForType,  // 🚀 新增：按需计算优化
   getLevelOptions,
   getVariantSubclassOptions,
@@ -63,7 +62,6 @@ export function CardSelectionModal({
 }: CardSelectionModalProps) {
   const { isTextMode } = useTextModeStore()
   const [displayedCards, setDisplayedCards] = useState<StandardCard[]>([])
-  const [filteredCards, setFilteredCards] = useState<StandardCard[]>([]) // Add state for filtered cards
   const [hasMore, setHasMore] = useState(true)
   const scrollableContainerRef = useRef<HTMLDivElement>(null)
   const [classDropdownOpen, setClassDropdownOpen] = useState(false); // Add state for class dropdown
@@ -115,7 +113,7 @@ export function CardSelectionModal({
     });
 
     return { standard, extended };
-  }, [cardStore.subclassCountIndex]);
+  }, []); // 🚀 优化：卡牌类型列表是静态的，不需要依赖 subclassCountIndex
 
   // Effect to set a default active tab when the modal opens and no tab is active
   useEffect(() => {
@@ -230,7 +228,6 @@ export function CardSelectionModal({
     // 类别筛选 - 使用 subclassCardIndex
     if (hasClassFilter) {
       if (!cardStore.subclassCardIndex) {
-        // 索引未初始化（理论上不应该发生，因为 Modal 打开时 store 已初始化）
         console.warn('[CardSelectionModal] subclassCardIndex not initialized');
         return [];
       }
@@ -241,9 +238,16 @@ export function CardSelectionModal({
         return [];
       }
 
-      // 合并所有选中类别的卡牌 ID
-      const idsFromClasses = selectedClasses.flatMap(cls => typeIndex[cls] || []);
-      candidateIds = new Set(idsFromClasses);
+      // 🚀 优化：直接合并到 Set，避免 flatMap 创建中间数组
+      candidateIds = new Set<string>();
+      for (const cls of selectedClasses) {
+        const ids = typeIndex[cls];
+        if (ids) {
+          for (const id of ids) {
+            candidateIds.add(id);
+          }
+        }
+      }
 
       if (candidateIds.size === 0) {
         // 选中的类别没有卡牌
@@ -264,14 +268,34 @@ export function CardSelectionModal({
         return [];
       }
 
-      const idsFromLevels = selectedLevels.flatMap(lvl => levelIndex[lvl] || []);
-
       if (candidateIds) {
-        // 计算交集：只保留同时在两个集合中的 ID
-        const levelSet = new Set(idsFromLevels);
-        for (const id of candidateIds) {
-          if (!levelSet.has(id)) {
-            candidateIds.delete(id);
+        // 🚀 优化：构建等级 ID Set，然后遍历较小的集合计算交集
+        const levelSet = new Set<string>();
+        for (const lvl of selectedLevels) {
+          const ids = levelIndex[lvl];
+          if (ids) {
+            for (const id of ids) {
+              levelSet.add(id);
+            }
+          }
+        }
+
+        // 🚀 优化：遍历较小的集合
+        if (levelSet.size < candidateIds.size) {
+          // 等级集合较小，遍历等级集合
+          const intersection = new Set<string>();
+          for (const id of levelSet) {
+            if (candidateIds.has(id)) {
+              intersection.add(id);
+            }
+          }
+          candidateIds = intersection;
+        } else {
+          // 类别集合较小或相等，遍历类别集合（原地删除）
+          for (const id of candidateIds) {
+            if (!levelSet.has(id)) {
+              candidateIds.delete(id);
+            }
           }
         }
 
@@ -281,7 +305,16 @@ export function CardSelectionModal({
         }
       } else {
         // 只有等级筛选
-        candidateIds = new Set(idsFromLevels);
+        candidateIds = new Set<string>();
+        for (const lvl of selectedLevels) {
+          const ids = levelIndex[lvl];
+          if (ids) {
+            for (const id of ids) {
+              candidateIds.add(id);
+            }
+          }
+        }
+
         if (candidateIds.size === 0) {
           return [];
         }
@@ -333,8 +366,8 @@ export function CardSelectionModal({
   }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses, selectedLevels, isOpen, activeTab,
       classOptions.length, levelOptions.length, cardStore.subclassCardIndex, cardStore.levelCardIndex]);
 
+  // 🚀 优化：fullyFilteredCards 变化时更新显示状态
   useEffect(() => {
-    setFilteredCards(fullyFilteredCards);
     if (scrollableContainerRef.current) {
       scrollableContainerRef.current.scrollTop = 0;
     }

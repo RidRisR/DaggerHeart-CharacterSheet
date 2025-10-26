@@ -1,0 +1,8 @@
+# DaggerHeart Character Sheet - Robots.txt
+# 允许所有搜索引擎爬虫访问
+
+User-agent: *
+Allow: /
+
+# 站点地图位置
+Sitemap: https://ridrisr.github.io/DaggerHeart-CharacterSheet/sitemap.xml

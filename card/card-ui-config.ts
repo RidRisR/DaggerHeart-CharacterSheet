@@ -29,15 +29,24 @@ export function getCardClassOptionsByType(tempBatchId?: string, tempDefinitions?
 // 获取变体类型的子类别选项（作为class选项）
 export function getVariantSubclassOptions(variantType: string, tempBatchId?: string, tempDefinitions?: any): { value: string; label: string }[] {
   const { getVariantTypes } = require("./card-predefined-field");
+  const { useUnifiedCardStore } = require("./stores/unified-card-store");
+
   const variantTypes = getVariantTypes(tempBatchId, tempDefinitions);
   const typeDef = variantTypes[variantType];
 
   if (!typeDef?.subclasses) return [];
 
-  return typeDef.subclasses.map((subclass: string) => ({
+  // Get all defined subclasses
+  const allSubclasses = typeDef.subclasses.map((subclass: string) => ({
     value: subclass,
     label: subclass
   }));
+
+  // Filter out subclasses with 0 cards
+  const store = useUnifiedCardStore.getState();
+  const counts = store.subclassCountIndex?.[variantType] || {};
+
+  return allSubclasses.filter((option: { value: string | number; }) => (counts[option.value] || 0) > 0);
 }
 
 // 获取所有可用的变体类型列表（用作UI中的卡牌类型选项）

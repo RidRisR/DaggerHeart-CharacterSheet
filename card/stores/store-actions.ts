@@ -275,7 +275,9 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
             Object.entries(processedData.customFieldDefinitions)
               .filter(([key, value]) => key !== 'variantTypes' && Array.isArray(value))
           ) as CustomFieldsForBatch : undefined,
-        variantTypes: processedData.customFieldDefinitions?.variantTypes
+        variantTypes: processedData.customFieldDefinitions?.variantTypes,
+        imageCount: undefined,
+        totalImageSize: undefined
       };
 
       // Update store state
@@ -1006,29 +1008,33 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
         if (batch?.disabled) continue;
       }
 
-      const cardType = card.type;
-      if (!cardType) continue;
-
-      // Determine the subclass based on card type
+      let indexKey: string;
       let subclass: string | undefined;
 
       if (isVariantCard(card)) {
-        // For variant cards, use variantSpecial.subCategory
-        subclass = card.variantSpecial?.subCategory;
+        // For variant cards:
+        // - Use variantSpecial.realType as the index key (e.g., "武器", "护甲", "野兽形态")
+        // - Use variantSpecial.subCategory as the subclass (e.g., "长剑", "短剑")
+        // - For variant types without subclasses (like 野兽形态), use "__no_subclass__" as placeholder
+        indexKey = card.variantSpecial?.realType || '';
+        subclass = card.variantSpecial?.subCategory || '__no_subclass__';
       } else {
-        // For standard cards, use card.class
+        // For standard cards:
+        // - Use card.type as the index key (e.g., "domain", "profession")
+        // - Use card.class as the subclass (e.g., "火焰", "Guardian")
+        indexKey = card.type;
         subclass = card.class;
       }
 
-      if (!subclass) continue;
+      if (!indexKey || !subclass) continue;
 
-      // Initialize the card type entry if it doesn't exist
-      if (!index[cardType]) {
-        index[cardType] = {};
+      // Initialize the index key entry if it doesn't exist
+      if (!index[indexKey]) {
+        index[indexKey] = {};
       }
 
       // Increment the count for this subclass
-      index[cardType][subclass] = (index[cardType][subclass] || 0) + 1;
+      index[indexKey][subclass] = (index[indexKey][subclass] || 0) + 1;
     }
 
     console.log('[UnifiedCardStore] Rebuilt subclass count index:', index);
@@ -1320,7 +1326,9 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
         disabled: savedDisabledStatus,
         cardIds: convertResult.cards.map(card => card.id),
         customFieldDefinitions: jsonCardPack.customFieldDefinitions,
-        variantTypes: jsonCardPack.customFieldDefinitions?.variantTypes
+        variantTypes: jsonCardPack.customFieldDefinitions?.variantTypes,
+        imageCount: undefined,
+        totalImageSize: undefined
       };
 
       // Update store state

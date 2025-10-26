@@ -121,7 +121,17 @@ export function getVariantSubclasses(variantType: string, tempBatchId?: string, 
 
 export function getVariantTypeNames(tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): string[] {
   const aggregatedTypes = mergeVariantTypes(tempBatchId, tempDefinitions);
-  return Object.keys(aggregatedTypes);
+  const allTypeNames = Object.keys(aggregatedTypes);
+
+  // Filter out variant types with 0 cards
+  const store = useUnifiedCardStore.getState();
+  const counts = store.subclassCountIndex || {};
+
+  return allTypeNames.filter(typeName => {
+    const typeSubclasses = counts[typeName] || {};
+    const totalCards = Object.values(typeSubclasses).reduce((sum, count) => sum + count, 0);
+    return totalCards > 0;
+  });
 }
 
 export function hasVariantType(variantType: string, tempBatchId?: string, tempDefinitions?: VariantTypesForBatch): boolean {

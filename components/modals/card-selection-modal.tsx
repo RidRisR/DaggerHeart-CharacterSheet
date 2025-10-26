@@ -75,6 +75,9 @@ export function CardSelectionModal({
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
+  // 使用 unified-card-store 直接获取卡牌数据
+  const cardStore = useUnifiedCardStore();
+
   // Group card types by category
   const cardTypesByCategory = useMemo(() => {
     // 定义期望的顺序
@@ -111,7 +114,7 @@ export function CardSelectionModal({
     });
 
     return { standard, extended };
-  }, []);
+  }, [cardStore.subclassCountIndex]);
 
   // Effect to set a default active tab when the modal opens and no tab is active
   useEffect(() => {
@@ -163,9 +166,6 @@ export function CardSelectionModal({
     return getLevelOptions(activeTab as CardType)
   }, [activeTab]);
 
-  // 使用 unified-card-store 直接获取卡牌数据
-  const cardStore = useUnifiedCardStore();
-  
   const cardsForActiveTab = useMemo(() => {
     if (!activeTab || !cardStore.initialized) return [];
     const targetType = isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType);

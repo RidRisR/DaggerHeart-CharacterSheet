@@ -54,6 +54,9 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       // 重建类型 Map（确保所有卡牌都被正确分类）
       get()._rebuildCardsByType();
 
+      // Rebuild subclass count index
+      get()._rebuildSubclassIndex();
+
       // 现在所有卡牌都已加载完毕，统一进行图片预处理
       get()._preprocessCardImages();
 
@@ -180,6 +183,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     get()._loadCustomCardsFromStorage();
     get()._recomputeAggregations();
     get()._rebuildCardsByType();
+    get()._rebuildSubclassIndex();
     const newStats = get()._computeStats();
     set({ stats: newStats });
   },
@@ -318,6 +322,9 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       // Rebuild cardsByType map
       get()._rebuildCardsByType();
 
+      // Rebuild subclass count index
+      get()._rebuildSubclassIndex();
+
       // NOTE: 不在这里调用 _preprocessCardImages()，在初始化完成后统一处理
 
       console.log(`[UnifiedCardStore] Successfully imported ${convertResult.cards.length} cards`);
@@ -391,6 +398,9 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
     // Rebuild cardsByType map after removing cards
     get()._rebuildCardsByType();
+
+    // Rebuild subclass count index
+    get()._rebuildSubclassIndex();
 
     return true;
   },
@@ -796,6 +806,9 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
     get()._syncToLocalStorage();
 
+    // Rebuild subclass count index after toggling batch
+    get()._rebuildSubclassIndex();
+
     // Note: Old card-store cache reset is no longer needed with unified system
     // Cards are automatically updated through the unified store
 
@@ -975,6 +988,53 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       aggregatedCustomFields: aggregatedFields,
       aggregatedVariantTypes: aggregatedVariants,
       cacheValid: true
+    });
+  },
+
+  _rebuildSubclassIndex: () => {
+    const state = get();
+    const { isVariantCard } = require('../card-types');
+
+    // Initialize the index object
+    const index: Record<string, Record<string, number>> = {};
+
+    // Iterate through all cards
+    for (const card of state.cards.values()) {
+      // Skip cards from disabled batches
+      if (card.batchId) {
+        const batch = state.batches.get(card.batchId);
+        if (batch?.disabled) continue;
+      }
+
+      const cardType = card.type;
+      if (!cardType) continue;
+
+      // Determine the subclass based on card type
+      let subclass: string | undefined;
+
+      if (isVariantCard(card)) {
+        // For variant cards, use variantSpecial.subCategory
+        subclass = card.variantSpecial?.subCategory;
+      } else {
+        // For standard cards, use card.class
+        subclass = card.class;
+      }
+
+      if (!subclass) continue;
+
+      // Initialize the card type entry if it doesn't exist
+      if (!index[cardType]) {
+        index[cardType] = {};
+      }
+
+      // Increment the count for this subclass
+      index[cardType][subclass] = (index[cardType][subclass] || 0) + 1;
+    }
+
+    console.log('[UnifiedCardStore] Rebuilt subclass count index:', index);
+
+    set({
+      subclassCountIndex: index
     });
   },
 

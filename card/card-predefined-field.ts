@@ -45,30 +45,67 @@ function mergeVariantTypes(tempBatchId?: string, tempDefinitions?: VariantTypesF
 export function getProfessionCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
   const aggregatedCustomFields = mergeCustomFields(tempBatchId, tempDefinitions);
   const customNames = aggregatedCustomFields.professions || [];
-  return [...new Set([...customNames])];
+  const allNames = [...new Set([...customNames])];
+
+  // Filter out subclasses with 0 cards
+  const { CardType } = require('./card-types');
+  const store = useUnifiedCardStore.getState();
+  const counts = store.subclassCountIndex?.[CardType.Profession] || {};
+
+  return allNames.filter(name => (counts[name] || 0) > 0);
 }
 
 export function getAncestryCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
   const aggregatedCustomFields = mergeCustomFields(tempBatchId, tempDefinitions);
   const customNames = aggregatedCustomFields.ancestries || [];
-  return [...new Set([...customNames])];
+  const allNames = [...new Set([...customNames])];
+
+  // Filter out subclasses with 0 cards
+  const { CardType } = require('./card-types');
+  const store = useUnifiedCardStore.getState();
+  const counts = store.subclassCountIndex?.[CardType.Ancestry] || {};
+
+  return allNames.filter(name => (counts[name] || 0) > 0);
 }
 
 export function getCommunityCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
   const aggregatedCustomFields = mergeCustomFields(tempBatchId, tempDefinitions);
   const customNames = aggregatedCustomFields.communities || [];
-  return [...new Set([...customNames])];
+  const allNames = [...new Set([...customNames])];
+
+  // Filter out subclasses with 0 cards
+  const { CardType } = require('./card-types');
+  const store = useUnifiedCardStore.getState();
+  const counts = store.subclassCountIndex?.[CardType.Community] || {};
+
+  return allNames.filter(name => (counts[name] || 0) > 0);
 }
 
 export function getSubClassCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
-  // Subclass names are derived from profession names
-  return getProfessionCardNames(tempBatchId, tempDefinitions);
+  // Subclass names are derived from profession names, but use Subclass type for filtering
+  const aggregatedCustomFields = mergeCustomFields(tempBatchId, tempDefinitions);
+  const customNames = aggregatedCustomFields.professions || [];
+  const allNames = [...new Set([...customNames])];
+
+  // Filter out subclasses with 0 cards
+  const { CardType } = require('./card-types');
+  const store = useUnifiedCardStore.getState();
+  const counts = store.subclassCountIndex?.[CardType.Subclass] || {};
+
+  return allNames.filter(name => (counts[name] || 0) > 0);
 }
 
 export function getDomainCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
   const aggregatedCustomFields = mergeCustomFields(tempBatchId, tempDefinitions);
   const customNames = aggregatedCustomFields.domains || [];
-  return [...new Set([...customNames])];
+  const allNames = [...new Set([...customNames])];
+
+  // Filter out subclasses with 0 cards
+  const { CardType } = require('./card-types');
+  const store = useUnifiedCardStore.getState();
+  const counts = store.subclassCountIndex?.[CardType.Domain] || {};
+
+  return allNames.filter(name => (counts[name] || 0) > 0);
 }
 
 // Variant type functions

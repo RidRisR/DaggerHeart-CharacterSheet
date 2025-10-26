@@ -83,6 +83,13 @@ export interface IntegrityReport {
   corruptedBatches: string[];
 }
 
+// Subclass count index for filtering empty subclasses in UI
+export interface SubclassCountIndex {
+  [cardType: string]: {
+    [subclass: string]: number;
+  };
+}
+
 export interface CleanupReport {
   removedKeys: string[];
   errors: string[];
@@ -134,6 +141,7 @@ export interface UnifiedCardState {
   // Aggregated cache (computed from batches)
   aggregatedCustomFields: CustomFieldNamesStore | null;
   aggregatedVariantTypes: VariantTypesForBatch | null;
+  subclassCountIndex: SubclassCountIndex | null;
   cacheValid: boolean;
 
   // System state
@@ -221,6 +229,7 @@ export interface UnifiedCardActions {
   _addCardToTypeMap: (card: ExtendedStandardCard) => void;
   _removeCardFromTypeMap: (card: ExtendedStandardCard) => void;
   _recomputeAggregations: () => void;
+  _rebuildSubclassIndex: () => void;
   _syncToLocalStorage: () => void;
   _loadAllCards: () => Promise<void>;
   _loadCustomCardsFromStorage: () => void;

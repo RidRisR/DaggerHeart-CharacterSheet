@@ -152,6 +152,9 @@ import type { SubClassCard } from '@/card/subclass-card/convert';
 import type { DomainCard } from '@/card/domain-card/convert';
 import { RawVariantCard } from "./variant-card/convert";
 
+// Re-export card types for external use
+export type { ProfessionCard, AncestryCard, CommunityCard, SubClassCard, DomainCard, RawVariantCard };
+
 // 变体类型定义接口（简化版）
 export interface VariantTypeDefinition {
   subclasses: string[];           // 允许的子类别列表

@@ -138,6 +138,9 @@ export interface BatchInfo {
   variantTypes?: VariantTypesForBatch;
   // 有本地图片的卡牌ID列表（用于批量删除时清理IndexedDB）
   imageCardIds?: string[];
+  // 图片统计信息
+  imageCount?: number;
+  totalImageSize?: number;
 }
 
 // Main store state

@@ -7,14 +7,14 @@ import { useState, useEffect, useMemo } from 'react'
 import { useCardEditorStore } from '../../store/card-editor-store'
 import type { CardPackageState, CurrentCardIndex } from '../../types'
 import type { StandardCard } from '@/card/card-types'
-import type { SubclassCard } from '@/card/subclass-card/convert'
+import type { SubClassCard } from '@/card/subclass-card/convert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 
 interface SubclassTriple {
-  card1: SubclassCard | null  // 基石
-  card2: SubclassCard | null  // 专精
-  card3: SubclassCard | null  // 大师
+  card1: SubClassCard | null  // 基石
+  card2: SubClassCard | null  // 专精
+  card3: SubClassCard | null  // 大师
   index1: number
   index2: number
   index3: number
@@ -37,7 +37,7 @@ export function SubclassEditorTab() {
     setDefinitionsDialog
   } = useCardEditorStore()
 
-  const cards = (packageData.subclass as SubclassCard[]) || []
+  const cards = (packageData.subclass as SubClassCard[]) || []
   
   // 将子职业卡组织成三卡组 - 仿照种族卡的简单做法
   const subclassTriples = useMemo(() => {
@@ -128,13 +128,13 @@ export function SubclassEditorTab() {
     addDefinition(categoryKey, keyword)
   }
   
-  const handleFormChange = (card1: SubclassCard, card2: SubclassCard, card3: SubclassCard) => {
+  const handleFormChange = (card1: SubClassCard, card2: SubClassCard, card3: SubClassCard) => {
     setPreviewCard1(transformCardToStandard(card1, 'subclass'))
     setPreviewCard2(transformCardToStandard(card2, 'subclass'))
     setPreviewCard3(transformCardToStandard(card3, 'subclass'))
   }
-  
-  const handleSave = (card1: SubclassCard, card2: SubclassCard, card3: SubclassCard) => {
+
+  const handleSave = (card1: SubClassCard, card2: SubClassCard, card3: SubClassCard) => {
     if (currentTriple) {
       // 确定实际的索引
       let index1 = currentTriple.index1
@@ -156,7 +156,7 @@ export function SubclassEditorTab() {
     }
   }
   
-  const handlePreview = (card: SubclassCard, level: '基石' | '专精' | '大师') => {
+  const handlePreview = (card: SubClassCard, level: '基石' | '专精' | '大师') => {
     const standardCard = transformCardToStandard(card, 'subclass')
     setPreviewDialogCard({ card: standardCard, level })
   }

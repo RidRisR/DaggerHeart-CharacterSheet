@@ -244,7 +244,7 @@ export function createImageServiceActions<T extends UnifiedCardState>(
 
         // Clear cache entries and revoke URLs
         set((state: any) => {
-          const newCache = new Map(state.imageService.cache);
+          const newCache = new Map<string, string>(state.imageService.cache);
           const newCacheOrder = [...state.imageService.cacheOrder];
           const newFailedImages = new Set(state.imageService.failedImages);
 

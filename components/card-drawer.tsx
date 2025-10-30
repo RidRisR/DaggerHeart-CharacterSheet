@@ -19,12 +19,18 @@ interface CardDrawerProps {
   isModalOpen?: boolean // 新增：是否有模态框打开
 }
 
-type TabType = "focused" | "profession" | "background" | "domain" | "variant" | "inventory"
+type MainDeckType = "focused" | "inventory"
+type TypeFilterType = "all" | "profession" | "background" | "domain" | "variant"
 
 export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onClose, onDeleteCard, onMoveCard, onAddCard, isModalOpen }: CardDrawerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const finalIsOpen = externalIsOpen !== undefined ? externalIsOpen : isOpen
+
+  // 新状态：主卡组选择 + 类型筛选
+  const [mainDeck, setMainDeck] = useState<MainDeckType>('focused')
+  const [typeFilter, setTypeFilter] = useState<TypeFilterType>('all')
+
   const handleClose = () => {
     setIsClosing(true)
     setHoveredCard(null) // 清除详情卡牌
@@ -37,30 +43,67 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
       }
     }, 300) // 匹配动画持续时间
   }
-  const [activeTab, setActiveTab] = useState<TabType>("focused")
+  // 移除旧的 activeTab 状态，已被 mainDeck 和 typeFilter 替代
   const [hoveredCard, setHoveredCard] = useState<StandardCard | null>(null)
   const [isMobile, setIsMobile] = useState(false)
 
-  // 卡牌分类
-  const [focusedCards, setFocusedCards] = useState<typeof cards>([])
-  const [professionCards, setProfessionCards] = useState<typeof cards>([])
-  const [backgroundCards, setBackgroundCards] = useState<typeof cards>([])
-  const [domainCards, setDomainCards] = useState<typeof cards>([])
-  const [variantCards, setVariantCards] = useState<typeof cards>([])
-  const [inventoryOnlyCards, setInventoryOnlyCards] = useState<typeof inventoryCards>([])
+  // 新逻辑：根据 mainDeck 和 typeFilter 获取卡牌
+  // 步骤1: 根据 mainDeck 获取源数据
+  const sourceCards = mainDeck === 'focused' ? cards : inventoryCards
 
-  // 更新卡牌分类
-  useEffect(() => {
-    const validCards = cards.filter((card) => card && card.name)
-    setProfessionCards(validCards.filter((card) => card.type === "profession" || card.type === "subclass"))
-    setBackgroundCards(validCards.filter((card) => card.type === "ancestry" || card.type === "community"))
-    setDomainCards(validCards.filter((card) => card.type === "domain"))
-    setVariantCards(validCards.filter((card) => isVariantCard(card)))
-    setFocusedCards(validCards) // 聚焦卡组为所有主卡组
+  // 步骤2: 过滤有效卡牌
+  const validCards = sourceCards.filter((card) => card && card.name)
 
-    const validInventoryCards = inventoryCards.filter((card) => card && card.name)
-    setInventoryOnlyCards(validInventoryCards)
-  }, [cards, inventoryCards])
+  // 步骤3: 根据 typeFilter 筛选卡牌
+  const getFilteredCards = () => {
+    if (typeFilter === 'all') {
+      return validCards
+    }
+
+    switch (typeFilter) {
+      case 'profession':
+        return validCards.filter((card) => card.type === "profession" || card.type === "subclass")
+      case 'background':
+        return validCards.filter((card) => card.type === "ancestry" || card.type === "community")
+      case 'domain':
+        return validCards.filter((card) => card.type === "domain")
+      case 'variant':
+        return validCards.filter((card) => isVariantCard(card))
+      default:
+        return validCards
+    }
+  }
+
+  const currentCards = getFilteredCards()
+
+  // 步骤4: 计算可用的筛选标签（只显示有卡牌的类型）
+  const availableFilters = [
+    { key: 'all' as const, label: '全部', count: validCards.length, alwaysShow: true },
+    {
+      key: 'profession' as const,
+      label: '职业',
+      count: validCards.filter(c => c.type === 'profession' || c.type === 'subclass').length,
+      show: validCards.some(c => c.type === 'profession' || c.type === 'subclass')
+    },
+    {
+      key: 'background' as const,
+      label: '背景',
+      count: validCards.filter(c => c.type === 'ancestry' || c.type === 'community').length,
+      show: validCards.some(c => c.type === 'ancestry' || c.type === 'community')
+    },
+    {
+      key: 'domain' as const,
+      label: '领域',
+      count: validCards.filter(c => c.type === 'domain').length,
+      show: validCards.some(c => c.type === 'domain')
+    },
+    {
+      key: 'variant' as const,
+      label: '扩展',
+      count: validCards.filter(c => isVariantCard(c)).length,
+      show: validCards.some(c => isVariantCard(c))
+    }
+  ].filter(f => f.alwaysShow || f.show)
 
   // 检测移动设备
   useEffect(() => {
@@ -88,34 +131,6 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
     }
   }, [isModalOpen])
 
-  // 获取当前标签页的卡牌
-  const getCurrentCards = () => {
-    switch (activeTab) {
-      case "focused": return focusedCards
-      case "profession": return professionCards
-      case "background": return backgroundCards
-      case "domain": return domainCards
-      case "variant": return variantCards
-      case "inventory": return inventoryOnlyCards
-      default: return []
-    }
-  }
-
-  // 计算标签页卡牌数量
-  const getTabCount = (tab: TabType) => {
-    switch (tab) {
-      case "focused": return focusedCards.length
-      case "profession": return professionCards.length
-      case "background": return backgroundCards.length
-      case "domain": return domainCards.length
-      case "variant": return variantCards.length
-      case "inventory": return inventoryOnlyCards.length
-      default: return 0
-    }
-  }
-
-  const currentCards = getCurrentCards()
-
   // 当卡牌列表更新时，检查 hoveredCard 是否仍然有效
   useEffect(() => {
     if (hoveredCard) {
@@ -130,15 +145,13 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
     }
   }, [cards, inventoryCards, hoveredCard, currentCards])
 
-  // 标签页配置
-  const tabs = [
-    { key: "focused" as const, label: "聚焦", count: getTabCount("focused") },
-    { key: "profession" as const, label: "职业", count: getTabCount("profession") },
-    { key: "background" as const, label: "背景", count: getTabCount("background") },
-    { key: "domain" as const, label: "领域", count: getTabCount("domain") },
-    { key: "variant" as const, label: "扩展", count: getTabCount("variant") },
-    { key: "inventory" as const, label: "库存", count: getTabCount("inventory") },
-  ]
+  // 当切换主卡组时，检查当前 typeFilter 是否仍然有效
+  useEffect(() => {
+    const filterStillValid = availableFilters.some(f => f.key === typeFilter)
+    if (!filterStillValid) {
+      setTypeFilter('all') // 如果当前筛选不可用，切换到"全部"
+    }
+  }, [mainDeck, availableFilters, typeFilter])
 
 
   const handleCardHover = (card: StandardCard | null) => {
@@ -166,12 +179,12 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
 
   // 处理添加卡牌点击
   const handleAddCardClick = () => {
-    const isInventoryTab = activeTab === "inventory";
-    const targetCards = isInventoryTab ? inventoryCards : cards;
-    const nextEmptyIndex = getNextEmptySlot(targetCards, isInventoryTab);
+    const isInventory = mainDeck === 'inventory';
+    const targetCards = isInventory ? inventoryCards : cards;
+    const nextEmptyIndex = getNextEmptySlot(targetCards, isInventory);
 
     if (onAddCard) {
-      onAddCard(nextEmptyIndex, isInventoryTab);
+      onAddCard(nextEmptyIndex, isInventory);
     }
   }
 
@@ -194,58 +207,84 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
               }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 顶部拖拽手柄 */}
-            <div className="flex items-center justify-center py-2 border-b border-gray-200">
-              <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
-            </div>
+            {/* 新导航：单行布局 - 主卡组固定 + 筛选滚动（移除拖拽手柄，增大按钮） */}
+            <div className="flex items-center border-b border-gray-200 flex-shrink-0">
+              {/* 左侧：固定的主卡组选择（不滚动） */}
+              <div className="flex-shrink-0 flex gap-3 px-4 py-3 border-r border-gray-200">
+                <button
+                  onClick={() => setMainDeck('focused')}
+                  className={`
+                    flex-shrink-0 rounded-lg font-bold transition-all duration-200 transform active:scale-95
+                    ${isMobile ? 'px-6 py-3 text-lg' : 'px-5 py-2.5 text-base'}
+                    ${mainDeck === 'focused'
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }
+                  `}
+                >
+                  {isMobile ? '聚焦' : '聚焦卡组'}
+                  <Badge variant="secondary" className="ml-2">
+                    {cards.filter(c => c && c.name).length}
+                  </Badge>
+                </button>
 
-            {/* 标签页导航 */}
-            <div className="px-4 py-1.5 border-b border-gray-200 flex-shrink-0">
-              <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`flex-shrink-0 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 ${
-                      isMobile ? 'px-4 py-2 text-base' : 'px-3 py-1.5 text-sm'
-                    } ${activeTab === tab.key
-                      ? "bg-blue-500 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
-                      }`}
-                  >
-                    {tab.label}
-                    {tab.count > 0 && (
-                      <Badge variant="secondary" className="ml-1.5 text-xs animate-in fade-in duration-300">
-                        {tab.count}
-                      </Badge>
-                    )}
-                  </button>
-                ))}
+                <button
+                  onClick={() => setMainDeck('inventory')}
+                  className={`
+                    flex-shrink-0 rounded-lg font-bold transition-all duration-200 transform active:scale-95
+                    ${isMobile ? 'px-6 py-3 text-lg' : 'px-5 py-2.5 text-base'}
+                    ${mainDeck === 'inventory'
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }
+                  `}
+                >
+                  {isMobile ? '库存' : '库存卡组'}
+                  <Badge variant="secondary" className="ml-2">
+                    {inventoryCards.filter(c => c && c.name).length}
+                  </Badge>
+                </button>
+              </div>
+
+              {/* 右侧：可滚动的类型筛选标签 */}
+              <div className="flex-1 overflow-x-auto px-4 py-3 scrollbar-thin scrollbar-thumb-gray-300">
+                <div className="flex gap-2">
+                  {availableFilters.map((filter) => (
+                    <button
+                      key={filter.key}
+                      onClick={() => setTypeFilter(filter.key)}
+                      className={`
+                        flex-shrink-0 rounded-full font-medium transition-all duration-200 transform hover:scale-105 active:scale-95
+                        ${isMobile ? 'px-5 py-2.5 text-base' : 'px-4 py-2 text-sm'}
+                        ${typeFilter === filter.key
+                          ? 'bg-blue-100 text-blue-700 border-2 border-blue-400'
+                          : 'bg-gray-50 text-gray-600 border border-gray-300 hover:bg-gray-100'
+                        }
+                      `}
+                    >
+                      {filter.label}
+                      {filter.count > 0 && (
+                        <span className="ml-1.5 opacity-75">({filter.count})</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* 卡牌展示区 */}
             <div className="flex-1 overflow-hidden min-h-0">
-              {/* 对于非聚焦和非库存tab，当无卡牌时显示空状态 */}
-              {currentCards.length === 0 && activeTab !== "focused" && activeTab !== "inventory" ? (
-                <div className="flex items-center justify-center h-full text-gray-500 animate-in fade-in duration-500">
-                  <div className="text-center">
-                    <div className="text-2xl mb-2 animate-bounce">📭</div>
-                    <div>暂无卡牌</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="h-full overflow-x-auto overflow-y-hidden px-4 py-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                  <div className="flex gap-3 h-full items-start animate-in slide-in-from-right duration-300" style={{ touchAction: 'pan-x' }}>
-                    {currentCards.map((card, index) => {
-                      // 找到卡牌在原数组中的真实索引
-                      const isInventoryTab = activeTab === "inventory"
-                      const realIndex = isInventoryTab
-                        ? inventoryCards.findIndex(c => c === card)
-                        : cards.findIndex(c => c === card)
+              <div className="h-full overflow-x-auto overflow-y-hidden px-4 py-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <div className="flex gap-3 h-full items-start animate-in slide-in-from-right duration-300" style={{ touchAction: 'pan-x' }}>
+                  {currentCards.map((card, index) => {
+                    // 找到卡牌在原数组中的真实索引
+                    const isInventory = mainDeck === 'inventory'
+                    const realIndex = isInventory
+                      ? inventoryCards.findIndex(c => c === card)
+                      : cards.findIndex(c => c === card)
                       
-                      // 检查是否是特殊卡位（聚焦卡组的前5个位置）
-                      const isSpecialSlot = !isInventoryTab && realIndex < 5
+                    // 检查是否是特殊卡位（聚焦卡组的前5个位置）
+                    const isSpecialSlot = !isInventory && realIndex < 5
 
                       return (
                         <div
@@ -265,9 +304,9 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
                                 }`}
                               onClick={(e) => {
                                 e.stopPropagation()
-                                onMoveCard(realIndex, isInventoryTab, !isInventoryTab)
+                                onMoveCard(realIndex, isInventory, !isInventory)
                               }}
-                              title={isInventoryTab ? "移动到聚焦卡组" : "移动到库存卡组"}
+                              title={isInventory ? "移动到聚焦卡组" : "移动到库存卡组"}
                             >
                               ⇄
                             </button>
@@ -279,7 +318,7 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
                                 }`}
                               onClick={(e) => {
                                 e.stopPropagation()
-                                onDeleteCard(realIndex, isInventoryTab)
+                                onDeleteCard(realIndex, isInventory)
                               }}
                               title="删除卡牌"
                             >
@@ -306,20 +345,19 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
                       )
                     })}
 
-                    {/* 添加卡牌占位符 - 只在聚焦和库存tab显示 */}
-                    {onAddCard && (activeTab === "focused" || activeTab === "inventory") && (
+                    {/* 添加卡牌占位符 */}
+                    {onAddCard && (
                       <AddCardPlaceholder
                         onClick={handleAddCardClick}
                         disabled={getNextEmptySlot(
-                          activeTab === "inventory" ? inventoryCards : cards,
-                          activeTab === "inventory"
+                          mainDeck === 'inventory' ? inventoryCards : cards,
+                          mainDeck === 'inventory'
                         ) === -1}
                         isMobile={isMobile}
                       />
                     )}
                   </div>
                 </div>
-              )}
             </div>
           </div>
         </div>

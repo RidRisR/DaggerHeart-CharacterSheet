@@ -5,8 +5,10 @@ import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-ranger-companion"
 import CharacterSheetPageAdventureNotes from "@/components/character-sheet-page-adventure-notes"
-import { isEmptyCard } from "@/card/card-types"
+import { isEmptyCard, type StandardCard } from "@/card/card-types"
 import { CardDrawer } from "@/components/card-drawer"
+import { showFadeNotification } from "@/components/ui/fade-notification"
+import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { CharacterSheetPageFour, CharacterSheetPageFive } from "@/components/character-sheet-page-card-print"
 import ArmorTemplatePage from "@/components/character-sheet-page-iknis"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
@@ -163,7 +165,7 @@ export default function Home() {
   // 钉住卡牌状态
   const { pinnedCards } = usePinnedCardsStore();
   // 卡牌操作方法
-  const { deleteCard, moveCard } = useCardActions();
+  const { deleteCard, moveCard, updateCard } = useCardActions();
   // 文字模式状态
   const { isTextMode, toggleTextMode } = useTextModeStore();
   // 双页模式状态
@@ -189,6 +191,17 @@ export default function Home() {
   const [currentTabValue, setCurrentTabValue] = useState("page1")
   const [showShortcutHint, setShowShortcutHint] = useState(false)
   const [isCardDrawerOpen, setIsCardDrawerOpen] = useState(false)
+
+  // 添加卡牌相关状态
+  const [pendingCardIndex, setPendingCardIndex] = useState<number | null>(null)
+  const [pendingCardIsInventory, setPendingCardIsInventory] = useState<boolean>(false)
+  const [cardSelectionModalOpen, setCardSelectionModalOpen] = useState(false)
+
+  // CardSelectionModal 的筛选状态
+  const [cardModalActiveTab, setCardModalActiveTab] = useState<string>("")
+  const [cardModalSearchTerm, setCardModalSearchTerm] = useState<string>("")
+  const [cardModalSelectedClasses, setCardModalSelectedClasses] = useState<string[]>([])
+  const [cardModalSelectedLevels, setCardModalSelectedLevels] = useState<string[]>([])
   
   // 使用角色管理Hook
   const {
@@ -576,6 +589,34 @@ export default function Home() {
     )
   }
 
+  // 处理添加卡牌
+  const handleAddCard = (index: number, isInventory: boolean) => {
+    if (index === -1) {
+      showFadeNotification({
+        message: "卡组已满，无法添加更多卡牌",
+        type: "error"
+      });
+      return;
+    }
+    setPendingCardIndex(index);
+    setPendingCardIsInventory(isInventory);
+    setCardSelectionModalOpen(true);
+  }
+
+  // 处理卡牌选择
+  const handleCardSelect = (card: StandardCard) => {
+    if (pendingCardIndex !== null) {
+      updateCard(pendingCardIndex, card, pendingCardIsInventory);
+      setCardSelectionModalOpen(false);
+      setPendingCardIndex(null);
+      setPendingCardIsInventory(false);
+      showFadeNotification({
+        message: `卡牌已添加到${pendingCardIsInventory ? '库存' : '聚焦'}卡组`,
+        type: "success"
+      });
+    }
+  }
+
   return (
     <main className={`min-w-0 w-full max-w-full mx-auto px-0 container ${isMobile ? 'pb-32' : 'pb-20'
       }`}>
@@ -589,6 +630,7 @@ export default function Home() {
           onClose={() => setIsCardDrawerOpen(false)}
           onDeleteCard={deleteCard}
           onMoveCard={moveCard}
+          onAddCard={handleAddCard}
         />
       </div>
 
@@ -806,6 +848,28 @@ export default function Home() {
         onDuplicateCharacter={duplicateCharacterHandler}
         onRenameCharacter={renameCharacterHandler}
       />
+
+      {/* 添加卡牌选择模态框 */}
+      {pendingCardIndex !== null && (
+        <CardSelectionModal
+          isOpen={cardSelectionModalOpen}
+          onClose={() => {
+            setCardSelectionModalOpen(false);
+            setPendingCardIndex(null);
+            setPendingCardIsInventory(false);
+          }}
+          onSelect={handleCardSelect}
+          selectedCardIndex={pendingCardIndex}
+          activeTab={cardModalActiveTab}
+          setActiveTab={setCardModalActiveTab}
+          searchTerm={cardModalSearchTerm}
+          setSearchTerm={setCardModalSearchTerm}
+          selectedClasses={cardModalSelectedClasses}
+          setSelectedClasses={setCardModalSelectedClasses}
+          selectedLevels={cardModalSelectedLevels}
+          setSelectedLevels={setCardModalSelectedLevels}
+        />
+      )}
 
       {/* 骰子导出模态框 */}
       <SealDiceExportModal

@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
-import { StandardCard } from "@/card/card-types"
+import { StandardCard, isEmptyCard } from "@/card/card-types"
 import { ImageCard } from "@/components/ui/image-card"
 import { SimpleImageCard } from "@/components/ui/simple-image-card"
+import { AddCardPlaceholder } from "@/components/ui/add-card-placeholder"
 import { isVariantCard } from "@/card/card-types"
 
 interface CardDrawerProps {
@@ -14,11 +15,12 @@ interface CardDrawerProps {
   onClose?: () => void
   onDeleteCard?: (cardIndex: number, isInventory: boolean) => void
   onMoveCard?: (cardIndex: number, fromInventory: boolean, toInventory: boolean) => void
+  onAddCard?: (index: number, isInventory: boolean) => void
 }
 
 type TabType = "focused" | "profession" | "background" | "domain" | "variant" | "inventory"
 
-export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onClose, onDeleteCard, onMoveCard }: CardDrawerProps) {
+export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onClose, onDeleteCard, onMoveCard, onAddCard }: CardDrawerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const finalIsOpen = externalIsOpen !== undefined ? externalIsOpen : isOpen
@@ -129,6 +131,28 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
     }
   }
 
+  // 计算下一个空位的 index
+  const getNextEmptySlot = (cardsList: StandardCard[], isInventoryTab: boolean): number => {
+    const startIndex = isInventoryTab ? 0 : 5; // 聚焦卡组从第6个开始（跳过特殊卡位），库存从第1个开始
+    for (let i = startIndex; i < 20; i++) {
+      if (isEmptyCard(cardsList[i])) {
+        return i;
+      }
+    }
+    return -1; // 没有空位
+  }
+
+  // 处理添加卡牌点击
+  const handleAddCardClick = () => {
+    const isInventoryTab = activeTab === "inventory";
+    const targetCards = isInventoryTab ? inventoryCards : cards;
+    const nextEmptyIndex = getNextEmptySlot(targetCards, isInventoryTab);
+
+    if (onAddCard) {
+      onAddCard(nextEmptyIndex, isInventoryTab);
+    }
+  }
+
   return (
     <>
 
@@ -180,7 +204,8 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
 
             {/* 卡牌展示区 */}
             <div className="flex-1 overflow-hidden min-h-0">
-              {currentCards.length === 0 ? (
+              {/* 对于非聚焦和非库存tab，当无卡牌时显示空状态 */}
+              {currentCards.length === 0 && activeTab !== "focused" && activeTab !== "inventory" ? (
                 <div className="flex items-center justify-center h-full text-gray-500 animate-in fade-in duration-500">
                   <div className="text-center">
                     <div className="text-2xl mb-2 animate-bounce">📭</div>
@@ -258,6 +283,18 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
                         </div>
                       )
                     })}
+
+                    {/* 添加卡牌占位符 - 只在聚焦和库存tab显示 */}
+                    {onAddCard && (activeTab === "focused" || activeTab === "inventory") && (
+                      <AddCardPlaceholder
+                        onClick={handleAddCardClick}
+                        disabled={getNextEmptySlot(
+                          activeTab === "inventory" ? inventoryCards : cards,
+                          activeTab === "inventory"
+                        ) === -1}
+                        isMobile={isMobile}
+                      />
+                    )}
                   </div>
                 </div>
               )}

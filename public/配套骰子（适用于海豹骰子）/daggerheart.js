@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Daggerheart二元骰
 // @author       RidRisR
-// @version      2.1.0
+// @version      2.2.0
 // @description  Daggerheart风格的二元骰系统，支持复杂修饰符语法和完整角色管理
 // @timestamp    1735802400
 // @diceRequireVer 1.2.0
@@ -20,15 +20,18 @@ const CONFIG = {
   // 示例：'希望+1' 或 '希望+1 ({currentHope}/{maxHope})' 或 '希望增加至{currentHope}点'
   messages: {
     // 二元骰结果文案（系统会随机选择一条）
+    // 大成功文案
     criticalSuccess: [
       '关键成功！希望之光闪耀，内心的重负得以释放！',
       '奇迹时刻！命运的眷顾让你重燃希望，卸下心头重担！'
     ],
+    // 希望结果文案
     hopeWins: [
       '希望战胜了恐惧！光明指引着前路。',
       '勇气驱散了阴霾，希望之光照亮道路！',
       '内心的光芒战胜了黑暗，前进的道路清晰可见！'
     ],
+    //恐惧结果文案
     fearWins: [
       '恐惧笼罩了希望...阴霾降临。',
       '黑暗的阴影遮蔽了光明，困难重重...',
@@ -90,6 +93,45 @@ const CONFIG = {
       insufficient: '{helperName} 希望不足，无法提供帮助',
       summary: '获得{count}个帮助优势',
       selfHelp: '无法帮助自己进行检定'
+    },
+
+    // 烹饪游戏文案
+    cook: {
+      gameStart: '【烹饪开始！】',
+      rollResults: '出目：',
+      pairingResults: '【第{round}轮】',
+      pairSuccess: '✓ 配对成功：{count}组',
+      pairDetail: '  • ({value}, {value}) → +{score}分',
+      unpaired: '✗ 未配对：{count}颗',
+      currentScore: '当前风味：{score}分',
+      cumulativeScore: '当前风味：{score}分（累计）',
+      separator: '-----------------',
+      removeHint: '使用 .cook rm [骰面] 移除骰子继续',
+      removableHint: '可移除：{faces}',
+      removed: '已移除：{dice}',
+      rerollCount: '剩余{count}颗骰子重新投掷：',
+      gameComplete: {
+        low: [
+          '感觉分量有点少...',
+          '嗯...很独特的味道...',
+          '不管结果怎样，辛苦了...'
+        ],
+        mid: [
+          '🎉 大餐完成了！',
+          '🎉 佳肴出炉！',
+          '🎉 烹饪大功告成！'
+        ],
+        high: [
+          '🌟 杰作！这简直是艺术品！',
+          '🌟 完美的料理！太棒了！',
+          '🌟 真是美味！堪称大师之作！'
+        ]
+      },
+      finalScore: '最终风味：{score}分',
+      pairFailed: '✗ 配对失败,骰子已用尽',
+      errorFormat: '❌ 参数格式错误\n正确格式：\n  • .cook [ndm]+[ndm]+... - 开始新游戏\n  • .cook [dm]+[dm]+... - dm视为1dm\n  • .cook rm [骰面] - 移除骰子\n\n示例：\n  • .cook 3d6+6d2\n  • .cook d6+d2\n  • .cook rm 6',
+      errorNoGame: '❌ 当前群组没有进行中的烹饪游戏\n请先使用 .cook [ndm]+... 开始游戏',
+      errorInvalidFace: '❌ 未配对的骰子中没有 d{face}\n可移除的骰面：{available}'
     }
   },
 
@@ -238,6 +280,13 @@ const GM_FEAR_CONFIG = {
   defaultFear: 0,
   storageKeys: {
     gmUser: (groupId) => `gm:${groupId}`
+  }
+};
+
+// 烹饪游戏配置
+const COOK_GAME_CONFIG = {
+  storageKeys: {
+    cookGame: (groupId) => `cook:${groupId}`
   }
 };
 
@@ -1038,6 +1087,177 @@ class HopeChangeTracker {
 }
 
 // ==========================================
+// 烹饪游戏工具函数 - Cook game utilities
+// ==========================================
+
+/**
+ * 解析烹饪游戏命令参数
+ * @param {Object} cmdArgs - 命令参数对象
+ * @returns {Object} 解析结果 {type: 'start'|'remove', diceList: [...], face: number}
+ */
+function parseCookArgs(cmdArgs) {
+  const rawArgs = cmdArgs.rawArgs || '';
+  const trimmed = rawArgs.trim();
+
+  // 空参数直接返回错误
+  if (!trimmed) {
+    return { type: 'invalid' };
+  }
+
+  // 检测是否是 rm 命令 (支持 "rm 6" 或 "rm6")
+  if (/^rm\s*\d+$/i.test(trimmed)) {
+    const match = trimmed.match(/^rm\s*(\d+)$/i);
+    return {
+      type: 'remove',
+      face: parseInt(match[1], 10)
+    };
+  }
+
+  // 验证整个字符串格式：只能包含骰子规格、+号、空格
+  // 允许格式：ndm 或 dm，使用 + 或空格分隔
+  const validFormatPattern = /^(\d*d\d+)(\s*[+\s]\s*\d*d\d+)*$/i;
+  if (!validFormatPattern.test(trimmed)) {
+    return { type: 'invalid' };
+  }
+
+  // 解析骰子规格 如 3d6+6d2 或 3d6 6d2 或 d6（视为1d6）
+  const dicePattern = /(\d*)d(\d+)/gi;
+  const matches = [...trimmed.matchAll(dicePattern)];
+
+  if (matches.length === 0) {
+    return { type: 'invalid' };
+  }
+
+  const diceList = matches.map(match => ({
+    count: match[1] === '' ? 1 : parseInt(match[1], 10), // 如果没有数字前缀，默认为1
+    face: parseInt(match[2], 10)
+  }));
+
+  return {
+    type: 'start',
+    diceList
+  };
+}
+
+/**
+ * 投掷多个骰子
+ * @param {Array} diceList - 骰子列表 [{count, face}, ...]
+ * @returns {Array} 投掷结果 [{face, value}, ...]
+ */
+function rollMultipleDice(diceList) {
+  const results = [];
+
+  for (const spec of diceList) {
+    for (let i = 0; i < spec.count; i++) {
+      const value = Math.floor(Math.random() * spec.face) + 1;
+      results.push({
+        face: spec.face,
+        value: value
+      });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * 配对骰子 - 相同点数的骰子两两配对，尽可能多配对
+ * @param {Array} dice - 骰子数组 [{face, value}, ...]
+ * @returns {Object} {pairs: [{value, score}], unpaired: [{face, value}]}
+ */
+function pairDiceByValue(dice) {
+  // 按点数分组
+  const groups = {};
+  for (const die of dice) {
+    if (!groups[die.value]) {
+      groups[die.value] = [];
+    }
+    groups[die.value].push(die);
+  }
+
+  const pairs = [];
+  const unpaired = [];
+
+  // 对每组尽可能多配对
+  for (const [value, group] of Object.entries(groups)) {
+    const pairCount = Math.floor(group.length / 2);
+    const numValue = parseInt(value, 10);
+
+    // 添加配对
+    for (let i = 0; i < pairCount; i++) {
+      pairs.push({
+        value: numValue,
+        score: numValue
+      });
+    }
+
+    // 剩余的进入未配对
+    if (group.length % 2 === 1) {
+      unpaired.push(group[group.length - 1]);
+    }
+  }
+
+  return { pairs, unpaired };
+}
+
+/**
+ * 格式化骰子显示
+ * @param {Object} die - 骰子对象 {face, value}
+ * @returns {string} 格式化字符串 [d6:5]
+ */
+function formatDie(die) {
+  return `[d${die.face}:${die.value}]`;
+}
+
+/**
+ * 格式化骰子列表显示
+ * @param {Array} dice - 骰子数组
+ * @returns {string} 格式化字符串
+ */
+function formatDiceList(dice) {
+  return dice.map(formatDie).join(' ');
+}
+
+/**
+ * 格式化骰子规格显示
+ * @param {Array} diceList - 骰子规格列表 [{count, face}, ...]
+ * @returns {string} 格式化字符串 3d6 + 6d2
+ */
+function formatDiceSpec(diceList) {
+  return diceList.map(spec => `${spec.count}d${spec.face}`).join(' + ');
+}
+
+/**
+ * 获取未配对骰子的所有骰面（去重）
+ * @param {Array} unpaired - 未配对骰子数组
+ * @returns {Array} 骰面数组 [6, 2]
+ */
+function getAvailableFaces(unpaired) {
+  const faces = new Set();
+  for (const die of unpaired) {
+    faces.add(die.face);
+  }
+  return Array.from(faces).sort((a, b) => b - a);
+}
+
+/**
+ * 根据得分选择合适的结束文案
+ * @param {number} score - 最终得分
+ * @returns {string} 随机选择的结束文案
+ */
+function getCookCompleteMessage(score) {
+  let messages;
+  if (score < 4) {
+    messages = CONFIG.messages.cook.gameComplete.low;
+  } else if (score <= 10) {
+    messages = CONFIG.messages.cook.gameComplete.mid;
+  } else {
+    messages = CONFIG.messages.cook.gameComplete.high;
+  }
+  return getRandomMessage(messages);
+}
+
+// ==========================================
 // 核心类定义区 - Business logic encapsulation
 // ==========================================
 
@@ -1169,6 +1389,49 @@ class GMManager {
     daggerheartExt.storageSet(key, '');
 
     return gmUserId;
+  }
+}
+
+/**
+ * 烹饪游戏存储管理类
+ */
+class CookGameStorage {
+  /**
+   * 保存游戏状态
+   * @param {string} groupId - 群组ID
+   * @param {Object} gameState - 游戏状态 {unpaired: [...], totalScore: number, round: number}
+   */
+  static save(groupId, gameState) {
+    const key = COOK_GAME_CONFIG.storageKeys.cookGame(groupId);
+    daggerheartExt.storageSet(key, JSON.stringify(gameState));
+  }
+
+  /**
+   * 加载游戏状态
+   * @param {string} groupId - 群组ID
+   * @returns {Object|null} 游戏状态，不存在时返回null
+   */
+  static load(groupId) {
+    const key = COOK_GAME_CONFIG.storageKeys.cookGame(groupId);
+    const data = daggerheartExt.storageGet(key);
+    if (!data) {
+      return null;
+    }
+    try {
+      return JSON.parse(data);
+    } catch (error) {
+      console.log(`解析烹饪游戏状态失败：${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * 清理游戏状态
+   * @param {string} groupId - 群组ID
+   */
+  static clear(groupId) {
+    const key = COOK_GAME_CONFIG.storageKeys.cookGame(groupId);
+    daggerheartExt.storageSet(key, '');
   }
 }
 
@@ -1410,20 +1673,20 @@ class DualityDiceLogic {
 
     // 处理匿名经历修饰符（需要消耗希望）
     const anonymousExperiences = parsedCommand.modifiers.filter(m => m.type === 'anonymousExperience');
-    
+
     for (const anonExp of anonymousExperiences) {
       // 检查是否还有希望值可用（考虑已记录的消耗）
       const alreadyConsumed = hopeTracker ? hopeTracker.components.filter(c => c.type === 'consume').length : 0;
       const [currentHope] = seal.vars.intGet(ctx, '希望');
-      
+
       if (currentHope - alreadyConsumed > 0) {
         // 有希望值，使用匿名经历
         if (hopeTracker) {
           hopeTracker.addComponent('consume', 1, '经历');
         }
-        
+
         modifierTotal += anonExp.value;
-        
+
         const sign = anonExp.value >= 0 ? '+' : '-';
         const detailText = `${sign}经历[${Math.abs(anonExp.value)}]`;
         modifierDetails.push(detailText);
@@ -1466,7 +1729,7 @@ class DualityDiceLogic {
           }
         }
       } else {
-      // 其他属性正常使用 intGet
+        // 其他属性正常使用 intGet
         const [attrValue, hasAttr] = seal.vars.intGet(ctx, attr.name);
         actualValue = hasAttr ? attrValue : 0;
       }
@@ -2086,6 +2349,221 @@ const commandHandlers = {
     } catch (error) {
       return ErrorHandler.handle(error, ctx, msg);
     }
+  },
+
+  /**
+   * 烹饪游戏命令处理器
+   * @param {Object} ctx - SealDice上下文
+   * @param {Object} msg - 消息对象
+   * @param {Object} cmdArgs - 命令参数
+   * @returns {Object} 命令执行结果
+   */
+  cookDice: (ctx, msg, cmdArgs) => {
+    try {
+      const groupId = ctx.group.groupId;
+      const parsed = parseCookArgs(cmdArgs);
+
+      // 参数格式错误
+      if (parsed.type === 'invalid') {
+        seal.replyToSender(ctx, msg, CONFIG.messages.cook.errorFormat);
+        return seal.ext.newCmdExecuteResult(true);
+      }
+
+      // 开始新游戏
+      if (parsed.type === 'start') {
+        // 投掷所有骰子
+        const allDice = rollMultipleDice(parsed.diceList);
+
+        // 配对
+        const { pairs, unpaired } = pairDiceByValue(allDice);
+
+        // 计算得分
+        const roundScore = pairs.reduce((sum, pair) => sum + pair.score, 0);
+
+        // 构建输出
+        let output = CONFIG.messages.cook.gameStart + '\n';
+        output += CONFIG.messages.cook.rollResults + '\n';
+        output += formatDiceList(allDice) + '\n';
+        output += CONFIG.messages.cook.separator + '\n';
+        output += CONFIG.messages.cook.pairingResults.replace('{round}', '1') + '\n';
+
+        if (pairs.length > 0) {
+          output += CONFIG.messages.cook.pairSuccess.replace('{count}', pairs.length) + '\n';
+          for (const pair of pairs) {
+            output += CONFIG.messages.cook.pairDetail
+              .replace(/{value}/g, pair.value)
+              .replace('{score}', pair.score) + '\n';
+          }
+          output += '\n';
+        }
+
+        // 检查游戏是否结束
+        if (unpaired.length <= 2) {
+          // 游戏结束
+          let finalScore = roundScore;
+
+          if (unpaired.length === 2) {
+            // 尝试配对最后两个骰子
+            if (unpaired[0].value === unpaired[1].value) {
+              output += CONFIG.messages.cook.pairSuccess.replace('{count}', '1') + ' (最后一组)\n';
+              output += CONFIG.messages.cook.pairDetail
+                .replace(/{value}/g, unpaired[0].value)
+                .replace('{score}', unpaired[0].value) + '\n';
+              finalScore += unpaired[0].value;
+            } else {
+              output += CONFIG.messages.cook.pairFailed + '\n\n';
+            }
+          }
+
+          output += CONFIG.messages.cook.separator + '\n';
+          output += CONFIG.messages.cook.finalScore.replace('{score}', finalScore) + '\n';
+          output += getCookCompleteMessage(finalScore);
+
+          // 清理存储
+          CookGameStorage.clear(groupId);
+        } else {
+          // 游戏继续
+          output += CONFIG.messages.cook.unpaired.replace('{count}', unpaired.length) + '\n';
+          output += formatDiceList(unpaired) + '\n\n';
+          output += CONFIG.messages.cook.currentScore.replace('{score}', roundScore) + '\n';
+          output += CONFIG.messages.cook.separator + '\n';
+          output += CONFIG.messages.cook.removeHint + '\n';
+
+          const availableFaces = getAvailableFaces(unpaired);
+          output += CONFIG.messages.cook.removableHint.replace('{faces}', availableFaces.map(f => `d${f}`).join(', '));
+
+          // 保存游戏状态
+          CookGameStorage.save(groupId, {
+            unpaired: unpaired,
+            totalScore: roundScore,
+            round: 1
+          });
+        }
+
+        seal.replyToSender(ctx, msg, output);
+        return seal.ext.newCmdExecuteResult(true);
+      }
+
+      // 移除骰子
+      if (parsed.type === 'remove') {
+        // 加载游戏状态
+        const gameState = CookGameStorage.load(groupId);
+
+        if (!gameState) {
+          seal.replyToSender(ctx, msg, CONFIG.messages.cook.errorNoGame);
+          return seal.ext.newCmdExecuteResult(true);
+        }
+
+        // 检查要移除的骰面是否存在
+        const availableFaces = getAvailableFaces(gameState.unpaired);
+        if (!availableFaces.includes(parsed.face)) {
+          const errorMsg = CONFIG.messages.cook.errorInvalidFace
+            .replace('{face}', parsed.face)
+            .replace('{available}', availableFaces.map(f => `d${f}`).join(', '));
+          seal.replyToSender(ctx, msg, errorMsg);
+          return seal.ext.newCmdExecuteResult(true);
+        }
+
+        // 移除一个指定面的骰子
+        const removeIndex = gameState.unpaired.findIndex(die => die.face === parsed.face);
+        const removedDie = gameState.unpaired[removeIndex];
+        gameState.unpaired.splice(removeIndex, 1);
+
+        // 构建输出
+        let output = CONFIG.messages.cook.removed.replace('{dice}', formatDie(removedDie)) + '\n';
+
+        // 重新投掷剩余骰子
+        if (gameState.unpaired.length > 0) {
+          output += CONFIG.messages.cook.rerollCount.replace('{count}', gameState.unpaired.length) + '\n';
+
+          // 重新投掷
+          const diceSpecs = [];
+          for (const die of gameState.unpaired) {
+            diceSpecs.push({ count: 1, face: die.face });
+          }
+          const rerolledDice = rollMultipleDice(diceSpecs);
+
+          output += formatDiceList(rerolledDice) + '\n';
+          output += CONFIG.messages.cook.separator + '\n';
+
+          // 配对
+          const { pairs, unpaired } = pairDiceByValue(rerolledDice);
+          const roundScore = pairs.reduce((sum, pair) => sum + pair.score, 0);
+          const newTotalScore = gameState.totalScore + roundScore;
+
+          gameState.round++;
+          output += CONFIG.messages.cook.pairingResults.replace('{round}', gameState.round) + '\n';
+
+          if (pairs.length > 0) {
+            output += CONFIG.messages.cook.pairSuccess.replace('{count}', pairs.length) + '\n';
+            for (const pair of pairs) {
+              output += CONFIG.messages.cook.pairDetail
+                .replace(/{value}/g, pair.value)
+                .replace('{score}', pair.score) + '\n';
+            }
+            output += '\n';
+          }
+
+          // 检查游戏是否结束
+          if (unpaired.length <= 2) {
+            // 游戏结束
+            let finalScore = newTotalScore;
+
+            if (unpaired.length === 2) {
+              // 尝试配对最后两个骰子
+              if (unpaired[0].value === unpaired[1].value) {
+                output += CONFIG.messages.cook.pairSuccess.replace('{count}', '1') + ' (最后一组)\n';
+                output += CONFIG.messages.cook.pairDetail
+                  .replace(/{value}/g, unpaired[0].value)
+                  .replace('{score}', unpaired[0].value) + '\n';
+                finalScore += unpaired[0].value;
+              } else {
+                output += CONFIG.messages.cook.pairFailed + '\n';
+              }
+            }
+
+            output += CONFIG.messages.cook.separator + '\n';
+            output += CONFIG.messages.cook.finalScore.replace('{score}', finalScore) + '\n';
+            output += getCookCompleteMessage(finalScore);
+
+            // 清理存储
+            CookGameStorage.clear(groupId);
+          } else {
+            // 游戏继续
+            output += CONFIG.messages.cook.unpaired.replace('{count}', unpaired.length) + '\n';
+            output += formatDiceList(unpaired) + '\n\n';
+            output += CONFIG.messages.cook.cumulativeScore.replace('{score}', newTotalScore) + '\n';
+            output += CONFIG.messages.cook.separator + '\n';
+            output += CONFIG.messages.cook.removeHint + '\n';
+
+            const newAvailableFaces = getAvailableFaces(unpaired);
+            output += CONFIG.messages.cook.removableHint.replace('{faces}', newAvailableFaces.map(f => `d${f}`).join(', '));
+
+            // 更新游戏状态
+            gameState.unpaired = unpaired;
+            gameState.totalScore = newTotalScore;
+            CookGameStorage.save(groupId, gameState);
+          }
+        } else {
+          // 没有剩余骰子，游戏结束
+          output += CONFIG.messages.cook.rerollCount.replace('{count}', '0') + '\n';
+          output += CONFIG.messages.cook.separator + '\n';
+          output += CONFIG.messages.cook.finalScore.replace('{score}', gameState.totalScore) + '\n';
+          output += getCookCompleteMessage(gameState.totalScore);
+
+          // 清理存储
+          CookGameStorage.clear(groupId);
+        }
+
+        seal.replyToSender(ctx, msg, output);
+        return seal.ext.newCmdExecuteResult(true);
+      }
+
+      return seal.ext.newCmdExecuteResult(true);
+
+    } catch (error) {
+      return ErrorHandler.handle(error, ctx, msg);
+    }
   }
 };
 
@@ -2194,6 +2672,40 @@ cmdAlias.help = `.dhalias [关键词或别名] // 查询Daggerheart关键词的�
   .dhalias mj - 查询拼音缩写mj对应的关键词`;
 cmdAlias.solve = commandHandlers.aliasQuery;
 
+// 创建并注册烹饪游戏命令
+const cmdCook = seal.ext.newCmdItemInfo();
+cmdCook.name = 'cook';
+cmdCook.help = `.cook [ndm]+... 或 .cook rm [骰面] // 烹饪游戏 - 配对骰子获得分数
+游戏规则:
+  • 投掷所有骰子，相同点数的骰子可以两两配对
+  • 配对成功得分 = 骰子点数（如两个5配对得5分）
+  • 未配对的骰子可以移除一个，剩余骰子重新投掷
+  • 剩余≤2个骰子时游戏结束
+
+命令格式:
+  .cook [ndm]+[ndm]+... - 开始新游戏
+    • ndm格式：n个m面骰（如3d6表示3个6面骰）
+    • dm格式：1个m面骰（如d6表示1个6面骰，等同于1d6）
+    • 支持+号或空格连接多个骰子规格（如3d6+6d2）
+
+  .cook rm [骰面] - 移除一个指定面的骰子
+    • 移除后剩余骰子会重新投掷并配对
+    • 骰面为数字（如6表示移除一个d6）
+
+示例:
+  .cook 3d6+6d2 - 投3个d6和6个d2开始游戏
+  .cook d6+d2 - 投1个d6和1个d2开始游戏
+  .cook 3d6 6d2 - 效果同上（空格或+号分隔都可以）
+  .cook rm 6 - 移除一个d6并重新投掷剩余骰子
+  .cook rm6 - 效果同上（空格可省略）
+  .cook rm2 - 移除一个d2并重新投掷剩余骰子
+
+注意事项:
+  • 群组内所有成员共享同一个游戏进度
+  • 开始新游戏会直接覆盖旧游戏
+  • 游戏结束后状态自动清理`;
+cmdCook.solve = commandHandlers.cookDice;
+
 // 创建并注册帮助命令 - 显示所有可用命令
 const cmdHelp = seal.ext.newCmdItemInfo();
 cmdHelp.name = 'dh';
@@ -2207,6 +2719,7 @@ cmdHelp.solve = (ctx, msg) => {
       { name: 'dh', description: '显示所有命令列表' },
       { name: 'dd', description: '二元骰检定（结果修改属性）' },
       { name: 'ddr', description: '反应二元骰（结果不修改属性，仅经历消耗属性）' },
+      { name: 'cook', description: '野兽饭烹饪小游戏' },
       { name: 'gm', description: 'GM管理（设置/卸任）' },
       { name: 'dhalias', description: '查询关键词别名' },
       { name: 'test', description: '测试命令（指定骰子点数）' }
@@ -2235,6 +2748,7 @@ cmdHelp.solve = (ctx, msg) => {
 // 注册命令到扩展
 daggerheartExt.cmdMap['dd'] = cmdDuality;
 daggerheartExt.cmdMap['ddr'] = cmdDualityRollOnly;
+daggerheartExt.cmdMap['cook'] = cmdCook;
 daggerheartExt.cmdMap['dhalias'] = cmdAlias;
 daggerheartExt.cmdMap['test'] = cmdTest;
 daggerheartExt.cmdMap['gm'] = cmdGM;

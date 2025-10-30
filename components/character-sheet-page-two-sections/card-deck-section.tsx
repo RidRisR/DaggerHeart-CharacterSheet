@@ -13,6 +13,7 @@ import type { SheetData } from "@/lib/sheet-data"
 import type { CSSProperties, MouseEvent } from "react"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
 import { useCardActions } from "@/lib/sheet-store"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface CardDeckSectionProps {
   formData: SheetData
@@ -66,6 +67,7 @@ interface CardProps {
   onPinCard: (card: StandardCard) => void;
   onCardDelete: (index: number) => void;
   isTextMode: boolean;
+  isMobile: boolean;
 }
 
 function Card({
@@ -81,6 +83,7 @@ function Card({
   onPinCard,
   onCardDelete,
   isTextMode,
+  isMobile,
 }: CardProps) {
   // Optimize: avoid unnecessary conversion if already StandardCard
   const standardCard = card && typeof card === 'object' && 'type' in card && 'name' in card 
@@ -127,14 +130,16 @@ function Card({
       {card?.name && (
         <div className="group flex items-center justify-between !text-sm font-medium">
           <span
-            className="truncate cursor-pointer hover:text-blue-600 transition-colors"
+            className={`truncate ${!isMobile ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''}`}
             onClick={(e) => {
-              e.stopPropagation();
-              if (standardCard) {
-                onPinCard(standardCard);
+              if (!isMobile) {
+                e.stopPropagation();
+                if (standardCard) {
+                  onPinCard(standardCard);
+                }
               }
             }}
-            title="点击钉住卡牌"
+            title={!isMobile ? "点击钉住卡牌" : undefined}
           >
             {standardCard?.name || card.name}
           </span>
@@ -233,6 +238,8 @@ export function CardDeckSection({
   const { deleteCard, moveCard } = useCardActions();
   // 文字模式状态
   const { isTextMode } = useTextModeStore();
+  // 移动端检测
+  const isMobile = useIsMobile();
   // 卡组视图状态
   const [activeDeck, setActiveDeck] = useState<'focused' | 'inventory'>('focused');
 
@@ -472,6 +479,7 @@ export function CardDeckSection({
                   onPinCard={pinCard}
                   onCardDelete={handleCardDelete}
                   isTextMode={isTextMode}
+                  isMobile={isMobile}
                 />
               </div>
             );

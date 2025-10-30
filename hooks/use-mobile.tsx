@@ -8,21 +8,21 @@ export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean>(false) // 设置为默认值false避免undefined
 
   React.useEffect(() => {
-    // 初始设置
+    // 初始设置 - 同时检测屏幕宽度和触摸支持
     const updateIsMobile = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT || 'ontouchstart' in window)
     }
-    
+
     // 立即执行一次
     updateIsMobile()
-    
+
     // 监听变化
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
     const onChange = () => {
       updateIsMobile()
     }
     mql.addEventListener("change", onChange)
-    
+
     return () => mql.removeEventListener("change", onChange)
   }, [])
 

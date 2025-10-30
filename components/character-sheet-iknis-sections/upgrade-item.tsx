@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useSheetStore } from "@/lib/sheet-store"
 import type { MaterialCost, ScrapMaterials } from './types'
 import { checkMaterialRequirements, renderMaterialCost, getMaterialCostWithAvailability } from './material-utils'
 
 interface UpgradeItemProps {
   title: string
   cost: MaterialCost
-  tier?: string
+  tier: 'basic' | 'tier2' | 'tier3' | 'tier4'
+  tierDisplay?: string // 用于显示的阶层标签（如 "预编译：二阶"）
   checkboxes?: number
   scrapMaterials?: ScrapMaterials
 }
@@ -16,11 +17,22 @@ export const UpgradeItem = ({
   title,
   cost,
   tier,
+  tierDisplay,
   checkboxes = 1,
   scrapMaterials,
 }: UpgradeItemProps) => {
-  const [checked, setChecked] = useState(Array(checkboxes).fill(false));
+  const { sheetData, updateUpgrade } = useSheetStore()
   const maxCheckboxes = 3; // 最大格子数，用于对齐
+
+  // 从 store 读取当前强化件的勾选状态
+  const upgradeState = sheetData.armorTemplate?.upgrades?.[tier]?.[title]
+
+  // 转换为 boolean 数组格式
+  const checkedArray: boolean[] = Array.isArray(upgradeState)
+    ? upgradeState.slice(0, checkboxes) // 确保长度匹配
+    : checkboxes === 1 && typeof upgradeState === 'boolean'
+    ? [upgradeState]
+    : Array(checkboxes).fill(false)
 
   // 检查材料是否满足需求
   const materialCheck = checkMaterialRequirements(cost, scrapMaterials)
@@ -41,16 +53,19 @@ export const UpgradeItem = ({
         {Array(checkboxes).fill(0).map((_, i) => (
           <span
             key={i}
-            className={`inline-block align-middle w-[1em] h-[1em] border border-gray-800 ${checked[i] ? 'bg-gray-800' : 'bg-white'} cursor-pointer transition-colors`}
+            className={`inline-block align-middle w-[1em] h-[1em] border border-gray-800 ${checkedArray[i] ? 'bg-gray-800' : 'bg-white'} cursor-pointer transition-colors`}
             style={{ borderRadius: '2px', marginLeft: i === 0 && (maxCheckboxes - checkboxes) === 0 ? 0 : '0.08em' }}
             onClick={() => {
-              const newChecked = [...checked];
+              const newChecked = [...checkedArray];
               newChecked[i] = !newChecked[i];
-              setChecked(newChecked);
+
+              // 如果只有一个复选框，存储为 boolean；多个则存储为 boolean[]
+              const valueToStore = checkboxes === 1 ? newChecked[0] : newChecked;
+              updateUpgrade(tier, title, valueToStore);
             }}
             tabIndex={0}
             role="checkbox"
-            aria-checked={checked[i]}
+            aria-checked={checkedArray[i]}
           ></span>
         ))}
       </span>
@@ -81,7 +96,7 @@ export const UpgradeItem = ({
             {renderMaterialCost(cost)}
           </div>
         </div>
-        {tier && <div className="text-[9px] text-gray-500 font-semibold leading-tight">{tier}</div>}
+        {tierDisplay && <div className="text-[9px] text-gray-500 font-semibold leading-tight">{tierDisplay}</div>}
       </div>
     </div>
   );

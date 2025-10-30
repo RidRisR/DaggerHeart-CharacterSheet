@@ -153,6 +153,7 @@ export default function CharacterSheetModulePage() {
                       key={index}
                       title={config.title}
                       cost={config.cost}
+                      tier="basic"
                       checkboxes={config.checkboxes}
                       scrapMaterials={scrapMaterials}
                     />
@@ -171,6 +172,8 @@ export default function CharacterSheetModulePage() {
                         key={index}
                         title={config.title}
                         cost={config.cost}
+                        tier="tier2"
+                        tierDisplay={config.tier}
                         checkboxes={config.checkboxes}
                         scrapMaterials={scrapMaterials}
                       />
@@ -187,6 +190,8 @@ export default function CharacterSheetModulePage() {
                         key={index}
                         title={config.title}
                         cost={config.cost}
+                        tier="tier3"
+                        tierDisplay={config.tier}
                         checkboxes={config.checkboxes}
                         scrapMaterials={scrapMaterials}
                       />
@@ -203,6 +208,8 @@ export default function CharacterSheetModulePage() {
                         key={index}
                         title={config.title}
                         cost={config.cost}
+                        tier="tier4"
+                        tierDisplay={config.tier}
                         checkboxes={config.checkboxes}
                         scrapMaterials={scrapMaterials}
                       />

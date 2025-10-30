@@ -38,8 +38,8 @@ export function generateRobustCardId(
     'variant': 'vari'
   } as const
 
-  const cleanPackageName = sanitizeIdString(packageName) || '新建卡包'
-  const cleanAuthor = sanitizeIdString(author) || '作者'
+  const cleanPackageName = truncateIdString(sanitizeIdString(packageName) || '新建卡包', 8)
+  const cleanAuthor = truncateIdString(sanitizeIdString(author) || '作者', 8)
   const typeCode = typeAbbreviation[cardType] || cardType
 
   // 生成防碰撞的短ID
@@ -138,6 +138,19 @@ export function sanitizeIdString(str: string): string {
 }
 
 /**
+ * 截断字符串到指定长度（按字符数，支持中文）
+ * @param str 原始字符串
+ * @param maxLength 最大字符数（默认8）
+ * @returns 截断后的字符串
+ */
+function truncateIdString(str: string, maxLength: number = 8): string {
+  if (str.length <= maxLength) {
+    return str
+  }
+  return str.substring(0, maxLength)
+}
+
+/**
  * 获取卡牌类型缩写
  */
 function getTypeAbbreviation(cardType: CardType): string {
@@ -162,8 +175,8 @@ export function parseCardId(
   author: string,
   cardType: CardType
 ): { isStandard: boolean; customSuffix: string; prefix: string } {
-  const cleanPackageName = sanitizeIdString(packageName) || '新建卡包'
-  const cleanAuthor = sanitizeIdString(author) || '作者'
+  const cleanPackageName = truncateIdString(sanitizeIdString(packageName) || '新建卡包', 8)
+  const cleanAuthor = truncateIdString(sanitizeIdString(author) || '作者', 8)
   const typeCode = getTypeAbbreviation(cardType)
 
   const expectedPrefix = `${cleanPackageName}-${cleanAuthor}-${typeCode}-`
@@ -194,8 +207,8 @@ export function buildCardId(
   cardType: CardType,
   customSuffix: string
 ): string {
-  const cleanPackageName = sanitizeIdString(packageName) || '新建卡包'
-  const cleanAuthor = sanitizeIdString(author) || '作者'
+  const cleanPackageName = truncateIdString(sanitizeIdString(packageName) || '新建卡包', 8)
+  const cleanAuthor = truncateIdString(sanitizeIdString(author) || '作者', 8)
   const typeCode = getTypeAbbreviation(cardType)
   const cleanSuffix = sanitizeIdString(customSuffix) || 'unnamed'
 

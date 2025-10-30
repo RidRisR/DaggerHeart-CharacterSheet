@@ -631,6 +631,7 @@ export default function Home() {
           onDeleteCard={deleteCard}
           onMoveCard={moveCard}
           onAddCard={handleAddCard}
+          isModalOpen={cardSelectionModalOpen}
         />
       </div>
 

@@ -16,11 +16,12 @@ interface CardDrawerProps {
   onDeleteCard?: (cardIndex: number, isInventory: boolean) => void
   onMoveCard?: (cardIndex: number, fromInventory: boolean, toInventory: boolean) => void
   onAddCard?: (index: number, isInventory: boolean) => void
+  isModalOpen?: boolean // 新增：是否有模态框打开
 }
 
 type TabType = "focused" | "profession" | "background" | "domain" | "variant" | "inventory"
 
-export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onClose, onDeleteCard, onMoveCard, onAddCard }: CardDrawerProps) {
+export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onClose, onDeleteCard, onMoveCard, onAddCard, isModalOpen }: CardDrawerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const finalIsOpen = externalIsOpen !== undefined ? externalIsOpen : isOpen
@@ -80,6 +81,13 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
     }
   }, [finalIsOpen])
 
+  // 当模态框打开时清除详情卡牌预览
+  useEffect(() => {
+    if (isModalOpen) {
+      setHoveredCard(null)
+    }
+  }, [isModalOpen])
+
   // 获取当前标签页的卡牌
   const getCurrentCards = () => {
     switch (activeTab) {
@@ -107,6 +115,20 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
   }
 
   const currentCards = getCurrentCards()
+
+  // 当卡牌列表更新时，检查 hoveredCard 是否仍然有效
+  useEffect(() => {
+    if (hoveredCard) {
+      // 检查 hoveredCard 是否仍在当前显示的卡牌列表中
+      const cardStillExists = currentCards.some(card =>
+        card.id === hoveredCard.id && card.name === hoveredCard.name
+      );
+
+      if (!cardStillExists) {
+        setHoveredCard(null);  // 清空已被删除的卡牌预览
+      }
+    }
+  }, [cards, inventoryCards, hoveredCard, currentCards])
 
   // 标签页配置
   const tabs = [

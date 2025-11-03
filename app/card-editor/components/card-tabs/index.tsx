@@ -5,6 +5,7 @@ import { MetadataTab } from './metadata-tab'
 import { CardEditorTab } from './card-editor-tab'
 import { AncestryEditorTab } from './ancestry-editor-tab'
 import { SubclassEditorTab } from './subclass-editor-tab'
+import { PreviewTab } from './preview-tab'
 
 interface CardTabsProps {
   selectedTab: string
@@ -84,22 +85,7 @@ export function CardTabs({
 
       {/* 预览选项卡 */}
       <TabsContent value="preview">
-        <Card>
-          <CardHeader>
-            <CardTitle>卡包预览</CardTitle>
-            <CardDescription>
-              预览当前卡包的结构和内容
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <Eye className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                预览功能正在开发中...
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <PreviewTab onTabChange={onSelectedTabChange} />
       </TabsContent>
     </Tabs>
   )

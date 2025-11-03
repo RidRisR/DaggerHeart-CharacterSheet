@@ -273,7 +273,7 @@ export const guideSteps: GuideStep[] = [
                     armorThresholdDisplay = formData.armorThreshold;
                 }
             }
-            return `<strong>您的护甲值是 ${armorValue} </strong>，意味着您的护甲在维修前可以承受 ${armorValue} 次攻击，请填写在角色卡左上角的护甲栏位中。\n已装备护甲提供基本的护甲阈值，您的等级会提供额外的等级加成，加成和当前等级相同（如一级+1）。<strong>您的护甲伤害阈值是 ${armorThresholdDisplay}</strong >。 \n<strong>请填写</strong>在'生命值与压力'下方的<strong>伤害阈值</strong>栏位上。`;
+            return `<strong>您的护甲值是 ${armorValue} </strong>，意味着您的护甲在维修前可以承受 ${armorValue} 次攻击，请<strong>填写</strong>在角色卡左上角的<strong>护甲值</strong>栏位中。\n已装备护甲提供基本的护甲阈值，您的等级会提供额外的等级加成，加成和当前等级相同（如一级+1）。<strong>您的护甲伤害阈值是 ${armorThresholdDisplay}</strong >。 \n请<strong>填写</strong>在'生命值与压力'下方的<strong>伤害阈值</strong>栏位中。`;
         },
         validation: (formData) => {
             return isFilled(formData.armorName)
@@ -302,7 +302,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
 
-            return `将以下物品添加到角色表的\"物品栏\"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（回复 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡左下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
+            return `将以下物品添加到角色表的\"物品栏\"字段中： \n1.一支火把、50 英尺长的绳索、基本补给品。 \n2.一瓶次级治疗药水（回复 1d4 点生命值）<strong>或</strong>一瓶次级耐力药水（清除 1d4 点压力）。\n3.职业特殊起始物品：<strong>${startingItems} </strong> \n4. 其他GM批准您携带的物品。\n5. 在角色卡右下角<strong>金币栏</strong>中，<strong>添加一把金币。</strong>`;
         },
         validation: () => true,
     },
@@ -378,7 +378,7 @@ export const guideSteps: GuideStep[] = [
     {
         id: "step14",
         title: "完成创建",
-        content: "恭喜您，您的角色卡已经创建完成。别忘了取一个好听的名字！点击\"存档与重置\"可以保存这个角色，点击\"导出PDF\"可以导出为PDF。",
+        content: "最后，检查你的角色卡上所有<strong>装备，卡牌，职业技能</strong>提供的加值和减值，它们可能会对你的闪避值，护甲值，属性或是HP等作出额外调整。将这些调整也记录在角色卡上。\n\n确定所有调整值都已经处理完成之后，你就完成了你的角色卡创建，别忘了给它取一个好听的名字！点击\"导出页面\"可以保存这个角色，推荐导出为\"PDF\"或者\"HTML\"格式，方便其他人查阅。",
         validation: () => true,
     },
 ]

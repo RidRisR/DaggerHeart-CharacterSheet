@@ -189,7 +189,7 @@ export interface UnifiedCardState {
 export interface UnifiedCardActions {
   // System lifecycle
   initializeSystem: () => Promise<{ initialized: boolean; migrationResult?: any }>;
-  resetSystem: () => void;
+  resetSystem: () => Promise<void>;
   
   // Core data operations
   loadAllCards: () => ExtendedStandardCard[];
@@ -200,7 +200,7 @@ export interface UnifiedCardActions {
   // Custom card management
   importCards: (data: ImportData, batchName?: string) => Promise<ImportResult>;
   removeBatch: (batchId: string) => boolean;
-  clearAllCustomCards: () => void;
+  clearAllCustomCards: () => Promise<void>;
   getAllBatches: () => BatchStats[];
   
   // Aggregated data (with smart caching)
@@ -240,6 +240,7 @@ export interface UnifiedCardActions {
   getImageUrl: (cardId: string) => Promise<string | null>;
   importBatchImages: (batchId: string, images: Map<string, Blob>) => Promise<void>;
   deleteBatchImages: (imageCardIds: string[]) => Promise<void>;
+  clearAllBatchImages: () => Promise<void>;
   clearImageCache: () => void;
   revokeImageUrl: (cardId: string) => void;
 

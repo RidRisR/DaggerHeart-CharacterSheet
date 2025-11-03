@@ -253,9 +253,9 @@ export function getCustomCardStats(): CustomCardStats {
 /**
  * Clear all custom cards
  */
-export function clearAllCustomCards(): void {
+export async function clearAllCustomCards(): Promise<void> {
   const store = useUnifiedCardStore.getState();
-  store.clearAllCustomCards();
+  await store.clearAllCustomCards();
 }
 
 

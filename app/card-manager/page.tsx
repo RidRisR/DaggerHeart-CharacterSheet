@@ -313,10 +313,10 @@ export default function CardImportTestPage() {
   }
 
   // 清空所有自定义卡牌
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (confirm('确定要清空所有自定义卡牌吗？此操作不可恢复。')) {
       try {
-        clearAllCustomCards()
+        await clearAllCustomCards()
         refreshData()
         alert('所有自定义卡牌已清空')
       } catch (error) {
@@ -329,11 +329,14 @@ export default function CardImportTestPage() {
   const handleClearAllLocalStorage = async () => {
     if (confirm('⚠️ 危险操作确认 ⚠️\n\n确定要清空所有本地存储数据吗？\n\n这将删除：\n• 所有自定义卡牌\n• 内置卡牌缓存\n• 所有角色数据和角色卡\n• 其他所有本地数据\n\n此操作不可恢复！请确保您已备份重要数据。')) {
       try {
-        // 清空所有localStorage数据
+        // 使用 resetSystem 来正确清理所有数据（包括 IndexedDB 图片）
+        const store = useUnifiedCardStore.getState()
+        await store.resetSystem()
+
+        // 清空其他非卡牌系统的 localStorage 数据
         localStorage.clear()
 
-        // 强制重新初始化卡牌系统
-        const store = useUnifiedCardStore.getState()
+        // 重新初始化卡牌系统
         await store.initializeSystem()
 
         // 刷新数据显示

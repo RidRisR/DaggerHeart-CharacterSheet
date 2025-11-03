@@ -283,6 +283,45 @@ export function createImageServiceActions<T extends UnifiedCardState>(
     },
 
     /**
+     * Clear all batch images from IndexedDB (images table)
+     * This clears the entire images table used for custom card batches
+     */
+    clearAllBatchImages: async () => {
+      if (!isIndexedDBAvailable()) {
+        return;
+      }
+
+      try {
+        // Clear the entire images table
+        await db.images.clear();
+        console.log('[ImageService] Cleared all batch images from IndexedDB');
+
+        // Clear image cache
+        const state = get() as any;
+        const { cache } = state.imageService;
+
+        // Revoke all blob URLs
+        for (const url of cache.values()) {
+          URL.revokeObjectURL(url);
+        }
+
+        set((state: any) => ({
+          imageService: {
+            ...state.imageService,
+            cache: new Map(),
+            cacheOrder: [],
+            failedImages: new Set()
+          }
+        }));
+
+        console.log('[ImageService] Cleared image cache');
+      } catch (error) {
+        console.error('[ImageService] Failed to clear all batch images:', error);
+        throw error;
+      }
+    },
+
+    /**
      * Clear all image cache and revoke blob URLs
      */
     clearImageCache: () => {

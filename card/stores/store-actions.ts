@@ -84,8 +84,15 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     }
   },
 
-  resetSystem: () => {
-    // Clean up all batch keys from localStorage first
+  resetSystem: async () => {
+    // Clear IndexedDB images table first
+    try {
+      await get().clearAllBatchImages();
+    } catch (error) {
+      console.error('[UnifiedCardStore] Error clearing IndexedDB during reset:', error);
+    }
+
+    // Clean up all batch keys from localStorage
     if (typeof window !== 'undefined' && !isServer) {
       try {
         // Get all keys from localStorage
@@ -96,13 +103,13 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
             keysToRemove.push(key);
           }
         }
-        
+
         // Remove all identified keys
         keysToRemove.forEach(key => {
           localStorage.removeItem(key);
           console.log(`[UnifiedCardStore] Removed ${key} from localStorage during system reset`);
         });
-        
+
         console.log(`[UnifiedCardStore] System reset: removed ${keysToRemove.length} keys from localStorage`);
       } catch (error) {
         console.error('[UnifiedCardStore] Error cleaning localStorage during reset:', error);
@@ -407,17 +414,24 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     return true;
   },
 
-  clearAllCustomCards: () => {
+  clearAllCustomCards: async () => {
     const state = get();
     const newBatches = new Map();
     const newCards = new Map();
 
-    // First, remove all custom batch keys from localStorage
+    // Clear all IndexedDB images (builtin batch doesn't store images in IndexedDB)
+    try {
+      await get().clearAllBatchImages();
+    } catch (error) {
+      console.error('[UnifiedCardStore] Error clearing IndexedDB during clearAllCustomCards:', error);
+    }
+
+    // Remove all custom batch keys from localStorage
     if (typeof window !== 'undefined' && !isServer) {
       for (const [batchId] of state.batches) {
         // Skip builtin batch
         if (batchId === BUILTIN_BATCH_ID) continue;
-        
+
         try {
           localStorage.removeItem(`${STORAGE_KEYS.BATCH_PREFIX}${batchId}`);
           console.log(`[UnifiedCardStore] Removed custom batch ${batchId} from localStorage`);

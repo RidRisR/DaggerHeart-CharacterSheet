@@ -114,11 +114,21 @@ export default function CharacterSheetPageTwo() {
     // 获取基础升级选项
     const baseUpgrades = [...upgradeOptionsData.baseUpgrades]
 
+    // 获取当前 tier 的等级上限文本
+    const tierKey = `tier${tier}` as keyof typeof upgradeOptionsData.tierLevelCaps
+    const levelCap = upgradeOptionsData.tierLevelCaps[tierKey] || ""
+
+    // 替换占位符 {LEVEL_CAP} 为实际的等级上限
+    const processedBaseUpgrades = baseUpgrades.map(option => ({
+      ...option,
+      label: option.label.replace('{LEVEL_CAP}', levelCap)
+    }))
+
     // 添加特定等级升级选项
     const tierSpecificKey = `tier${tier}` as keyof typeof upgradeOptionsData.tierSpecificUpgrades
     const tierSpecificUpgrades = upgradeOptionsData.tierSpecificUpgrades[tierSpecificKey] || []
 
-    return [...baseUpgrades, ...tierSpecificUpgrades]
+    return [...processedBaseUpgrades, ...tierSpecificUpgrades]
   }
 
 

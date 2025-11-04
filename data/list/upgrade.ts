@@ -6,9 +6,16 @@ export const upgradeOptionsData = {
     { label: "永久增加一个生命槽。", doubleBox: false, boxCount: 2 },
     { label: "永久增加一个压力槽。", doubleBox: false, boxCount: 2 },
     { label: "选择两项经历获得额外+1。", doubleBox: false, boxCount: 1 },
-    { label: "获得一张不高于你当前等级的领域卡。", doubleBox: false, boxCount: 1 },
+    { label: "选择一张不高于你当前等级{LEVEL_CAP}的领域卡加入卡组。", doubleBox: false, boxCount: 1 },
     { label: "获得闪避值+1。", doubleBox: false, boxCount: 1 },
   ],
+
+  // Tier特定的等级上限配置
+  tierLevelCaps: {
+    tier1: "(上限4级)",
+    tier2: "(上限7级)",
+    tier3: "(上限10级)",
+  },
 
   // 特定等级升级选项
   tierSpecificUpgrades: {

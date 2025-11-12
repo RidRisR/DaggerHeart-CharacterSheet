@@ -213,17 +213,122 @@ export function UpgradeSection({
         <div className="mt-3 !text-xs">
           {tier === 1 && (
             <>
-              将伤害阈值+1，选择一张不高于你当前等级(上限4级)的领域卡加入卡组。
+              <span className="text-gray-800 dark:text-gray-200 mr-1">
+                将伤害阈值+1，选择一张不高于你当前等级(上限4级)的领域卡加入卡组。
+              </span>
+              <Popover
+                open={openPopoverIndex === `threshold-tier${tier}`}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setOpenPopoverIndex(`threshold-tier${tier}`)
+                  } else {
+                    setOpenPopoverIndex(null)
+                  }
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
+                    title="选择领域卡"
+                  >
+                    <Edit className="w-2.5 h-2.5 text-gray-600" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-1.5 bg-white border border-gray-300 rounded shadow-lg"
+                  side="right"
+                  align="start"
+                  sideOffset={5}
+                >
+                  <DomainCardSelector
+                    formData={formData}
+                    tier={tier}
+                    onCardChange={onCardChange!}
+                    onClose={() => setOpenPopoverIndex(null)}
+                    onOpenModal={onOpenCardModal}
+                  />
+                </PopoverContent>
+              </Popover>
             </>
           )}
           {tier === 2 && (
             <>
-              将伤害阈值+1，选择一张不高于你当前等级(上限7级)的领域卡加入卡组。
+              <span className="text-gray-800 dark:text-gray-200 mr-1">
+                将伤害阈值+1，选择一张不高于你当前等级(上限7级)的领域卡加入卡组。
+              </span>
+              <Popover
+                open={openPopoverIndex === `threshold-tier${tier}`}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setOpenPopoverIndex(`threshold-tier${tier}`)
+                  } else {
+                    setOpenPopoverIndex(null)
+                  }
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
+                    title="选择领域卡"
+                  >
+                    <Edit className="w-2.5 h-2.5 text-gray-600" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-1.5 bg-white border border-gray-300 rounded shadow-lg"
+                  side="right"
+                  align="start"
+                  sideOffset={5}
+                >
+                  <DomainCardSelector
+                    formData={formData}
+                    tier={tier}
+                    onCardChange={onCardChange!}
+                    onClose={() => setOpenPopoverIndex(null)}
+                    onOpenModal={onOpenCardModal}
+                  />
+                </PopoverContent>
+              </Popover>
             </>
           )}
           {tier === 3 && (
             <>
-              将伤害阈值+1，选择一张不高于你当前等级(上限10级)的领域卡加入卡组。
+              <span className="text-gray-800 dark:text-gray-200 mr-1">
+                将伤害阈值+1，选择一张不高于你当前等级(上限10级)的领域卡加入卡组。
+              </span>
+              <Popover
+                open={openPopoverIndex === `threshold-tier${tier}`}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setOpenPopoverIndex(`threshold-tier${tier}`)
+                  } else {
+                    setOpenPopoverIndex(null)
+                  }
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
+                    title="选择领域卡"
+                  >
+                    <Edit className="w-2.5 h-2.5 text-gray-600" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-1.5 bg-white border border-gray-300 rounded shadow-lg"
+                  side="right"
+                  align="start"
+                  sideOffset={5}
+                >
+                  <DomainCardSelector
+                    formData={formData}
+                    tier={tier}
+                    onCardChange={onCardChange!}
+                    onClose={() => setOpenPopoverIndex(null)}
+                    onOpenModal={onOpenCardModal}
+                  />
+                </PopoverContent>
+              </Popover>
             </>
           )}
         </div>

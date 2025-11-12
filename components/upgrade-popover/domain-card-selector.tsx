@@ -48,6 +48,9 @@ export function DomainCardSelector({ formData, tier, onCardChange, onClose, onOp
 
     // Notify parent to open modal with level filter
     onOpenModal?.(emptySlotIndex, levelFilter)
+
+    // Close the popover after opening modal
+    onClose?.()
   }
 
   return (

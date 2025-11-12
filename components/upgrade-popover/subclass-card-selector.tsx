@@ -40,6 +40,9 @@ export function SubclassCardSelector({ formData, onCardChange, onClose, onOpenMo
 
     // Notify parent to open modal with subclass filter and profession filter
     onOpenModal?.(emptySlotIndex, currentProfession)
+
+    // Close the popover after opening modal
+    onClose?.()
   }
 
   return (

@@ -109,6 +109,7 @@ interface SheetState {
     updateExperience: (index: number, value: string) => void;
     updateExperienceValues: (index: number, value: string) => void;
     updateHP: (index: number, checked: boolean) => void;
+    updateHPMax: (value: number) => void;
     updateName: (name: string) => void;
     updateLevel: (level: string) => void;
     
@@ -337,7 +338,34 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
+    updateHPMax: (value) => set((state) => {
+        // 限制范围 1-18
+        const clampedValue = Math.min(Math.max(value, 1), 18);
+
+        const newData: Partial<SheetData> = { hpMax: clampedValue };
+
+        // 同步调整 hp 数组
+        const currentHP = Array.isArray(state.sheetData.hp) ? state.sheetData.hp : [];
+        const checkedCount = currentHP.filter(Boolean).length;
+
+        // 如果当前勾选的数量超过新上限，截断到新上限
+        if (checkedCount > clampedValue) {
+            const newHP = Array(18).fill(false);
+            for (let i = 0; i < clampedValue; i++) {
+                newHP[i] = true;
+            }
+            newData.hp = newHP;
+        }
+
+        return {
+            sheetData: {
+                ...state.sheetData,
+                ...newData
+            }
+        };
+    }),
+
     updateName: (name) => set((state) => ({
         sheetData: {
             ...state.sheetData,

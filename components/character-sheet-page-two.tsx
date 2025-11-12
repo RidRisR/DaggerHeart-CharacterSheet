@@ -27,6 +27,11 @@ export default function CharacterSheetPageTwo() {
   const [upgradeDomainModalOpen, setUpgradeDomainModalOpen] = useState(false);
   const [upgradeDomainCardIndex, setUpgradeDomainCardIndex] = useState<number>(-1);
 
+  // State for upgrade subclass card modal
+  const [upgradeSubclassModalOpen, setUpgradeSubclassModalOpen] = useState(false);
+  const [upgradeSubclassCardIndex, setUpgradeSubclassCardIndex] = useState<number>(-1);
+  const [upgradeSubclassProfession, setUpgradeSubclassProfession] = useState<string | undefined>(undefined);
+
   // 使用ref来避免无限循环
   const isUpdatingRef = useRef(false)
 
@@ -137,10 +142,32 @@ export default function CharacterSheetPageTwo() {
   }
 
   // Handle opening the domain card modal from upgrade section
-  const handleOpenUpgradeDomainModal = (cardIndex: number) => {
+  const handleOpenUpgradeDomainModal = (cardIndex: number, levels?: string[]) => {
     setUpgradeDomainCardIndex(cardIndex)
     setCardModalActiveTab("domain")
+    // Clear class filter and search term
+    setCardModalSelectedClasses([])
+    setCardModalSearchTerm("")
+    // Set smart level filtering
+    setCardModalSelectedLevels(levels || [])
     setUpgradeDomainModalOpen(true)
+  }
+
+  // Handle opening the subclass card modal from upgrade section
+  const handleOpenUpgradeSubclassModal = (cardIndex: number, profession?: string) => {
+    setUpgradeSubclassCardIndex(cardIndex)
+    setUpgradeSubclassProfession(profession)
+    setCardModalActiveTab("subclass")
+    // Clear search term and level filters
+    setCardModalSearchTerm("")
+    setCardModalSelectedLevels([])
+    // Set profession filter if available
+    if (profession) {
+      setCardModalSelectedClasses([profession])
+    } else {
+      setCardModalSelectedClasses([])
+    }
+    setUpgradeSubclassModalOpen(true)
   }
 
 
@@ -189,6 +216,7 @@ export default function CharacterSheetPageTwo() {
               getUpgradeOptions={getUpgradeOptions}
               onCardChange={handleCardChange}
               onOpenCardModal={handleOpenUpgradeDomainModal}
+              onOpenSubclassModal={handleOpenUpgradeSubclassModal}
             />
 
             {/* Tier 2: Levels 5-7 */}
@@ -202,6 +230,7 @@ export default function CharacterSheetPageTwo() {
               getUpgradeOptions={getUpgradeOptions}
               onCardChange={handleCardChange}
               onOpenCardModal={handleOpenUpgradeDomainModal}
+              onOpenSubclassModal={handleOpenUpgradeSubclassModal}
             />
 
             {/* Tier 3: Levels 8-10 */}
@@ -215,6 +244,7 @@ export default function CharacterSheetPageTwo() {
               getUpgradeOptions={getUpgradeOptions}
               onCardChange={handleCardChange}
               onOpenCardModal={handleOpenUpgradeDomainModal}
+              onOpenSubclassModal={handleOpenUpgradeSubclassModal}
           />
         </div>
       </div>
@@ -229,6 +259,28 @@ export default function CharacterSheetPageTwo() {
           setUpgradeDomainModalOpen(false)
         }}
         selectedCardIndex={upgradeDomainCardIndex}
+        activeTab={cardModalActiveTab}
+        setActiveTab={setCardModalActiveTab}
+        searchTerm={cardModalSearchTerm}
+        setSearchTerm={setCardModalSearchTerm}
+        selectedClasses={cardModalSelectedClasses}
+        setSelectedClasses={setCardModalSelectedClasses}
+        selectedLevels={cardModalSelectedLevels}
+        setSelectedLevels={setCardModalSelectedLevels}
+      />
+
+      <CardSelectionModal
+        isOpen={upgradeSubclassModalOpen}
+        onClose={() => {
+          setUpgradeSubclassModalOpen(false)
+          setUpgradeSubclassProfession(undefined)
+        }}
+        onSelect={(card) => {
+          handleCardChange(upgradeSubclassCardIndex, card)
+          setUpgradeSubclassModalOpen(false)
+          setUpgradeSubclassProfession(undefined)
+        }}
+        selectedCardIndex={upgradeSubclassCardIndex}
         activeTab={cardModalActiveTab}
         setActiveTab={setCardModalActiveTab}
         searchTerm={cardModalSearchTerm}

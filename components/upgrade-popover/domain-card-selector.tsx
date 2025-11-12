@@ -3,16 +3,18 @@
 import { X } from "lucide-react"
 import { isEmptyCard, type StandardCard } from "@/card/card-types"
 import { showFadeNotification } from "@/components/ui/fade-notification"
+import { parseToNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 
 interface DomainCardSelectorProps {
   formData: SheetData
+  tier: number
   onCardChange: (index: number, card: StandardCard) => void
   onClose?: () => void
-  onOpenModal?: (index: number) => void
+  onOpenModal?: (index: number, levels?: string[]) => void
 }
 
-export function DomainCardSelector({ formData, onCardChange, onClose, onOpenModal }: DomainCardSelectorProps) {
+export function DomainCardSelector({ formData, tier, onCardChange, onClose, onOpenModal }: DomainCardSelectorProps) {
   const handleSelectCard = () => {
     // Find first empty non-special slot (slots 5-19)
     const cards = formData.cards || []
@@ -26,12 +28,26 @@ export function DomainCardSelector({ formData, onCardChange, onClose, onOpenModa
     }
 
     if (emptySlotIndex === -1) {
-      showFadeNotification("没有空余卡位", "error")
+      showFadeNotification({ message: "没有空余卡位", type: "error" })
       return
     }
 
-    // Notify parent to open modal
-    onOpenModal?.(emptySlotIndex)
+    // Calculate smart level filtering
+    const tierLevelCaps: Record<number, number> = { 1: 4, 2: 7, 3: 10 }
+    const levelCap = tierLevelCaps[tier] || 10
+
+    // Parse and validate level using shared utility
+    const currentLevel = parseToNumber(formData.level, 0)
+
+    const targetLevel = currentLevel > 0
+      ? Math.min(currentLevel, levelCap)  // Has valid level: use min of current and cap
+      : levelCap                           // No valid level: use cap
+
+    // Generate level filter array ["1", "2", "3", ...]
+    const levelFilter = Array.from({ length: targetLevel }, (_, i) => String(i + 1))
+
+    // Notify parent to open modal with level filter
+    onOpenModal?.(emptySlotIndex, levelFilter)
   }
 
   return (

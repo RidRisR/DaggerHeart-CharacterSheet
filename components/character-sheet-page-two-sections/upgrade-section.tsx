@@ -10,6 +10,7 @@ import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-u
 import { DodgeEditor } from "@/components/upgrade-popover/dodge-editor"
 import { DomainCardSelector } from "@/components/upgrade-popover/domain-card-selector"
 import { ProficiencyEditor } from "@/components/upgrade-popover/proficiency-editor"
+import { SubclassCardSelector } from "@/components/upgrade-popover/subclass-card-selector"
 import type { StandardCard } from "@/card/card-types"
 
 interface UpgradeSectionProps {
@@ -21,7 +22,8 @@ interface UpgradeSectionProps {
   handleUpgradeCheck: (tier: string, index: number) => void
   getUpgradeOptions: (tier: number) => any[]
   onCardChange?: (index: number, card: StandardCard) => void
-  onOpenCardModal?: (index: number) => void
+  onOpenCardModal?: (index: number, levels?: string[]) => void
+  onOpenSubclassModal?: (index: number, profession?: string) => void
 }
 
 export function UpgradeSection({
@@ -34,6 +36,7 @@ export function UpgradeSection({
   getUpgradeOptions,
   onCardChange,
   onOpenCardModal,
+  onOpenSubclassModal,
 }: UpgradeSectionProps) {
   const tierKey = `tier${tier}`
   const [openPopoverIndex, setOpenPopoverIndex] = useState<string | null>(null)
@@ -46,6 +49,7 @@ export function UpgradeSection({
   const isDomainCardOption = (label: string) => label.includes("领域卡加入卡组")
   const isDodgeUpgradeOption = (label: string) => label.includes("闪避值")
   const isProficiencyUpgradeOption = (label: string) => label.includes("熟练度+1")
+  const isSubclassUpgradeOption = (label: string) => label.includes("升级你的子职业")
 
   // Helper function to determine if an option needs an edit button
   const needsEditButton = (label: string) => {
@@ -56,7 +60,8 @@ export function UpgradeSection({
       isExperienceUpgradeOption(label) ||
       isDomainCardOption(label) ||
       isDodgeUpgradeOption(label) ||
-      isProficiencyUpgradeOption(label)
+      isProficiencyUpgradeOption(label) ||
+      isSubclassUpgradeOption(label)
     )
   }
 
@@ -90,11 +95,12 @@ export function UpgradeSection({
       return (
         <DomainCardSelector
           formData={formData}
+          tier={tier}
           onCardChange={onCardChange!}
           onClose={() => setOpenPopoverIndex(null)}
-          onOpenModal={(slotIndex) => {
+          onOpenModal={(slotIndex, levels) => {
             setOpenPopoverIndex(null)
-            onOpenCardModal?.(slotIndex)
+            onOpenCardModal?.(slotIndex, levels)
           }}
         />
       )
@@ -106,6 +112,20 @@ export function UpgradeSection({
 
     if (isProficiencyUpgradeOption(option.label)) {
       return <ProficiencyEditor onClose={() => setOpenPopoverIndex(null)} />
+    }
+
+    if (isSubclassUpgradeOption(option.label)) {
+      return (
+        <SubclassCardSelector
+          formData={formData}
+          onCardChange={onCardChange!}
+          onClose={() => setOpenPopoverIndex(null)}
+          onOpenModal={(slotIndex, profession) => {
+            setOpenPopoverIndex(null)
+            onOpenSubclassModal?.(slotIndex, profession)
+          }}
+        />
+      )
     }
 
     return null

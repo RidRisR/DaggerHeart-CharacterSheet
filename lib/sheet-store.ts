@@ -387,9 +387,22 @@ export const useSheetStore = create<SheetState>((set) => ({
                 newProficiency[currentCount] = true
                 updates.proficiency = newProficiency
 
+                // 清空所有属性的升级标记
+                const attributeKeys: Array<keyof SheetData> = [
+                    'agility', 'strength', 'finesse',
+                    'instinct', 'presence', 'knowledge'
+                ]
+
+                attributeKeys.forEach(key => {
+                    const attr = state.sheetData[key]
+                    if (typeof attr === 'object' && attr !== null && 'checked' in attr) {
+                        updates[key] = { ...attr, checked: false }
+                    }
+                })
+
                 // 显示通知
                 showFadeNotification({
-                    message: `等级提升至${newLevel}级，熟练度+1（${currentCount} → ${currentCount + 1}）`,
+                    message: `等级提升至${newLevel}级，熟练度+1（${currentCount} → ${currentCount + 1}），属性升级标记已重置`,
                     type: "success"
                 })
             }

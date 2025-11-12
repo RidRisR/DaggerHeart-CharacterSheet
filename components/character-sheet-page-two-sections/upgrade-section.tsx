@@ -9,6 +9,7 @@ import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-
 import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-upgrade-editor"
 import { DodgeEditor } from "@/components/upgrade-popover/dodge-editor"
 import { DomainCardSelector } from "@/components/upgrade-popover/domain-card-selector"
+import { ProficiencyEditor } from "@/components/upgrade-popover/proficiency-editor"
 import type { StandardCard } from "@/card/card-types"
 
 interface UpgradeSectionProps {
@@ -44,6 +45,7 @@ export function UpgradeSection({
   const isExperienceUpgradeOption = (label: string) => label.includes("经历获得额外")
   const isDomainCardOption = (label: string) => label.includes("领域卡加入卡组")
   const isDodgeUpgradeOption = (label: string) => label.includes("闪避值")
+  const isProficiencyUpgradeOption = (label: string) => label.includes("熟练度+1")
 
   // Helper function to determine if an option needs an edit button
   const needsEditButton = (label: string) => {
@@ -53,7 +55,8 @@ export function UpgradeSection({
       isStressUpgradeOption(label) ||
       isExperienceUpgradeOption(label) ||
       isDomainCardOption(label) ||
-      isDodgeUpgradeOption(label)
+      isDodgeUpgradeOption(label) ||
+      isProficiencyUpgradeOption(label)
     )
   }
 
@@ -99,6 +102,10 @@ export function UpgradeSection({
 
     if (isDodgeUpgradeOption(option.label)) {
       return <DodgeEditor onClose={() => setOpenPopoverIndex(null)} />
+    }
+
+    if (isProficiencyUpgradeOption(option.label)) {
+      return <ProficiencyEditor onClose={() => setOpenPopoverIndex(null)} />
     }
 
     return null
@@ -147,8 +154,8 @@ export function UpgradeSection({
                   )
                 })}
               </span>
-              <div className="flex-1 ml-2 flex items-start gap-0.5">
-                <span className="text-gray-800 dark:text-gray-200">{option.label}</span>
+              <div className="flex-1 ml-2">
+                <span className="text-gray-800 dark:text-gray-200 mr-1">{option.label}</span>
                 {needsEditButton(option.label) && (
                   <Popover
                     open={openPopoverIndex === `${tierKey}-${index}`}
@@ -162,7 +169,7 @@ export function UpgradeSection({
                   >
                     <PopoverTrigger asChild>
                       <button
-                        className="flex-shrink-0 p-0.5 hover:bg-gray-100 rounded transition-colors mt-px"
+                        className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
                         title="编辑"
                       >
                         <Edit className="w-2.5 h-2.5 text-gray-600" />

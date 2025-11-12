@@ -110,6 +110,7 @@ interface SheetState {
     updateExperienceValues: (index: number, value: string) => void;
     updateHP: (index: number, checked: boolean) => void;
     updateHPMax: (value: number) => void;
+    updateStressMax: (value: number) => void;
     updateName: (name: string) => void;
     updateLevel: (level: string) => void;
     
@@ -356,6 +357,33 @@ export const useSheetStore = create<SheetState>((set) => ({
                 newHP[i] = true;
             }
             newData.hp = newHP;
+        }
+
+        return {
+            sheetData: {
+                ...state.sheetData,
+                ...newData
+            }
+        };
+    }),
+
+    updateStressMax: (value) => set((state) => {
+        // 限制范围 1-12
+        const clampedValue = Math.min(Math.max(value, 1), 12);
+
+        const newData: Partial<SheetData> = { stressMax: clampedValue };
+
+        // 同步调整 stress 数组
+        const currentStress = Array.isArray(state.sheetData.stress) ? state.sheetData.stress : [];
+        const checkedCount = currentStress.filter(Boolean).length;
+
+        // 如果当前勾选的数量超过新上限，截断到新上限
+        if (checkedCount > clampedValue) {
+            const newStress = Array(18).fill(false);
+            for (let i = 0; i < clampedValue; i++) {
+                newStress[i] = true;
+            }
+            newData.stress = newStress;
         }
 
         return {

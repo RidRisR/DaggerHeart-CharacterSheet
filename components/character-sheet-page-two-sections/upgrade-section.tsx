@@ -1,12 +1,15 @@
 "use client"
 import { useState } from "react"
 import type { SheetData } from "@/lib/sheet-data"
+import type { StandardCard } from "@/card/card-types"
 import { Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@/components/ui/popover"
 import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
 import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-values-editor"
 import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-upgrade-editor"
 import { DodgeEditor } from "@/components/upgrade-popover/dodge-editor"
+import { DomainCardSelector } from "@/components/upgrade-popover/domain-card-selector"
+import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { Info } from "lucide-react"
 
 interface UpgradeSectionProps {
@@ -17,6 +20,7 @@ interface UpgradeSectionProps {
   isUpgradeChecked: (tier: string, index: number) => boolean
   handleUpgradeCheck: (tier: string, index: number) => void
   getUpgradeOptions: (tier: number) => any[] // Removed profession from parameters
+  onCardChange: (index: number, card: StandardCard) => void
 }
 
 export function UpgradeSection({
@@ -27,10 +31,43 @@ export function UpgradeSection({
   isUpgradeChecked,
   handleUpgradeCheck,
   getUpgradeOptions,
+  onCardChange,
 }: UpgradeSectionProps) {
   const tierKey = `tier${tier}`
   const [openPopovers, setOpenPopovers] = useState<Record<string, boolean>>({})
   const [clickedBoxIndex, setClickedBoxIndex] = useState<Record<string, number>>({})
+
+  // Domain card modal state
+  const [domainCardModalOpen, setDomainCardModalOpen] = useState(false)
+  const [domainCardIndex, setDomainCardIndex] = useState<number | null>(null)
+  const [domainCardActiveTab, setDomainCardActiveTab] = useState<string>("domain")
+  const [domainCardSearchTerm, setDomainCardSearchTerm] = useState<string>("")
+  const [domainCardSelectedClasses, setDomainCardSelectedClasses] = useState<string[]>([])
+  const [domainCardSelectedLevels, setDomainCardSelectedLevels] = useState<string[]>([])
+
+  const handleOpenDomainCardModal = (index: number, popoverKey: string) => {
+    setDomainCardIndex(index)
+    setDomainCardActiveTab("domain")
+    setDomainCardSearchTerm("")
+    setDomainCardSelectedClasses([])
+    setDomainCardSelectedLevels([])
+    setDomainCardModalOpen(true)
+    // Close the popover when modal opens
+    togglePopover(popoverKey, false)
+  }
+
+  const handleDomainCardSelect = (card: StandardCard) => {
+    if (domainCardIndex !== null) {
+      onCardChange(domainCardIndex, card)
+      setDomainCardModalOpen(false)
+      setDomainCardIndex(null)
+    }
+  }
+
+  const handleCloseDomainCardModal = () => {
+    setDomainCardModalOpen(false)
+    setDomainCardIndex(null)
+  }
 
   // 检查是否是"永久增加一个生命槽"选项
   const isHPUpgradeOption = (label: string) => {
@@ -57,6 +94,11 @@ export function UpgradeSection({
     return label.includes("获得闪避值+1")
   }
 
+  // 检查是否是"选择领域卡"选项
+  const isDomainCardOption = (label: string) => {
+    return label.includes("领域卡加入卡组")
+  }
+
   const togglePopover = (key: string, open: boolean) => {
     setOpenPopovers(prev => ({ ...prev, [key]: open }))
   }
@@ -80,7 +122,8 @@ export function UpgradeSection({
             const showExperiencePopover = isExperienceUpgradeOption(option.label)
             const showAttributePopover = isAttributeUpgradeOption(option.label)
             const showDodgePopover = isDodgeUpgradeOption(option.label)
-            const showPopover = showHPPopover || showStressPopover || showExperiencePopover || showAttributePopover || showDodgePopover
+            const showDomainCardPopover = isDomainCardOption(option.label)
+            const showPopover = showHPPopover || showStressPopover || showExperiencePopover || showAttributePopover || showDodgePopover || showDomainCardPopover
 
             return (
             <div key={popoverKey} className="flex items-start !text-[10px] leading-[1.6]">
@@ -181,6 +224,14 @@ export function UpgradeSection({
                         handleUpgradeCheck={handleUpgradeCheck}
                       />
                     )}
+                    {showDomainCardPopover && (
+                      <DomainCardSelector
+                        formData={formData}
+                        onCardChange={onCardChange}
+                        onClose={() => togglePopover(popoverKey, false)}
+                        onOpenModal={(index) => handleOpenDomainCardModal(index, popoverKey)}
+                      />
+                    )}
                   </PopoverContent>
                 </Popover>
               ) : (
@@ -243,6 +294,24 @@ export function UpgradeSection({
           )}
         </div>
       </div>
+
+      {/* Domain Card Selection Modal - Rendered outside Popover */}
+      {domainCardIndex !== null && (
+        <CardSelectionModal
+          isOpen={domainCardModalOpen}
+          onClose={handleCloseDomainCardModal}
+          onSelect={handleDomainCardSelect}
+          selectedCardIndex={domainCardIndex}
+          activeTab={domainCardActiveTab}
+          setActiveTab={setDomainCardActiveTab}
+          searchTerm={domainCardSearchTerm}
+          setSearchTerm={setDomainCardSearchTerm}
+          selectedClasses={domainCardSelectedClasses}
+          setSelectedClasses={setDomainCardSelectedClasses}
+          selectedLevels={domainCardSelectedLevels}
+          setSelectedLevels={setDomainCardSelectedLevels}
+        />
+      )}
     </div>
   )
 }

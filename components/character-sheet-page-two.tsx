@@ -175,6 +175,7 @@ export default function CharacterSheetPageTwo() {
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
               getUpgradeOptions={getUpgradeOptions}
+              onCardChange={handleCardChange}
             />
 
             {/* Tier 2: Levels 5-7 */}
@@ -186,6 +187,7 @@ export default function CharacterSheetPageTwo() {
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
               getUpgradeOptions={getUpgradeOptions}
+              onCardChange={handleCardChange}
             />
 
             {/* Tier 3: Levels 8-10 */}
@@ -197,6 +199,7 @@ export default function CharacterSheetPageTwo() {
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
               getUpgradeOptions={getUpgradeOptions}
+              onCardChange={handleCardChange}
           />
         </div>
       </div>

@@ -412,7 +412,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 attributeKeys.forEach(key => {
                     const attr = state.sheetData[key]
                     if (typeof attr === 'object' && attr !== null && 'checked' in attr) {
-                        updates[key] = { ...attr, checked: false }
+                        (updates as any)[key] = { ...attr, checked: false }
                     }
                 })
 

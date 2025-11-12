@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ChevronUp, X } from "lucide-react"
+import { isValidNumber, parseToNumber } from "@/lib/number-utils"
 
 interface StressMaxEditorProps {
   onClose?: () => void
@@ -20,39 +21,35 @@ export function StressMaxEditor({ onClose }: StressMaxEditorProps) {
   }, [currentStressMax])
 
   const handleInputChange = (value: string) => {
-    // 允许空字符串以便编辑
-    if (value === "") {
-      setInputValue("")
-      return
-    }
-
-    // 只允许数字输入
-    if (!/^\d+$/.test(value)) return
-
-    const numValue = parseInt(value)
-
-    // 限制范围 1-12 (压力上限是12)
-    if (numValue < 1 || numValue > 12) return
-
+    // 允许任意输入,不做限制
     setInputValue(value)
   }
 
   const handleBlur = () => {
     // 失焦时应用更改
-    const numValue = parseInt(inputValue) || 6
-    const finalValue = Math.min(Math.max(numValue, 1), 12)
-
-    updateStressMax(finalValue)
-    setInputValue(String(finalValue))
+    if (isValidNumber(inputValue)) {
+      const numValue = parseToNumber(inputValue, 6)
+      const finalValue = Math.min(Math.max(numValue, 1), 12)
+      updateStressMax(finalValue)
+      setInputValue(String(finalValue))
+    } else {
+      // 如果不是有效数字,恢复到当前值
+      setInputValue(String(currentStressMax))
+    }
   }
 
   const handleIncrement = () => {
-    const currentValue = parseInt(inputValue) || currentStressMax
+    if (!isValidNumber(inputValue)) return
+
+    const currentValue = parseToNumber(inputValue, currentStressMax)
     const newValue = Math.min(currentValue + 1, 12)
 
     setInputValue(String(newValue))
     updateStressMax(newValue)
   }
+
+  // 判断是否可以增加
+  const canIncrement = isValidNumber(inputValue) && parseToNumber(inputValue, 0) < 12
 
   return (
     <div className="w-28">
@@ -84,9 +81,9 @@ export function StressMaxEditor({ onClose }: StressMaxEditorProps) {
 
         <button
           onClick={handleIncrement}
-          disabled={currentStressMax >= 12}
+          disabled={!canIncrement}
           className="w-8 h-8 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          title="增加压力上限 (+1)"
+          title={!isValidNumber(inputValue) ? "当前输入不是有效数字" : "增加压力上限 (+1)"}
         >
           <ChevronUp className="w-4 h-4" />
         </button>

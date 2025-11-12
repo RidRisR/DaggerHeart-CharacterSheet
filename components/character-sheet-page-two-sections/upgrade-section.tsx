@@ -4,6 +4,7 @@ import type { SheetData } from "@/lib/sheet-data"
 import { Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@/components/ui/popover"
 import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
+import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-values-editor"
 import { Info } from "lucide-react"
 
 interface UpgradeSectionProps {
@@ -38,6 +39,11 @@ export function UpgradeSection({
     return label.includes("永久增加一个压力槽")
   }
 
+  // 检查是否是"选择两项经历获得额外+1"选项
+  const isExperienceUpgradeOption = (label: string) => {
+    return label.includes("选择两项经历获得额外+1")
+  }
+
   const togglePopover = (key: string, open: boolean) => {
     setOpenPopovers(prev => ({ ...prev, [key]: open }))
   }
@@ -58,7 +64,8 @@ export function UpgradeSection({
             const popoverKey = `${tierKey}-${index}`
             const showHPPopover = isHPUpgradeOption(option.label)
             const showStressPopover = isStressUpgradeOption(option.label)
-            const showPopover = showHPPopover || showStressPopover
+            const showExperiencePopover = isExperienceUpgradeOption(option.label)
+            const showPopover = showHPPopover || showStressPopover || showExperiencePopover
 
             return (
             <div key={popoverKey} className="flex items-start !text-[10px] leading-[1.6]">
@@ -124,6 +131,7 @@ export function UpgradeSection({
                     <PopoverArrow className="fill-white" />
                     {showHPPopover && <HPMaxEditor onClose={() => togglePopover(popoverKey, false)} />}
                     {showStressPopover && <StressMaxEditor onClose={() => togglePopover(popoverKey, false)} />}
+                    {showExperiencePopover && <ExperienceValuesEditor onClose={() => togglePopover(popoverKey, false)} />}
                   </PopoverContent>
                 </Popover>
               ) : (

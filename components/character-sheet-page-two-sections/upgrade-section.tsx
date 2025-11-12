@@ -6,6 +6,7 @@ import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
 import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-values-editor"
 import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-upgrade-editor"
+import { DodgeEditor } from "@/components/upgrade-popover/dodge-editor"
 import { Info } from "lucide-react"
 
 interface UpgradeSectionProps {
@@ -51,6 +52,11 @@ export function UpgradeSection({
     return label.includes("两项未升级的角色属性+1")
   }
 
+  // 检查是否是"获得闪避值+1"选项
+  const isDodgeUpgradeOption = (label: string) => {
+    return label.includes("获得闪避值+1")
+  }
+
   const togglePopover = (key: string, open: boolean) => {
     setOpenPopovers(prev => ({ ...prev, [key]: open }))
   }
@@ -73,7 +79,8 @@ export function UpgradeSection({
             const showStressPopover = isStressUpgradeOption(option.label)
             const showExperiencePopover = isExperienceUpgradeOption(option.label)
             const showAttributePopover = isAttributeUpgradeOption(option.label)
-            const showPopover = showHPPopover || showStressPopover || showExperiencePopover || showAttributePopover
+            const showDodgePopover = isDodgeUpgradeOption(option.label)
+            const showPopover = showHPPopover || showStressPopover || showExperiencePopover || showAttributePopover || showDodgePopover
 
             return (
             <div key={popoverKey} className="flex items-start !text-[10px] leading-[1.6]">
@@ -106,7 +113,7 @@ export function UpgradeSection({
                           onClick={(e) => {
                             e.stopPropagation()
 
-                            // 对于属性升级选项，特殊处理
+                            // 对于属性升级选项，特殊处理（延迟勾选）
                             if (showAttributePopover) {
                               const checkKey = `${tierKey}-${index}-${i}`
                               const isCurrentlyChecked = isUpgradeChecked(checkKey, index)
@@ -158,6 +165,15 @@ export function UpgradeSection({
                     {showExperiencePopover && <ExperienceValuesEditor onClose={() => togglePopover(popoverKey, false)} />}
                     {showAttributePopover && (
                       <AttributeUpgradeEditor
+                        onClose={() => togglePopover(popoverKey, false)}
+                        tier={tierKey}
+                        optionIndex={index}
+                        boxIndex={clickedBoxIndex[popoverKey]}
+                        handleUpgradeCheck={handleUpgradeCheck}
+                      />
+                    )}
+                    {showDodgePopover && (
+                      <DodgeEditor
                         onClose={() => togglePopover(popoverKey, false)}
                         tier={tierKey}
                         optionIndex={index}

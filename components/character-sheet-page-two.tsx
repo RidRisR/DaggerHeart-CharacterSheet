@@ -4,8 +4,9 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
 import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
-import { createEmptyCard, type StandardCard } from "@/card/card-types"
+import { createEmptyCard, isEmptyCard, type StandardCard } from "@/card/card-types"
 import { showFadeNotification } from "@/components/ui/fade-notification"
+import { parseToNumber } from "@/lib/number-utils"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -181,6 +182,8 @@ export default function CharacterSheetPageTwo() {
           }
         }
       }
+
+      // 领域卡和子职业卡的选择现在由编辑按钮直接处理，不在这里处理
     }
 
     // 更新复选框状态
@@ -247,10 +250,9 @@ export default function CharacterSheetPageTwo() {
     setUpgradeSubclassCardIndex(cardIndex)
     setUpgradeSubclassProfession(profession)
     setCardModalActiveTab("subclass")
-    // Clear search term and level filters
     setCardModalSearchTerm("")
     setCardModalSelectedLevels([])
-    // Set profession filter if available
+
     if (profession) {
       setCardModalSelectedClasses([profession])
     } else {

@@ -7,7 +7,7 @@ import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
 import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-values-editor"
 import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-upgrade-editor"
-import { DodgeEditor } from "@/components/upgrade-popover/dodge-editor"
+import { EvasionEditor } from "@/components/upgrade-popover/evasion-editor"
 import { DomainCardSelector } from "@/components/upgrade-popover/domain-card-selector"
 import { ProficiencyEditor } from "@/components/upgrade-popover/proficiency-editor"
 import { SubclassCardSelector } from "@/components/upgrade-popover/subclass-card-selector"
@@ -58,11 +58,80 @@ export function UpgradeSection({
       // isHPUpgradeOption(label) ||           // 直接勾选/取消勾选即可 +1/-1
       // isStressUpgradeOption(label) ||       // 直接勾选/取消勾选即可 +1/-1
       isExperienceUpgradeOption(label) ||
-      isDomainCardOption(label) ||
+      isDomainCardOption(label) ||             // 点击按钮直接打开 modal
       isDodgeUpgradeOption(label) ||
       // isProficiencyUpgradeOption(label) ||  // 直接勾选/取消勾选即可 +1/-1
-      isSubclassUpgradeOption(label)
+      isSubclassUpgradeOption(label)           // 点击按钮直接打开 modal
     )
+  }
+
+  // Helper function to determine if button should directly open modal (no popover)
+  const shouldDirectlyOpenModal = (label: string) => {
+    return isDomainCardOption(label) || isSubclassUpgradeOption(label)
+  }
+
+  // Handle direct modal opening for domain/subclass cards
+  const handleDirectModalOpen = (option: any) => {
+    const label = option.label
+
+    if (isDomainCardOption(label)) {
+      // Domain card logic - same as in DomainCardSelector
+      const cards = formData.cards || []
+      let emptySlotIndex = -1
+
+      for (let i = 5; i < 20; i++) {
+        const card = cards[i]
+        if (!card || (!card.name && (!card.type || card.type === "unknown"))) {
+          emptySlotIndex = i
+          break
+        }
+      }
+
+      if (emptySlotIndex === -1) {
+        // Use showFadeNotification - need to import it
+        alert("没有空余卡位") // Temporary, will be replaced
+        return
+      }
+
+      // Calculate smart level filtering
+      const tierLevelCaps: Record<number, number> = { 1: 4, 2: 7, 3: 10 }
+      const levelCap = tierLevelCaps[tier] || 10
+      const currentLevel = parseInt(formData.level) || 0
+      const targetLevel = currentLevel > 0 ? Math.min(currentLevel, levelCap) : levelCap
+      const levelFilter = Array.from({ length: targetLevel }, (_, i) => String(i + 1))
+
+      onOpenCardModal?.(emptySlotIndex, levelFilter)
+    }
+
+    if (isSubclassUpgradeOption(label)) {
+      // Subclass card logic - same as in SubclassCardSelector
+      const cards = formData.cards || []
+      let emptySlotIndex = -1
+
+      for (let i = 5; i < 20; i++) {
+        const card = cards[i]
+        if (!card || (!card.name && (!card.type || card.type === "unknown"))) {
+          emptySlotIndex = i
+          break
+        }
+      }
+
+      if (emptySlotIndex === -1) {
+        alert("没有空余卡位") // Temporary
+        return
+      }
+
+      // Get current profession from profession card at index 0
+      let currentProfession: string | undefined = undefined
+      const professionCard = cards[0]
+      const isCardEmpty = !professionCard || (!professionCard.name && (!professionCard.type || professionCard.type === "unknown"))
+
+      if (!isCardEmpty && professionCard.type === "profession") {
+        currentProfession = professionCard.class
+      }
+
+      onOpenSubclassModal?.(emptySlotIndex, currentProfession)
+    }
   }
 
   // Render the appropriate editor based on option type
@@ -107,7 +176,7 @@ export function UpgradeSection({
     }
 
     if (isDodgeUpgradeOption(option.label)) {
-      return <DodgeEditor onClose={() => setOpenPopoverIndex(null)} />
+      return <EvasionEditor onClose={() => setOpenPopoverIndex(null)} />
     }
 
     if (isProficiencyUpgradeOption(option.label)) {
@@ -177,33 +246,45 @@ export function UpgradeSection({
               <div className="flex-1 ml-2">
                 <span className="text-gray-800 dark:text-gray-200 mr-1">{option.label}</span>
                 {needsEditButton(option.label) && (
-                  <Popover
-                    open={openPopoverIndex === `${tierKey}-${index}`}
-                    onOpenChange={(open) => {
-                      if (open) {
-                        setOpenPopoverIndex(`${tierKey}-${index}`)
-                      } else {
-                        setOpenPopoverIndex(null)
-                      }
-                    }}
-                  >
-                    <PopoverTrigger asChild>
-                      <button
-                        className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
-                        title="编辑"
-                      >
-                        <Edit className="w-2.5 h-2.5 text-gray-600" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-auto p-1.5 bg-white border border-gray-300 rounded shadow-lg"
-                      side="right"
-                      align="start"
-                      sideOffset={5}
+                  shouldDirectlyOpenModal(option.label) ? (
+                    // Direct modal open button (no popover)
+                    <button
+                      onClick={() => handleDirectModalOpen(option)}
+                      className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
+                      title="选择卡牌"
                     >
-                      {renderEditor(option, index, 0)}
-                    </PopoverContent>
-                  </Popover>
+                      <Edit className="w-2.5 h-2.5 text-gray-600" />
+                    </button>
+                  ) : (
+                    // Popover button for other options
+                    <Popover
+                      open={openPopoverIndex === `${tierKey}-${index}`}
+                      onOpenChange={(open) => {
+                        if (open) {
+                          setOpenPopoverIndex(`${tierKey}-${index}`)
+                        } else {
+                          setOpenPopoverIndex(null)
+                        }
+                      }}
+                    >
+                      <PopoverTrigger asChild>
+                        <button
+                          className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
+                          title="编辑"
+                        >
+                          <Edit className="w-2.5 h-2.5 text-gray-600" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto p-1.5 bg-white border border-gray-300 rounded shadow-lg"
+                        side="right"
+                        align="start"
+                        sideOffset={5}
+                      >
+                        {renderEditor(option, index, 0)}
+                      </PopoverContent>
+                    </Popover>
+                  )
                 )}
               </div>
             </div>
@@ -216,39 +297,13 @@ export function UpgradeSection({
               <span className="text-gray-800 dark:text-gray-200 mr-1">
                 将伤害阈值+1，选择一张不高于你当前等级(上限4级)的领域卡加入卡组。
               </span>
-              <Popover
-                open={openPopoverIndex === `threshold-tier${tier}`}
-                onOpenChange={(open) => {
-                  if (open) {
-                    setOpenPopoverIndex(`threshold-tier${tier}`)
-                  } else {
-                    setOpenPopoverIndex(null)
-                  }
-                }}
+              <button
+                onClick={() => handleDirectModalOpen({ label: "领域卡加入卡组" })}
+                className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
+                title="选择领域卡"
               >
-                <PopoverTrigger asChild>
-                  <button
-                    className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
-                    title="选择领域卡"
-                  >
-                    <Edit className="w-2.5 h-2.5 text-gray-600" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-1.5 bg-white border border-gray-300 rounded shadow-lg"
-                  side="right"
-                  align="start"
-                  sideOffset={5}
-                >
-                  <DomainCardSelector
-                    formData={formData}
-                    tier={tier}
-                    onCardChange={onCardChange!}
-                    onClose={() => setOpenPopoverIndex(null)}
-                    onOpenModal={onOpenCardModal}
-                  />
-                </PopoverContent>
-              </Popover>
+                <Edit className="w-2.5 h-2.5 text-gray-600" />
+              </button>
             </>
           )}
           {tier === 2 && (
@@ -256,39 +311,13 @@ export function UpgradeSection({
               <span className="text-gray-800 dark:text-gray-200 mr-1">
                 将伤害阈值+1，选择一张不高于你当前等级(上限7级)的领域卡加入卡组。
               </span>
-              <Popover
-                open={openPopoverIndex === `threshold-tier${tier}`}
-                onOpenChange={(open) => {
-                  if (open) {
-                    setOpenPopoverIndex(`threshold-tier${tier}`)
-                  } else {
-                    setOpenPopoverIndex(null)
-                  }
-                }}
+              <button
+                onClick={() => handleDirectModalOpen({ label: "领域卡加入卡组" })}
+                className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
+                title="选择领域卡"
               >
-                <PopoverTrigger asChild>
-                  <button
-                    className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
-                    title="选择领域卡"
-                  >
-                    <Edit className="w-2.5 h-2.5 text-gray-600" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-1.5 bg-white border border-gray-300 rounded shadow-lg"
-                  side="right"
-                  align="start"
-                  sideOffset={5}
-                >
-                  <DomainCardSelector
-                    formData={formData}
-                    tier={tier}
-                    onCardChange={onCardChange!}
-                    onClose={() => setOpenPopoverIndex(null)}
-                    onOpenModal={onOpenCardModal}
-                  />
-                </PopoverContent>
-              </Popover>
+                <Edit className="w-2.5 h-2.5 text-gray-600" />
+              </button>
             </>
           )}
           {tier === 3 && (
@@ -296,39 +325,13 @@ export function UpgradeSection({
               <span className="text-gray-800 dark:text-gray-200 mr-1">
                 将伤害阈值+1，选择一张不高于你当前等级(上限10级)的领域卡加入卡组。
               </span>
-              <Popover
-                open={openPopoverIndex === `threshold-tier${tier}`}
-                onOpenChange={(open) => {
-                  if (open) {
-                    setOpenPopoverIndex(`threshold-tier${tier}`)
-                  } else {
-                    setOpenPopoverIndex(null)
-                  }
-                }}
+              <button
+                onClick={() => handleDirectModalOpen({ label: "领域卡加入卡组" })}
+                className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
+                title="选择领域卡"
               >
-                <PopoverTrigger asChild>
-                  <button
-                    className="inline-flex items-center justify-center p-0.5 hover:bg-gray-100 rounded transition-colors print:hidden"
-                    title="选择领域卡"
-                  >
-                    <Edit className="w-2.5 h-2.5 text-gray-600" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-1.5 bg-white border border-gray-300 rounded shadow-lg"
-                  side="right"
-                  align="start"
-                  sideOffset={5}
-                >
-                  <DomainCardSelector
-                    formData={formData}
-                    tier={tier}
-                    onCardChange={onCardChange!}
-                    onClose={() => setOpenPopoverIndex(null)}
-                    onOpenModal={onOpenCardModal}
-                  />
-                </PopoverContent>
-              </Popover>
+                <Edit className="w-2.5 h-2.5 text-gray-600" />
+              </button>
             </>
           )}
         </div>

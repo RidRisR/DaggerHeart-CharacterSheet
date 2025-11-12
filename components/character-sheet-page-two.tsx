@@ -11,6 +11,7 @@ import { CharacterDescriptionSection } from "@/components/character-sheet-page-t
 import { CardDeckSection } from "@/components/character-sheet-page-two-sections/card-deck-section"
 import { UpgradeSection } from "@/components/character-sheet-page-two-sections/upgrade-section"
 import { PageHeader } from "@/components/page-header"
+import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 
 export default function CharacterSheetPageTwo() {
   const { setSheetData: setFormData } = useSheetStore();
@@ -21,6 +22,10 @@ export default function CharacterSheetPageTwo() {
   const [cardModalSearchTerm, setCardModalSearchTerm] = useState<string>("");
   const [cardModalSelectedClasses, setCardModalSelectedClasses] = useState<string[]>([]);
   const [cardModalSelectedLevels, setCardModalSelectedLevels] = useState<string[]>([]);
+
+  // State for upgrade domain card modal
+  const [upgradeDomainModalOpen, setUpgradeDomainModalOpen] = useState(false);
+  const [upgradeDomainCardIndex, setUpgradeDomainCardIndex] = useState<number>(-1);
 
   // 使用ref来避免无限循环
   const isUpdatingRef = useRef(false)
@@ -131,6 +136,13 @@ export default function CharacterSheetPageTwo() {
     return [...processedBaseUpgrades, ...tierSpecificUpgrades]
   }
 
+  // Handle opening the domain card modal from upgrade section
+  const handleOpenUpgradeDomainModal = (cardIndex: number) => {
+    setUpgradeDomainCardIndex(cardIndex)
+    setCardModalActiveTab("domain")
+    setUpgradeDomainModalOpen(true)
+  }
+
 
   return (
     <>
@@ -175,6 +187,8 @@ export default function CharacterSheetPageTwo() {
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
               getUpgradeOptions={getUpgradeOptions}
+              onCardChange={handleCardChange}
+              onOpenCardModal={handleOpenUpgradeDomainModal}
             />
 
             {/* Tier 2: Levels 5-7 */}
@@ -186,6 +200,8 @@ export default function CharacterSheetPageTwo() {
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
               getUpgradeOptions={getUpgradeOptions}
+              onCardChange={handleCardChange}
+              onOpenCardModal={handleOpenUpgradeDomainModal}
             />
 
             {/* Tier 3: Levels 8-10 */}
@@ -197,12 +213,31 @@ export default function CharacterSheetPageTwo() {
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
               getUpgradeOptions={getUpgradeOptions}
+              onCardChange={handleCardChange}
+              onOpenCardModal={handleOpenUpgradeDomainModal}
           />
         </div>
       </div>
       </div>
 
       {/* Modals */}
+      <CardSelectionModal
+        isOpen={upgradeDomainModalOpen}
+        onClose={() => setUpgradeDomainModalOpen(false)}
+        onSelect={(card) => {
+          handleCardChange(upgradeDomainCardIndex, card)
+          setUpgradeDomainModalOpen(false)
+        }}
+        selectedCardIndex={upgradeDomainCardIndex}
+        activeTab={cardModalActiveTab}
+        setActiveTab={setCardModalActiveTab}
+        searchTerm={cardModalSearchTerm}
+        setSearchTerm={setCardModalSearchTerm}
+        selectedClasses={cardModalSelectedClasses}
+        setSelectedClasses={setCardModalSelectedClasses}
+        selectedLevels={cardModalSelectedLevels}
+        setSelectedLevels={setCardModalSelectedLevels}
+      />
     </>
   )
 }

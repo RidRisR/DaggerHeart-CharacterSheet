@@ -15,7 +15,7 @@ interface DodgeEditorProps {
 
 export function DodgeEditor({ onClose, tier, optionIndex, boxIndex, handleUpgradeCheck }: DodgeEditorProps) {
   const { sheetData, setSheetData } = useSheetStore()
-  const currentDodge = sheetData.dodge ?? "0"
+  const currentDodge = sheetData.evasion ?? "0"
   const [inputValue, setInputValue] = useState(String(currentDodge))
 
   // 同步外部变化
@@ -36,7 +36,7 @@ export function DodgeEditor({ onClose, tier, optionIndex, boxIndex, handleUpgrad
     // 失焦时应用更改
     if (isValidNumber(inputValue)) {
       const numValue = parseToNumber(inputValue, 0)
-      setSheetData({ dodge: String(numValue) })
+      setSheetData({ evasion: String(numValue) })
       setInputValue(String(numValue))
     } else {
       // 如果不是有效数字，恢复到当前值
@@ -51,7 +51,7 @@ export function DodgeEditor({ onClose, tier, optionIndex, boxIndex, handleUpgrad
     const newValue = currentValue + 1
 
     setInputValue(String(newValue))
-    setSheetData({ dodge: String(newValue) })
+    setSheetData({ evasion: String(newValue) })
   }
 
   // 判断是否可以增加

@@ -112,7 +112,9 @@ interface SheetState {
     updateHP: (index: number, checked: boolean) => void;
     updateName: (name: string) => void;
     updateLevel: (level: string) => void;
-    
+    updateHPMax: (value: number) => void;
+    updateStressMax: (value: number) => void;
+
     // Threshold calculation actions
     updateLevelWithThreshold: (level: string) => void;
     updateArmorThresholdWithDamage: (armorThreshold: string) => void;
@@ -352,7 +354,21 @@ export const useSheetStore = create<SheetState>((set) => ({
             level
         }
     })),
-    
+
+    updateHPMax: (value) => set((state) => ({
+        sheetData: {
+            ...state.sheetData,
+            hpMax: value
+        }
+    })),
+
+    updateStressMax: (value) => set((state) => ({
+        sheetData: {
+            ...state.sheetData,
+            stressMax: value
+        }
+    })),
+
     // Threshold calculation actions
     updateLevelWithThreshold: (level) => set((state) => {
         const updates: Partial<SheetData> = { level };

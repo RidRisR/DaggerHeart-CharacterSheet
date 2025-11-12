@@ -5,6 +5,7 @@ import { Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@/compone
 import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
 import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-values-editor"
+import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-upgrade-editor"
 import { Info } from "lucide-react"
 
 interface UpgradeSectionProps {
@@ -28,6 +29,7 @@ export function UpgradeSection({
 }: UpgradeSectionProps) {
   const tierKey = `tier${tier}`
   const [openPopovers, setOpenPopovers] = useState<Record<string, boolean>>({})
+  const [clickedBoxIndex, setClickedBoxIndex] = useState<Record<string, number>>({})
 
   // 检查是否是"永久增加一个生命槽"选项
   const isHPUpgradeOption = (label: string) => {
@@ -42,6 +44,11 @@ export function UpgradeSection({
   // 检查是否是"选择两项经历获得额外+1"选项
   const isExperienceUpgradeOption = (label: string) => {
     return label.includes("选择两项经历获得额外+1")
+  }
+
+  // 检查是否是"两项未升级的角色属性+1"选项
+  const isAttributeUpgradeOption = (label: string) => {
+    return label.includes("两项未升级的角色属性+1")
   }
 
   const togglePopover = (key: string, open: boolean) => {
@@ -65,7 +72,8 @@ export function UpgradeSection({
             const showHPPopover = isHPUpgradeOption(option.label)
             const showStressPopover = isStressUpgradeOption(option.label)
             const showExperiencePopover = isExperienceUpgradeOption(option.label)
-            const showPopover = showHPPopover || showStressPopover || showExperiencePopover
+            const showAttributePopover = isAttributeUpgradeOption(option.label)
+            const showPopover = showHPPopover || showStressPopover || showExperiencePopover || showAttributePopover
 
             return (
             <div key={popoverKey} className="flex items-start !text-[10px] leading-[1.6]">
@@ -98,23 +106,39 @@ export function UpgradeSection({
                           onClick={(e) => {
                             e.stopPropagation()
 
-                            // 检查当前是否已勾选
-                            const checkKey = option.doubleBox ? `${tierKey}-${index}` : `${tierKey}-${index}-${i}`
-                            const isCurrentlyChecked = isUpgradeChecked(checkKey, index)
+                            // 对于属性升级选项，特殊处理
+                            if (showAttributePopover) {
+                              const checkKey = `${tierKey}-${index}-${i}`
+                              const isCurrentlyChecked = isUpgradeChecked(checkKey, index)
 
-                            // 处理勾选逻辑
-                            if (option.doubleBox) {
-                              handleUpgradeCheck(`${tierKey}-${index}`, index);
+                              if (isCurrentlyChecked) {
+                                // 已勾选：取消勾选并关闭气泡
+                                handleUpgradeCheck(checkKey, index)
+                                togglePopover(popoverKey, false)
+                              } else {
+                                // 未勾选：记录索引并打开气泡（不勾选）
+                                setClickedBoxIndex(prev => ({ ...prev, [popoverKey]: i }))
+                                togglePopover(popoverKey, true)
+                              }
                             } else {
-                              handleUpgradeCheck(`${tierKey}-${index}-${i}`, index);
-                            }
+                              // 对于其他升级选项，保持原逻辑
+                              const checkKey = option.doubleBox ? `${tierKey}-${index}` : `${tierKey}-${index}-${i}`
+                              const isCurrentlyChecked = isUpgradeChecked(checkKey, index)
 
-                            // 如果原来未勾选，现在勾选了，打开气泡
-                            // 如果原来已勾选，现在取消了，关闭气泡
-                            if (!isCurrentlyChecked) {
-                              togglePopover(popoverKey, true)
-                            } else {
-                              togglePopover(popoverKey, false)
+                              // 处理勾选逻辑
+                              if (option.doubleBox) {
+                                handleUpgradeCheck(`${tierKey}-${index}`, index);
+                              } else {
+                                handleUpgradeCheck(`${tierKey}-${index}-${i}`, index);
+                              }
+
+                              // 如果原来未勾选，现在勾选了，打开气泡
+                              // 如果原来已勾选，现在取消了，关闭气泡
+                              if (!isCurrentlyChecked) {
+                                togglePopover(popoverKey, true)
+                              } else {
+                                togglePopover(popoverKey, false)
+                              }
                             }
                           }}
                         ></div>
@@ -132,6 +156,15 @@ export function UpgradeSection({
                     {showHPPopover && <HPMaxEditor onClose={() => togglePopover(popoverKey, false)} />}
                     {showStressPopover && <StressMaxEditor onClose={() => togglePopover(popoverKey, false)} />}
                     {showExperiencePopover && <ExperienceValuesEditor onClose={() => togglePopover(popoverKey, false)} />}
+                    {showAttributePopover && (
+                      <AttributeUpgradeEditor
+                        onClose={() => togglePopover(popoverKey, false)}
+                        tier={tierKey}
+                        optionIndex={index}
+                        boxIndex={clickedBoxIndex[popoverKey]}
+                        handleUpgradeCheck={handleUpgradeCheck}
+                      />
+                    )}
                   </PopoverContent>
                 </Popover>
               ) : (

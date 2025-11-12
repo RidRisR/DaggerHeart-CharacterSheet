@@ -5,6 +5,7 @@ import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
 import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
 import { createEmptyCard, type StandardCard } from "@/card/card-types"
+import { showFadeNotification } from "@/components/ui/fade-notification"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -16,6 +17,8 @@ import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 export default function CharacterSheetPageTwo() {
   const { setSheetData: setFormData } = useSheetStore();
   const safeFormData = useSafeSheetData();
+  const updateHPMax = useSheetStore(state => state.updateHPMax);
+  const updateStressMax = useSheetStore(state => state.updateStressMax);
 
   // State for CardSelectionModal filters, lifted to this component
   const [cardModalActiveTab, setCardModalActiveTab] = useState<string>("");
@@ -95,6 +98,92 @@ export default function CharacterSheetPageTwo() {
 
   // Handle checkbox changes for upgrades
   const handleUpgradeCheck = (tier: string, index: number) => {
+    // 获取当前勾选状态
+    const currentlyChecked = safeFormData.checkedUpgrades?.[tier as keyof typeof safeFormData.checkedUpgrades]?.[index] ?? false
+    const newCheckedState = !currentlyChecked
+
+    // 获取选项信息
+    const tierNum = parseInt(tier.replace('tier', ''))
+    const options = getUpgradeOptions(tierNum)
+    const option = options[index]
+
+    if (option) {
+      const label = option.label
+
+      // 处理生命槽
+      if (label.includes("生命槽")) {
+        const currentHP = safeFormData.hpMax || 6
+        if (newCheckedState) {
+          const newValue = Math.min(currentHP + 1, 18)
+          updateHPMax(newValue)
+          showFadeNotification({
+            message: `生命槽上限 +1，当前为 ${newValue}`,
+            type: "success"
+          })
+        } else {
+          const newValue = Math.max(currentHP - 1, 1)
+          updateHPMax(newValue)
+          showFadeNotification({
+            message: `生命槽上限 -1，当前为 ${newValue}`,
+            type: "success"
+          })
+        }
+      }
+
+      // 处理压力槽
+      if (label.includes("压力槽")) {
+        const currentStress = safeFormData.stressMax || 6
+        if (newCheckedState) {
+          const newValue = Math.min(currentStress + 1, 18)
+          updateStressMax(newValue)
+          showFadeNotification({
+            message: `压力槽上限 +1，当前为 ${newValue}`,
+            type: "success"
+          })
+        } else {
+          const newValue = Math.max(currentStress - 1, 1)
+          updateStressMax(newValue)
+          showFadeNotification({
+            message: `压力槽上限 -1，当前为 ${newValue}`,
+            type: "success"
+          })
+        }
+      }
+
+      // 处理熟练度
+      if (label.includes("熟练度+1")) {
+        const currentProficiency = Array.isArray(safeFormData.proficiency)
+          ? safeFormData.proficiency
+          : Array(6).fill(false)
+        const currentCount = currentProficiency.filter(v => v === true).length
+
+        if (newCheckedState) {
+          // 增加熟练度
+          if (currentCount < 6) {
+            const newProficiency = [...currentProficiency]
+            newProficiency[currentCount] = true
+            setFormData({ proficiency: newProficiency })
+            showFadeNotification({
+              message: `熟练度 +1，当前为 ${currentCount + 1}/6`,
+              type: "success"
+            })
+          }
+        } else {
+          // 减少熟练度
+          if (currentCount > 0) {
+            const newProficiency = [...currentProficiency]
+            newProficiency[currentCount - 1] = false
+            setFormData({ proficiency: newProficiency })
+            showFadeNotification({
+              message: `熟练度 -1，当前为 ${currentCount - 1}/6`,
+              type: "success"
+            })
+          }
+        }
+      }
+    }
+
+    // 更新复选框状态
     setFormData((prev) => {
       const checkedUpgrades = prev.checkedUpgrades ?? { tier1: {}, tier2: {}, tier3: {} }
       const newCheckedUpgrades = {
@@ -107,7 +196,7 @@ export default function CharacterSheetPageTwo() {
       const tierUpgrades = { ...newCheckedUpgrades[tierKey] }
 
       // Toggle the checked state
-      tierUpgrades[index] = !tierUpgrades[index]
+      tierUpgrades[index] = newCheckedState
 
       newCheckedUpgrades[tierKey] = tierUpgrades
       return { ...prev, checkedUpgrades: newCheckedUpgrades }

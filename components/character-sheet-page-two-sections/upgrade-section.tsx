@@ -55,12 +55,12 @@ export function UpgradeSection({
   const needsEditButton = (label: string) => {
     return (
       isAttributeUpgradeOption(label) ||
-      isHPUpgradeOption(label) ||
-      isStressUpgradeOption(label) ||
+      // isHPUpgradeOption(label) ||           // 直接勾选/取消勾选即可 +1/-1
+      // isStressUpgradeOption(label) ||       // 直接勾选/取消勾选即可 +1/-1
       isExperienceUpgradeOption(label) ||
       isDomainCardOption(label) ||
       isDodgeUpgradeOption(label) ||
-      isProficiencyUpgradeOption(label) ||
+      // isProficiencyUpgradeOption(label) ||  // 直接勾选/取消勾选即可 +1/-1
       isSubclassUpgradeOption(label)
     )
   }

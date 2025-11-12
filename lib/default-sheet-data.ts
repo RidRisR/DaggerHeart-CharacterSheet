@@ -4,7 +4,7 @@ import type { SheetData } from "./sheet-data";
 export const defaultSheetData: SheetData = {
     name: "",
     characterImage: "",
-    level: "",
+    level: "1",
     proficiency: [true, false, false, false, false, false], // Default as boolean array, first one lit
     ancestry1: "",
     ancestry2: "",

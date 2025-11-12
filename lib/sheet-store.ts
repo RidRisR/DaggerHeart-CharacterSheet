@@ -6,6 +6,7 @@ import type { SheetData, AttributeValue, ArmorTemplateData } from "./sheet-data"
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { armorItems, type ArmorItem } from "@/data/list/armor";
 import { showFadeNotification } from "@/components/ui/fade-notification";
+import { parseToNumber } from "./number-utils";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -355,8 +356,46 @@ export const useSheetStore = create<SheetState>((set) => ({
     // Threshold calculation actions
     updateLevelWithThreshold: (level) => set((state) => {
         const updates: Partial<SheetData> = { level };
-        
-        // 如果等级为空字符串，只更新等级，不计算阈值
+
+        // 检查是否需要增加熟练度（当达到2、5、8级时）
+        const oldLevel = parseToNumber(state.sheetData.level, 1)
+        const newLevel = parseToNumber(level, 1)
+
+        const proficiencyLevels = [2, 5, 8]
+        let shouldIncreaseProficiency = false
+
+        // 检查是否跨过了熟练度提升等级
+        for (const threshold of proficiencyLevels) {
+            if (oldLevel < threshold && newLevel >= threshold) {
+                shouldIncreaseProficiency = true
+                break
+            }
+        }
+
+        // 如果需要增加熟练度
+        if (shouldIncreaseProficiency) {
+            const currentProficiency = Array.isArray(state.sheetData.proficiency)
+                ? state.sheetData.proficiency
+                : Array(6).fill(false)
+
+            // 计算当前熟练度数量
+            const currentCount = currentProficiency.filter(v => v === true).length
+
+            // 如果未达到上限（6个），增加1个
+            if (currentCount < 6) {
+                const newProficiency = [...currentProficiency]
+                newProficiency[currentCount] = true
+                updates.proficiency = newProficiency
+
+                // 显示通知
+                showFadeNotification({
+                    message: `等级提升至${newLevel}级，熟练度+1（${currentCount} → ${currentCount + 1}）`,
+                    type: "success"
+                })
+            }
+        }
+
+        // 如果等级为空字符串，只更新等级和熟练度，不计算阈值
         if (level === "") {
             return {
                 sheetData: {
@@ -365,10 +404,10 @@ export const useSheetStore = create<SheetState>((set) => ({
                 }
             };
         }
-        
+
         const levelNum = parseInt(level);
-        
-        // 验证等级范围 (1-10)，如果无效则只更新等级值，不计算阈值
+
+        // 验证等级范围 (1-10)，如果无效则只更新等级值和熟练度，不计算阈值
         if (isNaN(levelNum) || levelNum < 1 || levelNum > 10) {
             return {
                 sheetData: {

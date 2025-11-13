@@ -213,7 +213,8 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
     if (upgradedAttributes.length > 0) {
       showFadeNotification({
         message: `已升级属性：${upgradedAttributes.join('、')}`,
-        type: "success"
+        type: "success",
+        position: "middle"
       })
     }
 

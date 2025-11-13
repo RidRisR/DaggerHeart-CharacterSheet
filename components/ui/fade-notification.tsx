@@ -7,6 +7,7 @@ interface FadeNotificationProps {
   message: string
   type?: 'success' | 'error' | 'info'
   duration?: number
+  position?: 'top' | 'middle'  // 新增位置参数
 }
 
 interface NotificationState {
@@ -14,6 +15,7 @@ interface NotificationState {
   message: string
   type: 'success' | 'error' | 'info'
   duration: number
+  position: 'top' | 'middle'  // 新增位置参数
 }
 
 // 全局通知状态管理
@@ -31,9 +33,10 @@ export function showFadeNotification(props: FadeNotificationProps) {
     id,
     message: props.message,
     type: props.type || 'info',
-    duration: props.duration || 2000
+    duration: props.duration || 2000,
+    position: props.position || 'top'  // 默认为顶部
   }
-  
+
   notifications.push(notification)
   notifyListeners()
   
@@ -76,11 +79,14 @@ function FadeNotificationItem({ notification }: { notification: NotificationStat
     error: 'bg-red-100 text-red-800 border-red-200',
     info: 'bg-blue-100 text-blue-800 border-blue-200'
   }
-  
+
+  // 根据位置设置不同的 top 值
+  const positionClass = notification.position === 'middle' ? 'top-1/2 -translate-y-1/2' : 'top-20'
+
   return (
     <div
       className={`
-        fixed top-20 left-1/2 transform -translate-x-1/2 z-[200]
+        fixed ${positionClass} left-1/2 transform -translate-x-1/2 z-[200]
         px-4 py-2 rounded-lg border shadow-md text-sm font-medium
         transition-all duration-500 ease-out
         ${typeStyles[notification.type]}

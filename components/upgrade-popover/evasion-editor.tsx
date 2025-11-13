@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { X, ChevronUp, Check } from "lucide-react"
 import { isValidNumber, parseToNumber } from "@/lib/number-utils"
+import { showFadeNotification } from "@/components/ui/fade-notification"
 
 interface EvasionEditorProps {
   checkKey: string
@@ -53,6 +54,13 @@ export function EvasionEditor({
     if (finalValue !== currentEvasion) {
       createEvasionSnapshot(finalValue)
       setSheetData({ evasion: finalValue })
+
+      // 显示成功通知
+      showFadeNotification({
+        message: `闪避值已更新为 ${finalValue}`,
+        type: "success",
+        position: "middle"
+      })
     }
 
     // 勾选复选框

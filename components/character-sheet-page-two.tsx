@@ -157,18 +157,21 @@ export default function CharacterSheetPageTwo() {
         if (result.success) {
           showFadeNotification({
             message: "已撤回属性升级，属性值已恢复",
-            type: "success"
+            type: "success",
+            position: "middle"
           })
         } else {
           if (result.reason === 'no-record') {
             showFadeNotification({
               message: "升级记录已丢失，无法自动回滚，请手动调整属性值",
-              type: "info"
+              type: "info",
+              position: "middle"
             })
           } else if (result.reason === 'conflict') {
             showFadeNotification({
               message: "属性已被其他操作修改，无法自动回滚，请手动调整",
-              type: "info"
+              type: "info",
+              position: "middle"
             })
           }
         }
@@ -186,17 +189,20 @@ export default function CharacterSheetPageTwo() {
         if (result.reason === 'conflict') {
           showFadeNotification({
             message: "检测到经历加值已被其他升级修改，无法回滚",
-            type: "error"
+            type: "error",
+            position: "middle"
           })
         } else if (result.reason === 'no-snapshot') {
           showFadeNotification({
             message: "没有找到经历升级的快照记录",
-            type: "error"
+            type: "error",
+            position: "middle"
           })
         } else {
           showFadeNotification({
             message: "已撤回经历升级，经历加值已恢复",
-            type: "success"
+            type: "success",
+            position: "middle"
           })
         }
 
@@ -213,17 +219,20 @@ export default function CharacterSheetPageTwo() {
         if (result.reason === 'conflict') {
           showFadeNotification({
             message: "检测到闪避值已被其他升级修改，无法回滚",
-            type: "error"
+            type: "error",
+            position: "middle"
           })
         } else if (result.reason === 'no-snapshot') {
           showFadeNotification({
             message: "没有找到闪避值升级的快照记录",
-            type: "error"
+            type: "error",
+            position: "middle"
           })
         } else {
           showFadeNotification({
             message: "已撤回闪避值升级，闪避值已恢复",
-            type: "success"
+            type: "success",
+            position: "middle"
           })
         }
 
@@ -240,14 +249,16 @@ export default function CharacterSheetPageTwo() {
           updateHPMax(newValue)
           showFadeNotification({
             message: `生命槽上限 +1，当前为 ${newValue}`,
-            type: "success"
+            type: "success",
+            position: "middle"
           })
         } else {
           const newValue = Math.max(currentHP - 1, 1)
           updateHPMax(newValue)
           showFadeNotification({
             message: `生命槽上限 -1，当前为 ${newValue}`,
-            type: "success"
+            type: "success",
+            position: "middle"
           })
         }
       }
@@ -260,14 +271,16 @@ export default function CharacterSheetPageTwo() {
           updateStressMax(newValue)
           showFadeNotification({
             message: `压力槽上限 +1，当前为 ${newValue}`,
-            type: "success"
+            type: "success",
+            position: "middle"
           })
         } else {
           const newValue = Math.max(currentStress - 1, 1)
           updateStressMax(newValue)
           showFadeNotification({
             message: `压力槽上限 -1，当前为 ${newValue}`,
-            type: "success"
+            type: "success",
+            position: "middle"
           })
         }
       }
@@ -287,7 +300,8 @@ export default function CharacterSheetPageTwo() {
             setFormData({ proficiency: newProficiency })
             showFadeNotification({
               message: `熟练度 +1，当前为 ${currentCount + 1}/6`,
-              type: "success"
+              type: "success",
+              position: "middle"
             })
           }
         } else {
@@ -298,7 +312,8 @@ export default function CharacterSheetPageTwo() {
             setFormData({ proficiency: newProficiency })
             showFadeNotification({
               message: `熟练度 -1，当前为 ${currentCount - 1}/6`,
-              type: "success"
+              type: "success",
+              position: "middle"
             })
           }
         }

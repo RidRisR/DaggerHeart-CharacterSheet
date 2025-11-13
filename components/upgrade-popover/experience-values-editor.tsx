@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ChevronUp, ChevronDown, X, Check } from "lucide-react"
 import { isValidNumber, parseToNumber } from "@/lib/number-utils"
+import { showFadeNotification } from "@/components/ui/fade-notification"
 
 interface ExperienceValuesEditorProps {
   checkKey: string
@@ -119,6 +120,23 @@ export function ExperienceValuesEditor({
       modifiedIndices.forEach(index => {
         updateExperienceValues(index, editingValues[index])
       })
+
+      // 显示成功通知
+      const modifiedExperiences: string[] = []
+      modifiedIndices.forEach(index => {
+        const expContent = experience[index]
+        if (expContent) {
+          modifiedExperiences.push(expContent)
+        }
+      })
+
+      if (modifiedExperiences.length > 0) {
+        showFadeNotification({
+          message: `已更新 ${modifiedExperiences.length} 项经历加值`,
+          type: "success",
+          position: "middle"
+        })
+      }
     }
 
     // 勾选复选框

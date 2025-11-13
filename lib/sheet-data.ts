@@ -213,10 +213,6 @@ export interface SheetData {
   subclassRef?: SheetCardReference
 
   evasion?: string
-  evasion_snapshot?: {
-    before: string  // 修改前的值
-    after: string   // 修改后的值
-  }  // 闪避值升级快照：记录修改前后的闪避值
   agility?: AttributeValue
   strength?: AttributeValue
   finesse?: AttributeValue
@@ -230,10 +226,6 @@ export interface SheetData {
   gold: boolean[]
   experience: string[]
   experienceValues?: string[] // 经验数值，与 experience 一一对应
-  experienceValues_snapshot?: {
-    before: Record<number, string>  // 修改前的值
-    after: Record<number, string>   // 修改后的值
-  } // 经历升级快照：记录被修改的经历项索引和修改前后的值
   hope: boolean[]
   hp?: boolean[]
   stress?: boolean[]

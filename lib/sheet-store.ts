@@ -160,11 +160,19 @@ interface SheetState {
     saveAttributeUpgradeRecord: (tierKey: string, beforeState: Record<string, AttributeValue>, afterState: Record<string, AttributeValue>) => void;
     rollbackAttributeUpgrade: (tierKey: string) => { success: boolean; reason?: 'no-record' | 'conflict' | 'success' };
 
-    // Experience values upgrade snapshot actions
+    // Experience values upgrade snapshot (not in sheetData, won't be persisted)
+    experienceValuesSnapshot?: {
+        before: Record<number, string>;
+        after: Record<number, string>;
+    };
     createExperienceValuesSnapshot: (modifiedIndices: number[], afterValues: Record<number, string>) => void;
     restoreExperienceValuesSnapshot: () => { success: boolean; reason?: 'no-snapshot' | 'conflict' | 'success' };
 
-    // Evasion upgrade snapshot actions
+    // Evasion upgrade snapshot (not in sheetData, won't be persisted)
+    evasionSnapshot?: {
+        before: string;
+        after: string;
+    };
     createEvasionSnapshot: (afterValue: string) => void;
     restoreEvasionSnapshot: () => { success: boolean; reason?: 'no-snapshot' | 'conflict' | 'success' };
 }
@@ -1017,6 +1025,12 @@ export const useSheetStore = create<SheetState>((set) => ({
     // Attribute upgrade rollback system
     attributeUpgradeHistory: {},
 
+    // Experience values snapshot (not persisted)
+    experienceValuesSnapshot: undefined,
+
+    // Evasion snapshot (not persisted)
+    evasionSnapshot: undefined,
+
     saveAttributeUpgradeRecord: (tierKey, beforeState, afterState) => {
         set((state) => ({
             attributeUpgradeHistory: {
@@ -1083,7 +1097,8 @@ export const useSheetStore = create<SheetState>((set) => ({
     },
 
     // Experience values upgrade snapshot actions
-    createExperienceValuesSnapshot: (modifiedIndices, afterValues) => set((state) => {
+    createExperienceValuesSnapshot: (modifiedIndices, afterValues) => {
+        const state = useSheetStore.getState();
         const before: Record<number, string> = {};
         const experienceValues = state.sheetData.experienceValues || [];
 
@@ -1092,20 +1107,17 @@ export const useSheetStore = create<SheetState>((set) => ({
             before[index] = experienceValues[index] || '';
         });
 
-        return {
-            sheetData: {
-                ...state.sheetData,
-                experienceValues_snapshot: {
-                    before,
-                    after: afterValues,
-                },
+        set({
+            experienceValuesSnapshot: {
+                before,
+                after: afterValues,
             },
-        };
-    }),
+        });
+    },
 
     restoreExperienceValuesSnapshot: () => {
         const state = useSheetStore.getState();
-        const snapshot = state.sheetData.experienceValues_snapshot;
+        const snapshot = state.experienceValuesSnapshot;
 
         // 没有快照记录
         if (!snapshot) {
@@ -1123,12 +1135,7 @@ export const useSheetStore = create<SheetState>((set) => ({
 
         if (hasConflict) {
             // 发现冲突，删除快照但不恢复
-            set((state) => ({
-                sheetData: {
-                    ...state.sheetData,
-                    experienceValues_snapshot: undefined,
-                },
-            }));
+            set({ experienceValuesSnapshot: undefined });
             return { success: false, reason: 'conflict' as const };
         }
 
@@ -1143,29 +1150,27 @@ export const useSheetStore = create<SheetState>((set) => ({
             sheetData: {
                 ...state.sheetData,
                 experienceValues,
-                experienceValues_snapshot: undefined,
             },
+            experienceValuesSnapshot: undefined,
         }));
 
         return { success: true, reason: 'success' as const };
     },
 
     // Evasion upgrade snapshot actions
-    createEvasionSnapshot: (afterValue) => set((state) => {
-        return {
-            sheetData: {
-                ...state.sheetData,
-                evasion_snapshot: {
-                    before: state.sheetData.evasion || '0',
-                    after: afterValue,
-                },
+    createEvasionSnapshot: (afterValue) => {
+        const state = useSheetStore.getState();
+        set({
+            evasionSnapshot: {
+                before: state.sheetData.evasion || '0',
+                after: afterValue,
             },
-        };
-    }),
+        });
+    },
 
     restoreEvasionSnapshot: () => {
         const state = useSheetStore.getState();
-        const snapshot = state.sheetData.evasion_snapshot;
+        const snapshot = state.evasionSnapshot;
 
         // 没有快照记录
         if (!snapshot) {
@@ -1177,12 +1182,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         // 检查冲突：当前值是否与记录的 after 状态一致
         if (currentEvasion !== snapshot.after) {
             // 发现冲突，删除快照但不恢复
-            set((state) => ({
-                sheetData: {
-                    ...state.sheetData,
-                    evasion_snapshot: undefined,
-                },
-            }));
+            set({ evasionSnapshot: undefined });
             return { success: false, reason: 'conflict' as const };
         }
 
@@ -1191,8 +1191,8 @@ export const useSheetStore = create<SheetState>((set) => ({
             sheetData: {
                 ...state.sheetData,
                 evasion: snapshot.before,
-                evasion_snapshot: undefined,
             },
+            evasionSnapshot: undefined,
         }));
 
         return { success: true, reason: 'success' as const };

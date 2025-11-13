@@ -58,6 +58,28 @@ const splitFeatureText = (text: string): [string, string] => {
     ];
 };
 
+// 属性升级记录接口（用于回滚功能）
+interface AttributeUpgradeRecord {
+    tierKey: string  // 格式："tier1-0-2"（tier-optionIndex-boxIndex）
+    timestamp: number
+    beforeState: {
+        agility: AttributeValue
+        strength: AttributeValue
+        finesse: AttributeValue
+        instinct: AttributeValue
+        presence: AttributeValue
+        knowledge: AttributeValue
+    }
+    afterState: {
+        agility: AttributeValue
+        strength: AttributeValue
+        finesse: AttributeValue
+        instinct: AttributeValue
+        presence: AttributeValue
+        knowledge: AttributeValue
+    }
+}
+
 // 同步子职业施法属性的函数
 const syncSubclassSpellcasting = (newData: SheetData, oldData: SheetData): SheetData => {
     // 获取旧的和新的子职业施法属性
@@ -131,6 +153,11 @@ interface SheetState {
     updateUpgradeSlotText: (index: number, text: string) => void;
     updateUpgrade: (tier: string, upgradeName: string, value: boolean | boolean[]) => void;
     updateScrapMaterial: (category: string, index: number, value: number | string) => void;
+
+    // Attribute upgrade rollback actions
+    attributeUpgradeHistory: Record<string, AttributeUpgradeRecord>;
+    saveAttributeUpgradeRecord: (tierKey: string, beforeState: Record<string, AttributeValue>, afterState: Record<string, AttributeValue>) => void;
+    rollbackAttributeUpgrade: (tierKey: string) => { success: boolean; reason?: 'no-record' | 'conflict' | 'success' };
 }
 
 export const useSheetStore = create<SheetState>((set) => ({
@@ -917,6 +944,74 @@ export const useSheetStore = create<SheetState>((set) => ({
             };
         }
     }),
+
+    // Attribute upgrade rollback system
+    attributeUpgradeHistory: {},
+
+    saveAttributeUpgradeRecord: (tierKey, beforeState, afterState) => {
+        set((state) => ({
+            attributeUpgradeHistory: {
+                ...state.attributeUpgradeHistory,
+                [tierKey]: {
+                    tierKey,
+                    timestamp: Date.now(),
+                    beforeState: beforeState as any,
+                    afterState: afterState as any,
+                },
+            },
+        }));
+    },
+
+    rollbackAttributeUpgrade: (tierKey) => {
+        const state = useSheetStore.getState();
+        const record = state.attributeUpgradeHistory[tierKey];
+
+        if (!record) {
+            return { success: false, reason: 'no-record' as const };
+        }
+
+        const attributeKeys = ['agility', 'strength', 'finesse', 'instinct', 'presence', 'knowledge'];
+        const currentState = state.sheetData;
+
+        // Check for conflicts
+        const hasConflict = attributeKeys.some(key => {
+            const current = currentState[key as keyof SheetData] as AttributeValue;
+            const recorded = record.afterState[key as keyof typeof record.afterState];
+            return (
+                current.value !== recorded.value ||
+                current.checked !== recorded.checked ||
+                current.spellcasting !== recorded.spellcasting
+            );
+        });
+
+        if (hasConflict) {
+            // Delete record and return conflict
+            const newHistory = { ...state.attributeUpgradeHistory };
+            delete newHistory[tierKey];
+            set({ attributeUpgradeHistory: newHistory });
+            return { success: false, reason: 'conflict' as const };
+        }
+
+        // Apply rollback
+        const updates: any = {};
+        attributeKeys.forEach(key => {
+            updates[key] = { ...record.beforeState[key as keyof typeof record.beforeState] };
+        });
+
+        set((state) => ({
+            sheetData: {
+                ...state.sheetData,
+                ...updates,
+            },
+        }));
+
+        // Delete record
+        const newHistory = { ...state.attributeUpgradeHistory };
+        delete newHistory[tierKey];
+        set({ attributeUpgradeHistory: newHistory });
+
+        return { success: true, reason: 'success' as const };
+    },
 }));
 
 // Selector functions for better performance

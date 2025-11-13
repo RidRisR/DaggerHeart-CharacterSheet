@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { Edit } from "lucide-react"
 import type { SheetData } from "@/lib/sheet-data"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "@/components/ui/popover"
 import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
 import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-values-editor"
@@ -20,6 +20,7 @@ interface UpgradeSectionProps {
   formData: SheetData
   isUpgradeChecked: (tier: string, index: number) => boolean
   handleUpgradeCheck: (tier: string, index: number) => void
+  toggleUpgradeCheckbox: (checkKey: string, index: number, checked: boolean) => void  // 新增：纯粹的状态切换函数
   getUpgradeOptions: (tier: number) => any[]
   onCardChange?: (index: number, card: StandardCard) => void
   onOpenCardModal?: (index: number, levels?: string[]) => void
@@ -33,6 +34,7 @@ export function UpgradeSection({
   formData,
   isUpgradeChecked,
   handleUpgradeCheck,
+  toggleUpgradeCheckbox,
   getUpgradeOptions,
   onCardChange,
   onOpenCardModal,
@@ -54,7 +56,7 @@ export function UpgradeSection({
   // Helper function to determine if an option needs an edit button
   const needsEditButton = (label: string) => {
     return (
-      isAttributeUpgradeOption(label) ||
+      // isAttributeUpgradeOption(label) ||    // 属性升级现在通过点击复选框打开气泡
       // isHPUpgradeOption(label) ||           // 直接勾选/取消勾选即可 +1/-1
       // isStressUpgradeOption(label) ||       // 直接勾选/取消勾选即可 +1/-1
       isExperienceUpgradeOption(label) ||
@@ -135,14 +137,18 @@ export function UpgradeSection({
   }
 
   // Render the appropriate editor based on option type
-  const renderEditor = (option: any, index: number, boxIndex: number) => {
+  const renderEditor = (option: any, index: number, checkKeyOrBoxIndex: number | string) => {
     if (isAttributeUpgradeOption(option.label)) {
+      // 如果传入的是字符串，就是完整的 checkKey；否则是 boxIndex，需要构造
+      const checkKey = typeof checkKeyOrBoxIndex === 'string'
+        ? checkKeyOrBoxIndex
+        : `${tierKey}-${index}-${checkKeyOrBoxIndex}`
+
       return (
         <AttributeUpgradeEditor
-          tier={tierKey}
+          checkKey={checkKey}
           optionIndex={index}
-          boxIndex={boxIndex}
-          handleUpgradeCheck={handleUpgradeCheck}
+          toggleUpgradeCheckbox={toggleUpgradeCheckbox}
           onClose={() => setOpenPopoverIndex(null)}
         />
       )
@@ -212,14 +218,28 @@ export function UpgradeSection({
         </p>
 
         <div className="space-y-1">
-          {getUpgradeOptions(tier).map((option, index) => (
-            <div key={`${tierKey}-${index}`} className="flex items-start !text-[10px] leading-[1.6]">
-              <span className={`flex flex-shrink-0 items-center justify-end mt-px ${option.doubleBox && option.boxCount === 2 ? '' : 'gap-px'}`} style={{ minWidth: '3.2em' }}>
-                {Array(option.boxCount).fill(null).map((_, i) => {
+          {getUpgradeOptions(tier).map((option, index) => {
+            const isAttrUpgrade = isAttributeUpgradeOption(option.label)
+            return (
+              <div key={`${tierKey}-${index}`} className="flex items-start !text-[10px] leading-[1.6]">
+              {/* 属性升级：包裹 Popover 以便定位 */}
+              {isAttrUpgrade ? (
+                <Popover
+                  open={openPopoverIndex !== null && openPopoverIndex.startsWith(`${tierKey}-${index}-`)}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setOpenPopoverIndex(null)
+                    }
+                  }}
+                >
+                  <PopoverAnchor asChild>
+                    <span className={`flex flex-shrink-0 items-center justify-end mt-px ${option.doubleBox && option.boxCount === 2 ? '' : 'gap-px'}`} style={{ minWidth: '3.2em' }}>
+                      {Array(option.boxCount).fill(null).map((_, i) => {
                   const checkKey = option.doubleBox ? `${tierKey}-${index}` : `${tierKey}-${index}-${i}`
                   return (
                     <div
                       key={i}
+                      data-testid={`checkbox-${checkKey}`}
                       className={`w-3 h-3 cursor-pointer ${option.doubleBox && option.boxCount === 2
                         ? `${i === 0
                           ? 'border-l-2 border-t-2 border-b-2 border-r border-gray-800'
@@ -238,13 +258,74 @@ export function UpgradeSection({
                             : "bg-white"
                           }`
                       }`}
-                      onClick={() => handleUpgradeCheck(checkKey, index)}
+                      onClick={() => {
+                        // 属性升级选项：特殊处理
+                        if (isAttributeUpgradeOption(option.label)) {
+                          const isChecked = isUpgradeChecked(checkKey, index)
+                          if (!isChecked) {
+                            // 空白复选框 → 打开气泡编辑器
+                            setOpenPopoverIndex(checkKey)
+                          } else {
+                            // 已高亮复选框 → 触发回滚
+                            handleUpgradeCheck(checkKey, index)
+                          }
+                        } else {
+                          // 其他选项：保持原有逻辑
+                          handleUpgradeCheck(checkKey, index)
+                        }
+                      }}
                     ></div>
                   )
                 })}
-              </span>
+                    </span>
+                  </PopoverAnchor>
+                  <PopoverContent
+                    className="w-auto p-1.5 bg-white border border-gray-300 rounded shadow-lg"
+                    side="top"
+                    align="start"
+                    sideOffset={5}
+                  >
+                    {openPopoverIndex && renderEditor(option, index, openPopoverIndex)}
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <span className={`flex flex-shrink-0 items-center justify-end mt-px ${option.doubleBox && option.boxCount === 2 ? '' : 'gap-px'}`} style={{ minWidth: '3.2em' }}>
+                  {Array(option.boxCount).fill(null).map((_, i) => {
+                    const checkKey = option.doubleBox ? `${tierKey}-${index}` : `${tierKey}-${index}-${i}`
+                    return (
+                      <div
+                        key={i}
+                        data-testid={`checkbox-${checkKey}`}
+                        className={`w-3 h-3 cursor-pointer ${option.doubleBox && option.boxCount === 2
+                          ? `${i === 0
+                            ? 'border-l-2 border-t-2 border-b-2 border-r border-gray-800'
+                            : 'border-r-2 border-t-2 border-b-2 border-l border-gray-800'
+                          } ${isUpgradeChecked(checkKey, index)
+                              ? "bg-gray-800"
+                              : "bg-white"
+                          }`
+                          : option.doubleBox
+                            ? `border-2 border-gray-800 ${isUpgradeChecked(checkKey, index)
+                              ? "bg-gray-800"
+                              : "bg-white"
+                            }`
+                            : `border border-gray-800 ${isUpgradeChecked(checkKey, index)
+                              ? "bg-gray-800"
+                              : "bg-white"
+                            }`
+                        }`}
+                        onClick={() => {
+                          // 其他选项：保持原有逻辑
+                          handleUpgradeCheck(checkKey, index)
+                        }}
+                      ></div>
+                    )
+                  })}
+                </span>
+              )}
               <div className="flex-1 ml-2">
                 <span className="text-gray-800 dark:text-gray-200 mr-1">{option.label}</span>
+                {/* 其他需要编辑按钮的选项 */}
                 {needsEditButton(option.label) && (
                   shouldDirectlyOpenModal(option.label) ? (
                     // Direct modal open button (no popover)
@@ -287,8 +368,9 @@ export function UpgradeSection({
                   )
                 )}
               </div>
-            </div>
-          ))}
+              </div>
+            )
+          })}
         </div>
 
         <div className="mt-3 !text-xs">

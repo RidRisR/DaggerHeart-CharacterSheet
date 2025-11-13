@@ -4,13 +4,14 @@ import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { X, ChevronUp } from "lucide-react"
 import { isValidNumber, parseToNumber } from "@/lib/number-utils"
+import { showFadeNotification } from "@/components/ui/fade-notification"
+import type { AttributeValue } from "@/lib/sheet-data"
 
 interface AttributeUpgradeEditorProps {
   onClose?: () => void
-  tier?: string
-  optionIndex?: number
-  boxIndex?: number
-  handleUpgradeCheck?: (tier: string, index: number) => void
+  checkKey: string  // 完整的 checkKey，如 "tier1-0-2"
+  optionIndex: number  // 选项索引
+  toggleUpgradeCheckbox: (checkKey: string, index: number, checked: boolean) => void  // 状态切换函数
 }
 
 interface AttributeSelection {
@@ -40,15 +41,52 @@ const ATTRIBUTES = [
   { key: "knowledge", name: "知识" },
 ] as const
 
-export function AttributeUpgradeEditor({ onClose, tier, optionIndex, boxIndex, handleUpgradeCheck }: AttributeUpgradeEditorProps) {
+export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleUpgradeCheckbox }: AttributeUpgradeEditorProps) {
   const { sheetData } = useSheetStore()
   const updateAttribute = useSheetStore(state => state.updateAttribute)
   const toggleAttributeChecked = useSheetStore(state => state.toggleAttributeChecked)
+  const saveAttributeUpgradeRecord = useSheetStore(state => state.saveAttributeUpgradeRecord)
 
   const handleClose = () => {
     // 关闭时不做任何修改，直接关闭
     onClose?.()
   }
+
+  // 在组件 mount 时保存 beforeState 快照
+  const [beforeState] = useState<Record<string, AttributeValue>>(() => {
+    return {
+      agility: {
+        value: sheetData.agility?.value ?? "0",
+        checked: sheetData.agility?.checked ?? false,
+        ...(sheetData.agility?.spellcasting !== undefined && { spellcasting: sheetData.agility.spellcasting })
+      },
+      strength: {
+        value: sheetData.strength?.value ?? "0",
+        checked: sheetData.strength?.checked ?? false,
+        ...(sheetData.strength?.spellcasting !== undefined && { spellcasting: sheetData.strength.spellcasting })
+      },
+      finesse: {
+        value: sheetData.finesse?.value ?? "0",
+        checked: sheetData.finesse?.checked ?? false,
+        ...(sheetData.finesse?.spellcasting !== undefined && { spellcasting: sheetData.finesse.spellcasting })
+      },
+      instinct: {
+        value: sheetData.instinct?.value ?? "0",
+        checked: sheetData.instinct?.checked ?? false,
+        ...(sheetData.instinct?.spellcasting !== undefined && { spellcasting: sheetData.instinct.spellcasting })
+      },
+      presence: {
+        value: sheetData.presence?.value ?? "0",
+        checked: sheetData.presence?.checked ?? false,
+        ...(sheetData.presence?.spellcasting !== undefined && { spellcasting: sheetData.presence.spellcasting })
+      },
+      knowledge: {
+        value: sheetData.knowledge?.value ?? "0",
+        checked: sheetData.knowledge?.checked ?? false,
+        ...(sheetData.knowledge?.spellcasting !== undefined && { spellcasting: sheetData.knowledge.spellcasting })
+      },
+    }
+  })
 
   // 初始化原始值
   const [originalValues] = useState<AttributeValues>(() => ({
@@ -117,7 +155,35 @@ export function AttributeUpgradeEditor({ onClose, tier, optionIndex, boxIndex, h
   }
 
   const handleApply = () => {
-    // 1. 应用属性修改
+    // 收集升级的属性名称（用于通知）
+    const upgradedAttributes: string[] = []
+
+    // 1. 先构造 afterState（基于 beforeState + 选择的修改）
+    const afterState: Record<string, AttributeValue> = {
+      agility: { ...beforeState.agility },
+      strength: { ...beforeState.strength },
+      finesse: { ...beforeState.finesse },
+      instinct: { ...beforeState.instinct },
+      presence: { ...beforeState.presence },
+      knowledge: { ...beforeState.knowledge },
+    }
+
+    // 更新 afterState 中被选中的属性
+    Object.entries(selected).forEach(([key, isSelected]) => {
+      if (isSelected) {
+        afterState[key] = {
+          ...afterState[key],
+          value: editingValues[key as keyof AttributeValues],
+          checked: true,
+        }
+
+        // 记录升级的属性名称
+        const attrInfo = ATTRIBUTES.find(a => a.key === key)
+        if (attrInfo) upgradedAttributes.push(attrInfo.name)
+      }
+    })
+
+    // 2. 应用属性修改到 store
     Object.entries(selected).forEach(([key, isSelected]) => {
       if (isSelected) {
         // 直接使用编辑后的值
@@ -129,14 +195,21 @@ export function AttributeUpgradeEditor({ onClose, tier, optionIndex, boxIndex, h
       }
     })
 
-    // 2. 勾选对应的复选框
-    if (tier && optionIndex !== undefined && boxIndex !== undefined && handleUpgradeCheck) {
-      const checkKey = `${tier}-${optionIndex}-${boxIndex}`
-      console.log('[AttributeUpgradeEditor] 勾选复选框:', checkKey)
-      handleUpgradeCheck(checkKey, optionIndex)
+    // 3. 保存快照到 store
+    saveAttributeUpgradeRecord(checkKey, beforeState, afterState)
+
+    // 4. 勾选复选框（使用新的状态切换函数）
+    toggleUpgradeCheckbox(checkKey, optionIndex, true)
+
+    // 5. 显示成功通知
+    if (upgradedAttributes.length > 0) {
+      showFadeNotification({
+        message: `已升级属性：${upgradedAttributes.join('、')}`,
+        type: "success"
+      })
     }
 
-    // 3. 关闭气泡
+    // 6. 关闭气泡
     onClose?.()
   }
 

@@ -97,10 +97,48 @@ export default function CharacterSheetPageTwo() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  // 纯粹的状态切换函数：只负责设置复选框状态，无业务逻辑
+  const toggleUpgradeCheckbox = (checkKey: string, index: number, checked: boolean) => {
+    setFormData((prev) => {
+      const checkedUpgrades = prev.checkedUpgrades ?? {
+        tier1: {},
+        tier2: {},
+        tier3: {},
+      }
+
+      const newCheckedUpgrades: Record<string, Record<number, boolean>> = {
+        ...checkedUpgrades,
+        tier1: checkedUpgrades.tier1 ?? {},
+        tier2: checkedUpgrades.tier2 ?? {},
+        tier3: checkedUpgrades.tier3 ?? {},
+      }
+
+      // 确保 checkKey 对应的对象存在
+      if (!newCheckedUpgrades[checkKey]) {
+        newCheckedUpgrades[checkKey] = {}
+      }
+
+      // 设置勾选状态
+      newCheckedUpgrades[checkKey] = {
+        ...newCheckedUpgrades[checkKey],
+        [index]: checked,
+      }
+
+      return {
+        ...prev,
+        checkedUpgrades: newCheckedUpgrades as any,
+      }
+    })
+  }
+
   // Handle checkbox changes for upgrades
-  const handleUpgradeCheck = (tier: string, index: number) => {
-    // 获取当前勾选状态
-    const currentlyChecked = safeFormData.checkedUpgrades?.[tier as keyof typeof safeFormData.checkedUpgrades]?.[index] ?? false
+  const handleUpgradeCheck = (checkKeyOrTier: string, index: number) => {
+    // 提取 tier（从 "tier1-0-2" 提取出 "tier1"）
+    const tierMatch = checkKeyOrTier.match(/^(tier\d+)/)
+    const tier = tierMatch ? tierMatch[1] : checkKeyOrTier
+
+    // 获取当前勾选状态（使用完整的 checkKeyOrTier）
+    const currentlyChecked = safeFormData.checkedUpgrades?.[checkKeyOrTier as keyof typeof safeFormData.checkedUpgrades]?.[index] ?? false
     const newCheckedState = !currentlyChecked
 
     // 获取选项信息
@@ -110,6 +148,35 @@ export default function CharacterSheetPageTwo() {
 
     if (option) {
       const label = option.label
+
+      // 属性升级的回滚逻辑
+      if (label.includes("角色属性+1") && currentlyChecked) {
+        const rollbackAttributeUpgrade = useSheetStore.getState().rollbackAttributeUpgrade
+        const result = rollbackAttributeUpgrade(checkKeyOrTier)
+
+        if (result.success) {
+          showFadeNotification({
+            message: "已撤回属性升级，属性值已恢复",
+            type: "success"
+          })
+        } else {
+          if (result.reason === 'no-record') {
+            showFadeNotification({
+              message: "升级记录已丢失，无法自动回滚，请手动调整属性值",
+              type: "info"
+            })
+          } else if (result.reason === 'conflict') {
+            showFadeNotification({
+              message: "属性已被其他操作修改，无法自动回滚，请手动调整",
+              type: "info"
+            })
+          }
+        }
+
+        // 无论成功与否，都取消勾选
+        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
+        return  // 早返回，不执行后续逻辑
+      }
 
       // 处理生命槽
       if (label.includes("生命槽")) {
@@ -186,24 +253,8 @@ export default function CharacterSheetPageTwo() {
       // 领域卡和子职业卡的选择现在由编辑按钮直接处理，不在这里处理
     }
 
-    // 更新复选框状态
-    setFormData((prev) => {
-      const checkedUpgrades = prev.checkedUpgrades ?? { tier1: {}, tier2: {}, tier3: {} }
-      const newCheckedUpgrades = {
-        ...checkedUpgrades,
-        tier1: checkedUpgrades.tier1 ?? {},
-        tier2: checkedUpgrades.tier2 ?? {},
-        tier3: checkedUpgrades.tier3 ?? {},
-      }
-      const tierKey = tier as keyof typeof newCheckedUpgrades
-      const tierUpgrades = { ...newCheckedUpgrades[tierKey] }
-
-      // Toggle the checked state
-      tierUpgrades[index] = newCheckedState
-
-      newCheckedUpgrades[tierKey] = tierUpgrades
-      return { ...prev, checkedUpgrades: newCheckedUpgrades }
-    })
+    // 更新复选框状态（调用纯粹的状态切换函数）
+    toggleUpgradeCheckbox(checkKeyOrTier, index, newCheckedState)
   }
 
   // Check if an upgrade is checked
@@ -304,6 +355,7 @@ export default function CharacterSheetPageTwo() {
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
+              toggleUpgradeCheckbox={toggleUpgradeCheckbox}
               getUpgradeOptions={getUpgradeOptions}
               onCardChange={handleCardChange}
               onOpenCardModal={handleOpenUpgradeDomainModal}
@@ -318,6 +370,7 @@ export default function CharacterSheetPageTwo() {
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
+              toggleUpgradeCheckbox={toggleUpgradeCheckbox}
               getUpgradeOptions={getUpgradeOptions}
               onCardChange={handleCardChange}
               onOpenCardModal={handleOpenUpgradeDomainModal}
@@ -332,6 +385,7 @@ export default function CharacterSheetPageTwo() {
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
+              toggleUpgradeCheckbox={toggleUpgradeCheckbox}
               getUpgradeOptions={getUpgradeOptions}
               onCardChange={handleCardChange}
               onOpenCardModal={handleOpenUpgradeDomainModal}

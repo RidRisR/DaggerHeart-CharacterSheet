@@ -66,7 +66,7 @@ export function EvasionEditor({
   const canIncrement = isValidNumber(localValue)
 
   return (
-    <div className="w-36">
+    <div className="w-32">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-gray-700">闪避值 +1</span>
         <button
@@ -89,8 +89,8 @@ export function EvasionEditor({
               handleConfirm()
             }
           }}
-          className="flex-1 px-2 py-1 text-center text-sm font-bold border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-          placeholder="闪避值"
+          className="w-20 px-2 py-1 text-center text-sm font-bold border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+          placeholder="0"
         />
 
         <button

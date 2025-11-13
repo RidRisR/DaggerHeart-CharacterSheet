@@ -235,8 +235,8 @@ export function UpgradeSection({
       <div className="p-1">
         <p className="!text-xs mb-2">
           {tier === 1
-            ? "更新你的等级，从下方的升级列表中选择并标记两个选项。"
-            : "更新你的等级，从下方的升级列表或更低级的列表中选择并标记两个选项。"}
+            ? <>更新你的等级，从下方的升级列表中选择并标记<strong>两个</strong>选项。</>
+            : <>更新你的等级，从下方的升级列表或更低级的列表中选择并标记<strong>两个</strong>选项。</>}
         </p>
 
         <div className="space-y-1">

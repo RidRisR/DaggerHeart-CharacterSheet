@@ -158,6 +158,14 @@ interface SheetState {
     attributeUpgradeHistory: Record<string, AttributeUpgradeRecord>;
     saveAttributeUpgradeRecord: (tierKey: string, beforeState: Record<string, AttributeValue>, afterState: Record<string, AttributeValue>) => void;
     rollbackAttributeUpgrade: (tierKey: string) => { success: boolean; reason?: 'no-record' | 'conflict' | 'success' };
+
+    // Experience values upgrade snapshot actions
+    createExperienceValuesSnapshot: (modifiedIndices: number[]) => void;
+    restoreExperienceValuesSnapshot: () => void;
+
+    // Evasion upgrade snapshot actions
+    createEvasionSnapshot: () => void;
+    restoreEvasionSnapshot: () => void;
 }
 
 export const useSheetStore = create<SheetState>((set) => ({
@@ -1012,6 +1020,72 @@ export const useSheetStore = create<SheetState>((set) => ({
 
         return { success: true, reason: 'success' as const };
     },
+
+    // Experience values upgrade snapshot actions
+    createExperienceValuesSnapshot: (modifiedIndices) => set((state) => {
+        const snapshot: Record<number, string> = {};
+        const experienceValues = state.sheetData.experienceValues || [];
+
+        // 只保存将要被修改的经历项的原始值
+        modifiedIndices.forEach(index => {
+            snapshot[index] = experienceValues[index] || '';
+        });
+
+        return {
+            sheetData: {
+                ...state.sheetData,
+                experienceValues_snapshot: snapshot,
+            },
+        };
+    }),
+
+    restoreExperienceValuesSnapshot: () => set((state) => {
+        const snapshot = state.sheetData.experienceValues_snapshot;
+        if (!snapshot) {
+            return state; // 没有快照，不做任何修改
+        }
+
+        const experienceValues = [...(state.sheetData.experienceValues || [])];
+
+        // 恢复快照中记录的所有经历项
+        Object.entries(snapshot).forEach(([indexStr, value]) => {
+            const index = parseInt(indexStr);
+            experienceValues[index] = value;
+        });
+
+        return {
+            sheetData: {
+                ...state.sheetData,
+                experienceValues,
+                experienceValues_snapshot: undefined, // 清除快照
+            },
+        };
+    }),
+
+    // Evasion upgrade snapshot actions
+    createEvasionSnapshot: () => set((state) => {
+        return {
+            sheetData: {
+                ...state.sheetData,
+                evasion_snapshot: state.sheetData.evasion || '0',
+            },
+        };
+    }),
+
+    restoreEvasionSnapshot: () => set((state) => {
+        const snapshot = state.sheetData.evasion_snapshot;
+        if (!snapshot) {
+            return state; // 没有快照，不做任何修改
+        }
+
+        return {
+            sheetData: {
+                ...state.sheetData,
+                evasion: snapshot,
+                evasion_snapshot: undefined, // 清除快照
+            },
+        };
+    }),
 }));
 
 // Selector functions for better performance

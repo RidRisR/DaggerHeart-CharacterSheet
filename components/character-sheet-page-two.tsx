@@ -178,6 +178,36 @@ export default function CharacterSheetPageTwo() {
         return  // 早返回，不执行后续逻辑
       }
 
+      // 经历升级的回滚逻辑
+      if (label.includes("经历获得额外") && currentlyChecked) {
+        const restoreExperienceValuesSnapshot = useSheetStore.getState().restoreExperienceValuesSnapshot
+        restoreExperienceValuesSnapshot()
+
+        showFadeNotification({
+          message: "已撤回经历升级，经历加值已恢复",
+          type: "success"
+        })
+
+        // 取消勾选
+        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
+        return  // 早返回，不执行后续逻辑
+      }
+
+      // 闪避值升级的回滚逻辑
+      if (label.includes("闪避值") && currentlyChecked) {
+        const restoreEvasionSnapshot = useSheetStore.getState().restoreEvasionSnapshot
+        restoreEvasionSnapshot()
+
+        showFadeNotification({
+          message: "已撤回闪避值升级，闪避值已恢复",
+          type: "success"
+        })
+
+        // 取消勾选
+        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
+        return  // 早返回，不执行后续逻辑
+      }
+
       // 处理生命槽
       if (label.includes("生命槽")) {
         const currentHP = safeFormData.hpMax || 6

@@ -213,6 +213,7 @@ export interface SheetData {
   subclassRef?: SheetCardReference
 
   evasion?: string
+  evasion_snapshot?: string  // 闪避值升级快照：记录原始闪避值
   agility?: AttributeValue
   strength?: AttributeValue
   finesse?: AttributeValue
@@ -226,6 +227,7 @@ export interface SheetData {
   gold: boolean[]
   experience: string[]
   experienceValues?: string[] // 经验数值，与 experience 一一对应
+  experienceValues_snapshot?: Record<number, string> // 经历升级快照：记录被修改的经历项索引和原始值
   hope: boolean[]
   hp?: boolean[]
   stress?: boolean[]

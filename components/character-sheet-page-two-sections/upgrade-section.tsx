@@ -59,9 +59,9 @@ export function UpgradeSection({
       // isAttributeUpgradeOption(label) ||    // 属性升级现在通过点击复选框打开气泡
       // isHPUpgradeOption(label) ||           // 直接勾选/取消勾选即可 +1/-1
       // isStressUpgradeOption(label) ||       // 直接勾选/取消勾选即可 +1/-1
-      isExperienceUpgradeOption(label) ||
+      // isExperienceUpgradeOption(label) ||   // 经历升级现在通过点击复选框打开气泡
       isDomainCardOption(label) ||             // 点击按钮直接打开 modal
-      isDodgeUpgradeOption(label) ||
+      // isDodgeUpgradeOption(label) ||        // 闪避值现在通过点击复选框打开气泡
       // isProficiencyUpgradeOption(label) ||  // 直接勾选/取消勾选即可 +1/-1
       isSubclassUpgradeOption(label)           // 点击按钮直接打开 modal
     )
@@ -163,7 +163,18 @@ export function UpgradeSection({
     }
 
     if (isExperienceUpgradeOption(option.label)) {
-      return <ExperienceValuesEditor onClose={() => setOpenPopoverIndex(null)} />
+      const checkKey = typeof checkKeyOrBoxIndex === 'string'
+        ? checkKeyOrBoxIndex
+        : `${tierKey}-${index}-${checkKeyOrBoxIndex}`
+
+      return (
+        <ExperienceValuesEditor
+          checkKey={checkKey}
+          optionIndex={index}
+          toggleUpgradeCheckbox={toggleUpgradeCheckbox}
+          onClose={() => setOpenPopoverIndex(null)}
+        />
+      )
     }
 
     if (isDomainCardOption(option.label)) {
@@ -182,7 +193,18 @@ export function UpgradeSection({
     }
 
     if (isDodgeUpgradeOption(option.label)) {
-      return <EvasionEditor onClose={() => setOpenPopoverIndex(null)} />
+      const checkKey = typeof checkKeyOrBoxIndex === 'string'
+        ? checkKeyOrBoxIndex
+        : `${tierKey}-${index}-${checkKeyOrBoxIndex}`
+
+      return (
+        <EvasionEditor
+          checkKey={checkKey}
+          optionIndex={index}
+          toggleUpgradeCheckbox={toggleUpgradeCheckbox}
+          onClose={() => setOpenPopoverIndex(null)}
+        />
+      )
     }
 
     if (isProficiencyUpgradeOption(option.label)) {
@@ -220,10 +242,13 @@ export function UpgradeSection({
         <div className="space-y-1">
           {getUpgradeOptions(tier).map((option, index) => {
             const isAttrUpgrade = isAttributeUpgradeOption(option.label)
+            const isExpUpgrade = isExperienceUpgradeOption(option.label)
+            const isEvasionUpgrade = isDodgeUpgradeOption(option.label)
+            const needsPopover = isAttrUpgrade || isExpUpgrade || isEvasionUpgrade
             return (
               <div key={`${tierKey}-${index}`} className="flex items-start !text-[10px] leading-[1.6]">
-              {/* 属性升级：包裹 Popover 以便定位 */}
-              {isAttrUpgrade ? (
+              {/* 属性升级 / 经历升级 / 闪避值升级：包裹 Popover 以便定位 */}
+              {needsPopover ? (
                 <Popover
                   open={openPopoverIndex !== null && openPopoverIndex.startsWith(`${tierKey}-${index}-`)}
                   onOpenChange={(open) => {
@@ -259,8 +284,8 @@ export function UpgradeSection({
                           }`
                       }`}
                       onClick={() => {
-                        // 属性升级选项：特殊处理
-                        if (isAttributeUpgradeOption(option.label)) {
+                        // 属性升级 / 经历升级 / 闪避值升级选项：特殊处理
+                        if (isAttributeUpgradeOption(option.label) || isExperienceUpgradeOption(option.label) || isDodgeUpgradeOption(option.label)) {
                           const isChecked = isUpgradeChecked(checkKey, index)
                           if (!isChecked) {
                             // 空白复选框 → 打开气泡编辑器

@@ -217,7 +217,7 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
   const canApply = selectedCount === 2
 
   return (
-    <div className="w-56">
+    <div className="w-48">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-gray-700">属性升级</span>
         <button
@@ -230,7 +230,7 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
       </div>
 
       <div className="text-xs text-gray-600 mb-2">
-        选择两项未升级的属性 ({selectedCount}/2)
+        <strong>选择并修改</strong>两项未升级的属性 ({selectedCount}/2)
       </div>
 
       {unupgradedCount < 2 ? (
@@ -253,48 +253,35 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
               return (
                 <div
                   key={key}
+                  onClick={() => !isDisabled && handleToggle(key)}
                   className={`
                     flex items-center justify-between px-2 py-1.5 rounded border transition-colors
                     ${isDisabled
-                      ? "bg-gray-100 border-gray-200 opacity-60"
-                      : "bg-white border-gray-300"
+                    ? "bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed"
+                    : "bg-white border-gray-300 cursor-pointer hover:bg-gray-50"
                     }
-                    ${isSelected ? "border-blue-500 bg-blue-50" : ""}
+                    ${isSelected ? "!border-blue-500 !bg-blue-100 hover:!bg-blue-100" : ""}
                   `}
                 >
                   <div className="flex items-center gap-2">
-                    <div
-                      onClick={() => !isDisabled && handleToggle(key)}
-                      className={`
-                        w-4 h-4 border rounded flex items-center justify-center
-                        ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}
-                        ${isUpgraded
-                          ? "bg-gray-300 border-gray-400"
-                          : isSelected
-                            ? "bg-blue-500 border-blue-500"
-                            : "bg-white border-gray-400"
-                        }
-                      `}
-                    >
-                      {(isUpgraded || isSelected) && (
-                        <span className="text-white text-xs">✓</span>
-                      )}
-                    </div>
                     <span className="text-xs font-medium flex items-center gap-0.5">
                       {name}
                       {isSpellcasting && (
                         <span className="text-gray-800 text-[11px] font-bold">✦</span>
                       )}
+                      {isUpgraded && (
+                        <span className="text-[10px] text-gray-500 ml-1">(已升级)</span>
+                      )}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     {isSelected && isValidNumber(displayValue) && (
                       <button
                         onClick={() => handleIncrement(key)}
-                        className="p-0.5 hover:bg-blue-100 rounded transition-colors"
+                        className="w-5 h-5 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                         title="增加属性值 (+1)"
                       >
-                        <ChevronUp className="w-3.5 h-3.5 text-blue-600" />
+                        <ChevronUp className="w-3 h-3" />
                       </button>
                     )}
                     <input
@@ -309,11 +296,7 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
                           : "bg-gray-50 border-gray-200 text-gray-600"
                         }
                       `}
-                      onClick={(e) => e.stopPropagation()}
                     />
-                    {isUpgraded && (
-                      <span className="text-[10px] text-gray-500">(已升级)</span>
-                    )}
                   </div>
                 </div>
               )

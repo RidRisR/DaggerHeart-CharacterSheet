@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ChevronUp, X, Check } from "lucide-react"
 import { isValidNumber, parseToNumber } from "@/lib/number-utils"
@@ -10,6 +10,12 @@ interface ExperienceValuesEditorProps {
   optionIndex: number
   toggleUpgradeCheckbox: (checkKey: string, index: number, checked: boolean) => void
   onClose?: () => void
+}
+
+interface ExperienceItem {
+  index: number
+  content: string
+  originalValue: string
 }
 
 export function ExperienceValuesEditor({
@@ -25,37 +31,71 @@ export function ExperienceValuesEditor({
   const experience = sheetData.experience || ["", "", "", "", ""]
   const experienceValues = sheetData.experienceValues || ["", "", "", "", ""]
 
-  // 使用本地状态管理编辑
-  const [localValues, setLocalValues] = useState<string[]>([...experienceValues])
-
-  // 过滤出有内容的经历（不管是否有加值）
-  const experiencesWithContent = experience
+  // 过滤出有内容的经历
+  const availableExperiences: ExperienceItem[] = experience
     .map((content, index) => ({
       index,
       content,
-      value: localValues[index] || ""
+      originalValue: experienceValues[index] || ""
     }))
     .filter(item => item.content !== "")
 
-  const handleLocalChange = (index: number, value: string) => {
-    const newValues = [...localValues]
-    newValues[index] = value
-    setLocalValues(newValues)
+  // 选择状态：记录被选中的经历索引
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+
+  // 编辑中的值：只记录被选中的经历的值
+  const [editingValues, setEditingValues] = useState<Record<number, string>>({})
+
+  const selectedCount = selected.size
+
+  const handleToggle = (index: number) => {
+    const newSelected = new Set(selected)
+
+    if (newSelected.has(index)) {
+      // 取消选择：从 selected 和 editingValues 中移除
+      newSelected.delete(index)
+      setEditingValues(prev => {
+        const newValues = { ...prev }
+        delete newValues[index]
+        return newValues
+      })
+    } else {
+      // 选择：如果已选2个，不允许再选
+      if (selectedCount >= 2) return
+
+      newSelected.add(index)
+      // 初始化编辑值为原始值
+      setEditingValues(prev => ({
+        ...prev,
+        [index]: experienceValues[index] || ""
+      }))
+    }
+
+    setSelected(newSelected)
   }
 
-  const handleIncrement = (index: number, currentValue: string) => {
+  const handleValueChange = (index: number, value: string) => {
+    setEditingValues(prev => ({ ...prev, [index]: value }))
+  }
+
+  const handleIncrement = (index: number) => {
+    const currentValue = editingValues[index] || ""
     if (!isValidNumber(currentValue)) return
 
     const numValue = parseToNumber(currentValue, 0)
     const newValue = numValue + 1
-    handleLocalChange(index, String(newValue))
+    setEditingValues(prev => ({ ...prev, [index]: String(newValue) }))
   }
 
   const handleConfirm = () => {
     // 找出所有被修改的经历索引
     const modifiedIndices: number[] = []
-    localValues.forEach((value, index) => {
-      if (value !== experienceValues[index]) {
+
+    selected.forEach(index => {
+      const newValue = editingValues[index] || ""
+      const oldValue = experienceValues[index] || ""
+
+      if (newValue !== oldValue) {
         modifiedIndices.push(index)
       }
     })
@@ -66,7 +106,7 @@ export function ExperienceValuesEditor({
 
       // 应用所有更改到 store
       modifiedIndices.forEach(index => {
-        updateExperienceValues(index, localValues[index])
+        updateExperienceValues(index, editingValues[index])
       })
     }
 
@@ -77,10 +117,13 @@ export function ExperienceValuesEditor({
     onClose?.()
   }
 
+  // 检查是否可以应用：必须选择2项
+  const canApply = selectedCount === 2
+
   return (
-    <div className="w-40">
+    <div className="w-48">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-gray-700">经历加值 +1</span>
+        <span className="text-xs font-semibold text-gray-700">经历加值升级</span>
         <button
           onClick={onClose}
           className="p-0.5 hover:bg-gray-100 rounded transition-colors"
@@ -90,37 +133,68 @@ export function ExperienceValuesEditor({
         </button>
       </div>
 
-      {experiencesWithContent.length === 0 ? (
-        <div className="text-xs text-gray-500 py-2 text-center">
+      <div className="text-xs text-gray-600 mb-2">
+        <strong>选择并修改</strong>两项经历加值 ({selectedCount}/2)
+      </div>
+
+      {availableExperiences.length === 0 ? (
+        <div className="text-xs text-gray-500 py-4 text-center bg-gray-50 rounded border border-gray-200">
           暂无经历内容
+        </div>
+      ) : availableExperiences.length < 2 ? (
+        <div className="text-xs text-gray-500 py-4 text-center bg-gray-50 rounded border border-gray-200">
+          需要至少2项经历
         </div>
       ) : (
         <>
-          <div className="space-y-2 mb-3 max-h-64 overflow-y-auto">
-            {experiencesWithContent.map(({ index, content, value }) => {
-              const canIncrement = isValidNumber(value)
+          <div className="space-y-1 mb-3 max-h-64 overflow-y-auto">
+            {availableExperiences.map(({ index, content, originalValue }) => {
+              const isSelected = selected.has(index)
+              const isDisabled = selectedCount >= 2 && !isSelected
+              const displayValue = isSelected ? (editingValues[index] || "") : originalValue
 
               return (
-                <div key={index} className="space-y-0.5">
-                  <div className="text-xs text-gray-600 truncate" title={content}>
-                    {content}
+                <div
+                  key={index}
+                  onClick={() => !isDisabled && handleToggle(index)}
+                  className={`
+                    flex items-center justify-between px-2 py-1.5 rounded border transition-colors
+                    ${isDisabled
+                      ? "bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed"
+                      : "bg-white border-gray-300 cursor-pointer hover:bg-gray-50"
+                    }
+                    ${isSelected ? "!border-blue-500 !bg-blue-100 hover:!bg-blue-100" : ""}
+                  `}
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="text-xs text-gray-700 truncate" title={content}>
+                      {content}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    {isSelected && isValidNumber(displayValue) && (
+                      <button
+                        onClick={() => handleIncrement(index)}
+                        className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                        title="增加经历加值 (+1)"
+                      >
+                        <ChevronUp className="w-3 h-3" />
+                      </button>
+                    )}
                     <input
                       type="text"
-                      value={value}
-                      onChange={(e) => handleLocalChange(index, e.target.value)}
-                      className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                      placeholder="加值"
+                      value={displayValue}
+                      onChange={(e) => handleValueChange(index, e.target.value)}
+                      disabled={!isSelected}
+                      className={`
+                        w-14 px-1 py-0.5 text-xs text-center border rounded
+                        ${isSelected
+                          ? "bg-white border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          : "bg-gray-50 border-gray-200 text-gray-600"
+                        }
+                      `}
+                      placeholder="+0"
                     />
-                    <button
-                      onClick={() => handleIncrement(index, value)}
-                      disabled={!canIncrement}
-                      className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                      title={!canIncrement ? "当前输入不是有效数字" : "增加经历加值 (+1)"}
-                    >
-                      <ChevronUp className="w-3 h-3" />
-                    </button>
                   </div>
                 </div>
               )
@@ -129,10 +203,11 @@ export function ExperienceValuesEditor({
 
           <button
             onClick={handleConfirm}
-            className="w-full py-1.5 px-3 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors flex items-center justify-center gap-1"
+            disabled={!canApply}
+            className="w-full py-2 text-xs font-semibold rounded bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
           >
             <Check className="w-3 h-3" />
-            确认
+            应用升级
           </button>
         </>
       )}

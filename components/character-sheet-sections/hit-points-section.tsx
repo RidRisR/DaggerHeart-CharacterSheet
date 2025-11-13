@@ -5,7 +5,7 @@ import { useSheetStore } from "@/lib/sheet-store"
 
 export function HitPointsSection() {
   const { sheetData: formData, setSheetData } = useSheetStore()
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setSheetData((prev) => ({ ...prev, [name]: value }))
@@ -19,13 +19,13 @@ export function HitPointsSection() {
       setSheetData((prev) => ({ ...prev, [maxField]: undefined }))
       return
     }
-    
+
     // Only allow numeric input
     if (!/^\d+$/.test(value)) return
-    
+
     const intValue = parseInt(value) || 0
     // Enforce max limits
-    const maxLimit = field === "hp" ? 18 : 12
+    const maxLimit = 18
     if (intValue > maxLimit) return
 
     setSheetData((prev) => {
@@ -77,9 +77,9 @@ export function HitPointsSection() {
             return (
               <div
                 key={`${String(field)}-${i}`}
-                className={`w-4 h-4 border-2 ${
-                  isWithinMax ? "border-gray-800 cursor-pointer" : "border-gray-400 border-dashed"
-                } ${isChecked ? "bg-gray-800" : "bg-white"}`}
+                className={`w-4 h-4 border-2 ${isWithinMax ? "border-gray-800 cursor-pointer" : "border-gray-400 border-dashed"
+                  } ${isChecked ? "bg-gray-800" : "bg-white"} ${i > 0 && i % 6 === 0 ? "ml-1" : ""
+                  }`}
                 onClick={() => {
                   if (isWithinMax) {
                     handleClick(i)

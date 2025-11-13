@@ -164,13 +164,13 @@ export default function CharacterSheetPageTwo() {
           if (result.reason === 'no-record') {
             showFadeNotification({
               message: "升级记录已丢失，无法自动回滚，请手动调整属性值",
-              type: "info",
+              type: "error",
               position: "middle"
             })
           } else if (result.reason === 'conflict') {
             showFadeNotification({
               message: "属性已被其他操作修改，无法自动回滚，请手动调整",
-              type: "info",
+              type: "error",
               position: "middle"
             })
           }
@@ -194,7 +194,7 @@ export default function CharacterSheetPageTwo() {
           })
         } else if (result.reason === 'no-snapshot') {
           showFadeNotification({
-            message: "没有找到经历升级的快照记录",
+            message: "经历升级的记录已丢失，请手动回滚",
             type: "error",
             position: "middle"
           })
@@ -224,7 +224,7 @@ export default function CharacterSheetPageTwo() {
           })
         } else if (result.reason === 'no-snapshot') {
           showFadeNotification({
-            message: "没有找到闪避值升级的快照记录",
+            message: "闪避值升级的记录已丢失，请手动回滚",
             type: "error",
             position: "middle"
           })

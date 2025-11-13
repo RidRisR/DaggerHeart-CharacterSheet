@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { X, Check } from "lucide-react"
+import { showFadeNotification } from "@/components/ui/fade-notification"
 
 interface NewExperienceEditorProps {
   onClose?: () => void
@@ -45,6 +46,13 @@ export function NewExperienceEditor({ onClose }: NewExperienceEditorProps) {
     setSheetData({
       experience: newExperience,
       experienceValues: newExperienceValues
+    })
+
+    // 显示成功通知
+    showFadeNotification({
+      message: `已添加新经历：${newContent.trim()}`,
+      type: "success",
+      position: "middle"
     })
 
     // 关闭气泡

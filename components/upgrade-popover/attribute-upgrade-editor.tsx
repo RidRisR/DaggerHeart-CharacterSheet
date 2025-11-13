@@ -239,7 +239,7 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
       </div>
 
       <div className="text-xs text-gray-600 mb-2">
-        <strong>选择并修改</strong>两项未升级的属性 ({selectedCount}/2)
+        选择并<strong>修改两项</strong>未升级的属性 ({selectedCount}/2)
       </div>
 
       {unupgradedCount < 2 ? (

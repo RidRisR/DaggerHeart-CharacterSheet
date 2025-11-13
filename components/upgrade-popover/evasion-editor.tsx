@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
-import { X, ChevronUp, Check } from "lucide-react"
-import { isValidNumber, parseToNumber } from "@/lib/number-utils"
+import { X, ChevronUp, ChevronDown, Check } from "lucide-react"
+import { safeEvaluateExpression } from "@/lib/number-utils"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 
 interface EvasionEditorProps {
@@ -31,24 +31,32 @@ export function EvasionEditor({
     setLocalValue(value)
   }
 
-  const handleIncrement = () => {
-    if (!isValidNumber(localValue)) return
+  const handleDecrement = () => {
+    // 支持表达式：先计算当前值，然后 -1
+    const currentValue = safeEvaluateExpression(localValue)
+    const newValue = currentValue - 1
+    setLocalValue(String(newValue))
+  }
 
-    const currentValue = parseToNumber(localValue, 0)
+  const handleIncrement = () => {
+    // 支持表达式：先计算当前值，然后 +1
+    const currentValue = safeEvaluateExpression(localValue)
     const newValue = currentValue + 1
     setLocalValue(String(newValue))
   }
 
   const handleConfirm = () => {
-    // 验证输入
-    if (!isValidNumber(localValue)) {
-      // 如果不是有效数字，恢复到当前值
+    // 保存用户输入的字面字符串（可能是表达式如 "17+4"）
+    const trimmedValue = localValue.trim()
+
+    // 空字符串则不保存
+    if (!trimmedValue) {
       setLocalValue(String(currentEvasion))
       return
     }
 
-    const numValue = parseToNumber(localValue, 0)
-    const finalValue = String(numValue)
+    // 直接保存用户输入的字符串，不做计算
+    const finalValue = trimmedValue
 
     // 如果值发生了变化，创建快照
     if (finalValue !== currentEvasion) {
@@ -70,8 +78,8 @@ export function EvasionEditor({
     onClose?.()
   }
 
-  // 判断是否可以增加
-  const canIncrement = isValidNumber(localValue)
+  // 向上箭头仅在当前值可计算时启用
+  const canIncrement = localValue.trim() !== ''
 
   return (
     <div className="w-32">
@@ -87,6 +95,24 @@ export function EvasionEditor({
       </div>
 
       <div className="flex items-center gap-1 mb-3">
+        <button
+          onClick={handleDecrement}
+          disabled={!canIncrement}
+          className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          title="计算当前值 -1"
+        >
+          <ChevronDown className="w-3 h-3" />
+        </button>
+
+        <button
+          onClick={handleIncrement}
+          disabled={!canIncrement}
+          className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          title="计算当前值 +1"
+        >
+          <ChevronUp className="w-3 h-3" />
+        </button>
+
         <input
           type="text"
           inputMode="numeric"
@@ -97,18 +123,9 @@ export function EvasionEditor({
               handleConfirm()
             }
           }}
-          className="w-20 px-2 py-1 text-center text-sm font-bold border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+          className="w-16 px-2 py-1 text-center text-sm font-bold border border-gray-300 rounded focus:outline-none focus:border-blue-500"
           placeholder="0"
         />
-
-        <button
-          onClick={handleIncrement}
-          disabled={!canIncrement}
-          className="w-7 h-7 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          title={!isValidNumber(localValue) ? "当前输入不是有效数字" : "增加闪避值 (+1)"}
-        >
-          <ChevronUp className="w-3.5 h-3.5" />
-        </button>
       </div>
 
       <button

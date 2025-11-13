@@ -23,10 +23,86 @@ export interface SheetCardReference {
   name: string
 }
 
+/**
+ * 升级选项的勾选状态存储
+ *
+ * ## 存储格式说明
+ *
+ * CheckedUpgrades 使用**扁平化的 key-value 结构**来存储升级选项的勾选状态。
+ *
+ * ### Key 格式（checkKey）
+ *
+ * - **单个 checkbox 的选项**：`"tier{N}-{optionIndex}"`
+ *   - 例如：`"tier1-5"` 表示 tier1 的第 5 个选项（闪避值+1）
+ *
+ * - **多个 checkbox 的选项**：`"tier{N}-{optionIndex}-{boxIndex}"`
+ *   - 例如：`"tier1-0-2"` 表示 tier1 的第 0 个选项（属性升级）的第 3 个 checkbox
+ *   - 例如：`"tier1-1-0"` 表示 tier1 的第 1 个选项（生命槽）的第 1 个 checkbox
+ *
+ * - **doubleBox 选项**：`"tier{N}-{optionIndex}"`（两个框作为一组）
+ *   - 例如：`"tier2-1"` 表示 tier2 的第 1 个选项（熟练度+1）
+ *
+ * ### Value 格式
+ *
+ * Value 是一个 `Record<number, boolean>`，其中：
+ * - **Key**：optionIndex（升级选项在列表中的索引）
+ * - **Value**：`true` 表示已勾选，`false` 或不存在表示未勾选
+ *
+ * ### 实际存储示例
+ *
+ * ```json
+ * {
+ *   "checkedUpgrades": {
+ *     // 保留的基础结构（向后兼容）
+ *     "tier1": {},
+ *     "tier2": {},
+ *     "tier3": {},
+ *
+ *     // 实际的扁平化存储
+ *     "tier1-0-2": { "0": true },    // tier1 第0个选项（属性升级）的第3个checkbox
+ *     "tier1-1-0": { "1": true },    // tier1 第1个选项（生命槽）的第1个checkbox
+ *     "tier1-5-0": { "5": true },    // tier1 第5个选项（闪避值）的第1个checkbox
+ *     "tier2-1": { "1": true }       // tier2 第1个选项（熟练度）doubleBox
+ *   }
+ * }
+ * ```
+ *
+ * ### 为什么内层还有 optionIndex？
+ *
+ * 虽然 optionIndex 在外层 key 和内层 key 中都出现了，但这是当前实现的工作方式：
+ * - 外层 checkKey 包含完整信息：`tier-optionIndex-boxIndex`
+ * - 内层 key 使用 optionIndex 作为索引
+ * - 这种冗余设计保证了向后兼容性，并且代码逻辑已经正确运行
+ *
+ * ### 查询示例
+ *
+ * ```typescript
+ * // 检查 tier1 第0个选项的第3个checkbox是否被勾选
+ * const checkKey = "tier1-0-2"
+ * const optionIndex = 0
+ * const isChecked = checkedUpgrades?.[checkKey]?.[optionIndex]  // 查询 checkedUpgrades["tier1-0-2"][0]
+ * ```
+ *
+ * ### 更新示例
+ *
+ * ```typescript
+ * // 勾选 tier1 第0个选项的第3个checkbox
+ * checkedUpgrades["tier1-0-2"] = { 0: true }
+ * ```
+ *
+ * ### 向后兼容性
+ *
+ * - ✅ 保留 `tier1`, `tier2`, `tier3` 基础结构
+ * - ✅ 支持扁平化的 checkKey 格式
+ * - ✅ 旧数据可以正常读取（如果存在的话）
+ * - ✅ 新数据使用扁平化格式存储
+ */
 interface CheckedUpgrades {
   tier1: Record<number, boolean>
   tier2: Record<number, boolean>
   tier3: Record<number, boolean>
+  // 索引签名：允许任意 checkKey 格式的动态 key
+  [checkKey: string]: Record<number, boolean>
 }
 
 export interface AttributeValue {

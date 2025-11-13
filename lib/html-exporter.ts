@@ -777,7 +777,7 @@ async function generateFullHTML(formData: SheetData, options: HTMLExportOptions 
   </script>
   
   <div class="no-print" style="position: fixed; bottom: 10px; left: 10px; font-size: 12px; color: #999; pointer-events: auto; z-index: 1000; line-height: 1.4;">
-    <div>页面生成自 <a href="https://ridrisr.github.io/DaggerHeart-CharacterSheet" target="_blank" style="color: #007cba; text-decoration: underline;">https://ridrisr.github.io/DaggerHeart-CharacterSheet</a></div>
+    <div>页面生成自 <a href="https://dhsheet.site" target="_blank" style="color: #007cba; text-decoration: underline;">https://ridrisr.github.io/DaggerHeart-CharacterSheet</a></div>
     <div>仅用于展示和分享，没有任何数据绑定，所有修改都不会被保存</div>
   </div>
 </body>

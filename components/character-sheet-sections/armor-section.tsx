@@ -11,7 +11,7 @@ interface ArmorSectionProps {
 }
 
 export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
-  const { sheetData: formData, setSheetData, updateArmorThresholdWithDamage } = useSheetStore()
+  const { sheetData: formData, setSheetData, updateArmorThresholdWithDamage, updateArmorBaseScore } = useSheetStore()
   const [isEditingName, setIsEditingName] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -19,6 +19,9 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
     if (name === 'armorThreshold') {
       // 使用新的护甲阈值更新函数，自动计算伤害阈值
       updateArmorThresholdWithDamage(value)
+    } else if (name === 'armorBaseScore') {
+      // 使用新的护甲值更新函数，同步更新属性栏的护甲值
+      updateArmorBaseScore(value)
     } else {
       setSheetData((prev) => ({ ...prev, [name]: value }))
     }

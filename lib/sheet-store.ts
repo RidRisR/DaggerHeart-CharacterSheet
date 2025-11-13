@@ -140,6 +140,7 @@ interface SheetState {
     // Threshold calculation actions
     updateLevelWithThreshold: (level: string) => void;
     updateArmorThresholdWithDamage: (armorThreshold: string) => void;
+    updateArmorBaseScore: (armorBaseScore: string) => void;
     selectArmor: (armorId: string) => void;
     
     // Card management actions
@@ -561,10 +562,32 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
+    updateArmorBaseScore: (armorBaseScore) => set((state) => {
+        const updates: Partial<SheetData> = {
+            armorBaseScore,
+            armorValue: armorBaseScore  // 同步更新护甲值
+        };
+
+        // 显示通知
+        if (armorBaseScore) {
+            showFadeNotification({
+                message: `因护甲信息更新，护甲值已更新为 ${armorBaseScore}`,
+                type: "success"
+            });
+        }
+
+        return {
+            sheetData: {
+                ...state.sheetData,
+                ...updates
+            }
+        };
+    }),
+
     selectArmor: (armorId: string) => set((state) => {
         const updates: Partial<SheetData> = {};
-        
+
         if (armorId === "none") {
             // 清空所有护甲相关字段
             updates.armorName = "";
@@ -573,6 +596,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             updates.armorFeature = "";
             updates.minorThreshold = "";
             updates.majorThreshold = "";
+            updates.armorValue = "";  // 清空护甲值
 
             // 显示通知
             showFadeNotification({
@@ -599,7 +623,10 @@ export const useSheetStore = create<SheetState>((set) => ({
                 const featureText = `${customArmorData.特性名称 ? customArmorData.特性名称 + ': ' : ''}${customArmorData.描述 || ''}`.trim();
                 const [feature1, feature2] = splitFeatureText(featureText);
                 updates.armorFeature = feature2 ? `${feature1}\n${feature2}` : feature1;
-                
+
+                // 自动更新护甲值
+                updates.armorValue = String(customArmorData.护甲值 || "");
+
                 // 计算伤害阈值
                 if (customArmorData.伤害阈值) {
                     const thresholds = customArmorData.伤害阈值.split('/');
@@ -607,7 +634,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                         const minor = parseInt(thresholds[0]?.trim());
                         const major = parseInt(thresholds[1]?.trim());
                         const levelNum = parseInt(state.sheetData.level);
-                        
+
                         if (!isNaN(minor) && !isNaN(major) && !isNaN(levelNum) && levelNum >= 1 && levelNum <= 10) {
                             const newMinor = minor + levelNum;
                             const newMajor = major + levelNum;
@@ -616,16 +643,34 @@ export const useSheetStore = create<SheetState>((set) => ({
 
                             // 显示通知
                             showFadeNotification({
-                                message: `因护甲信息更新，自动更新伤害阈值`,
+                                message: `因护甲信息更新，自动更新护甲值和伤害阈值`,
+                                type: "success"
+                            });
+                        } else {
+                            // 如果没有等级或等级无效，仍然提示护甲值已更新
+                            showFadeNotification({
+                                message: `因护甲信息更新，自动更新护甲值`,
                                 type: "success"
                             });
                         }
+                    } else {
+                        // 如果护甲阈值格式不正确，仅提示护甲值已更新
+                        showFadeNotification({
+                            message: `因护甲信息更新，自动更新护甲值`,
+                            type: "success"
+                        });
                     }
+                } else {
+                    // 如果没有护甲阈值，仅提示护甲值已更新
+                    showFadeNotification({
+                        message: `因护甲信息更新，自动更新护甲值`,
+                        type: "success"
+                    });
                 }
             } else {
                 // 尝试从预设护甲列表中查找
                 const armor = armorItems.find((a: ArmorItem) => a.名称 === armorId);
-                
+
                 if (armor) {
                     // 使用预设护甲
                     updates.armorName = armor.名称;
@@ -634,14 +679,17 @@ export const useSheetStore = create<SheetState>((set) => ({
                     const featureText = `${armor.特性名称}${armor.特性名称 && armor.描述 ? ": " : ""}${armor.描述}`;
                     const [feature1, feature2] = splitFeatureText(featureText);
                     updates.armorFeature = feature2 ? `${feature1}\n${feature2}` : feature1;
-                    
+
+                    // 自动更新护甲值
+                    updates.armorValue = String(armor.护甲值);
+
                     // 计算伤害阈值
                     const thresholds = armor.伤害阈值.split('/');
                     if (thresholds.length === 2) {
                         const minor = parseInt(thresholds[0]?.trim());
                         const major = parseInt(thresholds[1]?.trim());
                         const levelNum = parseInt(state.sheetData.level);
-                        
+
                         if (!isNaN(minor) && !isNaN(major) && !isNaN(levelNum) && levelNum >= 1 && levelNum <= 10) {
                             const newMinor = minor + levelNum;
                             const newMajor = major + levelNum;
@@ -650,10 +698,22 @@ export const useSheetStore = create<SheetState>((set) => ({
 
                             // 显示通知
                             showFadeNotification({
-                                message: `因护甲信息更新，自动更新伤害阈值`,
+                                message: `因护甲信息更新，自动更新护甲值和伤害阈值`,
+                                type: "success"
+                            });
+                        } else {
+                            // 如果没有等级或等级无效，仍然提示护甲值已更新
+                            showFadeNotification({
+                                message: `因护甲信息更新，自动更新护甲值`,
                                 type: "success"
                             });
                         }
+                    } else {
+                        // 如果护甲阈值格式不正确，仅提示护甲值已更新
+                        showFadeNotification({
+                            message: `因护甲信息更新，自动更新护甲值`,
+                            type: "success"
+                        });
                     }
                 } else {
                     // 既不是JSON也不在预设列表中，作为纯文本名称处理
@@ -661,6 +721,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                     updates.armorBaseScore = "";
                     updates.armorThreshold = "";
                     updates.armorFeature = "";
+                    updates.armorValue = "";  // 清空护甲值
                 }
             }
         }

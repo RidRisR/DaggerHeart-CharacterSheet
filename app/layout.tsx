@@ -120,14 +120,13 @@ export default function RootLayout({
                 <br />
                 翻译及校对：PolearmMaster, 末楔, 里予, 一得, RisRisR
                 <br />
-                项目地址&下载地址：
                 <a
                   href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline pointer-events-auto"
+                  className="underline pointer-events-auto hover:text-gray-700 transition-colors"
                 >
-                  https://github.com/RidRisR/DaggerHeart-CharacterSheet
+                  项目地址 & 下载地址（点我访问 GitHub）
                 </a>
               </div>
             </PrintProvider>

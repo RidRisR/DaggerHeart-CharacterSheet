@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
-import { ChevronUp, X, Check } from "lucide-react"
+import { ChevronUp, ChevronDown, X, Check } from "lucide-react"
 import { isValidNumber, parseToNumber } from "@/lib/number-utils"
 
 interface ExperienceValuesEditorProps {
@@ -84,6 +84,15 @@ export function ExperienceValuesEditor({
 
     const numValue = parseToNumber(currentValue, 0)
     const newValue = numValue + 1
+    setEditingValues(prev => ({ ...prev, [index]: String(newValue) }))
+  }
+
+  const handleDecrement = (index: number) => {
+    const currentValue = editingValues[index] || ""
+    if (!isValidNumber(currentValue)) return
+
+    const numValue = parseToNumber(currentValue, 0)
+    const newValue = numValue - 1
     setEditingValues(prev => ({ ...prev, [index]: String(newValue) }))
   }
 
@@ -173,13 +182,22 @@ export function ExperienceValuesEditor({
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                     {isSelected && isValidNumber(displayValue) && (
-                      <button
-                        onClick={() => handleIncrement(index)}
-                        className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                        title="增加经历加值 (+1)"
-                      >
-                        <ChevronUp className="w-3 h-3" />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleDecrement(index)}
+                          className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                          title="减少经历加值 (-1)"
+                        >
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleIncrement(index)}
+                          className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                          title="增加经历加值 (+1)"
+                        >
+                          <ChevronUp className="w-3 h-3" />
+                        </button>
+                      </>
                     )}
                     <input
                       type="text"

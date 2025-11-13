@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
-import { X, ChevronUp } from "lucide-react"
+import { X, ChevronUp, ChevronDown } from "lucide-react"
 import { isValidNumber, parseToNumber } from "@/lib/number-utils"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { AttributeValue } from "@/lib/sheet-data"
@@ -154,6 +154,14 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
     }
   }
 
+  const handleDecrement = (key: keyof AttributeValues) => {
+    const currentValue = editingValues[key]
+    if (isValidNumber(currentValue)) {
+      const numValue = parseToNumber(currentValue, 0)
+      setEditingValues(prev => ({ ...prev, [key]: String(numValue - 1) }))
+    }
+  }
+
   const handleApply = () => {
     // 收集升级的属性名称（用于通知）
     const upgradedAttributes: string[] = []
@@ -276,13 +284,22 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
                   </div>
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     {isSelected && isValidNumber(displayValue) && (
-                      <button
-                        onClick={() => handleIncrement(key)}
-                        className="w-5 h-5 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                        title="增加属性值 (+1)"
-                      >
-                        <ChevronUp className="w-3 h-3" />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleDecrement(key)}
+                          className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                          title="减少属性值 (-1)"
+                        >
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleIncrement(key)}
+                          className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                          title="增加属性值 (+1)"
+                        >
+                          <ChevronUp className="w-3 h-3" />
+                        </button>
+                      </>
                     )}
                     <input
                       type="text"

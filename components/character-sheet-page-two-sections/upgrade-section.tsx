@@ -11,6 +11,7 @@ import { EvasionEditor } from "@/components/upgrade-popover/evasion-editor"
 import { DomainCardSelector } from "@/components/upgrade-popover/domain-card-selector"
 import { ProficiencyEditor } from "@/components/upgrade-popover/proficiency-editor"
 import { SubclassCardSelector } from "@/components/upgrade-popover/subclass-card-selector"
+import { NewExperienceEditor } from "@/components/upgrade-popover/new-experience-editor"
 import type { StandardCard } from "@/card/card-types"
 
 interface UpgradeSectionProps {
@@ -42,6 +43,7 @@ export function UpgradeSection({
 }: UpgradeSectionProps) {
   const tierKey = `tier${tier}`
   const [openPopoverIndex, setOpenPopoverIndex] = useState<string | null>(null)
+  const [openNewExperiencePopover, setOpenNewExperiencePopover] = useState(false)
 
   // Helper functions to detect upgrade option types
   const isAttributeUpgradeOption = (label: string) => label.includes("角色属性+1")
@@ -228,10 +230,38 @@ export function UpgradeSection({
     return null
   }
 
+  // 检测 description 是否包含"获得一项额外+2经历"
+  const hasNewExperienceText = description.includes("获得一项额外+2经历")
+
   return (
     <div className="border border-gray-300 rounded-md shadow-sm">
       <div className="bg-gray-800 text-white p-1 text-center font-bold !text-sm rounded-t-md">{title}</div>
-      <div className="bg-gray-600 text-white p-1 !text-xs">{description}</div>
+      <div className="bg-gray-600 text-white p-1 !text-xs flex items-center justify-between">
+        <span>{description}</span>
+        {hasNewExperienceText && (
+          <Popover
+            open={openNewExperiencePopover}
+            onOpenChange={setOpenNewExperiencePopover}
+          >
+            <PopoverTrigger asChild>
+              <button
+                className="inline-flex items-center justify-center p-0.5 hover:bg-gray-500 rounded transition-colors print:hidden ml-1 flex-shrink-0"
+                title="添加新经历"
+              >
+                <Edit className="w-2.5 h-2.5 text-white" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-auto p-1.5 bg-white border border-gray-300 rounded shadow-lg"
+              side="right"
+              align="start"
+              sideOffset={5}
+            >
+              <NewExperienceEditor onClose={() => setOpenNewExperiencePopover(false)} />
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
       <div className="p-1">
         <p className="!text-xs mb-2">
           {tier === 1

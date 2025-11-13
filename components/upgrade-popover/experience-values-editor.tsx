@@ -97,8 +97,9 @@ export function ExperienceValuesEditor({
   }
 
   const handleConfirm = () => {
-    // 找出所有被修改的经历索引
+    // 找出所有被修改的经历索引和新值
     const modifiedIndices: number[] = []
+    const afterValues: Record<number, string> = {}
 
     selected.forEach(index => {
       const newValue = editingValues[index] || ""
@@ -106,12 +107,13 @@ export function ExperienceValuesEditor({
 
       if (newValue !== oldValue) {
         modifiedIndices.push(index)
+        afterValues[index] = newValue
       }
     })
 
     // 如果有修改，创建快照
     if (modifiedIndices.length > 0) {
-      createExperienceValuesSnapshot(modifiedIndices)
+      createExperienceValuesSnapshot(modifiedIndices, afterValues)
 
       // 应用所有更改到 store
       modifiedIndices.forEach(index => {

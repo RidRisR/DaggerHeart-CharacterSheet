@@ -51,7 +51,7 @@ export function EvasionEditor({
 
     // 如果值发生了变化，创建快照
     if (finalValue !== currentEvasion) {
-      createEvasionSnapshot()
+      createEvasionSnapshot(finalValue)
       setSheetData({ evasion: finalValue })
     }
 

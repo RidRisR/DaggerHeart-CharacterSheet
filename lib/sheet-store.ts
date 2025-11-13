@@ -161,12 +161,12 @@ interface SheetState {
     rollbackAttributeUpgrade: (tierKey: string) => { success: boolean; reason?: 'no-record' | 'conflict' | 'success' };
 
     // Experience values upgrade snapshot actions
-    createExperienceValuesSnapshot: (modifiedIndices: number[]) => void;
-    restoreExperienceValuesSnapshot: () => void;
+    createExperienceValuesSnapshot: (modifiedIndices: number[], afterValues: Record<number, string>) => void;
+    restoreExperienceValuesSnapshot: () => { success: boolean; reason?: 'no-snapshot' | 'conflict' | 'success' };
 
     // Evasion upgrade snapshot actions
-    createEvasionSnapshot: () => void;
-    restoreEvasionSnapshot: () => void;
+    createEvasionSnapshot: (afterValue: string) => void;
+    restoreEvasionSnapshot: () => { success: boolean; reason?: 'no-snapshot' | 'conflict' | 'success' };
 }
 
 export const useSheetStore = create<SheetState>((set) => ({
@@ -1083,70 +1083,120 @@ export const useSheetStore = create<SheetState>((set) => ({
     },
 
     // Experience values upgrade snapshot actions
-    createExperienceValuesSnapshot: (modifiedIndices) => set((state) => {
-        const snapshot: Record<number, string> = {};
+    createExperienceValuesSnapshot: (modifiedIndices, afterValues) => set((state) => {
+        const before: Record<number, string> = {};
         const experienceValues = state.sheetData.experienceValues || [];
 
-        // 只保存将要被修改的经历项的原始值
+        // 保存修改前的值
         modifiedIndices.forEach(index => {
-            snapshot[index] = experienceValues[index] || '';
+            before[index] = experienceValues[index] || '';
         });
 
         return {
             sheetData: {
                 ...state.sheetData,
-                experienceValues_snapshot: snapshot,
+                experienceValues_snapshot: {
+                    before,
+                    after: afterValues,
+                },
             },
         };
     }),
 
-    restoreExperienceValuesSnapshot: () => set((state) => {
+    restoreExperienceValuesSnapshot: () => {
+        const state = useSheetStore.getState();
         const snapshot = state.sheetData.experienceValues_snapshot;
+
+        // 没有快照记录
         if (!snapshot) {
-            return state; // 没有快照，不做任何修改
+            return { success: false, reason: 'no-snapshot' as const };
         }
 
-        const experienceValues = [...(state.sheetData.experienceValues || [])];
+        const currentValues = state.sheetData.experienceValues || [];
 
-        // 恢复快照中记录的所有经历项
-        Object.entries(snapshot).forEach(([indexStr, value]) => {
+        // 检查冲突：当前值是否与记录的 after 状态一致
+        const hasConflict = Object.entries(snapshot.after).some(([indexStr, afterValue]) => {
             const index = parseInt(indexStr);
-            experienceValues[index] = value;
+            const currentValue = currentValues[index] || '';
+            return currentValue !== afterValue;
         });
 
-        return {
+        if (hasConflict) {
+            // 发现冲突，删除快照但不恢复
+            set((state) => ({
+                sheetData: {
+                    ...state.sheetData,
+                    experienceValues_snapshot: undefined,
+                },
+            }));
+            return { success: false, reason: 'conflict' as const };
+        }
+
+        // 无冲突，执行恢复
+        const experienceValues = [...currentValues];
+        Object.entries(snapshot.before).forEach(([indexStr, beforeValue]) => {
+            const index = parseInt(indexStr);
+            experienceValues[index] = beforeValue;
+        });
+
+        set((state) => ({
             sheetData: {
                 ...state.sheetData,
                 experienceValues,
-                experienceValues_snapshot: undefined, // 清除快照
+                experienceValues_snapshot: undefined,
             },
-        };
-    }),
+        }));
+
+        return { success: true, reason: 'success' as const };
+    },
 
     // Evasion upgrade snapshot actions
-    createEvasionSnapshot: () => set((state) => {
+    createEvasionSnapshot: (afterValue) => set((state) => {
         return {
             sheetData: {
                 ...state.sheetData,
-                evasion_snapshot: state.sheetData.evasion || '0',
+                evasion_snapshot: {
+                    before: state.sheetData.evasion || '0',
+                    after: afterValue,
+                },
             },
         };
     }),
 
-    restoreEvasionSnapshot: () => set((state) => {
+    restoreEvasionSnapshot: () => {
+        const state = useSheetStore.getState();
         const snapshot = state.sheetData.evasion_snapshot;
+
+        // 没有快照记录
         if (!snapshot) {
-            return state; // 没有快照，不做任何修改
+            return { success: false, reason: 'no-snapshot' as const };
         }
 
-        return {
+        const currentEvasion = state.sheetData.evasion || '0';
+
+        // 检查冲突：当前值是否与记录的 after 状态一致
+        if (currentEvasion !== snapshot.after) {
+            // 发现冲突，删除快照但不恢复
+            set((state) => ({
+                sheetData: {
+                    ...state.sheetData,
+                    evasion_snapshot: undefined,
+                },
+            }));
+            return { success: false, reason: 'conflict' as const };
+        }
+
+        // 无冲突，执行恢复
+        set((state) => ({
             sheetData: {
                 ...state.sheetData,
-                evasion: snapshot,
-                evasion_snapshot: undefined, // 清除快照
+                evasion: snapshot.before,
+                evasion_snapshot: undefined,
             },
-        };
-    }),
+        }));
+
+        return { success: true, reason: 'success' as const };
+    },
 }));
 
 // Selector functions for better performance

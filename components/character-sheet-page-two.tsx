@@ -181,12 +181,24 @@ export default function CharacterSheetPageTwo() {
       // 经历升级的回滚逻辑
       if (label.includes("经历获得额外") && currentlyChecked) {
         const restoreExperienceValuesSnapshot = useSheetStore.getState().restoreExperienceValuesSnapshot
-        restoreExperienceValuesSnapshot()
+        const result = restoreExperienceValuesSnapshot()
 
-        showFadeNotification({
-          message: "已撤回经历升级，经历加值已恢复",
-          type: "success"
-        })
+        if (result.reason === 'conflict') {
+          showFadeNotification({
+            message: "检测到经历加值已被其他升级修改，无法回滚",
+            type: "error"
+          })
+        } else if (result.reason === 'no-snapshot') {
+          showFadeNotification({
+            message: "没有找到经历升级的快照记录",
+            type: "error"
+          })
+        } else {
+          showFadeNotification({
+            message: "已撤回经历升级，经历加值已恢复",
+            type: "success"
+          })
+        }
 
         // 取消勾选
         toggleUpgradeCheckbox(checkKeyOrTier, index, false)
@@ -196,12 +208,24 @@ export default function CharacterSheetPageTwo() {
       // 闪避值升级的回滚逻辑
       if (label.includes("闪避值") && currentlyChecked) {
         const restoreEvasionSnapshot = useSheetStore.getState().restoreEvasionSnapshot
-        restoreEvasionSnapshot()
+        const result = restoreEvasionSnapshot()
 
-        showFadeNotification({
-          message: "已撤回闪避值升级，闪避值已恢复",
-          type: "success"
-        })
+        if (result.reason === 'conflict') {
+          showFadeNotification({
+            message: "检测到闪避值已被其他升级修改，无法回滚",
+            type: "error"
+          })
+        } else if (result.reason === 'no-snapshot') {
+          showFadeNotification({
+            message: "没有找到闪避值升级的快照记录",
+            type: "error"
+          })
+        } else {
+          showFadeNotification({
+            message: "已撤回闪避值升级，闪避值已恢复",
+            type: "success"
+          })
+        }
 
         // 取消勾选
         toggleUpgradeCheckbox(checkKeyOrTier, index, false)

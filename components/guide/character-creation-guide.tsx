@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, X, Minimize2, Maximize2 } from "lucide-react"
 import { guideSteps, canProceedToNextStep, getProfessionSpecificContent } from "@/components/guide/guide-content"
 import type { SheetData } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store"
@@ -16,7 +16,8 @@ export function CharacterCreationGuide({ isOpen, onClose }: CharacterCreationGui
   const { sheetData: formData } = useSheetStore()
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [canProceed, setCanProceed] = useState(false)
-  
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
   // 拖拽状态
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
@@ -112,8 +113,27 @@ export function CharacterCreationGuide({ isOpen, onClose }: CharacterCreationGui
 
   if (!isOpen) return null
 
+  // 收起状态显示为小球
+  if (isCollapsed) {
+    return (
+      <div
+        ref={guideRef}
+        className="fixed w-14 h-14 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full shadow-lg z-50 print:hidden flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+        style={{
+          left: hasBeenMoved ? `${position.x}px` : 'auto',
+          top: hasBeenMoved ? `${position.y}px` : '80px',
+          right: !hasBeenMoved ? '16px' : 'auto',
+        }}
+        onClick={() => setIsCollapsed(false)}
+        title="点击展开建卡指引"
+      >
+        <Maximize2 size={24} className="text-white" />
+      </div>
+    )
+  }
+
   return (
-    <div 
+    <div
       ref={guideRef}
       className="fixed w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 print:hidden"
       style={{
@@ -124,19 +144,30 @@ export function CharacterCreationGuide({ isOpen, onClose }: CharacterCreationGui
       }}
     >
       <div className="p-4">
-        <div 
+        <div
           className="flex justify-between items-center mb-4 cursor-grab active:cursor-grabbing bg-gray-50 hover:bg-gray-100 -mx-4 -mt-4 px-4 pt-4 pb-2 rounded-t-lg transition-colors select-none"
           onMouseDown={handleMouseDown}
           title="拖拽这里移动窗口"
         >
           <h3 className="text-lg font-bold pointer-events-none">{currentStep?.title}</h3>
-          <button 
-            onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700 pointer-events-auto cursor-pointer hover:bg-gray-200 p-1 rounded"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <X size={18} />
-          </button>
+          <div className="flex gap-3 pointer-events-auto">
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className="text-gray-500 hover:text-gray-700 cursor-pointer hover:bg-gray-200 p-1 rounded"
+              onMouseDown={(e) => e.stopPropagation()}
+              title="收起"
+            >
+              <Minimize2 size={18} />
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 cursor-pointer hover:bg-gray-200 p-1 rounded"
+              onMouseDown={(e) => e.stopPropagation()}
+              title="关闭"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         <div

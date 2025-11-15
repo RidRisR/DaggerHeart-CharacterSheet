@@ -572,9 +572,13 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     updateArmorBaseScore: (armorBaseScore) => set((state) => {
+        // 解析护甲值为数字，用于更新 armorMax
+        const armorMaxValue = parseToNumber(armorBaseScore, 0);
+
         const updates: Partial<SheetData> = {
             armorBaseScore,
-            armorValue: armorBaseScore  // 同步更新护甲值
+            armorValue: armorBaseScore,  // 同步更新护甲值
+            armorMax: armorMaxValue       // 同步更新护甲上限
         };
 
         // 显示通知
@@ -605,6 +609,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             updates.minorThreshold = "";
             updates.majorThreshold = "";
             updates.armorValue = "";  // 清空护甲值
+            updates.armorMax = 0;      // 清空护甲上限
 
             // 显示通知
             showFadeNotification({
@@ -632,8 +637,10 @@ export const useSheetStore = create<SheetState>((set) => ({
                 const [feature1, feature2] = splitFeatureText(featureText);
                 updates.armorFeature = feature2 ? `${feature1}\n${feature2}` : feature1;
 
-                // 自动更新护甲值
-                updates.armorValue = String(customArmorData.护甲值 || "");
+                // 自动更新护甲值和护甲上限
+                const armorValueStr = String(customArmorData.护甲值 || "");
+                updates.armorValue = armorValueStr;
+                updates.armorMax = parseToNumber(armorValueStr, 0);
 
                 // 计算伤害阈值
                 if (customArmorData.伤害阈值) {
@@ -688,8 +695,10 @@ export const useSheetStore = create<SheetState>((set) => ({
                     const [feature1, feature2] = splitFeatureText(featureText);
                     updates.armorFeature = feature2 ? `${feature1}\n${feature2}` : feature1;
 
-                    // 自动更新护甲值
-                    updates.armorValue = String(armor.护甲值);
+                    // 自动更新护甲值和护甲上限
+                    const armorValueStr = String(armor.护甲值);
+                    updates.armorValue = armorValueStr;
+                    updates.armorMax = parseToNumber(armorValueStr, 0);
 
                     // 计算伤害阈值
                     const thresholds = armor.伤害阈值.split('/');
@@ -730,6 +739,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                     updates.armorThreshold = "";
                     updates.armorFeature = "";
                     updates.armorValue = "";  // 清空护甲值
+                    updates.armorMax = 0;      // 清空护甲上限
                 }
             }
         }

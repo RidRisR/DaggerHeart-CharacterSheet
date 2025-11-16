@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
+import { showFadeNotification } from "@/components/ui/fade-notification"
 
 interface InventoryWeaponSectionProps {
   index: number
@@ -45,11 +46,57 @@ export function InventoryWeaponSection({
     }
   }
 
-  const handleBooleanChange = (field: string) => {
-    setSheetData((prev) => ({
-      ...prev,
-      [field]: !((prev as any)[field])
-    }))
+  /**
+   * 处理武器交换或取消勾选（向后兼容）
+   *
+   * 行为：
+   * 1. 如果 checkbox 当前为 true（老存档遗留状态），点击后仅取消勾选
+   * 2. 如果 checkbox 为 false（新存档或已取消的老存档），执行武器交换
+   */
+  const handleWeaponSwap = (field: string, targetType: 'primary' | 'secondary') => {
+    const currentValue = (formData as any)[field]
+
+    // 情况 1: 老存档遗留状态，用户点击取消勾选
+    if (currentValue === true) {
+      setSheetData((prev) => ({
+        ...prev,
+        [field]: false
+      }))
+      return
+    }
+
+    // 情况 2: 执行武器交换
+    const targetPrefix = targetType === 'primary' ? 'primaryWeapon' : 'secondaryWeapon'
+    const inventoryPrefix = `inventoryWeapon${index}`
+
+    setSheetData((prev) => {
+      const newData = { ...prev }
+
+      // 交换所有武器字段
+      const fieldsToSwap = ['Name', 'Trait', 'Damage', 'Feature']
+
+      for (const fieldName of fieldsToSwap) {
+        const inventoryField = `${inventoryPrefix}${fieldName}` as keyof typeof prev
+        const targetField = `${targetPrefix}${fieldName}` as keyof typeof prev
+
+        // 执行字段交换
+        const temp = (prev as any)[inventoryField]
+        ;(newData as any)[inventoryField] = (prev as any)[targetField]
+        ;(newData as any)[targetField] = temp
+      }
+
+      // 保持 checkbox 为 false（不持久化选中状态）
+      (newData as any)[field] = false
+
+      return newData
+    })
+
+    // 显示交换成功通知
+    showFadeNotification({
+      message: targetType === 'primary' ? '已设为主手武器' : '已设为副手武器',
+      type: 'success',
+      duration: 2000
+    })
   }
 
   const { getElementProps } = useAutoResizeFont({
@@ -141,7 +188,7 @@ export function InventoryWeaponSection({
             type="checkbox"
             id={primaryField}
             checked={!!(formData as any)[primaryField]} // Ensure value is boolean
-            onChange={() => handleBooleanChange(primaryField)}
+            onChange={() => handleWeaponSwap(primaryField, 'primary')}
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={primaryField} className="text-[8px]">
@@ -153,7 +200,7 @@ export function InventoryWeaponSection({
             type="checkbox"
             id={secondaryField}
             checked={!!(formData as any)[secondaryField]} // Ensure value is boolean
-            onChange={() => handleBooleanChange(secondaryField)}
+            onChange={() => handleWeaponSwap(secondaryField, 'secondary')}
             className="mr-1 h-3 w-3"
           />
           <label htmlFor={secondaryField} className="text-[8px]">

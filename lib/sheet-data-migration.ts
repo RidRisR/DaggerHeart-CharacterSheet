@@ -209,12 +209,44 @@ function migrateAdventureNotes(data: SheetData): SheetData {
 }
 
 /**
+ * 武器 checkbox 状态迁移
+ * 保留老存档中已勾选的 Primary/Secondary checkbox 状态，允许用户手动取消
+ * 新存档中这些字段永远为 false
+ */
+function migrateWeaponCheckboxes(data: SheetData): SheetData {
+  const migrated = { ...data }
+  let hasLegacyCheckboxes = false
+
+  // 检查库存武器的 checkbox 状态
+  const weaponIndexes = [1, 2] // inventoryWeapon1, inventoryWeapon2
+  const checkboxTypes = ['Primary', 'Secondary']
+
+  weaponIndexes.forEach(index => {
+    checkboxTypes.forEach(type => {
+      const fieldName = `inventoryWeapon${index}${type}` as keyof SheetData
+      const value = migrated[fieldName]
+
+      // 如果发现老存档中为 true 的 checkbox，保留状态
+      if (value === true) {
+        hasLegacyCheckboxes = true
+      }
+    })
+  })
+
+  if (hasLegacyCheckboxes) {
+    console.log('[Migration] Detected legacy weapon checkboxes, preserving state for user to manually uncheck')
+  }
+
+  return migrated
+}
+
+/**
  * 清理废弃字段
  * 移除不再使用的字段，保持数据结构清洁
  */
 function cleanupDeprecatedFields(data: SheetData): SheetData {
   const migrated = { ...data }
-  
+
   // 移除废弃的字段
   if ('includePageThreeInExport' in migrated) {
     delete (migrated as any).includePageThreeInExport
@@ -249,7 +281,8 @@ export function migrateSheetData(
   migrated = migratePageVisibilityFields(migrated)
   migrated = migrateArmorTemplate(migrated)
   migrated = migrateAdventureNotes(migrated)
-  
+  migrated = migrateWeaponCheckboxes(migrated)
+
   // 3. 清理废弃字段（最后执行）
   migrated = cleanupDeprecatedFields(migrated)
 

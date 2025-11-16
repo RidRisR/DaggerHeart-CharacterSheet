@@ -85,6 +85,30 @@ pnpm test:integration # Run only integration tests
 - Print functionality includes image loading optimization
 - The project uses PNPM as the package manager
 
+## Development Workflow Guidelines
+
+### NEVER Start the Development Server Automatically
+
+**CRITICAL RULE**: Claude Code should **NEVER** automatically start the development server (`pnpm dev`) or any other long-running background processes without explicit user request.
+
+**Reasons**:
+- The user manages their own development environment
+- Starting servers automatically can interfere with existing processes
+- The user will start the server when they're ready to test
+- Prevents unnecessary resource consumption
+
+**What to do instead**:
+- Complete code changes first
+- Update todo list to mark tasks as completed
+- Inform the user that changes are ready for testing
+- Let the user decide when to start the server
+
+**Example**:
+```
+❌ DON'T: "Let me start the dev server to test..."
+✅ DO: "Changes are complete. You can test by running `pnpm dev` when ready."
+```
+
 ## SheetData Flow and Migration
 
 ### SheetData Sources

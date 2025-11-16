@@ -77,7 +77,7 @@ export function NewExperienceEditor({ onClose }: NewExperienceEditorProps) {
       {/* 提示信息 */}
       <div className="mb-2 px-2 py-1.5 bg-blue-50 border border-blue-200 rounded">
         <p className="text-[10px] text-blue-700 leading-relaxed">
-          💡 熟练值会在更新等级时自动完成
+          💡 熟练度会在更新等级时自动更新
         </p>
       </div>
 

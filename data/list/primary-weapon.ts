@@ -11,7 +11,7 @@ export interface Weapon {
 }
 
 export const primaryWeapons: Weapon[] = [
-// 位阶1 (等级1) - 物理武器
+    // 位阶1 (等级1) - 物理武器
     {
         名称: "阔剑",
         等级: "T1",
@@ -1662,7 +1662,7 @@ export const primaryWeapons: Weapon[] = [
         伤害: "d10+9",
         负荷: "双手",
         特性名称: "贪婪",
-        描述: "你可以花费一把金币，使你的伤害掷骰熟练值+1。",
+        描述: "你可以花费一把金币，使你的伤害掷骰熟练度+1。",
     },
     {
         名称: "漂浮碎刃",

@@ -16,6 +16,9 @@ import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal
 import { ArmorSelectionModal } from "@/components/modals/armor-selection-modal"
 import { GenericCardSelectionModal } from "@/components/modals/generic-card-selection-modal"
 
+// Import modifier tracker
+import { ModifierInfoButton } from "@/components/modifier-tracker/modifier-info-button"
+
 // Import sections
 import { HeaderSection } from "@/components/character-sheet-sections/header-section"
 import { AttributesSection } from "@/components/character-sheet-sections/attributes-section"
@@ -640,7 +643,10 @@ export default function CharacterSheet() {
                   <div className="flex flex-col items-center justify-start">
                     <div className="w-24 h-24 flex flex-col rounded-lg overflow-hidden border border-gray-800">
                       <div className="bg-gray-800 text-white text-center py-1">
-                        <div className="text-ms font-bold">闪避值</div>
+                        <div className="text-ms font-bold flex items-center justify-center gap-1">
+                          闪避值
+                          <ModifierInfoButton attribute="evasion" className="w-3 h-3 text-white hover:text-gray-200" />
+                        </div>
                       </div>
                       <div className="flex-1 bg-white flex flex-col items-center justify-end pb-2 px-1">
                         <input

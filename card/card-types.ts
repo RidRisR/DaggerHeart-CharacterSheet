@@ -1,11 +1,13 @@
 // Functions will be imported dynamically to avoid circular dependencies
 
+import type { WithModifiers } from '@/lib/modifier-tracker/types'
+
 // 属性类别常量列表
 export const ATTRIBUTE_CLASS_NAMES: string[] = [
     "力量", "敏捷", "灵巧", "风度", "本能", "知识", "不可施法"
 ];
 
-// 子职业等级常量列表  
+// 子职业等级常量列表
 export const SUBCLASS_LEVEL_NAMES: string[] = [
     "基石", "专精", "大师", "未知"
 ];
@@ -14,7 +16,7 @@ export const SUBCLASS_LEVEL_NAMES: string[] = [
 export type AttributeClass = typeof ATTRIBUTE_CLASS_NAMES[number];
 export type SubClassLevel = typeof SUBCLASS_LEVEL_NAMES[number];
 
-export interface StandardCard {
+export interface StandardCard extends WithModifiers {
   standarized: boolean
   id: string
   name: string

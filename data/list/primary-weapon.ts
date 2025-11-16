@@ -1,4 +1,6 @@
-export interface Weapon {
+import type { WithModifiers } from '@/lib/modifier-tracker/types'
+
+export interface Weapon extends WithModifiers {
     名称: string;
     等级: "T1" | "T2" | "T3" | "T4";
     检定: "敏捷" | "灵巧" | "知识" | "力量" | "本能" | "风度";
@@ -55,6 +57,14 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "巨型",
         描述: "闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+        modifiers: [
+            {
+                attribute: 'evasion',
+                type: 'penalty',
+                value: 1,
+                description: '巨型武器笨重，降低闪避'
+            }
+        ]
     },
     {
         名称: "钉头锤",

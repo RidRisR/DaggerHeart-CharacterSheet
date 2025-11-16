@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
+import { ModifierInfoButton } from "@/components/modifier-tracker/modifier-info-button"
 
 interface ArmorSectionProps {
   onOpenArmorModal: () => void;
@@ -94,7 +95,10 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
           )}
         </div>
         <div className="col-span-3">
-          <label className="text-[8px] text-gray-600">护甲值</label>
+          <div className="flex items-center gap-1">
+            <label className="text-[8px] text-gray-600">护甲值</label>
+            <ModifierInfoButton attribute="armorValue" className="w-3 h-3" />
+          </div>
           <input
             type="text"
             name="armorBaseScore"

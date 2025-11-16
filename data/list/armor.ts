@@ -1,4 +1,6 @@
-export interface ArmorItem {
+import type { WithModifiers } from '@/lib/modifier-tracker/types'
+
+export interface ArmorItem extends WithModifiers {
     名称: string;
     等级: "T1" | "T2" | "T3" | "T4";
     伤害阈值: string;
@@ -16,6 +18,20 @@ export const armorItems: ArmorItem[] = [
         护甲值: 3,
         特性名称: "灵活",
         描述: "闪避值+1",
+        modifiers: [
+            {
+                attribute: 'evasion',
+                type: 'bonus',
+                value: 1,
+                description: '灵活护甲提供闪避加值'
+            },
+            {
+                attribute: 'armorValue',
+                type: 'bonus',
+                value: 3,
+                description: '护甲基础值'
+            }
+        ]
     },
     {
         名称: "皮甲",
@@ -32,6 +48,20 @@ export const armorItems: ArmorItem[] = [
         护甲值: 4,
         特性名称: "重型",
         描述: "闪避值-1",
+        modifiers: [
+            {
+                attribute: 'evasion',
+                type: 'penalty',
+                value: 1,
+                description: '重型护甲降低闪避'
+            },
+            {
+                attribute: 'armorValue',
+                type: 'bonus',
+                value: 4,
+                description: '护甲基础值'
+            }
+        ]
     },
     {
         名称: "全板甲",

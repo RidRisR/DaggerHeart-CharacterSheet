@@ -21,19 +21,52 @@ export function HeaderSection({
   onOpenCommunityModal,
   onOpenSubclassModal
 }: HeaderSectionProps) {
-  const { sheetData: formData, setSheetData, updateLevelWithThreshold } = useSheetStore()
+  const { sheetData: formData, setSheetData, updateLevel } = useSheetStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState("")
+  const [editingStartLevel, setEditingStartLevel] = useState<string | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     if (name === 'level') {
-      // 使用新的等级更新函数，自动计算伤害阈值
-      updateLevelWithThreshold(value)
+      // 只允许空字符串或 1-10 的数字
+      if (value === '' || /^([1-9]|10)$/.test(value)) {
+        setSheetData((prev) => ({ ...prev, level: value }))
+      }
+      // 非法输入直接忽略
     } else {
       setSheetData((prev) => ({ ...prev, [name]: value }))
     }
+  }
+
+  const handleLevelFocus = () => {
+    // 记录编辑开始时的等级（空视为"1"）
+    setEditingStartLevel(formData.level || "1")
+  }
+
+  const handleLevelKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur()  // 触发失焦
+    }
+  }
+
+  const handleLevelBlur = () => {
+    // 编辑完成，获取起始和结束等级
+    const startLevel = editingStartLevel || "1"
+    const endLevel = formData.level  // 保留原始值（可能是空）
+
+    // 用于比较的数值（空视为1级）
+    const oldLevelNum = parseInt(startLevel)
+    const newLevelNum = parseInt(endLevel || "1")
+
+    // 如果等级真的发生了变化，触发完整的等级更新逻辑
+    if (oldLevelNum !== newLevelNum) {
+      updateLevel(endLevel, startLevel)
+    }
+
+    // 清除编辑状态
+    setEditingStartLevel(null)
   }
 
   const openProfessionModal = () => {
@@ -341,6 +374,9 @@ export function HeaderSection({
               value={formData.level}
               placeholder="1"
               onChange={handleInputChange}
+              onFocus={handleLevelFocus}
+              onBlur={handleLevelBlur}
+              onKeyDown={handleLevelKeyDown}
               className="w-8 text-center border-b border-gray-400 focus:outline-none text-xl font-bold print-empty-hide"
             />
           </div>
@@ -348,17 +384,23 @@ export function HeaderSection({
         <button
           type="button"
           onClick={() => {
-            const currentLevel = parseInt(formData.level) || 0
-            // 如果当前等级为空、不是数字或小于1，设置为1
-            // 如果当前等级大于等于10，保持为10
-            // 否则加1
-            let newLevel = 1
-            if (currentLevel >= 1 && currentLevel < 10) {
-              newLevel = currentLevel + 1
-            } else if (currentLevel >= 10) {
-              newLevel = 10
+            const oldLevel = formData.level || ""
+
+            // 如果当前等级为空或无效，升到1级
+            if (!formData.level || formData.level.trim() === "") {
+              updateLevel("1", oldLevel)
+              return
             }
-            updateLevelWithThreshold(String(newLevel))
+
+            const currentLevel = parseInt(formData.level)
+            // 如果当前等级大于等于10，不再升级
+            if (currentLevel >= 10) {
+              return
+            }
+
+            // 否则加1，最大为10
+            const newLevel = Math.min(currentLevel + 1, 10)
+            updateLevel(String(newLevel), oldLevel)
           }}
           className="mt-1 px-2 py-0.5 bg-gray-600 hover:bg-gray-500 text-white text-[10px] font-bold rounded print:hidden transition-colors disabled:bg-gray-700 disabled:cursor-not-allowed"
           disabled={parseInt(formData.level) >= 10}

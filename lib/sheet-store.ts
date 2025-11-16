@@ -133,12 +133,11 @@ interface SheetState {
     updateExperienceValues: (index: number, value: string) => void;
     updateHP: (index: number, checked: boolean) => void;
     updateName: (name: string) => void;
-    updateLevel: (level: string) => void;
     updateHPMax: (value: number) => void;
     updateStressMax: (value: number) => void;
 
     // Threshold calculation actions
-    updateLevelWithThreshold: (level: string) => void;
+    updateLevel: (level: string, oldLevel?: string) => void;
     updateArmorThresholdWithDamage: (armorThreshold: string) => void;
     updateArmorBaseScore: (armorBaseScore: string) => void;
     selectArmor: (armorId: string) => void;
@@ -392,13 +391,6 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
     })),
     
-    updateLevel: (level) => set((state) => ({
-        sheetData: {
-            ...state.sheetData,
-            level
-        }
-    })),
-
     updateHPMax: (value) => set((state) => ({
         sheetData: {
             ...state.sheetData,
@@ -414,26 +406,26 @@ export const useSheetStore = create<SheetState>((set) => ({
     })),
 
     // Threshold calculation actions
-    updateLevelWithThreshold: (level) => set((state) => {
+    updateLevel: (level, oldLevel) => set((state) => {
         const updates: Partial<SheetData> = { level };
 
         // 检查是否需要增加熟练度（当达到2、5、8级时）
-        const oldLevel = parseToNumber(state.sheetData.level, 1)
+        // 使用传入的 oldLevel，如果未提供则从 store 读取
+        const prevLevel = parseToNumber(oldLevel ?? state.sheetData.level, 1)
         const newLevel = parseToNumber(level, 1)
 
         const proficiencyLevels = [2, 5, 8]
-        let shouldIncreaseProficiency = false
 
-        // 检查是否跨过了熟练度提升等级
+        // 计算跨越了多少个熟练度阈值
+        let proficiencyIncrements = 0
         for (const threshold of proficiencyLevels) {
-            if (oldLevel < threshold && newLevel >= threshold) {
-                shouldIncreaseProficiency = true
-                break
+            if (prevLevel < threshold && newLevel >= threshold) {
+                proficiencyIncrements++  // 累加，不 break
             }
         }
 
         // 如果需要增加熟练度
-        if (shouldIncreaseProficiency) {
+        if (proficiencyIncrements > 0) {
             const currentProficiency = Array.isArray(state.sheetData.proficiency)
                 ? state.sheetData.proficiency
                 : Array(6).fill(false)
@@ -441,28 +433,40 @@ export const useSheetStore = create<SheetState>((set) => ({
             // 计算当前熟练度数量
             const currentCount = currentProficiency.filter(v => v === true).length
 
-            // 如果未达到上限（6个），增加1个
-            if (currentCount < 6) {
+            // 计算可以增加的数量（不超过上限6）
+            const actualIncrements = Math.min(proficiencyIncrements, 6 - currentCount)
+
+            if (actualIncrements > 0) {
                 const newProficiency = [...currentProficiency]
-                newProficiency[currentCount] = true
+
+                // 批量添加熟练度
+                for (let i = 0; i < actualIncrements; i++) {
+                    newProficiency[currentCount + i] = true
+                }
+
                 updates.proficiency = newProficiency
 
                 // 清空所有属性的升级标记
-                const attributeKeys: Array<keyof SheetData> = [
+                type AttributeKey = 'agility' | 'strength' | 'finesse' | 'instinct' | 'presence' | 'knowledge'
+                const attributeKeys: AttributeKey[] = [
                     'agility', 'strength', 'finesse',
                     'instinct', 'presence', 'knowledge'
                 ]
 
                 attributeKeys.forEach(key => {
                     const attr = state.sheetData[key]
-                    if (typeof attr === 'object' && attr !== null && 'checked' in attr) {
-                        (updates as any)[key] = { ...attr, checked: false }
+                    if (attr && typeof attr === 'object' && 'checked' in attr) {
+                        updates[key] = { ...attr, checked: false }
                     }
                 })
 
-                // 显示通知
+                // 更新通知消息，显示实际增加的数量
+                const message = actualIncrements === 1
+                    ? `等级提升至${newLevel}级，熟练度+1（${currentCount} → ${currentCount + actualIncrements}），属性升级标记已重置`
+                    : `等级提升至${newLevel}级，熟练度+${actualIncrements}（${currentCount} → ${currentCount + actualIncrements}），属性升级标记已重置`
+
                 showFadeNotification({
-                    message: `等级提升至${newLevel}级，熟练度+1（${currentCount} → ${currentCount + 1}），属性升级标记已重置`,
+                    message,
                     type: "success"
                 })
             }

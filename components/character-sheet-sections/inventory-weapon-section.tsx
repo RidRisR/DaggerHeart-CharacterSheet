@@ -183,27 +183,27 @@ export function InventoryWeaponSection({
       </div>
 
       <div className="flex gap-4 mt-1">
-        <div className="flex items-center">
+        <div className="flex items-center group">
           <input
             type="checkbox"
             id={primaryField}
             checked={!!(formData as any)[primaryField]} // Ensure value is boolean
             onChange={() => handleWeaponSwap(primaryField, 'primary')}
-            className="mr-1 h-3 w-3"
+            className="mr-1 h-3 w-3 cursor-pointer"
           />
-          <label htmlFor={primaryField} className="text-[8px]">
+          <label htmlFor={primaryField} className="text-[8px] cursor-pointer group-hover:text-blue-600 transition-colors">
             设为主手
           </label>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center group">
           <input
             type="checkbox"
             id={secondaryField}
             checked={!!(formData as any)[secondaryField]} // Ensure value is boolean
             onChange={() => handleWeaponSwap(secondaryField, 'secondary')}
-            className="mr-1 h-3 w-3"
+            className="mr-1 h-3 w-3 cursor-pointer"
           />
-          <label htmlFor={secondaryField} className="text-[8px]">
+          <label htmlFor={secondaryField} className="text-[8px] cursor-pointer group-hover:text-blue-600 transition-colors">
             设为副手
           </label>
         </div>

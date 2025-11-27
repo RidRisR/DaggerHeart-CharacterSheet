@@ -152,8 +152,8 @@ function getBasicFallbackStyles(): string {
  */
 function cleanupExtractedHTML(htmlContent: string): string {
   return htmlContent
-    // 移除data属性（保留字体调整相关的）
-    .replace(/\s*data-(?!text|max-font|min-font)[^=]*="[^"]*"/g, '')
+    // 移除data属性（保留字体调整相关的和state属性）
+    .replace(/\s*data-(?!text|max-font|min-font|state)[^=]*="[^"]*"/g, '')
     // 移除React和Next.js相关属性
     .replace(/\s*data-react[^=]*="[^"]*"/g, '')
     .replace(/\s*on[a-z]+="[^"]*"/g, '')

@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { defaultSheetData } from "./default-sheet-data";
-import type { SheetData, AttributeValue, ArmorTemplateData } from "./sheet-data";
+import type { SheetData, AttributeValue, ArmorTemplateData, SheetCardReference } from "./sheet-data";
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { armorItems, type ArmorItem } from "@/data/list/armor";
 import { showFadeNotification } from "@/components/ui/fade-notification";
@@ -37,13 +37,13 @@ const splitFeatureText = (text: string): [string, string] => {
     for (let i = maxCharsPerLine; i >= Math.max(0, maxCharsPerLine - 5); i--) {
         const char = text[i];
         const nextChar = text[i + 1];
-        
+
         // 在空格处分割
         if (char === ' ') {
             splitIndex = i + 1;
             break;
         }
-        
+
         // 只有当下一行开头是标点符号时，才在标点符号处分割
         const punctuation = ['，', '。', '：', ';', ',', ':'];
         if (punctuation.includes(char) && nextChar && punctuation.includes(nextChar)) {
@@ -121,7 +121,7 @@ interface SheetState {
     sheetData: SheetData;
     setSheetData: (data: Partial<SheetData> | ((prevState: SheetData) => Partial<SheetData>)) => void;
     replaceSheetData: (data: SheetData) => void;
-    
+
     // Granular actions for better performance and cleaner code
     updateAttribute: (attribute: keyof SheetData, value: string) => void;
     toggleAttributeChecked: (attribute: keyof SheetData) => void;
@@ -141,12 +141,12 @@ interface SheetState {
     updateArmorThresholdWithDamage: (armorThreshold: string) => void;
     updateArmorBaseScore: (armorBaseScore: string) => void;
     selectArmor: (armorId: string) => void;
-    
+
     // Card management actions
     deleteCard: (index: number, isInventory: boolean) => void;
     moveCard: (fromIndex: number, fromInventory: boolean, toInventory: boolean) => boolean;
     updateCard: (index: number, card: StandardCard, isInventory: boolean) => void;
-    
+
     // Armor template actions
     updateArmorTemplateField: (field: keyof ArmorTemplateData, value: any) => void;
     updateUpgradeSlot: (index: number, checked: boolean, text: string) => void;
@@ -174,6 +174,9 @@ interface SheetState {
     };
     createEvasionSnapshot: (afterValue: string) => void;
     restoreEvasionSnapshot: () => { success: boolean; reason?: 'no-snapshot' | 'conflict' | 'success' };
+
+    // Profession change handler
+    handleProfessionChange: (newProfessionRef: SheetCardReference | undefined, newProfessionCard: StandardCard | undefined) => void;
 }
 
 export const useSheetStore = create<SheetState>((set) => ({
@@ -203,7 +206,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         const finalData = syncSubclassSpellcasting(newData, state.sheetData);
         return { sheetData: finalData };
     }),
-    
+
     // Granular actions
     updateAttribute: (attribute, value) => set((state) => {
         const currentAttribute = state.sheetData[attribute];
@@ -217,23 +220,23 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
         return state;
     }),
-    
+
     toggleAttributeChecked: (attribute) => set((state) => {
         const currentAttribute = state.sheetData[attribute];
         if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
             return {
                 sheetData: {
                     ...state.sheetData,
-                    [attribute]: { 
-                        ...currentAttribute, 
-                        checked: !currentAttribute.checked 
+                    [attribute]: {
+                        ...currentAttribute,
+                        checked: !currentAttribute.checked
                     },
                 }
             };
         }
         return state;
     }),
-    
+
     updateGold: (index: number) => set((state) => {
         const gold = state.sheetData.gold || [];
 
@@ -281,7 +284,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
     updateHope: (index: number) => set((state) => {
         const current = state.sheetData.hope || [];
         // 找到最后一个被点亮的 hope 的下标
@@ -304,7 +307,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
     updateArmorBox: (index: number) => set((state) => {
         const current = state.sheetData.armorBoxes || [];
         // 找到最后一个被点亮的 armorBox 的下标
@@ -327,7 +330,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
     updateProficiency: (index: number) => set((state) => {
         const current = Array.isArray(state.sheetData.proficiency) ? state.sheetData.proficiency : [];
         // 找到最后一个被点亮的 proficiency 的下标
@@ -350,7 +353,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
     updateExperience: (index, value) => set((state) => {
         const newExperience = [...(state.sheetData.experience || [])];
         newExperience[index] = value;
@@ -361,7 +364,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
     updateExperienceValues: (index, value) => set((state) => {
         const newExperienceValues = [...(state.sheetData.experienceValues || [])];
         newExperienceValues[index] = value;
@@ -372,7 +375,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
     updateHP: (index, checked) => set((state) => {
         const newHP = [...(state.sheetData.hp || [])];
         newHP[index] = checked;
@@ -383,14 +386,14 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
     updateName: (name) => set((state) => ({
         sheetData: {
             ...state.sheetData,
             name
         }
     })),
-    
+
     updateHPMax: (value) => set((state) => ({
         sheetData: {
             ...state.sheetData,
@@ -493,14 +496,14 @@ export const useSheetStore = create<SheetState>((set) => ({
                 }
             };
         }
-        
+
         // 如果有护甲阈值，计算伤害阈值
         if (state.sheetData.armorThreshold) {
             const thresholds = state.sheetData.armorThreshold.split('/');
             if (thresholds.length === 2) {
                 const minor = parseInt(thresholds[0]?.trim());
                 const major = parseInt(thresholds[1]?.trim());
-                
+
                 if (!isNaN(minor) && !isNaN(major)) {
                     const newMinor = minor + levelNum;
                     const newMajor = major + levelNum;
@@ -515,7 +518,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 }
             }
         }
-        
+
         return {
             sheetData: {
                 ...state.sheetData,
@@ -523,10 +526,10 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
     updateArmorThresholdWithDamage: (armorThreshold) => set((state) => {
         const updates: Partial<SheetData> = { armorThreshold };
-        
+
         // 解析护甲阈值
         const thresholds = armorThreshold.split('/');
         if (thresholds.length !== 2) {
@@ -538,10 +541,10 @@ export const useSheetStore = create<SheetState>((set) => ({
                 }
             };
         }
-        
+
         const minor = parseInt(thresholds[0]?.trim());
         const major = parseInt(thresholds[1]?.trim());
-        
+
         if (isNaN(minor) || isNaN(major)) {
             // 无效数字，只更新护甲阈值
             return {
@@ -551,7 +554,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 }
             };
         }
-        
+
         // 如果有等级，计算伤害阈值
         const levelNum = parseInt(state.sheetData.level);
         if (!isNaN(levelNum) && levelNum >= 1 && levelNum <= 10) {
@@ -566,7 +569,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 type: "success"
             });
         }
-        
+
         return {
             sheetData: {
                 ...state.sheetData,
@@ -624,14 +627,14 @@ export const useSheetStore = create<SheetState>((set) => ({
             // 首先检查是否为JSON格式（自定义护甲）
             let isCustomArmor = false;
             let customArmorData: any = null;
-            
+
             try {
                 customArmorData = JSON.parse(armorId);
                 isCustomArmor = true;
             } catch (e) {
                 // 不是JSON格式，继续处理
             }
-            
+
             if (isCustomArmor && customArmorData) {
                 // 处理自定义护甲
                 updates.armorName = customArmorData.名称 || armorId;
@@ -747,7 +750,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 }
             }
         }
-        
+
         return {
             sheetData: {
                 ...state.sheetData,
@@ -755,7 +758,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
     // Card management actions
     deleteCard: (index, isInventory) => set((state) => {
         // 检查特殊卡位保护：聚焦卡组的前5个位置不能删除
@@ -763,9 +766,9 @@ export const useSheetStore = create<SheetState>((set) => ({
             console.log('[Store] 特殊卡位不能删除');
             return state;
         }
-        
+
         const emptyCard = createEmptyCard();
-        
+
         if (isInventory) {
             // 删除库存卡牌
             const newInventoryCards = [...(state.sheetData.inventory_cards || [])];
@@ -774,7 +777,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 newInventoryCards.push(createEmptyCard());
             }
             newInventoryCards[index] = emptyCard;
-            
+
             return {
                 sheetData: {
                     ...state.sheetData,
@@ -789,7 +792,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 newCards.push(createEmptyCard());
             }
             newCards[index] = emptyCard;
-            
+
             return {
                 sheetData: {
                     ...state.sheetData,
@@ -798,71 +801,71 @@ export const useSheetStore = create<SheetState>((set) => ({
             };
         }
     }),
-    
+
     moveCard: (fromIndex, fromInventory, toInventory) => {
         let success = false;
-        
+
         set((state) => {
             if (fromInventory === toInventory) {
                 success = false;
                 return state; // 不需要移动
             }
-            
+
             // 确保两个卡组都存在且长度为20
             const newFocusedCards = [...(state.sheetData.cards || [])];
             const newInventoryCards = [...(state.sheetData.inventory_cards || [])];
-            
+
             while (newFocusedCards.length < 20) {
                 newFocusedCards.push(createEmptyCard());
             }
             while (newInventoryCards.length < 20) {
                 newInventoryCards.push(createEmptyCard());
             }
-            
+
             // 获取要移动的卡牌
             const sourceCards = fromInventory ? newInventoryCards : newFocusedCards;
             const targetCards = toInventory ? newInventoryCards : newFocusedCards;
             const cardToMove = sourceCards[fromIndex];
-            
+
             if (!cardToMove || cardToMove.name === '') {
                 success = false;
                 return state; // 空卡不能移动
             }
-            
+
             // 检查特殊卡位保护：不能从聚焦卡组的特殊卡位(前5位)移动出去
             if (!fromInventory && fromIndex < 5) {
                 console.log('[Store] 特殊卡位不能移动到库存卡组');
                 success = false;
                 return state;
             }
-            
+
             // 检查特殊卡位保护：不能移动到聚焦卡组的特殊卡位(前5位)
             // 从库存移动到聚焦卡组时，不能放入特殊卡位
             if (!toInventory && fromInventory) {
                 console.log('[Store] 从库存移动到聚焦卡组，不能占用特殊卡位');
                 // 这种情况下会在后面的逻辑中自动跳过特殊卡位，从第6位开始查找
             }
-            
+
             // 找到目标卡组中第一个空位（跳过特殊卡位）
             let targetIndex = -1;
             const startIndex = toInventory ? 0 : 5; // 移动到聚焦卡组时从第6位开始查找
-            
+
             for (let i = startIndex; i < targetCards.length; i++) {
                 if (!targetCards[i] || targetCards[i].name === '') {
                     targetIndex = i;
                     break;
                 }
             }
-            
+
             if (targetIndex === -1) {
                 success = false;
                 return state; // 目标卡组已满
             }
-            
+
             // 执行移动：源位置用空卡替换，目标位置放入卡牌
             sourceCards[fromIndex] = createEmptyCard();
             targetCards[targetIndex] = cardToMove;
-            
+
             success = true;
             return {
                 sheetData: {
@@ -872,10 +875,10 @@ export const useSheetStore = create<SheetState>((set) => ({
                 }
             };
         });
-        
+
         return success;
     },
-    
+
     // Armor template actions
     updateArmorTemplateField: (field, value) => set((state) => ({
         sheetData: {
@@ -889,7 +892,7 @@ export const useSheetStore = create<SheetState>((set) => ({
 
     updateUpgradeSlot: (index, checked, text) => set((state) => {
         const current = [...(state.sheetData.armorTemplate?.upgradeSlots || [])];
-        
+
         // 复选框逻辑：实现与其他组件相同的行为
         // 找到最后一个被点亮的插槽的下标
         let lastLit = -1;
@@ -899,12 +902,12 @@ export const useSheetStore = create<SheetState>((set) => ({
                 break;
             }
         }
-        
+
         // 如果点击的正好是最后一个被点亮的插槽，则全部熄灭
         if (index === lastLit && current[index]?.checked) {
-            const slots = current.map(slot => ({ 
-                checked: false, 
-                text: slot?.text || '' 
+            const slots = current.map(slot => ({
+                checked: false,
+                text: slot?.text || ''
             }));
             return {
                 sheetData: {
@@ -916,13 +919,13 @@ export const useSheetStore = create<SheetState>((set) => ({
                 }
             };
         }
-        
+
         // 其它情况，点亮前 n+1 个插槽
         const slots = current.map((slot, i) => ({
             checked: i <= index,
             text: slot?.text || ''
         }));
-        
+
         return {
             sheetData: {
                 ...state.sheetData,
@@ -952,7 +955,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         const currentArmor = state.sheetData.armorTemplate || {};
         const currentUpgrades = currentArmor.upgrades || { basic: {}, tier2: {}, tier3: {}, tier4: {} };
         const currentTierUpgrades = currentUpgrades[tier as keyof typeof currentUpgrades] || {};
-        
+
         return {
             sheetData: {
                 ...state.sheetData,
@@ -978,9 +981,9 @@ export const useSheetStore = create<SheetState>((set) => ({
             components: [],
             relics: []
         };
-        
+
         const updatedMaterials = { ...currentMaterials };
-        
+
         if (category === 'fragments' || category === 'metals' || category === 'components') {
             const array = [...(updatedMaterials[category] || [])];
             array[index] = value as number;
@@ -990,7 +993,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             array[index] = value as string;
             updatedMaterials[category] = array;
         }
-        
+
         return {
             sheetData: {
                 ...state.sheetData,
@@ -1001,7 +1004,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         };
     }),
-    
+
     updateCard: (index, card, isInventory) => set((state) => {
         if (isInventory) {
             // 更新库存卡牌
@@ -1011,7 +1014,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 newInventoryCards.push(createEmptyCard());
             }
             newInventoryCards[index] = card;
-            
+
             return {
                 sheetData: {
                     ...state.sheetData,
@@ -1026,7 +1029,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 newCards.push(createEmptyCard());
             }
             newCards[index] = card;
-            
+
             return {
                 sheetData: {
                     ...state.sheetData,
@@ -1211,6 +1214,55 @@ export const useSheetStore = create<SheetState>((set) => ({
 
         return { success: true, reason: 'success' as const };
     },
+
+    // Handle profession change - auto-fill evasion and max HP at level 1
+    handleProfessionChange: (newProfessionRef, newProfessionCard) => {
+        const state = useSheetStore.getState();
+        const currentLevel = state.sheetData.level;
+
+        // Only handle at level 1 (or empty level which defaults to 1)
+        if (currentLevel !== "1" && currentLevel !== "") {
+            return;
+        }
+
+        // Handle profession deletion
+        if (!newProfessionRef || !newProfessionRef.id) {
+            set((state) => ({
+                sheetData: {
+                    ...state.sheetData,
+                    evasion: "",
+                    hpMax: 6,
+                }
+            }));
+
+            showFadeNotification({
+                message: "职业已清空，闪避值和最大生命值回到初始值。",
+                type: "info"
+            });
+            return;
+        }
+
+        // Handle profession selection/change
+        if (newProfessionCard && newProfessionCard.professionSpecial) {
+            const evasion = newProfessionCard.professionSpecial["起始闪避"];
+            const hp = newProfessionCard.professionSpecial["起始生命"];
+
+            if (evasion !== undefined && hp !== undefined) {
+                set((state) => ({
+                    sheetData: {
+                        ...state.sheetData,
+                        evasion: String(evasion),
+                        hpMax: hp,
+                    }
+                }));
+
+                showFadeNotification({
+                    message: `因职业更新，已自动填写闪避值 ${evasion} 和最大生命值 ${hp}`,
+                    type: "success"
+                });
+            }
+        }
+    },
 }));
 
 // Selector functions for better performance
@@ -1226,7 +1278,7 @@ export const useSheetExperience = () => useSheetStore(state => state.sheetData.e
 // Helper function to safely merge data, filtering out undefined values
 const safelyMergeData = (defaultData: SheetData, userData: Partial<SheetData>): SheetData => {
     const result = { ...defaultData };
-    
+
     // Only copy defined values from userData
     Object.keys(userData).forEach(key => {
         const value = userData[key as keyof SheetData];
@@ -1234,7 +1286,7 @@ const safelyMergeData = (defaultData: SheetData, userData: Partial<SheetData>): 
             (result as any)[key] = value;
         }
     });
-    
+
     return result;
 };
 

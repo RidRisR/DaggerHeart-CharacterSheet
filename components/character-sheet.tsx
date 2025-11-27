@@ -32,7 +32,7 @@ import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 
 export default function CharacterSheet() {
-  const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor } = useSheetStore();
+  const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, handleProfessionChange: autofillProfessionData } = useSheetStore();
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
   const safeFormData = useSafeSheetData();
@@ -91,6 +91,7 @@ export default function CharacterSheet() {
 
   const needsSyncRef = useRef(true)
   const initialRenderRef = useRef(true)
+  const prevProfessionIdRef = useRef<string | undefined>(undefined)
 
 
   // 同步特殊卡牌与角色选择 - 不直接修改状态，而是返回新的卡牌数组
@@ -526,6 +527,35 @@ export default function CharacterSheet() {
     }
   }, [formData, cardsLoading]); // 添加 cardsLoading 作为依赖项
 
+  // 监听职业变化，自动填写闪避值和最大生命值（仅在1级时）
+  useEffect(() => {
+    // 等待卡牌加载完成
+    if (cardsLoading) {
+      return;
+    }
+
+    const currentProfessionId = formData.professionRef?.id;
+
+    // 初始化时保存当前职业ID
+    if (prevProfessionIdRef.current === undefined) {
+      prevProfessionIdRef.current = currentProfessionId;
+      return;
+    }
+
+    // 检测职业是否真的发生了变化
+    if (prevProfessionIdRef.current !== currentProfessionId) {
+      // 获取新职业卡数据
+      const newProfessionCard = currentProfessionId
+        ? getProfessionById(currentProfessionId)
+        : undefined;
+
+      // 调用处理函数
+      autofillProfessionData(formData.professionRef, newProfessionCard);
+
+      // 更新引用值
+      prevProfessionIdRef.current = currentProfessionId;
+    }
+  }, [formData.professionRef?.id, cardsLoading, autofillProfessionData]);
 
   // 模态框控制函数
   const openWeaponModal = (fieldName: string, slotType: "primary" | "secondary" | "inventory") => {

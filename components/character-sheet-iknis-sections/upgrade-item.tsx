@@ -8,7 +8,6 @@ interface UpgradeItemProps {
   title: string
   cost: MaterialCost
   tier: 'basic' | 'tier2' | 'tier3' | 'tier4'
-  tierDisplay?: string // 用于显示的阶层标签（如 "预编译：二阶"）
   checkboxes?: number
   scrapMaterials?: ScrapMaterials
 }
@@ -17,7 +16,6 @@ export const UpgradeItem = ({
   title,
   cost,
   tier,
-  tierDisplay,
   checkboxes = 1,
   scrapMaterials,
 }: UpgradeItemProps) => {
@@ -96,7 +94,6 @@ export const UpgradeItem = ({
             {renderMaterialCost(cost)}
           </div>
         </div>
-        {tierDisplay && <div className="text-[9px] text-gray-500 font-semibold leading-tight">{tierDisplay}</div>}
       </div>
     </div>
   );

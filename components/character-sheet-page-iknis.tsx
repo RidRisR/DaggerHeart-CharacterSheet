@@ -162,7 +162,7 @@ export default function CharacterSheetModulePage() {
               </div>
 
               {/* 右栏：预编译强化件 */}
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {/* 预编译：二阶 */}
                 <div>
                   <h4 className="text-xs font-bold text-gray-700 mb-0.5">预编译：二阶</h4>
@@ -173,7 +173,6 @@ export default function CharacterSheetModulePage() {
                         title={config.title}
                         cost={config.cost}
                         tier="tier2"
-                        tierDisplay={config.tier}
                         checkboxes={config.checkboxes}
                         scrapMaterials={scrapMaterials}
                       />
@@ -191,7 +190,6 @@ export default function CharacterSheetModulePage() {
                         title={config.title}
                         cost={config.cost}
                         tier="tier3"
-                        tierDisplay={config.tier}
                         checkboxes={config.checkboxes}
                         scrapMaterials={scrapMaterials}
                       />
@@ -209,7 +207,6 @@ export default function CharacterSheetModulePage() {
                         title={config.title}
                         cost={config.cost}
                         tier="tier4"
-                        tierDisplay={config.tier}
                         checkboxes={config.checkboxes}
                         scrapMaterials={scrapMaterials}
                       />

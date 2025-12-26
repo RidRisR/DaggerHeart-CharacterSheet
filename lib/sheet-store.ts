@@ -204,7 +204,15 @@ export const useSheetStore = create<SheetState>((set) => ({
     replaceSheetData: (newData) => set((state) => {
         // 应用子职业施法属性同步
         const finalData = syncSubclassSpellcasting(newData, state.sheetData);
-        return { sheetData: finalData };
+
+        // 清空所有撤回快照，防止跨角色混淆
+        // 当切换角色或导入数据时，旧角色的升级快照不应该影响新角色
+        return {
+            sheetData: finalData,
+            attributeUpgradeHistory: {},
+            experienceValuesSnapshot: undefined,
+            evasionSnapshot: undefined,
+        };
     }),
 
     // Granular actions

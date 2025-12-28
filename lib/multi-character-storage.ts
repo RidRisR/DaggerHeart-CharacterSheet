@@ -123,6 +123,7 @@ export function updateCharacterInMetadataList(
 }
 
 export function removeCharacterFromMetadataList(characterId: string): void {
+  // 1. 先删除元数据（确保 UI 一致性优先）
   const list = loadCharacterList();
   list.characters = list.characters.filter(char => char.id !== characterId);
 
@@ -132,6 +133,19 @@ export function removeCharacterFromMetadataList(characterId: string): void {
   }
 
   saveCharacterList(list);
+
+  // 2. 元数据保存成功后，删除实际数据
+  // 即使数据删除失败，也只是留下僵尸数据（不比现在更糟）
+  try {
+    const deleted = deleteCharacterById(characterId);
+    if (deleted) {
+      console.log(`[CharacterList] Successfully deleted character data: ${characterId}`);
+    } else {
+      console.warn(`[CharacterList] Failed to delete character data: ${characterId}`);
+    }
+  } catch (error) {
+    console.error(`[CharacterList] Error deleting character data: ${characterId}`, error);
+  }
 }
 
 // ===== 单个角色数据管理 =====
@@ -407,4 +421,71 @@ export function getAllCharacterStorageKeys(): string[] {
   }
 
   return characterKeys;
+}
+
+/**
+ * 清理孤立的角色数据（僵尸数据）
+ *
+ * 僵尸数据的产生原因：
+ * - Bug 修复前删除角色时只删除了元数据，实际数据残留
+ *
+ * 清理策略：
+ * - 只在应用启动时运行一次
+ * - 删除在 localStorage 中存在但不在元数据列表中的角色数据
+ * - 采用保守策略，详细记录日志
+ *
+ * @returns 清理的僵尸数据文件数量
+ */
+export function cleanupOrphanedCharacterData(): number {
+  try {
+    // 1. 加载元数据列表，获取所有有效角色 ID
+    const list = loadCharacterList();
+    const validCharacterIds = new Set(list.characters.map(c => c.id));
+
+    console.log(`[Cleanup] Valid character count: ${validCharacterIds.size}`);
+    console.log(`[Cleanup] Valid character IDs: ${Array.from(validCharacterIds).join(', ') || '(none)'}`);
+
+    // 2. 遍历 localStorage 找出所有角色数据键
+    const orphanedKeys: string[] = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(CHARACTER_DATA_PREFIX)) {
+        const characterId = key.substring(CHARACTER_DATA_PREFIX.length);
+
+        // 3. 检查是否为孤立数据（不在元数据列表中）
+        if (!validCharacterIds.has(characterId)) {
+          orphanedKeys.push(key);
+          console.log(`[Cleanup] Found orphaned data: ${key} (ID: ${characterId})`);
+        }
+      }
+    }
+
+    // 4. 安全检查：如果发现异常多的孤立数据，发出警告
+    if (orphanedKeys.length > 5) {
+      console.warn(
+        `[Cleanup] Found ${orphanedKeys.length} orphaned files. ` +
+        `This seems unusual. Proceeding with caution.`
+      );
+    }
+
+    // 5. 删除所有孤立数据
+    orphanedKeys.forEach(key => {
+      console.log(`[Cleanup] Removing orphaned character data: ${key}`);
+      localStorage.removeItem(key);
+    });
+
+    // 6. 报告清理结果
+    if (orphanedKeys.length > 0) {
+      console.log(`[Cleanup] ✅ Successfully cleaned up ${orphanedKeys.length} orphaned character data files`);
+    } else {
+      console.log(`[Cleanup] No orphaned data found. Storage is clean.`);
+    }
+
+    return orphanedKeys.length;
+  } catch (error) {
+    console.error('[Cleanup] ❌ Failed to cleanup orphaned data:', error);
+    // 出错时返回 0，不删除任何数据（安全优先）
+    return 0;
+  }
 }

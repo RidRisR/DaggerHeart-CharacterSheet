@@ -11,7 +11,8 @@ import {
   addCharacterToMetadataList,
   removeCharacterFromMetadataList,
   updateCharacterInMetadataList,
-  MAX_CHARACTERS
+  MAX_CHARACTERS,
+  cleanupOrphanedCharacterData
 } from '@/lib/multi-character-storage'
 import { CharacterMetadata } from '@/lib/sheet-data'
 import { defaultSheetData } from '@/lib/default-sheet-data'
@@ -58,6 +59,12 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
         const list = listData.characters
         console.log(`[CharacterManagement] Found ${list.length} characters`)
         setCharacterList(list)
+
+        // 清理僵尸数据（在列表加载后，角色切换前）
+        const orphanedCount = cleanupOrphanedCharacterData()
+        if (orphanedCount > 0) {
+          console.log(`[CharacterManagement] Cleaned up ${orphanedCount} zombie character files`)
+        }
 
         if (list.length === 0) {
           console.log('[CharacterManagement] No characters found, creating first character')

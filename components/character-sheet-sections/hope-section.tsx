@@ -51,26 +51,16 @@ export function HopeSection() {
   }
 
   return (
-    <div className="py-1 mb-1">
+    <div className="py-1 mb-1 group">
       <div className="flex items-center justify-center gap-2 mb-2">
         <h3 className="text-xs font-bold">希望</h3>
       </div>
 
       <div className="text-[12px] text-center mb-1">花费一点希望使用经历或帮助队友</div>
 
-      <div className="flex justify-center items-center gap-2 mb-2">
-        {/* 减少按钮 - 固定位置，移动端加大 */}
-        <button
-          onClick={handleDecreaseMax}
-          disabled={hopeMax <= 1}
-          className="print:hidden w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center border border-gray-800 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm sm:text-xs font-bold"
-          title="减少希望上限"
-        >
-          −
-        </button>
-
-        {/* 希望格子容器 - 固定宽度为8个格子的宽度，内容居中 */}
-        <div className="flex gap-2 justify-center" style={{ width: 'calc(8 * 1.25rem + 7 * 0.5rem)' }}>
+      <div className="relative flex justify-center items-center mb-2">
+        {/* 希望格子容器 - 绝对居中 */}
+        <div className="flex gap-2 justify-center">
           {Array(Math.max(hopeMax, 6)).fill(0).map((_, i) => {
             const isWithinMax = i < hopeMax
             const isLit = i < currentHope
@@ -99,15 +89,34 @@ export function HopeSection() {
           })}
         </div>
 
-        {/* 增加按钮 - 固定位置，移动端加大 */}
-        <button
-          onClick={handleIncreaseMax}
-          disabled={hopeMax >= 8}
-          className="print:hidden w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center border border-gray-800 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm sm:text-xs font-bold"
-          title="增加希望上限"
-        >
-          +
-        </button>
+        {/* 上限调整控制区 - 绝对定位在右侧，不影响格子居中 */}
+        <div className="absolute right-0 flex items-center gap-0.5 print:hidden">
+          {/* PC端：默认显示三点提示，悬停时隐藏 */}
+          <span className="hidden sm:block opacity-20 group-hover:opacity-0 transition-opacity duration-200 text-gray-600 text-xs pointer-events-none">
+            ⋮
+          </span>
+
+          {/* PC端：悬停时显示按钮，默认隐藏 */}
+          {/* 移动端：始终显示但颜色较淡 */}
+          <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+            <button
+              onClick={handleDecreaseMax}
+              disabled={hopeMax <= 1}
+              className="w-7 h-7 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
+              title="减少希望上限"
+            >
+              −
+            </button>
+            <button
+              onClick={handleIncreaseMax}
+              disabled={hopeMax >= 8}
+              className="w-7 h-7 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
+              title="增加希望上限"
+            >
+              ＋
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="text-center px-2">

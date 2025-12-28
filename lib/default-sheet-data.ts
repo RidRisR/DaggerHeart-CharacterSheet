@@ -30,7 +30,8 @@ export const defaultSheetData: SheetData = {
     gold: Array(20).fill(false),
     experience: ["", "", "", "", ""],
     experienceValues: ["", "", "", "", ""],
-    hope: Array(6).fill(false),
+    hope: 0,      // 默认0点希望
+    hopeMax: 6,   // 默认最大6点
 
     hp: Array(18).fill(false),
     stress: Array(18).fill(false),

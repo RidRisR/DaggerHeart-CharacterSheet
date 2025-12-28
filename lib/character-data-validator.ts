@@ -107,7 +107,29 @@ export function cleanAndNormalizeData(data: any): SheetData {
     gold: Array.isArray(data.gold) ? data.gold : [],
     experience: Array.isArray(data.experience) ? data.experience : [],
     experienceValues: Array.isArray(data.experienceValues) ? data.experienceValues : undefined,
-    hope: Array.isArray(data.hope) ? data.hope : [],
+
+    // Hope 验证和转换（支持 number 和 boolean[] 两种格式）
+    hope: (() => {
+      if (typeof data.hope === 'number') {
+        return Math.max(0, Math.min(data.hope, data.hopeMax || 12))
+      }
+      if (Array.isArray(data.hope)) {
+        const lastLit = data.hope.lastIndexOf(true)
+        return lastLit >= 0 ? lastLit + 1 : 0
+      }
+      return 0
+    })(),
+
+    hopeMax: (() => {
+      if (typeof data.hopeMax === 'number') {
+        return Math.max(1, Math.min(data.hopeMax, 12))
+      }
+      if (Array.isArray(data.hope)) {
+        return data.hope.length || 6
+      }
+      return 6
+    })(),
+
     hp: Array.isArray(data.hp) ? data.hp : undefined,
     stress: Array.isArray(data.stress) ? data.stress : undefined,
     armorBoxes: Array.isArray(data.armorBoxes) ? data.armorBoxes : undefined,

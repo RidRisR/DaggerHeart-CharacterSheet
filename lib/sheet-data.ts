@@ -226,7 +226,8 @@ export interface SheetData {
   gold: boolean[]
   experience: string[]
   experienceValues?: string[] // 经验数值，与 experience 一一对应
-  hope: boolean[]
+  hope: number        // 当前希望值 (0-hopeMax)
+  hopeMax?: number    // 希望最大值，默认6
   hp?: boolean[]
   stress?: boolean[]
   armorBoxes?: boolean[]

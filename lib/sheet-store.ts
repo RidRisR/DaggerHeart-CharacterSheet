@@ -294,26 +294,29 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     updateHope: (index: number) => set((state) => {
-        const current = state.sheetData.hope || [];
-        // 找到最后一个被点亮的 hope 的下标
-        const lastLit = current.lastIndexOf(true);
-        // 如果点击的正好是最后一个被点亮的 hope，则全部熄灭
-        if (index === lastLit && current[index]) {
+        const currentHope = typeof state.sheetData.hope === 'number'
+            ? state.sheetData.hope
+            : 0
+        const hopeMax = state.sheetData.hopeMax || 6
+
+        // 如果点击当前最后一个点亮的位置（index === currentHope - 1），清零
+        if (index === currentHope - 1) {
             return {
                 sheetData: {
                     ...state.sheetData,
-                    hope: current.map(() => false)
+                    hope: 0
                 }
-            };
+            }
         }
-        // 其它情况，点亮前 n 个
-        const newHope = current.map((_, i) => i <= index);
+
+        // 否则设置为点击位置 + 1（因为 index 从 0 开始）
+        const newHope = Math.min(index + 1, hopeMax)
         return {
             sheetData: {
                 ...state.sheetData,
                 hope: newHope
             }
-        };
+        }
     }),
 
     updateArmorBox: (index: number) => set((state) => {

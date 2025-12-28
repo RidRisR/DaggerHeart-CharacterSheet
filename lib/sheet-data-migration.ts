@@ -241,6 +241,42 @@ function migrateWeaponCheckboxes(data: SheetData): SheetData {
 }
 
 /**
+ * Hope 字段从 boolean[] 迁移到 number
+ */
+function migrateHopeToNumber(data: SheetData): SheetData {
+  // 如果 hope 已经是 number，跳过
+  if (typeof data.hope === 'number') {
+    // 确保 hopeMax 存在
+    if (!data.hopeMax) {
+      const migrated = { ...data }
+      migrated.hopeMax = 6
+      console.log('[Migration] Added default hopeMax')
+      return migrated
+    }
+    return data
+  }
+
+  // 如果 hope 是 boolean[]，进行转换
+  if (Array.isArray(data.hope)) {
+    const migrated = { ...data }
+    const hopeArray = data.hope as boolean[]
+    const lastLit = hopeArray.lastIndexOf(true)
+    migrated.hope = lastLit >= 0 ? lastLit + 1 : 0
+    migrated.hopeMax = hopeArray.length || 6
+
+    console.log(`[Migration] Converted hope from boolean[] to number: ${migrated.hope}/${migrated.hopeMax}`)
+    return migrated
+  }
+
+  // 其他情况，设置默认值
+  const migrated = { ...data }
+  migrated.hope = 0
+  migrated.hopeMax = 6
+  console.log('[Migration] Set default hope values')
+  return migrated
+}
+
+/**
  * 清理废弃字段
  * 移除不再使用的字段，保持数据结构清洁
  */
@@ -282,6 +318,9 @@ export function migrateSheetData(
   migrated = migrateArmorTemplate(migrated)
   migrated = migrateAdventureNotes(migrated)
   migrated = migrateWeaponCheckboxes(migrated)
+
+  // Phase 1: Hope 字段迁移
+  migrated = migrateHopeToNumber(migrated)
 
   // 3. 清理废弃字段（最后执行）
   migrated = cleanupDeprecatedFields(migrated)

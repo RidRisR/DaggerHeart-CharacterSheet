@@ -77,9 +77,11 @@ export function exportToSealDice(sheetData: SheetData): string {
   attributes.push(`压力${currentStress}`)
   attributes.push(`压力上限${maxStress}`)
 
-  const currentHope = countTrueValues(sheetData.hope)
-  // 希望上限通常是6，从hope数组长度获取
-  const maxHope = getMaxCapacity(sheetData.hope) || 6
+  // Hope 支持新格式（number）和旧格式（boolean[]）
+  const currentHope = typeof sheetData.hope === 'number'
+    ? sheetData.hope
+    : countTrueValues(sheetData.hope)
+  const maxHope = sheetData.hopeMax || 6
   attributes.push(`希望${currentHope}`)
   attributes.push(`希望上限${maxHope}`)
 

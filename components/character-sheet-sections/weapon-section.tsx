@@ -98,7 +98,7 @@ export function WeaponSection({
           <input
             type="text"
             name={traitField}
-            value={(formData as any)[traitField]}
+            value={(formData as any)[traitField] || ""}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none print-empty-hide text-sm"
           />
@@ -108,7 +108,7 @@ export function WeaponSection({
           <input
             type="text"
             name={damageField}
-            value={(formData as any)[damageField]}
+            value={(formData as any)[damageField] || ""}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none print-empty-hide text-sm"
           />

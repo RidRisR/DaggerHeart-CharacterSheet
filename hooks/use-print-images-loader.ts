@@ -25,18 +25,17 @@ export function useImagesLoader(): UseImagesLoaderReturn {
   }, [])
 
   const registerPageImages = useCallback((pageId: string, imageCount: number) => {
-    console.log(`[useImagesLoader] 注册页面 ${pageId}，图片数量: ${imageCount}`)
     setRegisteredPages(prev => {
       // 避免不必要的更新
       if (prev[pageId] === imageCount) {
         return prev
       }
+      console.log(`[useImagesLoader] 注册页面 ${pageId}，图片数量: ${imageCount}`)
       return { ...prev, [pageId]: imageCount }
     })
-    
+
     setPageImagesLoaded(prev => {
       const shouldBeLoaded = imageCount === 0
-      console.log(`[useImagesLoader] 设置页面 ${pageId} 加载状态: ${shouldBeLoaded}`)
       // 避免不必要的更新
       if (prev[pageId] === shouldBeLoaded) {
         return prev
@@ -79,27 +78,21 @@ export function useImagesLoader(): UseImagesLoaderReturn {
   const allImagesLoaded = useMemo(() => {
     // 如果还没有初始化，返回 false 等待组件注册
     if (!isInitialized) {
-      console.log('[useImagesLoader] 还未初始化，等待中...')
       return false
     }
-    
+
     const registeredPageCount = Object.keys(registeredPages).length
-    console.log(`[useImagesLoader] 已注册页面数量: ${registeredPageCount}`)
-    
+
     // 如果没有注册任何页面，认为所有图片都已加载完成
     if (registeredPageCount === 0) {
-      console.log('[useImagesLoader] 没有注册页面，认为加载完成')
       return true
     }
-    
+
     // 否则检查所有注册的页面是否都已加载完成
     const allLoaded = Object.keys(registeredPages).every(pageId => {
-      const loaded = pageImagesLoaded[pageId]
-      console.log(`[useImagesLoader] 页面 ${pageId} 加载状态: ${loaded}`)
-      return loaded
+      return pageImagesLoaded[pageId]
     })
-    
-    console.log(`[useImagesLoader] 所有图片加载完成: ${allLoaded}`)
+
     return allLoaded
   }, [registeredPages, pageImagesLoaded, isInitialized])
 

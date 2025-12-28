@@ -160,6 +160,7 @@ export function HitPointsSection() {
               pattern="[0-9]*"
               value={formData.hpMax ?? ""} // 使用空值合并运算符
               onChange={(e) => handleMaxChange("hp", e.target.value)}
+              onFocus={(e) => e.target.select()}
               placeholder="6"
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
@@ -177,6 +178,7 @@ export function HitPointsSection() {
               pattern="[0-9]*"
               value={formData.stressMax ?? ""} // 使用空值合并运算符
               onChange={(e) => handleMaxChange("stress", e.target.value)}
+              onFocus={(e) => e.target.select()}
               placeholder="6"
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />

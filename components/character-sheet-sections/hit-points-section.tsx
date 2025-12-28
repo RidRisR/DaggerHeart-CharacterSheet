@@ -45,6 +45,24 @@ export function HitPointsSection() {
     })
   }
 
+  // 增加上限
+  const handleIncreaseMax = (field: "hp" | "stress") => {
+    const maxField = `${field}Max` as "hpMax" | "stressMax"
+    const currentMax = formData[maxField] || 6
+    if (currentMax < 18) {
+      handleMaxChange(field, String(currentMax + 1))
+    }
+  }
+
+  // 减少上限
+  const handleDecreaseMax = (field: "hp" | "stress") => {
+    const maxField = `${field}Max` as "hpMax" | "stressMax"
+    const currentMax = formData[maxField] || 6
+    if (currentMax > 1) {
+      handleMaxChange(field, String(currentMax - 1))
+    }
+  }
+
   const renderBoxes = (field: "hp" | "stress", max: number, total: number) => {
     const fieldArray = Array.isArray(formData[field]) ? (formData[field] as boolean[]) : Array(total).fill(false)
 
@@ -92,7 +110,7 @@ export function HitPointsSection() {
     )
   }
   return (
-    <div className="py-1 mb-1">
+    <div className="py-1 mb-1 print:mt-1.5">
       <h3 className="text-xs font-bold text-center mb-2.5">生命值与压力</h3>
 
       <div className="flex justify-between items-center gap-1">
@@ -143,7 +161,7 @@ export function HitPointsSection() {
       </div>
 
       <div className="mt-1 space-y-1">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between group">
           <span className="font-bold mr-2 text-xs">
             HP
             {formData.cards?.[0]?.professionSpecial?.["起始生命"] && (
@@ -153,6 +171,26 @@ export function HitPointsSection() {
             )}
           </span>
           <div className="flex items-center">
+            {/* 渐进式显示的上限调整按钮 */}
+            <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 print:hidden">
+              <button
+                onClick={() => handleDecreaseMax("hp")}
+                disabled={(formData.hpMax || 6) <= 1}
+                className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
+                title="减少HP上限"
+              >
+                −
+              </button>
+              <button
+                onClick={() => handleIncreaseMax("hp")}
+                disabled={(formData.hpMax || 6) >= 18}
+                className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
+                title="增加HP上限"
+              >
+                ＋
+              </button>
+            </div>
+
             <span className="text-[9px] mr-1 print:hidden">最大值:</span> {/* 打印时隐藏 */}
             <input
               type="text"
@@ -168,9 +206,29 @@ export function HitPointsSection() {
         </div>
         {renderBoxes("hp", Number(formData.hpMax || formData.cards?.[0]?.professionSpecial?.["起始生命"] || 6), 18)}
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between group">
           <span className="font-bold mr-2 text-xs">压力</span>
           <div className="flex items-center">
+            {/* 渐进式显示的上限调整按钮 */}
+            <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 print:hidden">
+              <button
+                onClick={() => handleDecreaseMax("stress")}
+                disabled={(formData.stressMax || 6) <= 1}
+                className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
+                title="减少压力上限"
+              >
+                −
+              </button>
+              <button
+                onClick={() => handleIncreaseMax("stress")}
+                disabled={(formData.stressMax || 6) >= 18}
+                className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
+                title="增加压力上限"
+              >
+                ＋
+              </button>
+            </div>
+
             <span className="text-[9px] mr-1 print:hidden">最大值:</span> {/* 打印时隐藏 */}
             <input
               type="text"

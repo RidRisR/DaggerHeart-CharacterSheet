@@ -451,6 +451,11 @@ export function cleanupOrphanedCharacterData(): number {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith(CHARACTER_DATA_PREFIX)) {
+        // 排除系统键（dh_character_list 本身）
+        if (key === CHARACTER_LIST_KEY) {
+          continue;
+        }
+
         const characterId = key.substring(CHARACTER_DATA_PREFIX.length);
 
         // 3. 检查是否为孤立数据（不在元数据列表中）

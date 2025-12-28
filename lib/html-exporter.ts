@@ -260,30 +260,27 @@ function addCustomCheckboxInteraction(html: string): string {
  */
 function addHopePointInteraction(html: string): string {
   let transformed = html;
+  let hopeIndex = 0;
 
-  // 匹配希望点容器
-  const hopePatterns = [
-    /<div([^>]*?key="hope-\d+"[^>]*?className="relative"[^>]*?)>/g,
-    /<div([^>]*?className="relative"[^>]*?key="hope-\d+"[^>]*?)>/g
-  ];
-
-  hopePatterns.forEach(pattern => {
-    transformed = transformed.replace(pattern, (match, attributes) => {
-      const divId = `hope_${Math.random().toString(36).substr(2, 9)}`;
-      const cleanedAttributes = attributes.replace(/onClick[^=]*?(?:handleCheckboxChange\([^)]*\)[^"]*?"|[^"]*?")/g, '');
-      return `<div id="${divId}" ${cleanedAttributes} onclick="toggleHopePoint('${divId}')">`;
-    });
-  });
-
-  // 通用希望点处理
+  // 匹配希望格子容器模式：
+  // <div class="relative" ...><div class="w-5 h-5 border-2 transform rotate-45 ...">
+  // 使用更宽松的匹配来适应不同的class顺序
   transformed = transformed.replace(
-    /<div([^>]*?)>\s*<div[^>]*?w-5[^>]*?h-5[^>]*?border-2[^>]*?border-gray-800[^>]*?transform[^>]*?rotate-45[^>]*?>/g,
-    (match, attributes) => {
-      if (!attributes.includes('onclick') && !attributes.includes('id=')) {
-        const divId = `hope_${Math.random().toString(36).substr(2, 9)}`;
-        const cleanedAttributes = attributes.replace(/onClick[^=]*="[^"]*"/g, '');
-        return match.replace(`<div${attributes}>`, `<div id="${divId}" ${cleanedAttributes} onclick="toggleHopePoint('${divId}')">`);
+    /<div([^>]*?class="[^"]*relative[^"]*"[^>]*)>\s*<div([^>]*?class="[^"]*w-5[^"]*h-5[^"]*border-2[^"]*transform[^"]*rotate-45[^"]*"[^>]*)>/g,
+    (match, containerAttrs, diamondAttrs) => {
+      const hopeDivId = `hope_${Math.random().toString(36).substr(2, 9)}`;
+      const currentIndex = hopeIndex++;
+
+      // 只有非虚线框才可点击（border-gray-800表示可点击，border-dashed表示虚线框）
+      const isClickable = diamondAttrs.includes('border-gray-800') && !diamondAttrs.includes('border-dashed');
+
+      if (isClickable) {
+        // 清理可能存在的onClick属性
+        const cleanedContainerAttrs = containerAttrs.replace(/onClick[^=]*="[^"]*"/g, '');
+        return `<div${cleanedContainerAttrs} id="${hopeDivId}" data-hope-index="${currentIndex}" onclick="toggleHopePoint(${currentIndex})"><div${diamondAttrs}>`;
       }
+
+      // 虚线框不添加交互
       return match;
     }
   );
@@ -1157,32 +1154,69 @@ function generateCheckboxScript(): string {
       setTimeout(() => { element.style.transform = 'scale(1)'; }, 100);
     }
 
-    function toggleHopePoint(elementId) {
-      const container = document.getElementById(elementId);
-      if (!container) return;
+    function toggleHopePoint(clickedIndex) {
+      // 获取所有希望格子
+      const allHopeBoxes = document.querySelectorAll('[data-hope-index]');
+      if (allHopeBoxes.length === 0) return;
 
-      const innerDiamond = container.querySelector('.absolute');
-
-      if (innerDiamond) {
-        innerDiamond.remove();
-      } else {
-        const outerDiamond = container.querySelector('.w-5');
-        if (outerDiamond) {
-          const innerContainer = document.createElement('div');
-          innerContainer.className = 'absolute inset-0 flex items-center justify-center';
-
-          const innerDiamond = document.createElement('div');
-          innerDiamond.className = 'w-3 h-3 bg-gray-800 transform rotate-45';
-
-          innerContainer.appendChild(innerDiamond);
-          container.appendChild(innerContainer);
+      // 计算当前希望值（统计已点亮的格子数 - 连续点亮）
+      let currentHope = 0;
+      for (let i = 0; i < allHopeBoxes.length; i++) {
+        const box = allHopeBoxes[i];
+        if (box.querySelector('.absolute')) {
+          currentHope = i + 1;
+        } else {
+          break; // 遇到第一个未点亮的就停止
         }
       }
 
+      // 如果点击的是最后一个已点亮的格子，清零
+      if (clickedIndex === currentHope - 1) {
+        allHopeBoxes.forEach(box => {
+          const innerDiamond = box.querySelector('.absolute');
+          if (innerDiamond) innerDiamond.remove();
+        });
+
+        // 视觉反馈
+        const clickedBox = allHopeBoxes[clickedIndex];
+        if (clickedBox) {
+          clickedBox.style.transition = 'all 0.1s ease';
+          clickedBox.style.transform = 'scale(0.95)';
+          setTimeout(() => { clickedBox.style.transform = 'scale(1)'; }, 100);
+        }
+        return;
+      }
+
+      // 否则点亮到点击位置（连续点亮）
+      const newHope = clickedIndex + 1;
+      allHopeBoxes.forEach((box, index) => {
+        const innerDiamond = box.querySelector('.absolute');
+
+        if (index < newHope) {
+          // 应该点亮
+          if (!innerDiamond) {
+            const innerContainer = document.createElement('div');
+            innerContainer.className = 'absolute inset-0 flex items-center justify-center pointer-events-none';
+            const diamond = document.createElement('div');
+            diamond.className = 'w-3 h-3 bg-gray-800 transform rotate-45';
+            innerContainer.appendChild(diamond);
+            box.appendChild(innerContainer);
+          }
+        } else {
+          // 应该熄灭
+          if (innerDiamond) {
+            innerDiamond.remove();
+          }
+        }
+      });
+
       // 视觉反馈
-      container.style.transition = 'all 0.1s ease';
-      container.style.transform = 'scale(0.95)';
-      setTimeout(() => { container.style.transform = 'scale(1)'; }, 100);
+      const clickedBox = allHopeBoxes[clickedIndex];
+      if (clickedBox) {
+        clickedBox.style.transition = 'all 0.1s ease';
+        clickedBox.style.transform = 'scale(0.95)';
+        setTimeout(() => { clickedBox.style.transform = 'scale(1)'; }, 100);
+      }
     }
   `
 }

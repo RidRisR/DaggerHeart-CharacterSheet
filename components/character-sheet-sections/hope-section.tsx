@@ -59,11 +59,11 @@ export function HopeSection() {
       <div className="text-[12px] text-center mb-1">花费一点希望使用经历或帮助队友</div>
 
       <div className="flex justify-center items-center gap-2 mb-2">
-        {/* 减少按钮 - 固定位置 */}
+        {/* 减少按钮 - 固定位置，移动端加大 */}
         <button
           onClick={handleDecreaseMax}
           disabled={hopeMax <= 1}
-          className="print:hidden w-5 h-5 flex items-center justify-center border border-gray-800 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold"
+          className="print:hidden w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center border border-gray-800 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm sm:text-xs font-bold"
           title="减少希望上限"
         >
           −
@@ -71,27 +71,39 @@ export function HopeSection() {
 
         {/* 希望格子容器 - 固定宽度为8个格子的宽度，内容居中 */}
         <div className="flex gap-2 justify-center" style={{ width: 'calc(8 * 1.25rem + 7 * 0.5rem)' }}>
-          {Array(hopeMax).fill(0).map((_, i) => (
-            <div
-              key={`hope-${i}`}
-              className="relative"
-              onClick={() => handleCheckboxChange(i)}
-            >
-              <div className="w-5 h-5 border-2 border-gray-800 transform rotate-45 cursor-pointer"></div>
-              {i < currentHope && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-3 h-3 bg-gray-800 transform rotate-45"></div>
-                </div>
-              )}
-            </div>
-          ))}
+          {Array(Math.max(hopeMax, 6)).fill(0).map((_, i) => {
+            const isWithinMax = i < hopeMax
+            const isLit = i < currentHope
+            const isDashed = !isWithinMax && i < 6 // 超出上限但在默认6个以内
+
+            return (
+              <div
+                key={`hope-${i}`}
+                className="relative"
+                onClick={() => isWithinMax && handleCheckboxChange(i)}
+              >
+                <div
+                  className={`w-5 h-5 border-2 transform rotate-45 ${
+                    isDashed
+                      ? 'border-dashed border-gray-400'
+                      : 'border-gray-800 cursor-pointer'
+                  }`}
+                ></div>
+                {isLit && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-3 h-3 bg-gray-800 transform rotate-45"></div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
 
-        {/* 增加按钮 - 固定位置 */}
+        {/* 增加按钮 - 固定位置，移动端加大 */}
         <button
           onClick={handleIncreaseMax}
           disabled={hopeMax >= 8}
-          className="print:hidden w-5 h-5 flex items-center justify-center border border-gray-800 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold"
+          className="print:hidden w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center border border-gray-800 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm sm:text-xs font-bold"
           title="增加希望上限"
         >
           +

@@ -169,7 +169,7 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
         >
             {/* 标题区 */}
             <div className="flex items-start justify-between gap-2 mb-1.5">
-                <h3 className="font-bold text-xl text-gray-800 leading-tight flex-1 min-w-0" title={displayName}>
+                <h3 className="font-bold text-xl text-gray-900 leading-tight flex-1 min-w-0" title={displayName}>
                     {displayName}
                 </h3>
 

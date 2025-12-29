@@ -14,9 +14,9 @@ interface CardMarkdownProps {
  * 统一的卡牌 Markdown 渲染组件
  *
  * 颜色方案：
- * - **粗体** → text-amber-700（琥珀色 #B45309）
- * - *斜体* → text-sky-700（天蓝色 #0369A1）
- * - ***粗斜体*** → text-red-900（深红色 #7F1D1D）
+ * - **粗体** → text-amber-800（琥珀色加粗 #92400E）
+ * - *直角引号* → 「text-amber-800」（琥珀色，使用直角引号包裹 #92400E）
+ * - ***粗体*** → text-amber-800（琥珀色加粗 #92400E）
  */
 export function CardMarkdown({ children, className = "" }: CardMarkdownProps) {
     return (
@@ -35,11 +35,11 @@ export function CardMarkdown({ children, className = "" }: CardMarkdownProps) {
                     );
 
                     if (hasEmElement) {
-                        // *** 情况（虽然不会渲染，但保持一致）
-                        return <strong className="font-bold italic text-red-900">{children}</strong>;
+                        // *** 情况：琥珀色加粗
+                        return <strong className="font-bold text-gray-800">{children}</strong>;
                     }
-                    // ** 情况：琥珀色700
-                    return <strong className="font-bold text-amber-700">{children}</strong>;
+                    // ** 情况：琥珀色加粗
+                    return <strong className="font-bold text-amber-800">{children}</strong>;
                 },
                 em: ({ children }) => {
                     const childArray = React.Children.toArray(children);
@@ -48,7 +48,7 @@ export function CardMarkdown({ children, className = "" }: CardMarkdownProps) {
                     );
 
                     if (hasStrongElement) {
-                        // *** 的情况：em 包含 strong，深红900
+                        // *** 的情况：em 包含 strong，琥珀色加粗
                         const extractText = (child: any): string => {
                             if (typeof child === 'string') return child;
                             if (React.isValidElement(child) && (child.props as any).children) {
@@ -57,10 +57,10 @@ export function CardMarkdown({ children, className = "" }: CardMarkdownProps) {
                             return '';
                         };
                         const textContent = childArray.map(extractText).join('');
-                        return <span className="italic font-bold text-red-900">{textContent}</span>;
+                        return <span className="font-bold text-gray-800">{textContent}</span>;
                     }
-                    // * 情况：天蓝色
-                    return <em className="italic text-sky-700">{children}</em>;
+                    // * 情况：琥珀色直角引号
+                    return <span className="text-amber-800">「{children}」</span>;
                 },
                 }}
                 remarkPlugins={[remarkGfm, remarkBreaks]}

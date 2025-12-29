@@ -305,11 +305,11 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
                 {card.type === CardType.Ancestry ? (
                     /* 种族卡特殊处理：显示"种族"和具体种族名称两个标签 */
                     <div className="mb-3 pb-3 border-b border-dashed border-gray-200 flex flex-row flex-wrap items-center gap-2 text-xs">
-                        <div className="rounded-full bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">
+                        <div className="rounded-full bg-white border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700">
                             {getDisplayTypeName(card)}
                         </div>
                         {filteredItems.map((item, index) => (
-                            <div key={index} className="rounded-full bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">
+                            <div key={index} className="rounded-full bg-white border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700">
                                 {item}
                             </div>
                         ))}
@@ -318,7 +318,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
                     filteredItems.length > 0 && (
                         <div className="mb-3 pb-3 border-b border-dashed border-gray-200 flex flex-row flex-wrap items-center gap-2 text-xs">
                             {filteredItems.map((item, index) => (
-                                <div key={index} className="rounded-full bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">
+                                <div key={index} className="rounded-full bg-white border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700">
                                     {item}
                                 </div>
                             ))}

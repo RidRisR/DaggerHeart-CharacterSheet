@@ -205,6 +205,38 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
     const displayItem3 = card.cardSelectDisplay?.item3 || "";
     const displayItem4 = card.cardSelectDisplay?.item4 || "";
 
+    // 根据卡牌类型过滤需要显示的标签信息（去重逻辑）
+    const getFilteredDisplayItems = (): string[] => {
+        const items = [displayItem1, displayItem2, displayItem3, displayItem4].filter(Boolean);
+
+        switch (card.type) {
+            case CardType.Domain:
+                // 领域卡：保留领域名、属性和回想，移除等级（item4，因为已经在徽章显示）
+                return [displayItem1, displayItem2, displayItem3].filter(Boolean);
+
+            case CardType.Profession:
+                // 职业卡：保留所有（两个领域）
+                return items;
+
+            case CardType.Subclass:
+                // 子职业卡：只保留主职和等级，移除施法属性
+                return [displayItem1, displayItem2].filter(Boolean);
+
+            case CardType.Ancestry:
+                // 种族卡：保留所有（种族名）
+                return items;
+
+            case CardType.Community:
+                // 社群卡：保留所有（特性）
+                return items;
+
+            default:
+                return items;
+        }
+    };
+
+    const filteredItems = getFilteredDisplayItems();
+
     return (
         <div
             ref={cardRef}
@@ -250,27 +282,40 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
                 {/* 轻度遮罩 + 文字阴影 */}
                 <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/25 to-transparent pointer-events-none" />
                 <div className="absolute inset-x-0 bottom-0 flex items-end p-4 pointer-events-none">
-                    <div>
+                    <div className="w-full">
                         <h3 className="text-lg font-bold text-white" style={{ textShadow: '0 2px 10px rgba(0,0,0,1)' }}>{displayName}</h3>
-                        <span className="text-xs font-medium text-gray-200" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>{getDisplayTypeName(card)}</span>
+                        {/* 种族卡特殊处理：只显示具体种族，不显示"种族"类型 */}
+                        {card.type === CardType.Ancestry ? (
+                            <div className="flex items-center gap-1.5 flex-wrap tracking-tight">
+                                {filteredItems.map((item, index) => (
+                                    <React.Fragment key={index}>
+                                        {index > 0 && <span className="text-gray-300 text-xs" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>•</span>}
+                                        <span className="text-xs font-medium text-gray-200" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>{item}</span>
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        ) : (
+                            <span className="text-xs font-medium text-gray-200" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>{getDisplayTypeName(card)}</span>
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Content Container */}
             <div className="flex flex-1 flex-col p-4">
-                {/* Display Items */}
-                {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
-                    <div className="mb-3 flex flex-row flex-wrap items-center gap-2 border-b border-dashed border-gray-200 pb-3 text-xs">
-                        {displayItem1 && <div className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800">{displayItem1}</div>}
-                        {displayItem2 && <div className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800">{displayItem2}</div>}
-                        {displayItem3 && <div className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">{displayItem3}</div>}
-                        {displayItem4 && <div className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-rose-800">{displayItem4}</div>}
+                {/* Display Items - 使用去重后的标签（胶囊样式）- 种族卡不显示 */}
+                {card.type !== CardType.Ancestry && filteredItems.length > 0 && (
+                    <div className="mb-3 pb-3 border-b border-dashed border-gray-200 flex flex-row flex-wrap items-center gap-2 text-xs">
+                        {filteredItems.map((item, index) => (
+                            <div key={index} className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800">
+                                {item}
+                            </div>
+                        ))}
                     </div>
                 )}
 
                 {/* Description */}
-                <div className="flex-1 text-sm text-gray-600 overflow-hidden">
+                <div className="flex-1 text-sm text-gray-700 leading-relaxed text-left overflow-hidden">
                     <div>
                         <ReactMarkdown
                             skipHtml
@@ -279,6 +324,8 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
                                 ul: ({ children }) => <ul className="mb-2 list-inside list-disc">{children}</ul>,
                                 ol: ({ children }) => <ol className="mb-2 list-inside list-decimal">{children}</ol>,
                                 li: ({ children }) => <li className="mb-1">{children}</li>,
+                                strong: ({ children }) => <strong className="font-bold text-amber-900">{children}</strong>,
+                                em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
                             }}
                             remarkPlugins={[remarkGfm, remarkBreaks]}
                         >

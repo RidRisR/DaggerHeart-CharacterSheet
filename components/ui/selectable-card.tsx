@@ -208,7 +208,7 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
                         ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
                         ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
                         li: ({ children }) => <li className="mb-1 last:mb-0">{children}</li>,
-                        strong: ({ children }) => <strong className="font-bold text-amber-700">{children}</strong>,
+                        strong: ({ children }) => <strong className="font-bold text-amber-800">{children}</strong>,
                         em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
                     }}
                     remarkPlugins={[remarkGfm, remarkBreaks]}

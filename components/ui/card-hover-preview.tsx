@@ -4,12 +4,10 @@ import type { StandardCard } from "@/card/card-types"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { getVariantRealType, isVariantCard } from "@/card/card-types"
 import Image from "next/image"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
-import remarkBreaks from "remark-breaks"
 import React, { useState } from "react"
 import { getCardImageUrl } from "@/lib/utils"
 import { SelectableCard } from "@/components/ui/selectable-card"
+import { CardMarkdown } from "@/components/ui/card-markdown"
 
 interface CardHoverPreviewProps {
     card: StandardCard
@@ -110,18 +108,8 @@ export function CardHoverPreview({ card, isTextMode = false }: CardHoverPreviewP
             {/* Right Column: Description + Hint */}
             <div className="flex-grow p-3 min-w-0 flex flex-col bg-gray-100 rounded-r-lg">
                 {card.description && (
-                    <div className="text-sm text-gray-700 flex-grow overflow-y-auto pr-1 prose prose-sm max-w-none">
-                        <ReactMarkdown
-                            remarkPlugins={[remarkGfm, remarkBreaks]}
-                            components={{
-                                p: ({ children }) => <p className="first:mt-0 mb-0 mt-2">{children}</p>,
-                                ul: ({ children }) => <ul className="list-disc pl-4 mb-0">{children}</ul>,
-                                ol: ({ children }) => <ol className="list-decimal pl-4 mb-0">{children}</ol>,
-                                li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
-                            }}
-                        >
-                            {card.description}
-                        </ReactMarkdown>
+                    <div className="text-sm text-gray-700 flex-grow overflow-y-auto pr-1">
+                        <CardMarkdown>{card.description}</CardMarkdown>
                     </div>
                 )}
                 {card.hint && card.type !== "profession" && (

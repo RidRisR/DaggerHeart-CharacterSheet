@@ -6,9 +6,7 @@ import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { getBatchName } from "@/card"
 import { getStandardCardById } from "@/card"
 import React, { useState, useEffect, useRef } from "react"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
-import remarkBreaks from "remark-breaks"
+import { CardMarkdown } from "@/components/ui/card-markdown"
 
 // Helper function to get display type name, moved outside of the component
 const getDisplayTypeName = (card: StandardCard) => {
@@ -202,19 +200,7 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
 
             {/* 描述区 */}
             <div className="text-sm text-gray-700 leading-loose text-left flex-1 overflow-hidden pt-3">
-                <ReactMarkdown
-                    components={{
-                        p: ({ children }) => <p className="first:mt-0 mb-2 last:mb-0">{children}</p>,
-                        ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
-                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
-                        li: ({ children }) => <li className="mb-1 last:mb-0">{children}</li>,
-                        strong: ({ children }) => <strong className="font-bold text-amber-800">{children}</strong>,
-                        em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
-                    }}
-                    remarkPlugins={[remarkGfm, remarkBreaks]}
-                >
-                    {displayDescription}
-                </ReactMarkdown>
+                <CardMarkdown>{displayDescription}</CardMarkdown>
             </div>
 
             {/* 底部区域（hint + 来源信息） */}

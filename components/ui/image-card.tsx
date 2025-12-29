@@ -7,11 +7,9 @@ import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { getStandardCardById } from "@/card"
 import React, { useState, useEffect, useRef } from "react"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
-import remarkBreaks from "remark-breaks"
 import Image from "next/image"
 import { getCardImageUrl } from "@/lib/utils"
+import { CardMarkdown } from "@/components/ui/card-markdown"
 
 // Helper function to get display type name, moved outside of the component
 const getDisplayTypeName = (card: StandardCard) => {
@@ -284,7 +282,7 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
                 <div className="absolute inset-x-0 bottom-0 flex items-end p-4 pointer-events-none">
                     <div className="w-full">
                         <h3 className="text-lg font-bold text-white" style={{ textShadow: '0 2px 10px rgba(0,0,0,1)' }}>{displayName}</h3>
-                        {/* 种族卡特殊处理：只显示具体种族，不显示"种族"类型 */}
+                        {/* 种族卡特殊处理：副标题只显示具体种族名称 */}
                         {card.type === CardType.Ancestry ? (
                             <div className="flex items-center gap-1.5 flex-wrap tracking-tight">
                                 {filteredItems.map((item, index) => (
@@ -303,35 +301,34 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
 
             {/* Content Container */}
             <div className="flex flex-1 flex-col p-4">
-                {/* Display Items - 使用去重后的标签（胶囊样式）- 种族卡不显示 */}
-                {card.type !== CardType.Ancestry && filteredItems.length > 0 && (
+                {/* Display Items - 使用去重后的标签（胶囊样式） */}
+                {card.type === CardType.Ancestry ? (
+                    /* 种族卡特殊处理：显示"种族"和具体种族名称两个标签 */
                     <div className="mb-3 pb-3 border-b border-dashed border-gray-200 flex flex-row flex-wrap items-center gap-2 text-xs">
+                        <div className="rounded-full bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">
+                            {getDisplayTypeName(card)}
+                        </div>
                         {filteredItems.map((item, index) => (
-                            <div key={index} className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800">
+                            <div key={index} className="rounded-full bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">
                                 {item}
                             </div>
                         ))}
                     </div>
+                ) : (
+                    filteredItems.length > 0 && (
+                        <div className="mb-3 pb-3 border-b border-dashed border-gray-200 flex flex-row flex-wrap items-center gap-2 text-xs">
+                            {filteredItems.map((item, index) => (
+                                <div key={index} className="rounded-full bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">
+                                    {item}
+                                </div>
+                            ))}
+                            </div>
+                        )
                 )}
 
                 {/* Description */}
                 <div className="flex-1 text-sm text-gray-700 leading-relaxed text-left overflow-hidden">
-                    <div>
-                        <ReactMarkdown
-                            skipHtml
-                            components={{
-                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                ul: ({ children }) => <ul className="mb-2 list-inside list-disc">{children}</ul>,
-                                ol: ({ children }) => <ol className="mb-2 list-inside list-decimal">{children}</ol>,
-                                li: ({ children }) => <li className="mb-1">{children}</li>,
-                                strong: ({ children }) => <strong className="font-bold text-amber-900">{children}</strong>,
-                                em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
-                            }}
-                            remarkPlugins={[remarkGfm, remarkBreaks]}
-                        >
-                            {displayDescription}
-                        </ReactMarkdown>
-                    </div>
+                    <CardMarkdown>{displayDescription}</CardMarkdown>
                 </div>
 
                 {/* Footer */}

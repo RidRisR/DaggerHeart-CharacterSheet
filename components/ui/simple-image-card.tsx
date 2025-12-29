@@ -97,10 +97,10 @@ export function SimpleImageCard({ card, onClick, isSelected, priority = false }:
             {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
                 <div className="p-3">
                     <div className="flex flex-row flex-wrap items-center gap-2 text-xs">
-                        {displayItem1 && <div className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800">{displayItem1}</div>}
-                        {displayItem2 && <div className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800">{displayItem2}</div>}
-                        {displayItem3 && <div className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">{displayItem3}</div>}
-                        {displayItem4 && <div className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-rose-800">{displayItem4}</div>}
+                        {displayItem1 && <div className="rounded-full bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">{displayItem1}</div>}
+                        {displayItem2 && <div className="rounded-full bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">{displayItem2}</div>}
+                        {displayItem3 && <div className="rounded-full bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">{displayItem3}</div>}
+                        {displayItem4 && <div className="rounded-full bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">{displayItem4}</div>}
                     </div>
                 </div>
             )}

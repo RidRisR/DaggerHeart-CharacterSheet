@@ -1,10 +1,9 @@
 "use client"
 
-import { CardType, StandardCard, ExtendedStandardCard } from "@/card/card-types"
-import { CardSource } from "@/card/card-types"
-import { getBatchName } from "@/card"
+import { CardType, StandardCard, ExtendedStandardCard, CardSource } from "@/card/card-types"
 import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
+import { getBatchName } from "@/card"
 import { getStandardCardById } from "@/card"
 import React, { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
@@ -22,59 +21,65 @@ const getDisplayTypeName = (card: StandardCard) => {
     return getCardTypeName(card.type);
 };
 
-// Helper function to get card source display name (optimized)
+// Helper function to get card type border color hex value
+const getCardTypeBorderColorHex = (cardType: string): string => {
+    if (cardType.includes("domain")) return "#f87171"; // red-400
+    if (cardType.includes("profession")) return "#60a5fa"; // blue-400
+    if (cardType.includes("ancestry")) return "#9ca3af"; // gray-400
+    if (cardType.includes("subclass")) return "#c084fc"; // purple-400
+    if (cardType.includes("community")) return "#2dd4bf"; // teal-400
+    return "#34d399"; // green-400, variant default
+};
+
+// Helper function to get card source display name
 const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): string => {
-    // 如枟已经有来源信息，直接使用
-    if (hasSourceInfo(card)) {
-        if (card.source === CardSource.BUILTIN) {
+    // 检查是否有来源信息
+    const extCard = card as ExtendedStandardCard;
+    if (extCard.source !== undefined) {
+        if (extCard.source === CardSource.BUILTIN) {
             return "内置卡包";
         }
-        if (card.source === CardSource.CUSTOM) {
-            // 如果已经有 batchName，直接使用
-            if (card.batchName) {
-                return card.batchName;
+        if (extCard.source === CardSource.CUSTOM) {
+            // 优先使用 batchName
+            if (extCard.batchName) {
+                return extCard.batchName;
             }
-            // 如果没有 batchName 但有 batchId，通过 getBatchName 获取名称
-            if (card.batchId) {
-                const batchName = getBatchName(card.batchId);
+            // 其次使用 batchId 获取名称
+            if (extCard.batchId) {
+                const batchName = getBatchName(extCard.batchId);
                 if (batchName) {
                     return batchName;
                 }
-                return card.batchId;
+                return extCard.batchId;
             }
             return "自定义卡包";
         }
         return "内置卡包";
     }
 
-    // 使用优化的同步查找方法
+    // 如果没有来源信息，尝试通过ID查找
     const matchedCard = getStandardCardById(card.id);
-    if (matchedCard && hasSourceInfo(matchedCard)) {
-        if (matchedCard.source === CardSource.BUILTIN) {
+    if (matchedCard && (matchedCard as ExtendedStandardCard).source !== undefined) {
+        const matched = matchedCard as ExtendedStandardCard;
+        if (matched.source === CardSource.BUILTIN) {
             return "内置卡包";
         }
-        if (matchedCard.source === CardSource.CUSTOM) {
-            return matchedCard.batchName || matchedCard.batchId || "自定义卡包";
+        if (matched.source === CardSource.CUSTOM) {
+            return matched.batchName || matched.batchId || "自定义卡包";
         }
     }
 
-    // 如果找不到匹配的卡牌
     return "未知来源";
-};
-
-// 辅助函数：检查卡牌是否有来源信息
-const hasSourceInfo = (card: any): card is ExtendedStandardCard => {
-    return 'source' in card && card.source !== undefined;
 };
 
 interface SelectableCardProps {
     card: ExtendedStandardCard | StandardCard
-    onClick: (cardId: string) => void; // Added onClick prop
-    isSelected: boolean; // Added isSelected prop
-    showSource?: boolean; // 新增：是否显示来源，默认为 true
+    onClick: (cardId: string) => void;
+    isSelected: boolean;
+    showSource?: boolean; // 是否显示来源，默认为 true
 }
 
-export function SelectableCard({ card, onClick, isSelected, showSource = true }: SelectableCardProps) { // Added isSelected to props
+export function SelectableCard({ card, onClick, isSelected, showSource = true }: SelectableCardProps) {
     const [_isHovered, setIsHovered] = useState(false)
     const [_isAltPressed, setIsAltPressed] = useState(false)
     const [cardSource, setCardSource] = useState<string>("加载中...")
@@ -108,7 +113,7 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
 
         const source = getCardSourceDisplayName(card);
         setCardSource(source);
-    }, [card.id, showSource]);
+    }, [card.id, showSource, card])
 
     if (!card) {
         console.warn("[SelectableCard] Card prop is null or undefined.")
@@ -126,11 +131,37 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
     const displayItem3 = card.cardSelectDisplay?.item3 || "";
     const displayItem4 = card.cardSelectDisplay?.item4 || "";
 
+    // 构建属性徽章数组（只包含非空项）
+    const badges = [displayItem1, displayItem2, displayItem3, displayItem4].filter(Boolean);
+
+    // 根据卡牌类型提取右上角关键信息（视觉锚点）
+    let rightAnchor: string | null = null;
+    switch (card.type) {
+        case CardType.Domain:
+            // 领域卡：强调等级
+            rightAnchor = badges.find(b => b.startsWith('LV.')) || null;
+            break;
+        case CardType.Subclass:
+            // 子职业卡：强调主职业
+            rightAnchor = card.cardSelectDisplay.item1 || null;
+            break;
+        case CardType.Ancestry:
+            // 种族卡：强调种族名称
+            rightAnchor = card.cardSelectDisplay.item1 || null;
+            break;
+        default:
+            // 职业卡、社群卡：不提取锚点，显示类型标签
+            rightAnchor = null;
+    }
+
+    // 过滤掉已提取的锚点信息，避免重复显示
+    const otherBadges = rightAnchor ? badges.filter(b => b !== rightAnchor) : badges;
+
     return (
         <div
             ref={cardRef}
             key={cardId}
-            className={`border rounded p-2 sm:p-3 bg-white flex flex-col gap-1 break-inside-avoid shadow-sm relative cursor-pointer w-full max-w-60 h-full min-h-[180px] sm:min-h-[200px] ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+            className={`border rounded-lg p-4 bg-white flex flex-col gap-0 break-inside-avoid shadow-md hover:shadow-lg transition-shadow relative cursor-pointer w-full max-w-72 h-full min-h-[350px] ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
             onClick={() => onClick(cardId)}
             onMouseEnter={() => setIsHovered(false)}
             onMouseLeave={() => {
@@ -138,37 +169,65 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
                 setIsAltPressed(false)
             }}
         >
-            <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-sm sm:text-base truncate max-w-[60%] text-gray-800" title={displayName}>{displayName}</span>
-                <span className="text-xs text-gray-500 px-1 sm:px-2 py-0.5 rounded bg-gray-100 shrink-0">{getDisplayTypeName(card)}</span>
+            {/* 标题区 */}
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+                <h3 className="font-bold text-xl text-gray-800 leading-tight flex-1 min-w-0" title={displayName}>
+                    {displayName}
+                </h3>
+
+                {/* 右上角：优先显示关键锚点（小标签），否则显示类型标签 */}
+                <span className="text-sm px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap flex-shrink-0">
+                    {rightAnchor || getDisplayTypeName(card)}
+                </span>
             </div>
-            {(displayItem1 || displayItem2 || displayItem3 || displayItem4) && (
-                <div className="flex flex-row gap-1 sm:gap-2 text-xs font-mono mb-2 pb-2 border-b border-dashed border-gray-300 flex-wrap">
-                    {displayItem1 && <div className="px-1 sm:px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm text-xs">{displayItem1}</div>}
-                    {displayItem2 && <div className="px-1 sm:px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm text-xs">{displayItem2}</div>}
-                    {displayItem3 && <div className="px-1 sm:px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm text-xs">{displayItem3}</div>}
-                    {displayItem4 && <div className="px-1 sm:px-2 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-800 font-semibold shadow-sm text-xs">{displayItem4}</div>}
+
+            {/* 属性徽章区 */}
+            {otherBadges.length > 0 && (
+                <div className="pb-3">
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                        {otherBadges.map((badge, index) => (
+                            <React.Fragment key={index}>
+                                {index > 0 && <span className="text-gray-300">•</span>}
+                                <span className="text-gray-600">
+                                    {badge}
+                                </span>
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    <div className="w-1/2 h-px mt-1.5" style={{
+                        background: `linear-gradient(to right, ${getCardTypeBorderColorHex(card.type)}, transparent)`
+                    }}></div>
                 </div>
             )}
-            <div className="text-xs text-gray-600 leading-snug mb-1 flex-1 overflow-hidden">
-                <ReactMarkdown skipHtml
+
+            {/* 描述区 */}
+            <div className="text-sm text-gray-700 leading-loose text-left flex-1 overflow-hidden pt-3">
+                <ReactMarkdown
                     components={{
-                        p: ({ children }) => <p className="first:mt-0 mb-0 mt-3">{children}</p>,
-                        ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
-                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-0">{children}</ol>,
-                        li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
+                        p: ({ children }) => <p className="first:mt-0 mb-2 last:mb-0">{children}</p>,
+                        ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                        li: ({ children }) => <li className="mb-1 last:mb-0">{children}</li>,
+                        strong: ({ children }) => <strong className="font-bold text-amber-700">{children}</strong>,
+                        em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
                     }}
                     remarkPlugins={[remarkGfm, remarkBreaks]}
                 >
                     {displayDescription}
                 </ReactMarkdown>
             </div>
-            {(card.type !== CardType.Profession && card.hint) || showSource ? (
-                <div className="text-[10px] text-gray-400 mt-2">
-                    {card.type !== CardType.Profession && card.hint && <div className="italic text-left">{card.hint}</div>}
-                    {showSource && <div className="text-right">{cardSource}</div>}
+
+            {/* 底部区域（hint + 来源信息） */}
+            {((card.type !== CardType.Profession && card.hint) || showSource) && (
+                <div className="text-xs text-gray-500 border-t border-gray-200 pt-2 mt-auto space-y-1">
+                    {card.type !== CardType.Profession && card.hint && (
+                        <div className="italic">{card.hint}</div>
+                    )}
+                    {showSource && (
+                        <div className="text-right text-[10px] text-gray-400">{cardSource}</div>
+                    )}
                 </div>
-            ) : null}
+            )}
         </div>
     )
 }

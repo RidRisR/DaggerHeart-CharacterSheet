@@ -122,3 +122,48 @@ export function getLevelOptions(typeId: string): { value: string; label: string 
   // 检查是否是变体类型
   return getVariantLevelOptions(typeId);
 }
+
+// ===== 卡牌类型配色系统 =====
+
+/**
+ * 卡牌类型颜色配置
+ * 用于区分不同类型的卡牌，提升视觉识别度
+ */
+export interface CardTypeColorConfig {
+  /** 左侧边框颜色（CSS颜色值） */
+  borderColor: string;
+}
+
+/**
+ * 获取卡牌类型的颜色配置
+ */
+export function getCardTypeColors(card: { type: string; variantSpecial?: { realType?: string } }): CardTypeColorConfig {
+  // 处理变体卡牌：使用真实类型的颜色
+  let effectiveType = card.type;
+  if (card.type === CardType.Variant && card.variantSpecial?.realType) {
+    effectiveType = card.variantSpecial.realType;
+  }
+
+  const colorMap: Record<string, CardTypeColorConfig> = {
+    [CardType.Domain]: {
+      borderColor: '#f87171', // red-400 (淡红色)
+    },
+    [CardType.Profession]: {
+      borderColor: '#60a5fa', // blue-400 (淡蓝色)
+    },
+    [CardType.Ancestry]: {
+      borderColor: '#9ca3af', // gray-400 (淡灰色)
+    },
+    [CardType.Subclass]: {
+      borderColor: '#c084fc', // purple-400 (淡紫色)
+    },
+    [CardType.Community]: {
+      borderColor: '#2dd4bf', // teal-400 (淡青绿色)
+    },
+  };
+
+  // 返回对应颜色，如果找不到则使用灰色默认值
+  return colorMap[effectiveType] || {
+    borderColor: '#34d399', // green-400 (淡绿色，变体卡牌)
+  };
+}

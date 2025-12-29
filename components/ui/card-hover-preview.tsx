@@ -59,11 +59,10 @@ export function CardHoverPreview({ card, isTextMode = false }: CardHoverPreviewP
     if (isTextMode) {
         return (
             <div className="shadow-lg">
-                <SelectableCard 
-                    card={card} 
-                    onClick={() => {}} 
+                <SelectableCard
+                    card={card}
+                    onClick={() => {}}
                     isSelected={false}
-                    showSource={false}
                 />
             </div>
         )

@@ -1,9 +1,7 @@
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks';
 import { transformCustomSyntax } from '@/lib/md-component';
+import { CardMarkdown } from '@/components/ui/card-markdown';
 
 interface ProfessionDescriptionSectionProps {
     description: string | undefined;
@@ -14,14 +12,10 @@ const ProfessionDescriptionSection: React.FC<ProfessionDescriptionSectionProps> 
 
     return (
         <div className="border-2 border-gray-300 rounded-lg p-1.5 text-xs markdown-content h-[250px] overflow-auto">
-            <ReactMarkdown
-                children={transformedDescription}
+            <CardMarkdown
                 rehypePlugins={[rehypeRaw]}
-                remarkPlugins={[remarkGfm, remarkBreaks]}
-                components={{
+                customComponents={{
                     p: ({ children }) => <p className="first:mt-0 mb-0 mt-1">{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc pl-4 mb-0">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal pl-4 mb-0">{children}</ol>,
                     li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
                     code({ node, className, children, ...props }) {
                         const dataType = (props as any)['data-type'];
@@ -59,7 +53,9 @@ const ProfessionDescriptionSection: React.FC<ProfessionDescriptionSectionProps> 
                         );
                     },
                 }}
-            />
+            >
+                {transformedDescription}
+            </CardMarkdown>
         </div>
     );
 };

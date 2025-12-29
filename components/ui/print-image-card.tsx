@@ -3,11 +3,9 @@
 import { StandardCard, ExtendedStandardCard, isVariantCard, getVariantRealType, CardType } from "@/card/card-types"
 import { getCardTypeName } from "@/card/card-ui-config"
 import React from "react"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
-import remarkBreaks from "remark-breaks"
 import Image from "next/image"
 import { getCardImageUrl } from "@/lib/utils"
+import { CardMarkdown } from "@/components/ui/card-markdown"
 
 // Helper function to get display type name
 const getDisplayTypeName = (card: StandardCard) => {
@@ -99,18 +97,15 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
 
                 {/* Description */}
                 <div className="flex-1 text-xs text-gray-700 overflow-hidden card-description print-card-description">
-                    <ReactMarkdown
-                        skipHtml
-                        components={{
+                    <CardMarkdown
+                        className="text-[10px]"
+                        customComponents={{
                             p: ({ children }) => <p className="mb-1 last:mb-0 leading-tight">{children}</p>,
-                            ul: ({ children }) => <ul className="mb-1 list-inside list-disc text-[10px] space-y-0">{children}</ul>,
-                            ol: ({ children }) => <ol className="mb-1 list-inside list-decimal text-[10px] space-y-0">{children}</ol>,
                             li: ({ children }) => <li className="mb-0">{children}</li>,
                         }}
-                        remarkPlugins={[remarkGfm, remarkBreaks]}
                     >
                         {displayDescription}
-                    </ReactMarkdown>
+                    </CardMarkdown>
                 </div>
 
                 {/* Footer */}

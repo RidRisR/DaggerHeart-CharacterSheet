@@ -86,9 +86,9 @@ export function SimpleImageCard({ card, onClick, isSelected, priority = false }:
                 {/* 轻度遮罩 + 文字阴影 */}
                 <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/25 to-transparent pointer-events-none" />
                 <div className="absolute inset-x-0 bottom-0 flex items-end p-4 pointer-events-none">
-                    <div>
-                        <h3 className="text-lg font-bold text-white" style={{ textShadow: '0 2px 10px rgba(0,0,0,1)' }}>{displayName}</h3>
-                        <span className="text-xs font-medium text-gray-200" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>{getDisplayTypeName(card)}</span>
+                    <div className="space-y-0.5">
+                        <h3 className="text-xl font-extrabold text-white leading-none" style={{ textShadow: '0 2px 10px rgba(0,0,0,1)' }}>{displayName}</h3>
+                        <span className="text-xs font-normal tracking-widest text-gray-200 leading-tight block" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>{getDisplayTypeName(card)}</span>
                     </div>
                 </div>
             </div>

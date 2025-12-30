@@ -280,20 +280,20 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
                 {/* 轻度遮罩 + 文字阴影 */}
                 <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/25 to-transparent pointer-events-none" />
                 <div className="absolute inset-x-0 bottom-0 flex items-end p-4 pointer-events-none">
-                    <div className="w-full">
-                        <h3 className="text-lg font-bold text-white" style={{ textShadow: '0 2px 10px rgba(0,0,0,1)' }}>{displayName}</h3>
+                    <div className="w-full space-y-0.5">
+                        <h3 className="text-xl font-extrabold text-white leading-none" style={{ textShadow: '0 2px 10px rgba(0,0,0,1)' }}>{displayName}</h3>
                         {/* 种族卡特殊处理：副标题只显示具体种族名称 */}
                         {card.type === CardType.Ancestry ? (
-                            <div className="flex items-center gap-1.5 flex-wrap tracking-tight">
+                            <div className="flex items-center gap-1.5 flex-wrap leading-tight">
                                 {filteredItems.map((item, index) => (
                                     <React.Fragment key={index}>
                                         {index > 0 && <span className="text-gray-300 text-xs" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>•</span>}
-                                        <span className="text-xs font-medium text-gray-200" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>{item}</span>
+                                        <span className="text-xs font-normal tracking-widest text-gray-200 leading-tight" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>{item}</span>
                                     </React.Fragment>
                                 ))}
                             </div>
                         ) : (
-                            <span className="text-xs font-medium text-gray-200" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>{getDisplayTypeName(card)}</span>
+                            <span className="text-xs font-normal tracking-widest text-gray-200 leading-tight block" style={{ textShadow: '0 1px 5px rgba(0,0,0,1)' }}>{getDisplayTypeName(card)}</span>
                         )}
                     </div>
                 </div>

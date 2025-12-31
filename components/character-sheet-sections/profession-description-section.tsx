@@ -17,6 +17,40 @@ const ProfessionDescriptionSection: React.FC<ProfessionDescriptionSectionProps> 
                 customComponents={{
                     p: ({ children }) => <p className="first:mt-0 mb-0 mt-1">{children}</p>,
                     li: ({ children }) => <li className="mb-0.5 last:mb-0">{children}</li>,
+                    strong: ({ children }) => {
+                        // 检查是否包含 em 元素（*** 的情况）
+                        const childArray = React.Children.toArray(children);
+                        const hasEmElement = childArray.some(
+                            child => React.isValidElement(child) && typeof child.type === 'function' && child.type.name === 'em'
+                        );
+                        if (hasEmElement) {
+                            // *** 情况：斜体加粗，不加直角引号
+                            return <strong className="font-bold italic text-gray-800">{children}</strong>;
+                        }
+                        // ** 情况：标准加粗
+                        return <strong className="font-bold text-gray-800">{children}</strong>;
+                    },
+                    em: ({ children }) => {
+                        // 检查是否包含 strong 元素（*** 的情况）
+                        const childArray = React.Children.toArray(children);
+                        const hasStrongElement = childArray.some(
+                            child => React.isValidElement(child) && typeof child.type === 'function' && child.type.name === 'strong'
+                        );
+                        if (hasStrongElement) {
+                            // *** 的情况：提取文本内容，斜体加粗不加引号
+                            const extractText = (child: any): string => {
+                                if (typeof child === 'string') return child;
+                                if (React.isValidElement(child) && (child.props as any).children) {
+                                    return React.Children.toArray((child.props as any).children).map(extractText).join('');
+                                }
+                                return '';
+                            };
+                            const textContent = childArray.map(extractText).join('');
+                            return <span className="font-bold italic text-gray-800">{textContent}</span>;
+                        }
+                        // * 情况：琥珀色直角引号
+                        return <span className="text-amber-800">「{children}」</span>;
+                    },
                     code({ node, className, children, ...props }) {
                         const dataType = (props as any)['data-type'];
                         const dataValue = (props as any)['data-value'];

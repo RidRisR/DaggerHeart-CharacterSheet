@@ -38,13 +38,19 @@ export function validateSheetData(data: any): data is SheetData {
     }
   }
 
-  // 检查数组字段
-  const arrayFields = ['gold', 'experience', 'hope', 'inventory', 'cards']
+  // 检查数组字段（hope 已改为 number，不在此检查）
+  const arrayFields = ['gold', 'experience', 'inventory', 'cards']
   for (const field of arrayFields) {
     if (!Array.isArray(data[field])) {
       console.warn(`Field ${field} should be an array`)
       return false
     }
+  }
+
+  // hope 字段支持 number 或 boolean[] 两种格式（向后兼容）
+  if (typeof data.hope !== 'number' && !Array.isArray(data.hope)) {
+    console.warn('Field hope should be a number or boolean array')
+    return false
   }
 
   // 检查cards数组中的对象结构

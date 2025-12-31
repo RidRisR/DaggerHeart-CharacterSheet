@@ -265,9 +265,7 @@ export function validateCompatibility(data: SheetData): { compatible: boolean; w
     warnings.push('经验数据可能不完整')
   }
 
-  if (!Array.isArray(data.hope) || data.hope.length === 0) {
-    warnings.push('希望数据可能不完整')
-  }
+  // hope 字段已在 validateSheetData() 中验证类型，任何值（0-8）都是合法的，无需警告
 
   if (!Array.isArray(data.cards)) {
     warnings.push('卡牌数据缺失')

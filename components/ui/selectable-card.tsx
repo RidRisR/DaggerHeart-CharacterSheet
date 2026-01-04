@@ -130,7 +130,19 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
     const displayItem4 = card.cardSelectDisplay?.item4 || "";
 
     // 构建属性徽章数组（只包含非空项）
-    const badges = [displayItem1, displayItem2, displayItem3, displayItem4].filter(Boolean);
+    let badges = [displayItem1, displayItem2, displayItem3, displayItem4].filter(Boolean);
+
+    // 子职业卡特殊处理：为施法属性添加"施法"后缀
+    if (card.type === CardType.Subclass && displayItem3) {
+        const castingAttr = displayItem3 === '不可施法' ? displayItem3 : `${displayItem3}施法`;
+        badges = [displayItem1, displayItem2, castingAttr].filter(Boolean);
+    }
+
+    // 领域卡特殊处理：为领域名添加"领域"后缀
+    if (card.type === CardType.Domain && displayItem1) {
+        const domainName = `${displayItem1}领域`;
+        badges = [domainName, displayItem2, displayItem3, displayItem4].filter(Boolean);
+    }
 
     // 根据卡牌类型提取右上角关键信息（视觉锚点）
     let rightAnchor: string | null = null;
@@ -140,12 +152,12 @@ export function SelectableCard({ card, onClick, isSelected, showSource = true }:
             rightAnchor = badges.find(b => b.startsWith('LV.')) || null;
             break;
         case CardType.Subclass:
-            // 子职业卡：强调主职业
-            rightAnchor = card.cardSelectDisplay.item1 || null;
+            // 子职业卡：不提取锚点，显示类型标签（"子职业"）
+            rightAnchor = null;
             break;
         case CardType.Ancestry:
-            // 种族卡：强调种族名称
-            rightAnchor = card.cardSelectDisplay.item1 || null;
+            // 种族卡：不提取锚点，显示类型标签（"种族"），种族名称保留在属性徽章中
+            rightAnchor = null;
             break;
         default:
             // 职业卡、社群卡：不提取锚点，显示类型标签

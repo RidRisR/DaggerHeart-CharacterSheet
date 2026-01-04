@@ -26,16 +26,6 @@ const getDisplayTypeName = (card: StandardCard) => {
         return `${domainName}领域`;
     }
 
-    // 子职业卡特殊处理：显示 "xx施法" 格式
-    if (card.type === CardType.Subclass) {
-        const castingAttribute = card.cardSelectDisplay?.item3 || '不可施法';
-        if (castingAttribute && castingAttribute !== '不可施法') {
-            return `${castingAttribute}施法`;
-        } else {
-            return '不可施法';
-        }
-    }
-
     return getCardTypeName(card.type);
 };
 
@@ -217,8 +207,14 @@ export function ImageCard({ card, onClick, isSelected, showSource = true, priori
                 return items;
 
             case CardType.Subclass:
-                // 子职业卡：只保留主职和等级，移除施法属性
-                return [displayItem1, displayItem2].filter(Boolean);
+                // 子职业卡：保留主职、等级和施法属性（施法属性需要补全"施法"后缀）
+                const subclassItems = [displayItem1, displayItem2].filter(Boolean);
+                if (displayItem3) {
+                    // 补全施法属性格式：如果是"不可施法"则保持原样，否则添加"施法"后缀
+                    const castingAttr = displayItem3 === '不可施法' ? displayItem3 : `${displayItem3}施法`;
+                    subclassItems.push(castingAttr);
+                }
+                return subclassItems;
 
             case CardType.Ancestry:
                 // 种族卡：保留所有（种族名）

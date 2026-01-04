@@ -47,7 +47,7 @@ export class StreamingBatchProcessor {
     const promptBuilder = new AIPromptBuilder()
 
     // 获取系统提示词(只需一次)
-    const systemPrompt = await promptBuilder.buildSystemPrompt()
+    const systemPrompt = promptBuilder.buildSystemPrompt()
 
     console.log('[StreamingBatchProcessor] 开始处理文本')
     console.log(`  总长度: ${fullText.length} 字符`)
@@ -67,7 +67,7 @@ export class StreamingBatchProcessor {
       )
 
       // 2. 构建用户提示词
-      const userPrompt = await promptBuilder.buildUserPrompt(
+      const userPrompt = promptBuilder.buildUserPrompt(
         textWindow,
         accumulatedData,
         iterationCount === 1,

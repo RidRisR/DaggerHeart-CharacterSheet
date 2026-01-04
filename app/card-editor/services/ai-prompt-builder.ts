@@ -5,36 +5,17 @@
  */
 
 import type { CardPackageState } from '@/app/card-editor/store/card-editor-store'
-import { promises as fs } from 'fs'
-import path from 'path'
 
 /**
  * AI提示词构建器
  */
 export class AIPromptBuilder {
-  private guideContent: string | null = null
-
   /**
    * 获取AI创作指南内容
+   * 注意: 由于运行在浏览器环境,直接使用内嵌的指南内容
    */
-  private async getGuideContent(): Promise<string> {
-    if (this.guideContent) {
-      return this.guideContent
-    }
-
-    try {
-      // 尝试读取AI创作指南文件
-      const guidePath = path.join(
-        process.cwd(),
-        'public/自定义卡包指南和示例/AI-卡包创作指南.md'
-      )
-      this.guideContent = await fs.readFile(guidePath, 'utf-8')
-      return this.guideContent
-    } catch (error) {
-      console.error('[AIPromptBuilder] 无法读取AI创作指南:', error)
-      // 返回简化版指南
-      return this.getFallbackGuide()
-    }
+  private getGuideContent(): string {
+    return this.getFallbackGuide()
   }
 
   /**
@@ -89,8 +70,8 @@ export class AIPromptBuilder {
   /**
    * 构建系统提示词
    */
-  async buildSystemPrompt(): Promise<string> {
-    const guideContent = await this.getGuideContent()
+  buildSystemPrompt(): string {
+    const guideContent = this.getGuideContent()
 
     return `你是一个DaggerHeart卡包格式转换助手。你的任务是将用户提供的文本内容转换为严格的JSON格式。
 
@@ -102,13 +83,13 @@ ${guideContent}
   /**
    * 构建用户提示词
    */
-  async buildUserPrompt(
+  buildUserPrompt(
     textWindow: string,
     packageContext: Partial<CardPackageState>,
     isFirstChunk: boolean,
     position: number,
     totalLength: number
-  ): Promise<string> {
+  ): string {
     if (isFirstChunk) {
       return this.buildFirstChunkPrompt(textWindow, position, totalLength)
     } else {

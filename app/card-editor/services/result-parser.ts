@@ -107,7 +107,7 @@ export class ResultParser {
   private async validate(data: Partial<CardPackageState>) {
     try {
       // 动态导入验证服务(避免循环依赖)
-      const { default: validationService } = await import('./validation-service')
+      const { validationService } = await import('./validation-service')
 
       // 构造完整的CardPackageState(填充缺失字段)
       const fullData: CardPackageState = {

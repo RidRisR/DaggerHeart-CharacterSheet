@@ -55,8 +55,8 @@ describe('AI Service Integration', () => {
 - 起始生命：14
 - 起始闪避：8`
 
-      const systemPrompt = await promptBuilder.buildSystemPrompt()
-      const userPrompt = await promptBuilder.buildUserPrompt(
+      const systemPrompt = promptBuilder.buildSystemPrompt()
+      const userPrompt = promptBuilder.buildUserPrompt(
         testText,
         {},
         true,

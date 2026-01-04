@@ -7,7 +7,7 @@
 ## 🚀 实施进度追踪
 
 **最后更新**: 2025-01-04
-**当前状态**: ✅ 底层服务完成并测试通过，已迁移到 Vercel AI SDK，准备开始UI层
+**当前状态**: ✅ UI层完成，功能已完全集成到卡包编辑器
 
 ### 已完成阶段 ✅
 
@@ -17,20 +17,20 @@
 | **阶段1** | ✅ 完成 | `a1f84e3` | 基础工具层 (api-key-manager, file-processor, prompt-builder) |
 | **阶段2** | ✅ 完成 | `204affa` | 核心服务层 (json-merger, ai-service, result-parser) |
 | **阶段3** | ✅ 完成 | `a54c598` | 业务逻辑层 (streaming-batch-processor) |
-| **测试+重构** | ✅ 完成 | 待提交 | 迁移到 Vercel AI SDK，集成测试全部通过 (9/9) |
+| **测试+重构** | ✅ 完成 | `2c6d23f` | 迁移到 Vercel AI SDK，集成测试全部通过 (9/9) |
+| **阶段4A** | ✅ 完成 | `968c1d3` | UI基础组件 (progress, ai-config-dialog, file-upload-zone) |
+| **阶段4B** | ✅ 完成 | 待提交 | 主对话框与集成 (ai-converter-dialog, alert, page.tsx集成) |
 
 ### 待执行阶段 ⏳
 
 | 阶段 | 状态 | 预计文件 | 说明 |
 |------|------|---------|------|
-| **阶段4** | ⏳ 待执行 | file-upload-zone.tsx, ai-config-dialog.tsx | UI基础组件 |
-| **阶段5** | ⏳ 待执行 | ai-card-preview.tsx, ai-upload-step.tsx, ai-processing-step.tsx, ai-preview-step.tsx | 三步骤组件 |
-| **阶段6** | ⏳ 待执行 | ai-converter-dialog.tsx | 主对话框 |
-| **阶段7** | ⏳ 待执行 | 修改 card-editor-store.ts, toolbar.tsx, page.tsx | 编辑器集成 |
+| **手动测试** | ⏳ 待执行 | - | 启动 dev server 进行端到端测试 |
+| **优化迭代** | ⏳ 待执行 | - | 根据测试结果优化UI和用户体验 |
 
-### 已创建文件清单 (8个服务 + 5个测试)
+### 已创建文件清单
 
-**服务层文件** (`app/card-editor/services/`):
+**服务层文件** (`app/card-editor/services/` - 8个服务):
 1. ✅ `ai-types.ts` - 类型定义，支持 volcengine provider (252行)
 2. ✅ `api-key-manager.ts` - API Key加密存储 (141行)
 3. ✅ `file-processor.ts` - 文件处理器 (65行)
@@ -40,14 +40,26 @@
 7. ✅ `result-parser.ts` - 结果解析器 (141行)
 8. ✅ `streaming-batch-processor.ts` - 流式批量处理器 (315行)
 
-**测试文件** (`tests/`):
+**UI组件文件** (`app/card-editor/components/` - 3个 + `components/ui/` - 2个):
+1. ✅ `ai-config-dialog.tsx` - AI配置对话框 (218行)
+2. ✅ `file-upload-zone.tsx` - 文件上传区 (176行)
+3. ✅ `ai-converter-dialog.tsx` - 主转换器对话框 (420行)
+4. ✅ `components/ui/progress.tsx` - 进度条组件 (27行)
+5. ✅ `components/ui/alert.tsx` - 警告提示组件 (68行)
+
+**集成修改文件** (3个):
+1. ✅ `app/card-editor/store/card-editor-store.ts` - 添加 AI 对话框状态
+2. ✅ `app/card-editor/components/toolbar.tsx` - 添加 AI 转换按钮
+3. ✅ `app/card-editor/page.tsx` - 集成 AI 对话框组件
+
+**测试文件** (`tests/` - 5个):
 1. ✅ `unit/json-merger.test.ts` - JSON合并测试 (13 tests, 100% pass)
 2. ✅ `unit/file-processor.test.ts` - 文件处理测试 (17 tests, 100% pass)
 3. ✅ `unit/api-key-manager.test.ts` - 加密管理测试 (12 tests, 100% pass)
 4. ✅ `integration/ai-service.test.ts` - AI服务集成测试 (6 tests, 100% pass)
 5. ✅ `integration/streaming-processor.test.ts` - 流式处理集成测试 (3 tests, 100% pass)
 
-**总代码行数**: 约 1,491 行服务代码 + 约 800 行测试代码
+**总代码行数**: 约 1,491 行服务代码 + 约 909 行UI代码 + 约 800 行测试代码
 
 **测试覆盖**: 51 tests, 100% passing
 
@@ -70,7 +82,9 @@
 ### Git提交历史
 
 ```bash
-[待提交] refactor(ai-service): migrate to Vercel AI SDK
+[待提交] feat(ai-converter): complete UI layer (Phase 4B)
+968c1d3 feat(ai-converter): add UI foundation components (Phase 4A)
+2c6d23f refactor(ai-service): migrate to Vercel AI SDK
 a54c598 feat(ai-converter): add streaming batch processor
 204affa feat(ai-converter): add core services
 a1f84e3 feat(ai-converter): add foundation services

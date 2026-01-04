@@ -15,6 +15,8 @@ import { DefinitionsManager } from './components/definitions-manager'
 import { CardTabs } from './components/card-tabs'
 import { CardListDialog } from './components/card-list-dialog'
 import { ValidationResults } from './components/validation-results'
+import { AIConfigDialog } from './components/ai-config-dialog'
+import { AIConverterDialog } from './components/ai-converter-dialog'
 import type { CardType } from './types'
 
 export default function CardEditorPage() {
@@ -32,6 +34,8 @@ export default function CardEditorPage() {
     confirmDialog,
     validationResult,
     isValidating,
+    aiConfigDialog,
+    aiConverterDialog,
 
     // 方法
     updateMetadata,
@@ -49,7 +53,9 @@ export default function CardEditorPage() {
     setConfirmDialog,
     setCurrentCardIndex,
     addDefinition,
-    removeDefinition
+    removeDefinition,
+    setAIConfigDialog,
+    setAIConverterDialog
   } = useCardEditorStore()
 
   // 客户端初始化
@@ -135,6 +141,7 @@ export default function CardEditorPage() {
           onExport={exportPackage}
           onShowKeywords={() => setDefinitionsDialog(true)}
           onValidate={validatePackage}
+          onAIConverter={() => setAIConverterDialog(true)}
           isValidating={isValidating}
         />
       </div>
@@ -195,6 +202,18 @@ export default function CardEditorPage() {
         open={!!validationResult}
         onClose={clearValidationResult}
         onJumpToCard={handleJumpToCard}
+      />
+
+      {/* AI配置对话框 */}
+      <AIConfigDialog
+        open={aiConfigDialog}
+        onOpenChange={setAIConfigDialog}
+      />
+
+      {/* AI转换器对话框 */}
+      <AIConverterDialog
+        open={aiConverterDialog}
+        onOpenChange={setAIConverterDialog}
       />
 
       {/* 确认对话框 */}

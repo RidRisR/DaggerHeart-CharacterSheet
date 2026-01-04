@@ -44,11 +44,14 @@ export function AIConfigDialog({ open, onOpenChange }: AIConfigDialogProps) {
   // 加载已保存的配置
   useEffect(() => {
     if (open) {
-      const keyManager = new APIKeyManager()
-      const saved = keyManager.getConfig()
-      if (saved) {
-        setConfig(saved)
+      const loadSavedConfig = async () => {
+        const keyManager = new APIKeyManager()
+        const saved = await keyManager.loadConfig()
+        if (saved) {
+          setConfig(saved)
+        }
       }
+      loadSavedConfig()
     }
   }, [open])
 

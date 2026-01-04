@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Daggerheart二元骰
 // @author       RidRisR
-// @version      2.2.0
+// @version      2.3.0
 // @description  Daggerheart风格的二元骰系统，支持复杂修饰符语法和完整角色管理
 // @timestamp    1735802400
 // @diceRequireVer 1.2.0

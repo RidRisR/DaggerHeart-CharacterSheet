@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea"
 import { exportToSealDice, validateSealDiceFormat } from "@/lib/seal-dice-exporter"
 import { SheetData } from "@/lib/sheet-data"
+import { DiceUsageGuideModal } from "./dice-usage-guide-modal"
 
 interface SealDiceExportModalProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ interface SealDiceExportModalProps {
 
 export function SealDiceExportModal({ isOpen, onClose, sheetData }: SealDiceExportModalProps) {
   const [copySuccess, setCopySuccess] = useState(false)
+  const [showGuide, setShowGuide] = useState(false)
 
   // 生成导出字符串
   const exportString = exportToSealDice(sheetData)
@@ -90,6 +92,13 @@ export function SealDiceExportModal({ isOpen, onClose, sheetData }: SealDiceExpo
               >
                 {copySuccess ? "✓ 已复制到剪贴板" : "📋 复制文本"}
               </Button>
+              <Button
+                onClick={() => setShowGuide(true)}
+                className="px-6 py-2"
+                variant="outline"
+              >
+                📖 使用指南
+              </Button>
             </div>
           </div>
 
@@ -136,6 +145,12 @@ export function SealDiceExportModal({ isOpen, onClose, sheetData }: SealDiceExpo
 
         </div>
       </DialogContent>
+
+      {/* 使用指南模态框 */}
+      <DiceUsageGuideModal
+        isOpen={showGuide}
+        onClose={() => setShowGuide(false)}
+      />
     </Dialog>
   )
 }

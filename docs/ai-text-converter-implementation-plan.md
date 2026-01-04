@@ -7,7 +7,7 @@
 ## 🚀 实施进度追踪
 
 **最后更新**: 2025-01-04
-**当前状态**: 底层服务已完成，等待测试后继续UI层
+**当前状态**: ✅ 底层服务完成并测试通过，已迁移到 Vercel AI SDK，准备开始UI层
 
 ### 已完成阶段 ✅
 
@@ -17,7 +17,7 @@
 | **阶段1** | ✅ 完成 | `a1f84e3` | 基础工具层 (api-key-manager, file-processor, prompt-builder) |
 | **阶段2** | ✅ 完成 | `204affa` | 核心服务层 (json-merger, ai-service, result-parser) |
 | **阶段3** | ✅ 完成 | `a54c598` | 业务逻辑层 (streaming-batch-processor) |
-| **暂停点** | ⏸️ 当前 | - | 等待底层服务测试确认 |
+| **测试+重构** | ✅ 完成 | 待提交 | 迁移到 Vercel AI SDK，集成测试全部通过 (9/9) |
 
 ### 待执行阶段 ⏳
 
@@ -28,23 +28,49 @@
 | **阶段6** | ⏳ 待执行 | ai-converter-dialog.tsx | 主对话框 |
 | **阶段7** | ⏳ 待执行 | 修改 card-editor-store.ts, toolbar.tsx, page.tsx | 编辑器集成 |
 
-### 已创建文件清单 (8个)
+### 已创建文件清单 (8个服务 + 5个测试)
 
 **服务层文件** (`app/card-editor/services/`):
-1. ✅ `ai-types.ts` - 类型定义 (243行)
+1. ✅ `ai-types.ts` - 类型定义，支持 volcengine provider (252行)
 2. ✅ `api-key-manager.ts` - API Key加密存储 (141行)
 3. ✅ `file-processor.ts` - 文件处理器 (65行)
 4. ✅ `ai-prompt-builder.ts` - 提示词构建器 (206行)
 5. ✅ `json-merger.ts` - JSON合并函数 (231行)
-6. ✅ `ai-service.ts` - AI服务 (143行)
+6. ✅ `ai-service.ts` - AI服务 (基于 Vercel AI SDK, 140行)
 7. ✅ `result-parser.ts` - 结果解析器 (141行)
 8. ✅ `streaming-batch-processor.ts` - 流式批量处理器 (315行)
 
-**总代码行数**: 约 1,485 行
+**测试文件** (`tests/`):
+1. ✅ `unit/json-merger.test.ts` - JSON合并测试 (13 tests, 100% pass)
+2. ✅ `unit/file-processor.test.ts` - 文件处理测试 (17 tests, 100% pass)
+3. ✅ `unit/api-key-manager.test.ts` - 加密管理测试 (12 tests, 100% pass)
+4. ✅ `integration/ai-service.test.ts` - AI服务集成测试 (6 tests, 100% pass)
+5. ✅ `integration/streaming-processor.test.ts` - 流式处理集成测试 (3 tests, 100% pass)
+
+**总代码行数**: 约 1,491 行服务代码 + 约 800 行测试代码
+
+**测试覆盖**: 51 tests, 100% passing
+
+### 技术决策与重构
+
+#### 为什么选择 Vercel AI SDK？
+
+1. **统一接口**: 支持 OpenAI、Claude、火山引擎等多个提供商
+2. **零适配器代码**: 只需使用 `.chat()` 方法即可兼容火山引擎 Ark API
+3. **成熟稳定**: 200万周下载量，社区活跃
+4. **类型安全**: 完整的 TypeScript 支持
+5. **易于扩展**: 未来切换提供商只需改 baseURL
+
+#### 火山引擎兼容性要点
+
+- ✅ 使用 `client.chat()` 而非 `client.responses()` (Chat Completions API)
+- ✅ 集成测试需使用 `@vitest-environment node` (happy-dom fetch 不兼容)
+- ✅ 添加 `volcengine` 作为预设 provider 类型
 
 ### Git提交历史
 
 ```bash
+[待提交] refactor(ai-service): migrate to Vercel AI SDK
 a54c598 feat(ai-converter): add streaming batch processor
 204affa feat(ai-converter): add core services
 a1f84e3 feat(ai-converter): add foundation services

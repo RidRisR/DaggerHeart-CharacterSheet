@@ -3,6 +3,7 @@
  *
  * 测试ai-service.ts与真实API的集成
  * 需要环境变量: AI_TEST_API_KEY, AI_TEST_BASE_URL, AI_TEST_MODEL
+ * @vitest-environment node
  */
 
 import { describe, it, expect, beforeAll } from 'vitest'

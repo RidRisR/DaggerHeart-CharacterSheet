@@ -1,9 +1,12 @@
 /**
  * AI服务
  *
- * 提供OpenAI兼容的API调用功能
+ * 使用 Vercel AI SDK 提供统一的LLM提供商接口
+ * 使用 Chat Completions API 格式（兼容 OpenAI、火山引擎等主流提供商）
  */
 
+import { createOpenAI } from '@ai-sdk/openai'
+import { generateText } from 'ai'
 import type { AIServiceConfig, AIChunkResponse } from './ai-types'
 
 /**
@@ -11,9 +14,18 @@ import type { AIServiceConfig, AIChunkResponse } from './ai-types'
  */
 export class AIService {
   private config: AIServiceConfig
+  private client: ReturnType<typeof createOpenAI>
 
   constructor(config: AIServiceConfig) {
     this.config = config
+
+    // 创建 OpenAI 兼容客户端
+    // 支持火山引擎、OpenAI 等使用 Chat Completions API 的提供商
+    this.client = createOpenAI({
+      baseURL: config.baseURL,
+      apiKey: config.apiKey,
+      name: config.provider // 提供商标识
+    })
   }
 
   /**
@@ -25,36 +37,22 @@ export class AIService {
    */
   async generate(systemPrompt: string, userPrompt: string): Promise<AIChunkResponse> {
     try {
-      const response = await fetch(`${this.config.baseURL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.config.apiKey}`
-        },
-        body: JSON.stringify({
-          model: this.config.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.1, // 低温度确保严格遵守格式
-          response_format: { type: 'json_object' } // 强制JSON输出
-        })
+      // 在系统提示词中明确要求JSON格式（因为某些提供商不支持response_format）
+      const enhancedSystemPrompt = `${systemPrompt}
+
+IMPORTANT: 你必须严格返回有效的JSON格式，不要包含任何markdown代码块标记（如\`\`\`json），直接返回纯JSON对象。`
+
+      // 使用 Vercel AI SDK 的 generateText
+      // .chat() 方法使用标准的 Chat Completions API（火山引擎等提供商兼容）
+      const result = await generateText({
+        model: this.client.chat(this.config.model),
+        system: enhancedSystemPrompt,
+        prompt: userPrompt,
+        temperature: 0.1, // 低温度确保严格遵守格式
+        maxTokens: 4096
       })
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`API调用失败 (${response.status}): ${errorText}`)
-      }
-
-      const data = await response.json()
-
-      // 检查响应格式
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('API响应格式错误: 缺少choices或message字段')
-      }
-
-      const content = data.choices[0].message.content
+      const content = result.text
 
       // 解析JSON
       let parsed: AIChunkResponse
@@ -84,26 +82,26 @@ export class AIService {
 
   /**
    * 测试API配置是否有效
+   * 使用简单的生成调用来验证连接
    */
   async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await fetch(`${this.config.baseURL}/models`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${this.config.apiKey}`
-        }
+      // 使用简单的生成调用测试连接
+      const result = await generateText({
+        model: this.client.chat(this.config.model),
+        prompt: 'test',
+        maxTokens: 10
       })
 
-      if (response.ok) {
+      if (result.text) {
         return {
           success: true,
           message: '连接成功'
         }
       } else {
-        const errorText = await response.text()
         return {
           success: false,
-          message: `连接失败 (${response.status}): ${errorText}`
+          message: '连接失败: 响应为空'
         }
       }
     } catch (error) {

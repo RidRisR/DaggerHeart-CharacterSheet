@@ -13,7 +13,7 @@ import type { CardPackageState } from '@/app/card-editor/store/card-editor-store
  */
 export interface AIServiceConfig {
   /** 提供商类型 */
-  provider: 'openai' | 'claude' | 'custom'
+  provider: 'openai' | 'claude' | 'volcengine' | 'custom'
   /** API密钥 */
   apiKey: string
   /** API基础URL */
@@ -223,7 +223,10 @@ export interface AIProviderPreset {
 /**
  * 预设提供商配置
  */
-export const AI_PROVIDERS: Record<'openai' | 'claude' | 'custom', AIProviderPreset> = {
+export const AI_PROVIDERS: Record<
+  'openai' | 'claude' | 'volcengine' | 'custom',
+  AIProviderPreset
+> = {
   openai: {
     name: 'OpenAI',
     baseURL: 'https://api.openai.com/v1',
@@ -233,6 +236,11 @@ export const AI_PROVIDERS: Record<'openai' | 'claude' | 'custom', AIProviderPres
     name: 'Claude (OpenAI兼容)',
     baseURL: 'https://api.anthropic.com/v1',
     models: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022']
+  },
+  volcengine: {
+    name: '火山引擎豆包 (Volcengine Ark)',
+    baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
+    models: ['ep-20260104190511-tk2mc'] // 用户的模型端点
   },
   custom: {
     name: '自定义',

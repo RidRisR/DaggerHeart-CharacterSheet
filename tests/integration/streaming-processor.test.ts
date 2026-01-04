@@ -3,6 +3,7 @@
  *
  * 测试streaming-batch-processor.ts的完整流程
  * 这是最核心的集成测试,验证整个系统能否正常工作
+ * @vitest-environment node
  */
 
 import { describe, it, expect, beforeAll } from 'vitest'

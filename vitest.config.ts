@@ -1,13 +1,15 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { loadEnv } from 'vite'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   test: {
     environment: 'happy-dom',
     globals: true,
     setupFiles: './tests/setup.ts',
+    env: loadEnv(mode, process.cwd(), ''),
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: [
@@ -27,4 +29,4 @@ export default defineConfig({
       '@/lib': path.resolve(__dirname, './lib'),
     },
   },
-})
+}))

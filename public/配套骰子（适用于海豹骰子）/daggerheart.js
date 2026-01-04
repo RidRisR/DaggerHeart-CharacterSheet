@@ -1706,27 +1706,33 @@ class DualityDiceLogic {
       // SealDice的 .st 命令对"知识"这个属性有特殊处理：
       // - 其他属性同时写入 intGet 和 format 存储
       // - 知识只写入 format 存储，不写入 intGet
-      // 因此需要智能判断从哪里读取
+      // 为了最好的兼容性，优先读取非0值
       if (attr.name === '知识') {
-        // 先尝试从 format 获取（.st 命令设置的值）
+        // 从两个来源读取值
+        const [intValue, hasInt] = seal.vars.intGet(ctx, attr.name);
         const formatValue = seal.format(ctx, `{${attr.name}}`);
-        let foundInFormat = false;
 
-        // 检查format是否返回了有效的数字（包括0）
+        let formatParsed = 0;
+        let hasFormat = false;
+
+        // 检查format是否返回了有效的数字
         if (formatValue && formatValue !== `{${attr.name}}` && formatValue !== attr.name) {
           const parsed = parseInt(formatValue);
           if (!isNaN(parsed)) {
-            actualValue = parsed;
-            foundInFormat = true;
+            formatParsed = parsed;
+            hasFormat = true;
           }
         }
 
-        // 如果format没有找到值，尝试intGet（可能是通过intSet设置的）
-        if (!foundInFormat) {
-          const [attrValue, hasAttr] = seal.vars.intGet(ctx, attr.name);
-          if (hasAttr) {
-            actualValue = attrValue;
-          }
+        // 优先使用非0值，如果都非0则使用format的值（.st命令设置的）
+        if (hasFormat && formatParsed !== 0) {
+          actualValue = formatParsed;
+        } else if (hasInt && intValue !== 0) {
+          actualValue = intValue;
+        } else if (hasFormat) {
+          actualValue = formatParsed; // 都是0时，使用format的0
+        } else if (hasInt) {
+          actualValue = intValue; // 都是0时，使用intGet的0
         }
       } else {
         // 其他属性正常使用 intGet
@@ -2709,7 +2715,23 @@ cmdCook.solve = commandHandlers.cookDice;
 // 创建并注册帮助命令 - 显示所有可用命令
 const cmdHelp = seal.ext.newCmdItemInfo();
 cmdHelp.name = 'dh';
-cmdHelp.help = '显示Daggerheart插件所有可用命令';
+cmdHelp.help = `【Daggerheart插件命令列表】
+
+● .dh - 显示所有命令列表
+● .dd - 二元骰检定（结果修改属性）
+● .ddr - 反应二元骰（结果不修改属性，仅经历消耗属性）
+● .cook - 野兽饭烹饪小游戏
+● .gm - GM管理（设置/卸任）
+● .dhalias - 查询关键词别名
+● .test - 测试命令（指定骰子点数）
+
+【规则设置】
+● .set dh - 开启Daggerheart规则
+● .sn dh - 应用玩家名片模板
+● .gm - 设置自己为GM（注意：必须使用.gm命令，不要使用.sn gm）
+
+使用 .help [命令] 查看详细帮助
+例如：.help dd 查看dd命令详细说明`;
 cmdHelp.solve = (ctx, msg) => {
   try {
     let helpText = '【Daggerheart插件命令列表】\n\n';

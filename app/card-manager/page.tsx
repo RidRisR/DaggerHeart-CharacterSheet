@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { SelectableCard } from '@/components/ui/selectable-card'
+import { ViewCardsModal } from '@/components/modals/view-cards-modal'
 import { AlertCircle, Upload, FileText, CheckCircle, XCircle, Info, Eye, RefreshCw, Home, Power, PowerOff, BookOpen, Edit3 } from 'lucide-react'
 import {
   importCustomCards,
@@ -36,46 +36,6 @@ interface ImportStatus {
   isImporting: boolean
   result: ImportResult | ImportResultWithFileName[] | null
   error: string | null
-}
-
-interface ViewCardModalProps {
-  cards: ExtendedStandardCard[]
-  isOpen: boolean
-  onClose: () => void
-}
-
-function ViewCardModal({ cards, isOpen, onClose }: ViewCardModalProps) {
-  if (!isOpen) return null
-  const gridCards = useMemo(() => cards || [], [cards])
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-xl font-bold">卡牌详情（{gridCards.length} 张）</h2>
-          <Button onClick={onClose} variant="ghost" size="sm">
-            <XCircle className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {gridCards.length === 0 ? (
-              <div className="col-span-full text-center text-gray-500 py-8">没有找到任何卡牌</div>
-            ) : (
-              gridCards.map((card, index) => (
-                <SelectableCard
-                  key={`${card.id}-${index}`}
-                  card={card}
-                  onClick={() => { }}
-                  isSelected={false}
-                />
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 // 新增：用于UI显示的导入结果类型
@@ -801,10 +761,11 @@ export default function CardImportTestPage() {
       </div>
 
       {/* 卡牌查看模态框 */}
-      <ViewCardModal
+      <ViewCardsModal
         cards={viewingCards}
         isOpen={viewModalOpen}
         onClose={() => setViewModalOpen(false)}
+        title={`卡牌详情（${viewingCards.length} 张）`}
       />
 
       {/* 文档查看模态框 */}

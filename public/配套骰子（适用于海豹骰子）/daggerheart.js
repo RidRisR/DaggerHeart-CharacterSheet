@@ -106,7 +106,7 @@ const CONFIG = {
       currentScore: '当前风味：{score}分',
       cumulativeScore: '当前风味：{score}分（累计）',
       separator: '-----------------',
-      removeHint: '使用 .cook rm [骰面] 移除骰子继续',
+      removeHint: '使用 .cook [骰面] 移除骰子继续',
       removableHint: '可移除：{faces}',
       removed: '已移除：{dice}',
       rerollCount: '剩余{count}颗骰子重新投掷：',
@@ -129,7 +129,7 @@ const CONFIG = {
       },
       finalScore: '最终风味：{score}分',
       pairFailed: '✗ 配对失败,骰子已用尽',
-      errorFormat: '❌ 参数格式错误\n正确格式：\n  • .cook [ndm]+[ndm]+... - 开始新游戏\n  • .cook [dm]+[dm]+... - dm视为1dm\n  • .cook rm [骰面] - 移除骰子\n\n示例：\n  • .cook 3d6+6d2\n  • .cook d6+d2\n  • .cook rm 6',
+      errorFormat: '❌ 参数格式错误\n正确格式：\n  • .cook [ndm]+[ndm]+... - 开始新游戏\n  • .cook [dm]+[dm]+... - dm视为1dm\n  • .cook [骰面] - 移除骰子（推荐）\n  • .cook rm [骰面] - 移除骰子（兼容）\n\n示例：\n  • .cook 3d6+6d2\n  • .cook d6+d2\n  • .cook 6（推荐）\n  • .cook rm 6（兼容）',
       errorNoGame: '❌ 当前群组没有进行中的烹饪游戏\n请先使用 .cook [ndm]+... 开始游戏',
       errorInvalidFace: '❌ 未配对的骰子中没有 d{face}\n可移除的骰面：{available}'
     }
@@ -1104,7 +1104,15 @@ function parseCookArgs(cmdArgs) {
     return { type: 'invalid' };
   }
 
-  // 检测是否是 rm 命令 (支持 "rm 6" 或 "rm6")
+  // 检测纯数字（简化删除语法）- 优先级高于 rm 命令
+  if (/^\d+$/.test(trimmed)) {
+    return {
+      type: 'remove',
+      face: parseInt(trimmed, 10)
+    };
+  }
+
+  // 检测是否是 rm 命令 (支持 "rm 6" 或 "rm6")，保持向后兼容
   if (/^rm\s*\d+$/i.test(trimmed)) {
     const match = trimmed.match(/^rm\s*(\d+)$/i);
     return {
@@ -2681,7 +2689,7 @@ cmdAlias.solve = commandHandlers.aliasQuery;
 // 创建并注册烹饪游戏命令
 const cmdCook = seal.ext.newCmdItemInfo();
 cmdCook.name = 'cook';
-cmdCook.help = `.cook [ndm]+... 或 .cook rm [骰面] // 烹饪游戏 - 配对骰子获得分数
+cmdCook.help = `.cook [ndm]+... 或 .cook [骰面] // 烹饪游戏 - 配对骰子获得分数
 游戏规则:
   • 投掷所有骰子，相同点数的骰子可以两两配对
   • 配对成功得分 = 骰子点数（如两个5配对得5分）
@@ -2694,17 +2702,21 @@ cmdCook.help = `.cook [ndm]+... 或 .cook rm [骰面] // 烹饪游戏 - 配对�
     • dm格式：1个m面骰（如d6表示1个6面骰，等同于1d6）
     • 支持+号或空格连接多个骰子规格（如3d6+6d2）
 
-  .cook rm [骰面] - 移除一个指定面的骰子
-    • 移除后剩余骰子会重新投掷并配对
+  .cook [骰面] - 移除一个指定面的骰子（推荐）
     • 骰面为数字（如6表示移除一个d6）
+    • 移除后剩余骰子会重新投掷并配对
+
+  .cook rm [骰面] - 移除骰子（兼容旧语法）
+    • 功能同上，保留用于向后兼容
 
 示例:
   .cook 3d6+6d2 - 投3个d6和6个d2开始游戏
   .cook d6+d2 - 投1个d6和1个d2开始游戏
   .cook 3d6 6d2 - 效果同上（空格或+号分隔都可以）
-  .cook rm 6 - 移除一个d6并重新投掷剩余骰子
-  .cook rm6 - 效果同上（空格可省略）
-  .cook rm2 - 移除一个d2并重新投掷剩余骰子
+  .cook 6 - 移除一个d6并重新投掷剩余骰子（推荐）
+  .cook 2 - 移除一个d2并重新投掷剩余骰子（推荐）
+  .cook rm 6 - 效果同上（兼容旧语法）
+  .cook rm6 - 效果同上（兼容旧语法）
 
 注意事项:
   • 群组内所有成员共享同一个游戏进度

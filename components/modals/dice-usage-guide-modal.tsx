@@ -274,8 +274,12 @@ export function DiceUsageGuideModal({ isOpen, onClose }: DiceUsageGuideModalProp
                         <p className="text-xs text-gray-600 mt-1">→ 投3个d6和6个d2开始游戏</p>
                       </div>
                       <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                        <code className="text-xs text-blue-600">.cook 6</code>
+                        <p className="text-xs text-gray-600 mt-1">→ 移除一个d6并重新投掷剩余骰子（推荐）</p>
+                      </div>
+                      <div className="bg-gray-50 p-2 rounded border border-gray-200">
                         <code className="text-xs text-blue-600">.cook rm 6</code>
-                        <p className="text-xs text-gray-600 mt-1">→ 移除一个d6并重新投掷剩余骰子</p>
+                        <p className="text-xs text-gray-600 mt-1">→ 效果同上（兼容旧语法）</p>
                       </div>
                     </div>
                   </div>

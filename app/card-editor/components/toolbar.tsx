@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button'
-import { 
-  Download, 
-  Upload, 
-  Plus, 
+import {
+  Download,
+  Upload,
+  Plus,
   FileText,
   CheckCircle,
-  Loader2
+  Loader2,
+  Sparkles
 } from 'lucide-react'
 import type { CardPackageState } from '../types'
 
@@ -16,16 +17,18 @@ interface ToolbarProps {
   onExport: () => void
   onShowKeywords: () => void
   onValidate: () => void
+  onAIConverter: () => void
   isValidating: boolean
 }
 
-export function Toolbar({ 
-  currentPackage, 
-  onNew, 
-  onImport, 
-  onExport, 
+export function Toolbar({
+  currentPackage,
+  onNew,
+  onImport,
+  onExport,
   onShowKeywords,
   onValidate,
+  onAIConverter,
   isValidating
 }: ToolbarProps) {
   return (
@@ -47,6 +50,15 @@ export function Toolbar({
       >
         <Upload className="h-4 w-4" />
         导入卡包
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onAIConverter}
+        className="flex items-center gap-2"
+      >
+        <Sparkles className="h-4 w-4" />
+        AI文本转换
       </Button>
       <Button
         variant="outline"

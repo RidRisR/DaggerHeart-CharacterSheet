@@ -37,6 +37,10 @@ interface CardEditorStore {
     onConfirm: () => void
   }
 
+  // AI 相关状态
+  aiConverterDialog: boolean
+  aiConfigDialog: boolean
+
   // 验证相关状态
   validationResult: ValidationResult | null
   isValidating: boolean
@@ -81,6 +85,8 @@ interface CardEditorStore {
   setDefinitionsDialog: (open: boolean) => void
   setConfirmDialog: (state: { open: boolean; title?: string; message?: string; onConfirm?: () => void }) => void
   setCurrentCardIndex: (updater: (prev: CurrentCardIndex) => CurrentCardIndex) => void
+  setAIConverterDialog: (open: boolean) => void
+  setAIConfigDialog: (open: boolean) => void
   
   // 自定义字段定义
   addDefinition: (category: keyof NonNullable<CardPackageState['customFieldDefinitions']>, value: string) => void
@@ -124,6 +130,8 @@ export const useCardEditorStore = create<CardEditorStore>()(
         message: '',
         onConfirm: () => {}
       },
+      aiConverterDialog: false,
+      aiConfigDialog: false,
       
       // 验证相关初始状态
       validationResult: null,
@@ -628,9 +636,15 @@ export const useCardEditorStore = create<CardEditorStore>()(
           cardListDialog: typeof state === 'function' ? state(prev.cardListDialog) : state
         })),
         
-      setDefinitionsDialog: (open) => 
+      setDefinitionsDialog: (open) =>
         set({ definitionsDialog: open }),
-        
+
+      setAIConverterDialog: (open) =>
+        set({ aiConverterDialog: open }),
+
+      setAIConfigDialog: (open) =>
+        set({ aiConfigDialog: open }),
+
       setConfirmDialog: (state) => 
         set(prev => ({
           confirmDialog: {

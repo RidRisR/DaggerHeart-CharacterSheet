@@ -9,7 +9,7 @@ import {
   getCardTypeName,
 } from "@/card/index"
 import { CardType } from "@/card"; // Add this import
-import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType } from "@/card/card-types"
+import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType, isVariantCard } from "@/card/card-types"
 import { createEmptyCard } from "@/card/card-types"
 import { ImageCard } from "@/components/ui/image-card"
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -70,6 +70,7 @@ export function CardSelectionModal({
   const scrollableContainerRef = useRef<HTMLDivElement>(null)
   const [classDropdownOpen, setClassDropdownOpen] = useState(false); // Add state for class dropdown
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false); // Add state for level dropdown
+  const [batchDropdownOpen, setBatchDropdownOpen] = useState(false); // Add state for batch dropdown
   const [sourceDropdownOpen, setSourceDropdownOpen] = useState(false); // Add state for source dropdown
   const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发卡牌刷新动画
 
@@ -146,27 +147,95 @@ export function CardSelectionModal({
     }
   }, [isOpen, onClose]);
 
+  // ⚡ Step 1: 统计卡包关键词（优化版 - 直接读取 customFieldDefinitions）
+  const batchClassSet = useMemo(() => {
+    if (selectedBatches.length === 0) return null;
+
+    const classSet = new Set<string>();
+
+    for (const batchId of selectedBatches) {
+      const batch = cardStore.batches.get(batchId);
+      if (!batch || batch.disabled) continue;
+
+      // 🚀 直接读取元数据，无需遍历卡牌
+      const classesForActiveTab = batch.customFieldDefinitions?.[activeTab];
+
+      if (classesForActiveTab && Array.isArray(classesForActiveTab)) {
+        classesForActiveTab.forEach(cls => {
+          if (cls && cls !== '__no_subclass__') {
+            classSet.add(cls);
+          }
+        });
+      }
+    }
+
+    return classSet;
+  }, [selectedBatches, activeTab, cardStore.batches]);
+
+  // 等级统计（需要遍历卡牌，因为没有预处理的等级元数据）
+  const batchLevelSet = useMemo(() => {
+    if (selectedBatches.length === 0) return null;
+
+    const levelSet = new Set<string>();
+
+    for (const batchId of selectedBatches) {
+      const batch = cardStore.batches.get(batchId);
+      if (!batch || batch.disabled) continue;
+
+      for (const cardId of batch.cardIds) {
+        const card = cardStore.cards.get(cardId);
+        if (!card || !card.level) continue;
+
+        const cardType = isVariantCard(card)
+          ? card.variantSpecial?.realType
+          : card.type;
+
+        if (cardType !== activeTab) continue;
+
+        levelSet.add(card.level.toString());
+      }
+    }
+
+    return levelSet;
+  }, [selectedBatches, activeTab, cardStore.batches, cardStore.cards]);
+
+  // Step 2-3: 获取全局关键词列表并求交集
   const classOptions = useMemo(() => {
     if (!activeTab) return []
 
-    // 如果是变体类型，返回该类型的子类别作为class选项
-    if (isVariantType(activeTab)) {
-      return getVariantSubclassOptions(activeTab);
+    // Step 2: 获取全局关键词列表
+    const allGlobalOptions = isVariantType(activeTab)
+      ? getVariantSubclassOptions(activeTab)
+      : getCardClassOptionsForType(activeTab);
+
+    // 如果没有卡包筛选，直接返回全局列表
+    if (!batchClassSet) {
+      return allGlobalOptions;
     }
 
-    // 🚀 优化：按需计算当前类型的选项，而不是计算所有 5 种类型
-    return getCardClassOptionsForType(activeTab);
-  }, [activeTab, cardStore.subclassCountIndex]); // ✅ 添加 subclassCountIndex 作为依赖，确保数据更新时重新计算
+    // Step 3: 求交集 - 验证数据一致性
+    // 只保留同时在卡包中存在且在全局索引中有效的关键词
+    return allGlobalOptions.filter(option =>
+      batchClassSet.has(option.value)
+    );
+  }, [activeTab, batchClassSet, cardStore.subclassCountIndex]);
 
   const levelOptions = useMemo(() => {
-    // 如果是变体类型，返回该变体类型的等级选项
-    if (isVariantType(activeTab)) {
-      return getLevelOptions(activeTab);
+    // 获取全局等级选项
+    const allGlobalOptions = isVariantType(activeTab)
+      ? getLevelOptions(activeTab)
+      : getLevelOptions(activeTab as CardType);
+
+    // 如果没有卡包筛选，直接返回全局列表
+    if (!batchLevelSet) {
+      return allGlobalOptions;
     }
 
-    // 否则返回标准卡牌类型的等级选项
-    return getLevelOptions(activeTab as CardType)
-  }, [activeTab]);
+    // 求交集 - 只保留卡包中存在的等级
+    return allGlobalOptions.filter(option =>
+      batchLevelSet.has(option.value)
+    );
+  }, [activeTab, batchLevelSet]);
 
   const cardsForActiveTab = useMemo(() => {
     if (!activeTab || !cardStore.initialized) return [];
@@ -366,8 +435,16 @@ export function CardSelectionModal({
       });
     }
 
+    // Step 5: 应用卡包筛选 - 只保留属于选中卡包的卡牌
+    if (selectedBatches.length > 0) {
+      const batchSet = new Set(selectedBatches);
+      filtered = filtered.filter(card =>
+        card.batchId && batchSet.has(card.batchId)
+      );
+    }
+
     return filtered;
-  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses, selectedLevels, isOpen, activeTab,
+  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses, selectedLevels, selectedBatches, isOpen, activeTab,
       classOptions.length, levelOptions.length, cardStore.subclassCardIndex, cardStore.levelCardIndex]);
 
   // 🚀 优化：fullyFilteredCards 变化时更新显示状态

@@ -177,10 +177,10 @@ export async function importCharacterFromHTMLFile(file: File): Promise<ImportRes
         }
 
         // 检查文件大小（防止过大的文件）
-        if (file.size > 10 * 1024 * 1024) { // 10MB限制
+        if (file.size > 100 * 1024 * 1024) { // 100MB限制
             return {
                 success: false,
-                error: '文件过大，请选择小于10MB的HTML文件'
+                error: '文件过大，请选择小于100MB的HTML文件'
             }
         }
 

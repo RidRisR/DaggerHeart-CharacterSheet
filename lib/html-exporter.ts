@@ -870,10 +870,10 @@ export async function exportToHTML(formData: SheetData, options: HTMLExportOptio
     
     console.log(`[HTML导出] 生成的HTML文件大小: ${fileSizeMB}MB`)
     
-    if (fileSizeMB > 10) {
+    if (fileSizeMB > 100) {
       // 暂时关闭进度条显示警告
       exportStateManager.closeProgressModal()
-      
+
       const shouldContinue = confirm(
         `警告：生成的HTML文件大小为 ${fileSizeMB}MB，可能过大。\n\n` +
         '这主要是由于内嵌了大量图片。文件过大可能导致：\n' +

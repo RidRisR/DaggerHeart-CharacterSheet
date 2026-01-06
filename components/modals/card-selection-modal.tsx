@@ -9,7 +9,7 @@ import {
   getCardTypeName,
 } from "@/card/index"
 import { CardType } from "@/card"; // Add this import
-import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType, isVariantCard } from "@/card/card-types"
+import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType, isVariantCard, BatchStats, ExtendedStandardCard } from "@/card/card-types"
 import { createEmptyCard } from "@/card/card-types"
 import { ImageCard } from "@/components/ui/image-card"
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -238,15 +238,13 @@ export function CardSelectionModal({
 
   // 获取卡包选项列表
   const batchOptions = useMemo(() => {
-    const batches = cardStore.getAllBatches();
-    return batches
-      .filter(batch => !batch.disabled)
-      .map(batch => ({
-        id: batch.id,
-        name: batch.name,
-        cardCount: batch.cardCount,
-        isSystemBatch: batch.isSystemBatch || false,
-      }));
+    const batches = cardStore.getAllBatches() as Array<BatchStats & { id: string; name: string; isSystemBatch: boolean }>;
+    return batches.map(batch => ({
+      id: batch.id,
+      name: batch.name,
+      cardCount: batch.cardCount,
+      isSystemBatch: batch.isSystemBatch || false,
+    }));
   }, [cardStore.batches]);
 
   const cardsForActiveTab = useMemo(() => {
@@ -460,9 +458,10 @@ export function CardSelectionModal({
     // Step 5: 应用卡包筛选 - 只保留属于选中卡包的卡牌
     if (selectedBatches.length > 0) {
       const batchSet = new Set(selectedBatches);
-      filtered = filtered.filter(card =>
-        card.batchId && batchSet.has(card.batchId)
-      );
+      filtered = filtered.filter(card => {
+        const extCard = card as ExtendedStandardCard;
+        return extCard.batchId && batchSet.has(extCard.batchId);
+      });
     }
 
     return filtered;

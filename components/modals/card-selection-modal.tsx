@@ -640,8 +640,231 @@ export function CardSelectionModal({
           </div>
 
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-gray-200 flex items-center gap-4">
-              <div className="flex items-center gap-2">
+            {/* 优化后的筛选区 */}
+            <div className="bg-gray-50 border-b border-gray-200 p-4">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* 卡包筛选 */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">卡包</span>
+                  <DropdownMenu
+                    open={batchDropdownOpen}
+                    onOpenChange={setBatchDropdownOpen}
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-40 justify-start text-left font-normal">
+                        <span className="truncate">
+                          {
+                            batchOptions.length === 0
+                              ? "无卡包"
+                              : selectedBatches.length === batchOptions.length
+                                ? "全部卡包"
+                                : selectedBatches.length === 0
+                                  ? "未选卡包"
+                                  : selectedBatches.length === 1
+                                    ? batchOptions.find(b => b.id === selectedBatches[0])?.name || "选择卡包"
+                                    : `${selectedBatches.length} 包已选`
+                          }
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-52" align="start">
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                        <Button
+                          onClick={() => setSelectedBatches(batchOptions.map(b => b.id))}
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start"
+                        >
+                          全选
+                        </Button>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                        <Button
+                          onClick={() => {
+                            const allIds = batchOptions.map(b => b.id);
+                            setSelectedBatches(prev => allIds.filter(id => !prev.includes(id)));
+                          }}
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start"
+                        >
+                          反选
+                        </Button>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <ScrollArea className="h-64">
+                        {batchOptions.map((batch) => (
+                          <DropdownMenuItem
+                            key={batch.id}
+                            onSelect={(e) => e.preventDefault()}
+                            className="cursor-pointer"
+                          >
+                            <div className="flex items-center w-full">
+                              <Checkbox
+                                id={`batch-${batch.id}`}
+                                checked={selectedBatches.includes(batch.id)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedBatches(prev => {
+                                    return checked
+                                      ? [...prev, batch.id]
+                                      : prev.filter(id => id !== batch.id);
+                                  });
+                                }}
+                              />
+                              <label
+                                htmlFor={`batch-${batch.id}`}
+                                className="ml-2 cursor-pointer select-none flex-1 flex items-center justify-between"
+                              >
+                                <span className="truncate">{batch.name}</span>
+                                <span className="text-xs text-gray-500 ml-2">
+                                  {batch.cardCount}张
+                                </span>
+                              </label>
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </ScrollArea>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* 类别筛选 */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">类别</span>
+                  <DropdownMenu
+                    open={classDropdownOpen}
+                    onOpenChange={setClassDropdownOpen}
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-40 justify-start text-left font-normal">
+                        <span className="truncate">
+                          {
+                            classOptions.length === 0
+                              ? "无类别"
+                              : selectedClasses.length === classOptions.length
+                                ? "全部类别"
+                                : selectedClasses.length === 0
+                                  ? "未选类别"
+                                  : selectedClasses.length === 1
+                                    ? classOptions.find((o: any) => o.value === selectedClasses[0])?.label || "选择类别"
+                                    : `${selectedClasses.length} 类已选`
+                          }
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-52" align="start">
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                        <Button onClick={handleClassSelectAll} variant="ghost" size="sm" className="w-full justify-start">全选</Button>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                        <Button onClick={handleClassInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <ScrollArea className="h-64">
+                        {classOptions.map((option: any) => (
+                          <DropdownMenuItem
+                            key={option.value}
+                            onSelect={(e) => e.preventDefault()}
+                            className="cursor-pointer"
+                          >
+                            <div className="flex items-center w-full">
+                              <Checkbox
+                                id={`class-${option.value}`}
+                                checked={selectedClasses.includes(option.value)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedClasses(prev => {
+                                    return checked
+                                      ? [...prev, option.value]
+                                      : prev.filter(v => v !== option.value);
+                                  });
+                                }}
+                              />
+                              <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer select-none flex-1">
+                                {option.label}
+                              </label>
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </ScrollArea>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* 等级筛选 */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">等级</span>
+                  <DropdownMenu
+                    open={levelDropdownOpen}
+                    onOpenChange={setLevelDropdownOpen}
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-40 justify-start text-left font-normal">
+                        <span className="truncate">
+                          {
+                            levelOptions.length === 0
+                              ? "无等级"
+                              : selectedLevels.length === levelOptions.length
+                                ? "全部等级"
+                                : selectedLevels.length === 0
+                                  ? "未选等级"
+                                  : selectedLevels.length === 1
+                                    ? levelOptions.find(o => o.value === selectedLevels[0])?.label || "选择等级"
+                                    : `${selectedLevels.length} 级已选`
+                          }
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-52" align="start">
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                        <Button onClick={handleLevelSelectAll} variant="ghost" size="sm" className="w-full justify-start">全选</Button>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                        <Button onClick={handleLevelInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <ScrollArea className="h-48">
+                        {levelOptions.map((option) => (
+                          <DropdownMenuItem
+                            key={option.value}
+                            onSelect={(e) => e.preventDefault()}
+                            className="cursor-pointer"
+                          >
+                            <div className="flex items-center w-full">
+                              <Checkbox
+                                id={`level-${option.value}`}
+                                checked={selectedLevels.includes(option.value)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedLevels(prev => {
+                                    return checked
+                                      ? [...prev, option.value]
+                                      : prev.filter(v => v !== option.value);
+                                  });
+                                }}
+                              />
+                              <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer select-none flex-1">
+                                {option.label}
+                              </label>
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </ScrollArea>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* 搜索框 - 弹性增长 */}
+                <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">搜索</span>
+                  <input
+                    type="text"
+                    placeholder="搜索卡牌名称或描述..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* 重置按钮 */}
                 <button
                   onClick={() => {
                     setSearchTerm("");
@@ -652,212 +875,11 @@ export function CardSelectionModal({
                     setLevelDropdownOpen(false);
                     setBatchDropdownOpen(false);
                   }}
-                  className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-400 whitespace-nowrap"
+                  className="px-4 py-2 bg-gray-500 text-white text-sm rounded-md hover:bg-gray-600 transition-colors whitespace-nowrap"
                 >
                   重置筛选
                 </button>
-
-                {/* 卡包筛选 */}
-                <span className="text-sm font-medium">卡包:</span>
-                <DropdownMenu
-                  open={batchDropdownOpen}
-                  onOpenChange={setBatchDropdownOpen}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-36 justify-start text-left font-normal">
-                      {
-                        batchOptions.length === 0
-                          ? "无卡包"
-                          : selectedBatches.length === batchOptions.length
-                            ? "全部卡包"
-                            : selectedBatches.length === 0
-                              ? "未选卡包"
-                              : selectedBatches.length === 1
-                                ? batchOptions.find(b => b.id === selectedBatches[0])?.name || "选择卡包"
-                                : `${selectedBatches.length} 包已选`
-                      }
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-52" align="start">
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                      <Button
-                        onClick={() => setSelectedBatches(batchOptions.map(b => b.id))}
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start"
-                      >
-                        全选
-                      </Button>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                      <Button
-                        onClick={() => {
-                          const allIds = batchOptions.map(b => b.id);
-                          setSelectedBatches(prev => allIds.filter(id => !prev.includes(id)));
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start"
-                      >
-                        反选
-                      </Button>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <ScrollArea className="h-64">
-                      {batchOptions.map((batch) => (
-                        <DropdownMenuItem
-                          key={batch.id}
-                          onSelect={(e) => e.preventDefault()}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex items-center w-full">
-                            <Checkbox
-                              id={`batch-${batch.id}`}
-                              checked={selectedBatches.includes(batch.id)}
-                              onCheckedChange={(checked) => {
-                                setSelectedBatches(prev => {
-                                  return checked
-                                    ? [...prev, batch.id]
-                                    : prev.filter(id => id !== batch.id);
-                                });
-                              }}
-                            />
-                            <label
-                              htmlFor={`batch-${batch.id}`}
-                              className="ml-2 cursor-pointer select-none flex-1 flex items-center justify-between"
-                            >
-                              <span className="truncate">{batch.name}</span>
-                              <span className="text-xs text-gray-500 ml-2">
-                                {batch.cardCount}张
-                              </span>
-                            </label>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </ScrollArea>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <span className="text-sm font-medium">类别:</span>
-                <DropdownMenu
-                  open={classDropdownOpen}
-                  onOpenChange={setClassDropdownOpen}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-36 justify-start text-left font-normal">
-                      {
-                        classOptions.length === 0
-                          ? "无类别"
-                          : selectedClasses.length === classOptions.length
-                            ? "全部类别"
-                            : selectedClasses.length === 0
-                              ? "未选类别"
-                              : selectedClasses.length === 1
-                                ? classOptions.find((o: any) => o.value === selectedClasses[0])?.label || "选择类别"
-                                : `${selectedClasses.length} 类已选`
-                      }
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-52" align="start">
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                      <Button onClick={handleClassSelectAll} variant="ghost" size="sm" className="w-full justify-start">全选</Button>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                      <Button onClick={handleClassInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <ScrollArea className="h-64">
-                      {classOptions.map((option: any) => (
-                        <DropdownMenuItem
-                          key={option.value}
-                          onSelect={(e) => e.preventDefault()}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex items-center w-full">
-                            <Checkbox
-                              id={`class-${option.value}`}
-                              checked={selectedClasses.includes(option.value)}
-                              onCheckedChange={(checked) => {
-                                setSelectedClasses(prev => {
-                                  return checked
-                                    ? [...prev, option.value]
-                                    : prev.filter(v => v !== option.value);
-                                });
-                              }}
-                            />
-                            <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer select-none flex-1">
-                              {option.label}
-                            </label>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </ScrollArea>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <span className="text-sm font-medium">等级:</span>
-                <DropdownMenu
-                  open={levelDropdownOpen}
-                  onOpenChange={setLevelDropdownOpen}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-36 justify-start text-left font-normal">
-                      {
-                        levelOptions.length === 0
-                          ? "无等级"
-                          : selectedLevels.length === levelOptions.length
-                            ? "全部等级"
-                            : selectedLevels.length === 0
-                              ? "未选等级"
-                              : selectedLevels.length === 1
-                                ? levelOptions.find(o => o.value === selectedLevels[0])?.label || "选择等级"
-                                : `${selectedLevels.length} 级已选`
-                      }
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-52" align="start">
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                      <Button onClick={handleLevelSelectAll} variant="ghost" size="sm" className="w-full justify-start">全选</Button>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                      <Button onClick={handleLevelInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <ScrollArea className="h-48">
-                      {levelOptions.map((option) => (
-                        <DropdownMenuItem
-                          key={option.value}
-                          onSelect={(e) => e.preventDefault()}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex items-center w-full">
-                            <Checkbox
-                              id={`level-${option.value}`}
-                              checked={selectedLevels.includes(option.value)}
-                              onCheckedChange={(checked) => {
-                                setSelectedLevels(prev => {
-                                  return checked
-                                    ? [...prev, option.value]
-                                    : prev.filter(v => v !== option.value);
-                                });
-                              }}
-                            />
-                            <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer select-none flex-1">
-                              {option.label}
-                            </label>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </ScrollArea>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
-              <input
-                type="text"
-                placeholder="搜索卡牌名称或描述..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="p-2 border border-gray-300 rounded-md w-full"
-              />
             </div>
 
             <div id="scrollableDiv" ref={scrollableContainerRef} className="flex-1 overflow-y-auto p-4 pb-8">

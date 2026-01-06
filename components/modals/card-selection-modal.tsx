@@ -43,6 +43,8 @@ interface CardSelectionModalProps {
   setSelectedClasses: React.Dispatch<React.SetStateAction<string[]>>;
   selectedLevels: string[];
   setSelectedLevels: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedBatches: string[];
+  setSelectedBatches: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export function CardSelectionModal({
@@ -59,6 +61,8 @@ export function CardSelectionModal({
   setSelectedClasses,
   selectedLevels,
   setSelectedLevels,
+  selectedBatches,
+  setSelectedBatches,
 }: CardSelectionModalProps) {
   const { isTextMode } = useTextModeStore()
   const [displayedCards, setDisplayedCards] = useState<StandardCard[]>([])

@@ -202,6 +202,7 @@ export default function Home() {
   const [cardModalSearchTerm, setCardModalSearchTerm] = useState<string>("")
   const [cardModalSelectedClasses, setCardModalSelectedClasses] = useState<string[]>([])
   const [cardModalSelectedLevels, setCardModalSelectedLevels] = useState<string[]>([])
+  const [cardModalSelectedBatches, setCardModalSelectedBatches] = useState<string[]>([])
   
   // 使用角色管理Hook
   const {
@@ -869,6 +870,8 @@ export default function Home() {
           setSelectedClasses={setCardModalSelectedClasses}
           selectedLevels={cardModalSelectedLevels}
           setSelectedLevels={setCardModalSelectedLevels}
+          selectedBatches={cardModalSelectedBatches}
+          setSelectedBatches={setCardModalSelectedBatches}
         />
       )}
 

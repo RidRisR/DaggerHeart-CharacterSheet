@@ -28,6 +28,8 @@ interface CardDeckSectionProps {
   setCardModalSelectedClasses: React.Dispatch<React.SetStateAction<string[]>>;
   cardModalSelectedLevels: string[];
   setCardModalSelectedLevels: React.Dispatch<React.SetStateAction<string[]>>;
+  cardModalSelectedBatches: string[];
+  setCardModalSelectedBatches: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 // Utility function for border color
@@ -231,6 +233,8 @@ export function CardDeckSection({
   setCardModalSelectedClasses,
   cardModalSelectedLevels,
   setCardModalSelectedLevels,
+  cardModalSelectedBatches,
+  setCardModalSelectedBatches,
 }: CardDeckSectionProps) {
   // 钉住卡牌功能
   const { pinCard } = usePinnedCardsStore();
@@ -519,6 +523,8 @@ export function CardDeckSection({
           setSelectedClasses={setCardModalSelectedClasses}
           selectedLevels={cardModalSelectedLevels}
           setSelectedLevels={setCardModalSelectedLevels}
+          selectedBatches={cardModalSelectedBatches}
+          setSelectedBatches={setCardModalSelectedBatches}
         />
       )}
 

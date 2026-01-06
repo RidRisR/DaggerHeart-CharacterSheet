@@ -1012,9 +1012,12 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     const { isVariantCard } = require('../card-types');
 
     // Initialize the index objects
-    const countIndex: Record<string, Record<string, number>> = {};
     const cardIndex: Record<string, Record<string, string[]>> = {};
     const levelIndex: Record<string, Record<string, string[]>> = {};
+
+    // 🚀 New: Batch-specific keyword and level indexes
+    const batchKeywordIndex: Record<string, Record<string, Set<string>>> = {};
+    const batchLevelIndex: Record<string, Record<string, Set<string>>> = {};
 
     // Iterate through all cards
     for (const card of state.cards.values()) {
@@ -1044,13 +1047,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
       if (!indexKey || !subclass) continue;
 
-      // 🚀 Build count index (existing logic)
-      if (!countIndex[indexKey]) {
-        countIndex[indexKey] = {};
-      }
-      countIndex[indexKey][subclass] = (countIndex[indexKey][subclass] || 0) + 1;
-
-      // 🚀 Build card ID index (new - for O(1) filtering)
+      // 🚀 Build card ID index (for O(1) filtering)
       if (!cardIndex[indexKey]) {
         cardIndex[indexKey] = {};
       }
@@ -1059,7 +1056,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       }
       cardIndex[indexKey][subclass].push(card.id);
 
-      // 🚀 Build level index (new - for O(1) level filtering)
+      // 🚀 Build level index (for O(1) level filtering)
       if (card.level) {
         if (!levelIndex[indexKey]) {
           levelIndex[indexKey] = {};
@@ -1070,16 +1067,62 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
         }
         levelIndex[indexKey][levelKey].push(card.id);
       }
+
+      // 🚀 New: Record batch-specific keywords and levels
+      if (card.batchId) {
+        // Record keywords
+        if (!batchKeywordIndex[card.batchId]) {
+          batchKeywordIndex[card.batchId] = {};
+        }
+        if (!batchKeywordIndex[card.batchId][indexKey]) {
+          batchKeywordIndex[card.batchId][indexKey] = new Set();
+        }
+        // Add class/keyword (exclude placeholder)
+        if (subclass && subclass !== '__no_subclass__') {
+          batchKeywordIndex[card.batchId][indexKey].add(subclass);
+        }
+
+        // Record levels
+        if (card.level) {
+          if (!batchLevelIndex[card.batchId]) {
+            batchLevelIndex[card.batchId] = {};
+          }
+          if (!batchLevelIndex[card.batchId][indexKey]) {
+            batchLevelIndex[card.batchId][indexKey] = new Set();
+          }
+          batchLevelIndex[card.batchId][indexKey].add(card.level.toString());
+        }
+      }
     }
 
-    console.log('[UnifiedCardStore] Rebuilt subclass count index:', countIndex);
+    // 🚀 Convert Sets to Arrays for serialization
+    const finalBatchKeywordIndex: Record<string, Record<string, string[]>> = {};
+    const finalBatchLevelIndex: Record<string, Record<string, string[]>> = {};
+
+    for (const [batchId, types] of Object.entries(batchKeywordIndex)) {
+      finalBatchKeywordIndex[batchId] = {};
+      for (const [type, keywords] of Object.entries(types)) {
+        finalBatchKeywordIndex[batchId][type] = Array.from(keywords);
+      }
+    }
+
+    for (const [batchId, types] of Object.entries(batchLevelIndex)) {
+      finalBatchLevelIndex[batchId] = {};
+      for (const [type, levels] of Object.entries(types)) {
+        finalBatchLevelIndex[batchId][type] = Array.from(levels);
+      }
+    }
+
     console.log('[UnifiedCardStore] Rebuilt subclass card index - sample:', Object.keys(cardIndex));
     console.log('[UnifiedCardStore] Rebuilt level card index - sample:', Object.keys(levelIndex));
+    console.log('[UnifiedCardStore] Rebuilt batch keyword index - sample:', Object.keys(finalBatchKeywordIndex));
+    console.log('[UnifiedCardStore] Rebuilt batch level index - sample:', Object.keys(finalBatchLevelIndex));
 
     set({
-      subclassCountIndex: countIndex,
       subclassCardIndex: cardIndex,
-      levelCardIndex: levelIndex
+      levelCardIndex: levelIndex,
+      batchKeywordIndex: finalBatchKeywordIndex,
+      batchLevelIndex: finalBatchLevelIndex
     });
   },
 

@@ -147,57 +147,56 @@ export function CardSelectionModal({
     }
   }, [isOpen, onClose]);
 
-  // ⚡ Step 1: 统计卡包关键词（优化版 - 直接读取 customFieldDefinitions）
+  // 当卡包筛选改变时，清空类别和等级选择
+  const prevSelectedBatchesRef = useRef<string[]>([]);
+  useEffect(() => {
+    // 只在卡包筛选真正改变时清空（不是初始化时）
+    if (isOpen && prevSelectedBatchesRef.current.length > 0) {
+      const hasChanged =
+        prevSelectedBatchesRef.current.length !== selectedBatches.length ||
+        !prevSelectedBatchesRef.current.every(id => selectedBatches.includes(id));
+
+      if (hasChanged) {
+        setSelectedClasses([]);
+        setSelectedLevels([]);
+      }
+    }
+    prevSelectedBatchesRef.current = selectedBatches;
+  }, [selectedBatches, isOpen, setSelectedClasses, setSelectedLevels]);
+
+  // ⚡ Step 1: 获取卡包实际拥有的关键词（从预计算索引中读取）
   const batchClassSet = useMemo(() => {
     if (selectedBatches.length === 0) return null;
 
     const classSet = new Set<string>();
 
+    // 🚀 直接从预计算的索引中读取
     for (const batchId of selectedBatches) {
-      const batch = cardStore.batches.get(batchId);
-      if (!batch || batch.disabled) continue;
-
-      // 🚀 直接读取元数据，无需遍历卡牌
-      const classesForActiveTab = batch.customFieldDefinitions?.[activeTab];
-
-      if (classesForActiveTab && Array.isArray(classesForActiveTab)) {
-        classesForActiveTab.forEach(cls => {
-          if (cls && cls !== '__no_subclass__') {
-            classSet.add(cls);
-          }
-        });
+      const batchKeywords = cardStore.batchKeywordIndex?.[batchId]?.[activeTab];
+      if (batchKeywords && Array.isArray(batchKeywords)) {
+        batchKeywords.forEach(cls => classSet.add(cls));
       }
     }
 
-    return classSet;
-  }, [selectedBatches, activeTab, cardStore.batches]);
+    return classSet.size > 0 ? classSet : null;
+  }, [selectedBatches, activeTab, cardStore.batchKeywordIndex]);
 
-  // 等级统计（需要遍历卡牌，因为没有预处理的等级元数据）
+  // 获取卡包实际拥有的等级（从预计算索引中读取）
   const batchLevelSet = useMemo(() => {
     if (selectedBatches.length === 0) return null;
 
     const levelSet = new Set<string>();
 
+    // 🚀 直接从预计算的索引中读取
     for (const batchId of selectedBatches) {
-      const batch = cardStore.batches.get(batchId);
-      if (!batch || batch.disabled) continue;
-
-      for (const cardId of batch.cardIds) {
-        const card = cardStore.cards.get(cardId);
-        if (!card || !card.level) continue;
-
-        const cardType = isVariantCard(card)
-          ? card.variantSpecial?.realType
-          : card.type;
-
-        if (cardType !== activeTab) continue;
-
-        levelSet.add(card.level.toString());
+      const batchLevels = cardStore.batchLevelIndex?.[batchId]?.[activeTab];
+      if (batchLevels && Array.isArray(batchLevels)) {
+        batchLevels.forEach(lvl => levelSet.add(lvl));
       }
     }
 
-    return levelSet;
-  }, [selectedBatches, activeTab, cardStore.batches, cardStore.cards]);
+    return levelSet.size > 0 ? levelSet : null;
+  }, [selectedBatches, activeTab, cardStore.batchLevelIndex]);
 
   // Step 2-3: 获取全局关键词列表并求交集
   const classOptions = useMemo(() => {
@@ -218,7 +217,7 @@ export function CardSelectionModal({
     return allGlobalOptions.filter(option =>
       batchClassSet.has(option.value)
     );
-  }, [activeTab, batchClassSet, cardStore.subclassCountIndex]);
+  }, [activeTab, batchClassSet]);
 
   const levelOptions = useMemo(() => {
     // 获取全局等级选项
@@ -275,13 +274,16 @@ export function CardSelectionModal({
     const shouldUseIndex = hasClassFilter || hasLevelFilter;
 
     if (!shouldUseIndex) {
-      // 没有类别/等级筛选，直接对原始数组进行 variant/搜索过滤
+      // 没有类别/等级筛选，直接对原始数组进行 variant/搜索/卡包过滤
       let filtered = cardsForActiveTab;
 
       if (!filtered.length) return [];
 
-      // 合并 variant 和搜索过滤为单次遍历
-      if (isVariant || hasSearchTerm) {
+      // 合并 variant、搜索、卡包过滤为单次遍历
+      const hasBatchFilter = selectedBatches.length > 0;
+      const batchSet = hasBatchFilter ? new Set(selectedBatches) : null;
+
+      if (isVariant || hasSearchTerm || hasBatchFilter) {
         const term = hasSearchTerm ? debouncedSearchTerm.toLowerCase() : '';
 
         filtered = filtered.filter(card => {
@@ -299,6 +301,13 @@ export function CardSelectionModal({
               (card.cardSelectDisplay?.item2?.toLowerCase().includes(term)) ||
               (card.cardSelectDisplay?.item3?.toLowerCase().includes(term));
             if (!matches) return false;
+          }
+
+          // 卡包筛选检查
+          if (hasBatchFilter && batchSet) {
+            if (!card.batchId || !batchSet.has(card.batchId)) {
+              return false;
+            }
           }
 
           return true;

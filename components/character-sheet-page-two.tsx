@@ -26,6 +26,7 @@ export default function CharacterSheetPageTwo() {
   const [cardModalSearchTerm, setCardModalSearchTerm] = useState<string>("");
   const [cardModalSelectedClasses, setCardModalSelectedClasses] = useState<string[]>([]);
   const [cardModalSelectedLevels, setCardModalSelectedLevels] = useState<string[]>([]);
+  const [cardModalSelectedBatches, setCardModalSelectedBatches] = useState<string[]>([]);
 
   // State for upgrade domain card modal
   const [upgradeDomainModalOpen, setUpgradeDomainModalOpen] = useState(false);
@@ -412,6 +413,8 @@ export default function CharacterSheetPageTwo() {
           setCardModalSelectedClasses={setCardModalSelectedClasses}
           cardModalSelectedLevels={cardModalSelectedLevels}
           setCardModalSelectedLevels={setCardModalSelectedLevels}
+          cardModalSelectedBatches={cardModalSelectedBatches}
+          setCardModalSelectedBatches={setCardModalSelectedBatches}
         />
 
           {/* Upgrade Section */}
@@ -481,6 +484,8 @@ export default function CharacterSheetPageTwo() {
         setSelectedClasses={setCardModalSelectedClasses}
         selectedLevels={cardModalSelectedLevels}
         setSelectedLevels={setCardModalSelectedLevels}
+        selectedBatches={cardModalSelectedBatches}
+        setSelectedBatches={setCardModalSelectedBatches}
       />
 
       <CardSelectionModal
@@ -503,6 +508,8 @@ export default function CharacterSheetPageTwo() {
         setSelectedClasses={setCardModalSelectedClasses}
         selectedLevels={cardModalSelectedLevels}
         setSelectedLevels={setCardModalSelectedLevels}
+        selectedBatches={cardModalSelectedBatches}
+        setSelectedBatches={setCardModalSelectedBatches}
       />
     </>
   )

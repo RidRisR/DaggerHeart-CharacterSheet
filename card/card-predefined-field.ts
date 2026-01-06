@@ -50,9 +50,9 @@ export function getProfessionCardNames(tempBatchId?: string, tempDefinitions?: C
   // Filter out subclasses with 0 cards
   const { CardType } = require('./card-types');
   const store = useUnifiedCardStore.getState();
-  const counts = store.subclassCountIndex?.[CardType.Profession] || {};
+  const cardIndex = store.subclassCardIndex?.[CardType.Profession];
 
-  return allNames.filter(name => (counts[name] || 0) > 0);
+  return allNames.filter(name => cardIndex?.[name]?.length);
 }
 
 export function getAncestryCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
@@ -63,9 +63,9 @@ export function getAncestryCardNames(tempBatchId?: string, tempDefinitions?: Cus
   // Filter out subclasses with 0 cards
   const { CardType } = require('./card-types');
   const store = useUnifiedCardStore.getState();
-  const counts = store.subclassCountIndex?.[CardType.Ancestry] || {};
+  const cardIndex = store.subclassCardIndex?.[CardType.Ancestry];
 
-  return allNames.filter(name => (counts[name] || 0) > 0);
+  return allNames.filter(name => cardIndex?.[name]?.length);
 }
 
 export function getCommunityCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
@@ -76,9 +76,9 @@ export function getCommunityCardNames(tempBatchId?: string, tempDefinitions?: Cu
   // Filter out subclasses with 0 cards
   const { CardType } = require('./card-types');
   const store = useUnifiedCardStore.getState();
-  const counts = store.subclassCountIndex?.[CardType.Community] || {};
+  const cardIndex = store.subclassCardIndex?.[CardType.Community];
 
-  return allNames.filter(name => (counts[name] || 0) > 0);
+  return allNames.filter(name => cardIndex?.[name]?.length);
 }
 
 export function getSubClassCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
@@ -90,9 +90,9 @@ export function getSubClassCardNames(tempBatchId?: string, tempDefinitions?: Cus
   // Filter out subclasses with 0 cards
   const { CardType } = require('./card-types');
   const store = useUnifiedCardStore.getState();
-  const counts = store.subclassCountIndex?.[CardType.Subclass] || {};
+  const cardIndex = store.subclassCardIndex?.[CardType.Subclass];
 
-  return allNames.filter(name => (counts[name] || 0) > 0);
+  return allNames.filter(name => cardIndex?.[name]?.length);
 }
 
 export function getDomainCardNames(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): string[] {
@@ -103,9 +103,9 @@ export function getDomainCardNames(tempBatchId?: string, tempDefinitions?: Custo
   // Filter out subclasses with 0 cards
   const { CardType } = require('./card-types');
   const store = useUnifiedCardStore.getState();
-  const counts = store.subclassCountIndex?.[CardType.Domain] || {};
+  const cardIndex = store.subclassCardIndex?.[CardType.Domain];
 
-  return allNames.filter(name => (counts[name] || 0) > 0);
+  return allNames.filter(name => cardIndex?.[name]?.length);
 }
 
 // Variant type functions
@@ -125,11 +125,11 @@ export function getVariantTypeNames(tempBatchId?: string, tempDefinitions?: Vari
 
   // Filter out variant types with 0 cards
   const store = useUnifiedCardStore.getState();
-  const counts = store.subclassCountIndex || {};
+  const cardIndex = store.subclassCardIndex || {};
 
   return allTypeNames.filter(typeName => {
-    const typeSubclasses = counts[typeName] || {};
-    const totalCards = Object.values(typeSubclasses).reduce((sum, count) => sum + count, 0);
+    const typeSubclasses = cardIndex[typeName] || {};
+    const totalCards = Object.values(typeSubclasses).reduce((sum, cardIds) => sum + cardIds.length, 0);
     return totalCards > 0;
   });
 }

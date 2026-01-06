@@ -13,13 +13,13 @@ import { useUnifiedCardStore } from "./stores/unified-card-store";
  */
 export function getCardClassOptionsForType(cardType: string): { value: string; label: string }[] {
   const store = useUnifiedCardStore.getState();
-  const subclasses = store.subclassCountIndex?.[cardType];
+  const subclasses = store.subclassCardIndex?.[cardType];
 
   if (!subclasses) return [];
 
-  // 从已有的 subclassCountIndex 缓存中读取，过滤计数为 0 的子类别
+  // 从已有的 subclassCardIndex 缓存中读取，过滤无卡牌的子类别
   return Object.entries(subclasses)
-    .filter(([subclass, count]) => count > 0 && subclass !== '__no_subclass__')
+    .filter(([subclass, cardIds]) => cardIds.length > 0 && subclass !== '__no_subclass__')
     .map(([subclass]) => ({ value: subclass, label: subclass }));
 }
 
@@ -62,9 +62,9 @@ export function getVariantSubclassOptions(variantType: string, tempBatchId?: str
 
   // Filter out subclasses with 0 cards
   const store = useUnifiedCardStore.getState();
-  const counts = store.subclassCountIndex?.[variantType] || {};
+  const cardIndex = store.subclassCardIndex?.[variantType] || {};
 
-  return allSubclasses.filter((option: { value: string | number; }) => (counts[option.value] || 0) > 0);
+  return allSubclasses.filter((option: { value: string | number; }) => cardIndex[option.value]?.length);
 }
 
 // 获取所有可用的变体类型列表（用作UI中的卡牌类型选项）

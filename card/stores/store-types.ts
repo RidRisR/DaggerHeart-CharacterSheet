@@ -83,13 +83,6 @@ export interface IntegrityReport {
   corruptedBatches: string[];
 }
 
-// Subclass count index for filtering empty subclasses in UI
-export interface SubclassCountIndex {
-  [cardType: string]: {
-    [subclass: string]: number;
-  };
-}
-
 // Subclass card ID index for O(1) filtering by class
 export interface SubclassCardIndex {
   [cardType: string]: {
@@ -101,6 +94,20 @@ export interface SubclassCardIndex {
 export interface LevelCardIndex {
   [cardType: string]: {
     [level: string]: string[];  // Array of card IDs
+  };
+}
+
+// 🚀 Batch keyword index - records actual keywords present in each batch
+export interface BatchKeywordIndex {
+  [batchId: string]: {
+    [cardType: string]: string[];  // Actual keywords/classes in this batch
+  };
+}
+
+// 🚀 Batch level index - records actual levels present in each batch
+export interface BatchLevelIndex {
+  [batchId: string]: {
+    [cardType: string]: string[];  // Actual levels in this batch
   };
 }
 
@@ -158,9 +165,10 @@ export interface UnifiedCardState {
   // Aggregated cache (computed from batches)
   aggregatedCustomFields: CustomFieldNamesStore | null;
   aggregatedVariantTypes: VariantTypesForBatch | null;
-  subclassCountIndex: SubclassCountIndex | null;
-  subclassCardIndex: SubclassCardIndex | null;  // 🚀 New: Card ID index by subclass
-  levelCardIndex: LevelCardIndex | null;        // 🚀 New: Card ID index by level
+  subclassCardIndex: SubclassCardIndex | null;
+  levelCardIndex: LevelCardIndex | null;
+  batchKeywordIndex: BatchKeywordIndex | null;  // 🚀 Batch-specific keyword index
+  batchLevelIndex: BatchLevelIndex | null;      // 🚀 Batch-specific level index
   cacheValid: boolean;
 
   // System state

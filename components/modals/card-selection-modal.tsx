@@ -237,6 +237,19 @@ export function CardSelectionModal({
     );
   }, [activeTab, batchLevelSet]);
 
+  // 获取卡包选项列表
+  const batchOptions = useMemo(() => {
+    const batches = cardStore.getAllBatches();
+    return batches
+      .filter(batch => !batch.disabled)
+      .map(batch => ({
+        id: batch.id,
+        name: batch.name,
+        cardCount: batch.cardCount,
+        isSystemBatch: batch.isSystemBatch || false,
+      }));
+  }, [cardStore.batches]);
+
   const cardsForActiveTab = useMemo(() => {
     if (!activeTab || !cardStore.initialized) return [];
     const targetType = isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType);
@@ -530,8 +543,10 @@ export function CardSelectionModal({
     setSearchTerm("");
     setSelectedClasses([]);
     setSelectedLevels([]);
+    setSelectedBatches([]);
     setClassDropdownOpen(false);
     setLevelDropdownOpen(false);
+    setBatchDropdownOpen(false);
   };
 
   const positionTitle = `选择卡牌 #${selectedCardIndex + 1}`
@@ -623,13 +638,97 @@ export function CardSelectionModal({
                     setSearchTerm("");
                     setSelectedClasses([]);
                     setSelectedLevels([]);
-                    setClassDropdownOpen(false); // Reset dropdown state
-                    setLevelDropdownOpen(false); // Reset dropdown state
+                    setSelectedBatches([]);
+                    setClassDropdownOpen(false);
+                    setLevelDropdownOpen(false);
+                    setBatchDropdownOpen(false);
                   }}
                   className="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-400 whitespace-nowrap"
                 >
                   重置筛选
                 </button>
+
+                {/* 卡包筛选 */}
+                <span className="text-sm font-medium">卡包:</span>
+                <DropdownMenu
+                  open={batchDropdownOpen}
+                  onOpenChange={setBatchDropdownOpen}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-36 justify-start text-left font-normal">
+                      {
+                        batchOptions.length === 0
+                          ? "无卡包"
+                          : selectedBatches.length === batchOptions.length
+                            ? "全部卡包"
+                            : selectedBatches.length === 0
+                              ? "未选卡包"
+                              : selectedBatches.length === 1
+                                ? batchOptions.find(b => b.id === selectedBatches[0])?.name || "选择卡包"
+                                : `${selectedBatches.length} 包已选`
+                      }
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-52" align="start">
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                      <Button
+                        onClick={() => setSelectedBatches(batchOptions.map(b => b.id))}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start"
+                      >
+                        全选
+                      </Button>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                      <Button
+                        onClick={() => {
+                          const allIds = batchOptions.map(b => b.id);
+                          setSelectedBatches(prev => allIds.filter(id => !prev.includes(id)));
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start"
+                      >
+                        反选
+                      </Button>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <ScrollArea className="h-64">
+                      {batchOptions.map((batch) => (
+                        <DropdownMenuItem
+                          key={batch.id}
+                          onSelect={(e) => e.preventDefault()}
+                          className="cursor-pointer"
+                        >
+                          <div className="flex items-center w-full">
+                            <Checkbox
+                              id={`batch-${batch.id}`}
+                              checked={selectedBatches.includes(batch.id)}
+                              onCheckedChange={(checked) => {
+                                setSelectedBatches(prev => {
+                                  return checked
+                                    ? [...prev, batch.id]
+                                    : prev.filter(id => id !== batch.id);
+                                });
+                              }}
+                            />
+                            <label
+                              htmlFor={`batch-${batch.id}`}
+                              className="ml-2 cursor-pointer select-none flex-1 flex items-center justify-between"
+                            >
+                              <span className="truncate">{batch.name}</span>
+                              <span className="text-xs text-gray-500 ml-2">
+                                {batch.cardCount}张
+                              </span>
+                            </label>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </ScrollArea>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <span className="text-sm font-medium">类别:</span>
                 <DropdownMenu
                   open={classDropdownOpen}

@@ -18,7 +18,7 @@ interface CardMarkdownProps {
  *
  * 颜色方案：
  * - **粗体** → text-gray-800（深灰加粗 #1F2937）
- * - *直角引号* → 「text-gray-800」（深灰色，使用直角引号包裹）
+ * - *直角引号* → 「text-amber-900」（琥珀色，使用直角引号包裹）
  * - ***重要*** → text-amber-800（琥珀色加粗 #92400E）
  */
 export function CardMarkdown({ children, className = "", rehypePlugins, customComponents }: CardMarkdownProps) {
@@ -60,8 +60,8 @@ export function CardMarkdown({ children, className = "", rehypePlugins, customCo
                 const textContent = childArray.map(extractText).join('');
                 return <span className="font-bold text-amber-800">{textContent}</span>;
             }
-            // * 情况：深灰直角引号
-            return <span className="text-gray-800">「{children}」</span>;
+            // * 情况：琥珀色直角引号
+            return <span className="text-amber-900">「{children}」</span>;
         },
     };
 

@@ -17,9 +17,9 @@ interface CardMarkdownProps {
  * 统一的卡牌 Markdown 渲染组件
  *
  * 颜色方案：
- * - **粗体** → text-amber-800（琥珀色加粗 #92400E）
- * - *直角引号* → 「text-amber-800」（琥珀色，使用直角引号包裹 #92400E）
- * - ***粗体*** → text-gray-800（深灰加粗 #1F2937）
+ * - **粗体** → text-gray-800（深灰加粗 #1F2937）
+ * - *直角引号* → 「text-gray-800」（深灰色，使用直角引号包裹）
+ * - ***重要*** → text-amber-800（琥珀色加粗 #92400E）
  */
 export function CardMarkdown({ children, className = "", rehypePlugins, customComponents }: CardMarkdownProps) {
     // 默认组件配置
@@ -36,11 +36,11 @@ export function CardMarkdown({ children, className = "", rehypePlugins, customCo
             );
 
             if (hasEmElement) {
-                // *** 情况：深灰加粗
-                return <strong className="font-bold text-gray-800">{children}</strong>;
+                // *** 情况：琥珀色加粗
+                return <strong className="font-bold text-amber-800">{children}</strong>;
             }
-            // ** 情况：琥珀色加粗
-            return <strong className="font-bold text-amber-800">{children}</strong>;
+            // ** 情况：深灰加粗
+            return <strong className="font-bold text-gray-800">{children}</strong>;
         },
         em: ({ children }) => {
             const childArray = React.Children.toArray(children);
@@ -49,7 +49,7 @@ export function CardMarkdown({ children, className = "", rehypePlugins, customCo
             );
 
             if (hasStrongElement) {
-                // *** 的情况：em 包含 strong，深灰加粗
+                // *** 的情况：em 包含 strong，琥珀色加粗
                 const extractText = (child: any): string => {
                     if (typeof child === 'string') return child;
                     if (React.isValidElement(child) && (child.props as any).children) {
@@ -58,10 +58,10 @@ export function CardMarkdown({ children, className = "", rehypePlugins, customCo
                     return '';
                 };
                 const textContent = childArray.map(extractText).join('');
-                return <span className="font-bold text-gray-800">{textContent}</span>;
+                return <span className="font-bold text-amber-800">{textContent}</span>;
             }
-            // * 情况：琥珀色直角引号
-            return <span className="text-amber-800">「{children}」</span>;
+            // * 情况：深灰直角引号
+            return <span className="text-gray-800">「{children}」</span>;
         },
     };
 

@@ -14,30 +14,16 @@ import ArmorTemplatePage from "@/components/character-sheet-page-iknis"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { SealDiceExportModal } from "@/components/modals/seal-dice-export-modal"
-import { Button } from "@/components/ui/button"
-import { HoverMenu, HoverMenuItem, HoverMenuDivider } from "@/components/ui/hover-menu"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Download, FolderOpen, Package, Sparkles, FileText, FileJson, FileType, Code, Dice5, Plus, Upload } from "lucide-react"
 import { useSheetStore, useCardActions } from "@/lib/sheet-store"
-import { navigateToPage, cn } from "@/lib/utils"
 import { PrintReadyChecker } from "@/components/print/print-ready-checker"
 import { usePrintContext } from "@/contexts/print-context"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
 import { PinnedCardWindow } from "@/components/ui/pinned-card-window"
-import { PageVisibilityDropdown } from "@/components/ui/page-visibility-dropdown"
 import { useTextModeStore } from "@/lib/text-mode-store"
 import { useDualPageStore } from "@/lib/dual-page-store"
-import { DualPageToggle } from "@/components/ui/dual-page-toggle"
 import { registerPages, getTabPages } from "@/lib/page-registry"
 import { PageDisplay } from "@/components/layout/page-display"
+import { BottomDock } from "@/components/layout/bottom-dock"
 import { PrintPageRenderer } from "@/components/print/print-page-renderer"
 import { SaveSwitcher } from "@/components/ui/save-switcher"
 
@@ -546,52 +532,19 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 打印预览控制按钮，只在屏幕上显示，打印时隐藏 */}
-          <div className={`fixed left-0 right-0 z-[60] print:hidden print-control-buttons ${isMobile ? 'bottom-8' : 'bottom-4'
-            }`}>
-            <div className="flex justify-center">
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={() => window.print()}
-                  className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
-                    }`}
-                >
-                  导出为PDF
-                </Button>
-                <Button
-                  onClick={handleExportHTML}
-                  className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
-                    }`}
-                >
-                  导出为HTML
-                </Button>
-                <Button
-                  onClick={handleExportJSON}
-                  className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
-                    }`}
-                >
-                  导出为JSON
-                </Button>
-                <Button
-                  onClick={() => {
-                    setSealDiceExportModalOpen(true)
-                    setIsPrintingAll(false)
-                  }}
-                  className={`bg-gray-800 text-white hover:bg-gray-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
-                    }`}
-                >
-                  导出到骰子
-                </Button>
-                <Button
-                  onClick={() => setIsPrintingAll(false)}
-                  className={`bg-red-600 text-white hover:bg-red-700 focus:outline-none whitespace-nowrap ${isMobile ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'
-                    }`}
-                >
-                  返回
-                </Button>
-              </div>
-            </div>
-          </div>
+          {/* 打印预览控制按钮 */}
+          <BottomDock
+            mode="preview"
+            isMobile={isMobile}
+            onExportPDF={() => window.print()}
+            onExportHTML={handleExportHTML}
+            onExportJSON={handleExportJSON}
+            onOpenSealDiceExport={() => {
+              setSealDiceExportModalOpen(true)
+              setIsPrintingAll(false)
+            }}
+            onClose={() => setIsPrintingAll(false)}
+          />
 
           {/* 使用动态页面渲染器 */}
           <PrintPageRenderer sheetData={formData} />
@@ -715,187 +668,23 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 底部功能按钮区域 - 全新分组布局 */}
-      <div className={`fixed left-0 right-0 z-30 print:hidden ${isMobile ? 'bottom-8' : 'bottom-4'}`}>
-        <div className="flex justify-center px-4">
-          <TooltipProvider>
-            <div
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-full shadow-md border transition-all duration-200"
-              style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                backdropFilter: 'blur(16px) saturate(180%)',
-                borderColor: 'rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 4px 12px -2px rgba(0, 0, 0, 0.1)'
-              }}
-            >
-              {/* 统一布局：桌面端和移动端 */}
-              <>
-                {/* Group A: 卡牌相关 */}
-                <div className="flex items-center gap-2">
-                  {/* 卡牌抽屉按钮 */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => setIsCardDrawerOpen(!isCardDrawerOpen)}
-                        className={cn(
-                          "bg-gray-800 hover:bg-gray-700 text-white rounded-full p-0 flex items-center justify-center text-sm relative",
-                          isMobile ? "w-12 h-12 text-base" : "w-10 h-10",
-                          isCardDrawerOpen && "ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-900"
-                        )}
-                        aria-label="打开卡牌抽屉"
-                        aria-expanded={isCardDrawerOpen}
-                      >
-                        🎴
-                        {isCardDrawerOpen && (
-                          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-                          </span>
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <p>卡牌抽屉</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {isCardDrawerOpen ? "点击关闭" : "浏览和选择卡牌"}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  {/* 建卡指引按钮 */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={toggleGuide}
-                        className={cn(
-                          "bg-gray-800 hover:bg-gray-700 text-white gap-1.5 text-sm",
-                          isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
-                        )}
-                      >
-                        <Sparkles className="h-3.5 w-3.5" />
-                        建卡指引
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <p>新手建卡指引</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        跟随步骤快速创建你的第一个角色
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-
-                <Separator orientation="vertical" className="h-5 bg-slate-500/30" />
-
-                {/* Group B: 文件操作 */}
-                <div className="flex items-center gap-1.5">
-                  {/* 导出下拉菜单 */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button className={cn(
-                        "bg-gray-800 hover:bg-gray-700 text-white gap-1.5 text-sm",
-                        isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
-                      )}>
-                        <Download className="h-3.5 w-3.5" />
-                        导出
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" side="top" className={cn("w-56", isMobile && "text-base")}>
-                      <DropdownMenuItem onClick={handlePrintAll} className={cn(isMobile && "py-3 px-4")}>
-                        <FileText className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-                        打开导出预览界面
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setSealDiceExportModalOpen(true)} className={cn(isMobile && "py-3 px-4")}>
-                        <Dice5 className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-                        导出到骰子
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleQuickExportJSON} className={cn(isMobile && "py-3 px-4")}>
-                        <FileJson className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-                        导出JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleQuickExportPDF} className={cn(isMobile && "py-3 px-4")}>
-                        <FileType className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-                        导出PDF
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleQuickExportHTML} className={cn(isMobile && "py-3 px-4")}>
-                        <Code className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-                        导出HTML
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  {/* 存档管理下拉菜单 */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button className={cn(
-                        "bg-gray-800 hover:bg-gray-700 text-white gap-1.5 text-sm",
-                        isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
-                      )}>
-                        <FolderOpen className="h-3.5 w-3.5" />
-                        存档
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" side="top" className={cn("w-56", isMobile && "text-base")}>
-                      <DropdownMenuItem onClick={() => setCharacterManagementModalOpen(true)} className={cn(isMobile && "py-3 px-4")}>
-                        <FolderOpen className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-                        打开存档管理器
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={handleQuickCreateArchive}
-                        disabled={characterList.length >= MAX_CHARACTERS}
-                        className={cn(isMobile && "py-3 px-4")}
-                      >
-                        <Plus className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-                        新建存档
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={handleQuickImportFromHTML}
-                        disabled={characterList.length >= MAX_CHARACTERS}
-                        className={cn(isMobile && "py-3 px-4")}
-                      >
-                        <Upload className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-                        从HTML导入
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <Separator orientation="vertical" className="h-5 bg-slate-500/30" />
-
-                {/* Group C: 辅助功能 */}
-                <div className="flex items-center gap-1.5">
-                  {/* 卡包管理按钮 */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => navigateToPage('/card-manager')}
-                        className={cn(
-                          "bg-gray-800 hover:bg-gray-700 text-white gap-1.5 text-sm",
-                          isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
-                        )}
-                      >
-                        <Package className="h-3.5 w-3.5" />
-                        卡包
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <p>卡包管理</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        管理和导入自定义卡包
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  {/* 双页切换按钮 - 仅桌面端显示 */}
-                  {!isMobile && <DualPageToggle />}
-                </div>
-              </>
-            </div>
-          </TooltipProvider>
-        </div>
-      </div>
+      {/* 底部功能按钮区域 */}
+      <BottomDock
+        mode="main"
+        isMobile={isMobile}
+        isCardDrawerOpen={isCardDrawerOpen}
+        characterCount={characterList.length}
+        onToggleCardDrawer={() => setIsCardDrawerOpen(!isCardDrawerOpen)}
+        onToggleGuide={toggleGuide}
+        onPrintAll={handlePrintAll}
+        onOpenSealDiceExport={() => setSealDiceExportModalOpen(true)}
+        onQuickExportJSON={handleQuickExportJSON}
+        onQuickExportPDF={handleQuickExportPDF}
+        onQuickExportHTML={handleQuickExportHTML}
+        onOpenCharacterManagement={() => setCharacterManagementModalOpen(true)}
+        onQuickCreateArchive={handleQuickCreateArchive}
+        onQuickImportFromHTML={handleQuickImportFromHTML}
+      />
 
       {/* 快捷键提示 */}
       {showShortcutHint && (

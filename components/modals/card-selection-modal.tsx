@@ -73,6 +73,7 @@ export function CardSelectionModal({
   const [batchDropdownOpen, setBatchDropdownOpen] = useState(false); // Add state for batch dropdown
   const [sourceDropdownOpen, setSourceDropdownOpen] = useState(false); // Add state for source dropdown
   const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发卡牌刷新动画
+  const [filtersExpanded, setFiltersExpanded] = useState(false); // 筛选器折叠状态
 
   // Add category state management
   const [expandedCategories, setExpandedCategories] = useState(new Set(['standard', 'extended'])); // Default: both expanded
@@ -565,7 +566,7 @@ export function CardSelectionModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-bold">{positionTitle}</h2>
@@ -639,10 +640,47 @@ export function CardSelectionModal({
           </div>
 
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* 优化后的筛选区 */}
-            <div className="bg-gray-50 border-b border-gray-200 p-4">
-              <div className="flex flex-wrap items-center gap-3">
-                {/* 卡包筛选 */}
+            {/* 优化后的筛选区 - 移动端可折叠，桌面端常驻 */}
+            <div className="bg-gray-50 border-b border-gray-200 p-2 md:p-3">
+              {/* 移动端：展开/折叠按钮 + 摘要 - 整行可点击 */}
+              <div
+                className="flex flex-wrap items-center gap-2 md:hidden cursor-pointer select-none py-1"
+                onClick={() => setFiltersExpanded(!filtersExpanded)}
+              >
+                <div className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600">
+                  <span className={`transform transition-transform duration-200 text-xs ${filtersExpanded ? 'rotate-90' : ''}`}>
+                    ▶
+                  </span>
+                  <span>筛选</span>
+                  {(() => {
+                    const activeCount =
+                      (selectedBatches.length > 0 ? 1 : 0) +
+                      (selectedClasses.length > 0 ? 1 : 0) +
+                      (selectedLevels.length > 0 ? 1 : 0) +
+                      (searchTerm ? 1 : 0);
+                    return activeCount > 0 ? (
+                      <span className="px-1.5 py-0.5 text-xs bg-blue-500 text-white rounded-full">
+                        {activeCount}
+                      </span>
+                    ) : null;
+                  })()}
+                </div>
+
+                {/* 折叠时显示筛选摘要 */}
+                {!filtersExpanded && (selectedBatches.length > 0 || selectedClasses.length > 0 || selectedLevels.length > 0 || searchTerm) && (
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                    {selectedBatches.length > 0 && <span className="px-1.5 py-0.5 bg-gray-200 rounded">{selectedBatches.length}包</span>}
+                    {selectedClasses.length > 0 && <span className="px-1.5 py-0.5 bg-gray-200 rounded">{selectedClasses.length}类</span>}
+                    {selectedLevels.length > 0 && <span className="px-1.5 py-0.5 bg-gray-200 rounded">{selectedLevels.length}级</span>}
+                    {searchTerm && <span className="px-1.5 py-0.5 bg-gray-200 rounded">"{searchTerm.slice(0, 8)}{searchTerm.length > 8 ? '...' : ''}"</span>}
+                  </div>
+                )}
+              </div>
+
+              {/* 筛选器内容 - 移动端可折叠，桌面端常驻 */}
+              <div className={`overflow-hidden transition-all duration-200 md:!max-h-none md:!opacity-100 ${filtersExpanded ? 'max-h-[500px] mt-2 opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* 卡包筛选 */}
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-700 whitespace-nowrap">卡包</span>
                   <DropdownMenu
@@ -878,6 +916,7 @@ export function CardSelectionModal({
                 >
                   重置筛选
                 </button>
+                </div>
               </div>
             </div>
 

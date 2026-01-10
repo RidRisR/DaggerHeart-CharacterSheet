@@ -5,7 +5,7 @@
  */
 
 import type { ParseResult, AIWarning, CardType } from './ai-types'
-import type { CardPackageState } from '@/app/card-editor/store/card-editor-store'
+import type { CardPackageState } from '@/app/card-editor/types'
 import { countCards, countCardsByType } from './json-merger'
 
 /**

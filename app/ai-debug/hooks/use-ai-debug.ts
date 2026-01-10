@@ -7,7 +7,7 @@
 import { useState, useCallback, useRef } from 'react'
 import type { ChunkLog, DebugState, DebugCallbackInfo } from '../types'
 import type { AIServiceConfig, AIChunkResponse } from '@/app/card-editor/services/ai-types'
-import type { CardPackageState } from '@/app/card-editor/store/card-editor-store'
+import type { CardPackageState } from '@/app/card-editor/types'
 import { AIService } from '@/app/card-editor/services/ai-service'
 import { AIPromptBuilder } from '@/app/card-editor/services/ai-prompt-builder'
 import { mergeCardData } from '@/app/card-editor/services/json-merger'

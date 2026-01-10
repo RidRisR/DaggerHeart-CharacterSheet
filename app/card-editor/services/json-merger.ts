@@ -4,7 +4,7 @@
  * 纯函数实现的卡包数据合并逻辑
  */
 
-import type { CardPackageState } from '@/app/card-editor/store/card-editor-store'
+import type { CardPackageState } from '@/app/card-editor/types'
 import type { MergeOptions, CardType } from './ai-types'
 
 /**

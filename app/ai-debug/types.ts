@@ -3,7 +3,7 @@
  */
 
 import type { AIChunkResponse, AIWarning } from '../card-editor/services/ai-types'
-import type { CardPackageState } from '../card-editor/store/card-editor-store'
+import type { CardPackageState } from '../card-editor/types'
 
 /**
  * 单个 Chunk 的完整日志

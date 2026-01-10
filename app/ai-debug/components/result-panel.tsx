@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Copy, Check, Download } from 'lucide-react'
-import type { CardPackageState } from '@/app/card-editor/store/card-editor-store'
+import type { CardPackageState } from '@/app/card-editor/types'
 
 interface ResultPanelProps {
   data: Partial<CardPackageState>

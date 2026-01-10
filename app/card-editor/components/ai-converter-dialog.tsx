@@ -19,7 +19,7 @@ import { AIService } from '../services/ai-service'
 import { StreamingBatchProcessor } from '../services/streaming-batch-processor'
 import { ResultParser } from '../services/result-parser'
 import type { AIServiceConfig } from '../services/ai-types'
-import type { CardPackage } from '../types'
+import type { CardPackageState } from '../types'
 
 interface AIConverterDialogProps {
   open: boolean
@@ -51,7 +51,7 @@ export function AIConverterDialog({ open, onOpenChange }: AIConverterDialogProps
   const [processingError, setProcessingError] = useState<string | null>(null)
 
   // 预览步骤状态
-  const [generatedPackage, setGeneratedPackage] = useState<CardPackage | null>(null)
+  const [generatedPackage, setGeneratedPackage] = useState<CardPackageState | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
 
   // 检查是否已配置API
@@ -101,12 +101,14 @@ export function AIConverterDialog({ open, onOpenChange }: AIConverterDialogProps
         (state) => {
           // 更新处理进度
           if (state.currentChunk) {
+            const currentPos = state.currentPosition ?? 0
+            const inputTokens = aiService.estimateTokens(inputText)
             setProcessingState({
               currentChunk: state.currentChunk.index + 1,
               totalChunks: state.currentChunk.total,
-              currentText: inputText.substring(state.currentPosition, state.currentPosition + 50),
-              estimatedTokens: aiService.estimateTokens(inputText),
-              estimatedCost: aiService.estimateCost(aiService.estimateTokens(inputText))
+              currentText: inputText.substring(currentPos, currentPos + 50),
+              estimatedTokens: inputTokens,
+              estimatedCost: aiService.estimateCost(inputTokens, inputTokens)
             })
           }
         }
@@ -116,7 +118,7 @@ export function AIConverterDialog({ open, onOpenChange }: AIConverterDialogProps
       const parser = new ResultParser()
       const parseResult = await parser.parse(result)
 
-      setGeneratedPackage(parseResult.data as CardPackage)
+      setGeneratedPackage(parseResult.data as CardPackageState)
       setWarnings(parseResult.warnings.map(w => w.message))
       setCurrentStep('preview')
     } catch (error) {
@@ -210,7 +212,6 @@ export function AIConverterDialog({ open, onOpenChange }: AIConverterDialogProps
       <FileUploadZone
         value={inputText}
         onChange={setInputText}
-        placeholder="将 .txt 或 .md 文件拖放到此处，或点击上传文件..."
       />
 
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -308,7 +309,8 @@ export function AIConverterDialog({ open, onOpenChange }: AIConverterDialogProps
       ancestry: generatedPackage.ancestry?.length || 0,
       community: generatedPackage.community?.length || 0,
       subclass: generatedPackage.subclass?.length || 0,
-      domain: generatedPackage.domain?.length || 0
+      domain: generatedPackage.domain?.length || 0,
+      variant: generatedPackage.variant?.length || 0
     }
 
     const totalCards = Object.values(cardCounts).reduce((sum, count) => sum + count, 0)
@@ -337,6 +339,10 @@ export function AIConverterDialog({ open, onOpenChange }: AIConverterDialogProps
             <div className="flex justify-between">
               <span className="text-muted-foreground">领域卡牌</span>
               <span>{cardCounts.domain}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">变体卡牌</span>
+              <span>{cardCounts.variant}</span>
             </div>
             <div className="flex justify-between font-medium">
               <span>总计</span>

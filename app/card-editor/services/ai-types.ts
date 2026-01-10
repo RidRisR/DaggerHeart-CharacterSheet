@@ -4,7 +4,7 @@
  * 定义AI服务相关的所有TypeScript类型
  */
 
-import type { CardPackageState } from '@/app/card-editor/store/card-editor-store'
+import type { CardPackageState } from '@/app/card-editor/types'
 
 // ==================== AI服务配置 ====================
 

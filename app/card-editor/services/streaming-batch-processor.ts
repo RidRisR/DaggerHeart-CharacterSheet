@@ -4,7 +4,7 @@
  * 协调大文本的分块处理流程
  */
 
-import type { CardPackageState } from '@/app/card-editor/store/card-editor-store'
+import type { CardPackageState } from '@/app/card-editor/types'
 import type { ProcessState, AIChunkResponse } from './ai-types'
 import { AIService } from './ai-service'
 import { AIPromptBuilder } from './ai-prompt-builder'
@@ -217,9 +217,9 @@ export class StreamingBatchProcessor {
    * 推断卡牌类型
    */
   private inferCardType(card: any): keyof CardPackageState | null {
-    // 检查是否有明确的类型字段
-    if (card.type || card.类型) {
-      const typeValue = (card.type || card.类型).toLowerCase()
+    // 优先检查是否有明确的类型字段（AI 应该返回此字段）
+    if (card.type) {
+      const typeValue = card.type.toLowerCase()
       const typeMap: Record<string, keyof CardPackageState> = {
         profession: 'profession',
         职业: 'profession',
@@ -231,24 +231,47 @@ export class StreamingBatchProcessor {
         子职业: 'subclass',
         domain: 'domain',
         领域: 'domain',
+        领域法术: 'domain',
         variant: 'variant',
-        变体: 'variant'
+        变体: 'variant',
+        扩展: 'variant'
       }
-      return typeMap[typeValue] || null
+      const mappedType = typeMap[typeValue]
+      if (mappedType) {
+        return mappedType
+      }
     }
 
-    // 根据字段推断类型
-    if (card.领域1 || card.领域2 || card.起始生命 !== undefined) {
+    // 根据特征字段推断类型（作为后备方案）
+
+    // 职业卡：有领域1/领域2、起始生命、职业特性
+    if ((card.领域1 && card.领域2) || card.职业特性 || card.起始物品) {
       return 'profession'
     }
-    if (card.种族 || card.类别 !== undefined) {
+
+    // 种族卡：有种族字段和类别（1或2）
+    if (card.种族 && (card.类别 === 1 || card.类别 === 2)) {
       return 'ancestry'
     }
-    if (card.等级 !== undefined) {
+
+    // 社群卡：有特性字段（社群特有）
+    if (card.特性 && card.简介 && !card.施法 && !card.等级) {
+      return 'community'
+    }
+
+    // 子职业卡：有主职、子职业、等级（基石/专精/大师）和施法属性
+    if (card.主职 || card.子职业 || (card.施法 && card.等级 && typeof card.等级 === 'string')) {
       return 'subclass'
     }
-    if (card.施法属性 !== undefined) {
+
+    // 领域法术卡：有领域（单一领域字段）、等级（数字）、回想、属性
+    if (card.领域 && card.回想 !== undefined && typeof card.等级 === 'number') {
       return 'domain'
+    }
+
+    // 变体卡：有类型字段（变体类型如"神器"、"盟友"等）
+    if (card.类型 && card.效果) {
+      return 'variant'
     }
 
     // 默认为variant
@@ -265,7 +288,6 @@ export class StreamingBatchProcessor {
       professions: [],
       ancestries: [],
       communities: [],
-      subclasses: [],
       domains: [],
       variants: []
     }
@@ -274,10 +296,13 @@ export class StreamingBatchProcessor {
     if (packageData.profession) {
       packageData.profession.forEach((card: any) => {
         if (card.名称) definitions.professions.push(card.名称)
+        // 同时从职业卡中提取领域
+        if (card.领域1) definitions.domains.push(card.领域1)
+        if (card.领域2) definitions.domains.push(card.领域2)
       })
     }
 
-    // 提取种族名称
+    // 提取种族名称（从种族字段而非名称）
     if (packageData.ancestry) {
       packageData.ancestry.forEach((card: any) => {
         if (card.种族) definitions.ancestries.push(card.种族)
@@ -291,17 +316,17 @@ export class StreamingBatchProcessor {
       })
     }
 
-    // 提取子职业名称
-    if (packageData.subclass) {
-      packageData.subclass.forEach((card: any) => {
-        if (card.名称) definitions.subclasses.push(card.名称)
+    // 提取领域法术卡中的领域名称
+    if (packageData.domain) {
+      packageData.domain.forEach((card: any) => {
+        if (card.领域) definitions.domains.push(card.领域)
       })
     }
 
-    // 提取领域名称
-    if (packageData.domain) {
-      packageData.domain.forEach((card: any) => {
-        if (card.名称) definitions.domains.push(card.名称)
+    // 提取变体类型（从类型字段而非名称）
+    if (packageData.variant) {
+      packageData.variant.forEach((card: any) => {
+        if (card.类型) definitions.variants.push(card.类型)
       })
     }
 

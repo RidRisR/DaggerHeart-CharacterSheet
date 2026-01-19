@@ -37,16 +37,16 @@ export function DiceUsageGuideModal({ isOpen, onClose }: DiceUsageGuideModalProp
                   <div className="flex gap-4">
                     <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">2</div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-blue-900 mb-1">导入角色属性</h3>
-                      <p className="text-blue-800 text-sm">在"导出到骰子"弹窗中复制生成的 <code className="bg-blue-100 px-1 rounded">.st</code> 命令，在安装了骰子的群聊中发送，骰子会自动设置你的角色属性。</p>
+                      <h3 className="font-semibold text-blue-900 mb-1">应用名片模板</h3>
+                      <p className="text-blue-800 text-sm">发送 <code className="bg-blue-100 px-1 rounded">.sn dh</code> 应用玩家名片模板（显示属性值）。如果你是 GM，使用 <code className="bg-blue-100 px-1 rounded">.gm</code> 命令设置 GM 身份。</p>
+                      <p className="text-red-700 text-sm mt-2"><strong>⚠️ 重要：</strong>骰子机器人必须有群管理员权限才能应用名片模板</p>
                     </div>
                   </div>
                   <div className="flex gap-4">
                     <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">3</div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-blue-900 mb-1">应用名片模板</h3>
-                      <p className="text-blue-800 text-sm">发送 <code className="bg-blue-100 px-1 rounded">.sn dh</code> 应用玩家名片模板（显示属性值）。如果你是 GM，使用 <code className="bg-blue-100 px-1 rounded">.gm</code> 命令设置 GM 身份。</p>
-                      <p className="text-red-700 text-sm mt-2"><strong>⚠️ 重要：</strong>骰子机器人必须有群管理员权限才能应用名片模板</p>
+                      <h3 className="font-semibold text-blue-900 mb-1">导入角色属性</h3>
+                      <p className="text-blue-800 text-sm">在"导出到骰子"弹窗中复制生成的 <code className="bg-blue-100 px-1 rounded">.st</code> 命令，在安装了骰子的群聊中发送，骰子会自动设置你的角色属性。</p>
                     </div>
                   </div>
                   <div className="flex gap-4">

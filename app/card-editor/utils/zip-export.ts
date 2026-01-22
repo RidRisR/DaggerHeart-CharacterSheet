@@ -29,9 +29,22 @@ export async function exportCardPackageWithImages(
   };
   zip.file('manifest.json', JSON.stringify(manifest, null, 2));
 
-  // Get all available images from IndexedDB
-  const imageKeys = await getAllEditorImageKeys();
-  const imageKeysSet = new Set(imageKeys);
+  // Collect all card IDs from current package
+  const currentCardIds = new Set<string>();
+  const cardTypes = ['profession', 'ancestry', 'community', 'subclass', 'domain', 'variant'] as const;
+  cardTypes.forEach(type => {
+    const cards = packageData[type] as any[];
+    if (cards && Array.isArray(cards)) {
+      cards.forEach(card => {
+        if (card.id) currentCardIds.add(card.id);
+      });
+    }
+  });
+
+  // Get all available images from IndexedDB and filter to only include current package's cards
+  const allImageKeys = await getAllEditorImageKeys();
+  const validImageKeys = allImageKeys.filter(key => currentCardIds.has(key));
+  const imageKeysSet = new Set(validImageKeys);
 
   // Helper function to mark cards with local images
   const markCardsWithLocalImages = (cards: any[] | undefined) => {
@@ -64,11 +77,11 @@ export async function exportCardPackageWithImages(
 
   zip.file('cards.json', JSON.stringify(exportData, null, 2));
 
-  // Add images to ZIP
+  // Add images to ZIP (only valid images belonging to current package)
   const imagesFolder = zip.folder('images');
   if (imagesFolder) {
     let imageCount = 0;
-    for (const cardId of imageKeys) {
+    for (const cardId of validImageKeys) {
       try {
         const blob = await getImageBlobFromDB(cardId);
         if (blob) {

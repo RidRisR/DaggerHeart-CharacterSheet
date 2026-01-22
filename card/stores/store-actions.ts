@@ -865,7 +865,6 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
       const inferredUrl = get()._inferCardImageUrl(card);
       if (inferredUrl) {
-        console.log(`[UnifiedCardStore] 为卡牌 "${card.name}" (ID: ${cardId}) 推断图片路径: ${inferredUrl}`);
         updatedCards.set(cardId, { ...card, imageUrl: inferredUrl });
         processedCount++;
       } else {

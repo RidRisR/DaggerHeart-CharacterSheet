@@ -330,15 +330,25 @@ export const useCardEditorStore = create<CardEditorStore>()(
           }
         }),
         
-      deleteCard: (type, index) => 
+      deleteCard: (type, index) =>
         set(state => {
           const cards = state.packageData[type] as any[]
+          const cardToDelete = cards?.[index]
           const newCards = cards?.filter((_, i) => i !== index) || []
-          
+
+          // 异步删除卡牌对应的图片
+          if (cardToDelete?.id) {
+            import('../utils/image-db-helpers').then(({ deleteImageFromDB }) => {
+              deleteImageFromDB(cardToDelete.id).catch(error => {
+                console.warn(`[EditorStore] Failed to delete image for ${cardToDelete.id}:`, error)
+              })
+            })
+          }
+
           // 调整当前索引
           const currentIndex = state.currentCardIndex[type]
           const newIndex = currentIndex >= newCards.length ? Math.max(0, newCards.length - 1) : currentIndex
-          
+
           return {
             packageData: {
               ...state.packageData,
@@ -390,29 +400,42 @@ export const useCardEditorStore = create<CardEditorStore>()(
         set(state => {
           const cards = state.packageData.ancestry as any[]
           if (!cards || cards.length === 0) return state
-          
+
           // 找到配对的另一张卡
           const card = cards[index]
           if (!card) return state
-          
-          const pairedIndex = cards.findIndex((c, i) => 
-            i !== index && 
-            c.种族 === card.种族 && 
+
+          const pairedIndex = cards.findIndex((c, i) =>
+            i !== index &&
+            c.种族 === card.种族 &&
             c.简介 === card.简介 &&
             c.类别 !== card.类别
           )
-          
+
           // 删除两张配对的卡片
           const indicesToDelete = pairedIndex !== -1 ? [index, pairedIndex].sort((a, b) => b - a) : [index]
+
+          // 异步删除配对卡片的图片
+          import('../utils/image-db-helpers').then(({ deleteImageFromDB }) => {
+            indicesToDelete.forEach(i => {
+              const cardId = cards[i]?.id
+              if (cardId) {
+                deleteImageFromDB(cardId).catch(error => {
+                  console.warn(`[EditorStore] Failed to delete image for ${cardId}:`, error)
+                })
+              }
+            })
+          })
+
           let newCards = [...cards]
           indicesToDelete.forEach(i => newCards.splice(i, 1))
-          
+
           // 调整当前索引
           const currentIndex = state.currentCardIndex.ancestry
           const newIndex = currentIndex >= newCards.length ? Math.max(0, newCards.length - 1) : currentIndex
-          
+
           toast.info(`已删除种族配对：${card.种族}`)
-          
+
           return {
             packageData: {
               ...state.packageData,
@@ -461,30 +484,42 @@ export const useCardEditorStore = create<CardEditorStore>()(
         set(state => {
           const cards = state.packageData.subclass as any[]
           if (!cards || cards.length === 0) return state
-          
+
           // 找到同一子职业的其他两张卡
           const card = cards[index]
           if (!card) return state
-          
+
           const relatedIndices = cards
             .map((c, i) => ({ card: c, index: i }))
-            .filter(item => 
-              item.card.子职业 === card.子职业 && 
+            .filter(item =>
+              item.card.子职业 === card.子职业 &&
               item.card.主职 === card.主职
             )
             .map(item => item.index)
             .sort((a, b) => b - a)
-          
+
+          // 异步删除三卡组的图片
+          import('../utils/image-db-helpers').then(({ deleteImageFromDB }) => {
+            relatedIndices.forEach(i => {
+              const cardId = cards[i]?.id
+              if (cardId) {
+                deleteImageFromDB(cardId).catch(error => {
+                  console.warn(`[EditorStore] Failed to delete image for ${cardId}:`, error)
+                })
+              }
+            })
+          })
+
           // 删除三张相关的卡片
           let newCards = [...cards]
           relatedIndices.forEach(i => newCards.splice(i, 1))
-          
+
           // 调整当前索引
           const currentIndex = state.currentCardIndex.subclass
           const newIndex = currentIndex >= newCards.length ? Math.max(0, newCards.length - 1) : currentIndex
-          
+
           toast.info(`已删除子职业组：${card.子职业}`)
-          
+
           return {
             packageData: {
               ...state.packageData,

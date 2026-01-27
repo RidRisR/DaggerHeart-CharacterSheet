@@ -60,6 +60,7 @@
     "dexie": "^4.2.0",
     "domain": "latest",
     "embla-carousel-react": "latest",
+    "framer-motion": "^12.29.2",
     "input-otp": "latest",
     "jszip": "^3.10.1",
     "lucide-react": "^0.454.0",

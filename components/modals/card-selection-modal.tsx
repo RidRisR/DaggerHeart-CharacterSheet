@@ -1,991 +1,221 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react" // Added useState
-import InfiniteScroll from 'react-infinite-scroll-component';
-import {
-  getCardClassOptionsForType,  // 🚀 新增：按需计算优化
-  getLevelOptions,
-  getVariantSubclassOptions,
-  getCardTypeName,
-} from "@/card/index"
-import { CardType } from "@/card"; // Add this import
-import { StandardCard, ALL_CARD_TYPES, CardCategory, getCardTypesByCategory, isVariantType, isVariantCard, BatchStats, ExtendedStandardCard } from "@/card/card-types"
-import { createEmptyCard } from "@/card/card-types"
-import { ImageCard } from "@/components/ui/image-card"
-import { SelectableCard } from "@/components/ui/selectable-card"
-import { useTextModeStore } from "@/lib/text-mode-store"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
+import { useEffect, useCallback, useState } from "react"
+import { StandardCard, createEmptyCard } from "@/card/card-types"
+import { BaseCardModal, ModalHeader, ModalFilterBar } from "./base"
+import { ContentStates, InfiniteCardGrid } from "./display"
+import { MultiSelectFilter, SearchFilter } from "./filters"
+import { CardTypeSidebar } from "./card-selection/CardTypeSidebar"
+import { useCardFiltering } from "@/hooks/use-card-filtering"
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
+import { useDebounce } from "@/hooks/use-debounce"
 import { Button } from "@/components/ui/button"
-import { useDebounce } from "@/hooks/use-debounce";
-import { useUnifiedCardStore } from "@/card/stores/unified-card-store";
-
-const ITEMS_PER_PAGE = 30;
 
 interface CardSelectionModalProps {
   isOpen: boolean
   onClose: () => void
   onSelect: (card: StandardCard) => void
   selectedCardIndex: number
-  // Add the lifted state and setters as props
-  activeTab: string;
-  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
-  searchTerm: string;
-  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
-  selectedClasses: string[];
-  setSelectedClasses: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedLevels: string[];
-  setSelectedLevels: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedBatches: string[];
-  setSelectedBatches: React.Dispatch<React.SetStateAction<string[]>>;
+  initialTab?: string
 }
 
+/**
+ * 卡牌选择模态框
+ *
+ * 重构后的简化版本：
+ * - 状态内部管理（通过 useCardFiltering hook）
+ * - 使用 BaseCardModal 底座
+ * - 使用统一的筛选器组件
+ * - 代码量从 991 行减少到 ~140 行
+ */
 export function CardSelectionModal({
   isOpen,
   onClose,
   onSelect,
   selectedCardIndex,
-  // Destructure the new props
-  activeTab,
-  setActiveTab,
-  searchTerm,
-  setSearchTerm,
-  selectedClasses,
-  setSelectedClasses,
-  selectedLevels,
-  setSelectedLevels,
-  selectedBatches,
-  setSelectedBatches,
+  initialTab,
 }: CardSelectionModalProps) {
-  const { isTextMode } = useTextModeStore()
-  const [displayedCards, setDisplayedCards] = useState<StandardCard[]>([])
-  const [hasMore, setHasMore] = useState(true)
-  const scrollableContainerRef = useRef<HTMLDivElement>(null)
-  const [classDropdownOpen, setClassDropdownOpen] = useState(false); // Add state for class dropdown
-  const [levelDropdownOpen, setLevelDropdownOpen] = useState(false); // Add state for level dropdown
-  const [batchDropdownOpen, setBatchDropdownOpen] = useState(false); // Add state for batch dropdown
-  const [sourceDropdownOpen, setSourceDropdownOpen] = useState(false); // Add state for source dropdown
-  const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发卡牌刷新动画
-  const [filtersExpanded, setFiltersExpanded] = useState(false); // 筛选器折叠状态
+  // === 使用简化的筛选 Hook ===
+  const {
+    filteredCards,
+    totalCount,
+    classOptions,
+    levelOptions,
+    batchOptions,
+    state,
+    actions,
+    loading,
+    error,
+  } = useCardFiltering(initialTab)
 
-  // Add category state management
-  const [expandedCategories, setExpandedCategories] = useState(new Set(['standard', 'extended'])); // Default: both expanded
+  // 本地搜索词（用于即时输入响应）
+  const [localSearchTerm, setLocalSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(localSearchTerm, 300)
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 300)
-
-  // 使用 unified-card-store 直接获取卡牌数据
-  const cardStore = useUnifiedCardStore();
-
-  // Group card types by category
-  const cardTypesByCategory = useMemo(() => {
-    // 定义期望的顺序
-    const desiredOrder = [
-      CardType.Domain,      // 领域
-      CardType.Profession,  // 职业
-      CardType.Subclass,    // 子职业
-      CardType.Ancestry,    // 种族
-      CardType.Community,   // 社群
-    ];
-
-    let standard = getCardTypesByCategory(CardCategory.Standard);
-    const extended = getCardTypesByCategory(CardCategory.Extended);
-
-    // 对 standard 数组进行排序
-    standard.sort((a, b) => {
-      const indexA = desiredOrder.indexOf(a as CardType);
-      const indexB = desiredOrder.indexOf(b as CardType);
-
-      // 如果 a 和 b 都在期望顺序中，按期望顺序排
-      if (indexA !== -1 && indexB !== -1) {
-        return indexA - indexB;
-      }
-      // 如果只有 a 在期望顺序中，a 排在前面
-      if (indexA !== -1) {
-        return -1;
-      }
-      // 如果只有 b 在期望顺序中，b 排在前面
-      if (indexB !== -1) {
-        return 1;
-      }
-      // 如果都不在，保持原有相对顺序（或按字母顺序）
-      return a.localeCompare(b);
-    });
-
-    return { standard, extended };
-  }, []); // 🚀 优化：卡牌类型列表是静态的，不需要依赖 subclassCountIndex
-
-  // Effect to set a default active tab when the modal opens and no tab is active
+  // 同步防抖后的搜索词到筛选状态
   useEffect(() => {
-    if (isOpen && !activeTab) {
-      // Default to the first standard card type
-      const standardTypes = cardTypesByCategory.standard;
-      if (standardTypes.length > 0) {
-        setActiveTab(standardTypes[0]);
-      }
-    }
-  }, [isOpen, activeTab, setActiveTab, cardTypesByCategory.standard]);
+    actions.setSearchTerm(debouncedSearchTerm)
+  }, [debouncedSearchTerm, actions])
 
-  // ESC键关闭模态框
+  // 当筛选状态的搜索词变化时（如重置），同步到本地
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-      };
+    if (state.searchTerm !== localSearchTerm && state.searchTerm === '') {
+      setLocalSearchTerm('')
     }
-  }, [isOpen, onClose]);
+  }, [state.searchTerm])
 
-  // 当卡包筛选改变时，清空类别和等级选择
-  const prevSelectedBatchesRef = useRef<string[]>([]);
+  // 刷新触发器（用于卡牌动画）
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  // === 无限滚动 ===
+  const { displayedItems, hasMore, loadMore, reset, scrollRef } = useInfiniteScroll({
+    items: filteredCards,
+    pageSize: 30,
+  })
+
+  // === 副作用 ===
+
+  // 筛选结果变化时重置滚动
   useEffect(() => {
-    // 只在卡包筛选真正改变时清空（不是初始化时）
-    if (isOpen && prevSelectedBatchesRef.current.length > 0) {
-      const hasChanged =
-        prevSelectedBatchesRef.current.length !== selectedBatches.length ||
-        !prevSelectedBatchesRef.current.every(id => selectedBatches.includes(id));
+    reset()
+    setRefreshTrigger(prev => prev + 1)
+  }, [filteredCards, reset])
 
-      if (hasChanged) {
-        setSelectedClasses([]);
-        setSelectedLevels([]);
-      }
+  // === 事件处理 ===
+
+  const handleCardClick = useCallback((card: StandardCard) => {
+    const cardToSelect = { ...card }
+    if (!cardToSelect.type) {
+      cardToSelect.type = state.activeTab
     }
-    prevSelectedBatchesRef.current = selectedBatches;
-  }, [selectedBatches, isOpen, setSelectedClasses, setSelectedLevels]);
+    onSelect(cardToSelect)
+    onClose()
+  }, [state.activeTab, onSelect, onClose])
 
-  // ⚡ Step 1: 获取卡包实际拥有的关键词（从预计算索引中读取）
-  const batchClassSet = useMemo(() => {
-    if (selectedBatches.length === 0) return null;
+  const handleClearSelection = useCallback(() => {
+    onSelect(createEmptyCard())
+    onClose()
+  }, [onSelect, onClose])
 
-    const classSet = new Set<string>();
+  // 重置筛选（包括本地搜索词）
+  const handleResetFilters = useCallback(() => {
+    setLocalSearchTerm('')
+    actions.resetAll()
+  }, [actions])
 
-    // 🚀 直接从预计算的索引中读取
-    for (const batchId of selectedBatches) {
-      const batchKeywords = cardStore.batchKeywordIndex?.[batchId]?.[activeTab];
-      if (batchKeywords && Array.isArray(batchKeywords)) {
-        batchKeywords.forEach(cls => classSet.add(cls));
-      }
-    }
+  // Tab 切换时也清空本地搜索词
+  const handleTabChange = useCallback((tab: string) => {
+    setLocalSearchTerm('')
+    actions.setActiveTab(tab)
+  }, [actions])
 
-    return classSet.size > 0 ? classSet : null;
-  }, [selectedBatches, activeTab, cardStore.batchKeywordIndex]);
+  // 计算激活的筛选器数量
+  const activeFilterCount =
+    (state.selectedBatches.length > 0 ? 1 : 0) +
+    (state.selectedClasses.length > 0 ? 1 : 0) +
+    (state.selectedLevels.length > 0 ? 1 : 0) +
+    (localSearchTerm ? 1 : 0)
 
-  // 获取卡包实际拥有的等级（从预计算索引中读取）
-  const batchLevelSet = useMemo(() => {
-    if (selectedBatches.length === 0) return null;
-
-    const levelSet = new Set<string>();
-
-    // 🚀 直接从预计算的索引中读取
-    for (const batchId of selectedBatches) {
-      const batchLevels = cardStore.batchLevelIndex?.[batchId]?.[activeTab];
-      if (batchLevels && Array.isArray(batchLevels)) {
-        batchLevels.forEach(lvl => levelSet.add(lvl));
-      }
-    }
-
-    return levelSet.size > 0 ? levelSet : null;
-  }, [selectedBatches, activeTab, cardStore.batchLevelIndex]);
-
-  // Step 2-3: 获取全局关键词列表并求交集
-  const classOptions = useMemo(() => {
-    if (!activeTab) return []
-
-    // Step 2: 获取全局关键词列表
-    const allGlobalOptions = isVariantType(activeTab)
-      ? getVariantSubclassOptions(activeTab)
-      : getCardClassOptionsForType(activeTab);
-
-    // 如果没有卡包筛选，直接返回全局列表
-    if (!batchClassSet) {
-      return allGlobalOptions;
-    }
-
-    // Step 3: 求交集 - 验证数据一致性
-    // 只保留同时在卡包中存在且在全局索引中有效的关键词
-    return allGlobalOptions.filter(option =>
-      batchClassSet.has(option.value)
-    );
-  }, [activeTab, batchClassSet]);
-
-  const levelOptions = useMemo(() => {
-    // 获取全局等级选项
-    const allGlobalOptions = isVariantType(activeTab)
-      ? getLevelOptions(activeTab)
-      : getLevelOptions(activeTab as CardType);
-
-    // 如果没有卡包筛选，直接返回全局列表
-    if (!batchLevelSet) {
-      return allGlobalOptions;
-    }
-
-    // 求交集 - 只保留卡包中存在的等级
-    return allGlobalOptions.filter(option =>
-      batchLevelSet.has(option.value)
-    );
-  }, [activeTab, batchLevelSet]);
-
-  // 获取卡包选项列表
-  const batchOptions = useMemo(() => {
-    const batches = cardStore.getAllBatches() as Array<BatchStats & { id: string; name: string; isSystemBatch: boolean }>;
-    return batches.map(batch => ({
-      id: batch.id,
-      name: batch.name,
-      cardCount: batch.cardCount,
-      isSystemBatch: batch.isSystemBatch || false,
-    }));
-  }, [cardStore.batches]);
-
-  const cardsForActiveTab = useMemo(() => {
-    if (!activeTab || !cardStore.initialized) return [];
-    const targetType = isVariantType(activeTab) ? CardType.Variant : (activeTab as CardType);
-    return cardStore.loadCardsByType(targetType);
-  }, [activeTab, cardStore.initialized, cardStore.loadCardsByType]);
-  
-  // 使用真实的加载状态
-  const cardsLoading = cardStore.loading;
-  const cardsError = cardStore.error;
-
-  const fullyFilteredCards = useMemo(() => {
-    // 提前检查必要条件
-    if (!activeTab || !isOpen) {
-      return [];
-    }
-
-    const isVariant = isVariantType(activeTab);
-    const hasClassFilter = selectedClasses.length > 0 && classOptions.length > 0;
-    const hasLevelFilter = selectedLevels.length > 0 && levelOptions.length > 0;
-    const hasSearchTerm = !!debouncedSearchTerm;
-
-    // 🚀 优化：只在有筛选条件时使用索引，否则直接用原始数组
-    const shouldUseIndex = hasClassFilter || hasLevelFilter;
-
-    if (!shouldUseIndex) {
-      // 没有类别/等级筛选，直接对原始数组进行 variant/搜索/卡包过滤
-      let filtered = cardsForActiveTab;
-
-      if (!filtered.length) return [];
-
-      // 合并 variant、搜索、卡包过滤为单次遍历
-      const hasBatchFilter = selectedBatches.length > 0;
-      const batchSet = hasBatchFilter ? new Set(selectedBatches) : null;
-
-      if (isVariant || hasSearchTerm || hasBatchFilter) {
-        const term = hasSearchTerm ? debouncedSearchTerm.toLowerCase() : '';
-
-        filtered = filtered.filter(card => {
-          // Variant 类型检查
-          if (isVariant && card.variantSpecial?.realType !== activeTab) {
-            return false;
-          }
-
-          // 搜索检查
-          if (hasSearchTerm) {
-            const matches =
-              (card.name?.toLowerCase().includes(term)) ||
-              (card.description?.toLowerCase().includes(term)) ||
-              (card.cardSelectDisplay?.item1?.toLowerCase().includes(term)) ||
-              (card.cardSelectDisplay?.item2?.toLowerCase().includes(term)) ||
-              (card.cardSelectDisplay?.item3?.toLowerCase().includes(term));
-            if (!matches) return false;
-          }
-
-          // 卡包筛选检查
-          if (hasBatchFilter && batchSet) {
-            if (!card.batchId || !batchSet.has(card.batchId)) {
-              return false;
-            }
-          }
-
-          return true;
-        });
-      }
-
-      return filtered;
-    }
-
-    // 🚀 Step 1: 使用索引快速获取候选卡牌 ID
-    let candidateIds: Set<string> | null = null;
-
-    // 类别筛选 - 使用 subclassCardIndex
-    if (hasClassFilter) {
-      if (!cardStore.subclassCardIndex) {
-        console.warn('[CardSelectionModal] subclassCardIndex not initialized');
-        return [];
-      }
-
-      const typeIndex = cardStore.subclassCardIndex[activeTab];
-      if (!typeIndex) {
-        // 这个类型在索引中不存在 = 没有卡牌
-        return [];
-      }
-
-      // 🚀 优化：直接合并到 Set，避免 flatMap 创建中间数组
-      candidateIds = new Set<string>();
-      for (const cls of selectedClasses) {
-        const ids = typeIndex[cls];
-        if (ids) {
-          for (const id of ids) {
-            candidateIds.add(id);
-          }
-        }
-      }
-
-      if (candidateIds.size === 0) {
-        // 选中的类别没有卡牌
-        return [];
-      }
-    }
-
-    // 等级筛选 - 使用 levelCardIndex
-    if (hasLevelFilter) {
-      if (!cardStore.levelCardIndex) {
-        console.warn('[CardSelectionModal] levelCardIndex not initialized');
-        return [];
-      }
-
-      const levelIndex = cardStore.levelCardIndex[activeTab];
-      if (!levelIndex) {
-        // 这个类型没有等级信息 = 没有卡牌
-        return [];
-      }
-
-      if (candidateIds) {
-        // 🚀 优化：构建等级 ID Set，然后遍历较小的集合计算交集
-        const levelSet = new Set<string>();
-        for (const lvl of selectedLevels) {
-          const ids = levelIndex[lvl];
-          if (ids) {
-            for (const id of ids) {
-              levelSet.add(id);
-            }
-          }
-        }
-
-        // 🚀 优化：遍历较小的集合
-        if (levelSet.size < candidateIds.size) {
-          // 等级集合较小，遍历等级集合
-          const intersection = new Set<string>();
-          for (const id of levelSet) {
-            if (candidateIds.has(id)) {
-              intersection.add(id);
-            }
-          }
-          candidateIds = intersection;
-        } else {
-          // 类别集合较小或相等，遍历类别集合（原地删除）
-          for (const id of candidateIds) {
-            if (!levelSet.has(id)) {
-              candidateIds.delete(id);
-            }
-          }
-        }
-
-        if (candidateIds.size === 0) {
-          // 交集为空
-          return [];
-        }
-      } else {
-        // 只有等级筛选
-        candidateIds = new Set<string>();
-        for (const lvl of selectedLevels) {
-          const ids = levelIndex[lvl];
-          if (ids) {
-            for (const id of ids) {
-              candidateIds.add(id);
-            }
-          }
-        }
-
-        if (candidateIds.size === 0) {
-          return [];
-        }
-      }
-    }
-
-    // 🚀 Step 2: 通过 ID 获取卡牌对象
-    let filtered: StandardCard[];
-    if (candidateIds) {
-      // 从索引获取的 ID 集合中提取卡牌对象
-      filtered = [];
-      for (const id of candidateIds) {
-        const card = cardStore.cards.get(id);
-        if (card) {
-          filtered.push(card);
-        }
-      }
-    } else {
-      // 没有类别/等级筛选，使用全部卡牌
-      filtered = cardsForActiveTab;
-    }
-
-    // 🚀 Step 3: 应用其他过滤（variant 类型、搜索）- 合并为单次遍历
-    if (isVariant || hasSearchTerm) {
-      const term = hasSearchTerm ? debouncedSearchTerm.toLowerCase() : '';
-
-      filtered = filtered.filter(card => {
-        // Variant 类型检查
-        if (isVariant && card.variantSpecial?.realType !== activeTab) {
-          return false;
-        }
-
-        // 搜索检查
-        if (hasSearchTerm) {
-          const matches =
-            (card.name?.toLowerCase().includes(term)) ||
-            (card.description?.toLowerCase().includes(term)) ||
-            (card.cardSelectDisplay?.item1?.toLowerCase().includes(term)) ||
-            (card.cardSelectDisplay?.item2?.toLowerCase().includes(term)) ||
-            (card.cardSelectDisplay?.item3?.toLowerCase().includes(term));
-          if (!matches) return false;
-        }
-
-        return true;
-      });
-    }
-
-    // Step 5: 应用卡包筛选 - 只保留属于选中卡包的卡牌
-    if (selectedBatches.length > 0) {
-      const batchSet = new Set(selectedBatches);
-      filtered = filtered.filter(card => {
-        const extCard = card as ExtendedStandardCard;
-        return extCard.batchId && batchSet.has(extCard.batchId);
-      });
-    }
-
-    return filtered;
-  }, [cardsForActiveTab, debouncedSearchTerm, selectedClasses, selectedLevels, selectedBatches, isOpen, activeTab,
-      classOptions.length, levelOptions.length, cardStore.subclassCardIndex, cardStore.levelCardIndex]);
-
-  // 🚀 优化：fullyFilteredCards 变化时更新显示状态
-  useEffect(() => {
-    if (scrollableContainerRef.current) {
-      scrollableContainerRef.current.scrollTop = 0;
-    }
-    setDisplayedCards(fullyFilteredCards.slice(0, ITEMS_PER_PAGE));
-    setHasMore(fullyFilteredCards.length > ITEMS_PER_PAGE);
-    // 触发卡牌刷新动画
-    setRefreshTrigger(prev => prev + 1);
-  }, [fullyFilteredCards]);
-
-  const fetchMoreData = () => {
-    if (displayedCards.length >= fullyFilteredCards.length) {
-      setHasMore(false);
-      return;
-    }
-    // Ensure displayedCards and fullyFilteredCards are correctly typed
-    const newDisplayedCards = displayedCards.concat(
-      fullyFilteredCards.slice(displayedCards.length, displayedCards.length + ITEMS_PER_PAGE)
-    );
-    setDisplayedCards(newDisplayedCards);
-    setHasMore(newDisplayedCards.length < fullyFilteredCards.length);
-  };
-
-  const handleSelectCard = (selectedCard: StandardCard) => { // Ensure selectedCard is StandardCard
-    try {
-      if (!selectedCard.type) {
-        selectedCard.type = activeTab
-      }
-      onSelect(selectedCard)
-      onClose()
-    } catch (error) {
-      console.error("[CardSelectionModal] Error selecting card:", error);
-    }
-  }
-
-  const handleClearSelection = () => {
-    const emptyCard = createEmptyCard();
-    onSelect(emptyCard);
-    onClose();
-  }
-
-  if (!isOpen) return null
-
-  const handleClassSelectAll = () => {
-    const allClassValues = classOptions.map((opt: any) => opt.value);
-    setSelectedClasses(allClassValues);
-  };
-
-  const handleClassInvertSelection = () => {
-    const allClassValues = classOptions.map((opt: any) => opt.value);
-    setSelectedClasses(prev => allClassValues.filter((val: any) => !prev.includes(val)));
-  };
-
-  const handleLevelSelectAll = () => {
-    const allLevelValues = levelOptions.map(opt => opt.value);
-    setSelectedLevels(allLevelValues);
-  };
-
-  const handleLevelInvertSelection = () => {
-    const allLevelValues = levelOptions.map(opt => opt.value);
-    setSelectedLevels(prev => allLevelValues.filter(val => !prev.includes(val)));
-  };
-
-  // Add category toggle function
-  const toggleCategoryExpansion = (category: string) => {
-    setExpandedCategories(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(category)) {
-        newSet.delete(category);
-      } else {
-        newSet.add(category);
-      }
-      return newSet;
-    });
-  };
-
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-    // Reset filters when tab changes
-    setSearchTerm("");
-    setSelectedClasses([]);
-    setSelectedLevels([]);
-    setSelectedBatches([]);
-    setClassDropdownOpen(false);
-    setLevelDropdownOpen(false);
-    setBatchDropdownOpen(false);
-  };
-
-  const positionTitle = `选择卡牌 #${selectedCardIndex + 1}`
-
-  // 如果正在加载，显示加载状态
-  if (!isOpen) return null;
+  // === 渲染 ===
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold">{positionTitle}</h2>
-            <button
+    <BaseCardModal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="xl"
+      sidebar={
+        <CardTypeSidebar
+          activeTab={state.activeTab}
+          onTabChange={handleTabChange}
+        />
+      }
+      header={
+        <ModalHeader
+          title={`选择卡牌 #${selectedCardIndex + 1}`}
+          onClose={onClose}
+          actions={
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={handleClearSelection}
-              className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+              className="bg-red-500 hover:bg-red-600 text-white"
             >
               清除选择
-            </button>
-          </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            ✕
-          </button>
-        </div>
+            </Button>
+          }
+        />
+      }
+    >
+      <ModalFilterBar collapsible activeFilterCount={activeFilterCount}>
+        <MultiSelectFilter
+          label="卡包"
+          options={batchOptions.map(b => ({ value: b.id, label: `${b.name} (${b.cardCount})` }))}
+          selected={state.selectedBatches}
+          onChange={actions.setBatches}
+          placeholder="未选卡包"
+          allSelectedText="全部卡包"
+          countSuffix="包已选"
+        />
+        <MultiSelectFilter
+          label="类别"
+          options={classOptions}
+          selected={state.selectedClasses}
+          onChange={actions.setClasses}
+          placeholder="未选类别"
+          allSelectedText="全部类别"
+          countSuffix="类已选"
+          disabled={classOptions.length === 0}
+        />
+        <MultiSelectFilter
+          label="等级"
+          options={levelOptions}
+          selected={state.selectedLevels}
+          onChange={actions.setLevels}
+          placeholder="未选等级"
+          allSelectedText="全部等级"
+          countSuffix="级已选"
+          disabled={levelOptions.length === 0}
+        />
+        <SearchFilter
+          value={localSearchTerm}
+          onChange={setLocalSearchTerm}
+          placeholder="搜索卡牌名称或描述..."
+          debounceMs={0}
+          className="flex-1 min-w-[200px]"
+        />
+        <Button
+          variant="secondary"
+          onClick={handleResetFilters}
+          className="bg-gray-500 hover:bg-gray-600 text-white"
+        >
+          重置筛选
+        </Button>
+      </ModalFilterBar>
 
-        <div className="flex-1 flex overflow-hidden">
-          <div className="w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto">
-            <div className="flex flex-col p-2">
-              {/* Standard Category */}
-              <div className="mb-2">
-                <button
-                  onClick={() => toggleCategoryExpansion('standard')}
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded"
-                >
-                  <span>标准卡牌</span>
-                  <span className={`transform transition-transform ${expandedCategories.has('standard') ? 'rotate-90' : ''}`}>
-                    ▶
-                  </span>
-                </button>
-                {expandedCategories.has('standard') && (
-                  <div className="ml-2 mt-1 space-y-1">
-                    {cardTypesByCategory.standard.map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => handleTabChange(type)}
-                        className={`w-full text-left px-4 py-2 text-sm rounded ${activeTab === type ? "bg-blue-100 text-blue-700 font-medium" : "hover:bg-gray-100 text-gray-600"}`}
-                      >
-                        {ALL_CARD_TYPES.get(type) || type}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Extended Category */}
-              <div className="mb-2">
-                <button
-                  onClick={() => toggleCategoryExpansion('extended')}
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded"
-                >
-                  <span>扩展卡牌</span>
-                  <span className={`transform transition-transform ${expandedCategories.has('extended') ? 'rotate-90' : ''}`}>
-                    ▶
-                  </span>
-                </button>
-                {expandedCategories.has('extended') && (
-                  <div className="ml-2 mt-1 space-y-1">
-                    {cardTypesByCategory.extended.map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => handleTabChange(type)}
-                        className={`w-full text-left px-4 py-2 text-sm rounded ${activeTab === type ? "bg-blue-100 text-blue-700 font-medium" : "hover:bg-gray-100 text-gray-600"}`}
-                      >
-                        {getCardTypeName(type)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* 优化后的筛选区 - 移动端可折叠，桌面端常驻 */}
-            <div className="bg-gray-50 border-b border-gray-200 p-2 md:p-3">
-              {/* 移动端：展开/折叠按钮 + 摘要 - 整行可点击 */}
-              <div
-                className="flex flex-wrap items-center gap-2 md:hidden cursor-pointer select-none py-1"
-                onClick={() => setFiltersExpanded(!filtersExpanded)}
-              >
-                <div className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600">
-                  <span className={`transform transition-transform duration-200 text-xs ${filtersExpanded ? 'rotate-90' : ''}`}>
-                    ▶
-                  </span>
-                  <span>筛选</span>
-                  {(() => {
-                    const activeCount =
-                      (selectedBatches.length > 0 ? 1 : 0) +
-                      (selectedClasses.length > 0 ? 1 : 0) +
-                      (selectedLevels.length > 0 ? 1 : 0) +
-                      (searchTerm ? 1 : 0);
-                    return activeCount > 0 ? (
-                      <span className="px-1.5 py-0.5 text-xs bg-blue-500 text-white rounded-full">
-                        {activeCount}
-                      </span>
-                    ) : null;
-                  })()}
-                </div>
-
-                {/* 折叠时显示筛选摘要 */}
-                {!filtersExpanded && (selectedBatches.length > 0 || selectedClasses.length > 0 || selectedLevels.length > 0 || searchTerm) && (
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    {selectedBatches.length > 0 && <span className="px-1.5 py-0.5 bg-gray-200 rounded">{selectedBatches.length}包</span>}
-                    {selectedClasses.length > 0 && <span className="px-1.5 py-0.5 bg-gray-200 rounded">{selectedClasses.length}类</span>}
-                    {selectedLevels.length > 0 && <span className="px-1.5 py-0.5 bg-gray-200 rounded">{selectedLevels.length}级</span>}
-                    {searchTerm && <span className="px-1.5 py-0.5 bg-gray-200 rounded">"{searchTerm.slice(0, 8)}{searchTerm.length > 8 ? '...' : ''}"</span>}
-                  </div>
-                )}
-              </div>
-
-              {/* 筛选器内容 - 移动端可折叠，桌面端常驻 */}
-              <div className={`overflow-hidden transition-all duration-200 md:!max-h-none md:!opacity-100 ${filtersExpanded ? 'max-h-[500px] mt-2 opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* 卡包筛选 */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">卡包</span>
-                  <DropdownMenu
-                    open={batchDropdownOpen}
-                    onOpenChange={setBatchDropdownOpen}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-40 justify-start text-left font-normal">
-                        <span className="truncate">
-                          {
-                            batchOptions.length === 0
-                              ? "无卡包"
-                              : selectedBatches.length === batchOptions.length
-                                ? "全部卡包"
-                                : selectedBatches.length === 0
-                                  ? "未选卡包"
-                                  : selectedBatches.length === 1
-                                    ? batchOptions.find(b => b.id === selectedBatches[0])?.name || "选择卡包"
-                                    : `${selectedBatches.length} 包已选`
-                          }
-                        </span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-52" align="start">
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                        <Button
-                          onClick={() => setSelectedBatches(batchOptions.map(b => b.id))}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start"
-                        >
-                          全选
-                        </Button>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                        <Button
-                          onClick={() => {
-                            const allIds = batchOptions.map(b => b.id);
-                            setSelectedBatches(prev => allIds.filter(id => !prev.includes(id)));
-                          }}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start"
-                        >
-                          反选
-                        </Button>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <ScrollArea className="h-64">
-                        {batchOptions.map((batch) => (
-                          <DropdownMenuItem
-                            key={batch.id}
-                            onSelect={(e) => e.preventDefault()}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex items-center w-full">
-                              <Checkbox
-                                id={`batch-${batch.id}`}
-                                checked={selectedBatches.includes(batch.id)}
-                                onCheckedChange={(checked) => {
-                                  setSelectedBatches(prev => {
-                                    return checked
-                                      ? [...prev, batch.id]
-                                      : prev.filter(id => id !== batch.id);
-                                  });
-                                }}
-                              />
-                              <label
-                                htmlFor={`batch-${batch.id}`}
-                                className="ml-2 cursor-pointer select-none flex-1 flex items-center justify-between"
-                              >
-                                <span className="truncate">{batch.name}</span>
-                                <span className="text-xs text-gray-500 ml-2">
-                                  {batch.cardCount}张
-                                </span>
-                              </label>
-                            </div>
-                          </DropdownMenuItem>
-                        ))}
-                      </ScrollArea>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                {/* 类别筛选 */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">类别</span>
-                  <DropdownMenu
-                    open={classDropdownOpen}
-                    onOpenChange={setClassDropdownOpen}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-40 justify-start text-left font-normal">
-                        <span className="truncate">
-                          {
-                            classOptions.length === 0
-                              ? "无类别"
-                              : selectedClasses.length === classOptions.length
-                                ? "全部类别"
-                                : selectedClasses.length === 0
-                                  ? "未选类别"
-                                  : selectedClasses.length === 1
-                                    ? classOptions.find((o: any) => o.value === selectedClasses[0])?.label || "选择类别"
-                                    : `${selectedClasses.length} 类已选`
-                          }
-                        </span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-52" align="start">
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                        <Button onClick={handleClassSelectAll} variant="ghost" size="sm" className="w-full justify-start">全选</Button>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                        <Button onClick={handleClassInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <ScrollArea className="h-64">
-                        {classOptions.map((option: any) => (
-                          <DropdownMenuItem
-                            key={option.value}
-                            onSelect={(e) => e.preventDefault()}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex items-center w-full">
-                              <Checkbox
-                                id={`class-${option.value}`}
-                                checked={selectedClasses.includes(option.value)}
-                                onCheckedChange={(checked) => {
-                                  setSelectedClasses(prev => {
-                                    return checked
-                                      ? [...prev, option.value]
-                                      : prev.filter(v => v !== option.value);
-                                  });
-                                }}
-                              />
-                              <label htmlFor={`class-${option.value}`} className="ml-2 cursor-pointer select-none flex-1">
-                                {option.label}
-                              </label>
-                            </div>
-                          </DropdownMenuItem>
-                        ))}
-                      </ScrollArea>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                {/* 等级筛选 */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">等级</span>
-                  <DropdownMenu
-                    open={levelDropdownOpen}
-                    onOpenChange={setLevelDropdownOpen}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-40 justify-start text-left font-normal">
-                        <span className="truncate">
-                          {
-                            levelOptions.length === 0
-                              ? "无等级"
-                              : selectedLevels.length === levelOptions.length
-                                ? "全部等级"
-                                : selectedLevels.length === 0
-                                  ? "未选等级"
-                                  : selectedLevels.length === 1
-                                    ? levelOptions.find(o => o.value === selectedLevels[0])?.label || "选择等级"
-                                    : `${selectedLevels.length} 级已选`
-                          }
-                        </span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-52" align="start">
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                        <Button onClick={handleLevelSelectAll} variant="ghost" size="sm" className="w-full justify-start">全选</Button>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
-                        <Button onClick={handleLevelInvertSelection} variant="ghost" size="sm" className="w-full justify-start">反选</Button>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <ScrollArea className="h-48">
-                        {levelOptions.map((option) => (
-                          <DropdownMenuItem
-                            key={option.value}
-                            onSelect={(e) => e.preventDefault()}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex items-center w-full">
-                              <Checkbox
-                                id={`level-${option.value}`}
-                                checked={selectedLevels.includes(option.value)}
-                                onCheckedChange={(checked) => {
-                                  setSelectedLevels(prev => {
-                                    return checked
-                                      ? [...prev, option.value]
-                                      : prev.filter(v => v !== option.value);
-                                  });
-                                }}
-                              />
-                              <label htmlFor={`level-${option.value}`} className="ml-2 cursor-pointer select-none flex-1">
-                                {option.label}
-                              </label>
-                            </div>
-                          </DropdownMenuItem>
-                        ))}
-                      </ScrollArea>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                {/* 搜索框 - 弹性增长 */}
-                <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">搜索</span>
-                  <input
-                    type="text"
-                    placeholder="搜索卡牌名称或描述..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                {/* 重置按钮 */}
-                <button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedClasses([]);
-                    setSelectedLevels([]);
-                    setSelectedBatches([]);
-                    setClassDropdownOpen(false);
-                    setLevelDropdownOpen(false);
-                    setBatchDropdownOpen(false);
-                  }}
-                  className="px-4 py-2 bg-gray-500 text-white text-sm rounded-md hover:bg-gray-600 transition-colors whitespace-nowrap"
-                >
-                  重置筛选
-                </button>
-                </div>
-              </div>
-            </div>
-
-            <div id="scrollableDiv" ref={scrollableContainerRef} className="flex-1 overflow-y-auto p-4 pb-8">
-              {/* 显示加载状态 */}
-              {cardsLoading && (
-                <div className="flex items-center justify-center h-32">
-                  <div className="text-center">
-                    <div className="text-lg">加载卡牌中...</div>
-                    <div className="text-sm text-gray-500">请稍候</div>
-                  </div>
-                </div>
-              )}
-
-              {/* 显示错误状态 */}
-              {cardsError && !cardsLoading && (
-                <div className="flex items-center justify-center h-32">
-                  <div className="text-center text-red-600">
-                    <div className="text-lg">加载失败</div>
-                    <div className="text-sm">{cardsError}</div>
-                  </div>
-                </div>
-              )}
-
-              {/* 显示卡牌内容 */}
-              {!cardsLoading && !cardsError && (
-                <InfiniteScroll
-                  dataLength={displayedCards.length}
-                  next={fetchMoreData}
-                  hasMore={hasMore}
-                  loader={<div className="text-center py-4">加载中...</div>}
-                  endMessage={
-                    <p style={{ textAlign: 'center' }} className="py-4">
-                      <b>{fullyFilteredCards.length > 0 ? "已加载全部卡牌" : "未找到符合条件的卡牌"}</b>
-                    </p>
-                  }
-                  scrollableTarget="scrollableDiv"
-                  scrollThreshold="800px"
-                >
-                  <div className={`grid gap-6 ${isTextMode
-                    ? 'grid-cols-2 md:grid-cols-2 xl:grid-cols-3 justify-items-center md:justify-items-stretch'
-                    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 justify-items-center sm:justify-items-stretch'
-                    }`}>
-                    {displayedCards.map((card: StandardCard, index: number) => {
-                      return isTextMode ? (
-                        <SelectableCard
-                          key={`${card.id}-${index}`}
-                          card={card}
-                          onClick={() => handleSelectCard(card)}
-                          isSelected={false}
-                        />
-                      ) : (
-                        <ImageCard
-                          key={`${card.id}-${index}`}
-                          card={card}
-                          onClick={() => handleSelectCard(card)}
-                          isSelected={false}
-                          priority={index < 6}
-                          refreshTrigger={refreshTrigger}
-                        />
-                      );
-                    })}
-                  </div>
-                </InfiniteScroll>
-              )}
-            </div>
-          </div>
-        </div>
+      <div
+        id="cardSelectionScrollable"
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto p-4"
+      >
+        <ContentStates
+          loading={loading}
+          error={error}
+          empty={totalCount === 0}
+          emptyMessage="未找到符合条件的卡牌"
+          loadingMessage="加载卡牌中..."
+        >
+          <InfiniteCardGrid
+            cards={displayedItems}
+            hasMore={hasMore}
+            onLoadMore={loadMore}
+            onCardClick={handleCardClick}
+            totalCount={totalCount}
+            scrollableTarget="cardSelectionScrollable"
+            refreshTrigger={refreshTrigger}
+            className="gap-6"
+          />
+        </ContentStates>
       </div>
-    </div>
+    </BaseCardModal>
   )
 }

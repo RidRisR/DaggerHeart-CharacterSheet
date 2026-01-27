@@ -21,13 +21,6 @@ export default function CharacterSheetPageTwo() {
   const updateHPMax = useSheetStore(state => state.updateHPMax);
   const updateStressMax = useSheetStore(state => state.updateStressMax);
 
-  // State for CardSelectionModal filters, lifted to this component
-  const [cardModalActiveTab, setCardModalActiveTab] = useState<string>("");
-  const [cardModalSearchTerm, setCardModalSearchTerm] = useState<string>("");
-  const [cardModalSelectedClasses, setCardModalSelectedClasses] = useState<string[]>([]);
-  const [cardModalSelectedLevels, setCardModalSelectedLevels] = useState<string[]>([]);
-  const [cardModalSelectedBatches, setCardModalSelectedBatches] = useState<string[]>([]);
-
   // State for upgrade domain card modal
   const [upgradeDomainModalOpen, setUpgradeDomainModalOpen] = useState(false);
   const [upgradeDomainCardIndex, setUpgradeDomainCardIndex] = useState<number>(-1);
@@ -355,14 +348,8 @@ export default function CharacterSheetPageTwo() {
   }
 
   // Handle opening the domain card modal from upgrade section
-  const handleOpenUpgradeDomainModal = (cardIndex: number, levels?: string[]) => {
+  const handleOpenUpgradeDomainModal = (cardIndex: number, _levels?: string[]) => {
     setUpgradeDomainCardIndex(cardIndex)
-    setCardModalActiveTab("domain")
-    // Clear class filter and search term
-    setCardModalSelectedClasses([])
-    setCardModalSearchTerm("")
-    // Set smart level filtering
-    setCardModalSelectedLevels(levels || [])
     setUpgradeDomainModalOpen(true)
   }
 
@@ -370,15 +357,6 @@ export default function CharacterSheetPageTwo() {
   const handleOpenUpgradeSubclassModal = (cardIndex: number, profession?: string) => {
     setUpgradeSubclassCardIndex(cardIndex)
     setUpgradeSubclassProfession(profession)
-    setCardModalActiveTab("subclass")
-    setCardModalSearchTerm("")
-    setCardModalSelectedLevels([])
-
-    if (profession) {
-      setCardModalSelectedClasses([profession])
-    } else {
-      setCardModalSelectedClasses([])
-    }
     setUpgradeSubclassModalOpen(true)
   }
 
@@ -405,16 +383,6 @@ export default function CharacterSheetPageTwo() {
           formData={safeFormData}
           onCardChange={handleCardChange}
           onInventoryCardChange={handleInventoryCardChange}
-          cardModalActiveTab={cardModalActiveTab}
-          setCardModalActiveTab={setCardModalActiveTab}
-          cardModalSearchTerm={cardModalSearchTerm}
-          setCardModalSearchTerm={setCardModalSearchTerm}
-          cardModalSelectedClasses={cardModalSelectedClasses}
-          setCardModalSelectedClasses={setCardModalSelectedClasses}
-          cardModalSelectedLevels={cardModalSelectedLevels}
-          setCardModalSelectedLevels={setCardModalSelectedLevels}
-          cardModalSelectedBatches={cardModalSelectedBatches}
-          setCardModalSelectedBatches={setCardModalSelectedBatches}
         />
 
           {/* Upgrade Section */}
@@ -476,16 +444,7 @@ export default function CharacterSheetPageTwo() {
           setUpgradeDomainModalOpen(false)
         }}
         selectedCardIndex={upgradeDomainCardIndex}
-        activeTab={cardModalActiveTab}
-        setActiveTab={setCardModalActiveTab}
-        searchTerm={cardModalSearchTerm}
-        setSearchTerm={setCardModalSearchTerm}
-        selectedClasses={cardModalSelectedClasses}
-        setSelectedClasses={setCardModalSelectedClasses}
-        selectedLevels={cardModalSelectedLevels}
-        setSelectedLevels={setCardModalSelectedLevels}
-        selectedBatches={cardModalSelectedBatches}
-        setSelectedBatches={setCardModalSelectedBatches}
+        initialTab="domain"
       />
 
       <CardSelectionModal
@@ -500,16 +459,7 @@ export default function CharacterSheetPageTwo() {
           setUpgradeSubclassProfession(undefined)
         }}
         selectedCardIndex={upgradeSubclassCardIndex}
-        activeTab={cardModalActiveTab}
-        setActiveTab={setCardModalActiveTab}
-        searchTerm={cardModalSearchTerm}
-        setSearchTerm={setCardModalSearchTerm}
-        selectedClasses={cardModalSelectedClasses}
-        setSelectedClasses={setCardModalSelectedClasses}
-        selectedLevels={cardModalSelectedLevels}
-        setSelectedLevels={setCardModalSelectedLevels}
-        selectedBatches={cardModalSelectedBatches}
-        setSelectedBatches={setCardModalSelectedBatches}
+        initialTab="subclass"
       />
     </>
   )

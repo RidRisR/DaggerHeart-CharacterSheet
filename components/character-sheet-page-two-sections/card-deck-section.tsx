@@ -18,18 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 interface CardDeckSectionProps {
   formData: SheetData
   onCardChange: (index: number, card: StandardCard) => void
-  onInventoryCardChange: (index: number, card: StandardCard) => void // 新增：库存卡组修改函数
-  // 移除：onCardMove 功能现在由 store 处理
-  cardModalActiveTab: string;
-  setCardModalActiveTab: React.Dispatch<React.SetStateAction<string>>;
-  cardModalSearchTerm: string;
-  setCardModalSearchTerm: React.Dispatch<React.SetStateAction<string>>;
-  cardModalSelectedClasses: string[];
-  setCardModalSelectedClasses: React.Dispatch<React.SetStateAction<string[]>>;
-  cardModalSelectedLevels: string[];
-  setCardModalSelectedLevels: React.Dispatch<React.SetStateAction<string[]>>;
-  cardModalSelectedBatches: string[];
-  setCardModalSelectedBatches: React.Dispatch<React.SetStateAction<string[]>>;
+  onInventoryCardChange: (index: number, card: StandardCard) => void
 }
 
 // Utility function for border color
@@ -223,18 +212,7 @@ const MemoizedCard = memo(Card)
 export function CardDeckSection({
   formData,
   onCardChange,
-  onInventoryCardChange, // 新增参数
-  // 移除：onCardMove 参数，现在由 store 处理
-  cardModalActiveTab,
-  setCardModalActiveTab,
-  cardModalSearchTerm,
-  setCardModalSearchTerm,
-  cardModalSelectedClasses,
-  setCardModalSelectedClasses,
-  cardModalSelectedLevels,
-  setCardModalSelectedLevels,
-  cardModalSelectedBatches,
-  setCardModalSelectedBatches,
+  onInventoryCardChange,
 }: CardDeckSectionProps) {
   // 钉住卡牌功能
   const { pinCard } = usePinnedCardsStore();
@@ -514,17 +492,6 @@ export function CardDeckSection({
           onClose={() => setCardSelectionModalOpen(false)}
           onSelect={handleCardSelect}
           selectedCardIndex={selectedCardIndex}
-          // Pass down the lifted state and setters
-          activeTab={cardModalActiveTab}
-          setActiveTab={setCardModalActiveTab}
-          searchTerm={cardModalSearchTerm}
-          setSearchTerm={setCardModalSearchTerm}
-          selectedClasses={cardModalSelectedClasses}
-          setSelectedClasses={setCardModalSelectedClasses}
-          selectedLevels={cardModalSelectedLevels}
-          setSelectedLevels={setCardModalSelectedLevels}
-          selectedBatches={cardModalSelectedBatches}
-          setSelectedBatches={setCardModalSelectedBatches}
         />
       )}
 

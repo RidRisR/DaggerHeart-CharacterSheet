@@ -193,13 +193,6 @@ export default function Home() {
   const [pendingCardIsInventory, setPendingCardIsInventory] = useState<boolean>(false)
   const [cardSelectionModalOpen, setCardSelectionModalOpen] = useState(false)
 
-  // CardSelectionModal 的筛选状态
-  const [cardModalActiveTab, setCardModalActiveTab] = useState<string>("")
-  const [cardModalSearchTerm, setCardModalSearchTerm] = useState<string>("")
-  const [cardModalSelectedClasses, setCardModalSelectedClasses] = useState<string[]>([])
-  const [cardModalSelectedLevels, setCardModalSelectedLevels] = useState<string[]>([])
-  const [cardModalSelectedBatches, setCardModalSelectedBatches] = useState<string[]>([])
-  
   // 使用角色管理Hook
   const {
     currentCharacterId,
@@ -727,16 +720,6 @@ export default function Home() {
           }}
           onSelect={handleCardSelect}
           selectedCardIndex={pendingCardIndex}
-          activeTab={cardModalActiveTab}
-          setActiveTab={setCardModalActiveTab}
-          searchTerm={cardModalSearchTerm}
-          setSearchTerm={setCardModalSearchTerm}
-          selectedClasses={cardModalSelectedClasses}
-          setSelectedClasses={setCardModalSelectedClasses}
-          selectedLevels={cardModalSelectedLevels}
-          setSelectedLevels={setCardModalSelectedLevels}
-          selectedBatches={cardModalSelectedBatches}
-          setSelectedBatches={setCardModalSelectedBatches}
         />
       )}
 

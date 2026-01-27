@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-ranger-companion"
@@ -16,7 +16,7 @@ import { CharacterManagementModal } from "@/components/modals/character-manageme
 import { SealDiceExportModal } from "@/components/modals/seal-dice-export-modal"
 import { useSheetStore, useCardActions } from "@/lib/sheet-store"
 import { PrintReadyChecker } from "@/components/print/print-ready-checker"
-import { usePrintContext } from "@/contexts/print-context"
+import { PrintProvider } from "@/contexts/print-context"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
 import { PinnedCardWindow } from "@/components/ui/pinned-card-window"
 import { useTextModeStore } from "@/lib/text-mode-store"
@@ -206,12 +206,12 @@ export default function Home() {
     handleQuickCreateArchive,
   } = useCharacterManagement({ isClient, setCurrentTabValue })
   
-  // 打印图片加载状态
-  const { allImagesLoaded } = usePrintContext()
-  
+  // 打印容器引用
+  const printContainerRef = useRef<HTMLDivElement>(null)
+
   // 额外需要的MAX_CHARACTERS常量
   const MAX_CHARACTERS = 10
-  
+
   // 使用导出功能Hook
   const {
     handlePrintAll,
@@ -220,7 +220,7 @@ export default function Home() {
     handleQuickExportPDF,
     handleQuickExportHTML,
     handleQuickExportJSON,
-  } = useExportHandlers({ formData, allImagesLoaded, setIsPrintingAll })
+  } = useExportHandlers({ formData, setIsPrintingAll })
 
   // 客户端挂载检测
   useEffect(() => {
@@ -507,42 +507,46 @@ export default function Home() {
     }
 
     return (
-      <PrintReadyChecker onSkipWaiting={handleSkipWaiting}>
-        <div className="print-all-pages">
-          <PrintHelper />
+      <PrintProvider containerRef={printContainerRef}>
+        <PrintReadyChecker onSkipWaiting={handleSkipWaiting}>
+          <div className="print-all-pages">
+            <PrintHelper />
 
-          {/* 顶部提示横条 - 只在屏幕上显示，打印时隐藏 */}
-          <div className="fixed top-0 left-0 right-0 z-[70] print:hidden">
-            <div
-              className="bg-black bg-opacity-50 text-white px-6 py-3 text-center cursor-pointer hover:bg-opacity-70 transition-all duration-200"
-              onClick={() => setIsPrintingAll(false)}
-            >
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-sm">
-                  按 <kbd className="px-2 py-1 bg-gray-700 rounded text-xs mx-1">ESC</kbd> 键或点击此处退出预览
-                </span>
+            {/* 顶部提示横条 - 只在屏幕上显示，打印时隐藏 */}
+            <div className="fixed top-0 left-0 right-0 z-[70] print:hidden">
+              <div
+                className="bg-black bg-opacity-50 text-white px-6 py-3 text-center cursor-pointer hover:bg-opacity-70 transition-all duration-200"
+                onClick={() => setIsPrintingAll(false)}
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-sm">
+                    按 <kbd className="px-2 py-1 bg-gray-700 rounded text-xs mx-1">ESC</kbd> 键或点击此处退出预览
+                  </span>
+                </div>
               </div>
             </div>
+
+            {/* 打印预览控制按钮 */}
+            <BottomDock
+              mode="preview"
+              isMobile={isMobile}
+              onExportPDF={() => window.print()}
+              onExportHTML={handleExportHTML}
+              onExportJSON={handleExportJSON}
+              onOpenSealDiceExport={() => {
+                setSealDiceExportModalOpen(true)
+                setIsPrintingAll(false)
+              }}
+              onClose={() => setIsPrintingAll(false)}
+            />
+
+            {/* 打印内容容器 - 用于图片加载检测 */}
+            <div ref={printContainerRef}>
+              <PrintPageRenderer sheetData={formData} />
+            </div>
           </div>
-
-          {/* 打印预览控制按钮 */}
-          <BottomDock
-            mode="preview"
-            isMobile={isMobile}
-            onExportPDF={() => window.print()}
-            onExportHTML={handleExportHTML}
-            onExportJSON={handleExportJSON}
-            onOpenSealDiceExport={() => {
-              setSealDiceExportModalOpen(true)
-              setIsPrintingAll(false)
-            }}
-            onClose={() => setIsPrintingAll(false)}
-          />
-
-          {/* 使用动态页面渲染器 */}
-          <PrintPageRenderer sheetData={formData} />
-        </div >
-      </PrintReadyChecker >
+        </PrintReadyChecker>
+      </PrintProvider>
     )
   }
 

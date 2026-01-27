@@ -5,7 +5,6 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { CardSystemInitializer } from "@/components/card-system-initializer"
 import { Toaster } from "@/components/ui/toaster"
 import { FadeNotificationContainer } from "@/components/ui/fade-notification"
-import { PrintProvider } from "@/contexts/print-context"
 import { ProgressModalProvider } from "@/components/ui/unified-progress-modal"
 import { ChunkLoadErrorHandler } from "@/components/chunk-load-error-handler"
 import PrintHelper from "./print-helper"
@@ -106,30 +105,28 @@ export default function RootLayout({
         <ChunkLoadErrorHandler />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <ProgressModalProvider>
-            <PrintProvider>
-              <CardSystemInitializer />
-              <PrintHelper />
-              {children}
-              <Toaster />
-              <FadeNotificationContainer />
-              {/* 水印 */}
-              <div className="fixed bottom-2 left-2 text-gray-500 text-xs opacity-75 pointer-events-none">
-                本作品完全开源且免费
-                <br />
-                作者：RidRisR
-                <br />
-                翻译及校对：PolearmMaster, 末楔, 里予, 一得, RisRisR
-                <br />
-                <a
-                  href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline pointer-events-auto hover:text-gray-700 transition-colors"
-                >
-                  项目地址 & 下载地址（点我访问 GitHub）
-                </a>
-              </div>
-            </PrintProvider>
+            <CardSystemInitializer />
+            <PrintHelper />
+            {children}
+            <Toaster />
+            <FadeNotificationContainer />
+            {/* 水印 */}
+            <div className="fixed bottom-2 left-2 text-gray-500 text-xs opacity-75 pointer-events-none">
+              本作品完全开源且免费
+              <br />
+              作者：RidRisR
+              <br />
+              翻译及校对：PolearmMaster, 末楔, 里予, 一得, RisRisR
+              <br />
+              <a
+                href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline pointer-events-auto hover:text-gray-700 transition-colors"
+              >
+                项目地址 & 下载地址（点我访问 GitHub）
+              </a>
+            </div>
           </ProgressModalProvider>
         </ThemeProvider>
       </body>

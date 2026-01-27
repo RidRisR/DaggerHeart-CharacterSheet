@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { useUnifiedCardStore, CardType } from "@/card/stores/unified-card-store"
+import { useCardFilterStore } from "@/lib/card-filter-store"
 import type { ExtendedStandardCard } from "@/card/card-types"
 import { isVariantType } from "@/card/card-types"
 
@@ -54,65 +55,42 @@ interface UseCardFilteringReturn {
  * 简化的卡牌筛选 Hook
  *
  * 设计原则：
- * 1. 统一状态管理 - 所有筛选状态在单一对象中
+ * 1. 使用 Zustand store 持久化状态 - 组件卸载后状态不丢失
  * 2. 智能联动内置 - Tab/卡包变更时自动重置相关筛选
  * 3. 管道式过滤 - 按顺序执行：类型 → 卡包 → 类别 → 等级 → 搜索
  * 4. 动态选项计算 - 从过滤后的卡牌中提取类别/等级选项
+ * 5. 支持多入口 - 通过 syncWithInitialTab 处理不同入口的 initialTab
  */
 export function useCardFiltering(initialTab?: string): UseCardFilteringReturn {
   const cardStore = useUnifiedCardStore()
+  const filterStore = useCardFilterStore()
 
-  // === 筛选状态（统一管理） ===
-  const [state, setState] = useState<FilterState>({
-    activeTab: initialTab || 'domain',
-    selectedBatches: [],
-    selectedClasses: [],
-    selectedLevels: [],
-    searchTerm: '',
-  })
+  // === 同步 initialTab ===
+  // 当 initialTab 与当前 activeTab 不同时，重置到 initialTab
+  // 这样可以支持不同入口（card-deck、upgrade domain、upgrade subclass）
+  // 使用 getState() 获取稳定的函数引用，避免无限循环
+  useEffect(() => {
+    useCardFilterStore.getState().syncWithInitialTab(initialTab)
+  }, [initialTab])
 
-  // === 操作函数（带智能联动） ===
+  // === 从 store 获取状态 ===
+  const state: FilterState = {
+    activeTab: filterStore.activeTab,
+    selectedBatches: filterStore.selectedBatches,
+    selectedClasses: filterStore.selectedClasses,
+    selectedLevels: filterStore.selectedLevels,
+    searchTerm: filterStore.searchTerm,
+  }
+
+  // === 从 store 获取操作 ===
+  // Zustand actions 是稳定的，不需要在依赖数组中包含
   const actions: FilterActions = useMemo(() => ({
-    setActiveTab: (tab: string) => setState(prev => ({
-      ...prev,
-      activeTab: tab,
-      // Tab 切换时重置所有筛选
-      selectedBatches: [],
-      selectedClasses: [],
-      selectedLevels: [],
-      searchTerm: '',
-    })),
-
-    setBatches: (batches: string[]) => setState(prev => ({
-      ...prev,
-      selectedBatches: batches,
-      // 卡包变更时重置类别和等级
-      selectedClasses: [],
-      selectedLevels: [],
-    })),
-
-    setClasses: (classes: string[]) => setState(prev => ({
-      ...prev,
-      selectedClasses: classes,
-    })),
-
-    setLevels: (levels: string[]) => setState(prev => ({
-      ...prev,
-      selectedLevels: levels,
-    })),
-
-    setSearchTerm: (term: string) => setState(prev => ({
-      ...prev,
-      searchTerm: term,
-    })),
-
-    resetAll: () => setState(prev => ({
-      ...prev,
-      selectedBatches: [],
-      selectedClasses: [],
-      selectedLevels: [],
-      searchTerm: '',
-    })),
+    setActiveTab: useCardFilterStore.getState().setActiveTab,
+    setBatches: useCardFilterStore.getState().setBatches,
+    setClasses: useCardFilterStore.getState().setClasses,
+    setLevels: useCardFilterStore.getState().setLevels,
+    setSearchTerm: useCardFilterStore.getState().setSearchTerm,
+    resetAll: useCardFilterStore.getState().resetAll,
   }), [])
 
   // === 基础卡牌（按类型） ===

@@ -1,15 +1,16 @@
 "use client"
 
-import { useEffect, useCallback, useState } from "react"
+import { useEffect, useCallback, useState, useMemo } from "react"
 import { StandardCard, createEmptyCard } from "@/card/card-types"
 import { BaseCardModal, ModalHeader, ModalFilterBar } from "./base"
 import { ContentStates, InfiniteCardGrid } from "./display"
-import { MultiSelectFilter, SearchFilter } from "./filters"
+import { MultiSelectFilter } from "./filters"
 import { CardTypeSidebar } from "./card-selection/CardTypeSidebar"
 import { useCardFiltering } from "@/hooks/use-card-filtering"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
-import { useDebounce } from "@/hooks/use-debounce"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Search, X } from "lucide-react"
 
 interface CardSelectionModalProps {
   isOpen: boolean
@@ -38,7 +39,6 @@ export function CardSelectionModal({
   // === 使用简化的筛选 Hook ===
   const {
     filteredCards,
-    totalCount,
     classOptions,
     levelOptions,
     batchOptions,
@@ -48,38 +48,38 @@ export function CardSelectionModal({
     error,
   } = useCardFiltering(initialTab)
 
-  // 本地搜索词（用于即时输入响应）
-  const [localSearchTerm, setLocalSearchTerm] = useState('')
-  const debouncedSearchTerm = useDebounce(localSearchTerm, 300)
 
-  // 同步防抖后的搜索词到筛选状态
-  useEffect(() => {
-    actions.setSearchTerm(debouncedSearchTerm)
-  }, [debouncedSearchTerm, actions])
-
-  // 当筛选状态的搜索词变化时（如重置），同步到本地
-  useEffect(() => {
-    if (state.searchTerm !== localSearchTerm && state.searchTerm === '') {
-      setLocalSearchTerm('')
-    }
-  }, [state.searchTerm])
+  // 本地搜索词（modal 关闭后自动清空）
+  const [searchTerm, setSearchTerm] = useState('')
 
   // 刷新触发器（用于卡牌动画）
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
+  // 本地搜索过滤（在 useCardFiltering 结果基础上再过滤）
+  const searchedCards = useMemo(() => {
+    if (!searchTerm.trim()) return filteredCards
+    const term = searchTerm.toLowerCase()
+    return filteredCards.filter(card =>
+      card.name?.toLowerCase().includes(term) ||
+      card.description?.toLowerCase().includes(term) ||
+      card.cardSelectDisplay?.item1?.toLowerCase().includes(term) ||
+      card.cardSelectDisplay?.item2?.toLowerCase().includes(term) ||
+      card.cardSelectDisplay?.item3?.toLowerCase().includes(term)
+    )
+  }, [filteredCards, searchTerm])
+
   // === 无限滚动 ===
-  const { displayedItems, hasMore, loadMore, reset, scrollRef } = useInfiniteScroll({
-    items: filteredCards,
+  const { displayedItems, hasMore, loadMore, scrollRef } = useInfiniteScroll({
+    items: searchedCards,
     pageSize: 30,
   })
 
   // === 副作用 ===
 
-  // 筛选结果变化时重置滚动
+  // 筛选结果变化时触发动画（滚动重置由 useInfiniteScroll 内部处理）
   useEffect(() => {
-    reset()
     setRefreshTrigger(prev => prev + 1)
-  }, [filteredCards, reset])
+  }, [searchedCards])
 
   // === 事件处理 ===
 
@@ -97,15 +97,14 @@ export function CardSelectionModal({
     onClose()
   }, [onSelect, onClose])
 
-  // 重置筛选（包括本地搜索词）
+  // 重置筛选
   const handleResetFilters = useCallback(() => {
-    setLocalSearchTerm('')
+    setSearchTerm('')
     actions.resetAll()
   }, [actions])
 
-  // Tab 切换时也清空本地搜索词
+  // Tab 切换
   const handleTabChange = useCallback((tab: string) => {
-    setLocalSearchTerm('')
     actions.setActiveTab(tab)
   }, [actions])
 
@@ -114,7 +113,7 @@ export function CardSelectionModal({
     (state.selectedBatches.length > 0 ? 1 : 0) +
     (state.selectedClasses.length > 0 ? 1 : 0) +
     (state.selectedLevels.length > 0 ? 1 : 0) +
-    (localSearchTerm ? 1 : 0)
+    (searchTerm ? 1 : 0)
 
   // === 渲染 ===
 
@@ -155,6 +154,8 @@ export function CardSelectionModal({
           placeholder="未选卡包"
           allSelectedText="全部卡包"
           countSuffix="包已选"
+          showSearch
+          searchPlaceholder="搜索卡包..."
         />
         <MultiSelectFilter
           label="类别"
@@ -176,13 +177,23 @@ export function CardSelectionModal({
           countSuffix="级已选"
           disabled={levelOptions.length === 0}
         />
-        <SearchFilter
-          value={localSearchTerm}
-          onChange={setLocalSearchTerm}
-          placeholder="搜索卡牌名称或描述..."
-          debounceMs={0}
-          className="flex-1 min-w-[200px]"
-        />
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="搜索卡牌名称或描述..."
+            className="pl-9 pr-9"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         <Button
           variant="secondary"
           onClick={handleResetFilters}
@@ -200,7 +211,7 @@ export function CardSelectionModal({
         <ContentStates
           loading={loading}
           error={error}
-          empty={totalCount === 0}
+          empty={searchedCards.length === 0}
           emptyMessage="未找到符合条件的卡牌"
           loadingMessage="加载卡牌中..."
         >
@@ -209,7 +220,7 @@ export function CardSelectionModal({
             hasMore={hasMore}
             onLoadMore={loadMore}
             onCardClick={handleCardClick}
-            totalCount={totalCount}
+            totalCount={searchedCards.length}
             scrollableTarget="cardSelectionScrollable"
             refreshTrigger={refreshTrigger}
             className="gap-6"

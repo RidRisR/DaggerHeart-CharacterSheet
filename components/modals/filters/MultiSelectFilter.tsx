@@ -61,6 +61,11 @@ export function MultiSelectFilter<T extends string = string>({
     onChange(isAllSelected ? [] : options.map((o) => o.value))
   }
 
+  const toggleInvert = () => {
+    const unselected = options.filter(o => !selected.includes(o.value)).map(o => o.value)
+    onChange(unselected)
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={disabled}>
@@ -92,13 +97,16 @@ export function MultiSelectFilter<T extends string = string>({
           </div>
         )}
         {showSelectAll && options.length > 0 && (
-          <div className="px-2 py-1.5 border-b">
-            <Button variant="ghost" size="sm" className="w-full justify-start" onClick={toggleAll}>
+          <div className="px-2 py-1.5 border-b flex gap-1">
+            <Button variant="ghost" size="sm" className="flex-1 justify-start" onClick={toggleAll}>
               {isAllSelected ? "取消全选" : "全选"}
+            </Button>
+            <Button variant="ghost" size="sm" className="flex-1 justify-start" onClick={toggleInvert}>
+              反选
             </Button>
           </div>
         )}
-        <ScrollArea className="max-h-[300px]">
+        <ScrollArea className="h-[300px]">
           <div className="p-2 space-y-1">
             {filteredOptions.length === 0 && searchTerm && (
               <p className="text-sm text-muted-foreground text-center py-2">无匹配结果</p>

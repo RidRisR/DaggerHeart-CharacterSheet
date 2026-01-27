@@ -113,7 +113,7 @@ export const CARD_LEVEL_OPTIONS = {
   [CardType.Ancestry]: ["特性一", "特性二"],
   [CardType.Community]: [],
   [CardType.Subclass]: ["基石", "专精", "大师"],
-  [CardType.Domain]: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+  [CardType.Domain]: ["Lv.1", "Lv.2", "Lv.3", "Lv.4", "Lv.5", "Lv.6", "Lv.7", "Lv.8", "Lv.9", "Lv.10"],
 };
 
 export function createEmptyCard(type = "unknown"): StandardCard {

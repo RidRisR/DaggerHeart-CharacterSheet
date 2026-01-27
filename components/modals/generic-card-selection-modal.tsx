@@ -9,7 +9,7 @@ import { useSheetStore } from "@/lib/sheet-store"
 import { useUnifiedCardStore } from "@/card/stores/unified-card-store"
 import { BaseCardModal, ModalHeader, ModalFilterBar } from "./base"
 import { ContentStates, CardGrid } from "./display"
-import { SingleSelectFilter, MultiSelectFilter } from "./filters"
+import { MultiSelectFilter } from "./filters"
 
 interface GenericCardSelectionModalProps {
   isOpen: boolean
@@ -32,7 +32,7 @@ export function GenericCardSelectionModal({
 }: GenericCardSelectionModalProps) {
   const { sheetData: formData } = useSheetStore()
   const cardStore = useUnifiedCardStore()
-  const [selectedClass, setSelectedClass] = useState<string>("All")
+  const [selectedClasses, setSelectedClasses] = useState<string[]>([])
   const [selectedBatches, setSelectedBatches] = useState<string[]>([])
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [baseCards, setBaseCards] = useState<StandardCard[]>([])
@@ -135,11 +135,11 @@ export function GenericCardSelectionModal({
 
   // Calculate final filtered cards based on class selection
   const finalFilteredCards = useMemo(() => {
-    if (selectedClass === "All") return filteredInitialCards
+    if (selectedClasses.length === 0) return filteredInitialCards
     return filteredInitialCards.filter(
-      (card) => card.class && card.class.includes(selectedClass)
+      (card) => card.class && selectedClasses.some(cls => card.class?.includes(cls))
     )
-  }, [filteredInitialCards, selectedClass])
+  }, [filteredInitialCards, selectedClasses])
 
   // Trigger refresh animation when filter changes
   useEffect(() => {
@@ -153,12 +153,12 @@ export function GenericCardSelectionModal({
   // 计算激活的筛选器数量
   const activeFilterCount =
     (selectedBatches.length > 0 ? 1 : 0) +
-    (selectedClass !== "All" ? 1 : 0)
+    (selectedClasses.length > 0 ? 1 : 0)
 
   // 重置筛选
   const handleResetFilters = () => {
     setSelectedBatches([])
-    setSelectedClass("All")
+    setSelectedClasses([])
   }
 
   return (
@@ -196,12 +196,14 @@ export function GenericCardSelectionModal({
           searchPlaceholder="搜索卡包..."
           disabled={cardsLoading}
         />
-        <SingleSelectFilter
-          value={selectedClass}
-          onChange={setSelectedClass}
+        <MultiSelectFilter
+          label="类别"
           options={availableClasses}
-          allOption={{ value: "All", label: "全部类别" }}
-          placeholder="筛选类别"
+          selected={selectedClasses}
+          onChange={setSelectedClasses}
+          placeholder="未选类别"
+          allSelectedText="全部类别"
+          countSuffix="类已选"
           disabled={cardsLoading}
         />
         <Button

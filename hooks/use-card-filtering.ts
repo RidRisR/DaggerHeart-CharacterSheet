@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react"
 import { useUnifiedCardStore, CardType } from "@/card/stores/unified-card-store"
 import { useCardFilterStore } from "@/lib/card-filter-store"
 import type { ExtendedStandardCard } from "@/card/card-types"
-import { isVariantType } from "@/card/card-types"
+import { isVariantType, CARD_LEVEL_OPTIONS } from "@/card/card-types"
 
 /**
  * 筛选状态
@@ -128,15 +128,27 @@ export function useCardFiltering(initialTab?: string): UseCardFilteringReturn {
       if (card.level != null) levels.add(String(card.level))
     }
 
+    // 获取当前卡牌类型的等级选项配置
+    const currentCardType = state.activeTab as CardType
+    const levelLabels = (CARD_LEVEL_OPTIONS as Record<string, string[]>)[currentCardType] || []
+
     return {
       classOptions: Array.from(classes)
         .sort()
         .map(c => ({ value: c, label: c })),
       levelOptions: Array.from(levels)
         .sort((a, b) => Number(a) - Number(b))
-        .map(l => ({ value: l, label: `${l}级` })),
+        .map(l => {
+          const levelNum = Number(l)
+          // 如果有自定义等级标签，使用自定义标签（level 作为索引，从 1 开始）
+          const customLabel = levelLabels.length > 0 && levelLabels[levelNum - 1]
+          return {
+            value: l,
+            label: customLabel || `${l}级`
+          }
+        }),
     }
-  }, [batchFilteredCards])
+  }, [batchFilteredCards, state.activeTab])
 
   // === 完整筛选（管道式） ===
   const filteredCards = useMemo(() => {

@@ -5,7 +5,7 @@ import { getCardTypeName } from "@/card/card-ui-config"
 import { getVariantRealType, isVariantCard } from "@/card/card-types"
 import Image from "next/image"
 import React, { useState } from "react"
-import { getCardImageUrl } from "@/lib/utils"
+import { getCardImageUrl, getCardImageUrlAsync } from "@/lib/utils"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { CardMarkdown } from "@/components/ui/card-markdown"
 
@@ -33,7 +33,7 @@ export function CardHoverPreview({ card, isTextMode = false }: CardHoverPreviewP
     React.useEffect(() => {
         setImageError(false); // 重置错误状态
         const loadImageUrl = async () => {
-            const url = await getCardImageUrl(card, false);
+            const url = await getCardImageUrlAsync(card, false);
             setImageSrc(url);
         };
         
@@ -43,11 +43,8 @@ export function CardHoverPreview({ card, isTextMode = false }: CardHoverPreviewP
     // 处理图片加载失败
     React.useEffect(() => {
         if (imageError && !imageSrc?.includes('empty-card.webp')) {
-            const loadErrorImageUrl = async () => {
-                const url = await getCardImageUrl(card, true);
-                setImageSrc(url);
-            };
-            loadErrorImageUrl();
+            const url = getCardImageUrl(card, true);
+            setImageSrc(url);
         }
     }, [imageError, card, imageSrc]);
     

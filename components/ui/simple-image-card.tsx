@@ -5,7 +5,7 @@ import { getCardTypeName } from "@/card/card-ui-config"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import React, { useState } from "react"
 import Image from "next/image"
-import { getCardImageUrl } from "@/lib/utils"
+import { getCardImageUrl, getCardImageUrlAsync } from "@/lib/utils"
 
 const getDisplayTypeName = (card: StandardCard) => {
     if (isVariantCard(card)) {
@@ -32,7 +32,7 @@ export function SimpleImageCard({ card, onClick, isSelected, priority = false }:
     React.useEffect(() => {
         setImageError(false); // 重置错误状态
         const loadImageUrl = async () => {
-            const url = await getCardImageUrl(card, false);
+            const url = await getCardImageUrlAsync(card, false);
             setImageSrc(url);
         };
         
@@ -42,11 +42,8 @@ export function SimpleImageCard({ card, onClick, isSelected, priority = false }:
     // 处理图片加载失败
     React.useEffect(() => {
         if (imageError && !imageSrc?.includes('empty-card.webp')) {
-            const loadErrorImageUrl = async () => {
-                const url = await getCardImageUrl(card, true);
-                setImageSrc(url);
-            };
-            loadErrorImageUrl();
+            const url = getCardImageUrl(card, true);
+            setImageSrc(url);
         }
     }, [imageError, card, imageSrc]);
 

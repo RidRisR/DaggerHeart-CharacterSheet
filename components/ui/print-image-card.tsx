@@ -4,7 +4,7 @@ import { StandardCard, ExtendedStandardCard, isVariantCard, getVariantRealType, 
 import { getCardTypeName } from "@/card/card-ui-config"
 import React from "react"
 import Image from "next/image"
-import { getCardImageUrl } from "@/lib/utils"
+import { getCardImageUrl, getCardImageUrlAsync } from "@/lib/utils"
 import { CardMarkdown } from "@/components/ui/card-markdown"
 
 // Helper function to get display type name
@@ -30,8 +30,11 @@ export function PrintImageCard({ card, onImageLoad }: PrintImageCardProps) {
     // 获取图片URL
     React.useEffect(() => {
         setImageError(false);
-        const url = getCardImageUrl(card, false);
-        setImageSrc(url);
+        const loadImageUrl = async () => {
+            const url = await getCardImageUrlAsync(card, false);
+            setImageSrc(url);
+        };
+        loadImageUrl();
     }, [card]);
 
     // 当图片加载失败时，获取备用图片URL

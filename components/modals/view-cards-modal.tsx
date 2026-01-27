@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import InfiniteScroll from 'react-infinite-scroll-component'
 import type { ExtendedStandardCard } from "@/card/card-types"
 import { ImageCard } from "@/components/ui/image-card"
 import { SelectableCard } from "@/components/ui/selectable-card"
@@ -14,8 +15,7 @@ interface ViewCardsModalProps {
   title: string
 }
 
-const BATCH_SIZE = 30 // 每批加载30张卡牌
-const LOAD_DELAY = 50 // 每批之间延迟50ms，避免阻塞UI
+const ITEMS_PER_PAGE = 30
 
 export function ViewCardsModal({
   isOpen,
@@ -26,46 +26,34 @@ export function ViewCardsModal({
   const { isTextMode } = useTextModeStore()
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [displayedCards, setDisplayedCards] = useState<ExtendedStandardCard[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const scrollableContainerRef = useRef<HTMLDivElement>(null)
 
-  // 异步分批加载卡牌
+  // 初始化时加载第一页
   useEffect(() => {
     if (!isOpen) return
 
-    let isMounted = true
-    setIsLoading(true)
-    setDisplayedCards([])
-
-    // 使用 requestIdleCallback 或 setTimeout 进行分批加载
-    const loadCardsBatch = async () => {
-      const totalBatches = Math.ceil(cards.length / BATCH_SIZE)
-
-      for (let i = 0; i < totalBatches; i++) {
-        if (!isMounted) break
-
-        const start = i * BATCH_SIZE
-        const end = Math.min(start + BATCH_SIZE, cards.length)
-        const batch = cards.slice(start, end)
-
-        // 使用 setTimeout 让出主线程，避免阻塞UI
-        await new Promise((resolve) => setTimeout(resolve, LOAD_DELAY))
-
-        if (isMounted) {
-          setDisplayedCards((prev) => [...prev, ...batch])
-        }
-      }
-
-      if (isMounted) {
-        setIsLoading(false)
-      }
+    // 重置滚动位置
+    if (scrollableContainerRef.current) {
+      scrollableContainerRef.current.scrollTop = 0
     }
 
-    loadCardsBatch()
-
-    return () => {
-      isMounted = false
-    }
+    setDisplayedCards(cards.slice(0, ITEMS_PER_PAGE))
+    setHasMore(cards.length > ITEMS_PER_PAGE)
+    setRefreshTrigger(prev => prev + 1)
   }, [isOpen, cards])
+
+  // 加载更多
+  const fetchMoreData = () => {
+    if (displayedCards.length >= cards.length) {
+      setHasMore(false)
+      return
+    }
+    const newDisplayedCards = displayedCards.concat(
+      cards.slice(displayedCards.length, displayedCards.length + ITEMS_PER_PAGE)
+    )
+    setDisplayedCards(newDisplayedCards)
+  }
 
   // ESC键关闭模态框
   useEffect(() => {
@@ -86,11 +74,6 @@ export function ViewCardsModal({
     }
   }, [isOpen, onClose])
 
-  // 监听卡牌变化，触发刷新动画
-  useEffect(() => {
-    setRefreshTrigger((prev) => prev + 1)
-  }, [displayedCards])
-
   if (!isOpen) return null
 
   return (
@@ -101,25 +84,53 @@ export function ViewCardsModal({
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">{title}</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-            >
-              ✕
-            </button>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-500">
+                共 {cards.length} 张卡牌
+              </span>
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         </div>
 
         {/* 卡牌列表 */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {displayedCards.length === 0 && !isLoading ? (
+        <div
+          id="viewCardsScrollable"
+          ref={scrollableContainerRef}
+          className="flex-1 overflow-y-auto p-6"
+        >
+          {cards.length === 0 ? (
             <div className="flex items-center justify-center h-32">
               <div className="text-center">
                 <p className="text-gray-500 mb-2">没有卡牌</p>
               </div>
             </div>
           ) : (
-            <>
+            <InfiniteScroll
+              dataLength={displayedCards.length}
+              next={fetchMoreData}
+              hasMore={hasMore}
+              loader={
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <span className="ml-3 text-gray-600">
+                    加载中... ({displayedCards.length} / {cards.length})
+                  </span>
+                </div>
+              }
+              endMessage={
+                <p className="text-center py-4 text-gray-500">
+                  已加载全部 {cards.length} 张卡牌
+                </p>
+              }
+              scrollableTarget="viewCardsScrollable"
+              scrollThreshold="800px"
+            >
               <div
                 className={`grid gap-4 ${
                   isTextMode
@@ -147,17 +158,7 @@ export function ViewCardsModal({
                   )
                 )}
               </div>
-
-              {/* 加载指示器 */}
-              {isLoading && (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                  <span className="ml-3 text-gray-600">
-                    加载中... ({displayedCards.length} / {cards.length})
-                  </span>
-                </div>
-              )}
-            </>
+            </InfiniteScroll>
           )}
         </div>
       </div>

@@ -22,14 +22,13 @@ function updateLRUCache(state: UnifiedCardState, cardId: string, blobUrl: string
   cacheOrder.push(cardId);
 
   // Evict oldest entries if cache is full
+  // Note: We intentionally do NOT call URL.revokeObjectURL() here because
+  // Image components may still be using the evicted URLs. The browser will
+  // garbage collect the Blob when there are no more references to it.
   while (cacheOrder.length > maxCacheSize) {
     const evictedId = cacheOrder.shift();
     if (evictedId) {
-      const evictedUrl = cache.get(evictedId);
-      if (evictedUrl) {
-        URL.revokeObjectURL(evictedUrl);
-        cache.delete(evictedId);
-      }
+      cache.delete(evictedId);
     }
   }
 }

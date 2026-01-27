@@ -109,7 +109,7 @@ export function useCardFiltering(initialTab?: string): UseCardFilteringReturn {
     }
 
     return cards
-  }, [state.activeTab, cardStore.initialized, cardStore.loadCardsByType, cardStore.cards])
+  }, [state.activeTab, cardStore.initialized])
 
   // === 卡包过滤后的卡牌（用于计算选项） ===
   const batchFilteredCards = useMemo(() => {
@@ -182,7 +182,7 @@ export function useCardFiltering(initialTab?: string): UseCardFilteringReturn {
       name: b.name,
       cardCount: b.cardCount,
     }))
-  }, [cardStore.batches])
+  }, [cardStore.initialized])
 
   return {
     filteredCards,

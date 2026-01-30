@@ -459,7 +459,7 @@ export default function CharacterSheetPageTwo() {
           setUpgradeSubclassProfession(undefined)
         }}
         selectedCardIndex={upgradeSubclassCardIndex}
-        initialTab="subclass"
+        initialTab="domain"
       />
     </>
   )

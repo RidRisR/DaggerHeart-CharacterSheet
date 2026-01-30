@@ -492,6 +492,7 @@ export function CardDeckSection({
           onClose={() => setCardSelectionModalOpen(false)}
           onSelect={handleCardSelect}
           selectedCardIndex={selectedCardIndex}
+          initialTab="domain"
         />
       )}
 

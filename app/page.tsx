@@ -724,6 +724,7 @@ export default function Home() {
           }}
           onSelect={handleCardSelect}
           selectedCardIndex={pendingCardIndex}
+          initialTab="domain"
         />
       )}
 

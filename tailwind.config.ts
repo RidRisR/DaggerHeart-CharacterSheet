@@ -10,6 +10,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ['var(--font-serif)', 'Georgia', 'serif'],
+        sans: ['var(--font-sans)', 'Arial', 'sans-serif'],
+        mono: ['var(--font-mono)', 'Courier New', 'monospace'],
+      },
       fontSize: {
         'xs': ['12px', { lineHeight: '16px' }],
         'sm': ['14px', { lineHeight: '20px' }],

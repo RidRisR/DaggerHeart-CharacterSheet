@@ -8,6 +8,24 @@ import { FadeNotificationContainer } from "@/components/ui/fade-notification"
 import { ProgressModalProvider } from "@/components/ui/unified-progress-modal"
 import { ChunkLoadErrorHandler } from "@/components/chunk-load-error-handler"
 import PrintHelper from "./print-helper"
+import { Libre_Baskerville, Mulish, Space_Mono } from 'next/font/google'
+
+const libreBaskerville = Libre_Baskerville({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-serif'
+})
+
+const mulish = Mulish({
+  subsets: ['latin'],
+  variable: '--font-sans'
+})
+
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-mono'
+})
 
 export const metadata: Metadata = {
   title: "DaggerHeart Character Sheet | 匕首之心角色卡生成器",
@@ -94,7 +112,11 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html
+      lang="zh-CN"
+      suppressHydrationWarning
+      className={`${libreBaskerville.variable} ${mulish.variable} ${spaceMono.variable}`}
+    >
       <head>
         <script
           type="application/ld+json"

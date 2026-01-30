@@ -277,6 +277,33 @@ function migrateHopeToNumber(data: SheetData): SheetData {
 }
 
 /**
+ * 笔记本字段迁移
+ * 确保 notebook 字段存在且结构正确
+ */
+function migrateNotebook(data: SheetData): SheetData {
+  // 如果已有 notebook 数据且结构正确，跳过
+  if (data.notebook &&
+      Array.isArray(data.notebook.pages) &&
+      data.notebook.pages.length > 0 &&
+      typeof data.notebook.currentPageIndex === 'number') {
+    return data
+  }
+
+  const migrated = { ...data }
+  migrated.notebook = {
+    pages: [{
+      id: 'page-1',
+      lines: []
+    }],
+    currentPageIndex: 0,
+    isOpen: false
+  }
+
+  console.log('[Migration] Added notebook field')
+  return migrated
+}
+
+/**
  * 清理废弃字段
  * 移除不再使用的字段，保持数据结构清洁
  */
@@ -321,6 +348,9 @@ export function migrateSheetData(
 
   // Phase 1: Hope 字段迁移
   migrated = migrateHopeToNumber(migrated)
+
+  // Notebook 字段迁移
+  migrated = migrateNotebook(migrated)
 
   // 3. 清理废弃字段（最后执行）
   migrated = cleanupDeprecatedFields(migrated)

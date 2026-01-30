@@ -193,6 +193,52 @@ export interface AdventureNotesData {
   adventureLog?: AdventureLogEntry[]
 }
 
+// ===== 悬浮笔记本相关类型定义 =====
+
+// 文本行
+export interface NotebookTextLine {
+  type: 'text'
+  id: string
+  content: string
+}
+
+// 计数器行
+export interface NotebookCounterLine {
+  type: 'counter'
+  id: string
+  label: string           // 计数器标签
+  current: number         // 当前值
+  max: number             // 最大值
+}
+
+// 单个骰子
+export interface NotebookDie {
+  sides: number           // 骰子面数 (4, 6, 8, 10, 12, 20)
+  value: number           // 当前显示的值
+}
+
+// 骰子行
+export interface NotebookDiceLine {
+  type: 'dice'
+  id: string
+  dice: NotebookDie[]     // 最多6个骰子
+}
+
+export type NotebookLine = NotebookTextLine | NotebookCounterLine | NotebookDiceLine
+
+// 单页
+export interface NotebookPage {
+  id: string
+  lines: NotebookLine[]
+}
+
+// 完整笔记本数据
+export interface NotebookData {
+  pages: NotebookPage[]
+  currentPageIndex: number
+  isOpen: boolean         // 窗口是否打开
+}
+
 export interface SheetData {
   // 通用属性
   name: string
@@ -307,6 +353,9 @@ export interface SheetData {
 
   // ===== 冒险笔记数据 =====
   adventureNotes?: AdventureNotesData
+
+  // ===== 悬浮笔记本数据 =====
+  notebook?: NotebookData
 
   // ===== 临时索引签名，兼容动态key访问，后续逐步收敛类型安全 =====
   // [key: string]: any // 已废弃，彻底类型安全后移除

@@ -19,6 +19,7 @@ import { PrintReadyChecker } from "@/components/print/print-ready-checker"
 import { PrintProvider } from "@/contexts/print-context"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
 import { PinnedCardWindow } from "@/components/ui/pinned-card-window"
+import { FloatingNotebook } from "@/components/notebook"
 import { useTextModeStore } from "@/lib/text-mode-store"
 import { useDualPageStore } from "@/lib/dual-page-store"
 import { registerPages, getTabPages } from "@/lib/page-registry"
@@ -742,6 +743,9 @@ export default function Home() {
           pinnedCard={pinnedCard}
         />
       ))}
+
+      {/* 悬浮笔记本 */}
+      <FloatingNotebook />
     </main>
   )
 }

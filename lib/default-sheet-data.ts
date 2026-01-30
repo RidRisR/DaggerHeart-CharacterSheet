@@ -154,4 +154,14 @@ export const defaultSheetData: SheetData = {
             date: ''
         }))
     },
+
+    // 悬浮笔记本默认数据
+    notebook: {
+        pages: [{
+            id: 'page-1',
+            lines: []
+        }],
+        currentPageIndex: 0,
+        isOpen: false
+    },
 };

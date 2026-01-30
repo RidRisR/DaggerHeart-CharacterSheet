@@ -33,3 +33,5 @@ next-env.d.ts
 # testing
 coverage/
 .nyc_output/
+
+.claude

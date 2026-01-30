@@ -150,11 +150,6 @@ export function GenericCardSelectionModal({
     onSelect(card.id, field)
   }
 
-  // 计算激活的筛选器数量
-  const activeFilterCount =
-    (selectedBatches.length > 0 ? 1 : 0) +
-    (selectedClasses.length > 0 ? 1 : 0)
-
   // 重置筛选
   const handleResetFilters = () => {
     setSelectedBatches([])
@@ -183,7 +178,7 @@ export function GenericCardSelectionModal({
         />
       }
     >
-      <ModalFilterBar collapsible activeFilterCount={activeFilterCount}>
+      <ModalFilterBar>
         <MultiSelectFilter
           label="卡包"
           options={batchOptions.map(b => ({ value: b.id, label: `${b.name} (${b.cardCount})` }))}

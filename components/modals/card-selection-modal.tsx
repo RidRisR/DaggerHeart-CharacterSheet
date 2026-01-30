@@ -108,13 +108,6 @@ export function CardSelectionModal({
     actions.setActiveTab(tab)
   }, [actions])
 
-  // 计算激活的筛选器数量
-  const activeFilterCount =
-    (state.selectedBatches.length > 0 ? 1 : 0) +
-    (state.selectedClasses.length > 0 ? 1 : 0) +
-    (state.selectedLevels.length > 0 ? 1 : 0) +
-    (searchTerm ? 1 : 0)
-
   // === 渲染 ===
 
   return (
@@ -145,7 +138,7 @@ export function CardSelectionModal({
         />
       }
     >
-      <ModalFilterBar collapsible activeFilterCount={activeFilterCount}>
+      <ModalFilterBar>
         <MultiSelectFilter
           label="卡包"
           options={batchOptions.map(b => ({ value: b.id, label: `${b.name} (${b.cardCount})` }))}

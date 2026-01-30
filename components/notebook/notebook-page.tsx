@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState, useCallback } from "react"
 import type { NotebookPage as NotebookPageType, NotebookLine } from "@/lib/sheet-data"
 import { TextLine } from "./lines/text-line"
 import { CounterLine } from "./lines/counter-line"
@@ -10,11 +10,50 @@ interface NotebookPageProps {
   page: NotebookPageType
   onUpdateLine: (lineId: string, updates: Partial<NotebookLine>) => void
   onDeleteLine: (lineId: string) => void
+  onReorderLines: (fromIndex: number, toIndex: number) => void
 }
 
-export function NotebookPage({ page, onUpdateLine, onDeleteLine }: NotebookPageProps) {
+export function NotebookPage({ page, onUpdateLine, onDeleteLine, onReorderLines }: NotebookPageProps) {
   // 蓝色横线背景样式
   const lineHeight = 28 // 行高
+
+  // 拖拽状态
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
+  // 拖拽开始
+  const handleDragStart = useCallback((index: number) => {
+    setDraggedIndex(index)
+  }, [])
+
+  // 拖拽结束
+  const handleDragEnd = useCallback(() => {
+    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+      onReorderLines(draggedIndex, dragOverIndex)
+    }
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }, [draggedIndex, dragOverIndex, onReorderLines])
+
+  // 拖拽经过
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedIndex !== null && index !== draggedIndex) {
+      setDragOverIndex(index)
+    }
+  }, [draggedIndex])
+
+  // 拖拽离开
+  const handleDragLeave = useCallback(() => {
+    setDragOverIndex(null)
+  }, [])
+
+  // 创建拖拽手柄属性
+  const createDragHandleProps = (index: number) => ({
+    draggable: true,
+    onDragStart: () => handleDragStart(index),
+    onDragEnd: handleDragEnd,
+  })
 
   return (
     <div
@@ -39,11 +78,17 @@ export function NotebookPage({ page, onUpdateLine, onDeleteLine }: NotebookPageP
         </div>
       ) : (
         <div className="space-y-0">
-          {page.lines.map((line) => (
+          {page.lines.map((line, index) => (
             <div
               key={line.id}
-              className="group relative"
+              className={`group relative transition-all duration-150 ${
+                draggedIndex === index ? 'opacity-50' : ''
+              } ${
+                dragOverIndex === index ? 'border-t-2 border-amber-500' : ''
+              }`}
               style={{ minHeight: lineHeight }}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={handleDragLeave}
             >
               {line.type === 'text' && (
                 <TextLine
@@ -59,6 +104,7 @@ export function NotebookPage({ page, onUpdateLine, onDeleteLine }: NotebookPageP
                   lineHeight={lineHeight}
                   onUpdate={(updates) => onUpdateLine(line.id, updates)}
                   onDelete={() => onDeleteLine(line.id)}
+                  dragHandleProps={createDragHandleProps(index)}
                 />
               )}
               {line.type === 'dice' && (
@@ -67,6 +113,7 @@ export function NotebookPage({ page, onUpdateLine, onDeleteLine }: NotebookPageP
                   lineHeight={lineHeight}
                   onUpdate={(updates) => onUpdateLine(line.id, updates)}
                   onDelete={() => onDeleteLine(line.id)}
+                  dragHandleProps={createDragHandleProps(index)}
                 />
               )}
             </div>

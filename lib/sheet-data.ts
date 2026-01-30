@@ -221,6 +221,7 @@ export interface NotebookDie {
 export interface NotebookDiceLine {
   type: 'dice'
   id: string
+  label: string           // 骰子行标题
   dice: NotebookDie[]     // 最多6个骰子
 }
 

@@ -75,6 +75,16 @@ export function FloatingNotebook() {
     }))
   }, [updateCurrentPage])
 
+  // 重新排序行
+  const reorderLines = useCallback((fromIndex: number, toIndex: number) => {
+    updateCurrentPage(page => {
+      const newLines = [...page.lines]
+      const [removed] = newLines.splice(fromIndex, 1)
+      newLines.splice(toIndex, 0, removed)
+      return { ...page, lines: newLines }
+    })
+  }, [updateCurrentPage])
+
   // 添加页面
   const addPage = useCallback(() => {
     if (notebook.pages.length >= 5) return
@@ -236,6 +246,7 @@ export function FloatingNotebook() {
               page={currentPage}
               onUpdateLine={updateLine}
               onDeleteLine={deleteLine}
+              onReorderLines={reorderLines}
             />
           </div>
 
@@ -243,7 +254,7 @@ export function FloatingNotebook() {
           <NotebookToolbar
             onAddText={() => addLine({ type: 'text', id: generateId(), content: '' })}
             onAddCounter={() => addLine({ type: 'counter', id: generateId(), label: '计数器', current: 0, max: 6 })}
-            onAddDice={() => addLine({ type: 'dice', id: generateId(), dice: [{ sides: 6, value: 1 }] })}
+            onAddDice={() => addLine({ type: 'dice', id: generateId(), label: '骰子', dice: [{ sides: 6, value: 1 }] })}
           />
         </div>
 

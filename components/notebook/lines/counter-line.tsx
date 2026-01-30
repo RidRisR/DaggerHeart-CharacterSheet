@@ -69,8 +69,8 @@ export function CounterLine({ line, lineHeight, onUpdate, onDelete, dragHandlePr
 
   return (
     <div
-      className="flex flex-col gap-1 py-2 relative"
-      style={{ minHeight: Math.max(lineHeight * 2, 48) }}
+      className="flex flex-col relative"
+      style={{ minHeight: lineHeight * 2 }}
     >
       {/* 拖拽区域 - 红线左侧的整个区域 */}
       <div
@@ -80,7 +80,7 @@ export function CounterLine({ line, lineHeight, onUpdate, onDelete, dragHandlePr
       />
 
       {/* 标题行：标题 + 最大值 + 删除按钮 */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" style={{ height: lineHeight }}>
         {/* 标签 - 点击可编辑 */}
         {isEditingLabel ? (
           <input
@@ -158,7 +158,7 @@ export function CounterLine({ line, lineHeight, onUpdate, onDelete, dragHandlePr
       </div>
 
       {/* 计数器区域 - 占据整行 */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" style={{ height: lineHeight }}>
         {/* 减少按钮 */}
         <button
           onClick={() => onUpdate({ current: Math.max(0, line.current - 1) })}

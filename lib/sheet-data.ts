@@ -199,6 +199,7 @@ export interface AdventureNotesData {
 export interface NotebookTextLine {
   type: 'text'
   id: string
+  label: string             // 文本标题
   content: string
 }
 

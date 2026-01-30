@@ -190,8 +190,8 @@ export function DiceLine({ line, lineHeight, onUpdate, onDelete, dragHandleProps
 
   return (
     <div
-      className="flex flex-col gap-1 py-2 relative"
-      style={{ minHeight: Math.max(lineHeight * 2, 64) }}
+      className="flex flex-col relative"
+      style={{ minHeight: lineHeight * 4 }}
     >
       {/* 拖拽区域 - 红线左侧的整个区域 */}
       <div
@@ -201,7 +201,7 @@ export function DiceLine({ line, lineHeight, onUpdate, onDelete, dragHandleProps
       />
 
       {/* 标题行：标题 + 操作按钮 */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" style={{ height: lineHeight }}>
         {/* 标题 - 点击可编辑 */}
         {isEditingLabel ? (
           <input
@@ -251,8 +251,8 @@ export function DiceLine({ line, lineHeight, onUpdate, onDelete, dragHandleProps
         </button>
       </div>
 
-      {/* 骰子展示区 - 占据整行 */}
-      <div className="flex items-end gap-2 flex-wrap">
+      {/* 骰子展示区 - 占据三行高度 */}
+      <div className="flex items-start gap-2 flex-wrap pt-1" style={{ height: lineHeight * 3 }}>
         {line.dice.map((die, index) => (
           <div key={index} className="relative group/die">
             <HexDie
@@ -293,7 +293,7 @@ export function DiceLine({ line, lineHeight, onUpdate, onDelete, dragHandleProps
 
         {/* 骰子类型选择菜单 - 使用 Popover 样式，显示在标题行旁边 */}
         {isAddingDie && (
-          <div className="ml-2 bg-white border border-gray-200 rounded-lg shadow-lg p-1.5 flex gap-1">
+          <div className="ml-2 bg-white border border-gray-200 rounded-lg shadow-lg p-1.5 flex gap-1 z-50">
             {DICE_TYPES.map(sides => (
               <button
                 key={sides}

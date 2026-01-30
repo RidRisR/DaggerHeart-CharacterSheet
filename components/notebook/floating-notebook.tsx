@@ -220,13 +220,12 @@ export function FloatingNotebook() {
           </button>
         </div>
 
-        {/* 笔记本内容区域 */}
+        {/* 笔记本内容区域 - 固定高度 */}
         <div
-          className="notebook-content relative"
+          className="notebook-content relative flex flex-col"
           style={{
             background: '#FDF6E3', // 米黄色纸张
-            minHeight: 300,
-            maxHeight: 'calc(100vh - 200px)',
+            height: 400,
           }}
         >
           {/* 纸张纹理噪点 */}
@@ -243,8 +242,8 @@ export function FloatingNotebook() {
             style={{ backgroundColor: '#E57373' }}
           />
 
-          {/* 页面内容 */}
-          <div className="relative overflow-y-auto overflow-x-visible" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+          {/* 页面内容 - 可滚动区域 */}
+          <div className="relative flex-1 overflow-y-auto overflow-x-visible">
             <NotebookPage
               page={currentPage}
               onUpdateLine={updateLine}
@@ -255,7 +254,7 @@ export function FloatingNotebook() {
 
           {/* 工具栏 */}
           <NotebookToolbar
-            onAddText={() => addLine({ type: 'text', id: generateId(), content: '' })}
+            onAddText={() => addLine({ type: 'text', id: generateId(), label: '笔记', content: '' })}
             onAddCounter={() => addLine({ type: 'counter', id: generateId(), label: '计数器', current: 0, max: 6 })}
             onAddDice={() => addLine({ type: 'dice', id: generateId(), label: '骰子', dice: [{ sides: 6, value: 1 }] })}
             disabled={currentPage.lines.length >= MAX_LINES_PER_PAGE}

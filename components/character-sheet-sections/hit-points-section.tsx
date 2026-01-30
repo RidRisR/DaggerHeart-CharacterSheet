@@ -45,21 +45,29 @@ export function HitPointsSection() {
     })
   }
 
-  // 增加上限
-  const handleIncreaseMax = (field: "hp" | "stress") => {
+  // 增加当前值
+  const handleIncreaseCurrent = (field: "hp" | "stress") => {
     const maxField = `${field}Max` as "hpMax" | "stressMax"
-    const currentMax = formData[maxField] || 6
-    if (currentMax < 18) {
-      handleMaxChange(field, String(currentMax + 1))
+    const max = formData[maxField] || 6
+    const fieldArray = Array.isArray(formData[field]) ? (formData[field] as boolean[]) : Array(18).fill(false)
+    const currentCount = fieldArray.filter(Boolean).length
+
+    if (currentCount < max) {
+      const newFieldData = [...fieldArray]
+      newFieldData[currentCount] = true
+      setSheetData((prev) => ({ ...prev, [field]: newFieldData }))
     }
   }
 
-  // 减少上限
-  const handleDecreaseMax = (field: "hp" | "stress") => {
-    const maxField = `${field}Max` as "hpMax" | "stressMax"
-    const currentMax = formData[maxField] || 6
-    if (currentMax > 1) {
-      handleMaxChange(field, String(currentMax - 1))
+  // 减少当前值
+  const handleDecreaseCurrent = (field: "hp" | "stress") => {
+    const fieldArray = Array.isArray(formData[field]) ? (formData[field] as boolean[]) : Array(18).fill(false)
+    const currentCount = fieldArray.filter(Boolean).length
+
+    if (currentCount > 0) {
+      const newFieldData = [...fieldArray]
+      newFieldData[currentCount - 1] = false
+      setSheetData((prev) => ({ ...prev, [field]: newFieldData }))
     }
   }
 
@@ -171,21 +179,21 @@ export function HitPointsSection() {
             )}
           </span>
           <div className="flex items-center">
-            {/* 渐进式显示的上限调整按钮 */}
+            {/* 渐进式显示的当前值调整按钮 */}
             <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 print:hidden">
               <button
-                onClick={() => handleDecreaseMax("hp")}
-                disabled={(formData.hpMax || 6) <= 1}
+                onClick={() => handleDecreaseCurrent("hp")}
+                disabled={(Array.isArray(formData.hp) ? formData.hp.filter(Boolean).length : 0) <= 0}
                 className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
-                title="减少HP上限"
+                title="减少HP"
               >
                 −
               </button>
               <button
-                onClick={() => handleIncreaseMax("hp")}
-                disabled={(formData.hpMax || 6) >= 18}
+                onClick={() => handleIncreaseCurrent("hp")}
+                disabled={(Array.isArray(formData.hp) ? formData.hp.filter(Boolean).length : 0) >= (formData.hpMax || 6)}
                 className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
-                title="增加HP上限"
+                title="增加HP"
               >
                 ＋
               </button>
@@ -209,21 +217,21 @@ export function HitPointsSection() {
         <div className="flex items-center justify-between group">
           <span className="font-bold mr-2 text-xs">压力</span>
           <div className="flex items-center">
-            {/* 渐进式显示的上限调整按钮 */}
+            {/* 渐进式显示的当前值调整按钮 */}
             <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 print:hidden">
               <button
-                onClick={() => handleDecreaseMax("stress")}
-                disabled={(formData.stressMax || 6) <= 1}
+                onClick={() => handleDecreaseCurrent("stress")}
+                disabled={(Array.isArray(formData.stress) ? formData.stress.filter(Boolean).length : 0) <= 0}
                 className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
-                title="减少压力上限"
+                title="减少压力"
               >
                 −
               </button>
               <button
-                onClick={() => handleIncreaseMax("stress")}
-                disabled={(formData.stressMax || 6) >= 18}
+                onClick={() => handleIncreaseCurrent("stress")}
+                disabled={(Array.isArray(formData.stress) ? formData.stress.filter(Boolean).length : 0) >= (formData.stressMax || 6)}
                 className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
-                title="增加压力上限"
+                title="增加压力"
               >
                 ＋
               </button>

@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useDualPageStore } from '@/lib/dual-page-store'
 
 // 双页模式图标
@@ -43,12 +44,21 @@ export function DualPageToggle() {
   const { isDualPageMode, toggleDualPageMode } = useDualPageStore()
 
   return (
-    <Button
-      onClick={toggleDualPageMode}
-      className="bg-gray-800 hover:bg-gray-700 text-white rounded-full p-0 flex items-center justify-center w-12 h-12 text-base"
-      title={isDualPageMode ? "切换到单页模式" : "切换到双页模式"}
-    >
-      {isDualPageMode ? <SinglePageIcon /> : <DualPageIcon />}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          onClick={toggleDualPageMode}
+          className="bg-gray-800 hover:bg-gray-700 text-white rounded-full p-0 flex items-center justify-center w-10 h-10"
+        >
+          {isDualPageMode ? <SinglePageIcon /> : <DualPageIcon />}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        <p>单双页切换</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {isDualPageMode ? "当前双页模式，点击切换到单页" : "当前单页模式，点击切换到双页"}
+        </p>
+      </TooltipContent>
+    </Tooltip>
   )
 }

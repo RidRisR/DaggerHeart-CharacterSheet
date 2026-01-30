@@ -311,6 +311,16 @@ export default function Home() {
     setIsGuideOpen(!isGuideOpen)
   }
 
+  // 切换笔记本显示状态
+  const toggleNotebook = () => {
+    setFormData(prev => ({
+      ...prev,
+      notebook: {
+        ...(prev.notebook || { pages: [{ id: 'page-1', lines: [] }], currentPageIndex: 0, isOpen: false }),
+        isOpen: !(prev.notebook?.isOpen ?? false)
+      }
+    }))
+  }
 
   // 快速新建存档
 
@@ -674,6 +684,7 @@ export default function Home() {
         characterCount={characterList.length}
         onToggleCardDrawer={() => setIsCardDrawerOpen(!isCardDrawerOpen)}
         onToggleGuide={toggleGuide}
+        onToggleNotebook={toggleNotebook}
         onPrintAll={handlePrintAll}
         onOpenSealDiceExport={() => setSealDiceExportModalOpen(true)}
         onQuickExportJSON={handleQuickExportJSON}

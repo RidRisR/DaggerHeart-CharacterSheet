@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Download, FolderOpen, Package, Sparkles, FileText, FileJson, FileType, Code, Dice5, Plus, Upload } from "lucide-react"
+import { Download, FolderOpen, Package, Sparkles, FileText, FileJson, FileType, Code, Dice5, Plus, Upload, BookOpen, Layers } from "lucide-react"
 import { navigateToPage, cn } from "@/lib/utils"
 import { DualPageToggle } from "@/components/ui/dual-page-toggle"
 
@@ -34,6 +34,7 @@ interface MainModeProps extends BottomDockBaseProps {
   // 卡牌相关
   onToggleCardDrawer: () => void
   onToggleGuide: () => void
+  onToggleNotebook: () => void
 
   // 导出相关
   onPrintAll: () => void
@@ -75,14 +76,14 @@ function MainModeContent(props: MainModeProps) {
             <Button
               onClick={props.onToggleCardDrawer}
               className={cn(
-                "bg-gray-800 hover:bg-gray-700 text-white rounded-full p-0 flex items-center justify-center text-sm relative",
-                isMobile ? "w-12 h-12 text-base" : "w-10 h-10",
+                "bg-gray-800 hover:bg-gray-700 text-white rounded-full p-0 flex items-center justify-center relative",
+                isMobile ? "w-12 h-12" : "w-10 h-10",
                 props.isCardDrawerOpen && "ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-900"
               )}
               aria-label="打开卡牌抽屉"
               aria-expanded={props.isCardDrawerOpen}
             >
-              🎴
+              <Layers className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
               {props.isCardDrawerOpen && (
                 <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -120,6 +121,28 @@ function MainModeContent(props: MainModeProps) {
             </p>
           </TooltipContent>
         </Tooltip>
+
+        {/* 笔记按钮 */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={props.onToggleNotebook}
+              className={cn(
+                "bg-gray-800 hover:bg-gray-700 text-white gap-1.5 text-sm",
+                isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
+              )}
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              笔记
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p>笔记本</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              记录游戏中的笔记、计数器和骰子
+            </p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <Separator orientation="vertical" className="h-5 bg-slate-500/30" />
@@ -128,15 +151,25 @@ function MainModeContent(props: MainModeProps) {
       <div className="flex items-center gap-1.5">
         {/* 导出下拉菜单 */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className={cn(
-              "bg-gray-800 hover:bg-gray-700 text-white gap-1.5 text-sm",
-              isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
-            )}>
-              <Download className="h-3.5 w-3.5" />
-              导出
-            </Button>
-          </DropdownMenuTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button className={cn(
+                  "bg-gray-800 hover:bg-gray-700 text-white gap-1.5 text-sm",
+                  isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
+                )}>
+                  <Download className="h-3.5 w-3.5" />
+                  导出
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>导出角色卡</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                导出为PDF、HTML、JSON等格式
+              </p>
+            </TooltipContent>
+          </Tooltip>
           <DropdownMenuContent align="end" side="top" className={cn("w-56", isMobile && "text-base")}>
             <DropdownMenuItem onClick={props.onPrintAll} className={cn(isMobile && "py-3 px-4")}>
               <FileText className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
@@ -164,15 +197,25 @@ function MainModeContent(props: MainModeProps) {
 
         {/* 存档管理下拉菜单 */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className={cn(
-              "bg-gray-800 hover:bg-gray-700 text-white gap-1.5 text-sm",
-              isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
-            )}>
-              <FolderOpen className="h-3.5 w-3.5" />
-              存档
-            </Button>
-          </DropdownMenuTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button className={cn(
+                  "bg-gray-800 hover:bg-gray-700 text-white gap-1.5 text-sm",
+                  isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
+                )}>
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  存档
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>存档管理</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                管理多个角色存档
+              </p>
+            </TooltipContent>
+          </Tooltip>
           <DropdownMenuContent align="end" side="top" className={cn("w-56", isMobile && "text-base")}>
             <DropdownMenuItem onClick={props.onOpenCharacterManagement} className={cn(isMobile && "py-3 px-4")}>
               <FolderOpen className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />

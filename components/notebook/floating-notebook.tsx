@@ -165,15 +165,7 @@ export function FloatingNotebook() {
   const currentPage = notebook.pages[notebook.currentPageIndex] || notebook.pages[0]
 
   if (!notebook.isOpen) {
-    return (
-      <button
-        onClick={toggleOpen}
-        className="fixed bottom-4 right-4 z-50 p-3 bg-amber-800 text-amber-100 rounded-full shadow-lg hover:bg-amber-700 transition-colors print:hidden"
-        title="打开笔记本"
-      >
-        <BookOpen className="w-6 h-6" />
-      </button>
-    )
+    return null
   }
 
   return (

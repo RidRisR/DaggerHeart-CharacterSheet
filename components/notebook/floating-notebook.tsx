@@ -248,7 +248,7 @@ export function FloatingNotebook() {
           <NotebookToolbar
             onAddText={() => addLine({ type: 'text', id: generateId(), label: '笔记', content: '' })}
             onAddCounter={() => addLine({ type: 'counter', id: generateId(), label: '计数器', current: 0, max: 6 })}
-            onAddDice={() => addLine({ type: 'dice', id: generateId(), label: '骰子', dice: [{ sides: 6, value: 1 }] })}
+            onAddDice={() => addLine({ type: 'dice', id: generateId(), label: '骰子', dice: [] })}
             disabled={currentPage.lines.length >= MAX_LINES_PER_PAGE}
           />
         </div>

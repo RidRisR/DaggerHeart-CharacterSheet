@@ -263,15 +263,13 @@ export function DiceLine({ line, lineHeight, onUpdate, onDelete, dragHandleProps
               isRolling={rollingDice.has(index)}
             />
             {/* 删除单个骰子按钮 */}
-            {line.dice.length > 1 && (
-              <button
-                onClick={() => removeDie(index)}
-                className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full opacity-0 group-hover/die:opacity-100 transition-opacity flex items-center justify-center"
-                title="移除此骰子"
-              >
-                <span className="text-[10px] leading-none">×</span>
-              </button>
-            )}
+            <button
+              onClick={() => removeDie(index)}
+              className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full opacity-0 group-hover/die:opacity-100 transition-opacity flex items-center justify-center"
+              title="移除此骰子"
+            >
+              <span className="text-[10px] leading-none">×</span>
+            </button>
           </div>
         ))}
 

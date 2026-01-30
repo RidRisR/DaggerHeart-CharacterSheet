@@ -235,7 +235,8 @@ export interface BatchStats {
 // 卡牌来源标识
 export enum CardSource {
   BUILTIN = 'builtin',
-  CUSTOM = 'custom'
+  CUSTOM = 'custom',
+  ADHOC = 'adhoc'  // sheet直接创建的自定义卡牌
 }
 
 // 扩展的StandardCard，包含来源信息

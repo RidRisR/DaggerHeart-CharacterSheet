@@ -52,6 +52,9 @@ const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): st
             }
             return "自定义卡包";
         }
+        if (extCard.source === CardSource.ADHOC) {
+            return "角色自定义";
+        }
         return "内置卡包";
     }
 
@@ -64,6 +67,9 @@ const getCardSourceDisplayName = (card: StandardCard | ExtendedStandardCard): st
         }
         if (matched.source === CardSource.CUSTOM) {
             return matched.batchName || matched.batchId || "自定义卡包";
+        }
+        if (matched.source === CardSource.ADHOC) {
+            return "角色自定义";
         }
     }
 

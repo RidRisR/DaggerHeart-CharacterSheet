@@ -11,6 +11,8 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, X } from "lucide-react"
+import { CustomCardCreatorModal } from "./custom-card-creator-modal"
+import { getActiveCharacterId } from "@/lib/multi-character-storage"
 
 interface CardSelectionModalProps {
   isOpen: boolean
@@ -54,6 +56,9 @@ export function CardSelectionModal({
 
   // 刷新触发器（用于卡牌动画）
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  // 自定义卡牌模态框状态
+  const [customCardModalOpen, setCustomCardModalOpen] = useState(false)
 
   // 本地搜索过滤（在 useCardFiltering 结果基础上再过滤）
   const searchedCards = useMemo(() => {
@@ -111,6 +116,7 @@ export function CardSelectionModal({
   // === 渲染 ===
 
   return (
+    <>
     <BaseCardModal
       isOpen={isOpen}
       onClose={onClose}
@@ -126,14 +132,24 @@ export function CardSelectionModal({
           title={`选择卡牌 #${selectedCardIndex + 1}`}
           onClose={onClose}
           actions={
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleClearSelection}
-              className="bg-red-500 hover:bg-red-600 text-white"
-            >
-              清除选择
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCustomCardModalOpen(true)}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                + 自定义卡牌
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleClearSelection}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                清除选择
+              </Button>
+            </>
           }
         />
       }
@@ -221,5 +237,17 @@ export function CardSelectionModal({
         </ContentStates>
       </div>
     </BaseCardModal>
+
+    <CustomCardCreatorModal
+      isOpen={customCardModalOpen}
+      onClose={() => setCustomCardModalOpen(false)}
+      onCreate={(card) => {
+        onSelect(card)
+        setCustomCardModalOpen(false)
+        onClose()
+      }}
+      characterId={getActiveCharacterId() || "default"}
+    />
+  </>
   )
 }

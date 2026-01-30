@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import type { ExtendedStandardCard } from '@/card/card-types'
 import { CardSource } from '@/card/card-types'
 import type { CustomCardFormValues } from '@/lib/sheet-custom-card-types'
@@ -9,15 +9,13 @@ import type { CustomCardFormValues } from '@/lib/sheet-custom-card-types'
  * @param formValues - 表单值对象
  * @param cardId - 卡牌 ID
  * @param tags - 简略信息标签数组
- * @returns 预览卡牌对象和动画状态
+ * @returns 预览卡牌对象
  */
 export function useCardFormPreview(
   formValues: CustomCardFormValues,
   cardId: string,
   tags: string[] = []
 ) {
-  const [isAnimating, setIsAnimating] = useState(false)
-
   // 从表单值构建预览卡牌对象
   const previewCard = useMemo((): ExtendedStandardCard => {
     return {
@@ -45,12 +43,5 @@ export function useCardFormPreview(
     }
   }, [formValues, cardId, tags])
 
-  // 当预览卡牌内容变化时触发脉动动画
-  useEffect(() => {
-    setIsAnimating(true)
-    const timer = setTimeout(() => setIsAnimating(false), 300)
-    return () => clearTimeout(timer)
-  }, [previewCard])
-
-  return { previewCard, isAnimating }
+  return { previewCard }
 }

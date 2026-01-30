@@ -8,7 +8,6 @@ import { BaseCardModal } from "./base/BaseCardModal"
 import { ModalHeader } from "./base/ModalHeader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Form,
   FormControl,
@@ -25,6 +24,7 @@ import {
 } from "@/lib/sheet-custom-card-types"
 import { useCardFormPreview } from "@/hooks/use-card-form-preview"
 import { PreviewPanel } from "./custom-card-creator-modal/PreviewPanel"
+import MarkdownEditor from "@/components/card-editor/markdown-editor"
 
 interface CustomCardCreatorModalProps {
   isOpen: boolean
@@ -64,7 +64,7 @@ export function CustomCardCreatorModal({
   const formValues = form.watch()
 
   // 使用预览 Hook
-  const { previewCard, isAnimating } = useCardFormPreview(formValues, currentCardId, tags)
+  const { previewCard } = useCardFormPreview(formValues, currentCardId, tags)
 
   // 打开模态框时生成新ID
   useEffect(() => {
@@ -78,8 +78,9 @@ export function CustomCardCreatorModal({
   }, [isOpen, characterId, form])
 
   const addTag = () => {
-    if (tagInput.trim() && tags.length < 3) {
-      setTags([...tags, tagInput.trim()])
+    const trimmed = tagInput.trim()
+    if (trimmed && tags.length < 3 && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed])
       setTagInput("")
     }
   }
@@ -200,7 +201,7 @@ export function CustomCardCreatorModal({
                     onReorder={setTags}
                     className="flex flex-wrap gap-2"
                   >
-                    {tags.map((tag, index) => (
+                    {tags.map((tag) => (
                       <Reorder.Item
                         key={tag}
                         value={tag}
@@ -252,12 +253,18 @@ export function CustomCardCreatorModal({
                 <FormItem>
                   <FormLabel>描述</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="输入卡牌描述"
-                      className="min-h-[100px]"
-                      {...field}
+                    <MarkdownEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="输入卡牌描述，支持Markdown格式"
+                      height={120}
+                      preview="edit"
+                      hideToolbar={false}
                     />
                   </FormControl>
+                  <div className="text-sm text-muted-foreground">
+                    支持Markdown格式，可以使用 *__关键词__* 或 ***标题*** 来标记重要信息
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -305,7 +312,6 @@ export function CustomCardCreatorModal({
         <div className="w-full lg:w-3/5 overflow-y-auto bg-gray-50 p-8 border-l border-gray-200">
           <PreviewPanel
             previewCard={previewCard}
-            isAnimating={isAnimating}
             viewMode={previewMode}
             onViewModeChange={setPreviewMode}
           />

@@ -1,6 +1,5 @@
 "use client"
 
-import { motion } from 'framer-motion'
 import { ImageCard } from '@/components/ui/image-card'
 import { SelectableCard } from '@/components/ui/selectable-card'
 import type { ExtendedStandardCard } from '@/card/card-types'
@@ -8,14 +7,12 @@ import { cn } from '@/lib/utils'
 
 interface PreviewPanelProps {
   previewCard: ExtendedStandardCard
-  isAnimating: boolean
   viewMode: 'image' | 'selectable'
   onViewModeChange: (mode: 'image' | 'selectable') => void
 }
 
 export function PreviewPanel({
   previewCard,
-  isAnimating,
   viewMode,
   onViewModeChange
 }: PreviewPanelProps) {
@@ -56,16 +53,8 @@ export function PreviewPanel({
         </div>
       </div>
 
-      {/* 预览卡牌 (带动画) */}
-      <motion.div
-        key={`preview-${viewMode}`}
-        animate={{
-          opacity: isAnimating ? 0.7 : 1,
-          y: isAnimating ? -5 : 0,
-        }}
-        transition={{ duration: 0.2 }}
-        className="flex-1 flex items-start justify-center"
-      >
+      {/* 预览卡牌 */}
+      <div className="flex-1 flex items-start justify-center">
         {viewMode === 'image' ? (
           <ImageCard
             card={previewCard}
@@ -81,7 +70,7 @@ export function PreviewPanel({
             showSource={false}
           />
         )}
-      </motion.div>
+      </div>
 
       {/* 提示文本 */}
       <div className="text-sm text-gray-600 bg-blue-50 rounded p-3 border border-blue-200">

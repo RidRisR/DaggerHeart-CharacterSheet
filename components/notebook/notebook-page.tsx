@@ -28,18 +28,26 @@ export function NotebookPage({ page, onUpdateLine, onDeleteLine, onReorderLines 
 
   // 拖拽结束
   const handleDragEnd = useCallback(() => {
-    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
-      onReorderLines(draggedIndex, dragOverIndex)
+    if (draggedIndex !== null && dragOverIndex !== null) {
+      // dragOverIndex 表示目标位置（0 = 最顶部, 1 = 第一个之后, etc.）
+      let targetIndex = dragOverIndex
+      // 如果拖拽到自己下方，需要调整索引
+      if (targetIndex > draggedIndex) {
+        targetIndex = targetIndex - 1
+      }
+      if (targetIndex !== draggedIndex) {
+        onReorderLines(draggedIndex, targetIndex)
+      }
     }
     setDraggedIndex(null)
     setDragOverIndex(null)
   }, [draggedIndex, dragOverIndex, onReorderLines])
 
   // 拖拽经过
-  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+  const handleDragOver = useCallback((e: React.DragEvent, targetPosition: number) => {
     e.preventDefault()
-    if (draggedIndex !== null && index !== draggedIndex) {
-      setDragOverIndex(index)
+    if (draggedIndex !== null) {
+      setDragOverIndex(targetPosition)
     }
   }, [draggedIndex])
 
@@ -77,25 +85,62 @@ export function NotebookPage({ page, onUpdateLine, onDeleteLine, onReorderLines 
           点击下方按钮添加内容...
         </div>
       ) : (
-        <div className="space-y-0">
+        <div className="space-y-0 relative">
+          {/* 拖拽到最顶部的放置指示器 */}
+          {draggedIndex !== null && dragOverIndex === 0 && (
+            <div
+              className="h-px bg-amber-500 -mx-8"
+              style={{ boxShadow: '0 0 4px rgba(245, 158, 11, 0.8)' }}
+            />
+          )}
+
           {page.lines.map((line, index) => (
             <div
               key={line.id}
               className={`group relative transition-all duration-150 ${
-                draggedIndex === index ? 'opacity-50' : ''
+                draggedIndex === index ? 'opacity-50 bg-amber-100/50' : ''
               } ${
-                dragOverIndex === index ? 'border-t-2 border-amber-500' : ''
+                draggedIndex !== null && draggedIndex !== index ? 'bg-amber-50/30 border-t border-amber-200/60' : ''
               }`}
-              style={{ minHeight: lineHeight }}
-              onDragOver={(e) => handleDragOver(e, index)}
+              style={{
+                minHeight: lineHeight,
+                marginLeft: draggedIndex !== null && draggedIndex !== index ? '-32px' : undefined,
+                paddingLeft: draggedIndex !== null && draggedIndex !== index ? '32px' : undefined,
+              }}
+              onDragOver={(e) => {
+                e.preventDefault()
+                // 根据鼠标位置决定放置在上方还是下方
+                const rect = e.currentTarget.getBoundingClientRect()
+                const midY = rect.top + rect.height / 2
+                if (e.clientY < midY) {
+                  setDragOverIndex(index)
+                } else {
+                  setDragOverIndex(index + 1)
+                }
+              }}
               onDragLeave={handleDragLeave}
             >
+              {/* 放置指示器 - 上方 */}
+              {draggedIndex !== null && dragOverIndex === index && draggedIndex !== index && (
+                <div
+                  className="absolute -top-px left-0 right-0 h-px bg-amber-500 -mx-8 z-10"
+                  style={{ boxShadow: '0 0 4px rgba(245, 158, 11, 0.8)' }}
+                />
+              )}
+              {/* 放置指示器 - 下方 */}
+              {draggedIndex !== null && dragOverIndex === index + 1 && draggedIndex !== index && (
+                <div
+                  className="absolute -bottom-px left-0 right-0 h-px bg-amber-500 -mx-8 z-10"
+                  style={{ boxShadow: '0 0 4px rgba(245, 158, 11, 0.8)' }}
+                />
+              )}
               {line.type === 'text' && (
                 <TextLine
                   line={line}
                   lineHeight={lineHeight}
                   onUpdate={(updates) => onUpdateLine(line.id, updates)}
                   onDelete={() => onDeleteLine(line.id)}
+                  dragHandleProps={createDragHandleProps(index)}
                 />
               )}
               {line.type === 'counter' && (
@@ -118,6 +163,25 @@ export function NotebookPage({ page, onUpdateLine, onDeleteLine, onReorderLines 
               )}
             </div>
           ))}
+
+          {/* 拖拽到最底部的放置区域 */}
+          {draggedIndex !== null && (
+            <div
+              className="h-8 -mx-8 px-8"
+              onDragOver={(e) => {
+                e.preventDefault()
+                setDragOverIndex(page.lines.length)
+              }}
+              onDragLeave={handleDragLeave}
+            >
+              {dragOverIndex === page.lines.length && (
+                <div
+                  className="h-px bg-amber-500"
+                  style={{ boxShadow: '0 0 4px rgba(245, 158, 11, 0.8)' }}
+                />
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

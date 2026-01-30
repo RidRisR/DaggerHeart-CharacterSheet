@@ -18,6 +18,9 @@ const defaultNotebookData: NotebookData = {
   isOpen: false
 }
 
+// 每页最大行数
+const MAX_LINES_PER_PAGE = 10
+
 export function FloatingNotebook() {
   const { sheetData, setSheetData } = useSheetStore()
   const notebook = sheetData.notebook || defaultNotebookData
@@ -241,7 +244,7 @@ export function FloatingNotebook() {
           />
 
           {/* 页面内容 */}
-          <div className="relative overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+          <div className="relative overflow-y-auto overflow-x-visible" style={{ maxHeight: 'calc(100vh - 280px)' }}>
             <NotebookPage
               page={currentPage}
               onUpdateLine={updateLine}
@@ -255,6 +258,7 @@ export function FloatingNotebook() {
             onAddText={() => addLine({ type: 'text', id: generateId(), content: '' })}
             onAddCounter={() => addLine({ type: 'counter', id: generateId(), label: '计数器', current: 0, max: 6 })}
             onAddDice={() => addLine({ type: 'dice', id: generateId(), label: '骰子', dice: [{ sides: 6, value: 1 }] })}
+            disabled={currentPage.lines.length >= MAX_LINES_PER_PAGE}
           />
         </div>
 

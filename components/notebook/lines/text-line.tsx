@@ -9,9 +9,10 @@ interface TextLineProps {
   lineHeight: number
   onUpdate: (updates: Partial<NotebookTextLine>) => void
   onDelete: () => void
+  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
 }
 
-export function TextLine({ line, lineHeight, onUpdate, onDelete }: TextLineProps) {
+export function TextLine({ line, lineHeight, onUpdate, onDelete, dragHandleProps }: TextLineProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // 自动调整高度
@@ -24,7 +25,14 @@ export function TextLine({ line, lineHeight, onUpdate, onDelete }: TextLineProps
   }, [line.content, lineHeight])
 
   return (
-    <div className="flex items-start gap-1">
+    <div className="flex items-start gap-1 relative">
+      {/* 拖拽区域 - 红线左侧的整个区域 */}
+      <div
+        {...dragHandleProps}
+        className="absolute -left-8 top-0 bottom-0 w-6 cursor-grab hover:bg-amber-100/30 transition-colors"
+        title="拖拽排序"
+      />
+
       <textarea
         ref={textareaRef}
         value={line.content}

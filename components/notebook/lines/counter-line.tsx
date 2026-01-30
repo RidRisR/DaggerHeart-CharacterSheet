@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { Trash2, Minus, Plus, GripVertical } from "lucide-react"
+import { Trash2, Minus, Plus } from "lucide-react"
 import type { NotebookCounterLine } from "@/lib/sheet-data"
 
 interface CounterLineProps {
@@ -69,19 +69,18 @@ export function CounterLine({ line, lineHeight, onUpdate, onDelete, dragHandlePr
 
   return (
     <div
-      className="flex flex-col gap-1 py-2"
+      className="flex flex-col gap-1 py-2 relative"
       style={{ minHeight: Math.max(lineHeight * 2, 48) }}
     >
-      {/* 标题行：拖拽手柄 + 标题 + 最大值 + 删除按钮 */}
-      <div className="flex items-center gap-2">
-        {/* 拖拽手柄 */}
-        <div
-          {...dragHandleProps}
-          className="cursor-grab opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
-        >
-          <GripVertical className="w-3.5 h-3.5" />
-        </div>
+      {/* 拖拽区域 - 红线左侧的整个区域 */}
+      <div
+        {...dragHandleProps}
+        className="absolute -left-8 top-0 bottom-0 w-6 cursor-grab hover:bg-amber-100/30 transition-colors"
+        title="拖拽排序"
+      />
 
+      {/* 标题行：标题 + 最大值 + 删除按钮 */}
+      <div className="flex items-center gap-2">
         {/* 标签 - 点击可编辑 */}
         {isEditingLabel ? (
           <input
@@ -148,10 +147,10 @@ export function CounterLine({ line, lineHeight, onUpdate, onDelete, dragHandlePr
           )
         </span>
 
-        {/* 删除按钮 */}
+        {/* 删除按钮 - 推到最右侧 */}
         <button
           onClick={onDelete}
-          className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+          className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all ml-auto"
           title="删除此行"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -159,7 +158,7 @@ export function CounterLine({ line, lineHeight, onUpdate, onDelete, dragHandlePr
       </div>
 
       {/* 计数器区域 - 占据整行 */}
-      <div className="flex items-center gap-2 pl-5">
+      <div className="flex items-center gap-2">
         {/* 减少按钮 */}
         <button
           onClick={() => onUpdate({ current: Math.max(0, line.current - 1) })}

@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { Edit } from "lucide-react"
 import type { SheetData } from "@/lib/sheet-data"
+import { useSheetStore } from "@/lib/sheet-store"
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "@/components/ui/popover"
 import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
@@ -42,6 +43,7 @@ export function UpgradeSection({
   onOpenSubclassModal,
 }: UpgradeSectionProps) {
   const tierKey = `tier${tier}`
+  const updateLevel = useSheetStore(state => state.updateLevel)
   const [openPopoverIndex, setOpenPopoverIndex] = useState<string | null>(null)
   const [openNewExperiencePopover, setOpenNewExperiencePopover] = useState(false)
 
@@ -472,6 +474,35 @@ export function UpgradeSection({
             </>
           )}
         </div>
+
+        {tier === 1 && (
+          <div className="mt-10 -ml-1 inline-flex flex-col rounded-r-md border border-l-0 border-gray-300 overflow-hidden print:hidden">
+            <div className="bg-gray-100 px-2 py-0.5 text-center">
+              <span className="!text-xs text-gray-500">LEVEL</span>
+              <div className="text-base font-bold text-gray-500">
+                {formData.level || "1"}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const oldLevel = formData.level || ""
+                if (!formData.level || formData.level.trim() === "") {
+                  updateLevel("1", oldLevel)
+                  return
+                }
+                const currentLevel = parseInt(formData.level)
+                if (currentLevel >= 10) return
+                const newLevel = Math.min(currentLevel + 1, 10)
+                updateLevel(String(newLevel), oldLevel)
+              }}
+              className="px-2 py-0.5 bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={parseInt(formData.level) >= 10}
+            >
+              Level Up!
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

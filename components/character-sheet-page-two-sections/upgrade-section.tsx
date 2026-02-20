@@ -45,6 +45,7 @@ export function UpgradeSection({
   const tierKey = `tier${tier}`
   const updateLevel = useSheetStore(state => state.updateLevel)
   const [openPopoverIndex, setOpenPopoverIndex] = useState<string | null>(null)
+  const [isLevelExpanded, setIsLevelExpanded] = useState(false)
   const [openNewExperiencePopover, setOpenNewExperiencePopover] = useState(false)
 
   // Helper functions to detect upgrade option types
@@ -476,31 +477,44 @@ export function UpgradeSection({
         </div>
 
         {tier === 1 && (
-          <div className="mt-10 -ml-1 inline-flex flex-col rounded-r-md border border-l-0 border-gray-300 overflow-hidden print:hidden">
-            <div className="bg-gray-100 px-2 py-0.5 text-center">
-              <span className="!text-xs text-gray-500">LEVEL</span>
-              <div className="text-base font-bold text-gray-500">
-                {formData.level || "1"}
-              </div>
+          <div
+            className="group mt-8 -ml-1 inline-flex flex-row items-stretch rounded-r-md border border-l-0 border-gray-300 overflow-hidden print:hidden cursor-pointer"
+            onClick={() => setIsLevelExpanded(prev => !prev)}
+          >
+            {/* 收起标签 - 竖排文字，展开后隐藏 */}
+            <div className={`bg-gray-100 px-0.5 py-1 flex items-center justify-center transition-all duration-300 ease-out ${isLevelExpanded ? "max-w-0 px-0 overflow-hidden opacity-0" : ""} group-hover:max-w-0 group-hover:px-0 group-hover:overflow-hidden group-hover:opacity-0`} style={{ writingMode: "vertical-rl" }}>
+              <span className="text-sm font-bold text-gray-400 tracking-tight whitespace-nowrap">
+                {`Lv. ${formData.level || "1"}`}
+              </span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                const oldLevel = formData.level || ""
-                if (!formData.level || formData.level.trim() === "") {
-                  updateLevel("1", oldLevel)
-                  return
-                }
-                const currentLevel = parseInt(formData.level)
-                if (currentLevel >= 10) return
-                const newLevel = Math.min(currentLevel + 1, 10)
-                updateLevel(String(newLevel), oldLevel)
-              }}
-              className="px-2 py-0.5 bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              disabled={parseInt(formData.level) >= 10}
-            >
-              Level Up!
-            </button>
+            {/* 展开面板 - 横向滑出 */}
+            <div className={`flex flex-col transition-all duration-300 ease-out overflow-hidden max-w-0 opacity-0 ${isLevelExpanded ? "max-w-24 opacity-100" : ""} group-hover:max-w-24 group-hover:opacity-100`}>
+              <div className="bg-gray-100 px-2 py-0.5 text-center whitespace-nowrap">
+                <span className="!text-xs text-gray-500">LEVEL</span>
+                <div className="text-sm font-bold text-gray-500">
+                  {formData.level || "1"}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const oldLevel = formData.level || ""
+                  if (!formData.level || formData.level.trim() === "") {
+                    updateLevel("1", oldLevel)
+                    return
+                  }
+                  const currentLevel = parseInt(formData.level)
+                  if (currentLevel >= 10) return
+                  const newLevel = Math.min(currentLevel + 1, 10)
+                  updateLevel(String(newLevel), oldLevel)
+                }}
+                className="px-2 py-0.5 bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold transition-colors whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={parseInt(formData.level) >= 10}
+              >
+                Level Up!
+              </button>
+            </div>
           </div>
         )}
       </div>

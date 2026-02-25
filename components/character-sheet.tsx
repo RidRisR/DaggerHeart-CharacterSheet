@@ -397,8 +397,8 @@ export default function CharacterSheet() {
     if (weapon) {
       const weaponDetails = {
         name: weapon.名称,
-        trait: `${weapon.属性 || ""}/${weapon.负荷 || ""}/${weapon.范围 || ""}`,
-        damage: `${weapon.检定 || ""}: ${weapon.伤害 || ""}`,
+        trait: `${weapon.伤害类型 || ""}/${weapon.负荷 || ""}/${weapon.范围 || ""}`,
+        damage: `${weapon.属性 || ""}: ${weapon.伤害 || ""}`,
         feature: weapon.特性名称 ? `${weapon.特性名称}: ${weapon.描述}` : weapon.描述,
       }
 
@@ -464,8 +464,8 @@ export default function CharacterSheet() {
         const customWeaponData = JSON.parse(weaponId);
         weaponDetails = {
           name: customWeaponData.名称 || weaponId,
-          trait: `${customWeaponData.属性 || ""}/${customWeaponData.负荷 || ""}/${customWeaponData.范围 || ""}`.replace(/\/+$/, '').replace(/^\/+/, ''),
-          damage: customWeaponData.检定 && customWeaponData.伤害 ? `${customWeaponData.检定}: ${customWeaponData.伤害}` : (customWeaponData.伤害 || ""),
+          trait: `${customWeaponData.伤害类型 || ""}/${customWeaponData.负荷 || ""}/${customWeaponData.范围 || ""}`.replace(/\/+$/, '').replace(/^\/+/, ''),
+          damage: customWeaponData.属性 && customWeaponData.伤害 ? `${customWeaponData.属性}: ${customWeaponData.伤害}` : (customWeaponData.伤害 || ""),
           feature: `${customWeaponData.特性名称 ? customWeaponData.特性名称 + ': ' : ''}${customWeaponData.描述 || ''}`.trim(),
         };
       } catch (e) {

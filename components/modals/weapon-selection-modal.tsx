@@ -29,8 +29,8 @@ interface WeaponModalProps {
 interface Weapon {
   名称: string;
   等级: Level; // Changed from string
-  检定: Check; // Changed from string
-  属性: Attribute; // Changed from string
+  属性: Check; // Changed from string
+  伤害类型: Attribute; // Changed from string
   范围: Range; // Changed from string
   伤害: string;
   负荷: string;
@@ -78,8 +78,8 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
   const filteredWeapons = useMemo(() => {
     return availableWeapons.filter(w => {
       if (levelFilter && w.等级 !== levelFilter) return false;
-      if (checkFilter && w.检定 !== checkFilter) return false;
-      if (attributeFilter && w.属性 !== attributeFilter) return false;
+      if (checkFilter && w.属性 !== checkFilter) return false;
+      if (attributeFilter && w.伤害类型 !== attributeFilter) return false;
       if (rangeFilter && w.范围 !== rangeFilter) return false;
       if (weaponTypeFilter && w.weaponType !== weaponTypeFilter) return false;
       if (searchTerm) {
@@ -205,9 +205,9 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
               <option value="secondary">副武器</option>
             </select>
           )}
-          {/* 属性 */}
+          {/* 伤害类型 */}
           <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={attributeFilter} onChange={e => setAttributeFilter(e.target.value as Attribute | "")}> 
-            <option value="">属性(全部)</option>
+            <option value="">伤害类型(全部)</option>
             {ATTRIBUTES.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
           {/* 范围 */}
@@ -215,9 +215,9 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
             <option value="">范围(全部)</option>
             {RANGES.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
-          {/* 检定 */}
+          {/* 属性 */}
           <select className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem]" value={checkFilter} onChange={e => setCheckFilter(e.target.value as Check | "")}> 
-            <option value="">检定(全部)</option>
+            <option value="">属性(全部)</option>
             {CHECKS.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           <Button size="sm" variant="outline" onClick={() => { setLevelFilter(""); setCheckFilter(""); setAttributeFilter(""); setRangeFilter(""); setWeaponTypeFilter(""); setSearchTerm(""); }} className="text-xs sm:text-sm min-h-[2rem] sm:min-h-[2.25rem] px-2 sm:px-3">重置筛选</Button>
@@ -283,26 +283,26 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
                 </select>
               </div>
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">检定</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">属性</label>
                 <select
                   className="w-full border rounded px-2 py-2 text-sm min-h-[2.5rem]"
                   value={customCheck}
                   onChange={e => setCustomCheck(e.target.value as Check | "")}
                 >
-                  <option value="">选择检定</option>
+                  <option value="">选择属性</option>
                   {CHECKS.map(check => (
                     <option key={check} value={check}>{check}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">属性</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">伤害类型</label>
                 <select
                   className="w-full border rounded px-2 py-2 text-sm min-h-[2.5rem]"
                   value={customAttribute}
                   onChange={e => setCustomAttribute(e.target.value as Attribute | "")}
                 >
-                  <option value="">选择属性</option>
+                  <option value="">选择伤害类型</option>
                   {ATTRIBUTES.map(attr => (
                     <option key={attr} value={attr}>{attr}</option>
                   ))}
@@ -371,8 +371,8 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
                     const customWeaponData = {
                       名称: customName,
                       等级: customLevel || "",
-                      检定: customCheck || "",
-                      属性: customAttribute || "",
+                      属性: customCheck || "",
+                      伤害类型: customAttribute || "",
                       范围: customRange || "",
                       伤害: customDamage,
                       负荷: customLoad,
@@ -441,7 +441,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
             <div className="p-1 sm:p-2">
               <table className="w-full border-collapse min-w-[max-content]">
                 <thead className="bg-gray-800 text-white sticky top-0 z-10">
-                  <tr><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">等级</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">名称</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">类型</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">属性</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">负荷</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">范围</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">检定</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">伤害</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">特性</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">描述</th></tr>
+                  <tr><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">等级</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">名称</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">类型</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">伤害类型</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">负荷</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">范围</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">属性</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">伤害</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">特性</th><th className="p-1 sm:p-2 text-left whitespace-nowrap text-xs sm:text-sm">描述</th></tr>
                 </thead>
                 <tbody>
                   {isCustom && customName && (
@@ -476,7 +476,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
                         setCustomDescription("");
                         onSelect(weapon.id, weapon.weaponType);
                       }}
-                    ><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.等级}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.名称}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.weaponType === "primary" ? "主武器" : "副武器"}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.属性}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.负荷}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.范围}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.检定}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.伤害}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.特性名称}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.描述}</td></tr>
+                    ><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.等级}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.名称}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.weaponType === "primary" ? "主武器" : "副武器"}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.伤害类型}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.负荷}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.范围}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.属性}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.伤害}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.特性名称}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.描述}</td></tr>
                   ))}
                 </tbody>
               </table>

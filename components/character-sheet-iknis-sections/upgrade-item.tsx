@@ -28,8 +28,8 @@ export const UpgradeItem = ({
   // 转换为 boolean 数组格式
   const checkedArray: boolean[] = Array.isArray(upgradeState)
     ? upgradeState.slice(0, checkboxes) // 确保长度匹配
-    : checkboxes === 1 && typeof upgradeState === 'boolean'
-    ? [upgradeState]
+    : typeof upgradeState === 'boolean'
+    ? [upgradeState, ...Array(checkboxes - 1).fill(false)]
     : Array(checkboxes).fill(false)
 
   // 检查材料是否满足需求

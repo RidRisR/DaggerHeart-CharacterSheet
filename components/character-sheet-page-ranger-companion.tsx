@@ -224,7 +224,7 @@ const CharacterSheetPageThree: React.FC = () => {
             {/* 伙伴经验区块（右侧为图片+描述，无经验示例） */}
             {renderCompanionExperienceSection()}
             {/* Spellcast Roll Info */}
-                    <p className="text-xs mb-4 text-gray-600 dark:text-gray-400 leading-snug">你可以进行一次施法检定来与你的伙伴建立连接并命令他们行动。当你这样做时，你可以花费希望将一个适用的伙伴经历加入到检定中。在花费希望并成功时，如果你的下一个动作建立在其成功之上，你的动作掷骰获得优势。</p>
+                    <p className="text-xs mb-4 text-gray-600 dark:text-gray-400 leading-snug">进行一次<strong>施法掷骰</strong>，与你的伙伴建立联系并命令其采取行动。<strong>花费 1 希望点</strong>，将一项适用的伙伴经历加入掷骰中。<strong>希望成功</strong>时，如果你的下一次行动是基于伙伴的成功，则你在掷骰中获得<strong>优势</strong>。</p>
             {/* 新的两栏布局：左-攻击与伤害/压力，右-训练 */}
             <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-5 mb-3">
                 {/* 攻击与伤害/压力 - 左侧 */}

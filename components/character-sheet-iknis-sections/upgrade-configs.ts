@@ -14,6 +14,7 @@ export const UPGRADE_CONFIGS: UpgradeConfig[] = [
   },
   {
     title: "屏蔽：+1护甲值",
+    checkboxes: 2,
     cost: {
       fragments: { '缆线': 3, '水晶': 2 },
       metals: { '银': 2, '铂金': 2 },
@@ -22,6 +23,7 @@ export const UPGRADE_CONFIGS: UpgradeConfig[] = [
   },
   {
     title: "收敛：+1攻击检定",
+    checkboxes: 2,
     cost: {
       fragments: { '线圈': 4, '水晶': 2 },
       metals: { '金': 5 },
@@ -80,6 +82,7 @@ export const UPGRADE_CONFIGS: UpgradeConfig[] = [
   },
   {
     title: "震慑：当你的攻击骰出关键成功时，目标必须标记一点压力",
+    checkboxes: 2,
     cost: {
       fragments: { '扳机': 6 },
       metals: { '铜': 8, '铝': 9 },

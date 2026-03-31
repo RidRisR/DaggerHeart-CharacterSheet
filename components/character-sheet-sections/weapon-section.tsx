@@ -2,13 +2,47 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useSheetStore } from "@/lib/sheet-store"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
+import { useSheetStore } from "@/lib/sheet-store"
 
 interface WeaponSectionProps {
   isPrimary?: boolean
   fieldPrefix: string
-  onOpenWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void;
+  onOpenWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void
+}
+
+type WeaponFieldSet =
+  | {
+      selection: "primaryWeaponSelection"
+      name: "primaryWeaponName"
+      trait: "primaryWeaponTrait"
+      damage: "primaryWeaponDamage"
+      feature: "primaryWeaponFeature"
+    }
+  | {
+      selection: "secondaryWeaponSelection"
+      name: "secondaryWeaponName"
+      trait: "secondaryWeaponTrait"
+      damage: "secondaryWeaponDamage"
+      feature: "secondaryWeaponFeature"
+    }
+
+function getWeaponFields(fieldPrefix: string): WeaponFieldSet {
+  return fieldPrefix === "primaryWeapon"
+    ? {
+        selection: "primaryWeaponSelection",
+        name: "primaryWeaponName",
+        trait: "primaryWeaponTrait",
+        damage: "primaryWeaponDamage",
+        feature: "primaryWeaponFeature",
+      }
+    : {
+        selection: "secondaryWeaponSelection",
+        name: "secondaryWeaponName",
+        trait: "secondaryWeaponTrait",
+        damage: "secondaryWeaponDamage",
+        feature: "secondaryWeaponFeature",
+      }
 }
 
 export function WeaponSection({
@@ -18,22 +52,34 @@ export function WeaponSection({
 }: WeaponSectionProps) {
   const { sheetData: formData, setSheetData } = useSheetStore()
   const [isEditingName, setIsEditingName] = useState(false)
+  const weaponFields = getWeaponFields(fieldPrefix)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setSheetData((prev) => ({ ...prev, [name]: value }))
-  }
+    const currentName = formData[weaponFields.name] || ""
+    const hasCustomWeaponContent = !!(
+      currentName ||
+      formData[weaponFields.trait] ||
+      formData[weaponFields.damage] ||
+      formData[weaponFields.feature] ||
+      value
+    )
 
-  const openWeaponModal = (fieldName: string, slotType: "primary" | "secondary" | "inventory") => {
-    onOpenWeaponModal(fieldName, slotType)
-  }
-
-  const handleEditName = () => {
-    setIsEditingName(true)
+    setSheetData((prev) => ({
+      ...prev,
+      [name]: value,
+      [weaponFields.selection]: hasCustomWeaponContent
+        ? { mode: "custom", id: currentName || undefined }
+        : { mode: "none" },
+    }))
   }
 
   const handleNameChange = (value: string) => {
-    setSheetData((prev) => ({ ...prev, [nameField]: value }))
+    setSheetData((prev) => ({
+      ...prev,
+      [weaponFields.name]: value,
+      [weaponFields.selection]: value ? { mode: "custom", id: value } : { mode: "none" },
+    }))
   }
 
   const handleNameSubmit = () => {
@@ -41,16 +87,10 @@ export function WeaponSection({
   }
 
   const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleNameSubmit()
     }
   }
-
-
-  const nameField = `${fieldPrefix}Name`
-  const traitField = `${fieldPrefix}Trait`
-  const damageField = `${fieldPrefix}Damage`
-  const featureField = `${fieldPrefix}Feature`
 
   return (
     <div className="mb-2.5">
@@ -63,7 +103,7 @@ export function WeaponSection({
           {isEditingName ? (
             <input
               type="text"
-              value={(formData as any)[nameField] || ""}
+              value={formData[weaponFields.name] || ""}
               onChange={(e) => handleNameChange(e.target.value)}
               onKeyDown={handleNameKeyDown}
               onBlur={handleNameSubmit}
@@ -74,15 +114,15 @@ export function WeaponSection({
             <div className="group flex w-full border border-gray-400 rounded h-6 bg-white overflow-hidden">
               <button
                 type="button"
-                onClick={() => openWeaponModal(nameField, isPrimary ? "primary" : "secondary")}
+                onClick={() => onOpenWeaponModal(weaponFields.name, isPrimary ? "primary" : "secondary")}
                 className="flex-1 text-sm text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none"
               >
-                {(formData as any)[nameField] || <span className="print:hidden">选择武器</span>}
+                {formData[weaponFields.name] || <span className="print:hidden">选择武器</span>}
               </button>
-              <div className="w-px bg-gray-300 hidden group-hover:block"></div>
+              <div className="w-px bg-gray-300 hidden group-hover:block" />
               <button
                 type="button"
-                onClick={handleEditName}
+                onClick={() => setIsEditingName(true)}
                 className="w-8 hidden group-hover:flex items-center justify-center hover:bg-gray-50 focus:outline-none print:hidden"
                 title="编辑名称"
               >
@@ -97,8 +137,8 @@ export function WeaponSection({
           <label className="text-[8px] text-gray-600">基本信息</label>
           <input
             type="text"
-            name={traitField}
-            value={(formData as any)[traitField] || ""}
+            name={weaponFields.trait}
+            value={formData[weaponFields.trait] || ""}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none print-empty-hide text-sm"
           />
@@ -107,8 +147,8 @@ export function WeaponSection({
           <label className="text-[8px] text-gray-600">伤害骰</label>
           <input
             type="text"
-            name={damageField}
-            value={(formData as any)[damageField] || ""}
+            name={weaponFields.damage}
+            value={formData[weaponFields.damage] || ""}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none print-empty-hide text-sm"
           />
@@ -116,8 +156,8 @@ export function WeaponSection({
       </div>
       <div className="mt-1">
         <ContentEditableField
-          name={featureField}
-          value={(formData as any)[featureField] || ""}
+          name={weaponFields.feature}
+          value={formData[weaponFields.feature] || ""}
           onChange={handleInputChange}
           placeholder=""
           maxLines={2}

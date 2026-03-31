@@ -5,6 +5,7 @@ import { useSheetStore } from "@/lib/sheet-store"
 import { X, ChevronUp, ChevronDown, Check } from "lucide-react"
 import { safeEvaluateExpression } from "@/lib/number-utils"
 import { showFadeNotification } from "@/components/ui/fade-notification"
+import { calculateEvasionBreakdown, convertDisplayedEvasionToManualModifier } from "@/lib/preset-equipment"
 
 interface EvasionEditorProps {
   checkKey: string
@@ -22,7 +23,7 @@ export function EvasionEditor({
   const { sheetData, setSheetData } = useSheetStore()
   const createEvasionSnapshot = useSheetStore(state => state.createEvasionSnapshot)
 
-  const currentEvasion = sheetData.evasion ?? "0"
+  const currentEvasion = calculateEvasionBreakdown(sheetData).display || "0"
 
   // 使用本地状态管理编辑
   const [localValue, setLocalValue] = useState(String(currentEvasion))
@@ -61,7 +62,7 @@ export function EvasionEditor({
     // 如果值发生了变化，创建快照
     if (finalValue !== currentEvasion) {
       createEvasionSnapshot(finalValue)
-      setSheetData({ evasion: finalValue })
+      setSheetData({ evasionManualModifier: convertDisplayedEvasionToManualModifier(sheetData, finalValue) })
 
       // 显示成功通知
       showFadeNotification({

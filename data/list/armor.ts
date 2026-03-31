@@ -1,3 +1,5 @@
+import type { EquipmentEffects } from "@/types/preset-equipment"
+
 export interface ArmorItem {
     名称: string;
     等级: "T1" | "T2" | "T3" | "T4";
@@ -5,6 +7,7 @@ export interface ArmorItem {
     护甲值: number;
     特性名称: string;
     描述: string;
+    effects?: EquipmentEffects;
 }
 
 export const armorItems: ArmorItem[] = [
@@ -16,6 +19,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 3,
         特性名称: "灵活",
         描述: "闪避值+1",
+        effects: { evasion: 1 },
     },
     {
         名称: "皮甲",
@@ -32,6 +36,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 4,
         特性名称: "重型",
         描述: "闪避值-1",
+        effects: { evasion: -1 },
     },
     {
         名称: "全板甲",
@@ -40,6 +45,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 4,
         特性名称: "极重",
         描述: "闪避值-2,敏捷-1",
+        effects: { evasion: -2, attributes: { agility: -1 } },
     },
 
     // 位阶2 (等级2-4)
@@ -50,6 +56,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 4,
         特性名称: "灵活",
         描述: "闪避值+1",
+        effects: { evasion: 1 },
     },
     {
         名称: "改良皮甲",
@@ -66,6 +73,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 5,
         特性名称: "重型",
         描述: "闪避值-1",
+        effects: { evasion: -1 },
     },
     {
         名称: "改良全板甲",
@@ -74,6 +82,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 5,
         特性名称: "极重",
         描述: "闪避值-2,敏捷-1",
+        effects: { evasion: -2, attributes: { agility: -1 } },
     },
     {
         名称: "埃伦德里安链甲",
@@ -132,6 +141,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 5,
         特性名称: "灵活",
         描述: "闪避值+1",
+        effects: { evasion: 1 },
     },
     {
         名称: "高级皮甲",
@@ -148,6 +158,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 6,
         特性名称: "重型",
         描述: "闪避值-1",
+        effects: { evasion: -1 },
     },
     {
         名称: "高级全板甲",
@@ -156,6 +167,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 6,
         特性名称: "极重",
         描述: "闪避值-2,敏捷-1",
+        effects: { evasion: -2, attributes: { agility: -1 } },
     },
     {
         名称: "贝拉莫伊精致护甲",
@@ -164,6 +176,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 5,
         特性名称: "鎏金",
         描述: "风度+1",
+        effects: { attributes: { presence: 1 } },
     },
     {
         名称: "龙鳞护甲",
@@ -214,6 +227,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 6,
         特性名称: "灵活",
         描述: "闪避值+1",
+        effects: { evasion: 1 },
     },
     {
         名称: "传奇皮甲",
@@ -230,6 +244,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 7,
         特性名称: "重型",
         描述: "闪避值-1",
+        effects: { evasion: -1 },
     },
     {
         名称: "传奇全板甲",
@@ -238,6 +253,7 @@ export const armorItems: ArmorItem[] = [
         护甲值: 7,
         特性名称: "极重",
         描述: "闪避值-2,敏捷-1",
+        effects: { evasion: -2, attributes: { agility: -1 } },
     },
     {
         名称: "威能丝甲",
@@ -286,5 +302,16 @@ export const armorItems: ArmorItem[] = [
         护甲值: 8,
         特性名称: "困难",
         描述: "所有角色属性以及闪避值-1",
+        effects: {
+            evasion: -1,
+            attributes: {
+                agility: -1,
+                strength: -1,
+                finesse: -1,
+                instinct: -1,
+                presence: -1,
+                knowledge: -1,
+            },
+        },
     },
 ];

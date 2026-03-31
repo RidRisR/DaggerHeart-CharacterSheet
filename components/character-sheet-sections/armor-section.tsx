@@ -16,14 +16,27 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
+    const hasCustomArmorContent = !!(formData.armorName || formData.armorBaseScore || formData.armorThreshold || formData.armorFeature || value)
+    const nextSelection = hasCustomArmorContent
+      ? { mode: "custom" as const, id: formData.armorName || undefined }
+      : { mode: "none" as const }
+
     if (name === 'armorThreshold') {
       // 使用新的护甲阈值更新函数，自动计算伤害阈值
+      setSheetData({ armorSelection: nextSelection })
       updateArmorThresholdWithDamage(value)
     } else if (name === 'armorBaseScore') {
       // 使用新的护甲值更新函数，同步更新属性栏的护甲值
+      setSheetData({ armorSelection: nextSelection })
       updateArmorBaseScore(value)
     } else {
-      setSheetData((prev) => ({ ...prev, [name]: value }))
+      setSheetData((prev) => ({
+        ...prev,
+        [name]: value,
+        armorSelection: (prev.armorName || prev.armorBaseScore || prev.armorThreshold || prev.armorFeature || value)
+          ? { mode: "custom", id: prev.armorName || undefined }
+          : { mode: "none" },
+      }))
     }
   }
 
@@ -36,7 +49,11 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
   }
 
   const handleNameChange = (value: string) => {
-    setSheetData((prev) => ({ ...prev, armorName: value }))
+    setSheetData((prev) => ({
+      ...prev,
+      armorName: value,
+      armorSelection: value ? { mode: "custom", id: value } : { mode: "none" },
+    }))
   }
 
   const handleNameSubmit = () => {

@@ -1,3 +1,5 @@
+import type { EquipmentEffects } from "@/types/preset-equipment"
+
 export interface Weapon {
     名称: string;
     等级: "T1" | "T2" | "T3" | "T4";
@@ -8,6 +10,7 @@ export interface Weapon {
     负荷: string;
     特性名称: string;
     描述: string;
+    effects?: EquipmentEffects;
 }
 
 export const primaryWeapons: Weapon[] = [
@@ -55,6 +58,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "巨型",
         描述: "闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+        effects: { evasion: -1 },
     },
     {
         名称: "钉头锤",
@@ -77,6 +81,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "重型",
         描述: "闪避值-1。",
+        effects: { evasion: -1 },
     },
     {
         名称: "匕首",
@@ -132,6 +137,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        effects: { attributes: { finesse: -1 } },
     },
     {
         名称: "长矛",
@@ -176,6 +182,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        effects: { attributes: { finesse: -1 } },
     },
     // 位阶1 (等级1) - 魔法武器
     {
@@ -333,6 +340,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "巨型",
         描述: "闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+        effects: { evasion: -1 },
     },
     {
         名称: "改良钉头锤",
@@ -355,6 +363,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "重型",
         描述: "闪避值-1。",
+        effects: { evasion: -1 },
     },
     {
         名称: "改良匕首",
@@ -410,6 +419,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        effects: { attributes: { finesse: -1 } },
     },
     {
         名称: "改良长矛",
@@ -454,6 +464,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        effects: { attributes: { finesse: -1 } },
     },
     {
         名称: "鎏金弯刀",
@@ -810,6 +821,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "巨型",
         描述: "闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+        effects: { evasion: -1 },
     },
     {
         名称: "高级钉头锤",
@@ -832,6 +844,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "重型",
         描述: "闪避值-1。",
+        effects: { evasion: -1 },
     },
     {
         名称: "高级匕首",
@@ -887,6 +900,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        effects: { attributes: { finesse: -1 } },
     },
     {
         名称: "高级长矛",
@@ -931,6 +945,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        effects: { attributes: { finesse: -1 } },
     },
     {
         名称: "闪蝶之刃",
@@ -953,6 +968,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "勇气",
         描述: "闪避值 -1 ，严重伤害阈值 +3 。", // Note: JSON has spaces around symbols.
+        effects: { evasion: -1 },
     },
     {
         名称: "愤怒之锤",
@@ -975,6 +991,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "保护",
         描述: "护甲值+1。",
+        effects: { armorValue: 1 },
     },
     {
         名称: "经络短刀",
@@ -1298,6 +1315,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "巨型",
         描述: "闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+        effects: { evasion: -1 },
     },
     {
         名称: "传奇钉头锤",
@@ -1320,6 +1338,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "重型",
         描述: "闪避值-1。",
+        effects: { evasion: -1 },
     },
     {
         名称: "传奇匕首",
@@ -1375,6 +1394,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        effects: { attributes: { finesse: -1 } },
     },
     {
         名称: "传奇长矛",
@@ -1419,6 +1439,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        effects: { attributes: { finesse: -1 } },
     },
     {
         名称: "双刃剑",
@@ -1452,6 +1473,7 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "破坏",
         描述: "敏捷-1，成功攻击后为所有邻近范围内的敌人标记 1 压力点。",
+        effects: { attributes: { agility: -1 } },
     },
     {
         名称: "弧形匕首",

@@ -1,6 +1,7 @@
 // types/form-data.ts
 
 import { StandardCard } from "@/card/card-types"
+import type { EquipmentSelectionState } from "@/types/preset-equipment"
 
 // ===== 多角色系统数据结构 =====
 export interface CharacterMetadata {
@@ -261,6 +262,7 @@ export interface SheetData {
   subclassRef?: SheetCardReference
 
   evasion?: string
+  evasionManualModifier?: string
   agility?: AttributeValue
   strength?: AttributeValue
   finesse?: AttributeValue
@@ -289,19 +291,23 @@ export interface SheetData {
   minorThreshold?: string
   majorThreshold?: string
   armorValue?: string
+  armorValueManualModifier?: string
   armorBonus?: string
   armorMax?: number
   hpMax?: number
   stressMax?: number
   primaryWeaponName?: string
+  primaryWeaponSelection?: EquipmentSelectionState
   primaryWeaponTrait?: string
   primaryWeaponDamage?: string
   primaryWeaponFeature?: string
   secondaryWeaponName?: string
+  secondaryWeaponSelection?: EquipmentSelectionState
   secondaryWeaponTrait?: string
   secondaryWeaponDamage?: string
   secondaryWeaponFeature?: string
   armorName?: string
+  armorSelection?: EquipmentSelectionState
   armorBaseScore?: string
   armorThreshold?: string
   armorFeature?: string
@@ -359,7 +365,9 @@ export interface SheetData {
   // ===== 悬浮笔记本数据 =====
   notebook?: NotebookData
 
+  // ===== 预设装备自动计算迁移版本 =====
+  presetEquipmentCalcVersion?: number
+
   // ===== 临时索引签名，兼容动态key访问，后续逐步收敛类型安全 =====
   // [key: string]: any // 已废弃，彻底类型安全后移除
 }
-

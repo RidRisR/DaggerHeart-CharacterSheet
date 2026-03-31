@@ -1,6 +1,7 @@
 "use client"
 
 import type { SheetData, AttributeValue } from "@/lib/sheet-data"
+import { getDisplayedAttributeValue } from "@/lib/preset-equipment"
 import { useSheetStore } from "@/lib/sheet-store";
 
 export function AttributesSection() {
@@ -91,7 +92,9 @@ export function AttributesSection() {
                     function isAttributeValue(val: unknown): val is AttributeValue {
                       return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
                     }
-                    return isAttributeValue(attrValue) ? attrValue.value : "";
+                    return isAttributeValue(attrValue)
+                      ? getDisplayedAttributeValue(formData, attr.key as keyof Pick<SheetData, "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge">, attrValue.value)
+                      : "";
                   })()}
                   onChange={(e) => handleAttributeValueChange(attr.key as keyof SheetData, e.target.value)}
                   className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-lg font-bold text-gray-800 print-empty-hide"

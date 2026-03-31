@@ -13,6 +13,7 @@ import { StandardCard } from '@/card/card-types'
 import { defaultSheetData } from './default-sheet-data'
 import type { AttributeValue } from './sheet-data'
 import { migrateSheetData } from './sheet-data-migration'
+import type { EquipmentSelectionState } from '@/types/preset-equipment'
 
 export interface ValidationResult {
   valid: boolean
@@ -102,6 +103,7 @@ export function cleanAndNormalizeData(data: any): SheetData {
 
     // 属性值 - 添加施法标记迁移逻辑
     evasion: data.evasion ? String(data.evasion) : undefined,
+    evasionManualModifier: data.evasionManualModifier ? String(data.evasionManualModifier) : undefined,
     agility: migrateAttributeValue(data.agility),
     strength: migrateAttributeValue(data.strength),
     finesse: migrateAttributeValue(data.finesse),
@@ -162,6 +164,7 @@ export function cleanAndNormalizeData(data: any): SheetData {
     minorThreshold: data.minorThreshold ? String(data.minorThreshold) : undefined,
     majorThreshold: data.majorThreshold ? String(data.majorThreshold) : undefined,
     armorValue: data.armorValue ? String(data.armorValue) : undefined,
+    armorValueManualModifier: data.armorValueManualModifier ? String(data.armorValueManualModifier) : undefined,
     armorBonus: data.armorBonus ? String(data.armorBonus) : undefined,
     armorMax: typeof data.armorMax === 'number' ? data.armorMax : undefined,
     hpMax: typeof data.hpMax === 'number' ? data.hpMax : undefined,
@@ -169,16 +172,19 @@ export function cleanAndNormalizeData(data: any): SheetData {
 
     // 武器信息
     primaryWeaponName: data.primaryWeaponName ? String(data.primaryWeaponName) : undefined,
+    primaryWeaponSelection: normalizeEquipmentSelection(data.primaryWeaponSelection),
     primaryWeaponTrait: data.primaryWeaponTrait ? String(data.primaryWeaponTrait) : undefined,
     primaryWeaponDamage: data.primaryWeaponDamage ? String(data.primaryWeaponDamage) : undefined,
     primaryWeaponFeature: data.primaryWeaponFeature ? String(data.primaryWeaponFeature) : undefined,
     secondaryWeaponName: data.secondaryWeaponName ? String(data.secondaryWeaponName) : undefined,
+    secondaryWeaponSelection: normalizeEquipmentSelection(data.secondaryWeaponSelection),
     secondaryWeaponTrait: data.secondaryWeaponTrait ? String(data.secondaryWeaponTrait) : undefined,
     secondaryWeaponDamage: data.secondaryWeaponDamage ? String(data.secondaryWeaponDamage) : undefined,
     secondaryWeaponFeature: data.secondaryWeaponFeature ? String(data.secondaryWeaponFeature) : undefined,
 
     // 护甲信息
     armorName: data.armorName ? String(data.armorName) : undefined,
+    armorSelection: normalizeEquipmentSelection(data.armorSelection),
     armorBaseScore: data.armorBaseScore ? String(data.armorBaseScore) : undefined,
     armorThreshold: data.armorThreshold ? String(data.armorThreshold) : undefined,
     armorFeature: data.armorFeature ? String(data.armorFeature) : undefined,
@@ -235,7 +241,11 @@ export function cleanAndNormalizeData(data: any): SheetData {
     armorTemplate: data.armorTemplate || undefined,
 
     // 冒险笔记数据 - 直接传递，让迁移函数处理  
-    adventureNotes: data.adventureNotes || undefined
+    adventureNotes: data.adventureNotes || undefined,
+
+    presetEquipmentCalcVersion: typeof data.presetEquipmentCalcVersion === 'number'
+      ? data.presetEquipmentCalcVersion
+      : undefined
   }
 
   return cleaned
@@ -378,4 +388,20 @@ function migrateAttributeValue(attrValue: any): AttributeValue | undefined {
   }
   
   return undefined
+}
+
+function normalizeEquipmentSelection(selection: any): EquipmentSelectionState | undefined {
+  if (!selection || typeof selection !== 'object') {
+    return undefined
+  }
+
+  const mode = selection.mode
+  if (mode !== 'none' && mode !== 'preset' && mode !== 'custom') {
+    return undefined
+  }
+
+  return {
+    mode,
+    id: selection.id ? String(selection.id) : undefined
+  }
 }

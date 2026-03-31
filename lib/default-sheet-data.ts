@@ -19,6 +19,7 @@ export const defaultSheetData: SheetData = {
     subclassRef: { id: "", name: "" },
 
     evasion: "",
+    evasionManualModifier: "",
 
     agility: { checked: false, value: "", spellcasting: false },
     strength: { checked: false, value: "", spellcasting: false },
@@ -40,6 +41,7 @@ export const defaultSheetData: SheetData = {
 
     armorBoxes: Array(12).fill(false),
     armorValue: "",
+    armorValueManualModifier: "",
     armorBonus: "",
     armorMax: 0,
 
@@ -61,15 +63,18 @@ export const defaultSheetData: SheetData = {
     },
 
     primaryWeaponName: "",
+    primaryWeaponSelection: { mode: "none" },
     primaryWeaponTrait: "",
     primaryWeaponDamage: "",
     primaryWeaponFeature: "",
     secondaryWeaponName: "",
+    secondaryWeaponSelection: { mode: "none" },
     secondaryWeaponTrait: "",
     secondaryWeaponDamage: "",
     secondaryWeaponFeature: "",
 
     armorName: "",
+    armorSelection: { mode: "none" },
     armorBaseScore: "",
     armorThreshold: "",
     armorFeature: "",
@@ -164,4 +169,6 @@ export const defaultSheetData: SheetData = {
         currentPageIndex: 0,
         isOpen: false
     },
+
+    presetEquipmentCalcVersion: 1,
 };

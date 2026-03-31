@@ -23,6 +23,7 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+1",
+        effects: { armorValue: 1 },
     },
     {
         名称: "塔盾",
@@ -34,6 +35,7 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "壁垒",
         描述: "+2 护甲值，-1 闪避值", // Corrected
+        effects: { armorValue: 2, evasion: -1 },
     },
     {
         名称: "小匕首",
@@ -102,6 +104,7 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+2",
+        effects: { armorValue: 2 },
     },
     {
         名称: "改良塔盾",
@@ -113,6 +116,7 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "壁垒",
         描述: "护甲值+3，闪避值-1", // Corrected
+        effects: { armorValue: 3, evasion: -1 },
     },
     {
         名称: "改良小匕首",
@@ -168,6 +172,7 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "两用",
         描述: "护甲值+1，近战时主武器伤害+1", // Corrected
+        effects: { armorValue: 1 },
     },
     {
         名称: "格挡匕首",
@@ -214,6 +219,7 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+3",
+        effects: { armorValue: 3 },
     },
     {
         名称: "高级塔盾",
@@ -225,6 +231,7 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "壁垒",
         描述: "护甲值+4，闪避值-1", // Corrected
+        effects: { armorValue: 4, evasion: -1 },
     },
     {
         名称: "高级小匕首",
@@ -326,6 +333,7 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+4",
+        effects: { armorValue: 4 },
     },
     {
         名称: "传奇塔盾",
@@ -337,6 +345,7 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "壁垒",
         描述: "护甲值+5，闪避值-1", // Corrected
+        effects: { armorValue: 5, evasion: -1 },
     },
     {
         名称: "传奇小匕首",

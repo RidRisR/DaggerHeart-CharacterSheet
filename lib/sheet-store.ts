@@ -7,6 +7,12 @@ import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { armorItems, type ArmorItem } from "@/data/list/armor";
 import { showFadeNotification } from "@/components/ui/fade-notification";
 import { parseToNumber } from "./number-utils";
+import {
+    calculateArmorValueBreakdown,
+    calculateEvasionBreakdown,
+    convertDisplayedAttributeToStoredBase,
+    convertDisplayedEvasionToManualModifier,
+} from "@/lib/preset-equipment";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -117,6 +123,33 @@ const syncSubclassSpellcasting = (newData: SheetData, oldData: SheetData): Sheet
     return result;
 };
 
+const AUTO_CALC_ATTRIBUTE_KEYS: Array<keyof Pick<SheetData, "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge">> = [
+    "agility",
+    "strength",
+    "finesse",
+    "instinct",
+    "presence",
+    "knowledge",
+];
+
+const syncDerivedCombatStats = (data: SheetData): SheetData => {
+    const nextData = { ...data };
+
+    const evasionBreakdown = calculateEvasionBreakdown(nextData);
+    nextData.evasion = evasionBreakdown.display;
+
+    const armorValueBreakdown = calculateArmorValueBreakdown(nextData);
+    nextData.armorValue = armorValueBreakdown.display;
+    nextData.armorMax = parseToNumber(armorValueBreakdown.display, 0);
+
+    return nextData;
+};
+
+const finalizeSheetData = (newData: SheetData, oldData: SheetData): SheetData => {
+    const withSubclassSync = syncSubclassSpellcasting(newData, oldData);
+    return syncDerivedCombatStats(withSubclassSync);
+};
+
 interface SheetState {
     sheetData: SheetData;
     setSheetData: (data: Partial<SheetData> | ((prevState: SheetData) => Partial<SheetData>)) => void;
@@ -185,25 +218,19 @@ export const useSheetStore = create<SheetState>((set) => ({
         set((state) => {
             const oldData = state.sheetData;
             const rawUpdatedData = typeof updater === 'function' ? updater(oldData) : updater;
-            let newData = { ...oldData, ...rawUpdatedData };
+            const newData = { ...oldData, ...rawUpdatedData };
+            const finalData = finalizeSheetData(newData, oldData);
+            const shouldResetArmorBoxes = finalData.armorValue !== oldData.armorValue;
 
-            // 检查 armorValue 是否改变，如果改变则清空所有 armorBoxes
-            if ('armorValue' in rawUpdatedData && rawUpdatedData.armorValue !== oldData.armorValue) {
-                newData = {
-                    ...newData,
-                    armorBoxes: Array(12).fill(false)
-                };
-            }
-
-            // 应用子职业施法属性同步
-            const finalData = syncSubclassSpellcasting(newData, oldData);
-
-            return { sheetData: finalData };
+            return {
+                sheetData: shouldResetArmorBoxes
+                    ? { ...finalData, armorBoxes: Array(12).fill(false) }
+                    : finalData
+            };
         });
     },
     replaceSheetData: (newData) => set((state) => {
-        // 应用子职业施法属性同步
-        const finalData = syncSubclassSpellcasting(newData, state.sheetData);
+        const finalData = finalizeSheetData(newData, state.sheetData);
 
         // 清空所有撤回快照，防止跨角色混淆
         // 当切换角色或导入数据时，旧角色的升级快照不应该影响新角色
@@ -219,10 +246,14 @@ export const useSheetStore = create<SheetState>((set) => ({
     updateAttribute: (attribute, value) => set((state) => {
         const currentAttribute = state.sheetData[attribute];
         if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
+            const normalizedValue = AUTO_CALC_ATTRIBUTE_KEYS.includes(attribute as keyof Pick<SheetData, "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge">)
+                ? convertDisplayedAttributeToStoredBase(state.sheetData, attribute as keyof Pick<SheetData, "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge">, value)
+                : value;
+
             return {
                 sheetData: {
                     ...state.sheetData,
-                    [attribute]: { ...currentAttribute, value },
+                    [attribute]: { ...currentAttribute, value: normalizedValue },
                 }
             };
         }
@@ -488,11 +519,13 @@ export const useSheetStore = create<SheetState>((set) => ({
 
         // 如果等级为空字符串，只更新等级和熟练度，不计算阈值
         if (level === "") {
+            const finalData = finalizeSheetData({
+                ...state.sheetData,
+                ...updates
+            }, state.sheetData);
+
             return {
-                sheetData: {
-                    ...state.sheetData,
-                    ...updates
-                }
+                sheetData: finalData
             };
         }
 
@@ -500,11 +533,13 @@ export const useSheetStore = create<SheetState>((set) => ({
 
         // 验证等级范围 (1-10)，如果无效则只更新等级值和熟练度，不计算阈值
         if (isNaN(levelNum) || levelNum < 1 || levelNum > 10) {
+            const finalData = finalizeSheetData({
+                ...state.sheetData,
+                ...updates
+            }, state.sheetData);
+
             return {
-                sheetData: {
-                    ...state.sheetData,
-                    ...updates
-                }
+                sheetData: finalData
             };
         }
 
@@ -530,11 +565,13 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         }
 
+        const finalData = finalizeSheetData({
+            ...state.sheetData,
+            ...updates
+        }, state.sheetData);
+
         return {
-            sheetData: {
-                ...state.sheetData,
-                ...updates
-            }
+            sheetData: finalData
         };
     }),
 
@@ -545,11 +582,13 @@ export const useSheetStore = create<SheetState>((set) => ({
         const thresholds = armorThreshold.split('/');
         if (thresholds.length !== 2) {
             // 无效格式，只更新护甲阈值
+            const finalData = finalizeSheetData({
+                ...state.sheetData,
+                ...updates
+            }, state.sheetData);
+
             return {
-                sheetData: {
-                    ...state.sheetData,
-                    ...updates
-                }
+                sheetData: finalData
             };
         }
 
@@ -558,11 +597,13 @@ export const useSheetStore = create<SheetState>((set) => ({
 
         if (isNaN(minor) || isNaN(major)) {
             // 无效数字，只更新护甲阈值
+            const finalData = finalizeSheetData({
+                ...state.sheetData,
+                ...updates
+            }, state.sheetData);
+
             return {
-                sheetData: {
-                    ...state.sheetData,
-                    ...updates
-                }
+                sheetData: finalData
             };
         }
 
@@ -581,36 +622,38 @@ export const useSheetStore = create<SheetState>((set) => ({
             });
         }
 
+        const finalData = finalizeSheetData({
+            ...state.sheetData,
+            ...updates
+        }, state.sheetData);
+
         return {
-            sheetData: {
-                ...state.sheetData,
-                ...updates
-            }
+            sheetData: finalData
         };
     }),
 
     updateArmorBaseScore: (armorBaseScore) => set((state) => {
-        // 解析护甲值为数字，用于更新 armorMax
-        const armorMaxValue = parseToNumber(armorBaseScore, 0);
-
         const updates: Partial<SheetData> = {
             armorBaseScore,
-            armorValue: armorBaseScore,  // 同步更新护甲值
-            armorMax: armorMaxValue       // 同步更新护甲上限
         };
 
         // 显示通知
         if (armorBaseScore) {
             showFadeNotification({
-                message: `因护甲信息更新，护甲值已更新为 ${armorBaseScore}`,
+                message: `因护甲基础值更新，护甲值已重新计算`,
                 type: "success"
             });
         }
 
+        const finalData = finalizeSheetData({
+            ...state.sheetData,
+            ...updates
+        }, state.sheetData);
+
         return {
             sheetData: {
-                ...state.sheetData,
-                ...updates
+                ...finalData,
+                armorBoxes: finalData.armorValue !== state.sheetData.armorValue ? Array(12).fill(false) : state.sheetData.armorBoxes
             }
         };
     }),
@@ -621,6 +664,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         if (armorId === "none") {
             // 清空所有护甲相关字段
             updates.armorName = "";
+            updates.armorSelection = { mode: "none" };
             updates.armorBaseScore = "";
             updates.armorThreshold = "";
             updates.armorFeature = "";
@@ -642,13 +686,14 @@ export const useSheetStore = create<SheetState>((set) => ({
             try {
                 customArmorData = JSON.parse(armorId);
                 isCustomArmor = true;
-            } catch (e) {
+            } catch {
                 // 不是JSON格式，继续处理
             }
 
             if (isCustomArmor && customArmorData) {
                 // 处理自定义护甲
                 updates.armorName = customArmorData.名称 || armorId;
+                updates.armorSelection = { mode: "custom", id: customArmorData.名称 || armorId };
                 updates.armorBaseScore = String(customArmorData.护甲值 || "");
                 updates.armorThreshold = customArmorData.伤害阈值 || "";
                 const featureText = `${customArmorData.特性名称 ? customArmorData.特性名称 + ': ' : ''}${customArmorData.描述 || ''}`.trim();
@@ -707,6 +752,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 if (armor) {
                     // 使用预设护甲
                     updates.armorName = armor.名称;
+                    updates.armorSelection = { mode: "preset", id: armor.名称 };
                     updates.armorBaseScore = String(armor.护甲值);
                     updates.armorThreshold = armor.伤害阈值;
                     const featureText = `${armor.特性名称}${armor.特性名称 && armor.描述 ? ": " : ""}${armor.描述}`;
@@ -753,6 +799,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                 } else {
                     // 既不是JSON也不在预设列表中，作为纯文本名称处理
                     updates.armorName = armorId;
+                    updates.armorSelection = armorId ? { mode: "custom", id: armorId } : { mode: "none" };
                     updates.armorBaseScore = "";
                     updates.armorThreshold = "";
                     updates.armorFeature = "";
@@ -762,10 +809,15 @@ export const useSheetStore = create<SheetState>((set) => ({
             }
         }
 
+        const finalData = finalizeSheetData({
+            ...state.sheetData,
+            ...updates
+        }, state.sheetData);
+
         return {
             sheetData: {
-                ...state.sheetData,
-                ...updates
+                ...finalData,
+                armorBoxes: finalData.armorValue !== state.sheetData.armorValue ? Array(12).fill(false) : state.sheetData.armorBoxes
             }
         };
     }),
@@ -1188,9 +1240,10 @@ export const useSheetStore = create<SheetState>((set) => ({
     // Evasion upgrade snapshot actions
     createEvasionSnapshot: (afterValue) => {
         const state = useSheetStore.getState();
+        const currentBreakdown = calculateEvasionBreakdown(state.sheetData);
         set({
             evasionSnapshot: {
-                before: state.sheetData.evasion || '0',
+                before: currentBreakdown.display || '0',
                 after: afterValue,
             },
         });
@@ -1205,7 +1258,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             return { success: false, reason: 'no-snapshot' as const };
         }
 
-        const currentEvasion = state.sheetData.evasion || '0';
+        const currentEvasion = calculateEvasionBreakdown(state.sheetData).display || '0';
 
         // 检查冲突：当前值是否与记录的 after 状态一致
         if (currentEvasion !== snapshot.after) {
@@ -1215,10 +1268,13 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
 
         // 无冲突，执行恢复
+        const restoredManualModifier = convertDisplayedEvasionToManualModifier(state.sheetData, snapshot.before);
         set((state) => ({
             sheetData: {
-                ...state.sheetData,
-                evasion: snapshot.before,
+                ...finalizeSheetData({
+                    ...state.sheetData,
+                    evasionManualModifier: restoredManualModifier,
+                }, state.sheetData),
             },
             evasionSnapshot: undefined,
         }));
@@ -1238,12 +1294,14 @@ export const useSheetStore = create<SheetState>((set) => ({
 
         // Handle profession deletion
         if (!newProfessionRef || !newProfessionRef.id) {
-            set((state) => ({
-                sheetData: {
-                    ...state.sheetData,
-                    evasion: "",
-                    hpMax: 6,
-                }
+            const clearedData = finalizeSheetData({
+                ...state.sheetData,
+                evasionManualModifier: "",
+                hpMax: 6,
+            }, state.sheetData);
+
+            set(() => ({
+                sheetData: clearedData
             }));
 
             showFadeNotification({
@@ -1259,12 +1317,14 @@ export const useSheetStore = create<SheetState>((set) => ({
             const hp = newProfessionCard.professionSpecial["起始生命"];
 
             if (evasion !== undefined && hp !== undefined) {
-                set((state) => ({
-                    sheetData: {
-                        ...state.sheetData,
-                        evasion: String(evasion),
-                        hpMax: hp,
-                    }
+                const updatedData = finalizeSheetData({
+                    ...state.sheetData,
+                    evasionManualModifier: "",
+                    hpMax: hp,
+                }, state.sheetData);
+
+                set(() => ({
+                    sheetData: updatedData
                 }));
 
                 showFadeNotification({

@@ -13,6 +13,14 @@
 import type { SheetData, AttributeValue } from './sheet-data'
 import { defaultSheetData } from './default-sheet-data'
 import { createEmptyCard, type StandardCard } from '@/card/card-types'
+import {
+  aggregatePresetEquipmentEffects,
+  getProfessionBaseEvasion,
+  inferArmorSelection,
+  inferWeaponSelection,
+  PRESET_EQUIPMENT_CALC_VERSION,
+} from '@/lib/preset-equipment'
+import { safeEvaluateExpression } from '@/lib/number-utils'
 
 /**
  * 迁移选项接口
@@ -304,6 +312,100 @@ function migrateNotebook(data: SheetData): SheetData {
 }
 
 /**
+ * 装备选择元数据迁移
+ * 为旧数据补充预设/自定义选择来源，供后续自动计算复用
+ */
+function migrateEquipmentSelections(data: SheetData): SheetData {
+  const migrated = { ...data }
+  let hasChanges = false
+
+  if (!data.armorSelection || (data.armorSelection.mode === 'none' && data.armorName)) {
+    migrated.armorSelection = inferArmorSelection(data)
+    hasChanges = true
+  }
+
+  if (!data.primaryWeaponSelection || (data.primaryWeaponSelection.mode === 'none' && data.primaryWeaponName)) {
+    migrated.primaryWeaponSelection = inferWeaponSelection(data, 'primary')
+    hasChanges = true
+  }
+
+  if (!data.secondaryWeaponSelection || (data.secondaryWeaponSelection.mode === 'none' && data.secondaryWeaponName)) {
+    migrated.secondaryWeaponSelection = inferWeaponSelection(data, 'secondary')
+    hasChanges = true
+  }
+
+  if (hasChanges) {
+    console.log('[Migration] Added equipment selection metadata')
+  }
+
+  return migrated
+}
+
+/**
+ * 预设装备自动计算迁移
+ * 把旧存档中的最终值转换为“基础值/手动修正”结构，避免接入装备 effects 后重复叠加
+ */
+function migratePresetEquipmentAutoCalc(data: SheetData): SheetData {
+  if ((data.presetEquipmentCalcVersion || 0) >= PRESET_EQUIPMENT_CALC_VERSION) {
+    return data
+  }
+
+  const migrated = { ...data }
+  const equipmentEffects = aggregatePresetEquipmentEffects(migrated)
+  const professionBaseEvasion = getProfessionBaseEvasion(migrated) || 0
+
+  if (data.evasion && data.evasion.trim()) {
+    const currentFinal = safeEvaluateExpression(data.evasion)
+    migrated.evasionManualModifier = String(currentFinal - professionBaseEvasion - equipmentEffects.evasion)
+  } else {
+    migrated.evasionManualModifier = data.evasionManualModifier || ''
+  }
+
+  if (data.armorValue && data.armorValue.trim()) {
+    const currentFinalArmor = safeEvaluateExpression(data.armorValue)
+    const armorBase = data.armorBaseScore?.trim() ? safeEvaluateExpression(data.armorBaseScore) : 0
+    migrated.armorValueManualModifier = String(currentFinalArmor - armorBase - equipmentEffects.armorValue)
+  } else {
+    migrated.armorValueManualModifier = data.armorValueManualModifier || ''
+  }
+
+  const attributeKeys: Array<keyof Pick<SheetData, 'agility' | 'strength' | 'finesse' | 'instinct' | 'presence' | 'knowledge'>> = [
+    'agility',
+    'strength',
+    'finesse',
+    'instinct',
+    'presence',
+    'knowledge',
+  ]
+
+  attributeKeys.forEach((key) => {
+    const attribute = migrated[key]
+    if (!attribute || typeof attribute !== 'object' || !('value' in attribute)) {
+      return
+    }
+
+    if (!attribute.value?.trim()) {
+      return
+    }
+
+    const modifier = equipmentEffects.attributes[key]
+    if (!modifier) {
+      return
+    }
+
+    migrated[key] = {
+      ...attribute,
+      value: String(safeEvaluateExpression(attribute.value) - modifier),
+    } as AttributeValue
+  })
+
+  migrated.presetEquipmentCalcVersion = PRESET_EQUIPMENT_CALC_VERSION
+  console.log('[Migration] Converted legacy final stats to preset equipment auto-calc structure')
+
+  return migrated
+}
+
+/**
  * 清理废弃字段
  * 移除不再使用的字段，保持数据结构清洁
  */
@@ -330,10 +432,30 @@ export function migrateSheetData(
   data: Partial<SheetData> | any, 
   _options: MigrationOptions = {}
 ): SheetData {
+  const sourceData = data && typeof data === 'object' ? data : {}
+  const hasOwnField = (field: string) => Object.prototype.hasOwnProperty.call(sourceData, field)
+
   // 1. 确保基本结构，与默认数据合并
   let migrated: SheetData = {
     ...defaultSheetData,
-    ...data
+    ...sourceData
+  }
+
+  // 对旧存档保留“字段缺失”的语义，避免被默认值掩盖后跳过迁移
+  if (!hasOwnField('armorSelection')) {
+    migrated.armorSelection = undefined
+  }
+
+  if (!hasOwnField('primaryWeaponSelection')) {
+    migrated.primaryWeaponSelection = undefined
+  }
+
+  if (!hasOwnField('secondaryWeaponSelection')) {
+    migrated.secondaryWeaponSelection = undefined
+  }
+
+  if (!hasOwnField('presetEquipmentCalcVersion')) {
+    migrated.presetEquipmentCalcVersion = 0
   }
 
   // 2. 应用各项迁移（按依赖顺序执行）
@@ -352,9 +474,14 @@ export function migrateSheetData(
   // Notebook 字段迁移
   migrated = migrateNotebook(migrated)
 
+  // 装备选择元数据迁移
+  migrated = migrateEquipmentSelections(migrated)
+
+  // 预设装备自动计算迁移
+  migrated = migratePresetEquipmentAutoCalc(migrated)
+
   // 3. 清理废弃字段（最后执行）
   migrated = cleanupDeprecatedFields(migrated)
 
   return migrated
 }
-

@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
 import { secondaryWeapons } from "@/data/list/secondary-weapon"
+import { CircleHelp } from "lucide-react"
 import {
   CardType, // Import CardType
 } from "@/card"
@@ -15,6 +16,7 @@ import { useSheetStore, useSheetArmorBoxes, useSheetProficiency, useSafeSheetDat
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
 import { ArmorSelectionModal } from "@/components/modals/armor-selection-modal"
 import { GenericCardSelectionModal } from "@/components/modals/generic-card-selection-modal"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 // Import sections
 import { HeaderSection } from "@/components/character-sheet-sections/header-section"
@@ -30,12 +32,65 @@ import { InventoryWeaponSection } from "@/components/character-sheet-sections/in
 import ProfessionDescriptionSection from "@/components/character-sheet-sections/profession-description-section"
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
+import {
+  calculateArmorValueBreakdown,
+  calculateEvasionBreakdown,
+  convertDisplayedArmorValueToManualModifier,
+  convertDisplayedEvasionToManualModifier,
+} from "@/lib/preset-equipment"
+
+interface StatSourcePopoverProps {
+  title: string
+  value: string
+  sources: Array<{ label: string; value: number }>
+}
+
+function StatSourcePopover({ title, value, sources }: StatSourcePopoverProps) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center justify-center rounded-full p-0.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 print:hidden"
+          title={`${title}来源说明`}
+          aria-label={`${title}来源说明`}
+        >
+          <CircleHelp className="h-3 w-3" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-3" align="center">
+        <div className="space-y-2">
+          <div className="border-b border-gray-200 pb-2">
+            <div className="text-xs font-semibold text-gray-800">{title}</div>
+            <div className="text-lg font-bold text-gray-900">{value || "-"}</div>
+          </div>
+          {sources.length > 0 ? (
+            <div className="space-y-1">
+              {sources.map((source) => (
+                <div key={`${source.label}-${source.value}`} className="flex items-center justify-between text-xs text-gray-700">
+                  <span>{source.label}</span>
+                  <span className={source.value >= 0 ? "text-green-700" : "text-red-700"}>
+                    {source.value >= 0 ? "+" : ""}{source.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500">当前没有可展示的计算来源。</div>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 export default function CharacterSheet() {
   const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, handleProfessionChange: autofillProfessionData } = useSheetStore();
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
   const safeFormData = useSafeSheetData();
+  const evasionBreakdown = calculateEvasionBreakdown(safeFormData)
+  const armorValueBreakdown = calculateArmorValueBreakdown(safeFormData)
 
   // 添加一个安全的表达式计算函数
   const safeEvaluateExpression = (expression: string): number => {
@@ -63,7 +118,7 @@ export default function CharacterSheet() {
       }
 
       return 0;
-    } catch (error) {
+    } catch {
       // 如果计算失败，尝试解析为普通数字
       const parsed = parseInt(expression, 10);
       return isNaN(parsed) ? 0 : parsed;
@@ -239,11 +294,18 @@ export default function CharacterSheet() {
     setFormData((prev) => {
       const updatedFormData = { ...prev, [name]: value };
 
-      // 如果修改的是 armorValue，则更新 armorMax
+      if (name === "evasion") {
+        return {
+          ...prev,
+          evasionManualModifier: convertDisplayedEvasionToManualModifier(prev, value),
+        };
+      }
+
       if (name === "armorValue") {
-        const parsedValue = parseInt(value, 10);
-        updatedFormData.armorMax = isNaN(parsedValue) ? 0 : parsedValue;
-        // Note: armorBoxes will be automatically cleared by the store when armorValue changes
+        return {
+          ...prev,
+          armorValueManualModifier: convertDisplayedArmorValueToManualModifier(prev, value),
+        };
       }
 
       return updatedFormData;
@@ -393,15 +455,17 @@ export default function CharacterSheet() {
   const handleWeaponChange = (field: string, weaponId: string, weaponType: "primary" | "secondary") => {
     const weaponList = weaponType === "primary" ? primaryWeapons : secondaryWeapons
     const weapon = weaponList.find((w: Weapon) => w.名称 === weaponId)
+    const selectionField =
+      field === "primaryWeaponName"
+        ? "primaryWeaponSelection"
+        : field === "secondaryWeaponName"
+          ? "secondaryWeaponSelection"
+          : null
 
-    if (weapon) {
-      const weaponDetails = {
-        name: weapon.名称,
-        trait: `${weapon.伤害类型 || ""}/${weapon.负荷 || ""}/${weapon.范围 || ""}`,
-        damage: `${weapon.属性 || ""}: ${weapon.伤害 || ""}`,
-        feature: weapon.特性名称 ? `${weapon.特性名称}: ${weapon.描述}` : weapon.描述,
-      }
-
+    const applyWeaponFields = (weaponDetails: { name: string; trait: string; damage: string; feature: string }, selectionMode: "preset" | "custom") => {
+      const selection = selectionField
+        ? { [selectionField]: { mode: selectionMode, id: weaponDetails.name } }
+        : {}
 
       if (field === "primaryWeaponName") {
         setFormData((prev) => ({
@@ -410,6 +474,7 @@ export default function CharacterSheet() {
           primaryWeaponTrait: weaponDetails.trait,
           primaryWeaponDamage: weaponDetails.damage,
           primaryWeaponFeature: weaponDetails.feature,
+          ...selection,
         }))
       } else if (field === "secondaryWeaponName") {
         setFormData((prev) => ({
@@ -418,6 +483,7 @@ export default function CharacterSheet() {
           secondaryWeaponTrait: weaponDetails.trait,
           secondaryWeaponDamage: weaponDetails.damage,
           secondaryWeaponFeature: weaponDetails.feature,
+          ...selection,
         }))
       } else if (field.startsWith("inventoryWeapon")) {
         const inventoryFieldPrefix = field.replace("Name", "")
@@ -429,7 +495,13 @@ export default function CharacterSheet() {
           [`${inventoryFieldPrefix}Feature`]: weaponDetails.feature,
         }))
       }
-    } else if (weaponId === "none") {
+    }
+
+    const clearWeaponFields = () => {
+      const selection = selectionField
+        ? { [selectionField]: { mode: "none" } }
+        : {}
+
       if (field === "primaryWeaponName") {
         setFormData((prev) => ({
           ...prev,
@@ -437,6 +509,7 @@ export default function CharacterSheet() {
           primaryWeaponTrait: "",
           primaryWeaponDamage: "",
           primaryWeaponFeature: "",
+          ...selection,
         }))
       } else if (field === "secondaryWeaponName") {
         setFormData((prev) => ({
@@ -445,6 +518,7 @@ export default function CharacterSheet() {
           secondaryWeaponTrait: "",
           secondaryWeaponDamage: "",
           secondaryWeaponFeature: "",
+          ...selection,
         }))
       } else if (field.startsWith("inventoryWeapon")) {
         const prefix = field.replace("Name", "")
@@ -456,6 +530,17 @@ export default function CharacterSheet() {
           [`${prefix}Feature`]: "",
         }))
       }
+    }
+
+    if (weapon) {
+      applyWeaponFields({
+        name: weapon.名称,
+        trait: `${weapon.伤害类型 || ""}/${weapon.负荷 || ""}/${weapon.范围 || ""}`,
+        damage: `${weapon.属性 || ""}: ${weapon.伤害 || ""}`,
+        feature: weapon.特性名称 ? `${weapon.特性名称}: ${weapon.描述}` : weapon.描述,
+      }, "preset")
+    } else if (weaponId === "none") {
+      clearWeaponFields()
     } else if (weaponId) { // 处理自定义武器
       let weaponDetails;
 
@@ -468,7 +553,7 @@ export default function CharacterSheet() {
           damage: customWeaponData.属性 && customWeaponData.伤害 ? `${customWeaponData.属性}: ${customWeaponData.伤害}` : (customWeaponData.伤害 || ""),
           feature: `${customWeaponData.特性名称 ? customWeaponData.特性名称 + ': ' : ''}${customWeaponData.描述 || ''}`.trim(),
         };
-      } catch (e) {
+      } catch {
         // 如果不是JSON格式，按旧方式处理（只有名称）
         weaponDetails = {
           name: weaponId,
@@ -479,32 +564,7 @@ export default function CharacterSheet() {
       }
 
 
-      if (field === "primaryWeaponName") {
-        setFormData((prev) => ({
-          ...prev,
-          primaryWeaponName: weaponDetails.name,
-          primaryWeaponTrait: weaponDetails.trait,
-          primaryWeaponDamage: weaponDetails.damage,
-          primaryWeaponFeature: weaponDetails.feature,
-        }))
-      } else if (field === "secondaryWeaponName") {
-        setFormData((prev) => ({
-          ...prev,
-          secondaryWeaponName: weaponDetails.name,
-          secondaryWeaponTrait: weaponDetails.trait,
-          secondaryWeaponDamage: weaponDetails.damage,
-          secondaryWeaponFeature: weaponDetails.feature,
-        }))
-      } else if (field.startsWith("inventoryWeapon")) {
-        const prefix = field.replace("Name", "")
-        setFormData((prev) => ({
-          ...prev,
-          [`${prefix}Name`]: weaponDetails.name,
-          [`${prefix}Trait`]: weaponDetails.trait,
-          [`${prefix}Damage`]: weaponDetails.damage,
-          [`${prefix}Feature`]: weaponDetails.feature,
-        }))
-      }
+      applyWeaponFields(weaponDetails, "custom")
     }
   }
 
@@ -647,7 +707,14 @@ export default function CharacterSheet() {
                   <div className="flex flex-col items-center justify-start">
                     <div className="w-24 h-24 flex flex-col rounded-lg overflow-hidden border border-gray-800">
                       <div className="bg-gray-800 text-white text-center py-1">
-                        <div className="text-ms font-bold">闪避值</div>
+                        <div className="flex items-center justify-center gap-1">
+                          <div className="text-ms font-bold">闪避值</div>
+                          <StatSourcePopover
+                            title="闪避值"
+                            value={evasionBreakdown.display}
+                            sources={evasionBreakdown.sources}
+                          />
+                        </div>
                       </div>
                       <div className="flex-1 bg-white flex flex-col items-center justify-end pb-2 px-1">
                         <input
@@ -674,7 +741,14 @@ export default function CharacterSheet() {
                     <div className="flex gap-2">
                       <div className="w-24 h-24 flex flex-col rounded-lg overflow-hidden border border-gray-800">
                         <div className="bg-gray-800 text-white text-center py-1">
-                          <div className="text-ms font-bold">护甲值</div>
+                          <div className="flex items-center justify-center gap-1">
+                            <div className="text-ms font-bold">护甲值</div>
+                            <StatSourcePopover
+                              title="护甲值"
+                              value={armorValueBreakdown.display}
+                              sources={armorValueBreakdown.sources}
+                            />
+                          </div>
                         </div>
                         <div className="flex-1 bg-white flex flex-col items-center justify-end pb-2 px-1">
                           <input
@@ -806,36 +880,6 @@ export default function CharacterSheet() {
         onClose={() => setWeaponModalOpen(false)}
         weaponSlotType={currentWeaponSlotType} // Ensured not null
         onSelect={(weaponId, weaponType) => {
-          if (weaponId === "none") {
-            if (currentWeaponField === "primaryWeaponName") {
-              setFormData((prev) => ({
-                ...prev,
-                primaryWeaponName: "",
-                primaryWeaponTrait: "",
-                primaryWeaponDamage: "",
-                primaryWeaponFeature: "",
-              }))
-            } else if (currentWeaponField === "secondaryWeaponName") {
-              setFormData((prev) => ({
-                ...prev,
-                secondaryWeaponName: "",
-                secondaryWeaponTrait: "",
-                secondaryWeaponDamage: "",
-                secondaryWeaponFeature: "",
-              }))
-            } else if (currentWeaponField.startsWith("inventoryWeapon")) {
-              const prefix = currentWeaponField.replace("Name", "")
-              setFormData((prev) => ({
-                ...prev,
-                [`${prefix}Name`]: "",
-                [`${prefix}Trait`]: "",
-                [`${prefix}Damage`]: "",
-                [`${prefix}Feature`]: "",
-              }))
-            }
-            setWeaponModalOpen(false)
-            return
-          }
           handleWeaponChange(currentWeaponField, weaponId, weaponType)
           setWeaponModalOpen(false)
         }}

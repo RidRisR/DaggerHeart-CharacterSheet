@@ -27,6 +27,8 @@ import { PageDisplay } from "@/components/layout/page-display"
 import { BottomDock } from "@/components/layout/bottom-dock"
 import { PrintPageRenderer } from "@/components/print/print-page-renderer"
 import { SaveSwitcher } from "@/components/ui/save-switcher"
+import { MemoryAlert } from "@/components/memory-alert"
+import { memoryMonitor } from "@/lib/memory-monitor"
 
 // EyeIcon和EyeOffIcon已移除 - 现在使用PageVisibilityDropdown
 
@@ -248,6 +250,28 @@ export default function Home() {
     window.addEventListener('resize', checkIsMobile)
 
     return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
+
+  // 内存诊断监控
+  useEffect(() => {
+    memoryMonitor.start()
+
+    // 订阅 sheet store 关键状态变化
+    const unsubscribeSheet = useSheetStore.subscribe((state, prevState) => {
+      if (state.currentCharacterId !== prevState.currentCharacterId) {
+        memoryMonitor.logAction({
+          timestamp: Date.now(),
+          type: 'store',
+          target: 'switchCharacter',
+          detail: state.currentCharacterId || undefined,
+        })
+      }
+    })
+
+    return () => {
+      memoryMonitor.stop()
+      unsubscribeSheet()
+    }
   }, [])
 
   const closeCharacterManagementModal = () => {
@@ -757,6 +781,9 @@ export default function Home() {
 
       {/* 悬浮笔记本 */}
       <FloatingNotebook />
+
+      {/* 内存诊断监控 */}
+      <MemoryAlert />
     </main>
   )
 }

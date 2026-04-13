@@ -95,6 +95,8 @@ class MemoryMonitor {
   private startTime = Date.now()
   private clickHandler: ((e: Event) => void) | null = null
   private lastAlertLevel: 'warning' | 'critical' | null = null
+  private totalActionCount = 0
+  private firstSampleHeapMB: number | null = null
 
   get isSupported(): boolean {
     return typeof performance !== 'undefined' &&
@@ -146,6 +148,9 @@ class MemoryMonitor {
       domNodes: document.querySelectorAll('*').length,
       blobUrls: document.querySelectorAll('img[src^="blob:"]').length,
     }
+    if (this.firstSampleHeapMB === null) {
+      this.firstSampleHeapMB = sample.heapUsedMB
+    }
     this.samples.push(sample)
     this.checkAlerts(sample)
   }
@@ -189,6 +194,7 @@ class MemoryMonitor {
 
   logAction(action: UserAction): void {
     this.actions.push(action)
+    this.totalActionCount++
   }
 
   onAlert(callback: AlertCallback): () => void {
@@ -206,8 +212,8 @@ class MemoryMonitor {
       : 0
 
     let growthPattern: 'stable' | 'gradual_increase' | 'spike' = 'stable'
-    if (allSamples.length >= 3) {
-      const first = allSamples[0].heapUsedMB
+    if (allSamples.length >= 3 && this.firstSampleHeapMB !== null) {
+      const first = this.firstSampleHeapMB
       const last = allSamples[allSamples.length - 1].heapUsedMB
       if (last > first * 2) {
         growthPattern = 'spike'
@@ -227,6 +233,8 @@ class MemoryMonitor {
       localStorageSizeKB = Math.round(localStorageSizeKB / 1024)
     } catch { /* ignore */ }
 
+    const allActions = this.actions.getAll()
+
     return {
       version: '1.0',
       exportedAt: new Date().toISOString(),
@@ -239,13 +247,13 @@ class MemoryMonitor {
         localStorageSizeKB,
       },
       memorySamples: allSamples,
-      userActions: this.actions.getAll(),
+      userActions: allActions,
       alerts: this.alertEvents,
       summary: {
         peakHeapMB,
         currentHeapMB,
         sessionDurationMinutes: Math.round((Date.now() - this.startTime) / 60_000),
-        totalActions: this.actions.getAll().length,
+        totalActions: this.totalActionCount,
         growthPattern,
       },
     }

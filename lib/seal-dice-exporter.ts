@@ -42,6 +42,25 @@ function getMaxCapacity(boolArray: boolean[] | undefined): number {
   return boolArray.length
 }
 
+function moveFirstNonNegativeAttributeToFront(
+  attributes: Array<{ name: string; value: number }>
+): Array<{ name: string; value: number }> {
+  if (attributes.length === 0 || attributes[0].value >= 0) {
+    return attributes
+  }
+
+  const firstNonNegativeIndex = attributes.findIndex(attribute => attribute.value >= 0)
+  if (firstNonNegativeIndex === -1) {
+    return attributes
+  }
+
+  return [
+    attributes[firstNonNegativeIndex],
+    ...attributes.slice(0, firstNonNegativeIndex),
+    ...attributes.slice(firstNonNegativeIndex + 1),
+  ]
+}
+
 /**
  * 将角色数据导出为骰子格式
  * @param sheetData 角色表单数据
@@ -58,12 +77,14 @@ export function exportToSealDice(sheetData: SheetData): string {
   const presence = getAttributeNumericValue(sheetData.presence)
   const finesse = getAttributeNumericValue(sheetData.finesse)
 
-  attributes.push(`敏捷${agility}`)
-  attributes.push(`力量${strength}`)
-  attributes.push(`本能${instinct}`)
-  attributes.push(`知识${knowledge}`)
-  attributes.push(`风度${presence}`)
-  attributes.push(`灵巧${finesse}`)
+  moveFirstNonNegativeAttributeToFront([
+    { name: '敏捷', value: agility },
+    { name: '力量', value: strength },
+    { name: '本能', value: instinct },
+    { name: '知识', value: knowledge },
+    { name: '风度', value: presence },
+    { name: '灵巧', value: finesse },
+  ]).forEach(attribute => attributes.push(`${attribute.name}${attribute.value}`))
 
   // 状态数值 - 生命值：存档中的值表示损失，实际值 = 最大值 - 损失值
   const hpDamage = countTrueValues(sheetData.hp)

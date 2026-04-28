@@ -658,7 +658,7 @@ export default function CharacterSheet() {
                           placeholder={safeFormData.cards[0]?.professionSpecial?.["起始闪避"]?.toString() || ""}
                           className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold text-gray-800 placeholder-gray-400 print-empty-hide pb-1"
                         />
-                        {safeFormData.cards[0]?.professionSpecial?.["起始闪避"] ? (
+                        {safeFormData.cards[0]?.professionSpecial?.["起始闪避"] !== undefined ? (
                           <div className="text-[8px] text-gray-600">
                             职业初始：{safeFormData.cards[0].professionSpecial["起始闪避"]}
                           </div>

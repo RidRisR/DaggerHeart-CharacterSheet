@@ -116,8 +116,8 @@ export function copyCard(originalCard: unknown, type: CardType, packageData: Car
       copiedCard.简介 = copiedCard.简介 || ''
       copiedCard.领域1 = copiedCard.领域1 || ''
       copiedCard.领域2 = copiedCard.领域2 || ''
-      copiedCard.起始生命 = copiedCard.起始生命 || 10
-      copiedCard.起始闪避 = copiedCard.起始闪避 || 8
+      copiedCard.起始生命 = copiedCard.起始生命 ?? 10
+      copiedCard.起始闪避 = copiedCard.起始闪避 ?? 8
       copiedCard.起始物品 = copiedCard.起始物品 || ''
       copiedCard.希望特性 = copiedCard.希望特性 || ''
       copiedCard.职业特性 = copiedCard.职业特性 || ''

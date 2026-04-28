@@ -117,8 +117,8 @@ export function validateProfessionCard(card: any, index: number, tempFields?: Te
         errors.push({ path: `${prefix}.起始生命`, message: '起始生命必须是大于0的数字', value: card.起始生命 });
     }
 
-    if (typeof card.起始闪避 !== 'number' || card.起始闪避 < 1) {
-        errors.push({ path: `${prefix}.起始闪避`, message: '起始闪避必须是大于0的数字', value: card.起始闪避 });
+    if (typeof card.起始闪避 !== 'number' || card.起始闪避 < 0) {
+        errors.push({ path: `${prefix}.起始闪避`, message: '起始闪避必须是大于等于0的数字', value: card.起始闪避 });
     }
 
     if (!card.起始物品 || typeof card.起始物品 !== 'string') {

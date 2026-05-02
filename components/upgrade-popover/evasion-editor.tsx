@@ -20,7 +20,6 @@ export function EvasionEditor({
   onClose
 }: EvasionEditorProps) {
   const { sheetData, setSheetData } = useSheetStore()
-  const createEvasionSnapshot = useSheetStore(state => state.createEvasionSnapshot)
 
   const currentEvasion = sheetData.evasion ?? "0"
 
@@ -58,10 +57,10 @@ export function EvasionEditor({
     // 直接保存用户输入的字符串，不做计算
     const finalValue = trimmedValue
 
-    // 如果值发生了变化，创建快照
     if (finalValue !== currentEvasion) {
-      createEvasionSnapshot(finalValue)
       setSheetData({ evasion: finalValue })
+      const setAutomationSelection = useSheetStore.getState().setAutomationSelection
+      setAutomationSelection(`upgrade:${checkKey}`, true, { target: "evasion" })
 
       // 显示成功通知
       showFadeNotification({

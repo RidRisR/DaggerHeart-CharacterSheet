@@ -27,7 +27,6 @@ export function ExperienceValuesEditor({
 }: ExperienceValuesEditorProps) {
   const { sheetData } = useSheetStore()
   const updateExperienceValues = useSheetStore(state => state.updateExperienceValues)
-  const createExperienceValuesSnapshot = useSheetStore(state => state.createExperienceValuesSnapshot)
 
   const experience = sheetData.experience || ["", "", "", "", ""]
   const experienceValues = sheetData.experienceValues || ["", "", "", "", ""]
@@ -100,7 +99,6 @@ export function ExperienceValuesEditor({
   const handleConfirm = () => {
     // 找出所有被修改的经历索引和新值
     const modifiedIndices: number[] = []
-    const afterValues: Record<number, string> = {}
 
     selected.forEach(index => {
       const newValue = editingValues[index] || ""
@@ -108,14 +106,10 @@ export function ExperienceValuesEditor({
 
       if (newValue !== oldValue) {
         modifiedIndices.push(index)
-        afterValues[index] = newValue
       }
     })
 
-    // 如果有修改，创建快照
     if (modifiedIndices.length > 0) {
-      createExperienceValuesSnapshot(modifiedIndices, afterValues)
-
       // 应用所有更改到 store
       modifiedIndices.forEach(index => {
         updateExperienceValues(index, editingValues[index])
@@ -138,6 +132,11 @@ export function ExperienceValuesEditor({
         })
       }
     }
+
+    const setAutomationSelection = useSheetStore.getState().setAutomationSelection
+    setAutomationSelection(`upgrade:${checkKey}`, true, {
+      experienceIndexes: Array.from(selected),
+    })
 
     // 勾选复选框
     toggleUpgradeCheckbox(checkKey, optionIndex, true)

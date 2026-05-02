@@ -8,6 +8,8 @@ import { createEmptyCard, isEmptyCard, type StandardCard } from "@/card/card-typ
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import { parseToNumber } from "@/lib/number-utils"
 import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
+import { revertEffects } from "@/lib/modifiers/effect-executor"
+import type { AutomationEffect, ModifierTargetId } from "@/lib/modifiers/types"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -124,6 +126,32 @@ export default function CharacterSheetPageTwo() {
     })
   }
 
+  const createUpgradeRevertEffects = (sourceId: string): AutomationEffect[] => {
+    const params = safeFormData.automationSelections?.[sourceId]?.params ?? {}
+    const effects: AutomationEffect[] = []
+
+    if (Array.isArray(params.attributes)) {
+      params.attributes.forEach(attribute => {
+        if (typeof attribute !== "string") return
+        const target = `${attribute}.value` as ModifierTargetId
+        effects.push({ operation: "add", target, value: 1 })
+      })
+    }
+
+    if (Array.isArray(params.experienceIndexes)) {
+      params.experienceIndexes.forEach(index => {
+        if (typeof index !== "number") return
+        effects.push({
+          operation: "add",
+          target: `experienceValues.${index}` as ModifierTargetId,
+          value: 1,
+        })
+      })
+    }
+
+    return effects
+  }
+
   // Handle checkbox changes for upgrades
   const handleUpgradeCheck = (checkKeyOrTier: string, index: number) => {
     // 提取 tier（从 "tier1-0-2" 提取出 "tier1"）
@@ -146,92 +174,48 @@ export default function CharacterSheetPageTwo() {
         currentlyChecked,
       })
 
-      if (result.kind === "rollback") {
-        if (result.rollbackKind === "attribute") {
-          const rollbackAttributeUpgrade = useSheetStore.getState().rollbackAttributeUpgrade
-          const rollbackResult = rollbackAttributeUpgrade(checkKeyOrTier)
-
-          if (rollbackResult.success) {
-            showFadeNotification({
-              message: "已撤回属性升级，属性值已恢复",
-              type: "success",
-              position: "middle"
-            })
-          } else if (rollbackResult.reason === 'no-record') {
-            showFadeNotification({
-              message: "升级记录已丢失，无法自动回滚，请手动调整属性值",
-              type: "error",
-              position: "middle"
-            })
-          } else if (rollbackResult.reason === 'conflict') {
-            showFadeNotification({
-              message: "属性已被其他操作修改，无法自动回滚，请手动调整",
-              type: "error",
-              position: "middle"
-            })
-          }
-        }
-
-        if (result.rollbackKind === "experience") {
-          const restoreExperienceValuesSnapshot = useSheetStore.getState().restoreExperienceValuesSnapshot
-          const rollbackResult = restoreExperienceValuesSnapshot()
-
-          if (rollbackResult.reason === 'conflict') {
-            showFadeNotification({
-              message: "检测到经历加值已被其他升级修改，无法回滚",
-              type: "error",
-              position: "middle"
-            })
-          } else if (rollbackResult.reason === 'no-snapshot') {
-            showFadeNotification({
-              message: "经历升级的记录已丢失，请手动回滚",
-              type: "error",
-              position: "middle"
-            })
-          } else {
-            showFadeNotification({
-              message: "已撤回经历升级，经历加值已恢复",
-              type: "success",
-              position: "middle"
-            })
-          }
-        }
-
-        if (result.rollbackKind === "evasion") {
-          const restoreEvasionSnapshot = useSheetStore.getState().restoreEvasionSnapshot
-          const rollbackResult = restoreEvasionSnapshot()
-
-          if (rollbackResult.reason === 'conflict') {
-            showFadeNotification({
-              message: "检测到闪避值已被其他升级修改，无法回滚",
-              type: "error",
-              position: "middle"
-            })
-          } else if (rollbackResult.reason === 'no-snapshot') {
-            showFadeNotification({
-              message: "闪避值升级的记录已丢失，请手动回滚",
-              type: "error",
-              position: "middle"
-            })
-          } else {
-            showFadeNotification({
-              message: "已撤回闪避值升级，闪避值已恢复",
-              type: "success",
-              position: "middle"
-            })
-          }
-        }
-
-        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
-        return
-      }
-
       if (result.kind === "setSheetData") {
-        setFormData(result.updates)
-        if (result.selection) {
+        if (result.selection?.selected === false && !result.selection.params) {
           const sourceId = `upgrade:${checkKeyOrTier}`
+          const effects = createUpgradeRevertEffects(sourceId)
+
+          if (effects.length > 0) {
+            const reverted = revertEffects(safeFormData, effects)
+            const updates = { ...reverted.updates }
+            const params = safeFormData.automationSelections?.[sourceId]?.params ?? {}
+
+            if (Array.isArray(params.attributes)) {
+              params.attributes.forEach(attribute => {
+                if (typeof attribute !== "string") return
+                const current = safeFormData[attribute as keyof typeof safeFormData]
+                if (current && typeof current === "object" && "checked" in current) {
+                  ;(updates as Record<string, unknown>)[attribute] = {
+                    ...current,
+                    checked: false,
+                  }
+                }
+              })
+            }
+
+            setFormData(updates)
+            reverted.warnings.forEach(warning => {
+              showFadeNotification({
+                message: warning,
+                type: "info",
+                position: "middle",
+              })
+            })
+          }
+
           const setAutomationSelection = useSheetStore.getState().setAutomationSelection
-          setAutomationSelection(sourceId, result.selection.selected, result.selection.params)
+          setAutomationSelection(sourceId, false)
+        } else {
+          setFormData(result.updates)
+          if (result.selection) {
+            const sourceId = `upgrade:${checkKeyOrTier}`
+            const setAutomationSelection = useSheetStore.getState().setAutomationSelection
+            setAutomationSelection(sourceId, result.selection.selected, result.selection.params)
+          }
         }
         result.warnings?.forEach(warning => {
           showFadeNotification({

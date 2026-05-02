@@ -25,6 +25,10 @@ describe("升级编辑器组件烟雾测试", () => {
     await user.click(screen.getByRole("button", { name: /确认/ }))
 
     expect(sheet().evasion).toBe("13")
+    expect(sheet().automationSelections?.["upgrade:tier1-5-0"]).toEqual({
+      selected: true,
+      params: { target: "evasion" },
+    })
     expect(toggleUpgradeCheckbox).toHaveBeenCalledWith("tier1-5-0", 5, true)
   })
 

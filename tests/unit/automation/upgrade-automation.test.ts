@@ -129,24 +129,33 @@ describe("升级选项自动化基线", () => {
     })
   })
 
-  it("已勾选属性升级选项会请求属性回滚", () => {
+  it("已勾选属性升级选项会返回未选中 selection 信息", () => {
     expect(run("两项未升级的角色属性+1，然后将该属性标记为已升级。", {}, true)).toEqual({
-      kind: "rollback",
-      rollbackKind: "attribute",
+      kind: "setSheetData",
+      updates: {},
+      warnings: [],
+      selection: { selected: false },
     })
   })
 
-  it("已勾选经历升级选项会请求经历回滚", () => {
+  it("已勾选经历升级选项会返回未选中 selection 信息", () => {
     expect(run("选择两项经历获得额外+1。", {}, true)).toEqual({
-      kind: "rollback",
-      rollbackKind: "experience",
+      kind: "setSheetData",
+      updates: {},
+      warnings: [],
+      selection: { selected: false },
     })
   })
 
-  it("已勾选闪避升级选项会请求闪避回滚", () => {
-    expect(run("获得闪避值+1。", {}, true)).toEqual({
-      kind: "rollback",
-      rollbackKind: "evasion",
+  it("已勾选闪避升级选项会按当前最终值执行 -1", () => {
+    expect(run("获得闪避值+1。", { evasion: "20" }, true)).toMatchObject({
+      kind: "setSheetData",
+      updates: { evasion: "19" },
+      warnings: [],
+      selection: {
+        selected: false,
+        params: { target: "evasion" },
+      },
     })
   })
 })

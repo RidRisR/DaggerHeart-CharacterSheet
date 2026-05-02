@@ -87,15 +87,25 @@ export function computeUpgradeAutomation(
   const newCheckedState = !currentlyChecked
 
   if (label.includes("角色属性+1") && currentlyChecked) {
-    return { kind: "rollback", rollbackKind: "attribute" }
+    return {
+      kind: "setSheetData",
+      updates: {},
+      warnings: [],
+      selection: { selected: false },
+    }
   }
 
   if (label.includes("经历获得额外") && currentlyChecked) {
-    return { kind: "rollback", rollbackKind: "experience" }
+    return {
+      kind: "setSheetData",
+      updates: {},
+      warnings: [],
+      selection: { selected: false },
+    }
   }
 
   if (label.includes("闪避值") && currentlyChecked) {
-    return { kind: "rollback", rollbackKind: "evasion" }
+    return addTargetResult(sheetData, currentlyChecked, "evasion", "闪避值")
   }
 
   if (label.includes("生命槽")) {

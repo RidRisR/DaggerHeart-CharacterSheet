@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { applyEffects, revertEffects } from "@/lib/modifiers/effect-executor"
+import type { ModifierTargetId } from "@/lib/modifiers/types"
 
 describe("modifier effect executor", () => {
   it("applies and reverts add effects on string numeric targets", () => {
@@ -26,6 +27,15 @@ describe("modifier effect executor", () => {
     expect(result.warnings).toEqual([
       "evasion 当前值无法解析为数字，已跳过 +1",
     ])
+  })
+
+  it("adds string decimal targets without rounding", () => {
+    const sheetData = { ...defaultSheetData, evasion: "1.2" }
+
+    const result = applyEffects(sheetData, [{ operation: "add", target: "evasion", value: 1 }])
+
+    expect(result.sheetData.evasion).toBe("2.2")
+    expect(result.updates).toEqual({ evasion: "2.2" })
   })
 
   it("treats direct final value edits as the new current value for revert", () => {
@@ -63,6 +73,34 @@ describe("modifier effect executor", () => {
     expect(result.sheetData.experienceValues).toEqual(["1", "3", "", "", ""])
   })
 
+  it("skips malformed experience targets without writing by partial index", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      experienceValues: ["1", "2", "", "", ""],
+    }
+    const malformedTarget = "experienceValues.1.foo" as ModifierTargetId
+
+    const result = applyEffects(sheetData, [{ operation: "add", target: malformedTarget, value: 1 }])
+
+    expect(result.sheetData.experienceValues).toEqual(["1", "2", "", "", ""])
+    expect(result.updates).toEqual({})
+    expect(result.warnings).toEqual([
+      "experienceValues.1.foo 当前值无法解析为数字，已跳过 +1",
+    ])
+  })
+
+  it("accumulates duplicate add effects on the same target", () => {
+    const sheetData = { ...defaultSheetData, evasion: "12" }
+
+    const result = applyEffects(sheetData, [
+      { operation: "add", target: "evasion", value: 1 },
+      { operation: "add", target: "evasion", value: 2 },
+    ])
+
+    expect(result.sheetData.evasion).toBe("15")
+    expect(result.updates).toEqual({ evasion: "15" })
+  })
+
   it("adds to hpMax and stressMax numeric targets", () => {
     const sheetData = { ...defaultSheetData, hpMax: 6, stressMax: 6 }
 
@@ -86,5 +124,24 @@ describe("modifier effect executor", () => {
 
     const reverted = revertEffects(applied.sheetData, [{ operation: "add", target: "proficiency", value: 1 }])
     expect(reverted.sheetData.proficiency).toEqual([true, false, false, false, false, false])
+  })
+
+  it("does not report proficiency updates when already saturated at bounds", () => {
+    const maxed = {
+      ...defaultSheetData,
+      proficiency: [true, true, true, true, true, true],
+    }
+    const emptied = {
+      ...defaultSheetData,
+      proficiency: [false, false, false, false, false, false],
+    }
+
+    const maxResult = applyEffects(maxed, [{ operation: "add", target: "proficiency", value: 1 }])
+    const minResult = revertEffects(emptied, [{ operation: "add", target: "proficiency", value: 1 }])
+
+    expect(maxResult.sheetData.proficiency).toBe(maxed.proficiency)
+    expect(maxResult.updates).toEqual({})
+    expect(minResult.sheetData.proficiency).toBe(emptied.proficiency)
+    expect(minResult.updates).toEqual({})
   })
 })

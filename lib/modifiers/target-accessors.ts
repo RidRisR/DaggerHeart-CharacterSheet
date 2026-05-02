@@ -13,6 +13,12 @@ const ATTRIBUTE_TARGETS = {
 type AttributeTarget = keyof typeof ATTRIBUTE_TARGETS
 type AttributeKey = (typeof ATTRIBUTE_TARGETS)[AttributeTarget]
 
+function parseExperienceTargetIndex(target: ModifierTargetId): number | undefined {
+  const match = /^experienceValues\.(0|[1-9]\d*)$/.exec(target)
+  if (!match) return undefined
+  return Number(match[1])
+}
+
 export function readTargetValue(sheetData: SheetData, target: ModifierTargetId): unknown {
   if (target in ATTRIBUTE_TARGETS) {
     const attr = sheetData[ATTRIBUTE_TARGETS[target as AttributeTarget]]
@@ -20,8 +26,8 @@ export function readTargetValue(sheetData: SheetData, target: ModifierTargetId):
   }
 
   if (target.startsWith("experienceValues.")) {
-    const index = Number(target.split(".")[1])
-    return Number.isInteger(index) ? sheetData.experienceValues?.[index] : undefined
+    const index = parseExperienceTargetIndex(target)
+    return index !== undefined ? sheetData.experienceValues?.[index] : undefined
   }
 
   if (target === "proficiency") {
@@ -48,8 +54,8 @@ export function writeTargetValue(sheetData: SheetData, target: ModifierTargetId,
   }
 
   if (target.startsWith("experienceValues.")) {
-    const index = Number(target.split(".")[1])
-    if (!Number.isInteger(index) || index < 0) return sheetData
+    const index = parseExperienceTargetIndex(target)
+    if (index === undefined) return sheetData
     const values = [...(sheetData.experienceValues ?? ["", "", "", "", ""])]
     while (values.length <= index) values.push("")
     values[index] = String(value)
@@ -62,6 +68,8 @@ export function writeTargetValue(sheetData: SheetData, target: ModifierTargetId,
 
   if (target === "proficiency") {
     const count = Math.max(0, Math.min(6, Number(value)))
+    const current = readTargetValue(sheetData, target)
+    if (current === count) return sheetData
     return {
       ...sheetData,
       proficiency: Array(6).fill(false).map((_, index) => index < count),
@@ -87,6 +95,7 @@ export function targetUpdate(sheetData: SheetData, before: SheetData, target: Mo
   }
 
   if (target.startsWith("experienceValues.")) {
+    if (parseExperienceTargetIndex(target) === undefined) return {}
     return sheetData.experienceValues === before.experienceValues ? {} : { experienceValues: sheetData.experienceValues }
   }
 

@@ -7,6 +7,12 @@ import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { armorItems, type ArmorItem } from "@/data/list/armor";
 import { showFadeNotification } from "@/components/ui/fade-notification";
 import { parseToNumber } from "./number-utils";
+import type {
+    AutomationSourceId,
+    ModifierEntryId,
+    ModifierTargetId,
+    UserModifierEntry,
+} from "@/lib/modifiers/types";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -175,9 +181,21 @@ interface SheetState {
     createEvasionSnapshot: (afterValue: string) => void;
     restoreEvasionSnapshot: () => { success: boolean; reason?: 'no-snapshot' | 'conflict' | 'success' };
 
+    setActiveModifierBase: (target: ModifierTargetId, baseId: ModifierEntryId | undefined) => void;
+    setModifierEntryDisabled: (target: ModifierTargetId, entryId: ModifierEntryId, disabled: boolean) => void;
+    upsertUserModifierEntry: (entry: UserModifierEntry) => void;
+    removeUserModifierEntry: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
+    setAutomationSelection: (sourceId: AutomationSourceId, selected: boolean, params?: Record<string, unknown>) => void;
+
     // Profession change handler
     handleProfessionChange: (newProfessionRef: SheetCardReference | undefined, newProfessionCard: StandardCard | undefined) => void;
 }
+
+const ensureModifierState = (sheetData: SheetData) => ({
+    byTarget: {
+        ...(sheetData.modifierState?.byTarget ?? {}),
+    },
+});
 
 export const useSheetStore = create<SheetState>((set) => ({
     sheetData: defaultSheetData,
@@ -1049,6 +1067,106 @@ export const useSheetStore = create<SheetState>((set) => ({
             };
         }
     }),
+
+    setActiveModifierBase: (target, baseId) => set((state) => {
+        const modifierState = ensureModifierState(state.sheetData);
+        const targetState = modifierState.byTarget[target] ?? {};
+
+        return {
+            sheetData: {
+                ...state.sheetData,
+                modifierState: {
+                    byTarget: {
+                        ...modifierState.byTarget,
+                        [target]: {
+                            ...targetState,
+                            activeBaseId: baseId,
+                        },
+                    },
+                },
+            },
+        };
+    }),
+
+    setModifierEntryDisabled: (target, entryId, disabled) => set((state) => {
+        const modifierState = ensureModifierState(state.sheetData);
+        const targetState = modifierState.byTarget[target] ?? {};
+        const current = new Set(targetState.disabledEntryIds ?? []);
+        if (disabled) {
+            current.add(entryId);
+        } else {
+            current.delete(entryId);
+        }
+
+        return {
+            sheetData: {
+                ...state.sheetData,
+                modifierState: {
+                    byTarget: {
+                        ...modifierState.byTarget,
+                        [target]: {
+                            ...targetState,
+                            disabledEntryIds: Array.from(current),
+                        },
+                    },
+                },
+            },
+        };
+    }),
+
+    upsertUserModifierEntry: (entry) => set((state) => {
+        const modifierState = ensureModifierState(state.sheetData);
+        const targetState = modifierState.byTarget[entry.target] ?? {};
+        const entries = targetState.userEntries ?? [];
+        const nextEntries = entries.some(existing => existing.id === entry.id)
+            ? entries.map(existing => existing.id === entry.id ? entry : existing)
+            : [...entries, entry];
+
+        return {
+            sheetData: {
+                ...state.sheetData,
+                modifierState: {
+                    byTarget: {
+                        ...modifierState.byTarget,
+                        [entry.target]: {
+                            ...targetState,
+                            userEntries: nextEntries,
+                        },
+                    },
+                },
+            },
+        };
+    }),
+
+    removeUserModifierEntry: (target, entryId) => set((state) => {
+        const modifierState = ensureModifierState(state.sheetData);
+        const targetState = modifierState.byTarget[target] ?? {};
+
+        return {
+            sheetData: {
+                ...state.sheetData,
+                modifierState: {
+                    byTarget: {
+                        ...modifierState.byTarget,
+                        [target]: {
+                            ...targetState,
+                            userEntries: (targetState.userEntries ?? []).filter(entry => entry.id !== entryId),
+                        },
+                    },
+                },
+            },
+        };
+    }),
+
+    setAutomationSelection: (sourceId, selected, params) => set((state) => ({
+        sheetData: {
+            ...state.sheetData,
+            automationSelections: {
+                ...(state.sheetData.automationSelections ?? {}),
+                [sourceId]: params === undefined ? { selected } : { selected, params },
+            },
+        },
+    })),
 
     // Attribute upgrade rollback system
     attributeUpgradeHistory: {},

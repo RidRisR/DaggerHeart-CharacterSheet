@@ -61,6 +61,10 @@ export const defaultSheetData: SheetData = {
         tier2: {},
         tier3: {},
     },
+    modifierState: {
+        byTarget: {},
+    },
+    automationSelections: {},
 
     primaryWeaponName: "",
     primaryWeaponTrait: "",

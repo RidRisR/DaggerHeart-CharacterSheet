@@ -1,6 +1,7 @@
 // types/form-data.ts
 
 import { StandardCard } from "@/card/card-types"
+import type { AutomationSelections, ModifierState } from "@/lib/modifiers/types"
 
 // ===== 多角色系统数据结构 =====
 export interface CharacterMetadata {
@@ -287,6 +288,8 @@ export interface SheetData {
   cards: StandardCard[]
   inventory_cards?: StandardCard[] // 新增：库存卡组
   checkedUpgrades?: CheckedUpgrades
+  modifierState?: ModifierState
+  automationSelections?: AutomationSelections
   minorThreshold?: string
   majorThreshold?: string
   armorValue?: string

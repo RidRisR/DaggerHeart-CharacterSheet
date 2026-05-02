@@ -308,6 +308,25 @@ function migrateNotebook(data: SheetData): SheetData {
   return migrated
 }
 
+function migrateModifierState(data: SheetData): SheetData {
+  const migrated = { ...data }
+
+  if (!migrated.modifierState || typeof migrated.modifierState !== "object") {
+    migrated.modifierState = { byTarget: {} }
+    console.log("[Migration] Added modifierState field")
+  } else if (!migrated.modifierState.byTarget || typeof migrated.modifierState.byTarget !== "object") {
+    migrated.modifierState = { ...migrated.modifierState, byTarget: {} }
+    console.log("[Migration] Added modifierState.byTarget field")
+  }
+
+  if (!migrated.automationSelections || typeof migrated.automationSelections !== "object") {
+    migrated.automationSelections = {}
+    console.log("[Migration] Added automationSelections field")
+  }
+
+  return migrated
+}
+
 /**
  * 清理废弃字段
  * 移除不再使用的字段，保持数据结构清洁
@@ -333,7 +352,7 @@ function isValidStandardCard(card: any): card is StandardCard {
 }
 
 export function normalizeCurrentSheetData(data: Partial<SheetData> | any): SheetData {
-  const normalized: SheetData = {
+  let normalized: SheetData = {
     ...defaultSheetData,
     ...data,
     schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -346,6 +365,8 @@ export function normalizeCurrentSheetData(data: Partial<SheetData> | any): Sheet
   normalized.inventory_cards = Array.isArray(data.inventory_cards)
     ? data.inventory_cards.filter(isValidStandardCard)
     : defaultSheetData.inventory_cards
+
+  normalized = migrateModifierState(normalized)
 
   return cleanupDeprecatedFields(normalized)
 }

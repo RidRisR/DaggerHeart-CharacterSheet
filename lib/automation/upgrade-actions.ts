@@ -1,6 +1,7 @@
 import type { SheetData } from "@/lib/sheet-data"
 import { applyEffects, revertEffects } from "@/lib/modifiers/effect-executor"
-import type { AutomationSelection, ModifierTargetId } from "@/lib/modifiers/types"
+import { readTargetValue } from "@/lib/modifiers/target-accessors"
+import type { AutomationEffect, AutomationSelection, ModifierTargetId } from "@/lib/modifiers/types"
 
 export interface UpgradeOptionLike {
   label: string
@@ -26,6 +27,47 @@ export type UpgradeAutomationResult =
       selection?: AutomationSelection
     }
   | { kind: "rollback"; rollbackKind: UpgradeRollbackKind }
+
+const UPGRADE_ATTRIBUTE_KEYS = new Set([
+  "agility",
+  "strength",
+  "finesse",
+  "instinct",
+  "presence",
+  "knowledge",
+])
+
+export function isUpgradeAttributeKey(value: unknown): value is string {
+  return typeof value === "string" && UPGRADE_ATTRIBUTE_KEYS.has(value)
+}
+
+export function createUpgradeRevertEffects(params: Record<string, unknown> = {}): AutomationEffect[] {
+  const effects: AutomationEffect[] = []
+
+  if (Array.isArray(params.attributes)) {
+    params.attributes.forEach(attribute => {
+      if (!isUpgradeAttributeKey(attribute)) return
+      effects.push({
+        operation: "add",
+        target: `${attribute}.value` as ModifierTargetId,
+        value: 1,
+      })
+    })
+  }
+
+  if (Array.isArray(params.experienceIndexes)) {
+    params.experienceIndexes.forEach(index => {
+      if (!Number.isInteger(index) || index < 0) return
+      effects.push({
+        operation: "add",
+        target: `experienceValues.${index}` as ModifierTargetId,
+        value: 1,
+      })
+    })
+  }
+
+  return effects
+}
 
 function addTargetResult(
   sheetData: SheetData,
@@ -65,6 +107,8 @@ function addTargetResult(
     updates = { ...updates, [target]: clampedValue }
   }
 
+  const messageValue = clampedValue ?? readTargetValue(result.sheetData, target)
+
   return {
     kind: "setSheetData",
     updates,
@@ -74,8 +118,8 @@ function addTargetResult(
       params: { target },
     },
     message: newCheckedState
-      ? `${messageLabel} +1，当前为 ${clampedValue}`
-      : `${messageLabel} -1，当前为 ${clampedValue}`,
+      ? `${messageLabel} +1，当前为 ${messageValue}`
+      : `${messageLabel} -1，当前为 ${messageValue}`,
   }
 }
 

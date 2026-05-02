@@ -7,9 +7,12 @@ import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
 import { createEmptyCard, isEmptyCard, type StandardCard } from "@/card/card-types"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import { parseToNumber } from "@/lib/number-utils"
-import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
+import {
+  computeUpgradeAutomation,
+  createUpgradeRevertEffects,
+  isUpgradeAttributeKey,
+} from "@/lib/automation/upgrade-actions"
 import { revertEffects } from "@/lib/modifiers/effect-executor"
-import type { AutomationEffect, ModifierTargetId } from "@/lib/modifiers/types"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -126,32 +129,6 @@ export default function CharacterSheetPageTwo() {
     })
   }
 
-  const createUpgradeRevertEffects = (sourceId: string): AutomationEffect[] => {
-    const params = safeFormData.automationSelections?.[sourceId]?.params ?? {}
-    const effects: AutomationEffect[] = []
-
-    if (Array.isArray(params.attributes)) {
-      params.attributes.forEach(attribute => {
-        if (typeof attribute !== "string") return
-        const target = `${attribute}.value` as ModifierTargetId
-        effects.push({ operation: "add", target, value: 1 })
-      })
-    }
-
-    if (Array.isArray(params.experienceIndexes)) {
-      params.experienceIndexes.forEach(index => {
-        if (typeof index !== "number") return
-        effects.push({
-          operation: "add",
-          target: `experienceValues.${index}` as ModifierTargetId,
-          value: 1,
-        })
-      })
-    }
-
-    return effects
-  }
-
   // Handle checkbox changes for upgrades
   const handleUpgradeCheck = (checkKeyOrTier: string, index: number) => {
     // 提取 tier（从 "tier1-0-2" 提取出 "tier1"）
@@ -177,16 +154,16 @@ export default function CharacterSheetPageTwo() {
       if (result.kind === "setSheetData") {
         if (result.selection?.selected === false && !result.selection.params) {
           const sourceId = `upgrade:${checkKeyOrTier}`
-          const effects = createUpgradeRevertEffects(sourceId)
+          const params = safeFormData.automationSelections?.[sourceId]?.params ?? {}
+          const effects = createUpgradeRevertEffects(params)
 
           if (effects.length > 0) {
             const reverted = revertEffects(safeFormData, effects)
             const updates = { ...reverted.updates }
-            const params = safeFormData.automationSelections?.[sourceId]?.params ?? {}
 
             if (Array.isArray(params.attributes)) {
               params.attributes.forEach(attribute => {
-                if (typeof attribute !== "string") return
+                if (!isUpgradeAttributeKey(attribute)) return
                 const current = safeFormData[attribute as keyof typeof safeFormData]
                 if (current && typeof current === "object" && "checked" in current) {
                   ;(updates as Record<string, unknown>)[attribute] = {

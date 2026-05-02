@@ -311,15 +311,15 @@ function migrateNotebook(data: SheetData): SheetData {
 function migrateModifierState(data: SheetData): SheetData {
   const migrated = { ...data }
 
-  if (!migrated.modifierState || typeof migrated.modifierState !== "object") {
+  if (!migrated.modifierState || typeof migrated.modifierState !== "object" || Array.isArray(migrated.modifierState)) {
     migrated.modifierState = { byTarget: {} }
     console.log("[Migration] Added modifierState field")
-  } else if (!migrated.modifierState.byTarget || typeof migrated.modifierState.byTarget !== "object") {
+  } else if (!migrated.modifierState.byTarget || typeof migrated.modifierState.byTarget !== "object" || Array.isArray(migrated.modifierState.byTarget)) {
     migrated.modifierState = { ...migrated.modifierState, byTarget: {} }
     console.log("[Migration] Added modifierState.byTarget field")
   }
 
-  if (!migrated.automationSelections || typeof migrated.automationSelections !== "object") {
+  if (!migrated.automationSelections || typeof migrated.automationSelections !== "object" || Array.isArray(migrated.automationSelections)) {
     migrated.automationSelections = {}
     console.log("[Migration] Added automationSelections field")
   }

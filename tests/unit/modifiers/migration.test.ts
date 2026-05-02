@@ -50,6 +50,30 @@ describe("modifier state migration", () => {
     })
 
     expect(migrated.modifierState?.byTarget.evasion?.activeBaseId).toBe("user:evasion-base")
+    expect(migrated.modifierState?.byTarget.evasion?.disabledEntryIds).toEqual(["upgrade:evasion"])
+    expect(migrated.modifierState?.byTarget.evasion?.userEntries).toEqual([{
+      id: "user:evasion-base",
+      sourceId: "user:evasion-base",
+      target: "evasion",
+      kind: "base",
+      label: "手动基础闪避",
+      value: 12,
+      sourceType: "user",
+      priority: 10,
+    }])
     expect(migrated.automationSelections?.["upgrade:tier1-5-0"]?.selected).toBe(true)
+    expect(migrated.automationSelections?.["upgrade:tier1-5-0"]?.params).toEqual({ target: "evasion" })
+  })
+
+  it("replaces invalid array-backed modifier state and automation selections", () => {
+    const migrated = migrateSheetData({
+      modifierState: {
+        byTarget: [],
+      },
+      automationSelections: [],
+    })
+
+    expect(migrated.modifierState).toEqual({ byTarget: {} })
+    expect(migrated.automationSelections).toEqual({})
   })
 })

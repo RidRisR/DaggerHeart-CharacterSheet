@@ -59,8 +59,6 @@ export function EvasionEditor({
 
     if (finalValue !== currentEvasion) {
       setSheetData({ evasion: finalValue })
-      const setAutomationSelection = useSheetStore.getState().setAutomationSelection
-      setAutomationSelection(`upgrade:${checkKey}`, true, { target: "evasion" })
 
       // 显示成功通知
       showFadeNotification({
@@ -69,6 +67,9 @@ export function EvasionEditor({
         position: "middle"
       })
     }
+
+    const setAutomationSelection = useSheetStore.getState().setAutomationSelection
+    setAutomationSelection(`upgrade:${checkKey}`, true, { target: "evasion" })
 
     // 勾选复选框
     toggleUpgradeCheckbox(checkKey, optionIndex, true)

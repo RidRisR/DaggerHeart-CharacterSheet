@@ -32,6 +32,29 @@ describe("升级编辑器组件烟雾测试", () => {
     expect(toggleUpgradeCheckbox).toHaveBeenCalledWith("tier1-5-0", 5, true)
   })
 
+  it("EvasionEditor 未修改数值确认后记录升级选择并保持闪避不变", async () => {
+    const user = userEvent.setup()
+    const toggleUpgradeCheckbox = vi.fn()
+    resetSheetStore({ evasion: "12" })
+
+    render(
+      <EvasionEditor
+        checkKey="tier1-5-0"
+        optionIndex={5}
+        toggleUpgradeCheckbox={toggleUpgradeCheckbox}
+      />,
+    )
+
+    await user.click(screen.getByRole("button", { name: /确认/ }))
+
+    expect(toggleUpgradeCheckbox).toHaveBeenCalledWith("tier1-5-0", 5, true)
+    expect(sheet().automationSelections?.["upgrade:tier1-5-0"]).toEqual({
+      selected: true,
+      params: { target: "evasion" },
+    })
+    expect(sheet().evasion).toBe("12")
+  })
+
   it("ExperienceValuesEditor 确认后写入两项经历加值并勾选对应升级项", async () => {
     const user = userEvent.setup()
     const toggleUpgradeCheckbox = vi.fn()

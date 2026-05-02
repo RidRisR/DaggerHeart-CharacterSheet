@@ -1,6 +1,6 @@
 import { isValidNumber, parseToNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
-import type { AutomationSelection, ModifierEntry, ModifierTargetId } from "./types"
+import type { ModifierEntry, ModifierTargetId } from "./types"
 
 const ATTRIBUTE_LABELS: Record<string, string> = {
   agility: "敏捷",
@@ -17,9 +17,13 @@ function numericString(value: unknown): number | undefined {
   return undefined
 }
 
-function selectedUpgradeEntries(sourceId: string, selection: AutomationSelection): ModifierEntry[] {
-  if (!selection.selected) return []
-  const params = selection.params ?? {}
+function isSelectionRecord(selection: unknown): selection is Record<string, unknown> {
+  return typeof selection === "object" && selection !== null && !Array.isArray(selection)
+}
+
+function selectedUpgradeEntries(sourceId: string, selection: unknown): ModifierEntry[] {
+  if (!isSelectionRecord(selection) || selection.selected !== true) return []
+  const params = isSelectionRecord(selection.params) ? selection.params : {}
 
   if (params.target === "evasion") {
     return [{
@@ -71,7 +75,7 @@ function selectedUpgradeEntries(sourceId: string, selection: AutomationSelection
 
   if (Array.isArray(params.experienceIndexes)) {
     return params.experienceIndexes.flatMap((index) => {
-      if (typeof index !== "number") return []
+      if (!Number.isInteger(index) || index < 0) return []
       const target = `experienceValues.${index}` as ModifierTargetId
       return [{
         id: `${sourceId}:${target}`,

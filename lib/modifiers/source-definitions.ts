@@ -1,0 +1,174 @@
+import { isValidNumber, parseToNumber } from "@/lib/number-utils"
+import type { SheetData } from "@/lib/sheet-data"
+import type { AutomationSelection, ModifierEntry, ModifierTargetId } from "./types"
+
+const ATTRIBUTE_LABELS: Record<string, string> = {
+  agility: "敏捷",
+  strength: "力量",
+  finesse: "灵巧",
+  instinct: "本能",
+  presence: "风度",
+  knowledge: "知识",
+}
+
+function numericString(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value
+  if (typeof value === "string" && isValidNumber(value)) return parseToNumber(value, 0)
+  return undefined
+}
+
+function selectedUpgradeEntries(sourceId: string, selection: AutomationSelection): ModifierEntry[] {
+  if (!selection.selected) return []
+  const params = selection.params ?? {}
+
+  if (params.target === "evasion") {
+    return [{
+      id: `${sourceId}:evasion`,
+      sourceId,
+      target: "evasion",
+      kind: "modifier",
+      label: "升级：闪避 +1",
+      value: 1,
+      sourceType: "upgrade",
+      priority: 200,
+    }]
+  }
+
+  if (params.target === "hpMax" || params.target === "stressMax" || params.target === "proficiency") {
+    const labelMap = {
+      hpMax: "升级：生命上限 +1",
+      stressMax: "升级：压力上限 +1",
+      proficiency: "升级：熟练值 +1",
+    } as const
+    return [{
+      id: `${sourceId}:${params.target}`,
+      sourceId,
+      target: params.target,
+      kind: "modifier",
+      label: labelMap[params.target],
+      value: 1,
+      sourceType: "upgrade",
+      priority: 200,
+    }]
+  }
+
+  if (Array.isArray(params.attributes)) {
+    return params.attributes.flatMap((attribute) => {
+      if (typeof attribute !== "string" || !(attribute in ATTRIBUTE_LABELS)) return []
+      const target = `${attribute}.value` as ModifierTargetId
+      return [{
+        id: `${sourceId}:${target}`,
+        sourceId,
+        target,
+        kind: "modifier",
+        label: `升级：${ATTRIBUTE_LABELS[attribute]} +1`,
+        value: 1,
+        sourceType: "upgrade",
+        priority: 200,
+      }]
+    })
+  }
+
+  if (Array.isArray(params.experienceIndexes)) {
+    return params.experienceIndexes.flatMap((index) => {
+      if (typeof index !== "number") return []
+      const target = `experienceValues.${index}` as ModifierTargetId
+      return [{
+        id: `${sourceId}:${target}`,
+        sourceId,
+        target,
+        kind: "modifier",
+        label: `升级：经历 ${index + 1} +1`,
+        value: 1,
+        sourceType: "upgrade",
+        priority: 200,
+      }]
+    })
+  }
+
+  return []
+}
+
+export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntry[] {
+  const entries: ModifierEntry[] = []
+  const professionCard = sheetData.cards?.[0]
+  const professionId = professionCard?.id || sheetData.professionRef?.id || sheetData.profession || "current"
+  const professionName = professionCard?.name || sheetData.professionRef?.name || sheetData.profession || "职业"
+  const evasion = professionCard?.professionSpecial?.["起始闪避"]
+  const hp = professionCard?.professionSpecial?.["起始生命"]
+
+  if (typeof evasion === "number") {
+    entries.push({
+      id: `profession:${professionId}:evasion`,
+      sourceId: `profession:${professionId}`,
+      target: "evasion",
+      kind: "base",
+      label: `${professionName}：起始闪避`,
+      value: evasion,
+      sourceType: "profession",
+      priority: 100,
+    })
+  }
+
+  if (typeof hp === "number") {
+    entries.push({
+      id: `profession:${professionId}:hpMax`,
+      sourceId: `profession:${professionId}`,
+      target: "hpMax",
+      kind: "base",
+      label: `${professionName}：起始生命上限`,
+      value: hp,
+      sourceType: "profession",
+      priority: 100,
+    })
+  }
+
+  const armorLabel = sheetData.armorName || "当前护甲"
+  const armorValue = numericString(sheetData.armorBaseScore)
+  if (armorValue !== undefined) {
+    entries.push({
+      id: "armor:current:armorValue",
+      sourceId: "armor:current",
+      target: "armorValue",
+      kind: "base",
+      label: `${armorLabel}：基础护甲值`,
+      value: armorValue,
+      sourceType: "armor",
+      priority: 100,
+    })
+  }
+
+  const [minorRaw, majorRaw] = String(sheetData.armorThreshold || "").split("/")
+  const minor = numericString(minorRaw)
+  const major = numericString(majorRaw)
+  if (minor !== undefined) {
+    entries.push({
+      id: "armor:current:minorThreshold",
+      sourceId: "armor:current",
+      target: "minorThreshold",
+      kind: "base",
+      label: `${armorLabel}：基础轻伤阈值`,
+      value: minor,
+      sourceType: "armor",
+      priority: 100,
+    })
+  }
+  if (major !== undefined) {
+    entries.push({
+      id: "armor:current:majorThreshold",
+      sourceId: "armor:current",
+      target: "majorThreshold",
+      kind: "base",
+      label: `${armorLabel}：基础重伤阈值`,
+      value: major,
+      sourceType: "armor",
+      priority: 100,
+    })
+  }
+
+  Object.entries(sheetData.automationSelections ?? {}).forEach(([sourceId, selection]) => {
+    entries.push(...selectedUpgradeEntries(sourceId, selection))
+  })
+
+  return entries
+}

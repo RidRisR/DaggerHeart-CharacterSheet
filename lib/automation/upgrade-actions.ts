@@ -36,10 +36,19 @@ function addTargetResult(
   max?: number,
 ): UpgradeAutomationResult {
   const newCheckedState = !currentlyChecked
+  const currentValue = target === "hpMax"
+    ? sheetData.hpMax
+    : target === "stressMax"
+      ? sheetData.stressMax
+      : undefined
+  const effectSheetData = (target === "hpMax" || target === "stressMax")
+    && (typeof currentValue !== "number" || !Number.isFinite(currentValue))
+    ? { ...sheetData, [target]: 6 }
+    : sheetData
   const effect = { operation: "add" as const, target, value: 1 }
   const result = newCheckedState
-    ? applyEffects(sheetData, [effect])
-    : revertEffects(sheetData, [effect])
+    ? applyEffects(effectSheetData, [effect])
+    : revertEffects(effectSheetData, [effect])
 
   let updates = result.updates
   const nextValue = target === "hpMax"

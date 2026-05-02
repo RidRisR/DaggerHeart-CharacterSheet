@@ -29,6 +29,7 @@ describe("升级选项自动化基线", () => {
     expect(run("永久增加一个压力槽。", { stressMax: 6 })).toMatchObject({
       kind: "setSheetData",
       updates: { stressMax: 7 },
+      warnings: [],
     })
   })
 
@@ -54,6 +55,28 @@ describe("升级选项自动化基线", () => {
     }, true)).toMatchObject({
       kind: "setSheetData",
       updates: { proficiency: [true, false, false, false, false, false] },
+    })
+  })
+
+  it("生命槽升级返回 automation selection 信息", () => {
+    expect(run("永久增加一个生命槽。", { hpMax: 6 })).toMatchObject({
+      kind: "setSheetData",
+      updates: { hpMax: 7 },
+      selection: {
+        selected: true,
+        params: { target: "hpMax" },
+      },
+    })
+  })
+
+  it("取消生命槽升级返回未选中 selection 信息", () => {
+    expect(run("永久增加一个生命槽。", { hpMax: 7 }, true)).toMatchObject({
+      kind: "setSheetData",
+      updates: { hpMax: 6 },
+      selection: {
+        selected: false,
+        params: { target: "hpMax" },
+      },
     })
   })
 

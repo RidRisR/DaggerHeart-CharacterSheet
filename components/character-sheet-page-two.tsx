@@ -228,6 +228,18 @@ export default function CharacterSheetPageTwo() {
 
       if (result.kind === "setSheetData") {
         setFormData(result.updates)
+        if (result.selection) {
+          const sourceId = `upgrade:${checkKeyOrTier}`
+          const setAutomationSelection = useSheetStore.getState().setAutomationSelection
+          setAutomationSelection(sourceId, result.selection.selected, result.selection.params)
+        }
+        result.warnings?.forEach(warning => {
+          showFadeNotification({
+            message: warning,
+            type: "info",
+            position: "middle"
+          })
+        })
         if (result.message) {
           showFadeNotification({
             message: result.message,

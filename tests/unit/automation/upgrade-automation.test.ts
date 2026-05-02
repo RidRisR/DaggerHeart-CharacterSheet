@@ -15,6 +15,7 @@ describe("升级选项自动化基线", () => {
     expect(run("永久增加一个生命槽。", { hpMax: 6 })).toMatchObject({
       kind: "setSheetData",
       updates: { hpMax: 7 },
+      message: "生命槽上限 +1，当前为 7",
     })
   })
 
@@ -22,6 +23,7 @@ describe("升级选项自动化基线", () => {
     expect(run("永久增加一个生命槽。", { hpMax: 1 }, true)).toMatchObject({
       kind: "setSheetData",
       updates: { hpMax: 1 },
+      message: "生命槽上限 -1，当前为 1",
     })
   })
 
@@ -30,6 +32,7 @@ describe("升级选项自动化基线", () => {
       kind: "setSheetData",
       updates: { stressMax: 7 },
       warnings: [],
+      message: "压力槽上限 +1，当前为 7",
     })
   })
 
@@ -37,6 +40,16 @@ describe("升级选项自动化基线", () => {
     expect(run("永久增加一个压力槽。", { stressMax: 18 })).toMatchObject({
       kind: "setSheetData",
       updates: { stressMax: 18 },
+      message: "压力槽上限 +1，当前为 18",
+    })
+  })
+
+  it("压力槽取消会减少 stressMax 并保留当前值消息", () => {
+    expect(run("永久增加一个压力槽。", { stressMax: 7 }, true)).toMatchObject({
+      kind: "setSheetData",
+      updates: { stressMax: 6 },
+      warnings: [],
+      message: "压力槽上限 -1，当前为 6",
     })
   })
 

@@ -48,9 +48,12 @@ function addTargetResult(
       ? result.sheetData.stressMax
       : undefined
 
-  if ((target === "hpMax" || target === "stressMax") && typeof nextValue === "number") {
-    const clamped = Math.min(max ?? 18, Math.max(min ?? 1, nextValue))
-    updates = { ...updates, [target]: clamped }
+  const clampedValue = (target === "hpMax" || target === "stressMax") && typeof nextValue === "number"
+    ? Math.min(max ?? 18, Math.max(min ?? 1, nextValue))
+    : undefined
+
+  if (clampedValue !== undefined) {
+    updates = { ...updates, [target]: clampedValue }
   }
 
   return {
@@ -62,8 +65,8 @@ function addTargetResult(
       params: { target },
     },
     message: newCheckedState
-      ? `${messageLabel} +1`
-      : `${messageLabel} -1`,
+      ? `${messageLabel} +1，当前为 ${clampedValue}`
+      : `${messageLabel} -1，当前为 ${clampedValue}`,
   }
 }
 

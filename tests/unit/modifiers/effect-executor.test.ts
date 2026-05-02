@@ -29,13 +29,13 @@ describe("modifier effect executor", () => {
     ])
   })
 
-  it("adds string decimal targets without rounding", () => {
+  it("adds string decimal targets with ceiling numeric semantics", () => {
     const sheetData = { ...defaultSheetData, evasion: "1.2" }
 
     const result = applyEffects(sheetData, [{ operation: "add", target: "evasion", value: 1 }])
 
-    expect(result.sheetData.evasion).toBe("2.2")
-    expect(result.updates).toEqual({ evasion: "2.2" })
+    expect(result.sheetData.evasion).toBe("3")
+    expect(result.updates).toEqual({ evasion: "3" })
   })
 
   it("treats direct final value edits as the new current value for revert", () => {

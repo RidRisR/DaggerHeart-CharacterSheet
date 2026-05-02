@@ -1,11 +1,11 @@
-import { isValidNumber } from "@/lib/number-utils"
+import { isValidNumber, parseToNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import type { ApplyEffectsResult, AutomationEffect, ModifierTargetId } from "./types"
 import { readTargetValue, targetUpdate, writeTargetValue } from "./target-accessors"
 
 function parseCurrentNumber(value: unknown): number | undefined {
   if (typeof value === "number" && Number.isFinite(value)) return value
-  if (typeof value === "string" && isValidNumber(value)) return Number(value.trim())
+  if (typeof value === "string" && isValidNumber(value)) return parseToNumber(value, 0)
   return undefined
 }
 

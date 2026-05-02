@@ -7,6 +7,7 @@ import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
 import { createEmptyCard, isEmptyCard, type StandardCard } from "@/card/card-types"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import { parseToNumber } from "@/lib/number-utils"
+import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -18,8 +19,6 @@ import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 export default function CharacterSheetPageTwo() {
   const { setSheetData: setFormData } = useSheetStore();
   const safeFormData = useSafeSheetData();
-  const updateHPMax = useSheetStore(state => state.updateHPMax);
-  const updateStressMax = useSheetStore(state => state.updateStressMax);
 
   // State for upgrade domain card modal
   const [upgradeDomainModalOpen, setUpgradeDomainModalOpen] = useState(false);
@@ -141,27 +140,30 @@ export default function CharacterSheetPageTwo() {
     const option = options[index]
 
     if (option) {
-      const label = option.label
+      const result = computeUpgradeAutomation({
+        sheetData: safeFormData,
+        option,
+        currentlyChecked,
+      })
 
-      // 属性升级的回滚逻辑
-      if (label.includes("角色属性+1") && currentlyChecked) {
-        const rollbackAttributeUpgrade = useSheetStore.getState().rollbackAttributeUpgrade
-        const result = rollbackAttributeUpgrade(checkKeyOrTier)
+      if (result.kind === "rollback") {
+        if (result.rollbackKind === "attribute") {
+          const rollbackAttributeUpgrade = useSheetStore.getState().rollbackAttributeUpgrade
+          const rollbackResult = rollbackAttributeUpgrade(checkKeyOrTier)
 
-        if (result.success) {
-          showFadeNotification({
-            message: "已撤回属性升级，属性值已恢复",
-            type: "success",
-            position: "middle"
-          })
-        } else {
-          if (result.reason === 'no-record') {
+          if (rollbackResult.success) {
+            showFadeNotification({
+              message: "已撤回属性升级，属性值已恢复",
+              type: "success",
+              position: "middle"
+            })
+          } else if (rollbackResult.reason === 'no-record') {
             showFadeNotification({
               message: "升级记录已丢失，无法自动回滚，请手动调整属性值",
               type: "error",
               position: "middle"
             })
-          } else if (result.reason === 'conflict') {
+          } else if (rollbackResult.reason === 'conflict') {
             showFadeNotification({
               message: "属性已被其他操作修改，无法自动回滚，请手动调整",
               type: "error",
@@ -170,146 +172,68 @@ export default function CharacterSheetPageTwo() {
           }
         }
 
-        // 无论成功与否，都取消勾选
-        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
-        return  // 早返回，不执行后续逻辑
-      }
+        if (result.rollbackKind === "experience") {
+          const restoreExperienceValuesSnapshot = useSheetStore.getState().restoreExperienceValuesSnapshot
+          const rollbackResult = restoreExperienceValuesSnapshot()
 
-      // 经历升级的回滚逻辑
-      if (label.includes("经历获得额外") && currentlyChecked) {
-        const restoreExperienceValuesSnapshot = useSheetStore.getState().restoreExperienceValuesSnapshot
-        const result = restoreExperienceValuesSnapshot()
-
-        if (result.reason === 'conflict') {
-          showFadeNotification({
-            message: "检测到经历加值已被其他升级修改，无法回滚",
-            type: "error",
-            position: "middle"
-          })
-        } else if (result.reason === 'no-snapshot') {
-          showFadeNotification({
-            message: "经历升级的记录已丢失，请手动回滚",
-            type: "error",
-            position: "middle"
-          })
-        } else {
-          showFadeNotification({
-            message: "已撤回经历升级，经历加值已恢复",
-            type: "success",
-            position: "middle"
-          })
-        }
-
-        // 取消勾选
-        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
-        return  // 早返回，不执行后续逻辑
-      }
-
-      // 闪避值升级的回滚逻辑
-      if (label.includes("闪避值") && currentlyChecked) {
-        const restoreEvasionSnapshot = useSheetStore.getState().restoreEvasionSnapshot
-        const result = restoreEvasionSnapshot()
-
-        if (result.reason === 'conflict') {
-          showFadeNotification({
-            message: "检测到闪避值已被其他升级修改，无法回滚",
-            type: "error",
-            position: "middle"
-          })
-        } else if (result.reason === 'no-snapshot') {
-          showFadeNotification({
-            message: "闪避值升级的记录已丢失，请手动回滚",
-            type: "error",
-            position: "middle"
-          })
-        } else {
-          showFadeNotification({
-            message: "已撤回闪避值升级，闪避值已恢复",
-            type: "success",
-            position: "middle"
-          })
-        }
-
-        // 取消勾选
-        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
-        return  // 早返回，不执行后续逻辑
-      }
-
-      // 处理生命槽
-      if (label.includes("生命槽")) {
-        const currentHP = safeFormData.hpMax || 6
-        if (newCheckedState) {
-          const newValue = Math.min(currentHP + 1, 18)
-          updateHPMax(newValue)
-          showFadeNotification({
-            message: `生命槽上限 +1，当前为 ${newValue}`,
-            type: "success",
-            position: "middle"
-          })
-        } else {
-          const newValue = Math.max(currentHP - 1, 1)
-          updateHPMax(newValue)
-          showFadeNotification({
-            message: `生命槽上限 -1，当前为 ${newValue}`,
-            type: "success",
-            position: "middle"
-          })
-        }
-      }
-
-      // 处理压力槽
-      if (label.includes("压力槽")) {
-        const currentStress = safeFormData.stressMax || 6
-        if (newCheckedState) {
-          const newValue = Math.min(currentStress + 1, 18)
-          updateStressMax(newValue)
-          showFadeNotification({
-            message: `压力槽上限 +1，当前为 ${newValue}`,
-            type: "success",
-            position: "middle"
-          })
-        } else {
-          const newValue = Math.max(currentStress - 1, 1)
-          updateStressMax(newValue)
-          showFadeNotification({
-            message: `压力槽上限 -1，当前为 ${newValue}`,
-            type: "success",
-            position: "middle"
-          })
-        }
-      }
-
-      // 处理熟练度
-      if (label.includes("熟练度+1")) {
-        const currentProficiency = Array.isArray(safeFormData.proficiency)
-          ? safeFormData.proficiency
-          : Array(6).fill(false)
-        const currentCount = currentProficiency.filter(v => v === true).length
-
-        if (newCheckedState) {
-          // 增加熟练度
-          if (currentCount < 6) {
-            const newProficiency = [...currentProficiency]
-            newProficiency[currentCount] = true
-            setFormData({ proficiency: newProficiency })
+          if (rollbackResult.reason === 'conflict') {
             showFadeNotification({
-              message: `熟练度 +1，当前为 ${currentCount + 1}/6`,
+              message: "检测到经历加值已被其他升级修改，无法回滚",
+              type: "error",
+              position: "middle"
+            })
+          } else if (rollbackResult.reason === 'no-snapshot') {
+            showFadeNotification({
+              message: "经历升级的记录已丢失，请手动回滚",
+              type: "error",
+              position: "middle"
+            })
+          } else {
+            showFadeNotification({
+              message: "已撤回经历升级，经历加值已恢复",
               type: "success",
               position: "middle"
             })
           }
-        } else {
-          // 减少熟练度
-          if (currentCount > 0) {
-            const newProficiency = [...currentProficiency]
-            newProficiency[currentCount - 1] = false
-            setFormData({ proficiency: newProficiency })
+        }
+
+        if (result.rollbackKind === "evasion") {
+          const restoreEvasionSnapshot = useSheetStore.getState().restoreEvasionSnapshot
+          const rollbackResult = restoreEvasionSnapshot()
+
+          if (rollbackResult.reason === 'conflict') {
             showFadeNotification({
-              message: `熟练度 -1，当前为 ${currentCount - 1}/6`,
+              message: "检测到闪避值已被其他升级修改，无法回滚",
+              type: "error",
+              position: "middle"
+            })
+          } else if (rollbackResult.reason === 'no-snapshot') {
+            showFadeNotification({
+              message: "闪避值升级的记录已丢失，请手动回滚",
+              type: "error",
+              position: "middle"
+            })
+          } else {
+            showFadeNotification({
+              message: "已撤回闪避值升级，闪避值已恢复",
               type: "success",
               position: "middle"
             })
           }
+        }
+
+        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
+        return
+      }
+
+      if (result.kind === "setSheetData") {
+        setFormData(result.updates)
+        if (result.message) {
+          showFadeNotification({
+            message: result.message,
+            type: "success",
+            position: "middle"
+          })
         }
       }
 

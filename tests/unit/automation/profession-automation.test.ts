@@ -1,0 +1,76 @@
+import { beforeEach, describe, expect, it } from "vitest"
+import type { StandardCard } from "@/card/card-types"
+import { resetSheetStore, sheet, store } from "./test-helpers"
+
+function professionCard(evasion: number, hp: number): StandardCard {
+  return {
+    id: "profession-ranger",
+    name: "游侠",
+    type: "profession",
+    class: "游侠",
+    domains: ["骨骼", "贤者"],
+    description: "",
+    professionSpecial: {
+      起始闪避: evasion,
+      起始生命: hp,
+    },
+  } as unknown as StandardCard
+}
+
+describe("职业自动化基线", () => {
+  beforeEach(() => resetSheetStore())
+
+  it("1级选择职业时自动写入闪避和生命上限", () => {
+    resetSheetStore({ level: "1", evasion: "", hpMax: 6 })
+
+    store().handleProfessionChange(
+      { id: "profession-ranger", name: "游侠" },
+      professionCard(12, 7),
+    )
+
+    expect(sheet().evasion).toBe("12")
+    expect(sheet().hpMax).toBe(7)
+  })
+
+  it("空等级选择职业时按1级处理并自动写入", () => {
+    resetSheetStore({ level: "", evasion: "", hpMax: 6 })
+
+    store().handleProfessionChange(
+      { id: "profession-ranger", name: "游侠" },
+      professionCard(13, 8),
+    )
+
+    expect(sheet().evasion).toBe("13")
+    expect(sheet().hpMax).toBe(8)
+  })
+
+  it("非1级选择职业不会覆盖现有闪避和生命上限", () => {
+    resetSheetStore({ level: "2", evasion: "15", hpMax: 9 })
+
+    store().handleProfessionChange(
+      { id: "profession-ranger", name: "游侠" },
+      professionCard(12, 7),
+    )
+
+    expect(sheet().evasion).toBe("15")
+    expect(sheet().hpMax).toBe(9)
+  })
+
+  it("1级清空职业时重置闪避为空并把生命上限设为6", () => {
+    resetSheetStore({ level: "1", evasion: "12", hpMax: 7 })
+
+    store().handleProfessionChange(undefined, undefined)
+
+    expect(sheet().evasion).toBe("")
+    expect(sheet().hpMax).toBe(6)
+  })
+
+  it("非1级清空职业不会覆盖现有数值", () => {
+    resetSheetStore({ level: "3", evasion: "14", hpMax: 8 })
+
+    store().handleProfessionChange(undefined, undefined)
+
+    expect(sheet().evasion).toBe("14")
+    expect(sheet().hpMax).toBe(8)
+  })
+})

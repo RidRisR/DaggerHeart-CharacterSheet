@@ -8,9 +8,6 @@ export function resetSheetStore(overrides: Partial<SheetData> = {}) {
       ...defaultSheetData,
       ...overrides,
     },
-    attributeUpgradeHistory: {},
-    experienceValuesSnapshot: undefined,
-    evasionSnapshot: undefined,
   })
 }
 

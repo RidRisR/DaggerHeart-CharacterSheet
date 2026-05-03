@@ -64,28 +64,6 @@ const splitFeatureText = (text: string): [string, string] => {
     ];
 };
 
-// 属性升级记录接口（用于回滚功能）
-interface AttributeUpgradeRecord {
-    tierKey: string  // 格式："tier1-0-2"（tier-optionIndex-boxIndex）
-    timestamp: number
-    beforeState: {
-        agility: AttributeValue
-        strength: AttributeValue
-        finesse: AttributeValue
-        instinct: AttributeValue
-        presence: AttributeValue
-        knowledge: AttributeValue
-    }
-    afterState: {
-        agility: AttributeValue
-        strength: AttributeValue
-        finesse: AttributeValue
-        instinct: AttributeValue
-        presence: AttributeValue
-        knowledge: AttributeValue
-    }
-}
-
 // 同步子职业施法属性的函数
 const syncSubclassSpellcasting = (newData: SheetData, oldData: SheetData): SheetData => {
     // 获取旧的和新的子职业施法属性
@@ -160,27 +138,6 @@ interface SheetState {
     updateUpgrade: (tier: string, upgradeName: string, value: boolean | boolean[]) => void;
     updateScrapMaterial: (category: string, index: number, value: number | string) => void;
 
-    // Attribute upgrade rollback actions
-    attributeUpgradeHistory: Record<string, AttributeUpgradeRecord>;
-    saveAttributeUpgradeRecord: (tierKey: string, beforeState: Record<string, AttributeValue>, afterState: Record<string, AttributeValue>) => void;
-    rollbackAttributeUpgrade: (tierKey: string) => { success: boolean; reason?: 'no-record' | 'conflict' | 'success' };
-
-    // Experience values upgrade snapshot (not in sheetData, won't be persisted)
-    experienceValuesSnapshot?: {
-        before: Record<number, string>;
-        after: Record<number, string>;
-    };
-    createExperienceValuesSnapshot: (modifiedIndices: number[], afterValues: Record<number, string>) => void;
-    restoreExperienceValuesSnapshot: () => { success: boolean; reason?: 'no-snapshot' | 'conflict' | 'success' };
-
-    // Evasion upgrade snapshot (not in sheetData, won't be persisted)
-    evasionSnapshot?: {
-        before: string;
-        after: string;
-    };
-    createEvasionSnapshot: (afterValue: string) => void;
-    restoreEvasionSnapshot: () => { success: boolean; reason?: 'no-snapshot' | 'conflict' | 'success' };
-
     setActiveModifierBase: (target: ModifierTargetId, baseId: ModifierEntryId | undefined) => void;
     setModifierEntryDisabled: (target: ModifierTargetId, entryId: ModifierEntryId, disabled: boolean) => void;
     upsertUserModifierEntry: (entry: UserModifierEntry) => void;
@@ -223,13 +180,8 @@ export const useSheetStore = create<SheetState>((set) => ({
         // 应用子职业施法属性同步
         const finalData = syncSubclassSpellcasting(newData, state.sheetData);
 
-        // 清空所有撤回快照，防止跨角色混淆
-        // 当切换角色或导入数据时，旧角色的升级快照不应该影响新角色
         return {
             sheetData: finalData,
-            attributeUpgradeHistory: {},
-            experienceValuesSnapshot: undefined,
-            evasionSnapshot: undefined,
         };
     }),
 
@@ -1167,182 +1119,6 @@ export const useSheetStore = create<SheetState>((set) => ({
             },
         },
     })),
-
-    // Attribute upgrade rollback system
-    attributeUpgradeHistory: {},
-
-    // Experience values snapshot (not persisted)
-    experienceValuesSnapshot: undefined,
-
-    // Evasion snapshot (not persisted)
-    evasionSnapshot: undefined,
-
-    saveAttributeUpgradeRecord: (tierKey, beforeState, afterState) => {
-        set((state) => ({
-            attributeUpgradeHistory: {
-                ...state.attributeUpgradeHistory,
-                [tierKey]: {
-                    tierKey,
-                    timestamp: Date.now(),
-                    beforeState: beforeState as any,
-                    afterState: afterState as any,
-                },
-            },
-        }));
-    },
-
-    rollbackAttributeUpgrade: (tierKey) => {
-        const state = useSheetStore.getState();
-        const record = state.attributeUpgradeHistory[tierKey];
-
-        if (!record) {
-            return { success: false, reason: 'no-record' as const };
-        }
-
-        const attributeKeys = ['agility', 'strength', 'finesse', 'instinct', 'presence', 'knowledge'];
-        const currentState = state.sheetData;
-
-        // Check for conflicts
-        const hasConflict = attributeKeys.some(key => {
-            const current = currentState[key as keyof SheetData] as AttributeValue;
-            const recorded = record.afterState[key as keyof typeof record.afterState];
-            return (
-                current.value !== recorded.value ||
-                current.checked !== recorded.checked ||
-                current.spellcasting !== recorded.spellcasting
-            );
-        });
-
-        if (hasConflict) {
-            // Delete record and return conflict
-            const newHistory = { ...state.attributeUpgradeHistory };
-            delete newHistory[tierKey];
-            set({ attributeUpgradeHistory: newHistory });
-            return { success: false, reason: 'conflict' as const };
-        }
-
-        // Apply rollback
-        const updates: any = {};
-        attributeKeys.forEach(key => {
-            updates[key] = { ...record.beforeState[key as keyof typeof record.beforeState] };
-        });
-
-        set((state) => ({
-            sheetData: {
-                ...state.sheetData,
-                ...updates,
-            },
-        }));
-
-        // Delete record
-        const newHistory = { ...state.attributeUpgradeHistory };
-        delete newHistory[tierKey];
-        set({ attributeUpgradeHistory: newHistory });
-
-        return { success: true, reason: 'success' as const };
-    },
-
-    // Experience values upgrade snapshot actions
-    createExperienceValuesSnapshot: (modifiedIndices, afterValues) => {
-        const state = useSheetStore.getState();
-        const before: Record<number, string> = {};
-        const experienceValues = state.sheetData.experienceValues || [];
-
-        // 保存修改前的值
-        modifiedIndices.forEach(index => {
-            before[index] = experienceValues[index] || '';
-        });
-
-        set({
-            experienceValuesSnapshot: {
-                before,
-                after: afterValues,
-            },
-        });
-    },
-
-    restoreExperienceValuesSnapshot: () => {
-        const state = useSheetStore.getState();
-        const snapshot = state.experienceValuesSnapshot;
-
-        // 没有快照记录
-        if (!snapshot) {
-            return { success: false, reason: 'no-snapshot' as const };
-        }
-
-        const currentValues = state.sheetData.experienceValues || [];
-
-        // 检查冲突：当前值是否与记录的 after 状态一致
-        const hasConflict = Object.entries(snapshot.after).some(([indexStr, afterValue]) => {
-            const index = parseInt(indexStr);
-            const currentValue = currentValues[index] || '';
-            return currentValue !== afterValue;
-        });
-
-        if (hasConflict) {
-            // 发现冲突，删除快照但不恢复
-            set({ experienceValuesSnapshot: undefined });
-            return { success: false, reason: 'conflict' as const };
-        }
-
-        // 无冲突，执行恢复
-        const experienceValues = [...currentValues];
-        Object.entries(snapshot.before).forEach(([indexStr, beforeValue]) => {
-            const index = parseInt(indexStr);
-            experienceValues[index] = beforeValue;
-        });
-
-        set((state) => ({
-            sheetData: {
-                ...state.sheetData,
-                experienceValues,
-            },
-            experienceValuesSnapshot: undefined,
-        }));
-
-        return { success: true, reason: 'success' as const };
-    },
-
-    // Evasion upgrade snapshot actions
-    createEvasionSnapshot: (afterValue) => {
-        const state = useSheetStore.getState();
-        set({
-            evasionSnapshot: {
-                before: state.sheetData.evasion || '0',
-                after: afterValue,
-            },
-        });
-    },
-
-    restoreEvasionSnapshot: () => {
-        const state = useSheetStore.getState();
-        const snapshot = state.evasionSnapshot;
-
-        // 没有快照记录
-        if (!snapshot) {
-            return { success: false, reason: 'no-snapshot' as const };
-        }
-
-        const currentEvasion = state.sheetData.evasion || '0';
-
-        // 检查冲突：当前值是否与记录的 after 状态一致
-        if (currentEvasion !== snapshot.after) {
-            // 发现冲突，删除快照但不恢复
-            set({ evasionSnapshot: undefined });
-            return { success: false, reason: 'conflict' as const };
-        }
-
-        // 无冲突，执行恢复
-        set((state) => ({
-            sheetData: {
-                ...state.sheetData,
-                evasion: snapshot.before,
-            },
-            evasionSnapshot: undefined,
-        }));
-
-        return { success: true, reason: 'success' as const };
-    },
 
     // Handle profession change - auto-fill evasion and max HP at level 1
     handleProfessionChange: (newProfessionRef, newProfessionCard) => {

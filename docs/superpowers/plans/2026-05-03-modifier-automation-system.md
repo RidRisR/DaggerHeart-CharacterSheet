@@ -2398,7 +2398,7 @@ If no fixes were needed, do not create an empty commit.
 Mention these explicitly:
 
 - `tsc --noEmit` is not the chosen gate because unrelated pre-existing type errors were already present.
-- The old snapshot store methods may still exist for compatibility, but new upgrade flow should not depend on them.
+- The old snapshot store methods have been removed; upgrade undo now relies on persisted automation selections and add-effect reversal.
 - The first-phase UI displays manual user entries but one-click creation of user base/modifier from unattributed delta is intentionally deferred.
 
 ---

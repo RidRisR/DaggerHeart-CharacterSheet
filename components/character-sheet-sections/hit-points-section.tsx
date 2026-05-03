@@ -138,7 +138,7 @@ export function HitPointsSection() {
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div className="flex items-center justify-center">
             重度伤害
-            <ModifierFieldAnchor target="minorThreshold" label="重伤阈值" />
+            <ModifierFieldAnchor target="minorThreshold" label="重伤阈值" size="compact" />
           </div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 2 HP</div>
         </div>
@@ -161,7 +161,7 @@ export function HitPointsSection() {
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div className="flex items-center justify-center">
             严重伤害
-            <ModifierFieldAnchor target="majorThreshold" label="严重阈值" />
+            <ModifierFieldAnchor target="majorThreshold" label="严重阈值" size="compact" />
           </div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 3 HP</div>
         </div>
@@ -171,7 +171,7 @@ export function HitPointsSection() {
         <div className="flex items-center justify-between group">
           <span className="font-bold mr-2 text-xs">
             HP
-            <ModifierFieldAnchor target="hpMax" label="生命上限" />
+            <ModifierFieldAnchor target="hpMax" label="生命上限" size="compact" />
             {formData.cards?.[0]?.professionSpecial?.["起始生命"] && (
               <span className="text-[10px] text-gray-600 ml-1">
                 (职业初始: {formData.cards?.[0]?.professionSpecial?.["起始生命"] ?? "未知"})
@@ -217,7 +217,7 @@ export function HitPointsSection() {
         <div className="flex items-center justify-between group">
           <span className="font-bold mr-2 text-xs">
             压力
-            <ModifierFieldAnchor target="stressMax" label="压力上限" />
+            <ModifierFieldAnchor target="stressMax" label="压力上限" size="compact" />
           </span>
           <div className="flex items-center">
             {/* 渐进式显示的上限调整按钮 */}

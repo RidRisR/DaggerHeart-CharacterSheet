@@ -50,6 +50,16 @@ describe("ModifierFieldAnchor", () => {
     expect(button).not.toHaveClass("text-gray-500")
   })
 
+  it("supports a compact inline size for small labels", () => {
+    resetSheetStore()
+
+    render(<ModifierFieldAnchor target="hpMax" label="生命上限" size="compact" />)
+
+    const button = screen.getByRole("button", { name: "查看生命上限来源" })
+    expect(button).toHaveClass("h-3.5")
+    expect(button).toHaveClass("w-3.5")
+  })
+
   it("shows base, modifier, and unattributed delta", async () => {
     resetSheetStore({
       evasion: "15",

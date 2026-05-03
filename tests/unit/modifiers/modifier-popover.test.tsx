@@ -234,6 +234,39 @@ describe("ModifierFieldAnchor", () => {
     expect(sheet().evasion).toBe("15")
   })
 
+  it("adds a manual modifier from a numeric expression", async () => {
+    resetSheetStore({
+      evasion: "30",
+      modifierState: {
+        byTarget: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            userEntries: [{
+              id: "user:evasion-base",
+              sourceId: "user:evasion-base",
+              target: "evasion",
+              kind: "base",
+              label: "基础",
+              value: 12,
+              sourceType: "user",
+              priority: 10,
+            }],
+          },
+        },
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+    await userEvent.type(screen.getByLabelText("加值名称"), "表达式加值")
+    await userEvent.type(screen.getByLabelText("加值数值"), "12+1")
+    await userEvent.click(screen.getByRole("button", { name: "添加加值" }))
+
+    expect(screen.getByText("表达式加值")).toBeInTheDocument()
+    expect(screen.getByText("+13")).toBeInTheDocument()
+    expect(screen.getByText("未归因差额 +5")).toBeInTheDocument()
+  })
+
   it("rejects non-numeric manual source values", async () => {
     resetSheetStore({ evasion: "15" })
 

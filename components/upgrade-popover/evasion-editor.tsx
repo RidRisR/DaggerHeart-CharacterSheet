@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { X, ChevronUp, ChevronDown, Check } from "lucide-react"
-import { safeEvaluateExpression } from "@/lib/number-utils"
+import { parseNumberExpressionOr } from "@/lib/number-utils"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 
 interface EvasionEditorProps {
@@ -32,14 +32,14 @@ export function EvasionEditor({
 
   const handleDecrement = () => {
     // 支持表达式：先计算当前值，然后 -1
-    const currentValue = safeEvaluateExpression(localValue)
+    const currentValue = parseNumberExpressionOr(localValue, 0)
     const newValue = currentValue - 1
     setLocalValue(String(newValue))
   }
 
   const handleIncrement = () => {
     // 支持表达式：先计算当前值，然后 +1
-    const currentValue = safeEvaluateExpression(localValue)
+    const currentValue = parseNumberExpressionOr(localValue, 0)
     const newValue = currentValue + 1
     setLocalValue(String(newValue))
   }

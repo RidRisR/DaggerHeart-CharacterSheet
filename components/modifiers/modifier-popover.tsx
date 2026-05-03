@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { tryParseNumber } from "@/lib/number-utils"
+import { tryParseNumberExpression } from "@/lib/number-utils"
 import { getReferenceSummary } from "@/lib/modifiers/registry"
 import { readTargetValue } from "@/lib/modifiers/target-accessors"
 import type { ModifierEntryKind, ModifierTargetId, UserModifierEntry } from "@/lib/modifiers/types"
@@ -41,7 +41,7 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
     const name = kind === "base" ? baseName : modifierName
     const rawValue = kind === "base" ? baseValue : modifierValue
     const setError = kind === "base" ? setBaseError : setModifierError
-    const parsedValue = tryParseNumber(rawValue)
+    const parsedValue = tryParseNumberExpression(rawValue)
 
     if (parsedValue === undefined) {
       setError("请输入数字")

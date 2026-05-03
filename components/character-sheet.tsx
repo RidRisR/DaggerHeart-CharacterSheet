@@ -31,45 +31,13 @@ import ProfessionDescriptionSection from "@/components/character-sheet-sections/
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
+import { parseNumberExpressionOr } from "@/lib/number-utils"
 
 export default function CharacterSheet() {
   const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, handleProfessionChange: autofillProfessionData } = useSheetStore();
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
   const safeFormData = useSafeSheetData();
-
-  // 添加一个安全的表达式计算函数
-  const safeEvaluateExpression = (expression: string): number => {
-    if (!expression || typeof expression !== 'string') {
-      return 0;
-    }
-
-    // 移除空格
-    const cleanExpression = expression.replace(/\s/g, '');
-
-    // 只允许数字、+、-、*、/、()和小数点
-    if (!/^[0-9+\-*/().]+$/.test(cleanExpression)) {
-      // 如果包含非法字符，尝试解析为普通数字
-      const parsed = parseInt(cleanExpression, 10);
-      return isNaN(parsed) ? 0 : parsed;
-    }
-
-    try {
-      // 使用 Function 构造函数来安全地计算表达式
-      const result = new Function(`return ${cleanExpression}`)();
-
-      // 确保结果是有效数字
-      if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
-        return Math.ceil(result); // 向上取整，确保是整数
-      }
-
-      return 0;
-    } catch (error) {
-      // 如果计算失败，尝试解析为普通数字
-      const parsed = parseInt(expression, 10);
-      return isNaN(parsed) ? 0 : parsed;
-    }
-  };
 
   // 使用全局卡牌Store
   const store = useCardStore();
@@ -702,7 +670,7 @@ export default function CharacterSheet() {
                         {/* Armor Boxes - 3 per row, 4 rows */}
                         <div className="grid grid-cols-3 gap-1">
                           {(() => {
-                            const calculatedArmorValue = safeEvaluateExpression(safeFormData.armorValue || "0");
+                            const calculatedArmorValue = parseNumberExpressionOr(safeFormData.armorValue || "0", 0);
                             return Array(12)
                               .fill(0)
                               .map((_, i) => (

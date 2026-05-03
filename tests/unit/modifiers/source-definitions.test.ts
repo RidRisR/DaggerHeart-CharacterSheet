@@ -69,6 +69,44 @@ describe("modifier source definitions", () => {
     }))
   })
 
+  it("derives level threshold modifiers from current level", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      level: "5",
+      armorName: "锁子甲",
+      armorThreshold: "3/6",
+      minorThreshold: "8",
+      majorThreshold: "11",
+    }
+
+    const entries = collectModifierEntries(sheetData)
+
+    expect(entries).toContainEqual(expect.objectContaining({
+      id: "level:current:minorThreshold",
+      target: "minorThreshold",
+      kind: "modifier",
+      label: "等级 5：轻伤阈值 +5",
+      value: 5,
+      sourceType: "level",
+    }))
+    expect(entries).toContainEqual(expect.objectContaining({
+      id: "level:current:majorThreshold",
+      target: "majorThreshold",
+      kind: "modifier",
+      label: "等级 5：重伤阈值 +5",
+      value: 5,
+      sourceType: "level",
+    }))
+
+    const minorSummary = getReferenceSummary(sheetData, "minorThreshold")
+    const majorSummary = getReferenceSummary(sheetData, "majorThreshold")
+
+    expect(minorSummary.referenceTotal).toBe(8)
+    expect(minorSummary.unattributedDelta).toBe(0)
+    expect(majorSummary.referenceTotal).toBe(11)
+    expect(majorSummary.unattributedDelta).toBe(0)
+  })
+
   it("derives selected upgrade modifier entries from automation selections", () => {
     const sheetData = {
       ...defaultSheetData,

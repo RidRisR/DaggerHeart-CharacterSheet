@@ -170,6 +170,32 @@ export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntr
     })
   }
 
+  const level = numericString(sheetData.level)
+  if (level !== undefined && level >= 1 && level <= 10) {
+    entries.push(
+      {
+        id: "level:current:minorThreshold",
+        sourceId: "level:current",
+        target: "minorThreshold",
+        kind: "modifier",
+        label: `等级 ${level}：轻伤阈值 +${level}`,
+        value: level,
+        sourceType: "level",
+        priority: 150,
+      },
+      {
+        id: "level:current:majorThreshold",
+        sourceId: "level:current",
+        target: "majorThreshold",
+        kind: "modifier",
+        label: `等级 ${level}：重伤阈值 +${level}`,
+        value: level,
+        sourceType: "level",
+        priority: 150,
+      },
+    )
+  }
+
   Object.entries(sheetData.automationSelections ?? {}).forEach(([sourceId, selection]) => {
     entries.push(...selectedUpgradeEntries(sourceId, selection))
   })

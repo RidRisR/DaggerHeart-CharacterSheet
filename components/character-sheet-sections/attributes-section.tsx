@@ -2,6 +2,8 @@
 
 import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store";
+import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
+import type { ModifierTargetId } from "@/lib/modifiers/types"
 
 export function AttributesSection() {
   const { sheetData: formData, updateAttribute, toggleAttributeChecked, setSheetData } = useSheetStore();
@@ -45,6 +47,7 @@ export function AttributesSection() {
             <div className="flex items-center justify-between w-full bg-gray-800 text-white px-1 rounded-t-md py-0.5">
               <div className="flex items-center">
                 <div className="text-[12px] font-bold">{attr.name}</div>
+                <ModifierFieldAnchor target={`${attr.key}.value` as ModifierTargetId} label={attr.name} />
                 {(() => {
                   const attrValue = formData[attr.key as keyof typeof formData];
                   function isAttributeValue(val: unknown): val is AttributeValue {

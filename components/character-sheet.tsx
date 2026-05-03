@@ -30,6 +30,7 @@ import { InventoryWeaponSection } from "@/components/character-sheet-sections/in
 import ProfessionDescriptionSection from "@/components/character-sheet-sections/profession-description-section"
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
+import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 
 export default function CharacterSheet() {
   const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, handleProfessionChange: autofillProfessionData } = useSheetStore();
@@ -647,7 +648,10 @@ export default function CharacterSheet() {
                   <div className="flex flex-col items-center justify-start">
                     <div className="w-24 h-24 flex flex-col rounded-lg overflow-hidden border border-gray-800">
                       <div className="bg-gray-800 text-white text-center py-1">
-                        <div className="text-ms font-bold">闪避值</div>
+                        <div className="flex items-center justify-center text-ms font-bold">
+                          闪避值
+                          <ModifierFieldAnchor target="evasion" label="闪避" />
+                        </div>
                       </div>
                       <div className="flex-1 bg-white flex flex-col items-center justify-end pb-2 px-1">
                         <input
@@ -674,7 +678,10 @@ export default function CharacterSheet() {
                     <div className="flex gap-2">
                       <div className="w-24 h-24 flex flex-col rounded-lg overflow-hidden border border-gray-800">
                         <div className="bg-gray-800 text-white text-center py-1">
-                          <div className="text-ms font-bold">护甲值</div>
+                          <div className="flex items-center justify-center text-ms font-bold">
+                            护甲值
+                            <ModifierFieldAnchor target="armorValue" label="护甲值" />
+                          </div>
                         </div>
                         <div className="flex-1 bg-white flex flex-col items-center justify-end pb-2 px-1">
                           <input

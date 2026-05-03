@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useSheetStore } from "@/lib/sheet-store"
+import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 
 export function HitPointsSection() {
   const { sheetData: formData, setSheetData } = useSheetStore()
@@ -118,6 +119,7 @@ export function HitPointsSection() {
           <div>轻度伤害</div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 1 HP</div>
         </div>
+        <ModifierFieldAnchor target="minorThreshold" label="轻伤阈值" />
         <input
           type="text"
           name="minorThreshold"
@@ -138,6 +140,7 @@ export function HitPointsSection() {
           <div>重度伤害</div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 2 HP</div>
         </div>
+        <ModifierFieldAnchor target="majorThreshold" label="重伤阈值" />
         <input
           type="text"
           name="majorThreshold"
@@ -164,6 +167,7 @@ export function HitPointsSection() {
         <div className="flex items-center justify-between group">
           <span className="font-bold mr-2 text-xs">
             HP
+            <ModifierFieldAnchor target="hpMax" label="生命上限" />
             {formData.cards?.[0]?.professionSpecial?.["起始生命"] && (
               <span className="text-[10px] text-gray-600 ml-1">
                 (职业初始: {formData.cards?.[0]?.professionSpecial?.["起始生命"] ?? "未知"})
@@ -207,7 +211,10 @@ export function HitPointsSection() {
         {renderBoxes("hp", Number(formData.hpMax || formData.cards?.[0]?.professionSpecial?.["起始生命"] || 6), 18)}
 
         <div className="flex items-center justify-between group">
-          <span className="font-bold mr-2 text-xs">压力</span>
+          <span className="font-bold mr-2 text-xs">
+            压力
+            <ModifierFieldAnchor target="stressMax" label="压力上限" />
+          </span>
           <div className="flex items-center">
             {/* 渐进式显示的上限调整按钮 */}
             <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 print:hidden">

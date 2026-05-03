@@ -2,6 +2,8 @@
 
 import { useSheetStore } from "@/lib/sheet-store";
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
+import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
+import type { ModifierTargetId } from "@/lib/modifiers/types"
 
 export function ExperienceSection() {
   const { sheetData: formData, updateExperience, updateExperienceValues } = useSheetStore();
@@ -38,6 +40,7 @@ export function ExperienceSection() {
               {...getElementProps(experienceValues[i], `exp-value-${i}`, "w-8 border border-gray-400 rounded ml-1 text-center print-empty-hide")}
               placeholder="#"
             />
+            <ModifierFieldAnchor target={`experienceValues.${i}` as ModifierTargetId} label={`经历 ${i + 1}`} />
           </div>
         ))}
       </div>

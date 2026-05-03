@@ -2,10 +2,20 @@ import { render, screen } from "@testing-library/react"
 import "@testing-library/jest-dom/vitest"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
+import { AttributesSection } from "@/components/character-sheet-sections/attributes-section"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import { resetSheetStore } from "../automation/test-helpers"
 
 describe("ModifierFieldAnchor", () => {
+  it("renders source anchors on real attribute fields", () => {
+    resetSheetStore()
+
+    render(<AttributesSection />)
+
+    expect(screen.getByRole("button", { name: "查看敏捷来源" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "查看力量来源" })).toBeInTheDocument()
+  })
+
   it("shows base, modifier, and unattributed delta", async () => {
     resetSheetStore({
       evasion: "15",

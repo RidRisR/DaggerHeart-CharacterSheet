@@ -16,6 +16,14 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByRole("button", { name: "查看力量来源" })).toBeInTheDocument()
   })
 
+  it("hides the source anchor wrapper in print layouts", () => {
+    resetSheetStore()
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+
+    expect(screen.getByRole("button", { name: "查看闪避来源" }).parentElement).toHaveClass("print:hidden")
+  })
+
   it("shows base, modifier, and unattributed delta", async () => {
     resetSheetStore({
       evasion: "15",

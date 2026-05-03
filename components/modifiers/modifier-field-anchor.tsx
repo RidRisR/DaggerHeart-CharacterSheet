@@ -16,7 +16,7 @@ export function ModifierFieldAnchor({ target, label }: ModifierFieldAnchorProps)
   const sheetData = useSheetStore(state => state.sheetData)
 
   return (
-    <span className="relative inline-flex">
+    <span className="relative inline-flex print:hidden">
       <button
         type="button"
         aria-label={`查看${label}来源`}

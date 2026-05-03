@@ -1,15 +1,91 @@
 "use client"
 
+import { useRef } from "react"
 import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store";
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
-import type { ModifierTargetId } from "@/lib/modifiers/types"
+import type { AttributeTargetId, ModifierTargetId, UserModifierEntry } from "@/lib/modifiers/types"
+import {
+  getAttributeAutoBaseCreation,
+  getAttributeAutoBaseId,
+  shouldRemoveAttributeAutoBase,
+} from "@/lib/modifiers/attribute-auto-base"
+
+type AttributeKey = "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge"
+
+function isAttributeValue(val: unknown): val is AttributeValue {
+  return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
+}
+
+function attributeTarget(attribute: AttributeKey): AttributeTargetId {
+  return `${attribute}.value` as AttributeTargetId
+}
+
+function userBaseEntriesForTarget(formData: SheetData, target: AttributeTargetId): UserModifierEntry[] {
+  return (formData.modifierState?.byTarget[target]?.userEntries ?? [])
+    .filter((entry): entry is UserModifierEntry => entry.sourceType === "user" && entry.kind === "base")
+}
 
 export function AttributesSection() {
-  const { sheetData: formData, updateAttribute, toggleAttributeChecked, setSheetData } = useSheetStore();
+  const {
+    sheetData: formData,
+    updateAttribute,
+    toggleAttributeChecked,
+    setSheetData,
+    upsertUserModifierEntry,
+    setActiveModifierBase,
+    removeUserModifierEntry,
+  } = useSheetStore();
+  const editStartValues = useRef<Partial<Record<AttributeKey, string>>>({})
 
-  const handleAttributeValueChange = (attribute: keyof SheetData, value: string) => {
+  const handleAttributeValueChange = (attribute: AttributeKey, value: string) => {
     updateAttribute(attribute, value)
+  }
+
+  const handleAttributeFocus = (attribute: AttributeKey) => {
+    const attrValue = formData[attribute]
+    editStartValues.current[attribute] = isAttributeValue(attrValue) ? attrValue.value : ""
+  }
+
+  const handleAttributeCommit = (attribute: AttributeKey) => {
+    const target = attributeTarget(attribute)
+    const attrValue = formData[attribute]
+    const submittedValue = isAttributeValue(attrValue) ? attrValue.value : ""
+    const existingUserBases = userBaseEntriesForTarget(formData, target)
+
+    const autoBase = getAttributeAutoBaseCreation({
+      target,
+      level: formData.level,
+      initialValue: editStartValues.current[attribute] ?? "",
+      submittedValue,
+      existingUserBases,
+    })
+    if (autoBase) {
+      upsertUserModifierEntry(autoBase)
+      if (!formData.modifierState?.byTarget[target]?.activeBaseId) {
+        setActiveModifierBase(target, autoBase.id)
+      }
+      editStartValues.current[attribute] = submittedValue
+      return
+    }
+
+    if (shouldRemoveAttributeAutoBase({
+      target,
+      level: formData.level,
+      submittedValue,
+      existingUserBases,
+    })) {
+      removeUserModifierEntry(target, getAttributeAutoBaseId(target))
+    }
+
+    editStartValues.current[attribute] = submittedValue
+  }
+
+  const handleAttributeKeyDown = (event: React.KeyboardEvent<HTMLInputElement>, attribute: AttributeKey) => {
+    if (event.key === "Enter") {
+      handleAttributeCommit(attribute)
+      event.currentTarget.blur()
+    }
   }
 
   const handleBooleanChange = (field: keyof SheetData) => {
@@ -50,9 +126,6 @@ export function AttributesSection() {
                 <ModifierFieldAnchor target={`${attr.key}.value` as ModifierTargetId} label={attr.name} />
                 {(() => {
                   const attrValue = formData[attr.key as keyof typeof formData];
-                  function isAttributeValue(val: unknown): val is AttributeValue {
-                    return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
-                  }
                   const isSpellcasting = isAttributeValue(attrValue) && attrValue.spellcasting;
 
                   return (
@@ -71,9 +144,6 @@ export function AttributesSection() {
               </div>
               {(() => {
                 const attrValue = formData[attr.key as keyof typeof formData];
-                function isAttributeValue(val: unknown): val is AttributeValue {
-                  return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
-                }
 
                 return (
                   <div
@@ -91,12 +161,12 @@ export function AttributesSection() {
                   type="text"
                   value={(() => {
                     const attrValue = formData[attr.key as keyof typeof formData];
-                    function isAttributeValue(val: unknown): val is AttributeValue {
-                      return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
-                    }
                     return isAttributeValue(attrValue) ? attrValue.value : "";
                   })()}
-                  onChange={(e) => handleAttributeValueChange(attr.key as keyof SheetData, e.target.value)}
+                  onFocus={() => handleAttributeFocus(attr.key as AttributeKey)}
+                  onChange={(e) => handleAttributeValueChange(attr.key as AttributeKey, e.target.value)}
+                  onBlur={() => handleAttributeCommit(attr.key as AttributeKey)}
+                  onKeyDown={(event) => handleAttributeKeyDown(event, attr.key as AttributeKey)}
                   className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-lg font-bold text-gray-800 print-empty-hide"
                 />
                 <div className="text-[8px] text-center text-gray-600">{attr.skills.join(", ")}</div>

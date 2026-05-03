@@ -35,9 +35,9 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
 
       <div className="mb-2">
         <div className="mb-1 text-[11px] font-medium text-gray-500">加值</div>
-        {summary.modifiers.length > 0 ? (
+        {summary.enabledModifiers.length > 0 ? (
           <div className="space-y-1">
-            {summary.modifiers.map(entry => (
+            {summary.enabledModifiers.map(entry => (
               <div key={entry.id} className="flex justify-between gap-2 rounded bg-gray-50 px-2 py-1">
                 <span className="truncate">{entry.label}</span>
                 <span className="font-semibold">{formatSigned(entry.value)}</span>

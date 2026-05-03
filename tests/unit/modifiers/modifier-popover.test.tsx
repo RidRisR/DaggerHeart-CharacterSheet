@@ -56,4 +56,55 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByText("未知基础值")).toBeInTheDocument()
     expect(screen.queryByText(/未归因差额/)).not.toBeInTheDocument()
   })
+
+  it("hides disabled modifiers from active addends", async () => {
+    resetSheetStore({
+      evasion: "15",
+      modifierState: {
+        byTarget: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            disabledEntryIds: ["user:evasion-disabled"],
+            userEntries: [{
+              id: "user:evasion-base",
+              sourceId: "user:evasion-base",
+              target: "evasion",
+              kind: "base",
+              label: "手动基础闪避",
+              value: 12,
+              sourceType: "user",
+              priority: 10,
+            }, {
+              id: "user:evasion-enabled",
+              sourceId: "user:evasion-enabled",
+              target: "evasion",
+              kind: "modifier",
+              label: "启用加值",
+              value: 1,
+              sourceType: "user",
+              priority: 10,
+            }, {
+              id: "user:evasion-disabled",
+              sourceId: "user:evasion-disabled",
+              target: "evasion",
+              kind: "modifier",
+              label: "停用加值",
+              value: 2,
+              sourceType: "user",
+              priority: 10,
+            }],
+          },
+        },
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    expect(screen.getByText("启用加值")).toBeInTheDocument()
+    expect(screen.queryByText("停用加值")).not.toBeInTheDocument()
+    expect(screen.getByText("13")).toBeInTheDocument()
+    expect(screen.getByText("未归因差额 +2")).toBeInTheDocument()
+  })
 })

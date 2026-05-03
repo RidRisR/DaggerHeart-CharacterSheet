@@ -138,7 +138,7 @@ export function HitPointsSection() {
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div className="flex items-center justify-center">
             重度伤害
-            <ModifierFieldAnchor target="minorThreshold" label="轻伤阈值" />
+            <ModifierFieldAnchor target="minorThreshold" label="重伤阈值" />
           </div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 2 HP</div>
         </div>
@@ -161,7 +161,7 @@ export function HitPointsSection() {
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div className="flex items-center justify-center">
             严重伤害
-            <ModifierFieldAnchor target="majorThreshold" label="重伤阈值" />
+            <ModifierFieldAnchor target="majorThreshold" label="严重阈值" />
           </div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 3 HP</div>
         </div>

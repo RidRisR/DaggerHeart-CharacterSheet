@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
+import type { StandardCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { collectModifierEntries, getReferenceSummary } from "@/lib/modifiers/registry"
+import type { SheetData } from "@/lib/sheet-data"
 
 describe("modifier source definitions", () => {
   it("derives profession base entries from selected profession card", () => {
@@ -16,7 +18,7 @@ describe("modifier source definitions", () => {
             起始闪避: 12,
             起始生命: 7,
           },
-        } as any,
+        } as StandardCard,
         ...defaultSheetData.cards.slice(1),
       ],
     }
@@ -37,7 +39,7 @@ describe("modifier source definitions", () => {
     const sheetData = {
       ...defaultSheetData,
       cards: [
-        { ...defaultSheetData.cards[0], type: "ancestry", id: "ancestry-elf" } as any,
+        { ...defaultSheetData.cards[0], type: "ancestry", id: "ancestry-elf" } as StandardCard,
         {
           ...defaultSheetData.cards[1],
           id: "profession-bard",
@@ -47,7 +49,7 @@ describe("modifier source definitions", () => {
             起始闪避: 10,
             起始生命: 5,
           },
-        } as any,
+        } as StandardCard,
         ...defaultSheetData.cards.slice(2),
       ],
     }
@@ -93,7 +95,7 @@ describe("modifier source definitions", () => {
       id: "armor:current:minorThreshold",
       target: "minorThreshold",
       kind: "base",
-      label: "锁子甲：基础轻伤阈值",
+      label: "锁子甲：基础重伤阈值",
       value: 9,
       sourceType: "armor",
     }))
@@ -101,7 +103,7 @@ describe("modifier source definitions", () => {
       id: "armor:current:majorThreshold",
       target: "majorThreshold",
       kind: "base",
-      label: "锁子甲：基础重伤阈值",
+      label: "锁子甲：基础严重阈值",
       value: 20,
       sourceType: "armor",
     }))
@@ -123,7 +125,7 @@ describe("modifier source definitions", () => {
       id: "level:current:minorThreshold",
       target: "minorThreshold",
       kind: "modifier",
-      label: "等级 5：轻伤阈值 +5",
+      label: "等级 5：重伤阈值 +5",
       value: 5,
       sourceType: "level",
     }))
@@ -131,7 +133,7 @@ describe("modifier source definitions", () => {
       id: "level:current:majorThreshold",
       target: "majorThreshold",
       kind: "modifier",
-      label: "等级 5：重伤阈值 +5",
+      label: "等级 5：严重阈值 +5",
       value: 5,
       sourceType: "level",
     }))
@@ -191,7 +193,7 @@ describe("modifier source definitions", () => {
           params: { target: "evasion" },
         },
       },
-    } as any
+    } as unknown as SheetData
 
     expect(() => collectModifierEntries(sheetData)).not.toThrow()
 
@@ -262,7 +264,7 @@ describe("modifier source definitions", () => {
           },
         },
       },
-    } as any
+    } satisfies SheetData
 
     const entries = collectModifierEntries(sheetData, "evasion")
 

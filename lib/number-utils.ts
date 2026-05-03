@@ -32,7 +32,7 @@ export const safeEvaluateExpression = (expression: string): number => {
     }
 
     return 0;
-  } catch (error) {
+  } catch {
     // 如果计算失败,尝试解析为普通数字
     const parsed = parseInt(expression, 10);
     return isNaN(parsed) ? 0 : parsed;
@@ -80,4 +80,14 @@ export const parseToNumber = (value: string, defaultValue: number = 0): number =
 
   const parsed = parseFloat(value);
   return isNaN(parsed) ? defaultValue : Math.ceil(parsed);
+};
+
+/**
+ * 解析为数字；解析失败返回 undefined（与 parseToNumber 默认返回 0 不同，
+ * 用于区分"字段无效/不存在"和"字段为 0"两种情况）
+ */
+export const tryParseNumber = (value: unknown): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && isValidNumber(value)) return parseToNumber(value, 0);
+  return undefined;
 };

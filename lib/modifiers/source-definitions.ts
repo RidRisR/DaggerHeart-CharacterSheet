@@ -1,4 +1,4 @@
-import { isValidNumber, parseToNumber } from "@/lib/number-utils"
+import { tryParseNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import type { ModifierEntry, ModifierTargetId } from "./types"
 
@@ -9,12 +9,6 @@ const ATTRIBUTE_LABELS: Record<string, string> = {
   instinct: "本能",
   presence: "风度",
   knowledge: "知识",
-}
-
-function numericString(value: unknown): number | undefined {
-  if (typeof value === "number" && Number.isFinite(value)) return value
-  if (typeof value === "string" && isValidNumber(value)) return parseToNumber(value, 0)
-  return undefined
 }
 
 function isSelectionRecord(selection: unknown): selection is Record<string, unknown> {
@@ -95,7 +89,7 @@ function selectedUpgradeEntries(sourceId: string, selection: unknown): ModifierE
 
 export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntry[] {
   const entries: ModifierEntry[] = []
-  const professionCard = sheetData.cards?.[0]
+  const professionCard = sheetData.cards?.find(card => card?.type === "profession")
   const professionId = professionCard?.id || sheetData.professionRef?.id || sheetData.profession || "current"
   const professionName = professionCard?.name || sheetData.professionRef?.name || sheetData.profession || "职业"
   const evasion = professionCard?.professionSpecial?.["起始闪避"]
@@ -128,7 +122,7 @@ export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntr
   }
 
   const armorLabel = sheetData.armorName || "当前护甲"
-  const armorValue = numericString(sheetData.armorBaseScore)
+  const armorValue = tryParseNumber(sheetData.armorBaseScore)
   if (armorValue !== undefined) {
     entries.push({
       id: "armor:current:armorValue",
@@ -143,8 +137,8 @@ export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntr
   }
 
   const [minorRaw, majorRaw] = String(sheetData.armorThreshold || "").split("/")
-  const minor = numericString(minorRaw)
-  const major = numericString(majorRaw)
+  const minor = tryParseNumber(minorRaw)
+  const major = tryParseNumber(majorRaw)
   if (minor !== undefined) {
     entries.push({
       id: "armor:current:minorThreshold",
@@ -170,7 +164,7 @@ export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntr
     })
   }
 
-  const level = numericString(sheetData.level)
+  const level = tryParseNumber(sheetData.level)
   if (level !== undefined && level >= 1 && level <= 10) {
     entries.push(
       {

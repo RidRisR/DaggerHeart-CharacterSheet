@@ -33,6 +33,44 @@ describe("modifier source definitions", () => {
     }))
   })
 
+  it("finds profession card by type even when slot 0 is not the profession", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      cards: [
+        { ...defaultSheetData.cards[0], type: "ancestry", id: "ancestry-elf" } as any,
+        {
+          ...defaultSheetData.cards[1],
+          id: "profession-bard",
+          type: "profession",
+          name: "吟游诗人",
+          professionSpecial: {
+            起始闪避: 10,
+            起始生命: 5,
+          },
+        } as any,
+        ...defaultSheetData.cards.slice(2),
+      ],
+    }
+
+    const evasionEntries = collectModifierEntries(sheetData, "evasion")
+    const hpEntries = collectModifierEntries(sheetData, "hpMax")
+
+    expect(evasionEntries).toContainEqual(expect.objectContaining({
+      id: "profession:profession-bard:evasion",
+      kind: "base",
+      label: "吟游诗人：起始闪避",
+      value: 10,
+      sourceType: "profession",
+    }))
+    expect(hpEntries).toContainEqual(expect.objectContaining({
+      id: "profession:profession-bard:hpMax",
+      kind: "base",
+      label: "吟游诗人：起始生命上限",
+      value: 5,
+      sourceType: "profession",
+    }))
+  })
+
   it("derives armor base and threshold entries from current armor fields", () => {
     const sheetData = {
       ...defaultSheetData,

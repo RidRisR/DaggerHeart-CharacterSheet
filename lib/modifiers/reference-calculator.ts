@@ -1,4 +1,4 @@
-import { isValidNumber, parseToNumber } from "@/lib/number-utils"
+import { tryParseNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import { readTargetValue } from "./target-accessors"
 import type { ModifierEntry, ModifierTargetId, TargetModifierState } from "./types"
@@ -27,13 +27,6 @@ export interface CalculateReferenceSummaryInput {
 function sortEntries(a: ModifierEntry, b: ModifierEntry): number {
   if (a.priority !== b.priority) return a.priority - b.priority
   return a.id.localeCompare(b.id)
-}
-
-function parseFinalValue(sheetData: SheetData, target: ModifierTargetId): number | undefined {
-  const value = readTargetValue(sheetData, target)
-  if (typeof value === "number" && Number.isFinite(value)) return value
-  if (typeof value === "string" && isValidNumber(value)) return parseToNumber(value, 0)
-  return undefined
 }
 
 export function calculateReferenceSummary(input: CalculateReferenceSummaryInput): ReferenceSummary {
@@ -67,7 +60,7 @@ export function calculateReferenceSummary(input: CalculateReferenceSummaryInput)
   }
 
   const referenceTotal = activeBase.value + enabledModifiers.reduce((sum, entry) => sum + entry.value, 0)
-  const finalValue = parseFinalValue(input.sheetData, input.target)
+  const finalValue = tryParseNumber(readTargetValue(input.sheetData, input.target))
 
   return {
     target: input.target,

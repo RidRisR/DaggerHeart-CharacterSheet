@@ -4,9 +4,9 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
 import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
-import { createEmptyCard, isEmptyCard, type StandardCard } from "@/card/card-types"
+import { createEmptyCard, type StandardCard } from "@/card/card-types"
+import type { SheetData } from "@/lib/sheet-data"
 import { showFadeNotification } from "@/components/ui/fade-notification"
-import { parseToNumber } from "@/lib/number-utils"
 import {
   computeUpgradeAutomation,
   createUpgradeRevertEffects,
@@ -32,7 +32,7 @@ export default function CharacterSheetPageTwo() {
   // State for upgrade subclass card modal
   const [upgradeSubclassModalOpen, setUpgradeSubclassModalOpen] = useState(false);
   const [upgradeSubclassCardIndex, setUpgradeSubclassCardIndex] = useState<number>(-1);
-  const [upgradeSubclassProfession, setUpgradeSubclassProfession] = useState<string | undefined>(undefined);
+  const [, setUpgradeSubclassProfession] = useState<string | undefined>(undefined);
 
   // 使用ref来避免无限循环
   const isUpdatingRef = useRef(false)
@@ -124,7 +124,7 @@ export default function CharacterSheetPageTwo() {
 
       return {
         ...prev,
-        checkedUpgrades: newCheckedUpgrades as any,
+        checkedUpgrades: newCheckedUpgrades as SheetData["checkedUpgrades"],
       }
     })
   }
@@ -164,10 +164,11 @@ export default function CharacterSheetPageTwo() {
             if (Array.isArray(params.attributes)) {
               params.attributes.forEach(attribute => {
                 if (!isUpgradeAttributeKey(attribute)) return
-                const current = safeFormData[attribute as keyof typeof safeFormData]
-                if (current && typeof current === "object" && "checked" in current) {
+                const reverted = (updates as Record<string, unknown>)[attribute]
+                  ?? safeFormData[attribute as keyof typeof safeFormData]
+                if (reverted && typeof reverted === "object" && "checked" in reverted) {
                   ;(updates as Record<string, unknown>)[attribute] = {
-                    ...current,
+                    ...reverted,
                     checked: false,
                   }
                 }
@@ -245,7 +246,7 @@ export default function CharacterSheetPageTwo() {
   }
 
   // Handle opening the domain card modal from upgrade section
-  const handleOpenUpgradeDomainModal = (cardIndex: number, _levels?: string[]) => {
+  const handleOpenUpgradeDomainModal = (cardIndex: number) => {
     setUpgradeDomainCardIndex(cardIndex)
     setUpgradeDomainModalOpen(true)
   }

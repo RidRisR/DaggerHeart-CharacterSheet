@@ -1,19 +1,13 @@
-import { isValidNumber, parseToNumber } from "@/lib/number-utils"
+import { tryParseNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import type { ApplyEffectsResult, AutomationEffect, ModifierTargetId } from "./types"
 import { readTargetValue, targetUpdate, writeTargetValue } from "./target-accessors"
-
-function parseCurrentNumber(value: unknown): number | undefined {
-  if (typeof value === "number" && Number.isFinite(value)) return value
-  if (typeof value === "string" && isValidNumber(value)) return parseToNumber(value, 0)
-  return undefined
-}
 
 function applySingleAdd(sheetData: SheetData, target: ModifierTargetId, delta: number): {
   sheetData: SheetData
   warning?: string
 } {
-  const current = parseCurrentNumber(readTargetValue(sheetData, target))
+  const current = tryParseNumber(readTargetValue(sheetData, target))
   if (current === undefined) {
     const sign = delta >= 0 ? `+${delta}` : String(delta)
     return {

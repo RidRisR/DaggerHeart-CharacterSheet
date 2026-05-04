@@ -5,7 +5,22 @@ import { describe, expect, it } from "vitest"
 import CharacterSheet from "@/components/character-sheet"
 import { AttributesSection } from "@/components/character-sheet-sections/attributes-section"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
+import type { ModifierEntryKind, ModifierTargetId, UserModifierContribution } from "@/lib/modifiers/types"
 import { resetSheetStore, sheet } from "../automation/test-helpers"
+
+function userContribution(
+  id: string,
+  target: ModifierTargetId,
+  kind: ModifierEntryKind,
+  label: string,
+  value: number,
+): UserModifierContribution {
+  return {
+    id,
+    definition: { target, kind },
+    editable: { label, value },
+  }
+}
 
 describe("ModifierFieldAnchor", () => {
   it("renders source anchors on real attribute fields", () => {
@@ -72,31 +87,13 @@ describe("ModifierFieldAnchor", () => {
   it("shows base, modifier, and unattributed delta", async () => {
     resetSheetStore({
       evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "手动基础闪避", 12),
+        userContribution("user:evasion-mod", "evasion", "modifier", "临时加值", 1),
+      ],
       modifierState: {
-        byTarget: {
-          evasion: {
-            activeBaseId: "user:evasion-base",
-            userEntries: [{
-              id: "user:evasion-base",
-              sourceId: "user:evasion-base",
-              target: "evasion",
-              kind: "base",
-              label: "手动基础闪避",
-              value: 12,
-              sourceType: "user",
-              priority: 10,
-            }, {
-              id: "user:evasion-mod",
-              sourceId: "user:evasion-mod",
-              target: "evasion",
-              kind: "modifier",
-              label: "临时加值",
-              value: 1,
-              sourceType: "user",
-              priority: 10,
-            }],
-          },
-        },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: {},
       },
     })
 
@@ -104,8 +101,8 @@ describe("ModifierFieldAnchor", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
 
-    expect(screen.getByText("手动基础闪避")).toBeInTheDocument()
-    expect(screen.getByText("临时加值")).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "编辑手动基础闪避名称" })).toHaveValue("手动基础闪避")
+    expect(screen.getByRole("textbox", { name: "编辑临时加值名称" })).toHaveValue("临时加值")
     expect(screen.getByText("未归因差额 +2")).toBeInTheDocument()
   })
 
@@ -150,31 +147,13 @@ describe("ModifierFieldAnchor", () => {
   it("lets the user select the active base", async () => {
     resetSheetStore({
       evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base-12", "evasion", "base", "基础 12", 12),
+        userContribution("user:evasion-base-14", "evasion", "base", "基础 14", 14),
+      ],
       modifierState: {
-        byTarget: {
-          evasion: {
-            activeBaseId: "user:evasion-base-12",
-            userEntries: [{
-              id: "user:evasion-base-12",
-              sourceId: "user:evasion-base-12",
-              target: "evasion",
-              kind: "base",
-              label: "基础 12",
-              value: 12,
-              sourceType: "user",
-              priority: 10,
-            }, {
-              id: "user:evasion-base-14",
-              sourceId: "user:evasion-base-14",
-              target: "evasion",
-              kind: "base",
-              label: "基础 14",
-              value: 14,
-              sourceType: "user",
-              priority: 10,
-            }],
-          },
-        },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base-12" } },
+        entryStates: {},
       },
     })
 
@@ -183,38 +162,20 @@ describe("ModifierFieldAnchor", () => {
     await userEvent.click(screen.getByRole("radio", { name: /基础 14/ }))
 
     expect(screen.getByRole("radio", { name: /基础 14/ })).toBeChecked()
-    expect(sheet().modifierState?.byTarget.evasion?.activeBaseId).toBe("user:evasion-base-14")
+    expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base-14")
     expect(screen.getByText("未归因差额 +1")).toBeInTheDocument()
   })
 
   it("lets the user disable and re-enable a modifier", async () => {
     resetSheetStore({
       evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "基础", 12),
+        userContribution("user:evasion-mod", "evasion", "modifier", "加值", 2),
+      ],
       modifierState: {
-        byTarget: {
-          evasion: {
-            activeBaseId: "user:evasion-base",
-            userEntries: [{
-              id: "user:evasion-base",
-              sourceId: "user:evasion-base",
-              target: "evasion",
-              kind: "base",
-              label: "基础",
-              value: 12,
-              sourceType: "user",
-              priority: 10,
-            }, {
-              id: "user:evasion-mod",
-              sourceId: "user:evasion-mod",
-              target: "evasion",
-              kind: "modifier",
-              label: "加值",
-              value: 2,
-              sourceType: "user",
-              priority: 10,
-            }],
-          },
-        },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: {},
       },
     })
 
@@ -223,12 +184,12 @@ describe("ModifierFieldAnchor", () => {
 
     await userEvent.click(screen.getByRole("checkbox", { name: /加值/ }))
     expect(screen.getByRole("checkbox", { name: /加值/ })).not.toBeChecked()
-    expect(sheet().modifierState?.byTarget.evasion?.disabledEntryIds).toContain("user:evasion-mod")
+    expect(sheet().modifierState?.entryStates["user:evasion-mod"]).toEqual({ enabled: false })
     expect(screen.getByText("未归因差额 +3")).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole("checkbox", { name: /加值/ }))
     expect(screen.getByRole("checkbox", { name: /加值/ })).toBeChecked()
-    expect(sheet().modifierState?.byTarget.evasion?.disabledEntryIds ?? []).not.toContain("user:evasion-mod")
+    expect(sheet().modifierState?.entryStates["user:evasion-mod"]).toBeUndefined()
     expect(screen.getByText("未归因差额 +1")).toBeInTheDocument()
   })
 
@@ -244,11 +205,14 @@ describe("ModifierFieldAnchor", () => {
     await userEvent.type(screen.getByLabelText("基值数值"), "12")
     await userEvent.click(screen.getByRole("button", { name: "确认添加基值" }))
 
-    expect(screen.getByText("手动基础")).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "编辑手动基础名称" })).toHaveValue("手动基础")
     expect(screen.getByText("参考合计")).toBeInTheDocument()
     expect(screen.getByText("未归因差额 +3")).toBeInTheDocument()
-    expect(sheet().modifierState?.byTarget.evasion?.userEntries).toEqual([
-      expect.objectContaining({ kind: "base", label: "手动基础", value: 12 }),
+    expect(sheet().userModifierContributions).toEqual([
+      expect.objectContaining({
+        definition: { target: "evasion", kind: "base" },
+        editable: { label: "手动基础", value: 12 },
+      }),
     ])
     expect(sheet().evasion).toBe("15")
   })
@@ -256,22 +220,12 @@ describe("ModifierFieldAnchor", () => {
   it("adds and deletes a manual modifier", async () => {
     resetSheetStore({
       evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "基础", 12),
+      ],
       modifierState: {
-        byTarget: {
-          evasion: {
-            activeBaseId: "user:evasion-base",
-            userEntries: [{
-              id: "user:evasion-base",
-              sourceId: "user:evasion-base",
-              target: "evasion",
-              kind: "base",
-              label: "基础",
-              value: 12,
-              sourceType: "user",
-              priority: 10,
-            }],
-          },
-        },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: {},
       },
     })
 
@@ -284,36 +238,53 @@ describe("ModifierFieldAnchor", () => {
     await userEvent.type(screen.getByLabelText("加值数值"), "2")
     await userEvent.click(screen.getByRole("button", { name: "确认添加加值" }))
 
-    expect(screen.getByText("临时加值")).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "编辑临时加值名称" })).toHaveValue("临时加值")
     expect(screen.getByText("未归因差额 +1")).toBeInTheDocument()
-    expect(sheet().modifierState?.byTarget.evasion?.userEntries).toEqual(expect.arrayContaining([
-      expect.objectContaining({ kind: "modifier", label: "临时加值", value: 2 }),
+    expect(sheet().userModifierContributions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "临时加值", value: 2 },
+      }),
     ]))
 
     await userEvent.click(screen.getByRole("button", { name: "删除临时加值" }))
-    expect(screen.queryByText("临时加值")).not.toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "编辑临时加值名称" })).not.toBeInTheDocument()
+    expect(sheet().userModifierContributions?.some(contribution => contribution.editable.label === "临时加值")).toBe(false)
     expect(sheet().evasion).toBe("15")
+  })
+
+  it("clears the active base when deleting the active user base", async () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base-active", "evasion", "base", "当前基础", 12),
+        userContribution("user:evasion-base-other", "evasion", "base", "备用基础", 14),
+      ],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base-active" } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+    await userEvent.click(screen.getByRole("button", { name: "删除当前基础" }))
+
+    expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBeUndefined()
+    expect(sheet().userModifierContributions?.some(
+      contribution => contribution.id === "user:evasion-base-active",
+    )).toBe(false)
   })
 
   it("adds a manual modifier from a numeric expression", async () => {
     resetSheetStore({
       evasion: "30",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "基础", 12),
+      ],
       modifierState: {
-        byTarget: {
-          evasion: {
-            activeBaseId: "user:evasion-base",
-            userEntries: [{
-              id: "user:evasion-base",
-              sourceId: "user:evasion-base",
-              target: "evasion",
-              kind: "base",
-              label: "基础",
-              value: 12,
-              sourceType: "user",
-              priority: 10,
-            }],
-          },
-        },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: {},
       },
     })
 
@@ -324,8 +295,8 @@ describe("ModifierFieldAnchor", () => {
     await userEvent.type(screen.getByLabelText("加值数值"), "12+1")
     await userEvent.click(screen.getByRole("button", { name: "确认添加加值" }))
 
-    expect(screen.getByText("表达式加值")).toBeInTheDocument()
-    expect(screen.getByText("+13")).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "编辑表达式加值名称" })).toHaveValue("表达式加值")
+    expect(screen.getByRole("spinbutton", { name: "编辑表达式加值数值" })).toHaveValue(13)
     expect(screen.getByText("未归因差额 +5")).toBeInTheDocument()
   })
 
@@ -339,7 +310,7 @@ describe("ModifierFieldAnchor", () => {
     await userEvent.click(screen.getByRole("button", { name: "确认添加加值" }))
 
     expect(screen.getByText("请输入数字")).toBeInTheDocument()
-    expect(sheet().modifierState?.byTarget.evasion?.userEntries ?? []).toEqual([])
+    expect(sheet().userModifierContributions ?? []).toEqual([])
   })
 
   it("shows unknown base when no base exists", async () => {
@@ -356,41 +327,14 @@ describe("ModifierFieldAnchor", () => {
   it("keeps disabled modifiers visible but removes them from active addends", async () => {
     resetSheetStore({
       evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "手动基础闪避", 12),
+        userContribution("user:evasion-enabled", "evasion", "modifier", "启用加值", 1),
+        userContribution("user:evasion-disabled", "evasion", "modifier", "停用加值", 2),
+      ],
       modifierState: {
-        byTarget: {
-          evasion: {
-            activeBaseId: "user:evasion-base",
-            disabledEntryIds: ["user:evasion-disabled"],
-            userEntries: [{
-              id: "user:evasion-base",
-              sourceId: "user:evasion-base",
-              target: "evasion",
-              kind: "base",
-              label: "手动基础闪避",
-              value: 12,
-              sourceType: "user",
-              priority: 10,
-            }, {
-              id: "user:evasion-enabled",
-              sourceId: "user:evasion-enabled",
-              target: "evasion",
-              kind: "modifier",
-              label: "启用加值",
-              value: 1,
-              sourceType: "user",
-              priority: 10,
-            }, {
-              id: "user:evasion-disabled",
-              sourceId: "user:evasion-disabled",
-              target: "evasion",
-              kind: "modifier",
-              label: "停用加值",
-              value: 2,
-              sourceType: "user",
-              priority: 10,
-            }],
-          },
-        },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: { "user:evasion-disabled": { enabled: false } },
       },
     })
 
@@ -407,22 +351,12 @@ describe("ModifierFieldAnchor", () => {
   it("edits a manual entry value on blur", async () => {
     resetSheetStore({
       evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "手动基础闪避", 12),
+      ],
       modifierState: {
-        byTarget: {
-          evasion: {
-            activeBaseId: "user:evasion-base",
-            userEntries: [{
-              id: "user:evasion-base",
-              sourceId: "user:evasion-base",
-              target: "evasion",
-              kind: "base",
-              label: "手动基础闪避",
-              value: 12,
-              sourceType: "user",
-              priority: 10,
-            }],
-          },
-        },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: {},
       },
     })
 
@@ -434,9 +368,41 @@ describe("ModifierFieldAnchor", () => {
     await userEvent.type(valueInput, "5")
     await userEvent.tab()
 
-    expect(sheet().modifierState?.byTarget.evasion?.userEntries).toEqual([
-      expect.objectContaining({ id: "user:evasion-base", value: 5 }),
+    expect(sheet().userModifierContributions).toEqual([
+      expect.objectContaining({
+        id: "user:evasion-base",
+        editable: { label: "手动基础闪避", value: 5 },
+      }),
     ])
     expect(screen.getByText("未归因差额 +10")).toBeInTheDocument()
+  })
+
+  it("edits a manual entry label on blur", async () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "手动基础闪避", 12),
+      ],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    const labelInput = screen.getByRole("textbox", { name: "编辑手动基础闪避名称" })
+    await userEvent.clear(labelInput)
+    await userEvent.type(labelInput, "重命名基础")
+    await userEvent.tab()
+
+    expect(sheet().userModifierContributions).toEqual([
+      expect.objectContaining({
+        id: "user:evasion-base",
+        editable: { label: "重命名基础", value: 12 },
+      }),
+    ])
+    expect(screen.getByRole("textbox", { name: "编辑重命名基础名称" })).toBeInTheDocument()
   })
 })

@@ -1,10 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { tryParseNumberExpression } from "@/lib/number-utils"
+import { entryKind, entryLabel, entryValue } from "@/lib/modifiers/entry-utils"
 import { getReferenceSummary } from "@/lib/modifiers/registry"
 import { readTargetValue } from "@/lib/modifiers/target-accessors"
-import type { ModifierEntryKind, ModifierTargetId, UserModifierEntry } from "@/lib/modifiers/types"
+import type {
+  ModifierEntry,
+  ModifierEntryKind,
+  ModifierTargetId,
+  UserModifierContribution,
+} from "@/lib/modifiers/types"
 import type { SheetData } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store"
 
@@ -24,29 +30,35 @@ function createUserEntryId(target: ModifierTargetId): string {
 }
 
 interface EditableValueInputProps {
-  entry: UserModifierEntry
-  onCommit: (entry: UserModifierEntry) => void
+  entry: ModifierEntry
+  onCommit: (id: string, value: number) => void
   signed?: boolean
 }
 
 function EditableValueInput({ entry, onCommit, signed = false }: EditableValueInputProps) {
-  const [value, setValue] = useState(String(entry.value))
+  const currentValue = entryValue(entry)
+  const currentLabel = entryLabel(entry)
+  const [value, setValue] = useState(String(currentValue))
+
+  useEffect(() => {
+    setValue(String(currentValue))
+  }, [currentValue])
 
   const commit = () => {
     const parsedValue = tryParseNumberExpression(value)
-    if (parsedValue === undefined || parsedValue === entry.value) {
-      setValue(String(entry.value))
+    if (parsedValue === undefined || parsedValue === currentValue) {
+      setValue(String(currentValue))
       return
     }
-    onCommit({ ...entry, value: parsedValue })
+    onCommit(entry.id, parsedValue)
   }
 
   return (
     <span className="flex items-center gap-0.5">
-      {signed && entry.value >= 0 && <span className="font-semibold">+</span>}
+      {signed && currentValue >= 0 && <span className="font-semibold">+</span>}
       <input
         type="number"
-        aria-label={`编辑${entry.label}数值`}
+        aria-label={`编辑${currentLabel}数值`}
         value={value}
         className="h-7 w-16 rounded border border-gray-300 px-1 text-right text-xs font-semibold"
         onChange={event => setValue(event.target.value)}
@@ -58,8 +70,48 @@ function EditableValueInput({ entry, onCommit, signed = false }: EditableValueIn
           }
         }}
       />
-      {signed && <span aria-hidden="true" className="sr-only">{formatSigned(entry.value)}</span>}
+      {signed && <span aria-hidden="true" className="sr-only">{formatSigned(currentValue)}</span>}
     </span>
+  )
+}
+
+interface EditableLabelInputProps {
+  entry: ModifierEntry
+  onCommit: (id: string, label: string) => void
+}
+
+function EditableLabelInput({ entry, onCommit }: EditableLabelInputProps) {
+  const currentLabel = entryLabel(entry)
+  const [label, setLabel] = useState(currentLabel)
+
+  useEffect(() => {
+    setLabel(currentLabel)
+  }, [currentLabel])
+
+  const commit = () => {
+    const nextLabel = label.trim()
+    if (!nextLabel || nextLabel === currentLabel) {
+      setLabel(currentLabel)
+      return
+    }
+    onCommit(entry.id, nextLabel)
+  }
+
+  return (
+    <input
+      type="text"
+      aria-label={`编辑${currentLabel}名称`}
+      value={label}
+      className="h-7 min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 text-xs hover:border-gray-300 focus:border-gray-300 focus:bg-white"
+      onChange={event => setLabel(event.target.value)}
+      onBlur={commit}
+      onKeyDown={event => {
+        if (event.key === "Enter") {
+          commit()
+          event.currentTarget.blur()
+        }
+      }}
+    />
   )
 }
 
@@ -132,9 +184,9 @@ function AddEntryForm({
 export function ModifierPopover({ sheetData, target, label }: ModifierPopoverProps) {
   const summary = getReferenceSummary(sheetData, target)
   const setActiveModifierBase = useSheetStore(state => state.setActiveModifierBase)
-  const setModifierEntryDisabled = useSheetStore(state => state.setModifierEntryDisabled)
-  const upsertUserModifierEntry = useSheetStore(state => state.upsertUserModifierEntry)
-  const removeUserModifierEntry = useSheetStore(state => state.removeUserModifierEntry)
+  const setModifierEntryEnabled = useSheetStore(state => state.setModifierEntryEnabled)
+  const upsertUserModifierContribution = useSheetStore(state => state.upsertUserModifierContribution)
+  const removeUserModifierContribution = useSheetStore(state => state.removeUserModifierContribution)
   const [addingBase, setAddingBase] = useState(false)
   const [baseName, setBaseName] = useState("")
   const [baseValue, setBaseValue] = useState("")
@@ -143,8 +195,48 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const [modifierName, setModifierName] = useState("")
   const [modifierValue, setModifierValue] = useState("")
   const [modifierError, setModifierError] = useState("")
-  const disabledIds = new Set(summary.disabledEntries.map(entry => entry.id))
   const finalValue = readTargetValue(sheetData, target)
+
+  const findUserContribution = (id: string) => (
+    (sheetData.userModifierContributions ?? []).find(contribution => contribution.id === id)
+  )
+
+  const updateUserContributionValue = (id: string, value: number) => {
+    const contribution = findUserContribution(id)
+    if (!contribution) return
+
+    upsertUserModifierContribution({
+      ...contribution,
+      editable: {
+        ...contribution.editable,
+        value,
+      },
+    })
+  }
+
+  const updateUserContributionLabel = (id: string, label: string) => {
+    const contribution = findUserContribution(id)
+    if (!contribution) return
+
+    upsertUserModifierContribution({
+      ...contribution,
+      editable: {
+        ...contribution.editable,
+        label,
+      },
+    })
+  }
+
+  const deleteUserContribution = (entry: ModifierEntry) => {
+    const activeBaseId = sheetData.modifierState?.targetStates?.[target]?.activeBaseId
+    const isActiveBase = entryKind(entry) === "base"
+      && (summary.activeBase?.id === entry.id || activeBaseId === entry.id)
+
+    if (isActiveBase) {
+      setActiveModifierBase(target, undefined)
+    }
+    removeUserModifierContribution(entry.id)
+  }
 
   const addUserEntry = (kind: ModifierEntryKind) => {
     const name = kind === "base" ? baseName : modifierName
@@ -158,18 +250,16 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
     }
 
     const id = createUserEntryId(target)
-    const entry: UserModifierEntry = {
+    const contribution: UserModifierContribution = {
       id,
-      sourceId: id,
-      target,
-      kind,
-      label: name.trim() || (kind === "base" ? "手动基础值" : "手动加值"),
-      value: parsedValue,
-      sourceType: "user",
-      priority: 10,
+      definition: { target, kind },
+      editable: {
+        label: name.trim() || (kind === "base" ? "手动基础值" : "手动加值"),
+        value: parsedValue,
+      },
     }
 
-    upsertUserModifierEntry(entry)
+    upsertUserModifierContribution(contribution)
     if (kind === "base" && !summary.activeBase) {
       setActiveModifierBase(target, id)
     }
@@ -211,35 +301,45 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
         <div className="mb-1 text-[11px] font-medium text-gray-500">基础值</div>
         {summary.bases.length > 0 ? (
           <div className="space-y-1">
-            {summary.bases.map(entry => (
-              <div key={entry.id} className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
-                <label className="flex min-w-0 flex-1 items-center gap-1.5">
-                  <input
-                    type="radio"
-                    name={`${target}-active-base`}
-                    checked={summary.activeBase?.id === entry.id}
-                    aria-label={`${entry.label} ${entry.value}`}
-                    onChange={() => setActiveModifierBase(target, entry.id)}
-                  />
-                  <span className="truncate">{entry.label}</span>
-                </label>
-                {entry.sourceType === "user" ? (
-                  <EditableValueInput entry={entry} onCommit={upsertUserModifierEntry} />
-                ) : (
-                  <span className="font-semibold">{entry.value}</span>
-                )}
-                {entry.sourceType === "user" && (
-                  <button
-                    type="button"
-                    aria-label={`删除${entry.label}`}
-                    className="text-[11px] text-gray-400 hover:text-red-600"
-                    onClick={() => removeUserModifierEntry(target, entry.id)}
-                  >
-                    删除
-                  </button>
-                )}
-              </div>
-            ))}
+            {summary.bases.map(entry => {
+              const currentLabel = entryLabel(entry)
+              const currentValue = entryValue(entry)
+              const isUserEntry = entry.source.type === "user"
+
+              return (
+                <div key={entry.id} className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                    <input
+                      type="radio"
+                      name={`${target}-active-base`}
+                      checked={summary.activeBase?.id === entry.id}
+                      aria-label={`${currentLabel} ${currentValue}`}
+                      onChange={() => setActiveModifierBase(target, entry.id)}
+                    />
+                    {isUserEntry ? (
+                      <EditableLabelInput entry={entry} onCommit={updateUserContributionLabel} />
+                    ) : (
+                      <span className="truncate">{currentLabel}</span>
+                    )}
+                  </div>
+                  {isUserEntry ? (
+                    <EditableValueInput entry={entry} onCommit={updateUserContributionValue} />
+                  ) : (
+                    <span className="font-semibold">{currentValue}</span>
+                  )}
+                  {isUserEntry && (
+                    <button
+                      type="button"
+                      aria-label={`删除${currentLabel}`}
+                      className="text-[11px] text-gray-400 hover:text-red-600"
+                      onClick={() => deleteUserContribution(entry)}
+                    >
+                      删除
+                    </button>
+                  )}
+                </div>
+              )
+            })}
           </div>
         ) : (
           <div className="rounded bg-gray-50 px-2 py-1 text-gray-500">未知基础值</div>
@@ -273,34 +373,42 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
         {summary.modifiers.length > 0 ? (
           <div className="space-y-1">
             {summary.modifiers.map(entry => {
-              const checked = !disabledIds.has(entry.id)
+              const currentLabel = entryLabel(entry)
+              const currentValue = entryValue(entry)
+              const isUserEntry = entry.source.type === "user"
+              const checked = sheetData.modifierState?.entryStates?.[entry.id]?.enabled !== false
+              const kind = entryKind(entry)
               return (
                 <div
                   key={entry.id}
                   className={`flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1 ${checked ? "" : "text-gray-400 line-through"}`}
                 >
-                  <label className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5">
                     <input
                       type="checkbox"
                       checked={checked}
-                      aria-label={`${entry.label} ${formatSigned(entry.value)}`}
-                      onChange={event => setModifierEntryDisabled(target, entry.id, !event.target.checked)}
+                      aria-label={`${currentLabel} ${formatSigned(currentValue)}`}
+                      onChange={event => setModifierEntryEnabled(entry.id, event.target.checked)}
                     />
-                    <span className="truncate">{entry.label}</span>
-                  </label>
-                  {entry.sourceType === "user" ? (
-                    <EditableValueInput entry={entry} signed onCommit={upsertUserModifierEntry} />
+                    {isUserEntry ? (
+                      <EditableLabelInput entry={entry} onCommit={updateUserContributionLabel} />
+                    ) : (
+                      <span className="truncate">{currentLabel}</span>
+                    )}
+                  </div>
+                  {isUserEntry ? (
+                    <EditableValueInput entry={entry} signed onCommit={updateUserContributionValue} />
                   ) : (
-                    <span className="font-semibold">{formatSigned(entry.value)}</span>
+                    <span className="font-semibold">{formatSigned(currentValue)}</span>
                   )}
-                  {entry.sourceType === "user" && (
+                  {isUserEntry && (
                     <button
                       type="button"
-                      aria-label={`删除${entry.label}`}
+                      aria-label={`删除${currentLabel}`}
                       className="text-[11px] text-gray-400 hover:text-red-600"
-                      onClick={() => removeUserModifierEntry(target, entry.id)}
+                      onClick={() => deleteUserContribution(entry)}
                     >
-                      删除
+                      删除{kind === "base" ? "基值" : ""}
                     </button>
                   )}
                 </div>

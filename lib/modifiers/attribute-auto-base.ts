@@ -1,5 +1,5 @@
 import { parseNumberOr, tryParseNumberExpression } from "@/lib/number-utils"
-import type { AttributeTargetId, ModifierEntryId, UserModifierEntry } from "./types"
+import type { AttributeTargetId, ModifierEntryId, UserModifierContribution } from "./types"
 
 export const ATTRIBUTE_AUTO_BASE_LABEL = "手动基础值"
 
@@ -7,17 +7,18 @@ export function getAttributeAutoBaseId(target: AttributeTargetId): ModifierEntry
   return `user:${target}:auto-base`
 }
 
-export function createAttributeAutoBaseEntry(target: AttributeTargetId, value: number): UserModifierEntry {
+export function createAttributeAutoBaseEntry(target: AttributeTargetId, value: number): UserModifierContribution {
   const id = getAttributeAutoBaseId(target)
   return {
     id,
-    sourceId: id,
-    target,
-    kind: "base",
-    label: ATTRIBUTE_AUTO_BASE_LABEL,
-    value,
-    sourceType: "user",
-    priority: 10,
+    definition: {
+      target,
+      kind: "base",
+    },
+    editable: {
+      label: ATTRIBUTE_AUTO_BASE_LABEL,
+      value,
+    },
   }
 }
 
@@ -26,14 +27,14 @@ interface AttributeAutoBaseCreationInput {
   level: unknown
   initialValue: unknown
   submittedValue: unknown
-  existingUserBases: UserModifierEntry[]
+  existingUserBases: UserModifierContribution[]
 }
 
 interface AttributeAutoBaseRemovalInput {
   target: AttributeTargetId
   level: unknown
   submittedValue: unknown
-  existingUserBases: UserModifierEntry[]
+  existingUserBases: UserModifierContribution[]
 }
 
 function isBlank(value: unknown): boolean {
@@ -44,7 +45,7 @@ function isLevelOne(level: unknown): boolean {
   return parseNumberOr(level, 1) === 1
 }
 
-export function getAttributeAutoBaseCreation(input: AttributeAutoBaseCreationInput): UserModifierEntry | undefined {
+export function getAttributeAutoBaseCreation(input: AttributeAutoBaseCreationInput): UserModifierContribution | undefined {
   if (!isLevelOne(input.level)) return undefined
   if (!isBlank(input.initialValue)) return undefined
   if (input.existingUserBases.length > 0) return undefined

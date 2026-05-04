@@ -5,18 +5,19 @@ import {
   getAttributeAutoBaseId,
   shouldRemoveAttributeAutoBase,
 } from "@/lib/modifiers/attribute-auto-base"
-import type { UserModifierEntry } from "@/lib/modifiers/types"
+import type { UserModifierContribution } from "@/lib/modifiers/types"
 
-function userBase(id: string): UserModifierEntry {
+function userBase(id: string): UserModifierContribution {
   return {
     id,
-    sourceId: id,
-    target: "agility.value",
-    kind: "base",
-    label: "用户基础值",
-    value: 2,
-    sourceType: "user",
-    priority: 10,
+    definition: {
+      target: "agility.value",
+      kind: "base",
+    },
+    editable: {
+      label: "用户基础值",
+      value: 2,
+    },
   }
 }
 
@@ -44,7 +45,7 @@ describe("attribute auto base", () => {
       initialValue: "",
       submittedValue: "+2",
       existingUserBases: [],
-    })?.value).toBe(2)
+    })?.editable.value).toBe(2)
 
     expect(getAttributeAutoBaseCreation({
       target: "agility.value",
@@ -52,7 +53,7 @@ describe("attribute auto base", () => {
       initialValue: "",
       submittedValue: "-1",
       existingUserBases: [],
-    })?.value).toBe(-1)
+    })?.editable.value).toBe(-1)
   })
 
   it("does not create when level is above 1, start is non-empty, value is invalid, or user base exists", () => {

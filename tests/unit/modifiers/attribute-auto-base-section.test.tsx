@@ -4,24 +4,25 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import { AttributesSection } from "@/components/character-sheet-sections/attributes-section"
 import { getAttributeAutoBaseId } from "@/lib/modifiers/attribute-auto-base"
-import type { UserModifierEntry } from "@/lib/modifiers/types"
+import type { UserModifierContribution } from "@/lib/modifiers/types"
 import { resetSheetStore, sheet } from "../automation/test-helpers"
 
 function autoBase() {
-  return sheet().modifierState?.byTarget["agility.value"]?.userEntries
-    ?.find(entry => entry.id === getAttributeAutoBaseId("agility.value"))
+  return (sheet().userModifierContributions ?? [])
+    .find(contribution => contribution.id === getAttributeAutoBaseId("agility.value"))
 }
 
-function manualBase(id = "user:agility.value:base:manual"): UserModifierEntry {
+function manualBase(id = "user:agility.value:base:manual"): UserModifierContribution {
   return {
     id,
-    sourceId: id,
-    target: "agility.value",
-    kind: "base",
-    label: "手动基础值",
-    value: 1,
-    sourceType: "user",
-    priority: 10,
+    definition: {
+      target: "agility.value",
+      kind: "base",
+    },
+    editable: {
+      label: "手动基础值",
+      value: 1,
+    },
   }
 }
 
@@ -46,11 +47,15 @@ describe("attribute auto base section behavior", () => {
     expect(sheet().agility.value).toBe("12+1")
     expect(autoBase()).toMatchObject({
       id: "user:agility.value:auto-base",
-      value: 13,
-      kind: "base",
-      sourceType: "user",
+      definition: {
+        target: "agility.value",
+        kind: "base",
+      },
+      editable: {
+        value: 13,
+      },
     })
-    expect(sheet().modifierState?.byTarget["agility.value"]?.activeBaseId).toBe("user:agility.value:auto-base")
+    expect(sheet().modifierState?.targetStates["agility.value"]?.activeBaseId).toBe("user:agility.value:auto-base")
   })
 
   it("creates auto bases for signed, zero, and negative values", async () => {
@@ -62,7 +67,7 @@ describe("attribute auto base section behavior", () => {
     render(<AttributesSection />)
 
     await editAgility("+2")
-    expect(autoBase()?.value).toBe(2)
+    expect(autoBase()?.editable.value).toBe(2)
 
     cleanup()
     resetSheetStore({
@@ -71,7 +76,7 @@ describe("attribute auto base section behavior", () => {
     })
     render(<AttributesSection />)
     await editAgility("0")
-    expect(autoBase()?.value).toBe(0)
+    expect(autoBase()?.editable.value).toBe(0)
 
     cleanup()
     resetSheetStore({
@@ -80,7 +85,7 @@ describe("attribute auto base section behavior", () => {
     })
     render(<AttributesSection />)
     await editAgility("-1")
-    expect(autoBase()?.value).toBe(-1)
+    expect(autoBase()?.editable.value).toBe(-1)
   })
 
   it("does not create an auto base above level 1, from non-empty starts, invalid expressions, or existing user bases", async () => {
@@ -118,13 +123,7 @@ describe("attribute auto base section behavior", () => {
     resetSheetStore({
       level: "1",
       agility: { value: "", checked: false, spellcasting: false },
-      modifierState: {
-        byTarget: {
-          "agility.value": {
-            userEntries: [manualBase()],
-          },
-        },
-      },
+      userModifierContributions: [manualBase()],
     })
     render(<AttributesSection />)
     await editAgility("12+1")
@@ -134,18 +133,22 @@ describe("attribute auto base section behavior", () => {
   it("removes the sole auto base when the attribute is cleared", async () => {
     const auto = {
       ...manualBase(getAttributeAutoBaseId("agility.value")),
-      value: 13,
+      editable: {
+        label: "手动基础值",
+        value: 13,
+      },
     }
     resetSheetStore({
       level: "1",
       agility: { value: "12+1", checked: false, spellcasting: false },
+      userModifierContributions: [auto],
       modifierState: {
-        byTarget: {
+        targetStates: {
           "agility.value": {
             activeBaseId: auto.id,
-            userEntries: [auto],
           },
         },
+        entryStates: {},
       },
     })
 
@@ -157,23 +160,28 @@ describe("attribute auto base section behavior", () => {
 
     expect(sheet().agility.value).toBe("")
     expect(autoBase()).toBeUndefined()
+    expect(sheet().modifierState?.targetStates["agility.value"]).toBeUndefined()
   })
 
   it("does not remove auto base when another user base exists", async () => {
     const auto = {
       ...manualBase(getAttributeAutoBaseId("agility.value")),
-      value: 13,
+      editable: {
+        label: "手动基础值",
+        value: 13,
+      },
     }
     resetSheetStore({
       level: "1",
       agility: { value: "12+1", checked: false, spellcasting: false },
+      userModifierContributions: [auto, manualBase()],
       modifierState: {
-        byTarget: {
+        targetStates: {
           "agility.value": {
             activeBaseId: auto.id,
-            userEntries: [auto, manualBase()],
           },
         },
+        entryStates: {},
       },
     })
 

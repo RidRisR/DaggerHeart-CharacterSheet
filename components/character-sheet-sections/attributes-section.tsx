@@ -4,7 +4,7 @@ import { useRef } from "react"
 import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store";
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
-import type { AttributeTargetId, ModifierTargetId, UserModifierEntry } from "@/lib/modifiers/types"
+import type { AttributeTargetId, ModifierTargetId, UserModifierContribution } from "@/lib/modifiers/types"
 import {
   getAttributeAutoBaseCreation,
   getAttributeAutoBaseId,
@@ -21,9 +21,9 @@ function attributeTarget(attribute: AttributeKey): AttributeTargetId {
   return `${attribute}.value` as AttributeTargetId
 }
 
-function userBaseEntriesForTarget(formData: SheetData, target: AttributeTargetId): UserModifierEntry[] {
-  return (formData.modifierState?.byTarget[target]?.userEntries ?? [])
-    .filter((entry): entry is UserModifierEntry => entry.sourceType === "user" && entry.kind === "base")
+function userBaseEntriesForTarget(formData: SheetData, target: AttributeTargetId): UserModifierContribution[] {
+  return (formData.userModifierContributions ?? [])
+    .filter(contribution => contribution.definition.target === target && contribution.definition.kind === "base")
 }
 
 export function AttributesSection() {
@@ -32,9 +32,9 @@ export function AttributesSection() {
     updateAttribute,
     toggleAttributeChecked,
     setSheetData,
-    upsertUserModifierEntry,
+    upsertUserModifierContribution,
     setActiveModifierBase,
-    removeUserModifierEntry,
+    removeUserModifierContribution,
   } = useSheetStore();
   const editStartValues = useRef<Partial<Record<AttributeKey, string>>>({})
 
@@ -61,8 +61,8 @@ export function AttributesSection() {
       existingUserBases,
     })
     if (autoBase) {
-      upsertUserModifierEntry(autoBase)
-      if (!formData.modifierState?.byTarget[target]?.activeBaseId) {
+      upsertUserModifierContribution(autoBase)
+      if (!formData.modifierState?.targetStates?.[target]?.activeBaseId) {
         setActiveModifierBase(target, autoBase.id)
       }
       editStartValues.current[attribute] = submittedValue
@@ -75,7 +75,11 @@ export function AttributesSection() {
       submittedValue,
       existingUserBases,
     })) {
-      removeUserModifierEntry(target, getAttributeAutoBaseId(target))
+      const autoBaseId = getAttributeAutoBaseId(target)
+      removeUserModifierContribution(autoBaseId)
+      if (formData.modifierState?.targetStates?.[target]?.activeBaseId === autoBaseId) {
+        setActiveModifierBase(target, undefined)
+      }
     }
 
     editStartValues.current[attribute] = submittedValue

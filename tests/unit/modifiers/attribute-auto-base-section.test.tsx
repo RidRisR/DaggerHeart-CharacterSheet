@@ -44,7 +44,7 @@ describe("attribute auto base section behavior", () => {
 
     await editAgility("12+1")
 
-    expect(sheet().agility.value).toBe("12+1")
+    expect(sheet().agility?.value).toBe("12+1")
     expect(autoBase()).toMatchObject({
       id: "user:agility.value:auto-base",
       definition: {
@@ -158,7 +158,7 @@ describe("attribute auto base section behavior", () => {
     await userEvent.clear(input)
     await userEvent.tab()
 
-    expect(sheet().agility.value).toBe("")
+    expect(sheet().agility?.value).toBe("")
     expect(autoBase()).toBeUndefined()
     expect(sheet().modifierState?.targetStates["agility.value"]).toBeUndefined()
   })

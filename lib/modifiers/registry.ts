@@ -6,13 +6,13 @@ import type { ModifierEntry, ModifierTargetId } from "./types"
 
 export function collectModifierEntries(sheetData: SheetData, target?: ModifierTargetId): ModifierEntry[] {
   const systemEntries = collectSystemModifierEntries(sheetData)
-  const userEntries = (sheetData.userModifierContributions ?? [])
+  const userModifierEntries = (sheetData.userModifierContributions ?? [])
     .map(contribution => contributionToEntry(contribution, {
       sourceType: "user",
       sourceId: "user",
       priority: 10,
     }))
-  const entries = [...systemEntries, ...userEntries]
+  const entries = [...systemEntries, ...userModifierEntries]
 
   return target ? entries.filter(entry => entryTarget(entry) === target) : entries
 }

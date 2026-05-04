@@ -76,6 +76,62 @@ describe("modifier state migration", () => {
     expect(migrated.modifierState?.entryStates["upgrade:evasion"]).toBeUndefined()
   })
 
+  it("migrates legacy armorValue modifier state to armorMax", () => {
+    const migrated = migrateSheetData({
+      armorName: "锁子甲",
+      armorBaseScore: "4",
+      userModifierContributions: [{
+        id: "user:armor-mod",
+        definition: { target: "armorValue", kind: "modifier" },
+        editable: { label: "手动护甲调整", value: 1 },
+      }],
+      modifierState: {
+        byTarget: {
+          armorValue: {
+            activeBaseId: "armor:current:armorValue",
+            disabledEntryIds: ["armor:current:armorValue", "user:armor-mod"],
+          },
+        },
+      },
+    })
+
+    expect(migrated.modifierState?.targetStates.armorMax?.activeBaseId).toBe("armor:current:armorMax")
+    expect(migrated.modifierState?.targetStates).not.toHaveProperty("armorValue")
+    expect(migrated.modifierState?.entryStates["armor:current:armorMax"]).toEqual({ enabled: false })
+    expect(migrated.modifierState?.entryStates["user:armor-mod"]).toEqual({ enabled: false })
+    expect(migrated.modifierState?.entryStates).not.toHaveProperty("armor:current:armorValue")
+    expect(migrated.userModifierContributions).toContainEqual({
+      id: "user:armor-mod",
+      definition: { target: "armorMax", kind: "modifier" },
+      editable: { label: "手动护甲调整", value: 1 },
+    })
+  })
+
+  it("preserves unrelated root contribution ids that contain armorValue text", () => {
+    const armorValueTokenContribution = {
+      id: "user:note:armorValue-token",
+      definition: { target: "evasion", kind: "modifier" },
+      editable: { label: "备注标记 A", value: 1 },
+    }
+    const armorMaxTokenContribution = {
+      id: "user:note:armorMax-token",
+      definition: { target: "evasion", kind: "modifier" },
+      editable: { label: "备注标记 B", value: 2 },
+    }
+
+    const migrated = migrateSheetData({
+      userModifierContributions: [
+        armorValueTokenContribution,
+        armorMaxTokenContribution,
+      ],
+    })
+
+    expect(migrated.userModifierContributions).toEqual([
+      armorValueTokenContribution,
+      armorMaxTokenContribution,
+    ])
+  })
+
   it("replaces invalid array-backed modifier state and automation selections", () => {
     const migrated = migrateSheetData({
       modifierState: [],

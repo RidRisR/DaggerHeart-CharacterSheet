@@ -62,7 +62,7 @@ export function writeTargetValue(sheetData: SheetData, target: ModifierTargetId,
     return { ...sheetData, experienceValues: values }
   }
 
-  if (target === "hpMax" || target === "stressMax") {
+  if (target === "hpMax" || target === "stressMax" || target === "armorMax") {
     return { ...sheetData, [target]: Number(value) }
   }
 
@@ -78,7 +78,6 @@ export function writeTargetValue(sheetData: SheetData, target: ModifierTargetId,
 
   if (
     target === "evasion" ||
-    target === "armorValue" ||
     target === "minorThreshold" ||
     target === "majorThreshold"
   ) {

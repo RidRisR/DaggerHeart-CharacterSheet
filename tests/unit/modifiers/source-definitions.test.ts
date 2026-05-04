@@ -80,8 +80,8 @@ describe("modifier source definitions", () => {
     const entries = collectSystemModifierEntries(sheetData)
 
     expect(entries).toContainEqual(expect.objectContaining({
-      id: "armor:current:armorValue",
-      definition: { target: "armorValue", kind: "base" },
+      id: "armor:current:armorMax",
+      definition: { target: "armorMax", kind: "base" },
       presentation: { label: "锁子甲：基础护甲值", value: 4 },
       source: { type: "armor", id: "armor:current" },
     }))
@@ -272,7 +272,7 @@ describe("modifier source definitions", () => {
         editable: { label: "手动闪避调整", value: 2 },
       }, {
         id: "user:armor-value",
-        definition: { target: "armorValue", kind: "modifier" },
+        definition: { target: "armorMax", kind: "modifier" },
         editable: { label: "手动护甲调整", value: 1 },
       }],
     } satisfies SheetData

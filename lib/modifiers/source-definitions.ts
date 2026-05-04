@@ -128,9 +128,9 @@ export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntr
   const armorValue = tryParseNumber(sheetData.armorBaseScore)
   if (armorValue !== undefined) {
     entries.push(createModifierEntry({
-      id: "armor:current:armorValue",
+      id: "armor:current:armorMax",
       sourceId: "armor:current",
-      target: "armorValue",
+      target: "armorMax",
       kind: "base",
       label: `${armorLabel}：基础护甲值`,
       value: armorValue,

@@ -648,7 +648,7 @@ export default function CharacterSheet() {
                         <div className="bg-gray-800 text-white text-center py-1">
                           <div className="flex items-center justify-center text-ms font-bold">
                             护甲值
-                            <ModifierFieldAnchor target="armorValue" label="护甲值" />
+                            <ModifierFieldAnchor target="armorMax" label="护甲值" />
                           </div>
                         </div>
                         <div className="flex-1 bg-white flex flex-col items-center justify-end pb-2 px-1">

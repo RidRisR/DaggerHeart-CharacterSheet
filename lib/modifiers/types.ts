@@ -12,7 +12,7 @@ export type ExperienceTargetId = `experienceValues.${number}`
 
 export type ModifierTargetId =
   | "evasion"
-  | "armorValue"
+  | "armorMax"
   | "minorThreshold"
   | "majorThreshold"
   | "hpMax"

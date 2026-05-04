@@ -170,7 +170,7 @@ export function HitPointsSection() {
       <div className="mt-1 space-y-1">
         <div className="flex items-center justify-between group">
           <span className="font-bold mr-2 text-xs">
-            HP
+            生命
             <ModifierFieldAnchor target="hpMax" label="生命上限" size="compact" />
             {formData.cards?.[0]?.professionSpecial?.["起始生命"] && (
               <span className="text-[10px] text-gray-600 ml-1">

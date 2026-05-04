@@ -25,31 +25,56 @@ export type ModifierEntryId = string
 export type AutomationSourceId = string
 
 export type ModifierEntryKind = "base" | "modifier"
-export type ModifierSourceType = "profession" | "armor" | "level" | "upgrade" | "user"
+export type ModifierSourceType = "profession" | "armor" | "level" | "upgrade" | "user" | "equipment"
+
+export interface ModifierContributionDefinition {
+  target: ModifierTargetId
+  kind: ModifierEntryKind
+}
+
+export interface ModifierContributionEditable {
+  label: string
+  value: number
+}
+
+export interface ModifierContribution {
+  id: ModifierEntryId
+  definition: ModifierContributionDefinition
+  editable: ModifierContributionEditable
+}
+
+export type UserModifierContribution = ModifierContribution
+
+export interface ModifierEntryPresentation {
+  label: string
+  value: number
+}
+
+export interface ModifierEntrySource {
+  type: ModifierSourceType
+  id: string
+}
 
 export interface ModifierEntry {
   id: ModifierEntryId
-  sourceId: AutomationSourceId
-  target: ModifierTargetId
-  kind: ModifierEntryKind
-  label: string
-  value: number
-  sourceType: ModifierSourceType
+  definition: ModifierContributionDefinition
+  presentation: ModifierEntryPresentation
+  source: ModifierEntrySource
   priority: number
-}
-
-export interface UserModifierEntry extends ModifierEntry {
-  sourceType: "user"
 }
 
 export interface TargetModifierState {
   activeBaseId?: ModifierEntryId
-  disabledEntryIds?: ModifierEntryId[]
-  userEntries?: UserModifierEntry[]
+}
+
+export interface ModifierEntryState {
+  enabled?: boolean
+  order?: number
 }
 
 export interface ModifierState {
-  byTarget: Partial<Record<ModifierTargetId, TargetModifierState>>
+  targetStates: Partial<Record<ModifierTargetId, TargetModifierState>>
+  entryStates: Partial<Record<ModifierEntryId, ModifierEntryState>>
 }
 
 export interface AutomationSelection {

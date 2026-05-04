@@ -266,70 +266,39 @@ describe("modifier source definitions", () => {
   it("filters collected entries by target while keeping matching user entries", () => {
     const sheetData = {
       ...defaultSheetData,
-      modifierState: {
-        byTarget: {
-          evasion: {
-            userEntries: [{
-              id: "user:evasion",
-              sourceId: "user:evasion",
-              target: "evasion",
-              kind: "modifier",
-              label: "手动闪避调整",
-              value: 2,
-              sourceType: "user",
-              priority: 10,
-            }],
-          },
-          armorValue: {
-            userEntries: [{
-              id: "user:armor",
-              sourceId: "user:armor",
-              target: "armorValue",
-              kind: "modifier",
-              label: "手动护甲调整",
-              value: 1,
-              sourceType: "user",
-              priority: 10,
-            }],
-          },
-        },
-      },
+      userModifierContributions: [{
+        id: "user:evasion",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "手动闪避调整", value: 2 },
+      }, {
+        id: "user:armor-value",
+        definition: { target: "armorValue", kind: "modifier" },
+        editable: { label: "手动护甲调整", value: 1 },
+      }],
     } satisfies SheetData
 
     const entries = collectModifierEntries(sheetData, "evasion")
 
     expect(entries).toContainEqual(expect.objectContaining({ id: "user:evasion" }))
-    expect(entries).not.toContainEqual(expect.objectContaining({ id: "user:armor" }))
+    expect(entries).not.toContainEqual(expect.objectContaining({ id: "user:armor-value" }))
   })
 
   it("combines user entries with structured system entries", () => {
     const sheetData = {
       ...defaultSheetData,
       evasion: "15",
-      modifierState: {
-        byTarget: {
-          evasion: {
-            activeBaseId: "user:evasion-base",
-            userEntries: [{
-              id: "user:evasion-base",
-              sourceId: "user:evasion-base",
-              target: "evasion",
-              kind: "base",
-              label: "手动基础闪避",
-              value: 14,
-              sourceType: "user",
-              priority: 10,
-            }],
-          },
-        },
-      },
+      userModifierContributions: [{
+        id: "user:evasion-base",
+        definition: { target: "evasion", kind: "base" },
+        editable: { label: "手动基础闪避", value: 14 },
+      }],
       automationSelections: {
         "upgrade:tier1-5-0": {
           selected: true,
           params: { target: "evasion" },
         },
       },
-    }
+    } satisfies SheetData
 
     const entries = collectModifierEntries(sheetData)
 

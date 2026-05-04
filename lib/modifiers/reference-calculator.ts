@@ -1,7 +1,8 @@
 import { tryParseNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
+import { entryKind, entryTarget, entryValue } from "./entry-utils"
 import { readTargetValue } from "./target-accessors"
-import type { ModifierEntry, ModifierTargetId, TargetModifierState } from "./types"
+import type { ModifierEntry, ModifierState, ModifierTargetId } from "./types"
 
 export interface ReferenceSummary {
   target: ModifierTargetId
@@ -21,7 +22,7 @@ export interface CalculateReferenceSummaryInput {
   sheetData: SheetData
   target: ModifierTargetId
   entries: ModifierEntry[]
-  targetState?: TargetModifierState
+  modifierState?: ModifierState
 }
 
 function sortEntries(a: ModifierEntry, b: ModifierEntry): number {
@@ -31,16 +32,15 @@ function sortEntries(a: ModifierEntry, b: ModifierEntry): number {
 
 export function calculateReferenceSummary(input: CalculateReferenceSummaryInput): ReferenceSummary {
   const targetEntries = input.entries
-    .filter(entry => entry.target === input.target)
+    .filter(entry => entryTarget(entry) === input.target)
     .sort(sortEntries)
-  const disabledIds = new Set(input.targetState?.disabledEntryIds ?? [])
-  const disabledEntries = targetEntries.filter(entry => disabledIds.has(entry.id))
-  const enabledEntries = targetEntries.filter(entry => !disabledIds.has(entry.id))
-  const bases = enabledEntries.filter(entry => entry.kind === "base")
-  const modifiers = targetEntries.filter(entry => entry.kind === "modifier")
-  const enabledModifiers = enabledEntries.filter(entry => entry.kind === "modifier")
+  const disabledEntries = targetEntries.filter(entry => input.modifierState?.entryStates?.[entry.id]?.enabled === false)
+  const enabledEntries = targetEntries.filter(entry => input.modifierState?.entryStates?.[entry.id]?.enabled !== false)
+  const bases = enabledEntries.filter(entry => entryKind(entry) === "base")
+  const modifiers = targetEntries.filter(entry => entryKind(entry) === "modifier")
+  const enabledModifiers = enabledEntries.filter(entry => entryKind(entry) === "modifier")
 
-  const savedBaseId = input.targetState?.activeBaseId
+  const savedBaseId = input.modifierState?.targetStates?.[input.target]?.activeBaseId
   const savedBase = savedBaseId ? bases.find(entry => entry.id === savedBaseId) : undefined
   const activeBase = savedBase ?? bases[0]
   const activeBaseChanged = Boolean(savedBaseId && !savedBase && activeBase)
@@ -59,7 +59,7 @@ export function calculateReferenceSummary(input: CalculateReferenceSummaryInput)
     }
   }
 
-  const referenceTotal = activeBase.value + enabledModifiers.reduce((sum, entry) => sum + entry.value, 0)
+  const referenceTotal = entryValue(activeBase) + enabledModifiers.reduce((sum, entry) => sum + entryValue(entry), 0)
   const finalValue = tryParseNumber(readTargetValue(input.sheetData, input.target))
 
   return {

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest"
 import { defaultSheetData } from "@/lib/default-sheet-data"
+import { createModifierEntry } from "@/lib/modifiers/entry-utils"
 import { calculateReferenceSummary } from "@/lib/modifiers/reference-calculator"
-import type { ModifierEntry, ModifierState } from "@/lib/modifiers/types"
+import type { ModifierEntry } from "@/lib/modifiers/types"
 
 const entries: ModifierEntry[] = [
-  {
+  createModifierEntry({
     id: "system:profession:evasion",
     sourceId: "profession:warrior",
     target: "evasion",
@@ -13,8 +14,8 @@ const entries: ModifierEntry[] = [
     value: 12,
     sourceType: "profession",
     priority: 100,
-  },
-  {
+  }),
+  createModifierEntry({
     id: "upgrade:evasion",
     sourceId: "upgrade:tier1-5-0",
     target: "evasion",
@@ -23,7 +24,7 @@ const entries: ModifierEntry[] = [
     value: 1,
     sourceType: "upgrade",
     priority: 200,
-  },
+  }),
 ]
 
 describe("reference calculator", () => {
@@ -32,7 +33,7 @@ describe("reference calculator", () => {
       sheetData: { ...defaultSheetData, evasion: "15" },
       target: "evasion",
       entries,
-      targetState: {},
+      modifierState: { targetStates: {}, entryStates: {} },
     })
 
     expect(result.activeBase?.id).toBe("system:profession:evasion")
@@ -43,7 +44,7 @@ describe("reference calculator", () => {
   })
 
   it("uses saved active base when it still exists", () => {
-    const userBase: ModifierEntry = {
+    const userBase = createModifierEntry({
       id: "user:evasion-base",
       sourceId: "user:evasion-base",
       target: "evasion",
@@ -52,17 +53,16 @@ describe("reference calculator", () => {
       value: 14,
       sourceType: "user",
       priority: 10,
-    }
-
-    const state: ModifierState["byTarget"]["evasion"] = {
-      activeBaseId: "user:evasion-base",
-    }
+    })
 
     const result = calculateReferenceSummary({
       sheetData: { ...defaultSheetData, evasion: "15" },
       target: "evasion",
       entries: [...entries, userBase],
-      targetState: state,
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: {},
+      },
     })
 
     expect(result.activeBase?.id).toBe("user:evasion-base")
@@ -75,7 +75,10 @@ describe("reference calculator", () => {
       sheetData: { ...defaultSheetData, evasion: "13" },
       target: "evasion",
       entries,
-      targetState: { activeBaseId: "missing:base" },
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "missing:base" } },
+        entryStates: {},
+      },
     })
 
     expect(result.activeBase?.id).toBe("system:profession:evasion")
@@ -86,8 +89,8 @@ describe("reference calculator", () => {
     const result = calculateReferenceSummary({
       sheetData: { ...defaultSheetData, evasion: "13" },
       target: "evasion",
-      entries: entries.filter(entry => entry.kind !== "base"),
-      targetState: {},
+      entries: entries.filter(entry => entry.definition.kind !== "base"),
+      modifierState: { targetStates: {}, entryStates: {} },
     })
 
     expect(result.activeBase).toBeUndefined()
@@ -101,7 +104,7 @@ describe("reference calculator", () => {
       sheetData: { ...defaultSheetData, evasion: "12+敏捷" },
       target: "evasion",
       entries,
-      targetState: {},
+      modifierState: { targetStates: {}, entryStates: {} },
     })
 
     expect(result.referenceTotal).toBe(13)
@@ -113,7 +116,10 @@ describe("reference calculator", () => {
       sheetData: { ...defaultSheetData, evasion: "13" },
       target: "evasion",
       entries,
-      targetState: { disabledEntryIds: ["upgrade:evasion"] },
+      modifierState: {
+        targetStates: {},
+        entryStates: { "upgrade:evasion": { enabled: false } },
+      },
     })
 
     expect(result.enabledModifiers).toEqual([])

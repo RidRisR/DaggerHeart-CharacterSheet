@@ -22,6 +22,6 @@ export function getReferenceSummary(sheetData: SheetData, target: ModifierTarget
     sheetData,
     target,
     entries: collectModifierEntries(sheetData, target),
-    targetState: sheetData.modifierState?.byTarget?.[target],
+    modifierState: sheetData.modifierState,
   })
 }

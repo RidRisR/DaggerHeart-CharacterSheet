@@ -11,7 +11,7 @@ import type {
     AutomationSourceId,
     ModifierEntryId,
     ModifierTargetId,
-    UserModifierEntry,
+    UserModifierContribution,
 } from "@/lib/modifiers/types";
 
 // 施法属性映射关系
@@ -139,9 +139,9 @@ interface SheetState {
     updateScrapMaterial: (category: string, index: number, value: number | string) => void;
 
     setActiveModifierBase: (target: ModifierTargetId, baseId: ModifierEntryId | undefined) => void;
-    setModifierEntryDisabled: (target: ModifierTargetId, entryId: ModifierEntryId, disabled: boolean) => void;
-    upsertUserModifierEntry: (entry: UserModifierEntry) => void;
-    removeUserModifierEntry: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
+    setModifierEntryEnabled: (entryId: ModifierEntryId, enabled: boolean) => void;
+    upsertUserModifierContribution: (contribution: UserModifierContribution) => void;
+    removeUserModifierContribution: (entryId: ModifierEntryId) => void;
     setAutomationSelection: (sourceId: AutomationSourceId, selected: boolean, params?: Record<string, unknown>) => void;
 
     // Profession change handler
@@ -149,8 +149,11 @@ interface SheetState {
 }
 
 const ensureModifierState = (sheetData: SheetData) => ({
-    byTarget: {
-        ...(sheetData.modifierState?.byTarget ?? {}),
+    targetStates: {
+        ...(sheetData.modifierState?.targetStates ?? {}),
+    },
+    entryStates: {
+        ...(sheetData.modifierState?.entryStates ?? {}),
     },
 });
 
@@ -1022,93 +1025,77 @@ export const useSheetStore = create<SheetState>((set) => ({
 
     setActiveModifierBase: (target, baseId) => set((state) => {
         const modifierState = ensureModifierState(state.sheetData);
-        const targetState = modifierState.byTarget[target] ?? {};
-
-        return {
-            sheetData: {
-                ...state.sheetData,
-                modifierState: {
-                    byTarget: {
-                        ...modifierState.byTarget,
-                        [target]: {
-                            ...targetState,
-                            activeBaseId: baseId,
-                        },
-                    },
-                },
-            },
-        };
-    }),
-
-    setModifierEntryDisabled: (target, entryId, disabled) => set((state) => {
-        const modifierState = ensureModifierState(state.sheetData);
-        const targetState = modifierState.byTarget[target] ?? {};
-        const current = new Set(targetState.disabledEntryIds ?? []);
-        if (disabled) {
-            current.add(entryId);
+        const targetStates = { ...modifierState.targetStates };
+        if (baseId) {
+            targetStates[target] = { activeBaseId: baseId };
         } else {
-            current.delete(entryId);
+            delete targetStates[target];
         }
 
         return {
             sheetData: {
                 ...state.sheetData,
                 modifierState: {
-                    byTarget: {
-                        ...modifierState.byTarget,
-                        [target]: {
-                            ...targetState,
-                            disabledEntryIds: Array.from(current),
-                        },
-                    },
+                    ...modifierState,
+                    targetStates,
                 },
             },
         };
     }),
 
-    upsertUserModifierEntry: (entry) => set((state) => {
+    setModifierEntryEnabled: (entryId, enabled) => set((state) => {
         const modifierState = ensureModifierState(state.sheetData);
-        const targetState = modifierState.byTarget[entry.target] ?? {};
-        const entries = targetState.userEntries ?? [];
-        const nextEntries = entries.some(existing => existing.id === entry.id)
-            ? entries.map(existing => existing.id === entry.id ? entry : existing)
-            : [...entries, entry];
+        const entryStates = { ...modifierState.entryStates };
+        const currentState = entryStates[entryId] ?? {};
+
+        if (enabled) {
+            const nextEntryState = { ...currentState };
+            delete nextEntryState.enabled;
+            if (Object.keys(nextEntryState).length > 0) {
+                entryStates[entryId] = nextEntryState;
+            } else {
+                delete entryStates[entryId];
+            }
+        } else {
+            entryStates[entryId] = {
+                ...currentState,
+                enabled: false,
+            };
+        }
 
         return {
             sheetData: {
                 ...state.sheetData,
                 modifierState: {
-                    byTarget: {
-                        ...modifierState.byTarget,
-                        [entry.target]: {
-                            ...targetState,
-                            userEntries: nextEntries,
-                        },
-                    },
+                    ...modifierState,
+                    entryStates,
                 },
             },
         };
     }),
 
-    removeUserModifierEntry: (target, entryId) => set((state) => {
-        const modifierState = ensureModifierState(state.sheetData);
-        const targetState = modifierState.byTarget[target] ?? {};
+    upsertUserModifierContribution: (contribution) => set((state) => {
+        const contributions = state.sheetData.userModifierContributions ?? [];
+        const nextContributions = contributions.some(existing => existing.id === contribution.id)
+            ? contributions.map(existing => existing.id === contribution.id ? contribution : existing)
+            : [...contributions, contribution];
 
         return {
             sheetData: {
                 ...state.sheetData,
-                modifierState: {
-                    byTarget: {
-                        ...modifierState.byTarget,
-                        [target]: {
-                            ...targetState,
-                            userEntries: (targetState.userEntries ?? []).filter(entry => entry.id !== entryId),
-                        },
-                    },
-                },
+                userModifierContributions: nextContributions,
             },
         };
     }),
+
+    removeUserModifierContribution: (entryId) => set((state) => ({
+        sheetData: {
+            ...state.sheetData,
+            userModifierContributions: (state.sheetData.userModifierContributions ?? []).filter(
+                contribution => contribution.id !== entryId,
+            ),
+        },
+    })),
 
     setAutomationSelection: (sourceId, selected, params) => set((state) => ({
         sheetData: {

@@ -7,35 +7,46 @@ describe("modifier store actions", () => {
 
     store().setActiveModifierBase("evasion", "user:evasion-base")
 
-    expect(sheet().modifierState?.byTarget.evasion?.activeBaseId).toBe("user:evasion-base")
+    expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base")
   })
 
-  it("toggles disabled modifier entry ids", () => {
+  it("toggles modifier entry enabled state", () => {
     resetSheetStore()
 
-    store().setModifierEntryDisabled("evasion", "upgrade:evasion", true)
-    expect(sheet().modifierState?.byTarget.evasion?.disabledEntryIds).toEqual(["upgrade:evasion"])
+    store().setModifierEntryEnabled("upgrade:evasion", false)
+    expect(sheet().modifierState?.entryStates["upgrade:evasion"]).toEqual({ enabled: false })
 
-    store().setModifierEntryDisabled("evasion", "upgrade:evasion", false)
-    expect(sheet().modifierState?.byTarget.evasion?.disabledEntryIds).toEqual([])
+    store().setModifierEntryEnabled("upgrade:evasion", true)
+    expect(sheet().modifierState?.entryStates["upgrade:evasion"]).toBeUndefined()
   })
 
-  it("adds user modifier entries", () => {
+  it("adds user modifier contributions", () => {
     resetSheetStore()
 
-    store().upsertUserModifierEntry({
+    store().upsertUserModifierContribution({
       id: "user:evasion-mod",
-      sourceId: "user:evasion-mod",
-      target: "evasion",
-      kind: "modifier",
-      label: "临时加值",
-      value: 2,
-      sourceType: "user",
-      priority: 10,
+      definition: {
+        target: "evasion",
+        kind: "modifier",
+      },
+      editable: {
+        label: "临时加值",
+        value: 2,
+      },
     })
 
-    expect(sheet().modifierState?.byTarget.evasion?.userEntries).toEqual([
-      expect.objectContaining({ id: "user:evasion-mod", value: 2 }),
+    expect(sheet().userModifierContributions).toEqual([
+      {
+        id: "user:evasion-mod",
+        definition: {
+          target: "evasion",
+          kind: "modifier",
+        },
+        editable: {
+          label: "临时加值",
+          value: 2,
+        },
+      },
     ])
   })
 

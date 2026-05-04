@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react"
 import "@testing-library/jest-dom/vitest"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
+import CharacterSheet from "@/components/character-sheet"
 import { AttributesSection } from "@/components/character-sheet-sections/attributes-section"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import { resetSheetStore, sheet } from "../automation/test-helpers"
@@ -14,6 +15,14 @@ describe("ModifierFieldAnchor", () => {
 
     expect(screen.getByRole("button", { name: "查看敏捷来源" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "查看力量来源" })).toBeInTheDocument()
+  })
+
+  it("renders a source anchor on the real proficiency field", () => {
+    resetSheetStore()
+
+    render(<CharacterSheet />)
+
+    expect(screen.getByRole("button", { name: "查看熟练度来源" })).toBeInTheDocument()
   })
 
   it("hides the source anchor wrapper in print layouts", () => {

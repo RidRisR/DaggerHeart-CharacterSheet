@@ -147,6 +147,45 @@ describe("modifier source definitions", () => {
     expect(majorSummary.unattributedDelta).toBe(0)
   })
 
+  it("derives proficiency base and level threshold modifiers from current level", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      level: "5",
+      proficiency: [true, true, true, false, false, false],
+    }
+
+    const entries = collectModifierEntries(sheetData, "proficiency")
+
+    expect(entries).toContainEqual(expect.objectContaining({
+      id: "level:base:proficiency",
+      target: "proficiency",
+      kind: "base",
+      label: "基础熟练度",
+      value: 1,
+      sourceType: "level",
+    }))
+    expect(entries).toContainEqual(expect.objectContaining({
+      id: "level:threshold-2:proficiency",
+      target: "proficiency",
+      kind: "modifier",
+      label: "等级 2：熟练度 +1",
+      value: 1,
+      sourceType: "level",
+    }))
+    expect(entries).toContainEqual(expect.objectContaining({
+      id: "level:threshold-5:proficiency",
+      target: "proficiency",
+      kind: "modifier",
+      label: "等级 5：熟练度 +1",
+      value: 1,
+      sourceType: "level",
+    }))
+
+    const summary = getReferenceSummary(sheetData, "proficiency")
+    expect(summary.referenceTotal).toBe(3)
+    expect(summary.unattributedDelta).toBe(0)
+  })
+
   it("derives selected upgrade modifier entries from automation selections", () => {
     const sheetData = {
       ...defaultSheetData,
@@ -158,6 +197,10 @@ describe("modifier source definitions", () => {
         "upgrade:tier1-0-0": {
           selected: true,
           params: { attributes: ["agility", "strength"] },
+        },
+        "upgrade:tier2-6": {
+          selected: true,
+          params: { target: "proficiency" },
         },
       },
     }
@@ -177,6 +220,13 @@ describe("modifier source definitions", () => {
       kind: "modifier",
       value: 1,
       label: "升级：敏捷 +1",
+    }))
+    expect(entries).toContainEqual(expect.objectContaining({
+      id: "upgrade:tier2-6:proficiency",
+      target: "proficiency",
+      kind: "modifier",
+      value: 1,
+      label: "升级：熟练度 +1",
     }))
   })
 

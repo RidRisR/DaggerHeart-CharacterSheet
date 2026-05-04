@@ -11,6 +11,8 @@ const ATTRIBUTE_LABELS: Record<string, string> = {
   knowledge: "知识",
 }
 
+const PROFICIENCY_LEVEL_THRESHOLDS = [2, 5, 8]
+
 function isSelectionRecord(selection: unknown): selection is Record<string, unknown> {
   return typeof selection === "object" && selection !== null && !Array.isArray(selection)
 }
@@ -36,7 +38,7 @@ function selectedUpgradeEntries(sourceId: string, selection: unknown): ModifierE
     const labelMap = {
       hpMax: "升级：生命上限 +1",
       stressMax: "升级：压力上限 +1",
-      proficiency: "升级：熟练值 +1",
+      proficiency: "升级：熟练度 +1",
     } as const
     return [{
       id: `${sourceId}:${params.target}`,
@@ -188,6 +190,31 @@ export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntr
         priority: 150,
       },
     )
+
+    entries.push({
+      id: "level:base:proficiency",
+      sourceId: "level:base",
+      target: "proficiency",
+      kind: "base",
+      label: "基础熟练度",
+      value: 1,
+      sourceType: "level",
+      priority: 100,
+    })
+
+    PROFICIENCY_LEVEL_THRESHOLDS.forEach(threshold => {
+      if (level < threshold) return
+      entries.push({
+        id: `level:threshold-${threshold}:proficiency`,
+        sourceId: `level:threshold-${threshold}`,
+        target: "proficiency",
+        kind: "modifier",
+        label: `等级 ${threshold}：熟练度 +1`,
+        value: 1,
+        sourceType: "level",
+        priority: 150,
+      })
+    })
   }
 
   Object.entries(sheetData.automationSelections ?? {}).forEach(([sourceId, selection]) => {

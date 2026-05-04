@@ -705,6 +705,7 @@ export default function CharacterSheet() {
 
                   <div className="flex items-center gap-0.5 mb-1">
                     <span className="text-[10px]">熟练度</span>
+                    <ModifierFieldAnchor target="proficiency" label="熟练度" size="compact" />
                     {Array(6)
                       .fill(0)
                       .map((_, i) => (

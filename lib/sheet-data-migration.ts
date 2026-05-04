@@ -18,6 +18,8 @@ import {
   assertSupportedSchemaVersion,
   detectSchemaVersion,
 } from './sheet-schema-version'
+import { reconcileModifierState } from "@/lib/modifiers/reconcile"
+import type { ModifierContribution, ModifierEntryKind, ModifierTargetId } from "@/lib/modifiers/types"
 
 /**
  * 迁移选项接口
@@ -308,23 +310,119 @@ function migrateNotebook(data: SheetData): SheetData {
   return migrated
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function toModifierContribution(value: unknown): ModifierContribution | undefined {
+  if (!isRecord(value)) return undefined
+  if (typeof value.id !== "string") return undefined
+  if (!isRecord(value.definition)) return undefined
+  if (typeof value.definition.target !== "string") return undefined
+  if (value.definition.kind !== "base" && value.definition.kind !== "modifier") return undefined
+  if (!isRecord(value.editable)) return undefined
+  if (typeof value.editable.label !== "string") return undefined
+  if (typeof value.editable.value !== "number") return undefined
+
+  return {
+    id: value.id,
+    definition: {
+      target: value.definition.target as ModifierTargetId,
+      kind: value.definition.kind as ModifierEntryKind,
+    },
+    editable: {
+      label: value.editable.label,
+      value: value.editable.value,
+    },
+  }
+}
+
+function sanitizeModifierContributions(values: unknown): ModifierContribution[] {
+  if (!Array.isArray(values)) return []
+
+  const contributions: ModifierContribution[] = []
+  const seenIds = new Set<string>()
+
+  values.forEach(value => {
+    const contribution = toModifierContribution(value)
+    if (!contribution) return
+    if (seenIds.has(contribution.id)) return
+
+    seenIds.add(contribution.id)
+    contributions.push(contribution)
+  })
+
+  return contributions
+}
+
 function migrateModifierState(data: SheetData): SheetData {
   const migrated = { ...data }
+  const legacyState = isRecord(migrated.modifierState) ? migrated.modifierState : {}
+  const legacyByTarget = isRecord(legacyState.byTarget) ? legacyState.byTarget : {}
+  const targetStates: NonNullable<SheetData["modifierState"]>["targetStates"] =
+    isRecord(legacyState.targetStates)
+      ? { ...(legacyState.targetStates as NonNullable<SheetData["modifierState"]>["targetStates"]) }
+      : {}
+  const entryStates: NonNullable<SheetData["modifierState"]>["entryStates"] =
+    isRecord(legacyState.entryStates)
+      ? { ...(legacyState.entryStates as NonNullable<SheetData["modifierState"]>["entryStates"]) }
+      : {}
+  const userModifierContributions = sanitizeModifierContributions(migrated.userModifierContributions)
+  const seenUserContributionIds = new Set(userModifierContributions.map(entry => entry.id))
 
-  if (!migrated.modifierState || typeof migrated.modifierState !== "object" || Array.isArray(migrated.modifierState)) {
-    migrated.modifierState = { byTarget: {} }
-    console.log("[Migration] Added modifierState field")
-  } else if (!migrated.modifierState.byTarget || typeof migrated.modifierState.byTarget !== "object" || Array.isArray(migrated.modifierState.byTarget)) {
-    migrated.modifierState = { ...migrated.modifierState, byTarget: {} }
-    console.log("[Migration] Added modifierState.byTarget field")
-  }
+  Object.entries(legacyByTarget).forEach(([target, rawTargetState]) => {
+    if (!isRecord(rawTargetState)) return
+
+    if (typeof rawTargetState.activeBaseId === "string") {
+      targetStates[target as ModifierTargetId] = { activeBaseId: rawTargetState.activeBaseId }
+    }
+
+    if (Array.isArray(rawTargetState.disabledEntryIds)) {
+      rawTargetState.disabledEntryIds.forEach(entryId => {
+        if (typeof entryId !== "string") return
+        entryStates[entryId] = { ...(entryStates[entryId] ?? {}), enabled: false }
+      })
+    }
+
+    if (Array.isArray(rawTargetState.userEntries)) {
+      rawTargetState.userEntries.forEach(entry => {
+        if (!isRecord(entry)) return
+        if (
+          typeof entry.id !== "string" ||
+          typeof entry.target !== "string" ||
+          (entry.kind !== "base" && entry.kind !== "modifier") ||
+          typeof entry.label !== "string" ||
+          typeof entry.value !== "number"
+        ) {
+          return
+        }
+        if (seenUserContributionIds.has(entry.id)) return
+
+        seenUserContributionIds.add(entry.id)
+        userModifierContributions.push({
+          id: entry.id,
+          definition: {
+            target: entry.target as ModifierTargetId,
+            kind: entry.kind as ModifierEntryKind,
+          },
+          editable: {
+            label: entry.label,
+            value: entry.value,
+          },
+        })
+      })
+    }
+  })
+
+  migrated.modifierState = { targetStates, entryStates }
+  migrated.userModifierContributions = userModifierContributions
 
   if (!migrated.automationSelections || typeof migrated.automationSelections !== "object" || Array.isArray(migrated.automationSelections)) {
     migrated.automationSelections = {}
     console.log("[Migration] Added automationSelections field")
   }
 
-  return migrated
+  return reconcileModifierState(migrated)
 }
 
 /**

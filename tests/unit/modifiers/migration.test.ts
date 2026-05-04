@@ -17,11 +17,12 @@ describe("modifier state migration", () => {
     expect(migrated.armorValue).toBe("4")
     expect(migrated.minorThreshold).toBe("10")
     expect(migrated.majorThreshold).toBe("20")
-    expect(migrated.modifierState).toEqual({ byTarget: {} })
+    expect(migrated.modifierState).toEqual({ targetStates: {}, entryStates: {} })
+    expect(migrated.userModifierContributions).toEqual([])
     expect(migrated.automationSelections).toEqual({})
   })
 
-  it("preserves existing modifier state and automation selections", () => {
+  it("migrates legacy byTarget active base and user entries to provider contributions", () => {
     const migrated = migrateSheetData({
       modifierState: {
         byTarget: {
@@ -49,31 +50,111 @@ describe("modifier state migration", () => {
       },
     })
 
-    expect(migrated.modifierState?.byTarget.evasion?.activeBaseId).toBe("user:evasion-base")
-    expect(migrated.modifierState?.byTarget.evasion?.disabledEntryIds).toEqual(["upgrade:evasion"])
-    expect(migrated.modifierState?.byTarget.evasion?.userEntries).toEqual([{
+    expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base")
+    expect(migrated.userModifierContributions).toEqual([{
       id: "user:evasion-base",
-      sourceId: "user:evasion-base",
-      target: "evasion",
-      kind: "base",
-      label: "手动基础闪避",
-      value: 12,
-      sourceType: "user",
-      priority: 10,
+      definition: { target: "evasion", kind: "base" },
+      editable: { label: "手动基础闪避", value: 12 },
     }])
     expect(migrated.automationSelections?.["upgrade:tier1-5-0"]?.selected).toBe(true)
     expect(migrated.automationSelections?.["upgrade:tier1-5-0"]?.params).toEqual({ target: "evasion" })
   })
 
+  it("migrates legacy disabled ids to entry states and reconciles orphan ids", () => {
+    const migrated = migrateSheetData({
+      level: "1",
+      modifierState: {
+        byTarget: {
+          minorThreshold: {
+            disabledEntryIds: ["level:current:minorThreshold", "upgrade:evasion"],
+          },
+        },
+      },
+    })
+
+    expect(migrated.modifierState?.entryStates["level:current:minorThreshold"]).toEqual({ enabled: false })
+    expect(migrated.modifierState?.entryStates["upgrade:evasion"]).toBeUndefined()
+  })
+
   it("replaces invalid array-backed modifier state and automation selections", () => {
     const migrated = migrateSheetData({
-      modifierState: {
-        byTarget: [],
-      },
+      modifierState: [],
       automationSelections: [],
     })
 
-    expect(migrated.modifierState).toEqual({ byTarget: {} })
+    expect(migrated.modifierState).toEqual({ targetStates: {}, entryStates: {} })
     expect(migrated.automationSelections).toEqual({})
+  })
+
+  it("preserves new modifier state while merging legacy byTarget state", () => {
+    const migrated = migrateSheetData({
+      level: "1",
+      modifierState: {
+        targetStates: {
+          proficiency: { activeBaseId: "level:base:proficiency" },
+        },
+        entryStates: {
+          "level:current:minorThreshold": { enabled: false },
+        },
+        byTarget: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            userEntries: [{
+              id: "user:evasion-base",
+              sourceId: "user:evasion-base",
+              target: "evasion",
+              kind: "base",
+              label: "手动基础闪避",
+              value: 12,
+              sourceType: "user",
+              priority: 10,
+            }],
+          },
+        },
+      },
+    })
+
+    expect(migrated.modifierState?.targetStates.proficiency?.activeBaseId).toBe("level:base:proficiency")
+    expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base")
+    expect(migrated.modifierState?.entryStates["level:current:minorThreshold"]).toEqual({ enabled: false })
+    expect(migrated.userModifierContributions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "user:evasion-base" }),
+    ]))
+  })
+
+  it("sanitizes malformed root user modifier contributions and keeps the first duplicate id", () => {
+    const validContribution = {
+      id: "user:evasion-root",
+      definition: { target: "evasion", kind: "modifier" },
+      editable: { label: "根加值", value: 2 },
+    }
+
+    expect(() => migrateSheetData({
+      userModifierContributions: [
+        null,
+        { id: "bad" },
+        validContribution,
+        {
+          id: "user:evasion-root",
+          definition: { target: "evasion", kind: "modifier" },
+          editable: { label: "重复加值", value: 4 },
+        },
+      ],
+    })).not.toThrow()
+
+    const migrated = migrateSheetData({
+      userModifierContributions: [
+        null,
+        { id: "bad" },
+        validContribution,
+        {
+          id: "user:evasion-root",
+          definition: { target: "evasion", kind: "modifier" },
+          editable: { label: "重复加值", value: 4 },
+        },
+      ],
+    })
+
+    expect(migrated.userModifierContributions).toEqual([validContribution])
   })
 })

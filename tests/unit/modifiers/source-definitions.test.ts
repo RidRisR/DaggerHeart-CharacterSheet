@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest"
 import type { StandardCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import { collectModifierEntries, getReferenceSummary } from "@/lib/modifiers/registry"
+import { collectModifierEntries } from "@/lib/modifiers/registry"
+import { collectSystemModifierEntries } from "@/lib/modifiers/source-definitions"
 import type { SheetData } from "@/lib/sheet-data"
 
 describe("modifier source definitions", () => {
@@ -23,15 +24,13 @@ describe("modifier source definitions", () => {
       ],
     }
 
-    const entries = collectModifierEntries(sheetData, "evasion")
+    const entries = collectSystemModifierEntries(sheetData)
 
     expect(entries).toContainEqual(expect.objectContaining({
       id: "profession:profession-warrior:evasion",
-      target: "evasion",
-      kind: "base",
-      label: "战士：起始闪避",
-      value: 12,
-      sourceType: "profession",
+      definition: { target: "evasion", kind: "base" },
+      presentation: { label: "战士：起始闪避", value: 12 },
+      source: { type: "profession", id: "profession:profession-warrior" },
     }))
   })
 
@@ -54,22 +53,19 @@ describe("modifier source definitions", () => {
       ],
     }
 
-    const evasionEntries = collectModifierEntries(sheetData, "evasion")
-    const hpEntries = collectModifierEntries(sheetData, "hpMax")
+    const entries = collectSystemModifierEntries(sheetData)
 
-    expect(evasionEntries).toContainEqual(expect.objectContaining({
+    expect(entries).toContainEqual(expect.objectContaining({
       id: "profession:profession-bard:evasion",
-      kind: "base",
-      label: "吟游诗人：起始闪避",
-      value: 10,
-      sourceType: "profession",
+      definition: { target: "evasion", kind: "base" },
+      presentation: { label: "吟游诗人：起始闪避", value: 10 },
+      source: { type: "profession", id: "profession:profession-bard" },
     }))
-    expect(hpEntries).toContainEqual(expect.objectContaining({
+    expect(entries).toContainEqual(expect.objectContaining({
       id: "profession:profession-bard:hpMax",
-      kind: "base",
-      label: "吟游诗人：起始生命上限",
-      value: 5,
-      sourceType: "profession",
+      definition: { target: "hpMax", kind: "base" },
+      presentation: { label: "吟游诗人：起始生命上限", value: 5 },
+      source: { type: "profession", id: "profession:profession-bard" },
     }))
   })
 
@@ -81,31 +77,25 @@ describe("modifier source definitions", () => {
       armorThreshold: "9/20",
     }
 
-    const entries = collectModifierEntries(sheetData)
+    const entries = collectSystemModifierEntries(sheetData)
 
     expect(entries).toContainEqual(expect.objectContaining({
       id: "armor:current:armorValue",
-      target: "armorValue",
-      kind: "base",
-      label: "锁子甲：基础护甲值",
-      value: 4,
-      sourceType: "armor",
+      definition: { target: "armorValue", kind: "base" },
+      presentation: { label: "锁子甲：基础护甲值", value: 4 },
+      source: { type: "armor", id: "armor:current" },
     }))
     expect(entries).toContainEqual(expect.objectContaining({
       id: "armor:current:minorThreshold",
-      target: "minorThreshold",
-      kind: "base",
-      label: "锁子甲：基础重伤阈值",
-      value: 9,
-      sourceType: "armor",
+      definition: { target: "minorThreshold", kind: "base" },
+      presentation: { label: "锁子甲：基础重伤阈值", value: 9 },
+      source: { type: "armor", id: "armor:current" },
     }))
     expect(entries).toContainEqual(expect.objectContaining({
       id: "armor:current:majorThreshold",
-      target: "majorThreshold",
-      kind: "base",
-      label: "锁子甲：基础严重阈值",
-      value: 20,
-      sourceType: "armor",
+      definition: { target: "majorThreshold", kind: "base" },
+      presentation: { label: "锁子甲：基础严重阈值", value: 20 },
+      source: { type: "armor", id: "armor:current" },
     }))
   })
 
@@ -119,32 +109,30 @@ describe("modifier source definitions", () => {
       majorThreshold: "11",
     }
 
-    const entries = collectModifierEntries(sheetData)
+    const entries = collectSystemModifierEntries(sheetData)
 
     expect(entries).toContainEqual(expect.objectContaining({
       id: "level:current:minorThreshold",
-      target: "minorThreshold",
-      kind: "modifier",
-      label: "等级 5：重伤阈值 +5",
-      value: 5,
-      sourceType: "level",
+      definition: { target: "minorThreshold", kind: "modifier" },
+      presentation: { label: "等级 5：重伤阈值 +5", value: 5 },
+      source: { type: "level", id: "level:current" },
     }))
     expect(entries).toContainEqual(expect.objectContaining({
       id: "level:current:majorThreshold",
-      target: "majorThreshold",
-      kind: "modifier",
-      label: "等级 5：严重阈值 +5",
-      value: 5,
-      sourceType: "level",
+      definition: { target: "majorThreshold", kind: "modifier" },
+      presentation: { label: "等级 5：严重阈值 +5", value: 5 },
+      source: { type: "level", id: "level:current" },
     }))
 
-    const minorSummary = getReferenceSummary(sheetData, "minorThreshold")
-    const majorSummary = getReferenceSummary(sheetData, "majorThreshold")
+    const minorTotal = entries
+      .filter(entry => entry.definition.target === "minorThreshold")
+      .reduce((total, entry) => total + entry.presentation.value, 0)
+    const majorTotal = entries
+      .filter(entry => entry.definition.target === "majorThreshold")
+      .reduce((total, entry) => total + entry.presentation.value, 0)
 
-    expect(minorSummary.referenceTotal).toBe(8)
-    expect(minorSummary.unattributedDelta).toBe(0)
-    expect(majorSummary.referenceTotal).toBe(11)
-    expect(majorSummary.unattributedDelta).toBe(0)
+    expect(minorTotal).toBe(8)
+    expect(majorTotal).toBe(11)
   })
 
   it("derives proficiency base and level threshold modifiers from current level", () => {
@@ -154,36 +142,31 @@ describe("modifier source definitions", () => {
       proficiency: [true, true, true, false, false, false],
     }
 
-    const entries = collectModifierEntries(sheetData, "proficiency")
+    const entries = collectSystemModifierEntries(sheetData)
 
     expect(entries).toContainEqual(expect.objectContaining({
       id: "level:base:proficiency",
-      target: "proficiency",
-      kind: "base",
-      label: "基础熟练度",
-      value: 1,
-      sourceType: "level",
+      definition: { target: "proficiency", kind: "base" },
+      presentation: { label: "基础熟练度", value: 1 },
+      source: { type: "level", id: "level:base" },
     }))
     expect(entries).toContainEqual(expect.objectContaining({
       id: "level:threshold-2:proficiency",
-      target: "proficiency",
-      kind: "modifier",
-      label: "等级 2：熟练度 +1",
-      value: 1,
-      sourceType: "level",
+      definition: { target: "proficiency", kind: "modifier" },
+      presentation: { label: "等级 2：熟练度 +1", value: 1 },
+      source: { type: "level", id: "level:threshold-2" },
     }))
     expect(entries).toContainEqual(expect.objectContaining({
       id: "level:threshold-5:proficiency",
-      target: "proficiency",
-      kind: "modifier",
-      label: "等级 5：熟练度 +1",
-      value: 1,
-      sourceType: "level",
+      definition: { target: "proficiency", kind: "modifier" },
+      presentation: { label: "等级 5：熟练度 +1", value: 1 },
+      source: { type: "level", id: "level:threshold-5" },
     }))
 
-    const summary = getReferenceSummary(sheetData, "proficiency")
-    expect(summary.referenceTotal).toBe(3)
-    expect(summary.unattributedDelta).toBe(0)
+    const proficiencyTotal = entries
+      .filter(entry => entry.definition.target === "proficiency")
+      .reduce((total, entry) => total + entry.presentation.value, 0)
+    expect(proficiencyTotal).toBe(3)
   })
 
   it("derives selected upgrade modifier entries from automation selections", () => {
@@ -205,28 +188,25 @@ describe("modifier source definitions", () => {
       },
     }
 
-    const entries = collectModifierEntries(sheetData)
+    const entries = collectSystemModifierEntries(sheetData)
 
     expect(entries).toContainEqual(expect.objectContaining({
       id: "upgrade:tier1-5-0:evasion",
-      target: "evasion",
-      kind: "modifier",
-      value: 1,
-      label: "升级：闪避 +1",
+      definition: { target: "evasion", kind: "modifier" },
+      presentation: { label: "升级：闪避 +1", value: 1 },
+      source: { type: "upgrade", id: "upgrade:tier1-5-0" },
     }))
     expect(entries).toContainEqual(expect.objectContaining({
       id: "upgrade:tier1-0-0:agility.value",
-      target: "agility.value",
-      kind: "modifier",
-      value: 1,
-      label: "升级：敏捷 +1",
+      definition: { target: "agility.value", kind: "modifier" },
+      presentation: { label: "升级：敏捷 +1", value: 1 },
+      source: { type: "upgrade", id: "upgrade:tier1-0-0" },
     }))
     expect(entries).toContainEqual(expect.objectContaining({
       id: "upgrade:tier2-6:proficiency",
-      target: "proficiency",
-      kind: "modifier",
-      value: 1,
-      label: "升级：熟练度 +1",
+      definition: { target: "proficiency", kind: "modifier" },
+      presentation: { label: "升级：熟练度 +1", value: 1 },
+      source: { type: "upgrade", id: "upgrade:tier2-6" },
     }))
   })
 
@@ -245,13 +225,13 @@ describe("modifier source definitions", () => {
       },
     } as unknown as SheetData
 
-    expect(() => collectModifierEntries(sheetData)).not.toThrow()
+    expect(() => collectSystemModifierEntries(sheetData)).not.toThrow()
 
-    const entries = collectModifierEntries(sheetData, "evasion")
+    const entries = collectSystemModifierEntries(sheetData)
     expect(entries).toContainEqual(expect.objectContaining({
       id: "upgrade:valid:evasion",
-      target: "evasion",
-      kind: "modifier",
+      definition: { target: "evasion", kind: "modifier" },
+      source: { type: "upgrade", id: "upgrade:valid" },
     }))
   })
 
@@ -266,21 +246,21 @@ describe("modifier source definitions", () => {
       },
     }
 
-    const entries = collectModifierEntries(sheetData)
-      .filter(entry => entry.sourceId === "upgrade:experience")
+    const entries = collectSystemModifierEntries(sheetData)
+      .filter(entry => entry.source.id === "upgrade:experience")
 
     expect(entries).toEqual([expect.objectContaining({
       id: "upgrade:experience:experienceValues.0",
-      target: "experienceValues.0",
-      kind: "modifier",
-      label: "升级：经历 1 +1",
+      definition: { target: "experienceValues.0", kind: "modifier" },
+      presentation: { label: "升级：经历 1 +1", value: 1 },
+      source: { type: "upgrade", id: "upgrade:experience" },
     })])
   })
 
   it("does not emit profession entries from the default empty profession card", () => {
-    const entries = collectModifierEntries(defaultSheetData)
+    const entries = collectSystemModifierEntries(defaultSheetData)
 
-    expect(entries.filter(entry => entry.sourceType === "profession")).toEqual([])
+    expect(entries.filter(entry => entry.source.type === "profession")).toEqual([])
   })
 
   it("filters collected entries by target while keeping matching user entries", () => {
@@ -322,7 +302,7 @@ describe("modifier source definitions", () => {
     expect(entries).not.toContainEqual(expect.objectContaining({ id: "user:armor" }))
   })
 
-  it("combines user entries with system entries in reference summary", () => {
+  it("combines user entries with structured system entries", () => {
     const sheetData = {
       ...defaultSheetData,
       evasion: "15",
@@ -351,10 +331,14 @@ describe("modifier source definitions", () => {
       },
     }
 
-    const summary = getReferenceSummary(sheetData, "evasion")
+    const entries = collectModifierEntries(sheetData)
 
-    expect(summary.activeBase?.id).toBe("user:evasion-base")
-    expect(summary.referenceTotal).toBe(15)
-    expect(summary.unattributedDelta).toBe(0)
+    expect(entries).toContainEqual(expect.objectContaining({ id: "user:evasion-base" }))
+    expect(entries).toContainEqual(expect.objectContaining({
+      id: "upgrade:tier1-5-0:evasion",
+      definition: { target: "evasion", kind: "modifier" },
+      presentation: { label: "升级：闪避 +1", value: 1 },
+      source: { type: "upgrade", id: "upgrade:tier1-5-0" },
+    }))
   })
 })

@@ -3,6 +3,7 @@ import {
   validateAndProcessCharacterData,
   validateJSONCharacterData,
 } from '@/lib/character-data-validator'
+import { defaultSheetData } from '@/lib/default-sheet-data'
 
 const validCard = {
   id: 'card-domain-1',
@@ -61,5 +62,51 @@ describe('character data import validation', () => {
 
     expect(result.valid).toBe(true)
     expect(result.data?.cards).toEqual([validCard])
+  })
+
+  it('preserves persisted modifier fields through JSON import validation', () => {
+    const payload = {
+      ...defaultSheetData,
+      name: 'Modifier Import',
+      evasion: '12',
+      cards: [],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: 'user:evasion-base' },
+        },
+        entryStates: {
+          'user:evasion-mod': { enabled: false },
+        },
+      },
+      userModifierContributions: [
+        {
+          id: 'user:evasion-base',
+          definition: { target: 'evasion', kind: 'base' },
+          editable: { label: 'Manual evasion base', value: 12 },
+        },
+        {
+          id: 'user:evasion-mod',
+          definition: { target: 'evasion', kind: 'modifier' },
+          editable: { label: 'Manual evasion modifier', value: 2 },
+        },
+      ],
+      automationSelections: {
+        'upgrade:tier1-5-0': {
+          selected: true,
+          params: { target: 'evasion' },
+        },
+      },
+    }
+
+    const result = validateJSONCharacterData(JSON.stringify(payload))
+
+    expect(result.valid).toBe(true)
+    expect(result.data?.modifierState?.targetStates.evasion?.activeBaseId).toBe('user:evasion-base')
+    expect(result.data?.modifierState?.entryStates['user:evasion-mod']).toEqual({ enabled: false })
+    expect(result.data?.userModifierContributions).toEqual(payload.userModifierContributions)
+    expect(result.data?.automationSelections?.['upgrade:tier1-5-0']).toEqual({
+      selected: true,
+      params: { target: 'evasion' },
+    })
   })
 })

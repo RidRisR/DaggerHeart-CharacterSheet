@@ -170,6 +170,9 @@ export function cleanAndNormalizeData(data: any): SheetData {
 
     // 升级选项
     checkedUpgrades: data.checkedUpgrades || undefined,
+    modifierState: data.modifierState && typeof data.modifierState === "object" ? data.modifierState : undefined,
+    userModifierContributions: Array.isArray(data.userModifierContributions) ? data.userModifierContributions : undefined,
+    automationSelections: data.automationSelections && typeof data.automationSelections === "object" ? data.automationSelections : undefined,
 
     // 战斗相关
     minorThreshold: data.minorThreshold ? String(data.minorThreshold) : undefined,

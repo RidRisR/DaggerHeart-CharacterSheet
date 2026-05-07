@@ -222,7 +222,7 @@ builtin.armor.chainmail
 
 模板 id 不等于运行时 contribution id。写入角色卡的 `modifierContributions[].id` 必须是整张角色卡内全局唯一 id。
 
-武器模板第一阶段保留现有中文字段，并新增：
+武器模板第一阶段保留现有中文字段，只新增稳定 `id` 和可选 `modifierContributions`：
 
 ```ts
 interface WeaponTemplate {
@@ -240,22 +240,36 @@ interface WeaponTemplate {
 }
 ```
 
-护甲模板改为结构化核心规则字段：
+护甲模板本阶段改为英文字段。原因是护甲模板本来就要从中文规则字段迁到结构化核心字段，继续混用中英字段会让模板语义不清。
 
 ```ts
 interface ArmorTemplate {
   id: string
-  名称: string
+  name: string
+  tier: "T1" | "T2" | "T3" | "T4"
   baseArmorMax: number
   baseThresholds: {
     minor: number
     major: number
   }
-  特性名称?: string
-  描述?: string
+  featureName?: string
+  description?: string
   modifierContributions?: EquipmentModifierContributionTemplate[]
 }
 ```
+
+旧护甲模板字段只作为改造输入：
+
+```text
+名称 -> name
+等级 -> tier
+护甲值 -> baseArmorMax
+伤害阈值 -> baseThresholds
+特性名称 -> featureName
+描述 -> description
+```
+
+武器模板字段暂不英文化。它们仍使用当前中文字段，避免把武器选择 modal、筛选、展示和自定义武器解析一起扩大到本阶段之外。
 
 模板中的 `modifierContributions` 只记录非常明确的长期无条件加值。不明确、条件型、攻击或伤害相关规则不进入本阶段模板 contribution。
 

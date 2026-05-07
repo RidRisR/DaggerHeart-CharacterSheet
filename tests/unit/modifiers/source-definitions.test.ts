@@ -69,42 +69,160 @@ describe("modifier source definitions", () => {
     }))
   })
 
-  it("derives armor base and threshold entries from current armor fields", () => {
+  it("derives armor base entries from equipment armor slot", () => {
     const sheetData = {
       ...defaultSheetData,
-      armorName: "锁子甲",
-      armorBaseScore: "4",
-      armorThreshold: "9/20",
+      equipment: {
+        ...defaultSheetData.equipment,
+        armorSlot: {
+          name: "链甲",
+          baseArmorMax: 4,
+          baseThresholds: { minor: 7, major: 15 },
+          feature: "重型",
+          modifierContributions: [],
+        },
+      },
     }
 
-    const entries = collectSystemModifierEntries(sheetData)
+    const entries = collectModifierEntries(sheetData)
 
     expect(entries).toContainEqual(expect.objectContaining({
-      id: "armor:current:armorMax",
+      id: "equipment:armor:current:armorMax",
       definition: { target: "armorMax", kind: "base" },
-      presentation: { label: "锁子甲：基础护甲值", value: 4 },
-      source: { type: "armor", id: "armor:current" },
+      presentation: { label: "链甲：基础护甲值", value: 4 },
+      source: { type: "equipment", id: "armor:current" },
     }))
     expect(entries).toContainEqual(expect.objectContaining({
-      id: "armor:current:minorThreshold",
+      id: "equipment:armor:current:minorThreshold",
       definition: { target: "minorThreshold", kind: "base" },
-      presentation: { label: "锁子甲：基础重伤阈值", value: 9 },
-      source: { type: "armor", id: "armor:current" },
+      presentation: { label: "链甲：基础重伤阈值", value: 7 },
+      source: { type: "equipment", id: "armor:current" },
     }))
     expect(entries).toContainEqual(expect.objectContaining({
-      id: "armor:current:majorThreshold",
+      id: "equipment:armor:current:majorThreshold",
       definition: { target: "majorThreshold", kind: "base" },
-      presentation: { label: "锁子甲：基础严重阈值", value: 20 },
-      source: { type: "armor", id: "armor:current" },
+      presentation: { label: "链甲：基础严重阈值", value: 15 },
+      source: { type: "equipment", id: "armor:current" },
     }))
+  })
+
+  it("skips null armor base values from equipment armor slot", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      equipment: {
+        ...defaultSheetData.equipment,
+        armorSlot: {
+          name: "无护甲",
+          baseArmorMax: null,
+          baseThresholds: { minor: null, major: null },
+          feature: "",
+          modifierContributions: [],
+        },
+      },
+    }
+
+    const entries = collectModifierEntries(sheetData)
+
+    expect(entries.some(entry => entry.id === "equipment:armor:current:armorMax")).toBe(false)
+    expect(entries.some(entry => entry.id === "equipment:armor:current:minorThreshold")).toBe(false)
+    expect(entries.some(entry => entry.id === "equipment:armor:current:majorThreshold")).toBe(false)
+  })
+
+  it("collects active equipment contributions but not inventory weapon contributions", () => {
+    const entries = collectModifierEntries({
+      ...defaultSheetData,
+      equipment: {
+        ...defaultSheetData.equipment,
+        weaponSlots: {
+          primary: {
+            name: "塔盾",
+            trait: "",
+            damage: "",
+            feature: "",
+            modifierContributions: [
+              {
+                id: "primary-armor",
+                definition: { target: "armorMax", kind: "modifier" },
+                editable: { label: "壁垒", value: 2 },
+              },
+            ],
+          },
+          secondary: {
+            name: "刺剑",
+            trait: "",
+            damage: "",
+            feature: "",
+            modifierContributions: [
+              {
+                id: "secondary-evasion",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "灵巧格挡", value: 1 },
+              },
+            ],
+          },
+          inventory: [
+            {
+              name: "备用塔盾",
+              trait: "",
+              damage: "",
+              feature: "",
+              modifierContributions: [
+                {
+                  id: "inventory-armor",
+                  definition: { target: "armorMax", kind: "modifier" },
+                  editable: { label: "不应生效", value: 99 },
+                },
+              ],
+            },
+            defaultSheetData.equipment.weaponSlots.inventory[1],
+          ],
+        },
+        armorSlot: {
+          ...defaultSheetData.equipment.armorSlot,
+          name: "链甲",
+          modifierContributions: [
+            {
+              id: "armor-sturdy",
+              definition: { target: "armorMax", kind: "modifier" },
+              editable: { label: "稳固", value: 1 },
+            },
+          ],
+        },
+      },
+    })
+
+    expect(entries).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "primary-armor",
+        presentation: { label: "塔盾：壁垒", value: 2 },
+        source: { type: "equipment", id: "weapon:primary" },
+      }),
+      expect.objectContaining({
+        id: "secondary-evasion",
+        presentation: { label: "刺剑：灵巧格挡", value: 1 },
+        source: { type: "equipment", id: "weapon:secondary" },
+      }),
+      expect.objectContaining({
+        id: "armor-sturdy",
+        presentation: { label: "链甲：稳固", value: 1 },
+        source: { type: "equipment", id: "armor:current" },
+      }),
+    ]))
+    expect(entries.some(entry => entry.id === "inventory-armor")).toBe(false)
   })
 
   it("derives level threshold modifiers from current level", () => {
     const sheetData = {
       ...defaultSheetData,
       level: "5",
-      armorName: "锁子甲",
-      armorThreshold: "3/6",
+      equipment: {
+        ...defaultSheetData.equipment,
+        armorSlot: {
+          ...defaultSheetData.equipment.armorSlot,
+          name: "锁子甲",
+          baseThresholds: { minor: 3, major: 6 },
+        },
+      },
       minorThreshold: "8",
       majorThreshold: "11",
     }

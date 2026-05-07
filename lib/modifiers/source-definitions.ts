@@ -124,45 +124,42 @@ export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntr
     }))
   }
 
-  const armorLabel = sheetData.armorName || "当前护甲"
-  const armorValue = tryParseNumber(sheetData.armorBaseScore)
-  if (armorValue !== undefined) {
+  const armorSlot = sheetData.equipment.armorSlot
+  const armorLabel = armorSlot.name || "当前护甲"
+  if (armorSlot.baseArmorMax !== null) {
     entries.push(createModifierEntry({
-      id: "armor:current:armorMax",
+      id: "equipment:armor:current:armorMax",
       sourceId: "armor:current",
       target: "armorMax",
       kind: "base",
       label: `${armorLabel}：基础护甲值`,
-      value: armorValue,
-      sourceType: "armor",
+      value: armorSlot.baseArmorMax,
+      sourceType: "equipment",
       priority: 100,
     }))
   }
 
-  const [minorRaw, majorRaw] = String(sheetData.armorThreshold || "").split("/")
-  const minor = tryParseNumber(minorRaw)
-  const major = tryParseNumber(majorRaw)
-  if (minor !== undefined) {
+  if (armorSlot.baseThresholds.minor !== null) {
     entries.push(createModifierEntry({
-      id: "armor:current:minorThreshold",
+      id: "equipment:armor:current:minorThreshold",
       sourceId: "armor:current",
       target: "minorThreshold",
       kind: "base",
       label: `${armorLabel}：基础重伤阈值`,
-      value: minor,
-      sourceType: "armor",
+      value: armorSlot.baseThresholds.minor,
+      sourceType: "equipment",
       priority: 100,
     }))
   }
-  if (major !== undefined) {
+  if (armorSlot.baseThresholds.major !== null) {
     entries.push(createModifierEntry({
-      id: "armor:current:majorThreshold",
+      id: "equipment:armor:current:majorThreshold",
       sourceId: "armor:current",
       target: "majorThreshold",
       kind: "base",
       label: `${armorLabel}：基础严重阈值`,
-      value: major,
-      sourceType: "armor",
+      value: armorSlot.baseThresholds.major,
+      sourceType: "equipment",
       priority: 100,
     }))
   }

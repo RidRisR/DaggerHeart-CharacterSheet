@@ -95,9 +95,9 @@ describe("modifier state migration", () => {
       },
     })
 
-    expect(migrated.modifierState?.targetStates.armorMax?.activeBaseId).toBe("armor:current:armorMax")
+    expect(migrated.modifierState?.targetStates.armorMax?.activeBaseId).toBe("equipment:armor:current:armorMax")
     expect(migrated.modifierState?.targetStates).not.toHaveProperty("armorValue")
-    expect(migrated.modifierState?.entryStates["armor:current:armorMax"]).toEqual({ enabled: false })
+    expect(migrated.modifierState?.entryStates["equipment:armor:current:armorMax"]).toEqual({ enabled: false })
     expect(migrated.modifierState?.entryStates["user:armor-mod"]).toEqual({ enabled: false })
     expect(migrated.modifierState?.entryStates).not.toHaveProperty("armor:current:armorValue")
     expect(migrated.userModifierContributions).toContainEqual({

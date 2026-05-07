@@ -466,7 +466,14 @@ function migrateModifierTarget(target: string): ModifierTargetId {
 }
 
 function migrateSystemModifierEntryId(entryId: string): string {
-  return entryId === "armor:current:armorValue" ? "armor:current:armorMax" : entryId
+  const equipmentArmorEntryIds: Record<string, string> = {
+    "armor:current:armorValue": "equipment:armor:current:armorMax",
+    "armor:current:armorMax": "equipment:armor:current:armorMax",
+    "armor:current:minorThreshold": "equipment:armor:current:minorThreshold",
+    "armor:current:majorThreshold": "equipment:armor:current:majorThreshold",
+  }
+
+  return equipmentArmorEntryIds[entryId] ?? entryId
 }
 
 function migrateLegacyUserEntryId(entryId: string, target: string): string {

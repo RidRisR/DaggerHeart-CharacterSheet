@@ -1,5 +1,5 @@
 "use client"
-import { ArmorItem, armorItems } from "@/data/list/armor" // Changed import
+import { armorItems } from "@/data/list/armor"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area" // Ensure ScrollBar is imported
 import { useEffect, useState, useMemo } from "react"; // Added useEffect
 import { Button } from "@/components/ui/button";
@@ -7,20 +7,8 @@ import { Button } from "@/components/ui/button";
 interface ArmorModalProps {
   isOpen: boolean
   onClose: () => void
-  onSelect: (armorId: string) => void // Assuming armorId is the '名称'
+  onSelect: (armorId: string) => void
   title: string
-}
-
-// Updated Armor interface to match Chinese keys in armor.ts
-interface Armor {
-  名称: string;
-  等级: string;
-  伤害阈值: string;
-  护甲值: number;
-  特性名称: string;
-  描述: string;
-  // Add an id for React key and selection, can be same as 名称 if unique
-  id: string;
 }
 
 const LEVELS = ["T1", "T2", "T3", "T4"] as const;
@@ -39,28 +27,22 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
   // 新增搜索状态
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 处理数据和筛选都放在组件体内，保证 Hook 顺序
-  const processedArmorItems: Armor[] = useMemo(() => armorItems.map((armor: ArmorItem) => ({
-    ...armor,
-    id: armor.名称,
-  })), []);
-
   const filteredArmorItems = useMemo(() => {
-    return processedArmorItems.filter(a => {
-      if (levelFilter && a.等级 !== levelFilter) return false;
+    return armorItems.filter(a => {
+      if (levelFilter && a.tier !== levelFilter) return false;
       if (searchTerm) {
         const lowerCaseSearchTerm = searchTerm.toLowerCase();
         if (
-          !a.名称.toLowerCase().includes(lowerCaseSearchTerm) &&
-          !a.描述.toLowerCase().includes(lowerCaseSearchTerm) &&
-          !a.特性名称.toLowerCase().includes(lowerCaseSearchTerm)
+          !a.name.toLowerCase().includes(lowerCaseSearchTerm) &&
+          !a.description.toLowerCase().includes(lowerCaseSearchTerm) &&
+          !a.featureName.toLowerCase().includes(lowerCaseSearchTerm)
         ) {
           return false;
         }
       }
       return true;
     });
-  }, [processedArmorItems, levelFilter, searchTerm]);
+  }, [levelFilter, searchTerm]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -343,12 +325,12 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                       onSelect(armor.id);
                     }}
                   >
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.名称}</td>
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.等级}</td>
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.伤害阈值}</td>
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.护甲值}</td>
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.特性名称}</td>
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.描述}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.name}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.tier}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{`${armor.baseThresholds.minor}/${armor.baseThresholds.major}`}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.baseArmorMax}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.featureName}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.description}</td>
                   </tr>
                 ))}
               </tbody>

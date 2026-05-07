@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest"
+import { createEmptyArmorSlot, createEmptyEquipmentData } from "@/lib/equipment/defaults"
 import { countChecked, resetSheetStore, sheet, store } from "./test-helpers"
 
 describe("等级自动化基线", () => {
@@ -69,7 +70,13 @@ describe("等级自动化基线", () => {
   it("等级变化时按护甲阈值重算伤害阈值", () => {
     resetSheetStore({
       level: "1",
-      armorThreshold: "3/6",
+      equipment: {
+        ...createEmptyEquipmentData(),
+        armorSlot: {
+          ...createEmptyArmorSlot(),
+          baseThresholds: { minor: 3, major: 6 },
+        },
+      },
       minorThreshold: "",
       majorThreshold: "",
     })
@@ -83,7 +90,13 @@ describe("等级自动化基线", () => {
   it("等级改为空字符串时保留已有伤害阈值不重算", () => {
     resetSheetStore({
       level: "5",
-      armorThreshold: "3/6",
+      equipment: {
+        ...createEmptyEquipmentData(),
+        armorSlot: {
+          ...createEmptyArmorSlot(),
+          baseThresholds: { minor: 3, major: 6 },
+        },
+      },
       minorThreshold: "8",
       majorThreshold: "11",
       proficiency: [true, true, false, false, false, false],

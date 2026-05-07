@@ -1,6 +1,7 @@
 // types/form-data.ts
 
 import { StandardCard } from "@/card/card-types"
+import type { EquipmentData } from "@/lib/equipment/types"
 import type { AutomationSelections, ModifierState, UserModifierContribution } from "@/lib/modifiers/types"
 
 // ===== 多角色系统数据结构 =====
@@ -291,37 +292,13 @@ export interface SheetData {
   modifierState?: ModifierState
   userModifierContributions?: UserModifierContribution[]
   automationSelections?: AutomationSelections
+  equipment: EquipmentData
   minorThreshold?: string
   majorThreshold?: string
-  armorValue?: string
   armorBonus?: string
   armorMax?: number
   hpMax?: number
   stressMax?: number
-  primaryWeaponName?: string
-  primaryWeaponTrait?: string
-  primaryWeaponDamage?: string
-  primaryWeaponFeature?: string
-  secondaryWeaponName?: string
-  secondaryWeaponTrait?: string
-  secondaryWeaponDamage?: string
-  secondaryWeaponFeature?: string
-  armorName?: string
-  armorBaseScore?: string
-  armorThreshold?: string
-  armorFeature?: string
-  inventoryWeapon1Name?: string
-  inventoryWeapon1Trait?: string
-  inventoryWeapon1Damage?: string
-  inventoryWeapon1Feature?: string
-  inventoryWeapon1Primary?: boolean
-  inventoryWeapon1Secondary?: boolean
-  inventoryWeapon2Name?: string
-  inventoryWeapon2Trait?: string
-  inventoryWeapon2Damage?: string
-  inventoryWeapon2Feature?: string
-  inventoryWeapon2Primary?: boolean
-  inventoryWeapon2Secondary?: boolean
   // 伙伴相关
   companionImage?: string
   companionDescription?: string

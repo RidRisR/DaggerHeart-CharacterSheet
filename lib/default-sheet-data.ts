@@ -1,4 +1,5 @@
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
+import { createEmptyEquipmentData } from "@/lib/equipment/defaults";
 import type { SheetData } from "./sheet-data";
 import { CURRENT_SCHEMA_VERSION } from "./sheet-schema-version";
 
@@ -41,7 +42,6 @@ export const defaultSheetData: SheetData = {
     stressMax: 6, // Defaulting to 6 as it's a common base
 
     armorBoxes: Array(12).fill(false),
-    armorValue: "",
     armorBonus: "",
     armorMax: 0,
 
@@ -67,33 +67,7 @@ export const defaultSheetData: SheetData = {
     },
     userModifierContributions: [],
     automationSelections: {},
-
-    primaryWeaponName: "",
-    primaryWeaponTrait: "",
-    primaryWeaponDamage: "",
-    primaryWeaponFeature: "",
-    secondaryWeaponName: "",
-    secondaryWeaponTrait: "",
-    secondaryWeaponDamage: "",
-    secondaryWeaponFeature: "",
-
-    armorName: "",
-    armorBaseScore: "",
-    armorThreshold: "",
-    armorFeature: "",
-
-    inventoryWeapon1Name: "",
-    inventoryWeapon1Trait: "",
-    inventoryWeapon1Damage: "",
-    inventoryWeapon1Feature: "",
-    inventoryWeapon1Primary: false,
-    inventoryWeapon1Secondary: false,
-    inventoryWeapon2Name: "",
-    inventoryWeapon2Trait: "",
-    inventoryWeapon2Damage: "",
-    inventoryWeapon2Feature: "",
-    inventoryWeapon2Primary: false,
-    inventoryWeapon2Secondary: false,
+    equipment: createEmptyEquipmentData(),
 
     // Companion fields
     companionImage: "",

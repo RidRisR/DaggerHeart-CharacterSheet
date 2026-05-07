@@ -35,6 +35,18 @@ inventoryWeapon1Primary
 
 第一阶段迁移完成后，这些旧顶层装备字段不再属于运行时 `SheetData`。它们只作为旧存档 migration 和 import validation 的输入。
 
+迁移和导入必须按这个顺序处理：
+
+```text
+raw legacy input
+-> 保留 legacy 装备字段供 migration 读取
+-> 迁移到 equipment
+-> 运行时 normalization
+-> 删除旧顶层装备字段
+```
+
+`defaultSheetData` 和 `useSafeSheetData` 不能在迁移后重新补回旧顶层装备字段。import validation 也不能在 migration 之前丢弃 legacy 装备字段。
+
 ## 范围
 
 本阶段包含：
@@ -150,9 +162,29 @@ minorThreshold / majorThreshold
 
 本阶段保持现有自动化行为：选择或编辑护甲核心字段时，仍同步更新 `armorMax`、`minorThreshold`、`majorThreshold`。未来是否改成更严格的 reference/final target 同步模型，另行设计。
 
+保持现有自动化行为不意味着继续读写旧顶层护甲字段。实现时：
+
+- 护甲区域编辑 `baseArmorMax` 时，写入 `equipment.armorSlot.baseArmorMax`，并同步 `armorMax`。
+- 护甲区域编辑 `baseThresholds` 时，写入 `equipment.armorSlot.baseThresholds`，并按当前等级同步 `minorThreshold` / `majorThreshold`。
+- 等级变化时，从 `equipment.armorSlot.baseThresholds` 读取护甲基础阈值，并同步 final thresholds。
+- `hit-points` 区域用于 placeholder 或提示的护甲基础阈值也从 `equipment.armorSlot.baseThresholds` 读取。
+- 旧 `armorValue` 不再作为运行时字段写入。
+
+护甲 final target 字段仍保留：
+
+```ts
+armorMax
+minorThreshold
+majorThreshold
+```
+
+它们是角色卡最终值，不是旧装备字段。
+
 ## 迁移规则
 
 旧顶层装备字段只作为迁移输入。迁移完成后的运行时数据读写 `equipment`。
+
+实现时应把旧装备字段从 `SheetData` 运行时类型和默认数据中移除，但 migration/import 可以使用单独的 legacy input 类型读取这些字段。
 
 武器迁移：
 
@@ -180,6 +212,8 @@ inventoryWeapon2Secondary
 ```
 
 原因是当前 UI 语义已经是点击后交换备用武器和主/副武器槽位，而不是持久化点亮状态。新结构应保留 slot swap 行为，不保留 checkbox state。
+
+如果老存档中这些字段为 `true`，迁移时也直接丢弃，不执行自动 slot swap。原因是旧 `true` 只表示一个过渡兼容状态，不是新装备模型中的 source of truth。迁移后的备用武器是否生效，只由它是否位于 `primary` 或 `secondary` slot 决定。
 
 护甲迁移：
 
@@ -221,6 +255,14 @@ builtin.armor.chainmail
 - 生成可读的 contribution id 前缀。
 
 模板 id 不等于运行时 contribution id。写入角色卡的 `modifierContributions[].id` 必须是整张角色卡内全局唯一 id。
+
+装备选择链路必须改为使用模板 id：
+
+- 武器和护甲 modal 返回模板 `id`，不再返回中文名称作为 identity。
+- 模板 lookup 使用 `template.id === selectedId`。
+- UI 展示继续使用中文名称。
+- `all-weapons.ts` 不能再把 `id` 覆盖为 `weapon.名称`。
+- `none` 和自定义装备 payload 仍然是特殊输入，不参与模板 id lookup。
 
 武器模板第一阶段保留现有中文字段，只新增稳定 `id` 和可选 `modifierContributions`：
 
@@ -271,6 +313,22 @@ interface ArmorTemplate {
 
 武器模板字段暂不英文化。它们仍使用当前中文字段，避免把武器选择 modal、筛选、展示和自定义武器解析一起扩大到本阶段之外。
 
+template contribution 使用与运行时 contribution 相同的定义和 editable 形状，但 template id 只在模板内稳定：
+
+```ts
+interface EquipmentModifierContributionTemplate {
+  id: string
+  definition: {
+    target: EquipmentModifierTargetId
+    kind: "base" | "modifier"
+  }
+  editable: {
+    label: string
+    value: number
+  }
+}
+```
+
 模板中的 `modifierContributions` 只记录非常明确的长期无条件加值。不明确、条件型、攻击或伤害相关规则不进入本阶段模板 contribution。
 
 ## 选择装备
@@ -288,6 +346,21 @@ interface ArmorTemplate {
 - 初始化可解析的文本和护甲核心规则字段。
 - `modifierContributions` 默认为 `[]`。
 - 本阶段不提供 UI 手动编辑装备 contributions。
+
+自定义护甲 payload 是输入格式，不是运行时结构。为兼容当前 UI，parser 必须继续接受中文 key payload：
+
+```ts
+{
+  名称: string
+  等级?: string
+  护甲值?: number | string
+  伤害阈值?: string
+  特性名称?: string
+  描述?: string
+}
+```
+
+parser 可以同时接受英文字段 payload，但写入 `SheetData` 时统一归一化为 `equipment.armorSlot`。
 
 清空装备时：
 
@@ -324,6 +397,14 @@ registry 收集装备 entries 时：
 - 从 `equipment.armorSlot.baseArmorMax` 自动生成 `armorMax` base entry。
 - 从 `equipment.armorSlot.baseThresholds` 自动生成 `minorThreshold` / `majorThreshold` base entries。
 - 不收集 `equipment.weaponSlots.inventory`。
+
+本阶段把当前护甲核心 base entries 也归入 equipment provider，不再使用旧顶层护甲字段作为 armor provider 输入。也就是说，护甲核心 base entries 和护甲 `modifierContributions` 的 source type 都使用 `"equipment"`：
+
+```ts
+source: { type: "equipment", id: "armor:current" }
+```
+
+`ModifierSourceType` 可以暂时保留 `"armor"` 以兼容其它代码，但新装备路径不再产出 `source.type === "armor"` 的护甲 entries。
 
 装备 contribution 转成 runtime `ModifierEntry` 时：
 

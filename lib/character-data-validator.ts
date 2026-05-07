@@ -12,7 +12,7 @@ import { SheetData } from './sheet-data'
 import { StandardCard } from '@/card/card-types'
 import { defaultSheetData } from './default-sheet-data'
 import type { AttributeValue } from './sheet-data'
-import { migrateSheetData } from './sheet-data-migration'
+import { LEGACY_EQUIPMENT_KEYS, migrateSheetData } from './sheet-data-migration'
 
 export interface ValidationResult {
   valid: boolean
@@ -94,7 +94,7 @@ export function isValidCard(card: any): card is StandardCard {
  */
 export function cleanAndNormalizeData(data: any): SheetData {
   // 创建一个新的对象，只保留有效的字段
-  const cleaned: SheetData = {
+  const cleaned: any = {
     name: String(data.name || ''),
     level: String(data.level || '1'),
     proficiency: Array.isArray(data.proficiency) ? data.proficiency : (typeof data.proficiency === 'number' ? data.proficiency : 0),
@@ -177,41 +177,10 @@ export function cleanAndNormalizeData(data: any): SheetData {
     // 战斗相关
     minorThreshold: data.minorThreshold ? String(data.minorThreshold) : undefined,
     majorThreshold: data.majorThreshold ? String(data.majorThreshold) : undefined,
-    armorValue: data.armorValue ? String(data.armorValue) : undefined,
     armorBonus: data.armorBonus ? String(data.armorBonus) : undefined,
     armorMax: typeof data.armorMax === 'number' ? data.armorMax : undefined,
     hpMax: typeof data.hpMax === 'number' ? data.hpMax : undefined,
     stressMax: typeof data.stressMax === 'number' ? data.stressMax : undefined,
-
-    // 武器信息
-    primaryWeaponName: data.primaryWeaponName ? String(data.primaryWeaponName) : undefined,
-    primaryWeaponTrait: data.primaryWeaponTrait ? String(data.primaryWeaponTrait) : undefined,
-    primaryWeaponDamage: data.primaryWeaponDamage ? String(data.primaryWeaponDamage) : undefined,
-    primaryWeaponFeature: data.primaryWeaponFeature ? String(data.primaryWeaponFeature) : undefined,
-    secondaryWeaponName: data.secondaryWeaponName ? String(data.secondaryWeaponName) : undefined,
-    secondaryWeaponTrait: data.secondaryWeaponTrait ? String(data.secondaryWeaponTrait) : undefined,
-    secondaryWeaponDamage: data.secondaryWeaponDamage ? String(data.secondaryWeaponDamage) : undefined,
-    secondaryWeaponFeature: data.secondaryWeaponFeature ? String(data.secondaryWeaponFeature) : undefined,
-
-    // 护甲信息
-    armorName: data.armorName ? String(data.armorName) : undefined,
-    armorBaseScore: data.armorBaseScore ? String(data.armorBaseScore) : undefined,
-    armorThreshold: data.armorThreshold ? String(data.armorThreshold) : undefined,
-    armorFeature: data.armorFeature ? String(data.armorFeature) : undefined,
-
-    // 库存武器
-    inventoryWeapon1Name: data.inventoryWeapon1Name ? String(data.inventoryWeapon1Name) : undefined,
-    inventoryWeapon1Trait: data.inventoryWeapon1Trait ? String(data.inventoryWeapon1Trait) : undefined,
-    inventoryWeapon1Damage: data.inventoryWeapon1Damage ? String(data.inventoryWeapon1Damage) : undefined,
-    inventoryWeapon1Feature: data.inventoryWeapon1Feature ? String(data.inventoryWeapon1Feature) : undefined,
-    inventoryWeapon1Primary: typeof data.inventoryWeapon1Primary === 'boolean' ? data.inventoryWeapon1Primary : undefined,
-    inventoryWeapon1Secondary: typeof data.inventoryWeapon1Secondary === 'boolean' ? data.inventoryWeapon1Secondary : undefined,
-    inventoryWeapon2Name: data.inventoryWeapon2Name ? String(data.inventoryWeapon2Name) : undefined,
-    inventoryWeapon2Trait: data.inventoryWeapon2Trait ? String(data.inventoryWeapon2Trait) : undefined,
-    inventoryWeapon2Damage: data.inventoryWeapon2Damage ? String(data.inventoryWeapon2Damage) : undefined,
-    inventoryWeapon2Feature: data.inventoryWeapon2Feature ? String(data.inventoryWeapon2Feature) : undefined,
-    inventoryWeapon2Primary: typeof data.inventoryWeapon2Primary === 'boolean' ? data.inventoryWeapon2Primary : undefined,
-    inventoryWeapon2Secondary: typeof data.inventoryWeapon2Secondary === 'boolean' ? data.inventoryWeapon2Secondary : undefined,
 
     // 伙伴相关
     companionImage: data.companionImage ? String(data.companionImage) : undefined,
@@ -254,7 +223,21 @@ export function cleanAndNormalizeData(data: any): SheetData {
     adventureNotes: data.adventureNotes || undefined
   }
 
-  return cleaned
+  if (data.equipment && typeof data.equipment === "object" && !Array.isArray(data.equipment)) {
+    cleaned.equipment = data.equipment
+  }
+
+  copyLegacyEquipmentInput(cleaned, data)
+
+  return cleaned as SheetData
+}
+
+function copyLegacyEquipmentInput(cleanedData: any, data: any) {
+  LEGACY_EQUIPMENT_KEYS.forEach(key => {
+    if (key in data) {
+      cleanedData[key] = typeof data[key] === "boolean" ? data[key] : String(data[key] ?? "")
+    }
+  })
 }
 
 /**

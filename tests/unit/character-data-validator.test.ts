@@ -25,6 +25,55 @@ function rawImport(overrides: Record<string, unknown> = {}) {
   } as any
 }
 
+function minimalPayload(overrides: Record<string, unknown>) {
+  return {
+    name: 'Imported',
+    level: '1',
+    gold: [],
+    experience: [],
+    hope: 0,
+    inventory: [],
+    cards: [],
+    ...overrides,
+  }
+}
+
+function expectCompleteEquipment(data: NonNullable<ReturnType<typeof validateJSONCharacterData>['data']>) {
+  expect(data.equipment.weaponSlots.primary).toMatchObject({
+    name: expect.any(String),
+    trait: expect.any(String),
+    damage: expect.any(String),
+    feature: expect.any(String),
+    modifierContributions: expect.any(Array),
+  })
+  expect(data.equipment.weaponSlots.secondary).toMatchObject({
+    name: expect.any(String),
+    trait: expect.any(String),
+    damage: expect.any(String),
+    feature: expect.any(String),
+    modifierContributions: expect.any(Array),
+  })
+  expect(data.equipment.weaponSlots.inventory).toHaveLength(2)
+  data.equipment.weaponSlots.inventory.forEach(slot => {
+    expect(slot).toMatchObject({
+      name: expect.any(String),
+      trait: expect.any(String),
+      damage: expect.any(String),
+      feature: expect.any(String),
+      modifierContributions: expect.any(Array),
+    })
+  })
+  expect(data.equipment.armorSlot).toMatchObject({
+    name: expect.any(String),
+    baseThresholds: expect.any(Object),
+    feature: expect.any(String),
+    modifierContributions: expect.any(Array),
+  })
+  expect(data.equipment.armorSlot).toHaveProperty('baseArmorMax')
+  expect(data.equipment.armorSlot.baseThresholds).toHaveProperty('minor')
+  expect(data.equipment.armorSlot.baseThresholds).toHaveProperty('major')
+}
+
 describe('character data import validation', () => {
   it('migrates JSON imports to v1 and preserves unknown fields through migration', () => {
     const result = validateJSONCharacterData(JSON.stringify(rawImport()))
@@ -107,6 +156,97 @@ describe('character data import validation', () => {
     expect(result.data?.automationSelections?.['upgrade:tier1-5-0']).toEqual({
       selected: true,
       params: { target: 'evasion' },
+    })
+  })
+
+  it('preserves legacy equipment fields until migration', () => {
+    const payload = minimalPayload({
+      primaryWeaponName: '阔剑',
+      primaryWeaponTrait: '物理/单手/近战',
+      primaryWeaponDamage: '敏捷: d8',
+      primaryWeaponFeature: '可靠',
+      armorName: '链甲',
+      armorBaseScore: '4',
+      armorThreshold: '7/15',
+      armorFeature: '重型',
+    })
+
+    const result = validateJSONCharacterData(JSON.stringify(payload))
+
+    expect(result.valid).toBe(true)
+    expect(result.data?.equipment.weaponSlots.primary).toMatchObject({
+      name: '阔剑',
+      trait: '物理/单手/近战',
+      damage: '敏捷: d8',
+      feature: '可靠',
+    })
+    expect(result.data?.equipment.armorSlot).toMatchObject({
+      name: '链甲',
+      baseArmorMax: 4,
+      baseThresholds: { minor: 7, major: 15 },
+      feature: '重型',
+    })
+    expect('primaryWeaponName' in (result.data as any)).toBe(false)
+    expect('armorName' in (result.data as any)).toBe(false)
+  })
+
+  it('normalizes imported empty equipment objects', () => {
+    const result = validateJSONCharacterData(JSON.stringify(minimalPayload({
+      equipment: {},
+    })))
+
+    expect(result.valid).toBe(true)
+    expectCompleteEquipment(result.data!)
+  })
+
+  it('normalizes imported equipment missing inventory slots', () => {
+    const result = validateJSONCharacterData(JSON.stringify(minimalPayload({
+      equipment: {
+        weaponSlots: {
+          primary: { name: 'Existing Primary' },
+          secondary: { name: 'Existing Secondary' },
+        },
+      },
+    })))
+
+    expect(result.valid).toBe(true)
+    expectCompleteEquipment(result.data!)
+    expect(result.data?.equipment.weaponSlots.primary.name).toBe('Existing Primary')
+    expect(result.data?.equipment.weaponSlots.inventory).toHaveLength(2)
+  })
+
+  it('normalizes imported equipment with one inventory slot', () => {
+    const result = validateJSONCharacterData(JSON.stringify(minimalPayload({
+      equipment: {
+        weaponSlots: {
+          inventory: [{ name: 'Only Inventory' }],
+        },
+      },
+      inventoryWeapon2Name: 'Legacy Inventory 2',
+    })))
+
+    expect(result.valid).toBe(true)
+    expectCompleteEquipment(result.data!)
+    expect(result.data?.equipment.weaponSlots.inventory[0].name).toBe('Only Inventory')
+    expect(result.data?.equipment.weaponSlots.inventory[1].name).toBe('Legacy Inventory 2')
+  })
+
+  it('normalizes imported equipment missing armor slot from legacy armor fields', () => {
+    const result = validateJSONCharacterData(JSON.stringify(minimalPayload({
+      equipment: {
+        weaponSlots: {},
+      },
+      armorName: 'Legacy Armor',
+      armorBaseScore: '6',
+      armorThreshold: '9/18',
+    })))
+
+    expect(result.valid).toBe(true)
+    expectCompleteEquipment(result.data!)
+    expect(result.data?.equipment.armorSlot).toMatchObject({
+      name: 'Legacy Armor',
+      baseArmorMax: 6,
+      baseThresholds: { minor: 9, major: 18 },
     })
   })
 })

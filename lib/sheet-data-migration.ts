@@ -18,8 +18,67 @@ import {
   assertSupportedSchemaVersion,
   detectSchemaVersion,
 } from './sheet-schema-version'
+import { createEmptyEquipmentData } from "@/lib/equipment/defaults"
+import { parseArmorMax, parseArmorThreshold } from "@/lib/equipment/armor-utils"
+import type { ArmorSlot, WeaponSlot } from "@/lib/equipment/types"
 import { reconcileModifierState } from "@/lib/modifiers/reconcile"
 import type { ModifierContribution, ModifierEntryKind, ModifierTargetId } from "@/lib/modifiers/types"
+
+type LegacyEquipmentInput = Partial<SheetData> & {
+  primaryWeaponName?: string
+  primaryWeaponTrait?: string
+  primaryWeaponDamage?: string
+  primaryWeaponFeature?: string
+  secondaryWeaponName?: string
+  secondaryWeaponTrait?: string
+  secondaryWeaponDamage?: string
+  secondaryWeaponFeature?: string
+  inventoryWeapon1Name?: string
+  inventoryWeapon1Trait?: string
+  inventoryWeapon1Damage?: string
+  inventoryWeapon1Feature?: string
+  inventoryWeapon1Primary?: boolean
+  inventoryWeapon1Secondary?: boolean
+  inventoryWeapon2Name?: string
+  inventoryWeapon2Trait?: string
+  inventoryWeapon2Damage?: string
+  inventoryWeapon2Feature?: string
+  inventoryWeapon2Primary?: boolean
+  inventoryWeapon2Secondary?: boolean
+  armorName?: string
+  armorBaseScore?: string
+  armorThreshold?: string
+  armorFeature?: string
+  armorValue?: string
+}
+
+export const LEGACY_EQUIPMENT_KEYS = [
+  "primaryWeaponName",
+  "primaryWeaponTrait",
+  "primaryWeaponDamage",
+  "primaryWeaponFeature",
+  "secondaryWeaponName",
+  "secondaryWeaponTrait",
+  "secondaryWeaponDamage",
+  "secondaryWeaponFeature",
+  "inventoryWeapon1Name",
+  "inventoryWeapon1Trait",
+  "inventoryWeapon1Damage",
+  "inventoryWeapon1Feature",
+  "inventoryWeapon1Primary",
+  "inventoryWeapon1Secondary",
+  "inventoryWeapon2Name",
+  "inventoryWeapon2Trait",
+  "inventoryWeapon2Damage",
+  "inventoryWeapon2Feature",
+  "inventoryWeapon2Primary",
+  "inventoryWeapon2Secondary",
+  "armorName",
+  "armorBaseScore",
+  "armorThreshold",
+  "armorFeature",
+  "armorValue",
+] as const
 
 /**
  * 迁移选项接口
@@ -215,36 +274,124 @@ function migrateAdventureNotes(data: SheetData): SheetData {
   return migrated
 }
 
-/**
- * 武器 checkbox 状态迁移
- * 保留老存档中已勾选的 Primary/Secondary checkbox 状态，允许用户手动取消
- * 新存档中这些字段永远为 false
- */
-function migrateWeaponCheckboxes(data: SheetData): SheetData {
-  const migrated = { ...data }
-  let hasLegacyCheckboxes = false
+function legacyWeaponSlot(data: LegacyEquipmentInput, prefix: string) {
+  return {
+    name: String((data as any)[`${prefix}Name`] ?? ""),
+    trait: String((data as any)[`${prefix}Trait`] ?? ""),
+    damage: String((data as any)[`${prefix}Damage`] ?? ""),
+    feature: String((data as any)[`${prefix}Feature`] ?? ""),
+    modifierContributions: [],
+  }
+}
 
-  // 检查库存武器的 checkbox 状态
-  const weaponIndexes = [1, 2] // inventoryWeapon1, inventoryWeapon2
-  const checkboxTypes = ['Primary', 'Secondary']
+function legacyArmorSlot(data: LegacyEquipmentInput): ArmorSlot {
+  return {
+    name: String(data.armorName ?? ""),
+    baseArmorMax: parseArmorMax(data.armorBaseScore),
+    baseThresholds: parseArmorThreshold(data.armorThreshold),
+    feature: String(data.armorFeature ?? ""),
+    modifierContributions: [],
+  }
+}
 
-  weaponIndexes.forEach(index => {
-    checkboxTypes.forEach(type => {
-      const fieldName = `inventoryWeapon${index}${type}` as keyof SheetData
-      const value = migrated[fieldName]
+function hasOwn(value: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key)
+}
 
-      // 如果发现老存档中为 true 的 checkbox，保留状态
-      if (value === true) {
-        hasLegacyCheckboxes = true
-      }
-    })
-  })
+function normalizedStringField(rawSlot: Record<string, unknown>, fallbackSlot: WeaponSlot | ArmorSlot, key: "name" | "trait" | "damage" | "feature"): string {
+  const value = rawSlot[key]
+  if (typeof value === "string") return value
+  return String((fallbackSlot as any)[key] ?? "")
+}
 
-  if (hasLegacyCheckboxes) {
-    console.log('[Migration] Detected legacy weapon checkboxes, preserving state for user to manually uncheck')
+function normalizeModifierContributions(value: unknown): ModifierContribution[] {
+  return sanitizeModifierContributions(value)
+}
+
+function normalizeWeaponSlot(value: unknown, fallbackSlot: WeaponSlot): WeaponSlot {
+  if (!isRecord(value)) {
+    return fallbackSlot
   }
 
-  return migrated
+  return {
+    name: normalizedStringField(value, fallbackSlot, "name"),
+    trait: normalizedStringField(value, fallbackSlot, "trait"),
+    damage: normalizedStringField(value, fallbackSlot, "damage"),
+    feature: normalizedStringField(value, fallbackSlot, "feature"),
+    modifierContributions: normalizeModifierContributions(value.modifierContributions),
+  }
+}
+
+function normalizeArmorSlot(value: unknown, fallbackSlot: ArmorSlot): ArmorSlot {
+  if (!isRecord(value)) {
+    return fallbackSlot
+  }
+
+  const parsedBaseArmorMax = hasOwn(value, "baseArmorMax")
+    ? parseArmorMax(value.baseArmorMax)
+    : fallbackSlot.baseArmorMax
+  const parsedBaseThresholds = hasOwn(value, "baseThresholds")
+    ? parseArmorThreshold(value.baseThresholds)
+    : fallbackSlot.baseThresholds
+
+  return {
+    name: normalizedStringField(value, fallbackSlot, "name"),
+    baseArmorMax: parsedBaseArmorMax,
+    baseThresholds: parsedBaseThresholds,
+    feature: normalizedStringField(value, fallbackSlot, "feature"),
+    modifierContributions: normalizeModifierContributions(value.modifierContributions),
+  }
+}
+
+function normalizeEquipment(data: SheetData | LegacyEquipmentInput, useExistingEquipment: boolean) {
+  const legacy = data as LegacyEquipmentInput
+  const equipment = useExistingEquipment && isRecord((data as any).equipment) ? (data as any).equipment : {}
+  const weaponSlots = isRecord(equipment.weaponSlots) ? equipment.weaponSlots : {}
+  const inventorySlots = Array.isArray(weaponSlots.inventory) ? weaponSlots.inventory : []
+  const emptyEquipment = createEmptyEquipmentData()
+
+  return {
+    weaponSlots: {
+      primary: normalizeWeaponSlot(
+        weaponSlots.primary,
+        legacyWeaponSlot(legacy, "primaryWeapon") ?? emptyEquipment.weaponSlots.primary,
+      ),
+      secondary: normalizeWeaponSlot(
+        weaponSlots.secondary,
+        legacyWeaponSlot(legacy, "secondaryWeapon") ?? emptyEquipment.weaponSlots.secondary,
+      ),
+      inventory: [
+        normalizeWeaponSlot(
+          inventorySlots[0],
+          legacyWeaponSlot(legacy, "inventoryWeapon1") ?? emptyEquipment.weaponSlots.inventory[0],
+        ),
+        normalizeWeaponSlot(
+          inventorySlots[1],
+          legacyWeaponSlot(legacy, "inventoryWeapon2") ?? emptyEquipment.weaponSlots.inventory[1],
+        ),
+      ],
+    },
+    armorSlot: normalizeArmorSlot(equipment.armorSlot, legacyArmorSlot(legacy)),
+  }
+}
+
+function stripLegacyEquipmentFields(data: SheetData | LegacyEquipmentInput): SheetData {
+  const migrated: any = { ...data }
+
+  LEGACY_EQUIPMENT_KEYS.forEach(key => {
+    delete migrated[key]
+  })
+
+  return migrated as SheetData
+}
+
+function migrateEquipment(data: SheetData | LegacyEquipmentInput, useExistingEquipment: boolean): SheetData {
+  const migrated: any = {
+    ...data,
+    equipment: normalizeEquipment(data, useExistingEquipment),
+  }
+
+  return migrated as SheetData
 }
 
 /**
@@ -489,6 +636,7 @@ function isValidStandardCard(card: any): card is StandardCard {
 }
 
 export function normalizeCurrentSheetData(data: Partial<SheetData> | any): SheetData {
+  const hasInputEquipment = isRecord(data?.equipment)
   let normalized: SheetData = {
     ...defaultSheetData,
     ...data,
@@ -503,7 +651,9 @@ export function normalizeCurrentSheetData(data: Partial<SheetData> | any): Sheet
     ? data.inventory_cards.filter(isValidStandardCard)
     : defaultSheetData.inventory_cards
 
+  normalized = migrateEquipment(normalized, hasInputEquipment)
   normalized = migrateModifierState(normalized)
+  normalized = stripLegacyEquipmentFields(normalized)
 
   return cleanupDeprecatedFields(normalized)
 }
@@ -518,7 +668,6 @@ function migrateV0ToV1(raw: Partial<SheetData> | any): Partial<SheetData> {
   migrated = migratePageVisibilityFields(migrated)
   migrated = migrateArmorTemplate(migrated)
   migrated = migrateAdventureNotes(migrated)
-  migrated = migrateWeaponCheckboxes(migrated)
   migrated = migrateHopeToNumber(migrated)
   migrated = migrateNotebook(migrated)
   migrated = cleanupDeprecatedFields(migrated)

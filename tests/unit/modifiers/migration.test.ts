@@ -14,7 +14,7 @@ describe("modifier state migration", () => {
 
     expect(migrated.evasion).toBe("12+敏捷")
     expect(migrated.hpMax).toBe(7)
-    expect(migrated.armorValue).toBe("4")
+    expect("armorValue" in (migrated as any)).toBe(false)
     expect(migrated.minorThreshold).toBe("10")
     expect(migrated.majorThreshold).toBe("20")
     expect(migrated.modifierState).toEqual({ targetStates: {}, entryStates: {} })
@@ -105,6 +105,8 @@ describe("modifier state migration", () => {
       definition: { target: "armorMax", kind: "modifier" },
       editable: { label: "手动护甲调整", value: 1 },
     })
+    expect("armorName" in (migrated as any)).toBe(false)
+    expect("armorBaseScore" in (migrated as any)).toBe(false)
   })
 
   it("preserves unrelated root contribution ids that contain armorValue text", () => {

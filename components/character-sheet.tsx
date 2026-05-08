@@ -3,8 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { primaryWeapons, Weapon } from "@/data/list/primary-weapon"
-import { secondaryWeapons } from "@/data/list/secondary-weapon"
+import { allWeapons } from "@/data/list/all-weapons"
 import {
   CardType, // Import CardType
 } from "@/card"
@@ -32,6 +31,23 @@ import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import { parseNumberExpressionOr } from "@/lib/number-utils"
+import { createEmptyWeaponSlot } from "@/lib/equipment/defaults"
+import {
+  createWeaponSlotFromCustomPayload,
+  createWeaponSlotFromName,
+  createWeaponSlotFromTemplate,
+} from "@/lib/equipment/template-to-slot"
+import type { WeaponSlot } from "@/lib/equipment/types"
+
+type WeaponSlotSelection =
+  | { slotType: "primary" | "secondary" }
+  | { slotType: "inventory"; index: 0 | 1 }
+
+const createEquipmentContributionId = (slotId: string, templateContributionId: string) =>
+  `equipment:${slotId}:${Date.now()}:${Math.random().toString(36).slice(2)}:${templateContributionId}`
+
+const weaponSlotSelectionId = (selection: WeaponSlotSelection) =>
+  selection.slotType === "inventory" ? `inventory-${selection.index}` : selection.slotType
 
 export default function CharacterSheet() {
   const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, handleProfessionChange: autofillProfessionData } = useSheetStore();
@@ -52,8 +68,7 @@ export default function CharacterSheet() {
 
   // 模态框状态
   const [weaponModalOpen, setWeaponModalOpen] = useState(false)
-  const [currentWeaponField, setCurrentWeaponField] = useState("")
-  const [currentWeaponSlotType, setCurrentWeaponSlotType] = useState<"primary" | "secondary" | "inventory">("primary") // Default to primary to avoid null
+  const [currentWeaponSlot, setCurrentWeaponSlot] = useState<WeaponSlotSelection>({ slotType: "primary" })
   const [armorModalOpen, setArmorModalOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [currentModal, setCurrentModal] = useState<{ type: "profession" | "ancestry" | "community" | "subclass"; field?: string; levelFilter?: number }>({ type: "profession" })
@@ -359,122 +374,57 @@ export default function CharacterSheet() {
     needsSyncRef.current = true
   }
 
-  const handleWeaponChange = (field: string, weaponId: string, weaponType: "primary" | "secondary") => {
-    const weaponList = weaponType === "primary" ? primaryWeapons : secondaryWeapons
-    const weapon = weaponList.find((w: Weapon) => w.名称 === weaponId)
-
-    if (weapon) {
-      const weaponDetails = {
-        name: weapon.名称,
-        trait: `${weapon.伤害类型 || ""}/${weapon.负荷 || ""}/${weapon.范围 || ""}`,
-        damage: `${weapon.属性 || ""}: ${weapon.伤害 || ""}`,
-        feature: weapon.特性名称 ? `${weapon.特性名称}: ${weapon.描述}` : weapon.描述,
-      }
-
-
-      if (field === "primaryWeaponName") {
-        setFormData((prev) => ({
-          ...prev,
-          primaryWeaponName: weaponDetails.name,
-          primaryWeaponTrait: weaponDetails.trait,
-          primaryWeaponDamage: weaponDetails.damage,
-          primaryWeaponFeature: weaponDetails.feature,
-        }))
-      } else if (field === "secondaryWeaponName") {
-        setFormData((prev) => ({
-          ...prev,
-          secondaryWeaponName: weaponDetails.name,
-          secondaryWeaponTrait: weaponDetails.trait,
-          secondaryWeaponDamage: weaponDetails.damage,
-          secondaryWeaponFeature: weaponDetails.feature,
-        }))
-      } else if (field.startsWith("inventoryWeapon")) {
-        const inventoryFieldPrefix = field.replace("Name", "")
-        setFormData((prev) => ({
-          ...prev,
-          [`${inventoryFieldPrefix}Name`]: weaponDetails.name,
-          [`${inventoryFieldPrefix}Trait`]: weaponDetails.trait,
-          [`${inventoryFieldPrefix}Damage`]: weaponDetails.damage,
-          [`${inventoryFieldPrefix}Feature`]: weaponDetails.feature,
-        }))
-      }
-    } else if (weaponId === "none") {
-      if (field === "primaryWeaponName") {
-        setFormData((prev) => ({
-          ...prev,
-          primaryWeaponName: "",
-          primaryWeaponTrait: "",
-          primaryWeaponDamage: "",
-          primaryWeaponFeature: "",
-        }))
-      } else if (field === "secondaryWeaponName") {
-        setFormData((prev) => ({
-          ...prev,
-          secondaryWeaponName: "",
-          secondaryWeaponTrait: "",
-          secondaryWeaponDamage: "",
-          secondaryWeaponFeature: "",
-        }))
-      } else if (field.startsWith("inventoryWeapon")) {
-        const prefix = field.replace("Name", "")
-        setFormData((prev) => ({
-          ...prev,
-          [`${prefix}Name`]: "",
-          [`${prefix}Trait`]: "",
-          [`${prefix}Damage`]: "",
-          [`${prefix}Feature`]: "",
-        }))
-      }
-    } else if (weaponId) { // 处理自定义武器
-      let weaponDetails;
-
-      // 尝试解析JSON格式的自定义武器数据
-      try {
-        const customWeaponData = JSON.parse(weaponId);
-        weaponDetails = {
-          name: customWeaponData.名称 || weaponId,
-          trait: `${customWeaponData.伤害类型 || ""}/${customWeaponData.负荷 || ""}/${customWeaponData.范围 || ""}`.replace(/\/+$/, '').replace(/^\/+/, ''),
-          damage: customWeaponData.属性 && customWeaponData.伤害 ? `${customWeaponData.属性}: ${customWeaponData.伤害}` : (customWeaponData.伤害 || ""),
-          feature: `${customWeaponData.特性名称 ? customWeaponData.特性名称 + ': ' : ''}${customWeaponData.描述 || ''}`.trim(),
-        };
-      } catch (e) {
-        // 如果不是JSON格式，按旧方式处理（只有名称）
-        weaponDetails = {
-          name: weaponId,
-          trait: "",
-          damage: "",
-          feature: "",
-        };
-      }
-
-
-      if (field === "primaryWeaponName") {
-        setFormData((prev) => ({
-          ...prev,
-          primaryWeaponName: weaponDetails.name,
-          primaryWeaponTrait: weaponDetails.trait,
-          primaryWeaponDamage: weaponDetails.damage,
-          primaryWeaponFeature: weaponDetails.feature,
-        }))
-      } else if (field === "secondaryWeaponName") {
-        setFormData((prev) => ({
-          ...prev,
-          secondaryWeaponName: weaponDetails.name,
-          secondaryWeaponTrait: weaponDetails.trait,
-          secondaryWeaponDamage: weaponDetails.damage,
-          secondaryWeaponFeature: weaponDetails.feature,
-        }))
-      } else if (field.startsWith("inventoryWeapon")) {
-        const prefix = field.replace("Name", "")
-        setFormData((prev) => ({
-          ...prev,
-          [`${prefix}Name`]: weaponDetails.name,
-          [`${prefix}Trait`]: weaponDetails.trait,
-          [`${prefix}Damage`]: weaponDetails.damage,
-          [`${prefix}Feature`]: weaponDetails.feature,
-        }))
-      }
+  const createSelectedWeaponSlot = (weaponId: string): WeaponSlot => {
+    if (weaponId === "none") {
+      return createEmptyWeaponSlot()
     }
+
+    const slotId = weaponSlotSelectionId(currentWeaponSlot)
+    const template = allWeapons.find((weapon) => weapon.id === weaponId)
+    if (template) {
+      return createWeaponSlotFromTemplate(template, (templateContributionId) =>
+        createEquipmentContributionId(slotId, templateContributionId),
+      )
+    }
+
+    try {
+      return createWeaponSlotFromCustomPayload(JSON.parse(weaponId))
+    } catch {
+      return createWeaponSlotFromName(weaponId)
+    }
+  }
+
+  const handleWeaponChange = (weaponId: string) => {
+    const slot = createSelectedWeaponSlot(weaponId)
+
+    setFormData((prev) => {
+      const weaponSlots = prev.equipment.weaponSlots
+
+      if (currentWeaponSlot.slotType === "inventory") {
+        const inventory = [...weaponSlots.inventory] as typeof weaponSlots.inventory
+        inventory[currentWeaponSlot.index] = slot
+
+        return {
+          equipment: {
+            ...prev.equipment,
+            weaponSlots: {
+              ...weaponSlots,
+              inventory,
+            },
+          },
+        }
+      }
+
+      return {
+        equipment: {
+          ...prev.equipment,
+          weaponSlots: {
+            ...weaponSlots,
+            [currentWeaponSlot.slotType]: slot,
+          },
+        },
+      }
+    })
   }
 
   const handleArmorChange = (value: string) => {
@@ -504,9 +454,8 @@ export default function CharacterSheet() {
   }, [formData, cardsLoading]); // 添加 cardsLoading 作为依赖项
 
   // 模态框控制函数
-  const openWeaponModal = (fieldName: string, slotType: "primary" | "secondary" | "inventory") => {
-    setCurrentWeaponField(fieldName)
-    setCurrentWeaponSlotType(slotType)
+  const openWeaponModal = (selection: WeaponSlotSelection) => {
+    setCurrentWeaponSlot(selection)
     setWeaponModalOpen(true)
   }
 
@@ -720,13 +669,13 @@ export default function CharacterSheet() {
 
                   <WeaponSection
                     isPrimary={true}
-                    fieldPrefix="primaryWeapon"
+                    slotType="primary"
                     onOpenWeaponModal={openWeaponModal}
                   />
 
                   <WeaponSection
                     isPrimary={false}
-                    fieldPrefix="secondaryWeapon"
+                    slotType="secondary"
                     onOpenWeaponModal={openWeaponModal}
                   />
                 </div>
@@ -759,12 +708,12 @@ export default function CharacterSheet() {
                 {/* Inventory Weapons */}
                 <h3 className="text-xs font-bold text-center">备用武器</h3>
                 <InventoryWeaponSection
-                  index={1}
+                  index={0}
                   onOpenWeaponModal={openWeaponModal}
                 />
 
                 <InventoryWeaponSection
-                  index={2}
+                  index={1}
                   onOpenWeaponModal={openWeaponModal}
                 />
 
@@ -780,39 +729,9 @@ export default function CharacterSheet() {
       <WeaponSelectionModal
         isOpen={weaponModalOpen}
         onClose={() => setWeaponModalOpen(false)}
-        weaponSlotType={currentWeaponSlotType} // Ensured not null
-        onSelect={(weaponId, weaponType) => {
-          if (weaponId === "none") {
-            if (currentWeaponField === "primaryWeaponName") {
-              setFormData((prev) => ({
-                ...prev,
-                primaryWeaponName: "",
-                primaryWeaponTrait: "",
-                primaryWeaponDamage: "",
-                primaryWeaponFeature: "",
-              }))
-            } else if (currentWeaponField === "secondaryWeaponName") {
-              setFormData((prev) => ({
-                ...prev,
-                secondaryWeaponName: "",
-                secondaryWeaponTrait: "",
-                secondaryWeaponDamage: "",
-                secondaryWeaponFeature: "",
-              }))
-            } else if (currentWeaponField.startsWith("inventoryWeapon")) {
-              const prefix = currentWeaponField.replace("Name", "")
-              setFormData((prev) => ({
-                ...prev,
-                [`${prefix}Name`]: "",
-                [`${prefix}Trait`]: "",
-                [`${prefix}Damage`]: "",
-                [`${prefix}Feature`]: "",
-              }))
-            }
-            setWeaponModalOpen(false)
-            return
-          }
-          handleWeaponChange(currentWeaponField, weaponId, weaponType)
+        weaponSlotType={currentWeaponSlot.slotType}
+        onSelect={(weaponId) => {
+          handleWeaponChange(weaponId)
           setWeaponModalOpen(false)
         }}
         title="选择武器"

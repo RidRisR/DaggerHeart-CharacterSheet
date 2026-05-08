@@ -2,14 +2,15 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
 import { showFadeNotification } from "@/components/ui/fade-notification"
+import { swapInventoryWeaponWithActiveSlot } from "@/lib/equipment/weapon-slot-utils"
+import type { WeaponSlot } from "@/lib/equipment/types"
 
 interface InventoryWeaponSectionProps {
-  index: number
-  onOpenWeaponModal: (fieldName: string, slotType: "primary" | "secondary" | "inventory") => void;
+  index: 0 | 1
+  onOpenWeaponModal: (selection: { slotType: "inventory"; index: 0 | 1 }) => void
 }
 
 export function InventoryWeaponSection({
@@ -18,14 +19,35 @@ export function InventoryWeaponSection({
 }: InventoryWeaponSectionProps) {
   const { sheetData: formData, setSheetData } = useSheetStore()
   const [isEditingName, setIsEditingName] = useState(false)
+  const slot = formData.equipment.weaponSlots.inventory[index]
+
+  const updateInventoryWeaponSlot = (updates: Partial<WeaponSlot>) => {
+    setSheetData((prev) => {
+      const inventory = [...prev.equipment.weaponSlots.inventory] as typeof prev.equipment.weaponSlots.inventory
+      inventory[index] = {
+        ...inventory[index],
+        ...updates,
+      }
+
+      return {
+        equipment: {
+          ...prev.equipment,
+          weaponSlots: {
+            ...prev.equipment.weaponSlots,
+            inventory,
+          },
+        },
+      }
+    })
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setSheetData((prev) => ({ ...prev, [name]: value }))
+    updateInventoryWeaponSlot({ [name]: value } as Partial<WeaponSlot>)
   }
 
-  const openWeaponModal = (fieldName: string, slotType: "primary" | "secondary" | "inventory") => {
-    onOpenWeaponModal(fieldName, slotType)
+  const openWeaponModal = () => {
+    onOpenWeaponModal({ slotType: "inventory", index })
   }
 
   const handleEditName = () => {
@@ -33,7 +55,7 @@ export function InventoryWeaponSection({
   }
 
   const handleNameChange = (value: string) => {
-    setSheetData((prev) => ({ ...prev, [nameField]: value }))
+    updateInventoryWeaponSlot({ name: value })
   }
 
   const handleNameSubmit = () => {
@@ -46,70 +68,17 @@ export function InventoryWeaponSection({
     }
   }
 
-  /**
-   * 处理武器交换或取消勾选（向后兼容）
-   *
-   * 行为：
-   * 1. 如果 checkbox 当前为 true（老存档遗留状态），点击后仅取消勾选
-   * 2. 如果 checkbox 为 false（新存档或已取消的老存档），执行武器交换
-   */
-  const handleWeaponSwap = (field: string, targetType: 'primary' | 'secondary') => {
-    const currentValue = (formData as any)[field]
+  const handleWeaponSwap = (targetType: 'primary' | 'secondary') => {
+    setSheetData((prev) => ({
+      equipment: swapInventoryWeaponWithActiveSlot(prev.equipment, index, targetType),
+    }))
 
-    // 情况 1: 老存档遗留状态，用户点击取消勾选
-    if (currentValue === true) {
-      setSheetData((prev) => ({
-        ...prev,
-        [field]: false
-      }))
-      return
-    }
-
-    // 情况 2: 执行武器交换
-    const targetPrefix = targetType === 'primary' ? 'primaryWeapon' : 'secondaryWeapon'
-    const inventoryPrefix = `inventoryWeapon${index}`
-
-    setSheetData((prev) => {
-      const newData = { ...prev }
-
-      // 交换所有武器字段
-      const fieldsToSwap = ['Name', 'Trait', 'Damage', 'Feature']
-
-      for (const fieldName of fieldsToSwap) {
-        const inventoryField = `${inventoryPrefix}${fieldName}` as keyof typeof prev
-        const targetField = `${targetPrefix}${fieldName}` as keyof typeof prev
-
-        // 执行字段交换
-        const temp = (prev as any)[inventoryField]
-        ;(newData as any)[inventoryField] = (prev as any)[targetField]
-        ;(newData as any)[targetField] = temp
-      }
-
-      // 保持 checkbox 为 false（不持久化选中状态）
-      (newData as any)[field] = false
-
-      return newData
-    })
-
-    // 显示交换成功通知
     showFadeNotification({
       message: targetType === 'primary' ? '已设为主手武器' : '已设为副手武器',
       type: 'success',
       duration: 2000
     })
   }
-
-  const { getElementProps } = useAutoResizeFont({
-    maxFontSize: 14,
-    minFontSize: 10
-  })
-
-  const nameField = `inventoryWeapon${index}Name`
-  const traitField = `inventoryWeapon${index}Trait`
-  const damageField = `inventoryWeapon${index}Damage`
-  const featureField = `inventoryWeapon${index}Feature`
-  const primaryField = `inventoryWeapon${index}Primary`
-  const secondaryField = `inventoryWeapon${index}Secondary`
 
   return (
     <div className="py-1 mb-1">
@@ -120,7 +89,7 @@ export function InventoryWeaponSection({
           {isEditingName ? (
             <input
               type="text"
-              value={(formData as any)[nameField] || ""}
+              value={slot.name ?? ""}
               onChange={(e) => handleNameChange(e.target.value)}
               onKeyDown={handleNameKeyDown}
               onBlur={handleNameSubmit}
@@ -131,10 +100,10 @@ export function InventoryWeaponSection({
             <div className="group flex w-full border border-gray-400 rounded h-6 bg-white overflow-hidden">
               <button
                 type="button"
-                onClick={() => openWeaponModal(nameField, "inventory")}
+                onClick={openWeaponModal}
                 className="flex-1 text-sm text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none"
               >
-                {(formData as any)[nameField] || <span className="print:hidden">选择武器</span>}
+                {slot.name || <span className="print:hidden">选择武器</span>}
               </button>
               <div className="w-px bg-gray-300 hidden group-hover:block"></div>
               <button
@@ -154,8 +123,8 @@ export function InventoryWeaponSection({
           <label className="text-[8px] text-gray-600">基本信息</label>
           <input
             type="text"
-            name={traitField}
-            value={(formData as any)[traitField]}
+            name="trait"
+            value={slot.trait ?? ""}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none print-empty-hide text-sm"
           />
@@ -164,8 +133,8 @@ export function InventoryWeaponSection({
           <label className="text-[8px] text-gray-600">伤害骰</label>
           <input
             type="text"
-            name={damageField}
-            value={(formData as any)[damageField]}
+            name="damage"
+            value={slot.damage ?? ""}
             onChange={handleInputChange}
             className="w-full border-b border-gray-400 focus:outline-none print-empty-hide text-sm"
           />
@@ -174,8 +143,8 @@ export function InventoryWeaponSection({
 
       <div className="mt-1">
         <ContentEditableField
-          name={featureField}
-          value={(formData as any)[featureField] || ""}
+          name="feature"
+          value={slot.feature ?? ""}
           onChange={handleInputChange}
           placeholder=""
           maxLines={2}
@@ -186,24 +155,24 @@ export function InventoryWeaponSection({
         <div className="flex items-center group">
           <input
             type="checkbox"
-            id={primaryField}
-            checked={!!(formData as any)[primaryField]} // Ensure value is boolean
-            onChange={() => handleWeaponSwap(primaryField, 'primary')}
+            id={`inventory-slot-${index}-set-primary`}
+            checked={false}
+            onChange={() => handleWeaponSwap('primary')}
             className="mr-1 h-3 w-3 cursor-pointer"
           />
-          <label htmlFor={primaryField} className="text-[8px] cursor-pointer group-hover:text-blue-600 transition-colors">
+          <label htmlFor={`inventory-slot-${index}-set-primary`} className="text-[8px] cursor-pointer group-hover:text-blue-600 transition-colors">
             设为主手
           </label>
         </div>
         <div className="flex items-center group">
           <input
             type="checkbox"
-            id={secondaryField}
-            checked={!!(formData as any)[secondaryField]} // Ensure value is boolean
-            onChange={() => handleWeaponSwap(secondaryField, 'secondary')}
+            id={`inventory-slot-${index}-set-secondary`}
+            checked={false}
+            onChange={() => handleWeaponSwap('secondary')}
             className="mr-1 h-3 w-3 cursor-pointer"
           />
-          <label htmlFor={secondaryField} className="text-[8px] cursor-pointer group-hover:text-blue-600 transition-colors">
+          <label htmlFor={`inventory-slot-${index}-set-secondary`} className="text-[8px] cursor-pointer group-hover:text-blue-600 transition-colors">
             设为副手
           </label>
         </div>

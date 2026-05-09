@@ -255,6 +255,52 @@ JSON / HTML
 
 因此，`cleanAndNormalizeData()` 应移除，或降级为 migration 内部的 normalize helper。它不应继续作为导入时、migration 前的破坏性预处理。
 
+## cleanAndNormalizeData 拆分
+
+当前 `cleanAndNormalizeData()` 混合了四类职责：
+
+1. 外部导入清理。
+2. 旧存档结构迁移。
+3. 当前 schema 默认值补齐。
+4. 兼容性 warning。
+
+版本化改造后，这四类职责应拆开。
+
+外部导入清理只应做最小判断：
+
+- 确认输入是对象。
+- 确认可作为角色数据候选。
+- 不补默认值。
+- 不转换字段类型。
+- 不删除未知字段。
+- 不重建白名单对象。
+
+旧存档结构迁移进入版本 migration：
+
+- `hope` boolean array 到 number 属于 `v0 -> v1`。
+- `hopeMax` 从旧 hope array 长度推断属于 `v0 -> v1`。
+- 六大属性补 `spellcasting` 属于 `v0 -> v1`。
+- legacy equipment 字段迁移属于 `v1 -> v2`。
+- `armorTemplate`、`adventureNotes` 等旧字段由对应版本 migration 处理。
+
+当前 schema 默认值补齐进入 `normalizeCurrentSheetData()`：
+
+- `hopeMax` 缺失时补当前默认值。
+- `trainingOptions` 缺失时补完整空数组结构。
+- 当前 schema 需要的数组字段缺失时补空数组。
+- 当前 schema 需要的对象字段缺失时补默认结构。
+
+兼容性 warning 保留在 current schema validation 阶段：
+
+- 角色名称为空。
+- 等级为空。
+- 金币 / 经历数据可能不完整。
+- 迁移后仍无法满足当前 schema 的字段。
+
+实现时不应继续用“白名单重建对象”的方式清理导入数据。更安全的原则是保留原对象，只修正明确需要迁移或 normalize 的字段。
+
+无效 card 的处理暂时维持现有行为：导入时过滤无效 card，避免改变当前用户可见行为。但必须补测试锁定这一点，后续如果要改成 warning 或 error，应作为单独行为变更讨论。
+
 ## 外部数据入口
 
 版本化 migration 的安全性取决于入口职责清晰，而不是把所有入口都强行塞进同一个函数。
@@ -301,8 +347,11 @@ stored object
 
 - `lib/storage.ts` 的 `loadCharacterData()` 只做 `JSON.parse`，不迁移。
 - `lib/storage.ts` 的 `importCharacterData()` parse 后直接保存并返回，不迁移。
+- `lib/storage.ts` 的 `importCharacterDataForMultiCharacter()` 会直接迁移，但目前不应作为主导入入口继续扩展。
 
-这些函数看起来是遗留单角色存储 API。版本化改造时应先确认是否仍有真实 UI 调用方。如果没有调用方，优先删除或明确废弃，而不是为了历史 API 继续维护另一条导入链。
+这些函数看起来是遗留单角色存储 / 导入 API。版本化改造时应先确认是否仍有真实 UI 调用方。如果没有调用方，优先删除或明确废弃，而不是为了历史 API 继续维护另一条导入链。
+
+注意：`lib/storage.ts` 不是整个文件都废弃。`exportCharacterData()` 仍被导出流程使用，应保留。需要清理的是旧 localStorage 和旧 import helper。
 
 `migrateToMultiCharacterStorage()` 是旧单角色 localStorage 到多角色系统的迁移入口。它可以继续作为内部存储迁移处理，但建议在保存迁移出来的角色前直接调用 `migrateSheetData()`，避免依赖后续 `loadCharacterById()` 再补迁移。
 
@@ -321,7 +370,9 @@ stored object
 当前共识：
 
 - 短期保留 `MigrationOptions` 和 `migrateSheetData(data, options)` 签名，降低调用方改动。
-- 版本化实现时可以让 options 承载 warning / strict 行为，例如高版本存档提示。
+- 第一阶段继续保持 `MigrationOptions` 为空接口，不引入 `strict` / `warnings` / `source` 等新行为。
+- 高版本存档直接报错，不需要通过 options 控制。
+- 未来确实需要时，再让 options 承载 warning / strict 行为。
 - 不为了清理而立刻删除这个参数。
 
 ## 测试策略
@@ -349,6 +400,7 @@ stored object
 17. JSON import 和 HTML import 共用同一条外部文件导入处理链。
 18. localStorage load、duplicate character、legacy storage migration 不走 import validate，但必须进入版本化 `migrateSheetData()`。
 19. 旧 `lib/storage.ts` API 要么删除，要么明确标记为废弃并不再作为用户入口。
+20. 无效 card 暂时维持现有过滤行为，并用测试锁定。
 
 测试 fixture 应从目标场景构建，不需要兼容当前分支开发过程中的中间态测试数据。
 
@@ -364,7 +416,8 @@ stored object
 4. 将 `cleanAndNormalizeData()` 的必要行为迁入 `normalizeCurrentSheetData()`，不要直接删除行为。
 5. 重构 `validateAndProcessCharacterData()`，让 HTML / JSON 文件导入共享新的 raw validate + migrate + current validate 流程。
 6. 检查内部存储入口，保证 localStorage load、duplicate character、legacy storage migration 都只依赖版本化 `migrateSheetData()`。
-7. 保证所有 migration 幂等：
+7. 清理旧 `lib/storage.ts` 中未使用的 localStorage / import helper，但保留仍被使用的 export helper。
+8. 保证所有 migration 幂等：
 
 ```text
 migrate(v0) = v2
@@ -421,14 +474,14 @@ schemaVersion >= 2 -> 按未来版本 migration，不做旧存档专属猜测
 15. 高版本存档在 v2 阶段直接报错并禁止导入/加载。
 16. `schemaVersion` 当前不需要在 UI 或导出 metadata 中展示。
 17. 导入 validate 不再修改数据，原 `cleanAndNormalizeData()` 应移除或降级为 migration 内部 normalize helper。
-18. `MigrationOptions` 短期保留，后续可用于 warning / strict 行为。
+18. `MigrationOptions` 短期保留为空接口，第一阶段不引入 warning / strict 行为。
 19. HTML 和 JSON 文件导入已经共用核心处理函数，后续应只改这条共用文件导入链。
 20. 内部存储加载和复制角色不需要 import validate，但必须依赖版本化 migration。
-21. 旧 `lib/storage.ts` API 优先删除或废弃，不作为未来主路径维护。
-22. 版本化 migration 改造必须测试先行、分步骤落地，避免一次性大重构。
+21. 旧 `lib/storage.ts` 中的 localStorage / import helper 优先删除或废弃，不作为未来主路径维护。
+22. `lib/storage.ts` 中仍被使用的 export helper 保留。
+23. 无效 card 暂时维持现有过滤行为，并用测试锁定。
+24. 版本化 migration 改造必须测试先行、分步骤落地，避免一次性大重构。
 
 ## 待讨论问题
 
-1. 原 `cleanAndNormalizeData()` 中哪些清理行为必须迁入 `normalizeCurrentSheetData()`？
-2. `MigrationOptions` 未来需要支持哪些 warning / strict 参数？
-3. 旧 `lib/storage.ts` API 是否还有真实调用方？如果没有，应在版本化迁移中删除或明确废弃。
+1. 未来是否要把无效 card 从静默过滤改成 warning 或 error？当前阶段不改。

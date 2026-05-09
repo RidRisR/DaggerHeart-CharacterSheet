@@ -257,40 +257,54 @@ JSON / HTML
 
 ## 外部数据入口
 
-版本化 migration 的安全性取决于所有外部角色数据入口都进入同一条处理链。
+版本化 migration 的安全性取决于入口职责清晰，而不是把所有入口都强行塞进同一个函数。
 
-目标新增统一入口：
+当前代码中，HTML 文件导入和 JSON 文件导入已经基本收敛：
 
-```ts
-function processImportedSheetData(raw: unknown, source: ImportSource): ValidationResult
-```
+- HTML 文件先从 `window.characterData = {...}` 提取 JSON 字符串，再 `JSON.parse`。
+- JSON 文件直接 `JSON.parse`。
+- 两者之后都会进入 `validateAndProcessCharacterData(rawData, source)`。
 
-内部流程固定为：
+因此，文件导入层面不需要分别改 HTML 和 JSON 两套迁移逻辑。真正应该改的是它们共用的核心处理流程。
+
+外部文件导入目标流程：
 
 ```text
-raw object
+file content
+-> parse / extract raw object
 -> validateRawImportCandidate(raw)
 -> migrateSheetData(raw)
 -> validateCurrentSheetData(migrated)
 -> return migrated
 ```
 
-需要收敛到该入口的路径：
+这里的 validate 只适用于外部不可信输入，例如用户导入的 JSON / HTML 文件。
 
-- JSON 文件导入。
-- HTML 文件导入。
+内部持久化入口不应走 import validate：
+
 - 多角色 localStorage 加载。
-- 从旧单角色 localStorage 迁移到多角色存储。
 - 复制角色。
-- 旧 `lib/storage.ts` 中仍保留的 import / load helper。
+- 运行时已有角色数据保存后再次读取。
 
-当前主要入口大体都会调用 `migrateSheetData()`，但仍存在需要处理的旧路径：
+这些数据来源是应用自己保存的角色数据，不是外部文件。它们只需要：
+
+```text
+stored object
+-> migrateSheetData(stored)
+-> save migrated data when needed
+-> return migrated
+```
+
+这样可以避免把“外部文件格式验证”和“内部 schema 迁移”混在一起。
+
+当前仍需要处理的旧路径是 `lib/storage.ts`：
 
 - `lib/storage.ts` 的 `loadCharacterData()` 只做 `JSON.parse`，不迁移。
 - `lib/storage.ts` 的 `importCharacterData()` parse 后直接保存并返回，不迁移。
-- `migrateToMultiCharacterStorage()` 会先保存组装后的旧数据，再依赖后续 `loadCharacterById()` 迁移；版本化后建议保存前直接迁移。
 
-这些旧路径要么明确废弃，要么接入统一入口。实现前必须盘点并测试，避免出现绕过 `migrateSheetData()` 的导入通道。
+这些函数看起来是遗留单角色存储 API。版本化改造时应先确认是否仍有真实 UI 调用方。如果没有调用方，优先删除或明确废弃，而不是为了历史 API 继续维护另一条导入链。
+
+`migrateToMultiCharacterStorage()` 是旧单角色 localStorage 到多角色系统的迁移入口。它可以继续作为内部存储迁移处理，但建议在保存迁移出来的角色前直接调用 `migrateSheetData()`，避免依赖后续 `loadCharacterById()` 再补迁移。
 
 运行时编辑不属于外部导入入口：
 
@@ -332,8 +346,9 @@ raw object
 14. 高版本 `schemaVersion` 报错并禁止导入/加载。
 15. import raw validation 不修改数据。
 16. 原 `cleanAndNormalizeData()` 的必要清理行为迁入 migration / normalize 后，导入结果不回归。
-17. JSON import、HTML import、localStorage load、legacy storage migration 都会进入统一处理链。
-18. 旧 `lib/storage.ts` API 要么接入统一处理链，要么被明确标记为废弃并不再作为用户入口。
+17. JSON import 和 HTML import 共用同一条外部文件导入处理链。
+18. localStorage load、duplicate character、legacy storage migration 不走 import validate，但必须进入版本化 `migrateSheetData()`。
+19. 旧 `lib/storage.ts` API 要么删除，要么明确标记为废弃并不再作为用户入口。
 
 测试 fixture 应从目标场景构建，不需要兼容当前分支开发过程中的中间态测试数据。
 
@@ -347,8 +362,8 @@ raw object
 2. 保持 `migrateSheetData(data, options?)` 公共 API 不变。
 3. 新增版本化 pipeline，但先让现有测试证明输出不回归。
 4. 将 `cleanAndNormalizeData()` 的必要行为迁入 `normalizeCurrentSheetData()`，不要直接删除行为。
-5. 新增统一导入入口，再逐个切换 JSON、HTML、localStorage、legacy storage。
-6. 每切换一个入口，就跑对应测试。
+5. 重构 `validateAndProcessCharacterData()`，让 HTML / JSON 文件导入共享新的 raw validate + migrate + current validate 流程。
+6. 检查内部存储入口，保证 localStorage load、duplicate character、legacy storage migration 都只依赖版本化 `migrateSheetData()`。
 7. 保证所有 migration 幂等：
 
 ```text
@@ -363,8 +378,8 @@ migrate(v2) = v2
 1. 增加版本化 migration / import 行为测试。
 2. 增加 `schemaVersion` 和 `CURRENT_SCHEMA_VERSION`。
 3. 重构 `migrateSheetData()` 为版本 pipeline。
-4. 收敛 JSON / HTML import。
-5. 收敛 localStorage / legacy storage。
+4. 重构 `validateAndProcessCharacterData()`，收敛 JSON / HTML 文件导入。
+5. 调整或废弃旧 storage helper，并确保内部存储入口直接使用版本化 migration。
 6. 移除或降级旧 `cleanAndNormalizeData()`。
 
 每一步都必须能独立验证。
@@ -407,11 +422,13 @@ schemaVersion >= 2 -> 按未来版本 migration，不做旧存档专属猜测
 16. `schemaVersion` 当前不需要在 UI 或导出 metadata 中展示。
 17. 导入 validate 不再修改数据，原 `cleanAndNormalizeData()` 应移除或降级为 migration 内部 normalize helper。
 18. `MigrationOptions` 短期保留，后续可用于 warning / strict 行为。
-19. 所有外部角色数据入口都应收敛到统一导入处理链。
-20. 版本化 migration 改造必须测试先行、分步骤落地，避免一次性大重构。
+19. HTML 和 JSON 文件导入已经共用核心处理函数，后续应只改这条共用文件导入链。
+20. 内部存储加载和复制角色不需要 import validate，但必须依赖版本化 migration。
+21. 旧 `lib/storage.ts` API 优先删除或废弃，不作为未来主路径维护。
+22. 版本化 migration 改造必须测试先行、分步骤落地，避免一次性大重构。
 
 ## 待讨论问题
 
 1. 原 `cleanAndNormalizeData()` 中哪些清理行为必须迁入 `normalizeCurrentSheetData()`？
 2. `MigrationOptions` 未来需要支持哪些 warning / strict 参数？
-3. 旧 `lib/storage.ts` API 是继续兼容，还是在版本化迁移中明确废弃？
+3. 旧 `lib/storage.ts` API 是否还有真实调用方？如果没有，应在版本化迁移中删除或明确废弃。

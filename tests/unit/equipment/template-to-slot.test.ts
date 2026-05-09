@@ -110,6 +110,50 @@ describe("template to slot conversion", () => {
     }
   })
 
+  it("captures obvious static weapon modifiers from template descriptions", () => {
+    const expectedByText = [
+      { text: "闪避值-1", target: "evasion", value: -1 },
+      { text: "灵巧-1", target: "finesse.value", value: -1 },
+      { text: "敏捷-1", target: "agility.value", value: -1 },
+      { text: "严重伤害阈值+3", target: "majorThreshold", value: 3 },
+    ] as const
+
+    for (const template of allWeapons) {
+      const compactDescription = template.描述.replace(/\s/g, "")
+      const expectedContributions: { text: string; target: string; value: number }[] = [
+        ...expectedByText,
+      ]
+
+      const armorMaxValue =
+        compactDescription.match(/\+(\d+)护甲值/)?.[1] ??
+        compactDescription.match(/护甲值\+(\d+)/)?.[1]
+
+      if (armorMaxValue) {
+        expectedContributions.push({
+          text: `armorMax:${armorMaxValue}`,
+          target: "armorMax",
+          value: Number(armorMaxValue),
+        })
+      }
+
+      for (const expected of expectedContributions) {
+        if (!compactDescription.includes(expected.text) && !expected.text.startsWith("armorMax:")) {
+          continue
+        }
+
+        const contribution = template.modifierContributions?.find(
+          (entry) => entry.definition.target === expected.target,
+        )
+
+        expect(
+          contribution,
+          `${template.名称} should expose ${expected.target} ${expected.value} from "${template.描述}"`,
+        ).toBeTruthy()
+        expect(contribution?.editable.value).toBe(expected.value)
+      }
+    }
+  })
+
   it("creates armor slots from structured armor templates", () => {
     const template = armorItems.find((armor) => armor.id === "builtin.armor.full-plate")
     expect(template).toBeTruthy()

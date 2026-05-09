@@ -14,6 +14,19 @@ export interface Weapon {
     modifierContributions?: EquipmentModifierContributionTemplate[];
 }
 
+function weaponModifierContribution(
+    id: string,
+    target: EquipmentModifierContributionTemplate["definition"]["target"],
+    label: string,
+    value: number,
+): EquipmentModifierContributionTemplate {
+    return {
+        id,
+        definition: { target, kind: "modifier" },
+        editable: { label, value },
+    }
+}
+
 export const primaryWeapons: Weapon[] = [
     // 位阶1 (等级1) - 物理武器
     {
@@ -63,6 +76,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "巨型",
         描述: "闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+        modifierContributions: [
+            weaponModifierContribution("evasion", "evasion", "巨型", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.005",
@@ -87,6 +103,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "重型",
         描述: "闪避值-1。",
+        modifierContributions: [
+            weaponModifierContribution("evasion", "evasion", "重型", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.007",
@@ -147,6 +166,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        modifierContributions: [
+            weaponModifierContribution("finesse", "finesse.value", "繁琐", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.012",
@@ -195,6 +217,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        modifierContributions: [
+            weaponModifierContribution("finesse", "finesse.value", "繁琐", -1),
+        ],
     },
     // 位阶1 (等级1) - 魔法武器
     {
@@ -366,6 +391,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "巨型",
         描述: "闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+        modifierContributions: [
+            weaponModifierContribution("evasion", "evasion", "巨型", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.030",
@@ -390,6 +418,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "重型",
         描述: "闪避值-1。",
+        modifierContributions: [
+            weaponModifierContribution("evasion", "evasion", "重型", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.032",
@@ -450,6 +481,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        modifierContributions: [
+            weaponModifierContribution("finesse", "finesse.value", "繁琐", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.037",
@@ -498,6 +532,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        modifierContributions: [
+            weaponModifierContribution("finesse", "finesse.value", "繁琐", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.041",
@@ -886,6 +923,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "巨型",
         描述: "闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+        modifierContributions: [
+            weaponModifierContribution("evasion", "evasion", "巨型", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.073",
@@ -910,6 +950,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "重型",
         描述: "闪避值-1。",
+        modifierContributions: [
+            weaponModifierContribution("evasion", "evasion", "重型", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.075",
@@ -970,6 +1013,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        modifierContributions: [
+            weaponModifierContribution("finesse", "finesse.value", "繁琐", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.080",
@@ -1018,6 +1064,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        modifierContributions: [
+            weaponModifierContribution("finesse", "finesse.value", "繁琐", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.084",
@@ -1042,6 +1091,10 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "勇气",
         描述: "闪避值 -1 ，严重伤害阈值 +3 。", // Note: JSON has spaces around symbols.
+        modifierContributions: [
+            weaponModifierContribution("evasion", "evasion", "勇气", -1),
+            weaponModifierContribution("major-threshold", "majorThreshold", "勇气", 3),
+        ],
     },
     {
         id: "builtin.weapon.primary.086",
@@ -1066,6 +1119,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "保护",
         描述: "护甲值+1。",
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "保护", 1),
+        ],
     },
     {
         id: "builtin.weapon.primary.088",
@@ -1418,6 +1474,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "巨型",
         描述: "闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+        modifierContributions: [
+            weaponModifierContribution("evasion", "evasion", "巨型", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.117",
@@ -1442,6 +1501,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "重型",
         描述: "闪避值-1。",
+        modifierContributions: [
+            weaponModifierContribution("evasion", "evasion", "重型", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.119",
@@ -1502,6 +1564,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        modifierContributions: [
+            weaponModifierContribution("finesse", "finesse.value", "繁琐", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.124",
@@ -1550,6 +1615,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "繁琐",
         描述: "灵巧-1。",
+        modifierContributions: [
+            weaponModifierContribution("finesse", "finesse.value", "繁琐", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.128",
@@ -1586,6 +1654,9 @@ export const primaryWeapons: Weapon[] = [
         负荷: "双手",
         特性名称: "破坏",
         描述: "敏捷-1，成功攻击后为所有邻近范围内的敌人标记 1 压力点。",
+        modifierContributions: [
+            weaponModifierContribution("agility", "agility.value", "破坏", -1),
+        ],
     },
     {
         id: "builtin.weapon.primary.131",

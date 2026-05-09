@@ -1,4 +1,18 @@
 import { Weapon } from "./primary-weapon";
+import type { EquipmentModifierContributionTemplate } from "@/lib/equipment/types"
+
+function weaponModifierContribution(
+    id: string,
+    target: EquipmentModifierContributionTemplate["definition"]["target"],
+    label: string,
+    value: number,
+): EquipmentModifierContributionTemplate {
+    return {
+        id,
+        definition: { target, kind: "modifier" },
+        editable: { label, value },
+    }
+}
 
 export const secondaryWeapons: Weapon[] = [
 // 位阶1 (等级1)
@@ -25,6 +39,9 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+1",
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "保护", 1),
+        ],
     },
     {
         id: "builtin.weapon.secondary.tower-shield",
@@ -123,6 +140,9 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+2",
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "保护", 2),
+        ],
     },
     {
         id: "builtin.weapon.secondary.010",
@@ -207,6 +227,9 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "两用",
         描述: "护甲值+1，近战时主武器伤害+1", // Corrected
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "两用", 1),
+        ],
     },
     {
         id: "builtin.weapon.secondary.016",
@@ -257,6 +280,9 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+3",
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "保护", 3),
+        ],
     },
     {
         id: "builtin.weapon.secondary.020",
@@ -391,6 +417,9 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+4",
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "保护", 4),
+        ],
     },
     {
         id: "builtin.weapon.secondary.030",

@@ -221,16 +221,11 @@ export default function CharacterSheet() {
     const { name, value } = e.target;
 
     setFormData((prev) => {
-      const updatedFormData = { ...prev, [name]: value };
-
-      // 如果修改的是 armorValue，则更新 armorMax
-      if (name === "armorValue") {
-        const parsedValue = parseInt(value, 10);
-        updatedFormData.armorMax = isNaN(parsedValue) ? 0 : parsedValue;
-        // Note: armorBoxes will be automatically cleared by the store when armorValue changes
+      if (name === "armorMax") {
+        return { ...prev, armorMax: parseNumberExpressionOr(value || "0", 0) };
       }
 
-      return updatedFormData;
+      return { ...prev, [name]: value };
     });
   }
 
@@ -603,10 +598,14 @@ export default function CharacterSheet() {
                         <div className="flex-1 bg-white flex flex-col items-center justify-end pb-2 px-1">
                           <input
                             type="text"
-                            name="armorValue"
-                            value={safeFormData.armorValue}
+                            name="armorMax"
+                            value={safeFormData.armorMax ?? ""}
                             onChange={handleInputChange}
-                            placeholder={safeFormData.armorBaseScore || ""}
+                            placeholder={
+                              safeFormData.equipment.armorSlot.baseArmorMax === null
+                                ? ""
+                                : String(safeFormData.equipment.armorSlot.baseArmorMax)
+                            }
                             className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold text-gray-800 placeholder-gray-400 print-empty-hide pb-1"
                           />
                           <div className="text-[8px] text-transparent">占位</div>
@@ -619,7 +618,7 @@ export default function CharacterSheet() {
                         {/* Armor Boxes - 3 per row, 4 rows */}
                         <div className="grid grid-cols-3 gap-1">
                           {(() => {
-                            const calculatedArmorValue = parseNumberExpressionOr(safeFormData.armorValue || "0", 0);
+                            const calculatedArmorValue = parseNumberExpressionOr(String(safeFormData.armorMax ?? "0"), 0);
                             return Array(12)
                               .fill(0)
                               .map((_, i) => (

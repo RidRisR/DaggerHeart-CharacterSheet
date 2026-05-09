@@ -86,7 +86,7 @@ describe("护甲自动化基线", () => {
       armorMax: 3,
     })
 
-    store().updateArmorBaseScore("6")
+    store().updateArmorBaseMax("6")
 
     expect(sheet().equipment.armorSlot.baseArmorMax).toBe(6)
     expect(sheet().armorMax).toBe(6)
@@ -95,7 +95,7 @@ describe("护甲自动化基线", () => {
   it("手动修改护甲阈值会按当前等级重算伤害阈值", () => {
     resetSheetStore({ level: "5" })
 
-    store().updateArmorThresholdWithDamage("9/20")
+    store().updateArmorBaseThresholds("9/20")
 
     expect(sheet().equipment.armorSlot.baseThresholds).toEqual({ minor: 9, major: 20 })
     expect(sheet().minorThreshold).toBe("14")
@@ -169,10 +169,10 @@ describe("护甲自动化基线", () => {
     store().selectArmor(armor!.id)
     expect(sheet().equipment.weaponSlots).toEqual(expectedWeaponSlots)
 
-    store().updateArmorBaseScore("6")
+    store().updateArmorBaseMax("6")
     expect(sheet().equipment.weaponSlots).toEqual(expectedWeaponSlots)
 
-    store().updateArmorThresholdWithDamage("9/20")
+    store().updateArmorBaseThresholds("9/20")
     expect(sheet().equipment.weaponSlots).toEqual(expectedWeaponSlots)
   })
 

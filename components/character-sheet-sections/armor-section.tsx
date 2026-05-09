@@ -5,23 +5,42 @@ import { useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
+import { formatArmorThreshold } from "@/lib/equipment/armor-utils"
+import type { ArmorSlot } from "@/lib/equipment/types"
 
 interface ArmorSectionProps {
   onOpenArmorModal: () => void;
 }
 
 export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
-  const { sheetData: formData, setSheetData, updateArmorThresholdWithDamage, updateArmorBaseScore } = useSheetStore()
+  const { sheetData: formData, setSheetData, updateArmorBaseThresholds, updateArmorBaseMax } = useSheetStore()
   const [isEditingName, setIsEditingName] = useState(false)
+  const armorSlot = formData.equipment.armorSlot
+  const baseArmorMaxValue = armorSlot.baseArmorMax === null ? "" : String(armorSlot.baseArmorMax)
+  const baseThresholdsValue = formatArmorThreshold(armorSlot.baseThresholds)
+
+  const updateArmorSlot = (updates: Partial<ArmorSlot>) => {
+    setSheetData((prev) => ({
+      equipment: {
+        ...prev.equipment,
+        armorSlot: {
+          ...prev.equipment.armorSlot,
+          ...updates,
+        },
+      },
+    }))
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    if (name === 'armorThreshold') {
+    if (name === 'baseThresholds') {
       // 使用新的护甲阈值更新函数，自动计算伤害阈值
-      updateArmorThresholdWithDamage(value)
-    } else if (name === 'armorBaseScore') {
+      updateArmorBaseThresholds(value)
+    } else if (name === 'baseArmorMax') {
       // 使用新的护甲值更新函数，同步更新属性栏的护甲值
-      updateArmorBaseScore(value)
+      updateArmorBaseMax(value)
+    } else if (name === 'feature') {
+      updateArmorSlot({ feature: value })
     } else {
       setSheetData((prev) => ({ ...prev, [name]: value }))
     }
@@ -36,7 +55,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
   }
 
   const handleNameChange = (value: string) => {
-    setSheetData((prev) => ({ ...prev, armorName: value }))
+    updateArmorSlot({ name: value })
   }
 
   const handleNameSubmit = () => {
@@ -63,7 +82,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
           {isEditingName ? (
             <input
               type="text"
-              value={formData.armorName || ""}
+              value={armorSlot.name || ""}
               onChange={(e) => handleNameChange(e.target.value)}
               onKeyDown={handleNameKeyDown}
               onBlur={handleNameSubmit}
@@ -77,7 +96,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
                 onClick={openArmorModal}
                 className="flex-1 text-sm text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none"
               >
-                {formData.armorName || <span className="print:hidden">选择护甲</span>}
+                {armorSlot.name || <span className="print:hidden">选择护甲</span>}
               </button>
               <div className="w-px bg-gray-300 hidden group-hover:block"></div>
               <button
@@ -97,10 +116,10 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
           <label className="text-[8px] text-gray-600">护甲值</label>
           <input
             type="text"
-            name="armorBaseScore"
-            value={formData.armorBaseScore}
+            name="baseArmorMax"
+            value={baseArmorMaxValue}
             onChange={handleInputChange}
-            {...getElementProps(formData.armorBaseScore || "", "armor-base-score")}
+            {...getElementProps(baseArmorMaxValue, "armor-base-score")}
             className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
           />
         </div>
@@ -108,18 +127,18 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
           <label className="text-[8px] text-gray-600">阈值</label>
           <input
             type="text"
-            name="armorThreshold"
-            value={formData.armorThreshold}
+            name="baseThresholds"
+            value={baseThresholdsValue}
             onChange={handleInputChange}
-            {...getElementProps(formData.armorThreshold || "", "armor-threshold")}
+            {...getElementProps(baseThresholdsValue, "armor-threshold")}
             className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
           />
         </div>
       </div>
       <div className="mt-1">
         <ContentEditableField
-          name="armorFeature"
-          value={formData.armorFeature || ""}
+          name="feature"
+          value={armorSlot.feature || ""}
           onChange={handleInputChange}
           placeholder=""
           maxLines={2}

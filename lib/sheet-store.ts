@@ -108,8 +108,8 @@ interface SheetState {
 
     // Threshold calculation actions
     updateLevel: (level: string, oldLevel?: string) => void;
-    updateArmorThresholdWithDamage: (armorThreshold: string) => void;
-    updateArmorBaseScore: (armorBaseScore: string) => void;
+    updateArmorBaseThresholds: (baseThresholds: string) => void;
+    updateArmorBaseMax: (baseArmorMax: string) => void;
     selectArmor: (armorId: string) => void;
 
     // Card management actions
@@ -489,10 +489,10 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
     }),
 
-    updateArmorThresholdWithDamage: (armorThreshold) => set((state) => {
+    updateArmorBaseThresholds: (baseThresholds) => set((state) => {
         const armorSlot: ArmorSlot = {
             ...state.sheetData.equipment.armorSlot,
-            baseThresholds: parseArmorThreshold(armorThreshold),
+            baseThresholds: parseArmorThreshold(baseThresholds),
         };
         const thresholdUpdates = finalThresholdUpdatesFromArmorSlot(armorSlot, state.sheetData.level);
         const updates: Partial<SheetData> = {
@@ -518,8 +518,8 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
     }),
 
-    updateArmorBaseScore: (armorBaseScore) => set((state) => {
-        const baseArmorMax = parseArmorMax(armorBaseScore);
+    updateArmorBaseMax: (baseArmorMaxText) => set((state) => {
+        const baseArmorMax = parseArmorMax(baseArmorMaxText);
         const updates: Partial<SheetData> = {
             equipment: {
                 ...state.sheetData.equipment,
@@ -531,9 +531,9 @@ export const useSheetStore = create<SheetState>((set) => ({
             armorMax: baseArmorMax ?? 0,
         };
 
-        if (armorBaseScore) {
+        if (baseArmorMaxText) {
             showFadeNotification({
-                message: `因护甲信息更新，护甲值已更新为 ${armorBaseScore}`,
+                message: `因护甲信息更新，护甲值已更新为 ${baseArmorMaxText}`,
                 type: "success"
             });
         }

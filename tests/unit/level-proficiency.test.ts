@@ -5,6 +5,14 @@ import { defaultSheetData } from '@/lib/default-sheet-data'
 // Helper to get proficiency as boolean array
 const getProficiency = () => useSheetStore.getState().sheetData.proficiency as boolean[]
 
+const equipmentWithArmorThresholds = (minor: number | null, major: number | null) => ({
+  ...defaultSheetData.equipment,
+  armorSlot: {
+    ...defaultSheetData.equipment.armorSlot,
+    baseThresholds: { minor, major },
+  },
+})
+
 describe('等级升级 - 熟练度提升逻辑', () => {
   beforeEach(() => {
     // 重置 store 状态，从空白角色开始（0个熟练度）
@@ -186,7 +194,7 @@ describe('等级升级 - 熟练度提升逻辑', () => {
       const store = useSheetStore.getState()
       store.setSheetData({
         level: "5",
-        armorThreshold: "3/6",
+        equipment: equipmentWithArmorThresholds(3, 6),
         minorThreshold: "8",   // 3 + 5
         majorThreshold: "11"   // 6 + 5
       })
@@ -227,7 +235,7 @@ describe('等级升级 - 熟练度提升逻辑', () => {
       store.setSheetData({
         ...store.sheetData,
         level: "1",
-        armorThreshold: "3/6"
+        equipment: equipmentWithArmorThresholds(3, 6)
       })
 
       store.updateLevel("5")
@@ -242,7 +250,7 @@ describe('等级升级 - 熟练度提升逻辑', () => {
       store.setSheetData({
         ...store.sheetData,
         level: "1",
-        armorThreshold: "",
+        equipment: equipmentWithArmorThresholds(null, null),
         minorThreshold: "3",
         majorThreshold: "6"
       })

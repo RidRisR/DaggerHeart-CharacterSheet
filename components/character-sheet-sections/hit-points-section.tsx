@@ -6,6 +6,14 @@ import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-ancho
 
 export function HitPointsSection() {
   const { sheetData: formData, setSheetData } = useSheetStore()
+  const baseThresholds = formData.equipment.armorSlot.baseThresholds
+  const level = Number(formData.level)
+  const thresholdPlaceholder = (baseThreshold: number | null) => {
+    if (baseThreshold === null || !Number.isFinite(level)) {
+      return ""
+    }
+    return String(baseThreshold + level)
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -124,15 +132,7 @@ export function HitPointsSection() {
           name="minorThreshold"
           value={formData.minorThreshold || ""}
           onChange={handleInputChange}
-          placeholder={
-            formData.armorThreshold && formData.level
-              ? (() => {
-                const thresholds = formData.armorThreshold.split('/')
-                const minorThreshold = thresholds[0]?.trim()
-                return minorThreshold ? String(Number(minorThreshold) + Number(formData.level)) : ""
-              })()
-              : ""
-          }
+          placeholder={thresholdPlaceholder(baseThresholds.minor)}
           className="w-10 text-center text-m border border-gray-400 rounded mx-1 placeholder-gray-400 print-empty-hide"
         />
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
@@ -147,15 +147,7 @@ export function HitPointsSection() {
           name="majorThreshold"
           value={formData.majorThreshold || ""}
           onChange={handleInputChange}
-          placeholder={
-            formData.armorThreshold && formData.level
-              ? (() => {
-                const thresholds = formData.armorThreshold.split('/')
-                const majorThreshold = thresholds[1]?.trim()
-                return majorThreshold ? String(Number(majorThreshold) + Number(formData.level)) : ""
-              })()
-              : ""
-          }
+          placeholder={thresholdPlaceholder(baseThresholds.major)}
           className="w-10 text-center text-m border border-gray-400 rounded mx-1 placeholder-gray-400 print-empty-hide"
         />
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">

@@ -246,7 +246,7 @@ export const guideSteps: GuideStep[] = [
         title: "选择初始武器",
         content: "现在请选择您的初始武器。请从<strong>T1</strong>武器表中选择\n1.<strong>一把双手主武器</strong>;\n2. 或者 <strong>一把单手主武器和一把单手副武器</strong>。\n填写在主武器和副武器栏位上。",
         validation: (formData) => {
-            return isFilled(formData.primaryWeaponName);
+            return isFilled(formData.equipment?.weaponSlots?.primary?.name);
         }
     },
     {

@@ -61,8 +61,9 @@ describe("armor parsing helpers", () => {
     expect(parseArmorThreshold(null)).toEqual({ minor: null, major: null })
     expect(parseArmorThreshold(undefined)).toEqual({ minor: null, major: null })
     expect(parseArmorThreshold("")).toEqual({ minor: null, major: null })
-    expect(parseArmorThreshold("7/")).toEqual({ minor: 7, major: null })
-    expect(parseArmorThreshold("/15")).toEqual({ minor: null, major: 15 })
+    expect(parseArmorThreshold("7/")).toEqual({ minor: null, major: null })
+    expect(parseArmorThreshold("/15")).toEqual({ minor: null, major: null })
+    expect(parseArmorThreshold("7/bad")).toEqual({ minor: null, major: null })
     expect(parseArmorThreshold("7/15/20")).toEqual({ minor: null, major: null })
   })
 

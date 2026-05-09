@@ -79,7 +79,7 @@ describe("equipment data migration", () => {
     const migrated = migrateSheetData({
       armorName: "奇怪护甲",
       armorBaseScore: "heavy",
-      armorThreshold: "seven/fifteen",
+      armorThreshold: "7/bad",
     } as any)
 
     expect(migrated.equipment.armorSlot).toMatchObject({

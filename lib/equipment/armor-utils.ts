@@ -32,10 +32,16 @@ export function parseArmorThreshold(value: unknown): { minor: number | null; maj
   }
 
   const [minorRaw, majorRaw] = parts
+  const minor = parseThresholdSide(minorRaw)
+  const major = parseThresholdSide(majorRaw)
+
+  if (minor === null || major === null) {
+    return { minor: null, major: null }
+  }
 
   return {
-    minor: parseThresholdSide(minorRaw),
-    major: parseThresholdSide(majorRaw),
+    minor,
+    major,
   }
 }
 

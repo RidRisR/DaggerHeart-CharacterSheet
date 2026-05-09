@@ -182,6 +182,8 @@ migrateV0ToV1()
 
 如果 equipment / modifier 先发布，target sync automation 后做，则 target sync automation 必须成为未来的 `v1 -> v2`。
 
+当前共识是：target sync automation 会在当前分支发布前完成，因此它属于 v1 的一部分。
+
 ## 高版本存档
 
 如果导入数据的 `schemaVersion > CURRENT_SCHEMA_VERSION`，不能静默降级。
@@ -190,7 +192,8 @@ migrateV0ToV1()
 
 - validation/import 阶段给出 warning。
 - UI 提示“该存档来自更新版本，可能不兼容”。
-- 是否阻止导入可以在实现阶段再定，但不能无提示地当作当前版本处理。
+
+当前只有一个目标版本，因此高版本存档的完整策略可以之后再讨论。v1 阶段只需要保证不要无提示地把高版本数据当作当前版本处理。
 
 ## Validator / Import / Export
 
@@ -207,6 +210,22 @@ migrateV0ToV1()
 - 任何 clean / normalize 函数。
 
 特别注意：当前 `cleanAndNormalizeData()` 会手工挑字段。如果不更新，它可能丢掉 `schemaVersion`。
+
+当前共识：
+
+- `cleanAndNormalizeData()` 短期保留。
+- 版本化改造时必须保证它不会丢掉 `schemaVersion`、`targetStates.syncMode` 等新字段。
+- 长期可以逐步收敛到统一的 migration + normalize pipeline，但不是 v1 的必要前提。
+
+## MigrationOptions
+
+当前 `MigrationOptions` 是空接口，`migrateSheetData()` 的 `_options` 参数没有实际使用。
+
+当前共识：
+
+- 短期保留 `MigrationOptions` 和 `migrateSheetData(data, options)` 签名，降低调用方改动。
+- 版本化实现时可以让 options 承载 warning / strict 行为，例如高版本存档提示。
+- 不为了清理而立刻删除这个参数。
 
 ## 测试策略
 
@@ -258,11 +277,14 @@ schemaVersion >= 1 -> 按版本 migration，不做 v0 专属猜测
 8. 当前分支中间态无版本存档不进入兼容范围。
 9. 发布后不再重写已发布 migration，只追加新版本。
 10. 重构 migration 的目标是改组织方式，不改变现有迁移语义。
+11. target sync automation 是 v1 的一部分。
+12. 高版本存档策略之后再讨论，但 v1 不能无提示静默降级。
+13. `schemaVersion` 当前不需要在 UI 或导出 metadata 中展示。
+14. `cleanAndNormalizeData()` 短期保留，但必须保证不丢新字段。
+15. `MigrationOptions` 短期保留，后续可用于 warning / strict 行为。
 
 ## 待讨论问题
 
-1. 高版本存档是阻止导入，还是允许 best-effort 导入但强提示？
-2. `schemaVersion` 是否应该在 UI 或导出 metadata 中显示？
-3. target sync automation 是否会赶在当前分支发布前完成，从而进入 v1？
-4. `cleanAndNormalizeData()` 是否应继续存在，还是逐步收敛到 migration + normalize pipeline？
-5. `MigrationOptions` 是否需要保留，或在版本化重构时清理为真正有用途的参数？
+1. 高版本存档未来是阻止导入，还是允许 best-effort 导入但强提示？
+2. `cleanAndNormalizeData()` 长期是否应完全收敛到 migration + normalize pipeline？
+3. `MigrationOptions` 未来需要支持哪些 warning / strict 参数？

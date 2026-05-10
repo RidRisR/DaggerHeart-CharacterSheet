@@ -65,6 +65,19 @@ export function validateSheetData(data: any): data is SheetData {
   return true
 }
 
+function validateRawImportCandidate(data: any): data is Record<string, unknown> {
+  if (!data || typeof data !== 'object') {
+    return false
+  }
+
+  const requiredFields = ['name', 'level', 'gold', 'experience', 'hope', 'inventory', 'cards']
+  return requiredFields.every(field => field in data)
+}
+
+function validateCurrentSheetData(data: any): data is SheetData {
+  return validateSheetData(data) && typeof data.schemaVersion === 'number'
+}
+
 /**
  * 验证卡牌对象是否有效
  */
@@ -286,17 +299,21 @@ export function validateAndProcessCharacterData(rawData: any, source: 'json' | '
   try {
     console.log(`[Data Validation] 开始验证${source.toUpperCase()}数据...`)
 
-    // 1. 基本类型检查
-    if (!rawData || typeof rawData !== 'object') {
+    // 1. 外部导入只做原始结构粗校验；字段修正统一交给迁移管线处理。
+    if (!validateRawImportCandidate(rawData)) {
       return {
         valid: false,
-        error: '数据格式无效，必须是JSON对象',
+        error: '数据格式无效，必须是JSON对象且包含角色数据必需字段',
         warnings: []
       }
     }
 
-    // 2. 结构验证
-    if (!validateSheetData(rawData)) {
+    // 2. 应用数据迁移。这里必须直接使用原始对象，避免默认值提前遮蔽旧字段。
+    const migratedData = migrateSheetData(rawData)
+    console.log(`[Data Validation] Applied data migrations for ${source.toUpperCase()}`)
+
+    // 3. 迁移后再验证当前版本结构。
+    if (!validateCurrentSheetData(migratedData)) {
       return {
         valid: false,
         error: '角色数据结构验证失败，缺少必需字段或字段类型不正确',
@@ -304,32 +321,14 @@ export function validateAndProcessCharacterData(rawData: any, source: 'json' | '
       }
     }
 
-    // 3. 数据清理和标准化
-    const cleanedData = cleanAndNormalizeData(rawData)
+    // 4. 兼容性检查
+    const compatibility = validateCompatibility(migratedData)
 
-    // 4. 与默认数据合并（保持向后兼容）
-    let mergedData: any = { 
-      ...defaultSheetData, 
-      ...cleanedData
-    }
-
-    // 保留特殊字段到合并后的数据中（用于向后兼容）
-    if ((rawData as any).focused_card_ids) {
-      mergedData.focused_card_ids = (rawData as any).focused_card_ids
-    }
-
-    // 5. 应用数据迁移
-    mergedData = migrateSheetData(mergedData);
-    console.log(`[Data Validation] Applied data migrations for ${source.toUpperCase()}`)
-
-    // 6. 兼容性检查
-    const compatibility = validateCompatibility(mergedData)
-
-    console.log(`[Data Validation] ${source.toUpperCase()}数据验证成功:`, mergedData.name)
+    console.log(`[Data Validation] ${source.toUpperCase()}数据验证成功:`, migratedData.name)
 
     return {
       valid: true,
-      data: mergedData,
+      data: migratedData,
       warnings: compatibility.warnings
     }
 

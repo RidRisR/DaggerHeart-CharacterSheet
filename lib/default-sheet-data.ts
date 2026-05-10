@@ -1,7 +1,9 @@
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import type { SheetData } from "./sheet-data";
+import { CURRENT_SCHEMA_VERSION } from "./sheet-schema-version";
 
 export const defaultSheetData: SheetData = {
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     name: "",
     characterImage: "",
     level: "1",

@@ -13,6 +13,11 @@
 import type { SheetData, AttributeValue } from './sheet-data'
 import { defaultSheetData } from './default-sheet-data'
 import { createEmptyCard, type StandardCard } from '@/card/card-types'
+import {
+  CURRENT_SCHEMA_VERSION,
+  assertSupportedSchemaVersion,
+  detectSchemaVersion,
+} from './sheet-schema-version'
 
 /**
  * 迁移选项接口
@@ -319,6 +324,53 @@ function cleanupDeprecatedFields(data: SheetData): SheetData {
   return migrated
 }
 
+function isValidStandardCard(card: any): card is StandardCard {
+  return card &&
+    typeof card === 'object' &&
+    typeof card.id === 'string' &&
+    typeof card.name === 'string' &&
+    card.type !== undefined
+}
+
+export function normalizeCurrentSheetData(data: Partial<SheetData> | any): SheetData {
+  const normalized: SheetData = {
+    ...defaultSheetData,
+    ...data,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+  }
+
+  normalized.cards = Array.isArray(data.cards)
+    ? data.cards.filter(isValidStandardCard)
+    : defaultSheetData.cards
+
+  normalized.inventory_cards = Array.isArray(data.inventory_cards)
+    ? data.inventory_cards.filter(isValidStandardCard)
+    : defaultSheetData.inventory_cards
+
+  return cleanupDeprecatedFields(normalized)
+}
+
+function migrateV0ToV1(raw: Partial<SheetData> | any): Partial<SheetData> {
+  let migrated = { ...raw } as SheetData
+
+  migrated = migratePageVisibility(migrated)
+  migrated = migrateInventoryCards(migrated)
+  migrated = migrateAttributeSpellcasting(migrated)
+  migrated = migratePageVisibilityRename(migrated)
+  migrated = migratePageVisibilityFields(migrated)
+  migrated = migrateArmorTemplate(migrated)
+  migrated = migrateAdventureNotes(migrated)
+  migrated = migrateWeaponCheckboxes(migrated)
+  migrated = migrateHopeToNumber(migrated)
+  migrated = migrateNotebook(migrated)
+  migrated = cleanupDeprecatedFields(migrated)
+
+  return {
+    ...migrated,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+  }
+}
+
 /**
  * 主迁移函数 - 统一入口点
  * 
@@ -330,31 +382,13 @@ export function migrateSheetData(
   data: Partial<SheetData> | any, 
   _options: MigrationOptions = {}
 ): SheetData {
-  // 1. 确保基本结构，与默认数据合并
-  let migrated: SheetData = {
-    ...defaultSheetData,
-    ...data
+  const schemaVersion = detectSchemaVersion(data)
+  assertSupportedSchemaVersion(schemaVersion)
+
+  let migrated = data
+  if (schemaVersion === 0) {
+    migrated = migrateV0ToV1(migrated)
   }
 
-  // 2. 应用各项迁移（按依赖顺序执行）
-  migrated = migratePageVisibility(migrated)
-  migrated = migrateInventoryCards(migrated)
-  migrated = migrateAttributeSpellcasting(migrated)
-  migrated = migratePageVisibilityRename(migrated)
-  migrated = migratePageVisibilityFields(migrated)
-  migrated = migrateArmorTemplate(migrated)
-  migrated = migrateAdventureNotes(migrated)
-  migrated = migrateWeaponCheckboxes(migrated)
-
-  // Phase 1: Hope 字段迁移
-  migrated = migrateHopeToNumber(migrated)
-
-  // Notebook 字段迁移
-  migrated = migrateNotebook(migrated)
-
-  // 3. 清理废弃字段（最后执行）
-  migrated = cleanupDeprecatedFields(migrated)
-
-  return migrated
+  return normalizeCurrentSheetData(migrated)
 }
-

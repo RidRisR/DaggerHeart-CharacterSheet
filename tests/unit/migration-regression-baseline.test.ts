@@ -30,7 +30,7 @@ describe('main migration regression baseline', () => {
     }))
 
     expect(migrated.pageVisibility).toEqual({
-      rangerCompanion: false,
+      rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
     })

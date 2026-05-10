@@ -35,6 +35,7 @@ coverage/
 .nyc_output/
 
 .claude
+.superpowers/
 
 # git worktrees
 .worktrees/

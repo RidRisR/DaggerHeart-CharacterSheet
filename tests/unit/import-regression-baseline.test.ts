@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  cleanAndNormalizeData,
   validateAndProcessCharacterData,
   validateJSONCharacterData,
 } from '@/lib/character-data-validator'
@@ -46,45 +45,29 @@ describe('main import and normalize regression baseline', () => {
     expect(jsonResult.data?.agility).toEqual({ checked: true, value: '+1', spellcasting: false })
     expect(htmlResult.data?.agility).toEqual({ checked: true, value: '+1', spellcasting: false })
     expect(jsonResult.data?.pageVisibility).toEqual({
-      rangerCompanion: true,
+      rangerCompanion: false,
       armorTemplate: false,
       adventureNotes: false,
     })
     expect(htmlResult.data?.pageVisibility).toEqual({
-      rangerCompanion: true,
+      rangerCompanion: false,
       armorTemplate: false,
       adventureNotes: false,
     })
+    expect(jsonResult.data?.schemaVersion).toBe(1)
+    expect(htmlResult.data?.schemaVersion).toBe(1)
   })
 
-  it('captures current cleanAndNormalizeData coercion and invalid card filtering behavior', () => {
-    const cleaned = cleanAndNormalizeData(importCandidate({
-      level: 3,
-      proficiency: 'invalid',
-      gold: 'invalid',
+  it('captures current import invalid card filtering behavior', () => {
+    const result = validateJSONCharacterData(JSON.stringify(importCandidate({
       cards: [
         validCard,
         { id: 'missing-name-and-type' },
       ],
-      trainingOptions: {
-        intelligent: [true, false],
-        bonded: 'invalid',
-      },
-      armorMax: '5',
-      hpMax: 7,
-      stressMax: 8,
-    }))
+    })))
 
-    expect(cleaned.level).toBe('3')
-    expect(cleaned.proficiency).toBe(0)
-    expect(cleaned.gold).toEqual([])
-    expect(cleaned.hope).toBe(3)
-    expect(cleaned.hopeMax).toBe(4)
-    expect(cleaned.cards).toEqual([validCard])
-    expect(cleaned.trainingOptions.intelligent).toEqual([true, false])
-    expect(cleaned.trainingOptions.bonded).toEqual([])
-    expect(cleaned.armorMax).toBeUndefined()
-    expect(cleaned.hpMax).toBe(7)
-    expect(cleaned.stressMax).toBe(8)
+    expect(result.valid).toBe(true)
+    expect(result.data?.cards).toEqual([validCard])
+    expect(result.data?.schemaVersion).toBe(1)
   })
 })

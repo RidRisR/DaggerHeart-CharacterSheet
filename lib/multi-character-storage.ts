@@ -315,7 +315,8 @@ export function migrateToMultiCharacterStorage(): void {
 
     // 生成新角色ID并保存
     const newCharacterId = generateCharacterId();
-    saveCharacterById(newCharacterId, migratedCharacterData);
+    const normalizedCharacterData = migrateSheetData(migratedCharacterData);
+    saveCharacterById(newCharacterId, normalizedCharacterData);
 
     // 创建角色元数据
     const metadata: CharacterMetadata = {

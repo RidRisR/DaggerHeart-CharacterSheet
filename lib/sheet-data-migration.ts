@@ -536,7 +536,7 @@ function normalizeTargetStates(value: unknown): NonNullable<SheetData["modifierS
 
     const nextState: NonNullable<SheetData["modifierState"]>["targetStates"][ModifierTargetId] = {}
     if (typeof state.activeBaseId === "string") {
-      nextState.activeBaseId = state.activeBaseId
+      nextState.activeBaseId = migrateSystemModifierEntryId(state.activeBaseId)
     }
     if (state.syncMode === "continuous") {
       nextState.syncMode = "continuous"
@@ -557,7 +557,15 @@ function migrateSystemModifierEntryId(entryId: string): string {
     "armor:current:majorThreshold": "equipment:armor:current:majorThreshold",
   }
 
-  return equipmentArmorEntryIds[entryId] ?? entryId
+  const migratedArmorEntryId = equipmentArmorEntryIds[entryId]
+  if (migratedArmorEntryId) return migratedArmorEntryId
+
+  const oldProfessionEntryId = /^profession:.+:(evasion|hpMax)$/.exec(entryId)
+  if (oldProfessionEntryId) {
+    return `profession:current:${oldProfessionEntryId[1]}`
+  }
+
+  return entryId
 }
 
 function migrateLegacyUserEntryId(entryId: string, target: string): string {
@@ -727,9 +735,21 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
   if (!migrated.modifierState || typeof migrated.modifierState !== "object" || Array.isArray(migrated.modifierState)) {
     migrated.modifierState = { targetStates: {}, entryStates: {} }
   } else {
+    const entryStates: NonNullable<SheetData["modifierState"]>["entryStates"] = {}
+    if (isRecord(migrated.modifierState.entryStates)) {
+      Object.entries(migrated.modifierState.entryStates).forEach(([entryId, state]) => {
+        if (!isRecord(state)) return
+        const migratedEntryId = migrateSystemModifierEntryId(entryId)
+        entryStates[migratedEntryId] = {
+          ...(entryStates[migratedEntryId] ?? {}),
+          ...state,
+        }
+      })
+    }
+
     migrated.modifierState = {
       targetStates: normalizeTargetStates(migrated.modifierState.targetStates),
-      entryStates: isRecord(migrated.modifierState.entryStates) ? migrated.modifierState.entryStates : {},
+      entryStates,
     }
   }
 

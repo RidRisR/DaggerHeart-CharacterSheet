@@ -231,7 +231,7 @@ describe("modifier store actions", () => {
       modifierState: {
         targetStates: {
           evasion: {
-            activeBaseId: "profession:profession:current:evasion",
+            activeBaseId: "profession:current:evasion",
             syncMode: "continuous",
           },
         },

@@ -49,7 +49,7 @@ describe("等级自动化基线", () => {
     expect(sheet().proficiency).toEqual([true, true, false, false, false, false])
   })
 
-  it("熟练度提升时重置六属性升级标记", () => {
+  it("等级变化不再直接重置六属性升级标记", () => {
     resetSheetStore({
       level: "1",
       agility: { value: "2", checked: true, spellcasting: false },
@@ -62,12 +62,12 @@ describe("等级自动化基线", () => {
 
     store().updateLevel("5", "1")
 
-    expect(sheet().agility?.checked).toBe(false)
-    expect(sheet().strength?.checked).toBe(false)
-    expect(sheet().finesse?.checked).toBe(false)
-    expect(sheet().instinct?.checked).toBe(false)
-    expect(sheet().presence?.checked).toBe(false)
-    expect(sheet().knowledge?.checked).toBe(false)
+    expect(sheet().agility?.checked).toBe(true)
+    expect(sheet().strength?.checked).toBe(true)
+    expect(sheet().finesse?.checked).toBe(true)
+    expect(sheet().instinct?.checked).toBe(true)
+    expect(sheet().presence?.checked).toBe(true)
+    expect(sheet().knowledge?.checked).toBe(true)
   })
 
   it("等级变化时不直接重算手动模式的伤害阈值", () => {

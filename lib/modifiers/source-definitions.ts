@@ -93,15 +93,14 @@ function selectedUpgradeEntries(sourceId: string, selection: unknown): ModifierE
 export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntry[] {
   const entries: ModifierEntry[] = []
   const professionCard = sheetData.cards?.find(card => card?.type === "profession")
-  const professionId = professionCard?.id || sheetData.professionRef?.id || sheetData.profession || "current"
   const professionName = professionCard?.name || sheetData.professionRef?.name || sheetData.profession || "职业"
   const evasion = professionCard?.professionSpecial?.["起始闪避"]
   const hp = professionCard?.professionSpecial?.["起始生命"]
 
   if (typeof evasion === "number") {
     entries.push(createModifierEntry({
-      id: `profession:${professionId}:evasion`,
-      sourceId: `profession:${professionId}`,
+      id: "profession:current:evasion",
+      sourceId: "profession:current",
       target: "evasion",
       kind: "base",
       label: `${professionName}：起始闪避`,
@@ -113,8 +112,8 @@ export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntr
 
   if (typeof hp === "number") {
     entries.push(createModifierEntry({
-      id: `profession:${professionId}:hpMax`,
-      sourceId: `profession:${professionId}`,
+      id: "profession:current:hpMax",
+      sourceId: "profession:current",
       target: "hpMax",
       kind: "base",
       label: `${professionName}：起始生命上限`,

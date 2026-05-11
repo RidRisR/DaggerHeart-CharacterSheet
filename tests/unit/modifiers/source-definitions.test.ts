@@ -27,10 +27,10 @@ describe("modifier source definitions", () => {
     const entries = collectSystemModifierEntries(sheetData)
 
     expect(entries).toContainEqual(expect.objectContaining({
-      id: "profession:profession-warrior:evasion",
+      id: "profession:current:evasion",
       definition: { target: "evasion", kind: "base" },
       presentation: { label: "战士：起始闪避", value: 12 },
-      source: { type: "profession", id: "profession:profession-warrior" },
+      source: { type: "profession", id: "profession:current" },
     }))
   })
 
@@ -56,16 +56,16 @@ describe("modifier source definitions", () => {
     const entries = collectSystemModifierEntries(sheetData)
 
     expect(entries).toContainEqual(expect.objectContaining({
-      id: "profession:profession-bard:evasion",
+      id: "profession:current:evasion",
       definition: { target: "evasion", kind: "base" },
       presentation: { label: "吟游诗人：起始闪避", value: 10 },
-      source: { type: "profession", id: "profession:profession-bard" },
+      source: { type: "profession", id: "profession:current" },
     }))
     expect(entries).toContainEqual(expect.objectContaining({
-      id: "profession:profession-bard:hpMax",
+      id: "profession:current:hpMax",
       definition: { target: "hpMax", kind: "base" },
       presentation: { label: "吟游诗人：起始生命上限", value: 5 },
-      source: { type: "profession", id: "profession:profession-bard" },
+      source: { type: "profession", id: "profession:current" },
     }))
   })
 

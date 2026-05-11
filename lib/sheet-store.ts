@@ -6,8 +6,6 @@ import type { SheetData, AttributeValue, ArmorTemplateData, SheetCardReference }
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { armorItems } from "@/data/list/armor";
 import { allWeapons } from "@/data/list/all-weapons";
-import { showFadeNotification } from "@/components/ui/fade-notification";
-import { parseToNumber } from "./number-utils";
 import { parseArmorMax, parseArmorThreshold } from "@/lib/equipment/armor-utils";
 import { createEmptyArmorSlot, createEmptyWeaponSlot } from "@/lib/equipment/defaults";
 import { swapInventoryWeaponWithActiveSlot } from "@/lib/equipment/weapon-slot-utils";
@@ -72,21 +70,6 @@ function createSelectedWeaponSlot(selection: WeaponSlotSelection, weaponId: stri
         return createWeaponSlotFromCustomPayload(JSON.parse(weaponId))
     } catch {
         return createWeaponSlotFromName(weaponId)
-    }
-}
-
-function finalThresholdUpdatesFromArmorSlot(armorSlot: ArmorSlot, level: string): Partial<SheetData> {
-    const levelNum = parseInt(level)
-    if (Number.isNaN(levelNum) || levelNum < 1 || levelNum > 10) {
-        return {}
-    }
-    const { minor, major } = armorSlot.baseThresholds
-    if (minor === null || major === null) {
-        return {}
-    }
-    return {
-        minorThreshold: String(minor + levelNum),
-        majorThreshold: String(major + levelNum),
     }
 }
 
@@ -449,187 +432,52 @@ export const useSheetStore = create<SheetState>((set) => ({
     })),
 
     // Threshold calculation actions
-    updateLevel: (level, oldLevel) => set((state) => {
-        const updates: Partial<SheetData> = { level };
-
-        // 检查是否需要增加熟练度（当达到2、5、8级时）
-        // 使用传入的 oldLevel，如果未提供则从 store 读取
-        const prevLevel = parseToNumber(oldLevel ?? state.sheetData.level, 1)
-        const newLevel = parseToNumber(level, 1)
-
-        const proficiencyLevels = [2, 5, 8]
-
-        // 计算跨越了多少个熟练度阈值
-        let proficiencyIncrements = 0
-        for (const threshold of proficiencyLevels) {
-            if (prevLevel < threshold && newLevel >= threshold) {
-                proficiencyIncrements++  // 累加，不 break
-            }
-        }
-
-        // 如果需要增加熟练度
-        if (proficiencyIncrements > 0) {
-            const currentProficiency = Array.isArray(state.sheetData.proficiency)
-                ? state.sheetData.proficiency
-                : Array(6).fill(false)
-
-            // 计算当前熟练度数量
-            const currentCount = currentProficiency.filter(v => v === true).length
-
-            // 计算可以增加的数量（不超过上限6）
-            const actualIncrements = Math.min(proficiencyIncrements, 6 - currentCount)
-
-            if (actualIncrements > 0) {
-                const newProficiency = [...currentProficiency]
-
-                // 批量添加熟练度
-                for (let i = 0; i < actualIncrements; i++) {
-                    newProficiency[currentCount + i] = true
-                }
-
-                updates.proficiency = newProficiency
-
-                // 清空所有属性的升级标记
-                type AttributeKey = 'agility' | 'strength' | 'finesse' | 'instinct' | 'presence' | 'knowledge'
-                const attributeKeys: AttributeKey[] = [
-                    'agility', 'strength', 'finesse',
-                    'instinct', 'presence', 'knowledge'
-                ]
-
-                attributeKeys.forEach(key => {
-                    const attr = state.sheetData[key]
-                    if (attr && typeof attr === 'object' && 'checked' in attr) {
-                        updates[key] = { ...attr, checked: false }
-                    }
-                })
-
-                // 更新通知消息，显示实际增加的数量
-                const message = actualIncrements === 1
-                    ? `等级提升至${newLevel}级，熟练度+1（${currentCount} → ${currentCount + actualIncrements}），属性升级标记已重置`
-                    : `等级提升至${newLevel}级，熟练度+${actualIncrements}（${currentCount} → ${currentCount + actualIncrements}），属性升级标记已重置`
-
-                showFadeNotification({
-                    message,
-                    type: "success"
-                })
-            }
-        }
-
-        // 如果等级为空字符串，只更新等级和熟练度，不计算阈值
-        if (level === "") {
-            return {
-                sheetData: applyContinuousTargetSync({
-                    ...state.sheetData,
-                    ...updates
-                })
-            };
-        }
-
-        const levelNum = parseInt(level);
-
-        // 验证等级范围 (1-10)，如果无效则只更新等级值和熟练度，不计算阈值
-        if (isNaN(levelNum) || levelNum < 1 || levelNum > 10) {
-            return {
-                sheetData: applyContinuousTargetSync({
-                    ...state.sheetData,
-                    ...updates
-                })
-            };
-        }
-
-        const thresholdUpdates = finalThresholdUpdatesFromArmorSlot(
-            state.sheetData.equipment.armorSlot,
+    updateLevel: (level) => set((state) => ({
+        sheetData: applyContinuousTargetSync({
+            ...state.sheetData,
             level,
-        )
-
-        if (thresholdUpdates.minorThreshold !== undefined || thresholdUpdates.majorThreshold !== undefined) {
-            Object.assign(updates, thresholdUpdates)
-
-            showFadeNotification({
-                message: `因等级更新，自动更新伤害阈值`,
-                type: "success"
-            });
-        }
-
-        return {
-            sheetData: applyContinuousTargetSync({
-                ...state.sheetData,
-                ...updates
-            })
-        };
-    }),
+        }),
+    })),
 
     updateArmorBaseThresholds: (baseThresholds) => set((state) => {
         const armorSlot: ArmorSlot = {
             ...state.sheetData.equipment.armorSlot,
             baseThresholds: parseArmorThreshold(baseThresholds),
         };
-        const thresholdUpdates = finalThresholdUpdatesFromArmorSlot(armorSlot, state.sheetData.level);
-        const updates: Partial<SheetData> = {
-            equipment: {
-                ...state.sheetData.equipment,
-                armorSlot,
-            },
-            ...thresholdUpdates,
-        };
-
-        if (thresholdUpdates.minorThreshold !== undefined || thresholdUpdates.majorThreshold !== undefined) {
-            showFadeNotification({
-                message: `因护甲信息更新，自动更新伤害阈值`,
-                type: "success"
-            });
-        }
 
         return {
             sheetData: applyContinuousTargetSync({
                 ...state.sheetData,
-                ...updates
-            })
+                equipment: {
+                    ...state.sheetData.equipment,
+                    armorSlot,
+                },
+            }),
         };
     }),
 
     updateArmorBaseMax: (baseArmorMaxText) => set((state) => {
         const baseArmorMax = parseArmorMax(baseArmorMaxText);
-        const updates: Partial<SheetData> = {
-            equipment: {
-                ...state.sheetData.equipment,
-                armorSlot: {
-                    ...state.sheetData.equipment.armorSlot,
-                    baseArmorMax,
-                },
-            },
-            armorMax: baseArmorMax ?? 0,
-        };
-
-        if (baseArmorMaxText) {
-            showFadeNotification({
-                message: `因护甲信息更新，护甲值已更新为 ${baseArmorMaxText}`,
-                type: "success"
-            });
-        }
 
         return {
             sheetData: applyContinuousTargetSync({
                 ...state.sheetData,
-                ...updates
-            })
+                equipment: {
+                    ...state.sheetData.equipment,
+                    armorSlot: {
+                        ...state.sheetData.equipment.armorSlot,
+                        baseArmorMax,
+                    },
+                },
+            }),
         };
     }),
 
     selectArmor: (armorId: string) => set((state) => {
         let armorSlot: ArmorSlot;
-        const updates: Partial<SheetData> = {};
 
         if (armorId === "none") {
             armorSlot = createEmptyArmorSlot();
-            updates.minorThreshold = "";
-            updates.majorThreshold = "";
-            updates.armorMax = 0;
-
-            showFadeNotification({
-                message: "护甲信息无效或清空，伤害阈值已重置",
-                type: "info"
-            });
         } else {
             let isCustomArmor = false;
             let customArmorData: unknown = null;
@@ -656,15 +504,6 @@ export const useSheetStore = create<SheetState>((set) => ({
                 }
             }
 
-            updates.armorMax = armorSlot.baseArmorMax ?? 0;
-            Object.assign(updates, finalThresholdUpdatesFromArmorSlot(armorSlot, state.sheetData.level));
-
-            showFadeNotification({
-                message: updates.minorThreshold !== undefined || updates.majorThreshold !== undefined
-                    ? `因护甲信息更新，自动更新护甲值和伤害阈值`
-                    : `因护甲信息更新，自动更新护甲值`,
-                type: "success"
-            });
         }
 
         return {
@@ -674,8 +513,7 @@ export const useSheetStore = create<SheetState>((set) => ({
                     ...state.sheetData.equipment,
                     armorSlot,
                 },
-                ...updates
-            })
+            }),
         };
     }),
 
@@ -1153,54 +991,9 @@ export const useSheetStore = create<SheetState>((set) => ({
         }),
     })),
 
-    // Handle profession change - auto-fill evasion and max HP at level 1
-    handleProfessionChange: (newProfessionRef, newProfessionCard) => {
-        const state = useSheetStore.getState();
-        const currentLevel = state.sheetData.level;
-
-        // Only handle at level 1 (or empty level which defaults to 1)
-        if (currentLevel !== "1" && currentLevel !== "") {
-            return;
-        }
-
-        // Handle profession deletion
-        if (!newProfessionRef || !newProfessionRef.id) {
-            set((state) => ({
-                sheetData: applyContinuousTargetSync({
-                    ...state.sheetData,
-                    evasion: "",
-                    hpMax: 6,
-                })
-            }));
-
-            showFadeNotification({
-                message: "职业已清空，闪避值和最大生命值回到初始值。",
-                type: "info"
-            });
-            return;
-        }
-
-        // Handle profession selection/change
-        if (newProfessionCard && newProfessionCard.professionSpecial) {
-            const evasion = newProfessionCard.professionSpecial["起始闪避"];
-            const hp = newProfessionCard.professionSpecial["起始生命"];
-
-            if (evasion !== undefined && hp !== undefined) {
-                set((state) => ({
-                    sheetData: applyContinuousTargetSync({
-                        ...state.sheetData,
-                        evasion: String(evasion),
-                        hpMax: hp,
-                    })
-                }));
-
-                showFadeNotification({
-                    message: `因职业更新，已自动填写闪避值 ${evasion} 和最大生命值 ${hp}`,
-                    type: "success"
-                });
-            }
-        }
-    },
+    handleProfessionChange: () => set((state) => ({
+        sheetData: applyContinuousTargetSync(state.sheetData),
+    })),
 }));
 
 // Selector functions for better performance

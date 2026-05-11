@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import type { StandardCard } from "@/card/card-types"
 import { migrateSheetData } from "@/lib/sheet-data-migration"
 
 function v1ModifierInput(overrides: Record<string, unknown>) {
@@ -120,6 +121,45 @@ describe("modifier state migration", () => {
     })
     expect("armorName" in (migrated as any)).toBe(false)
     expect("armorBaseScore" in (migrated as any)).toBe(false)
+  })
+
+  it("migrates old profession base ids before reconciling against competing user bases", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      cards: [{
+        id: "profession-warrior",
+        type: "profession",
+        name: "战士",
+        professionSpecial: {
+          起始闪避: 12,
+          起始生命: 7,
+        },
+      } as StandardCard],
+      userModifierContributions: [{
+        id: "user:evasion-base",
+        definition: { target: "evasion", kind: "base" },
+        editable: { label: "手动基础闪避", value: 14 },
+      }],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: "profession:profession-warrior:evasion" },
+          hpMax: { activeBaseId: "profession:profession-warrior:hpMax" },
+        },
+        entryStates: {
+          "profession:profession-warrior:evasion": { enabled: false },
+          "profession:profession-warrior:hpMax": { enabled: false },
+          "user:evasion-base": { enabled: false },
+        },
+      },
+    })
+
+    expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe("profession:current:evasion")
+    expect(migrated.modifierState?.targetStates.hpMax?.activeBaseId).toBe("profession:current:hpMax")
+    expect(migrated.modifierState?.entryStates["profession:current:evasion"]).toEqual({ enabled: false })
+    expect(migrated.modifierState?.entryStates["profession:current:hpMax"]).toEqual({ enabled: false })
+    expect(migrated.modifierState?.entryStates["user:evasion-base"]).toEqual({ enabled: false })
+    expect(migrated.modifierState?.entryStates).not.toHaveProperty("profession:profession-warrior:evasion")
+    expect(migrated.modifierState?.entryStates).not.toHaveProperty("profession:profession-warrior:hpMax")
   })
 
   it("preserves unrelated root contribution ids that contain armorValue text", () => {

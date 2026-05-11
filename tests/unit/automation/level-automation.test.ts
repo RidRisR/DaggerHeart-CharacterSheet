@@ -10,38 +10,41 @@ describe("等级自动化基线", () => {
     })
   })
 
-  it("跨越 2/5/8 级阈值时累计增加熟练度", () => {
+  it("等级变化只更新等级来源，手动模式不直接改熟练度", () => {
     resetSheetStore({
       level: "1",
       proficiency: [false, false, false, false, false, false],
     })
 
-    store().updateLevel("8")
+    store().updateLevel("8", "1")
 
-    expect(countChecked(sheet().proficiency)).toBe(3)
-    expect(sheet().proficiency).toEqual([true, true, true, false, false, false])
+    expect(sheet().level).toBe("8")
+    expect(countChecked(sheet().proficiency)).toBe(0)
+    expect(sheet().proficiency).toEqual([false, false, false, false, false, false])
   })
 
-  it("熟练度提升不会超过6点上限", () => {
+  it("等级变化不会直接补满手动模式的熟练度", () => {
     resetSheetStore({
       level: "1",
       proficiency: [true, true, true, true, true, false],
     })
 
-    store().updateLevel("8")
+    store().updateLevel("8", "1")
 
-    expect(countChecked(sheet().proficiency)).toBe(6)
-    expect(sheet().proficiency).toEqual([true, true, true, true, true, true])
+    expect(sheet().level).toBe("8")
+    expect(countChecked(sheet().proficiency)).toBe(5)
+    expect(sheet().proficiency).toEqual([true, true, true, true, true, false])
   })
 
-  it("降级不会降低熟练度", () => {
+  it("降级不会直接改手动模式的熟练度", () => {
     resetSheetStore({
       level: "5",
       proficiency: [true, true, false, false, false, false],
     })
 
-    store().updateLevel("3")
+    store().updateLevel("3", "5")
 
+    expect(sheet().level).toBe("3")
     expect(countChecked(sheet().proficiency)).toBe(2)
     expect(sheet().proficiency).toEqual([true, true, false, false, false, false])
   })
@@ -57,7 +60,7 @@ describe("等级自动化基线", () => {
       knowledge: { value: "0", checked: true, spellcasting: false },
     })
 
-    store().updateLevel("5")
+    store().updateLevel("5", "1")
 
     expect(sheet().agility?.checked).toBe(false)
     expect(sheet().strength?.checked).toBe(false)
@@ -67,7 +70,7 @@ describe("等级自动化基线", () => {
     expect(sheet().knowledge?.checked).toBe(false)
   })
 
-  it("等级变化时按护甲阈值重算伤害阈值", () => {
+  it("等级变化时不直接重算手动模式的伤害阈值", () => {
     resetSheetStore({
       level: "1",
       equipment: {
@@ -77,14 +80,15 @@ describe("等级自动化基线", () => {
           baseThresholds: { minor: 3, major: 6 },
         },
       },
-      minorThreshold: "",
-      majorThreshold: "",
+      minorThreshold: "manual-minor",
+      majorThreshold: "manual-major",
     })
 
-    store().updateLevel("5")
+    store().updateLevel("5", "1")
 
-    expect(sheet().minorThreshold).toBe("8")
-    expect(sheet().majorThreshold).toBe("11")
+    expect(sheet().level).toBe("5")
+    expect(sheet().minorThreshold).toBe("manual-minor")
+    expect(sheet().majorThreshold).toBe("manual-major")
   })
 
   it("等级改为空字符串时保留已有伤害阈值不重算", () => {

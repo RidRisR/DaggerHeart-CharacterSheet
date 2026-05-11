@@ -20,7 +20,7 @@ function professionCard(evasion: number, hp: number): StandardCard {
 describe("职业自动化基线", () => {
   beforeEach(() => resetSheetStore())
 
-  it("1级选择职业时自动写入闪避和生命上限", () => {
+  it("1级选择职业时不再直接写入手动模式的闪避和生命上限", () => {
     resetSheetStore({ level: "1", evasion: "", hpMax: 6 })
 
     store().handleProfessionChange(
@@ -28,11 +28,11 @@ describe("职业自动化基线", () => {
       professionCard(12, 7),
     )
 
-    expect(sheet().evasion).toBe("12")
-    expect(sheet().hpMax).toBe(7)
+    expect(sheet().evasion).toBe("")
+    expect(sheet().hpMax).toBe(6)
   })
 
-  it("空等级选择职业时按1级处理并自动写入", () => {
+  it("空等级选择职业时不再直接写入手动模式的闪避和生命上限", () => {
     resetSheetStore({ level: "", evasion: "", hpMax: 6 })
 
     store().handleProfessionChange(
@@ -40,8 +40,8 @@ describe("职业自动化基线", () => {
       professionCard(13, 8),
     )
 
-    expect(sheet().evasion).toBe("13")
-    expect(sheet().hpMax).toBe(8)
+    expect(sheet().evasion).toBe("")
+    expect(sheet().hpMax).toBe(6)
   })
 
   it("非1级选择职业不会覆盖现有闪避和生命上限", () => {
@@ -56,13 +56,13 @@ describe("职业自动化基线", () => {
     expect(sheet().hpMax).toBe(9)
   })
 
-  it("1级清空职业时重置闪避为空并把生命上限设为6", () => {
+  it("1级清空职业时只清空职业来源，不直接覆盖手动最终值", () => {
     resetSheetStore({ level: "1", evasion: "12", hpMax: 7 })
 
     store().handleProfessionChange(undefined, undefined)
 
-    expect(sheet().evasion).toBe("")
-    expect(sheet().hpMax).toBe(6)
+    expect(sheet().evasion).toBe("12")
+    expect(sheet().hpMax).toBe(7)
   })
 
   it("非1级清空职业不会覆盖现有数值", () => {

@@ -11,123 +11,76 @@ function run(label: string, overrides = {}, currentlyChecked = false) {
   })
 }
 
+function expectSelectionOnly(
+  result: ReturnType<typeof run>,
+  selected: boolean,
+  target: string,
+) {
+  expect(result).toMatchObject({
+    kind: "setSheetData",
+    selection: {
+      selected,
+      params: { target },
+    },
+  })
+  expect(result.kind === "setSheetData" ? result.updates : undefined).toEqual({})
+}
+
 describe("升级选项自动化基线", () => {
-  it("生命槽勾选会增加 hpMax", () => {
-    expect(run("永久增加一个生命槽。", { hpMax: 6 })).toMatchObject({
-      kind: "setSheetData",
-      updates: { hpMax: 7 },
-      message: "生命槽上限 +1，当前为 7",
-    })
+  it("生命槽升级只返回 selection，不直接改 hpMax", () => {
+    expectSelectionOnly(run("永久增加一个生命槽。", { hpMax: 6 }), true, "hpMax")
   })
 
-  it("生命槽取消会减少 hpMax 但不低于1", () => {
-    expect(run("永久增加一个生命槽。", { hpMax: 1 }, true)).toMatchObject({
-      kind: "setSheetData",
-      updates: { hpMax: 1 },
-      message: "生命槽上限 -1，当前为 1",
-    })
+  it("生命槽取消只返回未选中 selection，不直接改 hpMax", () => {
+    expectSelectionOnly(run("永久增加一个生命槽。", { hpMax: 1 }, true), false, "hpMax")
   })
 
-  it("生命槽缺失时勾选按默认值6增加", () => {
-    expect(run("永久增加一个生命槽。", { hpMax: undefined })).toMatchObject({
-      kind: "setSheetData",
-      updates: { hpMax: 7 },
-      warnings: [],
-      message: "生命槽上限 +1，当前为 7",
-    })
+  it("生命槽缺失时勾选仍只返回 selection", () => {
+    expectSelectionOnly(run("永久增加一个生命槽。", { hpMax: undefined }), true, "hpMax")
   })
 
-  it("生命槽缺失时取消按默认值6减少", () => {
-    expect(run("永久增加一个生命槽。", { hpMax: undefined }, true)).toMatchObject({
-      kind: "setSheetData",
-      updates: { hpMax: 5 },
-      warnings: [],
-      message: "生命槽上限 -1，当前为 5",
-    })
+  it("生命槽缺失时取消仍只返回未选中 selection", () => {
+    expectSelectionOnly(run("永久增加一个生命槽。", { hpMax: undefined }, true), false, "hpMax")
   })
 
-  it("压力槽勾选会增加 stressMax", () => {
-    expect(run("永久增加一个压力槽。", { stressMax: 6 })).toMatchObject({
-      kind: "setSheetData",
-      updates: { stressMax: 7 },
-      warnings: [],
-      message: "压力槽上限 +1，当前为 7",
-    })
+  it("压力槽升级只返回 selection，不直接改 stressMax", () => {
+    expectSelectionOnly(run("永久增加一个压力槽。", { stressMax: 6 }), true, "stressMax")
   })
 
-  it("压力槽勾选不会超过18，因为组件现有 checkbox 自动化使用18上限", () => {
-    expect(run("永久增加一个压力槽。", { stressMax: 18 })).toMatchObject({
-      kind: "setSheetData",
-      updates: { stressMax: 18 },
-      message: "压力槽上限 +1，当前为 18",
-    })
+  it("压力槽勾选到上限时仍只返回 selection", () => {
+    expectSelectionOnly(run("永久增加一个压力槽。", { stressMax: 18 }), true, "stressMax")
   })
 
-  it("压力槽取消会减少 stressMax 并保留当前值消息", () => {
-    expect(run("永久增加一个压力槽。", { stressMax: 7 }, true)).toMatchObject({
-      kind: "setSheetData",
-      updates: { stressMax: 6 },
-      warnings: [],
-      message: "压力槽上限 -1，当前为 6",
-    })
+  it("压力槽取消只返回未选中 selection，不直接改 stressMax", () => {
+    expectSelectionOnly(run("永久增加一个压力槽。", { stressMax: 7 }, true), false, "stressMax")
   })
 
-  it("压力槽缺失时勾选按默认值6增加", () => {
-    expect(run("永久增加一个压力槽。", { stressMax: undefined })).toMatchObject({
-      kind: "setSheetData",
-      updates: { stressMax: 7 },
-      warnings: [],
-      message: "压力槽上限 +1，当前为 7",
-    })
+  it("压力槽缺失时勾选仍只返回 selection", () => {
+    expectSelectionOnly(run("永久增加一个压力槽。", { stressMax: undefined }), true, "stressMax")
   })
 
-  it("压力槽缺失时取消按默认值6减少", () => {
-    expect(run("永久增加一个压力槽。", { stressMax: undefined }, true)).toMatchObject({
-      kind: "setSheetData",
-      updates: { stressMax: 5 },
-      warnings: [],
-      message: "压力槽上限 -1，当前为 5",
-    })
+  it("压力槽缺失时取消仍只返回未选中 selection", () => {
+    expectSelectionOnly(run("永久增加一个压力槽。", { stressMax: undefined }, true), false, "stressMax")
   })
 
-  it("熟练度勾选会点亮下一个熟练度标记", () => {
-    expect(run("(同时标记两格) 获得熟练度+1。", {
+  it("熟练度升级只返回 selection，不直接改熟练度", () => {
+    expectSelectionOnly(run("(同时标记两格) 获得熟练度+1。", {
       proficiency: [true, false, false, false, false, false],
-    })).toMatchObject({
-      kind: "setSheetData",
-      updates: { proficiency: [true, true, false, false, false, false] },
-    })
+    }), true, "proficiency")
   })
 
-  it("熟练度取消会熄灭最后一个熟练度标记", () => {
-    expect(run("(同时标记两格) 获得熟练度+1。", {
+  it("熟练度取消只返回未选中 selection，不直接改熟练度", () => {
+    expectSelectionOnly(run("(同时标记两格) 获得熟练度+1。", {
       proficiency: [true, true, false, false, false, false],
-    }, true)).toMatchObject({
-      kind: "setSheetData",
-      updates: { proficiency: [true, false, false, false, false, false] },
-    })
+    }, true), false, "proficiency")
   })
 
   it("生命槽升级返回 automation selection 信息", () => {
-    expect(run("永久增加一个生命槽。", { hpMax: 6 })).toMatchObject({
-      kind: "setSheetData",
-      updates: { hpMax: 7 },
-      selection: {
-        selected: true,
-        params: { target: "hpMax" },
-      },
-    })
+    expectSelectionOnly(run("永久增加一个生命槽。", { hpMax: 6 }), true, "hpMax")
   })
 
   it("取消生命槽升级返回未选中 selection 信息", () => {
-    expect(run("永久增加一个生命槽。", { hpMax: 7 }, true)).toMatchObject({
-      kind: "setSheetData",
-      updates: { hpMax: 6 },
-      selection: {
-        selected: false,
-        params: { target: "hpMax" },
-      },
-    })
+    expectSelectionOnly(run("永久增加一个生命槽。", { hpMax: 7 }, true), false, "hpMax")
   })
 
   it("已勾选属性升级选项会返回未选中 selection 信息", () => {
@@ -148,17 +101,8 @@ describe("升级选项自动化基线", () => {
     })
   })
 
-  it("已勾选闪避升级选项会按当前最终值执行 -1", () => {
-    expect(run("获得闪避值+1。", { evasion: "20" }, true)).toMatchObject({
-      kind: "setSheetData",
-      updates: { evasion: "19" },
-      warnings: [],
-      selection: {
-        selected: false,
-        params: { target: "evasion" },
-      },
-      message: "闪避值 -1，当前为 19",
-    })
+  it("已勾选闪避升级选项只返回未选中 selection，不直接改 evasion", () => {
+    expectSelectionOnly(run("获得闪避值+1。", { evasion: "20" }, true), false, "evasion")
   })
 
   it("已勾选闪避升级选项的提示不会显示 undefined", () => {
@@ -166,8 +110,12 @@ describe("升级选项自动化基线", () => {
 
     expect(result).toMatchObject({
       kind: "setSheetData",
-      message: "闪避值 -1，当前为 19",
+      selection: {
+        selected: false,
+        params: { target: "evasion" },
+      },
     })
+    expect(result.kind === "setSheetData" ? result.updates : undefined).toEqual({})
     expect(result.kind === "setSheetData" ? result.message : "").not.toContain("undefined")
   })
 

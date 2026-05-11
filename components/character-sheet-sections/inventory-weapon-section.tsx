@@ -5,7 +5,6 @@ import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
 import { showFadeNotification } from "@/components/ui/fade-notification"
-import { swapInventoryWeaponWithActiveSlot } from "@/lib/equipment/weapon-slot-utils"
 import type { WeaponSlot } from "@/lib/equipment/types"
 
 interface InventoryWeaponSectionProps {
@@ -17,28 +16,16 @@ export function InventoryWeaponSection({
   index,
   onOpenWeaponModal,
 }: InventoryWeaponSectionProps) {
-  const { sheetData: formData, setSheetData } = useSheetStore()
+  const {
+    sheetData: formData,
+    updateInventoryWeaponSlot: storeUpdateInventoryWeaponSlot,
+    swapInventoryWeaponToActiveSlot,
+  } = useSheetStore()
   const [isEditingName, setIsEditingName] = useState(false)
   const slot = formData.equipment.weaponSlots.inventory[index]
 
   const updateInventoryWeaponSlot = (updates: Partial<WeaponSlot>) => {
-    setSheetData((prev) => {
-      const inventory = [...prev.equipment.weaponSlots.inventory] as typeof prev.equipment.weaponSlots.inventory
-      inventory[index] = {
-        ...inventory[index],
-        ...updates,
-      }
-
-      return {
-        equipment: {
-          ...prev.equipment,
-          weaponSlots: {
-            ...prev.equipment.weaponSlots,
-            inventory,
-          },
-        },
-      }
-    })
+    storeUpdateInventoryWeaponSlot(index, updates)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -69,9 +56,7 @@ export function InventoryWeaponSection({
   }
 
   const handleWeaponSwap = (targetType: 'primary' | 'secondary') => {
-    setSheetData((prev) => ({
-      equipment: swapInventoryWeaponWithActiveSlot(prev.equipment, index, targetType),
-    }))
+    swapInventoryWeaponToActiveSlot(index, targetType)
 
     showFadeNotification({
       message: targetType === 'primary' ? '已设为主手武器' : '已设为副手武器',

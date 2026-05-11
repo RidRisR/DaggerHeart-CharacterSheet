@@ -5,12 +5,20 @@ import { defaultSheetData } from "./default-sheet-data";
 import type { SheetData, AttributeValue, ArmorTemplateData, SheetCardReference } from "./sheet-data";
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { armorItems } from "@/data/list/armor";
+import { allWeapons } from "@/data/list/all-weapons";
 import { showFadeNotification } from "@/components/ui/fade-notification";
 import { parseToNumber } from "./number-utils";
 import { parseArmorMax, parseArmorThreshold } from "@/lib/equipment/armor-utils";
-import { createEmptyArmorSlot } from "@/lib/equipment/defaults";
-import { createArmorSlotFromCustomPayload, createArmorSlotFromTemplate } from "@/lib/equipment/template-to-slot";
-import type { ArmorSlot } from "@/lib/equipment/types";
+import { createEmptyArmorSlot, createEmptyWeaponSlot } from "@/lib/equipment/defaults";
+import { swapInventoryWeaponWithActiveSlot } from "@/lib/equipment/weapon-slot-utils";
+import {
+    createArmorSlotFromCustomPayload,
+    createArmorSlotFromTemplate,
+    createWeaponSlotFromCustomPayload,
+    createWeaponSlotFromName,
+    createWeaponSlotFromTemplate,
+} from "@/lib/equipment/template-to-slot";
+import type { ArmorSlot, WeaponSlot } from "@/lib/equipment/types";
 import type {
     AutomationSourceId,
     ModifierEntryId,
@@ -35,6 +43,36 @@ let equipmentContributionSequence = 0;
 function createEquipmentContributionId(templateId: string): string {
     equipmentContributionSequence += 1;
     return `equipment:${templateId}:${equipmentContributionSequence}`;
+}
+
+type WeaponSlotSelection =
+    | { slotType: "primary" | "secondary" }
+    | { slotType: "inventory"; index: 0 | 1 }
+
+const weaponSlotSelectionId = (selection: WeaponSlotSelection) =>
+    selection.slotType === "inventory" ? `inventory-${selection.index}` : selection.slotType
+
+const createWeaponContributionId = (selection: WeaponSlotSelection, templateContributionId: string) => {
+    return `equipment:${weaponSlotSelectionId(selection)}:${Date.now()}:${Math.random().toString(36).slice(2)}:${templateContributionId}`;
+}
+
+function createSelectedWeaponSlot(selection: WeaponSlotSelection, weaponId: string): WeaponSlot {
+    if (weaponId === "none") {
+        return createEmptyWeaponSlot()
+    }
+
+    const template = allWeapons.find((weapon) => weapon.id === weaponId)
+    if (template) {
+        return createWeaponSlotFromTemplate(template, (templateContributionId) =>
+            createWeaponContributionId(selection, templateContributionId),
+        )
+    }
+
+    try {
+        return createWeaponSlotFromCustomPayload(JSON.parse(weaponId))
+    } catch {
+        return createWeaponSlotFromName(weaponId)
+    }
 }
 
 function finalThresholdUpdatesFromArmorSlot(armorSlot: ArmorSlot, level: string): Partial<SheetData> {
@@ -113,6 +151,10 @@ interface SheetState {
     updateArmorBaseThresholds: (baseThresholds: string) => void;
     updateArmorBaseMax: (baseArmorMax: string) => void;
     selectArmor: (armorId: string) => void;
+    selectWeaponSlot: (selection: WeaponSlotSelection, weaponId: string) => void;
+    updateActiveWeaponSlot: (slotType: "primary" | "secondary", updates: Partial<WeaponSlot>) => void;
+    updateInventoryWeaponSlot: (index: 0 | 1, updates: Partial<WeaponSlot>) => void;
+    swapInventoryWeaponToActiveSlot: (index: 0 | 1, targetType: "primary" | "secondary") => void;
 
     // Card management actions
     deleteCard: (index: number, isInventory: boolean) => void;
@@ -636,6 +678,86 @@ export const useSheetStore = create<SheetState>((set) => ({
             })
         };
     }),
+
+    selectWeaponSlot: (selection, weaponId) => set((state) => {
+        const slot = createSelectedWeaponSlot(selection, weaponId);
+        const weaponSlots = state.sheetData.equipment.weaponSlots;
+
+        if (selection.slotType === "inventory") {
+            const inventory = [...weaponSlots.inventory] as typeof weaponSlots.inventory;
+            inventory[selection.index] = slot;
+
+            return {
+                sheetData: applyContinuousTargetSync({
+                    ...state.sheetData,
+                    equipment: {
+                        ...state.sheetData.equipment,
+                        weaponSlots: {
+                            ...weaponSlots,
+                            inventory,
+                        },
+                    },
+                }),
+            };
+        }
+
+        return {
+            sheetData: applyContinuousTargetSync({
+                ...state.sheetData,
+                equipment: {
+                    ...state.sheetData.equipment,
+                    weaponSlots: {
+                        ...weaponSlots,
+                        [selection.slotType]: slot,
+                    },
+                },
+            }),
+        };
+    }),
+
+    updateActiveWeaponSlot: (slotType, updates) => set((state) => ({
+        sheetData: applyContinuousTargetSync({
+            ...state.sheetData,
+            equipment: {
+                ...state.sheetData.equipment,
+                weaponSlots: {
+                    ...state.sheetData.equipment.weaponSlots,
+                    [slotType]: {
+                        ...state.sheetData.equipment.weaponSlots[slotType],
+                        ...updates,
+                    },
+                },
+            },
+        }),
+    })),
+
+    updateInventoryWeaponSlot: (index, updates) => set((state) => {
+        const inventory = [...state.sheetData.equipment.weaponSlots.inventory] as typeof state.sheetData.equipment.weaponSlots.inventory;
+        inventory[index] = {
+            ...inventory[index],
+            ...updates,
+        };
+
+        return {
+            sheetData: applyContinuousTargetSync({
+                ...state.sheetData,
+                equipment: {
+                    ...state.sheetData.equipment,
+                    weaponSlots: {
+                        ...state.sheetData.equipment.weaponSlots,
+                        inventory,
+                    },
+                },
+            }),
+        };
+    }),
+
+    swapInventoryWeaponToActiveSlot: (index, targetType) => set((state) => ({
+        sheetData: applyContinuousTargetSync({
+            ...state.sheetData,
+            equipment: swapInventoryWeaponWithActiveSlot(state.sheetData.equipment, index, targetType),
+        }),
+    })),
 
     // Card management actions
     deleteCard: (index, isInventory) => set((state) => {

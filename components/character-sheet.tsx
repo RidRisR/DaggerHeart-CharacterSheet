@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { allWeapons } from "@/data/list/all-weapons"
 import {
   CardType, // Import CardType
 } from "@/card"
@@ -31,26 +30,13 @@ import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import { parseNumberExpressionOr } from "@/lib/number-utils"
-import { createEmptyWeaponSlot } from "@/lib/equipment/defaults"
-import {
-  createWeaponSlotFromCustomPayload,
-  createWeaponSlotFromName,
-  createWeaponSlotFromTemplate,
-} from "@/lib/equipment/template-to-slot"
-import type { WeaponSlot } from "@/lib/equipment/types"
 
 type WeaponSlotSelection =
   | { slotType: "primary" | "secondary" }
   | { slotType: "inventory"; index: 0 | 1 }
 
-const createEquipmentContributionId = (slotId: string, templateContributionId: string) =>
-  `equipment:${slotId}:${Date.now()}:${Math.random().toString(36).slice(2)}:${templateContributionId}`
-
-const weaponSlotSelectionId = (selection: WeaponSlotSelection) =>
-  selection.slotType === "inventory" ? `inventory-${selection.index}` : selection.slotType
-
 export default function CharacterSheet() {
-  const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, handleProfessionChange: autofillProfessionData } = useSheetStore();
+  const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, selectWeaponSlot, handleProfessionChange: autofillProfessionData } = useSheetStore();
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
   const safeFormData = useSafeSheetData();
@@ -369,57 +355,8 @@ export default function CharacterSheet() {
     needsSyncRef.current = true
   }
 
-  const createSelectedWeaponSlot = (weaponId: string): WeaponSlot => {
-    if (weaponId === "none") {
-      return createEmptyWeaponSlot()
-    }
-
-    const slotId = weaponSlotSelectionId(currentWeaponSlot)
-    const template = allWeapons.find((weapon) => weapon.id === weaponId)
-    if (template) {
-      return createWeaponSlotFromTemplate(template, (templateContributionId) =>
-        createEquipmentContributionId(slotId, templateContributionId),
-      )
-    }
-
-    try {
-      return createWeaponSlotFromCustomPayload(JSON.parse(weaponId))
-    } catch {
-      return createWeaponSlotFromName(weaponId)
-    }
-  }
-
   const handleWeaponChange = (weaponId: string) => {
-    const slot = createSelectedWeaponSlot(weaponId)
-
-    setFormData((prev) => {
-      const weaponSlots = prev.equipment.weaponSlots
-
-      if (currentWeaponSlot.slotType === "inventory") {
-        const inventory = [...weaponSlots.inventory] as typeof weaponSlots.inventory
-        inventory[currentWeaponSlot.index] = slot
-
-        return {
-          equipment: {
-            ...prev.equipment,
-            weaponSlots: {
-              ...weaponSlots,
-              inventory,
-            },
-          },
-        }
-      }
-
-      return {
-        equipment: {
-          ...prev.equipment,
-          weaponSlots: {
-            ...weaponSlots,
-            [currentWeaponSlot.slotType]: slot,
-          },
-        },
-      }
-    })
+    selectWeaponSlot(currentWeaponSlot, weaponId)
   }
 
   const handleArmorChange = (value: string) => {

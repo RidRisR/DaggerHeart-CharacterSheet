@@ -17,7 +17,7 @@ export function WeaponSection({
   slotType,
   onOpenWeaponModal,
 }: WeaponSectionProps) {
-  const { sheetData: formData, setSheetData } = useSheetStore()
+  const { sheetData: formData, updateActiveWeaponSlot } = useSheetStore()
   const [isEditingName, setIsEditingName] = useState(false)
   const slot = formData.equipment.weaponSlots[slotType]
 
@@ -27,18 +27,7 @@ export function WeaponSection({
   }
 
   const updateWeaponSlot = (updates: Partial<WeaponSlot>) => {
-    setSheetData((prev) => ({
-      equipment: {
-        ...prev.equipment,
-        weaponSlots: {
-          ...prev.equipment.weaponSlots,
-          [slotType]: {
-            ...prev.equipment.weaponSlots[slotType],
-            ...updates,
-          },
-        },
-      },
-    }))
+    updateActiveWeaponSlot(slotType, updates)
   }
 
   const openWeaponModal = () => {

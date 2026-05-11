@@ -1,10 +1,22 @@
 import { describe, expect, it } from "vitest"
 import { migrateSheetData } from "@/lib/sheet-data-migration"
 
+function v1EquipmentInput(overrides: Record<string, unknown>) {
+  return {
+    schemaVersion: 1,
+    name: "V1 Equipment",
+    level: "1",
+    hope: 0,
+    hopeMax: 6,
+    cards: [],
+    inventory_cards: [],
+    ...overrides,
+  } as any
+}
+
 describe("equipment data migration", () => {
   it("migrates legacy weapon and armor fields into equipment", () => {
-    const migrated = migrateSheetData({
-      name: "Legacy",
+    const migrated = migrateSheetData(v1EquipmentInput({
       primaryWeaponName: "阔剑",
       primaryWeaponTrait: "物理/单手/近战",
       primaryWeaponDamage: "敏捷: d8",
@@ -28,7 +40,7 @@ describe("equipment data migration", () => {
       armorThreshold: "7/15",
       armorFeature: "重型: 闪避值-1",
       armorValue: "4",
-    } as any)
+    }))
 
     expect(migrated.equipment.weaponSlots.primary).toMatchObject({
       name: "阔剑",
@@ -76,11 +88,11 @@ describe("equipment data migration", () => {
   })
 
   it("normalizes invalid armor rule fields to null", () => {
-    const migrated = migrateSheetData({
+    const migrated = migrateSheetData(v1EquipmentInput({
       armorName: "奇怪护甲",
       armorBaseScore: "heavy",
       armorThreshold: "7/bad",
-    } as any)
+    }))
 
     expect(migrated.equipment.armorSlot).toMatchObject({
       name: "奇怪护甲",
@@ -90,7 +102,7 @@ describe("equipment data migration", () => {
   })
 
   it("preserves existing equipment over legacy fields", () => {
-    const migrated = migrateSheetData({
+    const migrated = migrateSheetData(v1EquipmentInput({
       equipment: {
         weaponSlots: {
           primary: { name: "Existing", trait: "", damage: "", feature: "", modifierContributions: [] },
@@ -110,7 +122,7 @@ describe("equipment data migration", () => {
       },
       primaryWeaponName: "Legacy",
       armorName: "Legacy Armor",
-    } as any)
+    }))
 
     expect(migrated.equipment.weaponSlots.primary.name).toBe("Existing")
     expect(migrated.equipment.armorSlot.name).toBe("Existing Armor")
@@ -119,7 +131,7 @@ describe("equipment data migration", () => {
   })
 
   it("normalizes malformed equipment and fills missing slots from legacy fields", () => {
-    const migrated = migrateSheetData({
+    const migrated = migrateSheetData(v1EquipmentInput({
       equipment: {
         weaponSlots: {
           primary: { name: "Existing Primary" },
@@ -139,7 +151,7 @@ describe("equipment data migration", () => {
       armorBaseScore: "5",
       armorThreshold: "8/17",
       armorFeature: "Legacy Armor Feature",
-    } as any)
+    }))
 
     expect(migrated.equipment.weaponSlots.primary).toEqual({
       name: "Existing Primary",
@@ -182,7 +194,7 @@ describe("equipment data migration", () => {
   })
 
   it("normalizes empty equipment objects against equipment defaults", () => {
-    const migrated = migrateSheetData({ equipment: {} } as any)
+    const migrated = migrateSheetData({ schemaVersion: 2, equipment: {} } as any)
 
     expect(migrated.equipment.weaponSlots.primary).toEqual({
       name: "",

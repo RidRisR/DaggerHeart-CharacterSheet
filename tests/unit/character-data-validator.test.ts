@@ -75,11 +75,11 @@ function expectCompleteEquipment(data: NonNullable<ReturnType<typeof validateJSO
 }
 
 describe('character data import validation', () => {
-  it('migrates JSON imports to v1 and preserves unknown fields through migration', () => {
+  it('migrates JSON imports to v2 and preserves unknown fields through migration', () => {
     const result = validateJSONCharacterData(JSON.stringify(rawImport()))
 
     expect(result.valid).toBe(true)
-    expect(result.data?.schemaVersion).toBe(1)
+    expect(result.data?.schemaVersion).toBe(2)
     expect(result.data?.hope).toBe(3)
     expect((result.data as any).unknownFutureField).toEqual({ keep: true })
   })
@@ -91,8 +91,8 @@ describe('character data import validation', () => {
 
     expect(json.valid).toBe(true)
     expect(html.valid).toBe(true)
-    expect(json.data?.schemaVersion).toBe(1)
-    expect(html.data?.schemaVersion).toBe(1)
+    expect(json.data?.schemaVersion).toBe(2)
+    expect(html.data?.schemaVersion).toBe(2)
     expect(json.data?.hope).toBe(html.data?.hope)
     expect(json.data?.cards).toEqual(html.data?.cards)
     expect((json.data as any).focused_card_ids).toEqual(['card-domain-1'])

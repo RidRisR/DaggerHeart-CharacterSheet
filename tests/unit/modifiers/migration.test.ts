@@ -1,16 +1,29 @@
 import { describe, expect, it } from "vitest"
 import { migrateSheetData } from "@/lib/sheet-data-migration"
 
+function v1ModifierInput(overrides: Record<string, unknown>) {
+  return {
+    schemaVersion: 1,
+    name: "V1 Modifier",
+    level: "1",
+    hope: 0,
+    hopeMax: 6,
+    cards: [],
+    inventory_cards: [],
+    ...overrides,
+  } as any
+}
+
 describe("modifier state migration", () => {
   it("adds empty modifier state without changing existing final values", () => {
-    const migrated = migrateSheetData({
+    const migrated = migrateSheetData(v1ModifierInput({
       name: "Legacy",
       evasion: "12+敏捷",
       hpMax: 7,
       armorValue: "4",
       minorThreshold: "10",
       majorThreshold: "20",
-    })
+    }))
 
     expect(migrated.evasion).toBe("12+敏捷")
     expect(migrated.hpMax).toBe(7)
@@ -23,7 +36,7 @@ describe("modifier state migration", () => {
   })
 
   it("migrates legacy byTarget active base and user entries to provider contributions", () => {
-    const migrated = migrateSheetData({
+    const migrated = migrateSheetData(v1ModifierInput({
       modifierState: {
         byTarget: {
           evasion: {
@@ -48,7 +61,7 @@ describe("modifier state migration", () => {
           params: { target: "evasion" },
         },
       },
-    })
+    }))
 
     expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base")
     expect(migrated.userModifierContributions).toEqual([{
@@ -61,7 +74,7 @@ describe("modifier state migration", () => {
   })
 
   it("migrates legacy disabled ids to entry states and reconciles orphan ids", () => {
-    const migrated = migrateSheetData({
+    const migrated = migrateSheetData(v1ModifierInput({
       level: "1",
       modifierState: {
         byTarget: {
@@ -70,14 +83,14 @@ describe("modifier state migration", () => {
           },
         },
       },
-    })
+    }))
 
     expect(migrated.modifierState?.entryStates["level:current:minorThreshold"]).toEqual({ enabled: false })
     expect(migrated.modifierState?.entryStates["upgrade:evasion"]).toBeUndefined()
   })
 
   it("migrates legacy armorValue modifier state to armorMax", () => {
-    const migrated = migrateSheetData({
+    const migrated = migrateSheetData(v1ModifierInput({
       armorName: "锁子甲",
       armorBaseScore: "4",
       userModifierContributions: [{
@@ -93,7 +106,7 @@ describe("modifier state migration", () => {
           },
         },
       },
-    })
+    }))
 
     expect(migrated.modifierState?.targetStates.armorMax?.activeBaseId).toBe("equipment:armor:current:armorMax")
     expect(migrated.modifierState?.targetStates).not.toHaveProperty("armorValue")
@@ -122,6 +135,7 @@ describe("modifier state migration", () => {
     }
 
     const migrated = migrateSheetData({
+      schemaVersion: 2,
       userModifierContributions: [
         armorValueTokenContribution,
         armorMaxTokenContribution,
@@ -136,6 +150,7 @@ describe("modifier state migration", () => {
 
   it("replaces invalid array-backed modifier state and automation selections", () => {
     const migrated = migrateSheetData({
+      schemaVersion: 2,
       modifierState: [],
       automationSelections: [],
     })
@@ -145,7 +160,7 @@ describe("modifier state migration", () => {
   })
 
   it("preserves new modifier state while merging legacy byTarget state", () => {
-    const migrated = migrateSheetData({
+    const migrated = migrateSheetData(v1ModifierInput({
       level: "1",
       modifierState: {
         targetStates: {
@@ -170,7 +185,7 @@ describe("modifier state migration", () => {
           },
         },
       },
-    })
+    }))
 
     expect(migrated.modifierState?.targetStates.proficiency?.activeBaseId).toBe("level:base:proficiency")
     expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base")
@@ -188,6 +203,7 @@ describe("modifier state migration", () => {
     }
 
     expect(() => migrateSheetData({
+      schemaVersion: 2,
       userModifierContributions: [
         null,
         { id: "bad" },
@@ -201,6 +217,7 @@ describe("modifier state migration", () => {
     })).not.toThrow()
 
     const migrated = migrateSheetData({
+      schemaVersion: 2,
       userModifierContributions: [
         null,
         { id: "bad" },

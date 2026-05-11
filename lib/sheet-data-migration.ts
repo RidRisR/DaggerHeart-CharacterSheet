@@ -24,6 +24,9 @@ import type { ArmorSlot, WeaponSlot } from "@/lib/equipment/types"
 import { reconcileModifierState } from "@/lib/modifiers/reconcile"
 import type { ModifierContribution, ModifierEntryKind, ModifierTargetId } from "@/lib/modifiers/types"
 
+const V1_SCHEMA_VERSION = 1
+const V2_SCHEMA_VERSION = 2
+
 type LegacyEquipmentInput = Partial<SheetData> & {
   primaryWeaponName?: string
   primaryWeaponTrait?: string
@@ -343,35 +346,65 @@ function normalizeArmorSlot(value: unknown, fallbackSlot: ArmorSlot): ArmorSlot 
   }
 }
 
-function normalizeEquipment(data: SheetData | LegacyEquipmentInput, useExistingEquipment: boolean) {
+function normalizeEquipmentFromLegacy(data: SheetData | LegacyEquipmentInput, useExistingEquipment: boolean) {
   const legacy = data as LegacyEquipmentInput
   const equipment = useExistingEquipment && isRecord((data as any).equipment) ? (data as any).equipment : {}
   const weaponSlots = isRecord(equipment.weaponSlots) ? equipment.weaponSlots : {}
   const inventorySlots = Array.isArray(weaponSlots.inventory) ? weaponSlots.inventory : []
-  const emptyEquipment = createEmptyEquipmentData()
 
   return {
     weaponSlots: {
       primary: normalizeWeaponSlot(
         weaponSlots.primary,
-        legacyWeaponSlot(legacy, "primaryWeapon") ?? emptyEquipment.weaponSlots.primary,
+        legacyWeaponSlot(legacy, "primaryWeapon"),
       ),
       secondary: normalizeWeaponSlot(
         weaponSlots.secondary,
-        legacyWeaponSlot(legacy, "secondaryWeapon") ?? emptyEquipment.weaponSlots.secondary,
+        legacyWeaponSlot(legacy, "secondaryWeapon"),
       ),
       inventory: [
         normalizeWeaponSlot(
           inventorySlots[0],
-          legacyWeaponSlot(legacy, "inventoryWeapon1") ?? emptyEquipment.weaponSlots.inventory[0],
+          legacyWeaponSlot(legacy, "inventoryWeapon1"),
         ),
         normalizeWeaponSlot(
           inventorySlots[1],
-          legacyWeaponSlot(legacy, "inventoryWeapon2") ?? emptyEquipment.weaponSlots.inventory[1],
+          legacyWeaponSlot(legacy, "inventoryWeapon2"),
         ),
       ],
     },
     armorSlot: normalizeArmorSlot(equipment.armorSlot, legacyArmorSlot(legacy)),
+  }
+}
+
+function normalizeCurrentEquipment(value: unknown) {
+  const emptyEquipment = createEmptyEquipmentData()
+  const equipment = isRecord(value) ? value : {}
+  const weaponSlots = isRecord(equipment.weaponSlots) ? equipment.weaponSlots : {}
+  const inventorySlots = Array.isArray(weaponSlots.inventory) ? weaponSlots.inventory : []
+
+  return {
+    weaponSlots: {
+      primary: normalizeWeaponSlot(
+        weaponSlots.primary,
+        emptyEquipment.weaponSlots.primary,
+      ),
+      secondary: normalizeWeaponSlot(
+        weaponSlots.secondary,
+        emptyEquipment.weaponSlots.secondary,
+      ),
+      inventory: [
+        normalizeWeaponSlot(
+          inventorySlots[0],
+          emptyEquipment.weaponSlots.inventory[0],
+        ),
+        normalizeWeaponSlot(
+          inventorySlots[1],
+          emptyEquipment.weaponSlots.inventory[1],
+        ),
+      ],
+    },
+    armorSlot: normalizeArmorSlot(equipment.armorSlot, emptyEquipment.armorSlot),
   }
 }
 
@@ -388,7 +421,7 @@ function stripLegacyEquipmentFields(data: SheetData | LegacyEquipmentInput): She
 function migrateEquipment(data: SheetData | LegacyEquipmentInput, useExistingEquipment: boolean): SheetData {
   const migrated: any = {
     ...data,
-    equipment: normalizeEquipment(data, useExistingEquipment),
+    equipment: normalizeEquipmentFromLegacy(data, useExistingEquipment),
   }
 
   return migrated as SheetData
@@ -618,6 +651,27 @@ function migrateModifierState(data: SheetData): SheetData {
   return reconcileModifierState(migrated)
 }
 
+function normalizeCurrentModifierCollections(data: SheetData): SheetData {
+  const migrated = { ...data }
+
+  migrated.userModifierContributions = sanitizeModifierContributions(migrated.userModifierContributions)
+
+  if (!migrated.modifierState || typeof migrated.modifierState !== "object" || Array.isArray(migrated.modifierState)) {
+    migrated.modifierState = { targetStates: {}, entryStates: {} }
+  } else {
+    migrated.modifierState = {
+      targetStates: isRecord(migrated.modifierState.targetStates) ? migrated.modifierState.targetStates : {},
+      entryStates: isRecord(migrated.modifierState.entryStates) ? migrated.modifierState.entryStates : {},
+    }
+  }
+
+  if (!migrated.automationSelections || typeof migrated.automationSelections !== "object" || Array.isArray(migrated.automationSelections)) {
+    migrated.automationSelections = {}
+  }
+
+  return migrated
+}
+
 /**
  * 清理废弃字段
  * 移除不再使用的字段，保持数据结构清洁
@@ -643,7 +697,6 @@ function isValidStandardCard(card: any): card is StandardCard {
 }
 
 export function normalizeCurrentSheetData(data: Partial<SheetData> | any): SheetData {
-  const hasInputEquipment = isRecord(data?.equipment)
   let normalized: SheetData = {
     ...defaultSheetData,
     ...data,
@@ -658,9 +711,9 @@ export function normalizeCurrentSheetData(data: Partial<SheetData> | any): Sheet
     ? data.inventory_cards.filter(isValidStandardCard)
     : defaultSheetData.inventory_cards
 
-  normalized = migrateEquipment(normalized, hasInputEquipment)
-  normalized = migrateModifierState(normalized)
-  normalized = stripLegacyEquipmentFields(normalized)
+  normalized.equipment = normalizeCurrentEquipment(normalized.equipment)
+  normalized = normalizeCurrentModifierCollections(normalized)
+  normalized = reconcileModifierState(normalized)
 
   return cleanupDeprecatedFields(normalized)
 }
@@ -681,7 +734,22 @@ function migrateV0ToV1(raw: Partial<SheetData> | any): Partial<SheetData> {
 
   return {
     ...migrated,
-    schemaVersion: CURRENT_SCHEMA_VERSION,
+    schemaVersion: V1_SCHEMA_VERSION,
+  }
+}
+
+function migrateV1ToV2(raw: Partial<SheetData> | any): Partial<SheetData> {
+  const hasInputEquipment = isRecord(raw?.equipment)
+  let migrated = { ...raw } as SheetData
+
+  migrated = migrateEquipment(migrated, hasInputEquipment)
+  migrated = migrateModifierState(migrated)
+  migrated = stripLegacyEquipmentFields(migrated)
+  migrated = cleanupDeprecatedFields(migrated)
+
+  return {
+    ...migrated,
+    schemaVersion: V2_SCHEMA_VERSION,
   }
 }
 
@@ -700,8 +768,15 @@ export function migrateSheetData(
   assertSupportedSchemaVersion(schemaVersion)
 
   let migrated = data
-  if (schemaVersion === 0) {
+  let migratedVersion = schemaVersion
+  if (migratedVersion === 0) {
     migrated = migrateV0ToV1(migrated)
+    migratedVersion = V1_SCHEMA_VERSION
+  }
+
+  if (migratedVersion === V1_SCHEMA_VERSION) {
+    migrated = migrateV1ToV2(migrated)
+    migratedVersion = V2_SCHEMA_VERSION
   }
 
   return normalizeCurrentSheetData(migrated)

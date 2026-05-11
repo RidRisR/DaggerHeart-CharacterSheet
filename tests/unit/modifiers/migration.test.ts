@@ -195,6 +195,50 @@ describe("modifier state migration", () => {
     ]))
   })
 
+  it("preserves sync mode from current modifier state", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      modifierState: {
+        targetStates: {
+          evasion: { syncMode: "continuous" },
+        },
+        entryStates: {},
+      },
+    })
+
+    expect(migrated.modifierState?.targetStates.evasion).toEqual({
+      syncMode: "continuous",
+    })
+  })
+
+  it("drops invalid sync mode values", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      modifierState: {
+        targetStates: {
+          evasion: { syncMode: "always" },
+        },
+        entryStates: {},
+      },
+    } as any)
+
+    expect(migrated.modifierState?.targetStates.evasion).toBeUndefined()
+  })
+
+  it("drops invalid target state keys", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      modifierState: {
+        targetStates: {
+          notATarget: { syncMode: "continuous" },
+        },
+        entryStates: {},
+      },
+    } as any)
+
+    expect(migrated.modifierState?.targetStates).toEqual({})
+  })
+
   it("sanitizes malformed root user modifier contributions and keeps the first duplicate id", () => {
     const validContribution = {
       id: "user:evasion-root",

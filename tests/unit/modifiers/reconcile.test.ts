@@ -43,4 +43,52 @@ describe("modifier state reconciliation", () => {
       proficiency: { activeBaseId: "level:base:proficiency" },
     })
   })
+
+  it("preserves continuous sync mode when active base is still valid", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      userModifierContributions: [{
+        id: "user:evasion-base",
+        definition: { target: "evasion", kind: "base" },
+        editable: { label: "Base", value: 12 },
+      }],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            syncMode: "continuous",
+          },
+        },
+        entryStates: {},
+      },
+    } as any
+
+    const reconciled = reconcileModifierState(sheetData)
+
+    expect(reconciled.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: "user:evasion-base",
+      syncMode: "continuous",
+    })
+  })
+
+  it("keeps sync mode when active base becomes orphaned", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "missing:base",
+            syncMode: "continuous",
+          },
+        },
+        entryStates: {},
+      },
+    } as any
+
+    const reconciled = reconcileModifierState(sheetData)
+
+    expect(reconciled.modifierState?.targetStates.evasion).toEqual({
+      syncMode: "continuous",
+    })
+  })
 })

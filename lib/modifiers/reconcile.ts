@@ -31,11 +31,23 @@ export function reconcileModifierState(sheetData: SheetData): SheetData {
 
   const nextTargetStates: ModifierState["targetStates"] = {}
   Object.entries(currentState.targetStates ?? {}).forEach(([target, state]) => {
-    const activeBaseId = state?.activeBaseId
-    if (!activeBaseId) return
-    if (!baseIdsByTarget.get(target as ModifierTargetId)?.has(activeBaseId)) return
+    if (!state) return
 
-    nextTargetStates[target as ModifierTargetId] = { activeBaseId }
+    const targetId = target as ModifierTargetId
+    const activeBaseId = state?.activeBaseId
+    const nextState: NonNullable<ModifierState["targetStates"][ModifierTargetId]> = {}
+
+    if (activeBaseId && baseIdsByTarget.get(targetId)?.has(activeBaseId)) {
+      nextState.activeBaseId = activeBaseId
+    }
+
+    if (state.syncMode === "continuous") {
+      nextState.syncMode = "continuous"
+    }
+
+    if (Object.keys(nextState).length > 0) {
+      nextTargetStates[targetId] = nextState
+    }
   })
 
   return {

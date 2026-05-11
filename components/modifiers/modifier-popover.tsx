@@ -185,6 +185,8 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const summary = getReferenceSummary(sheetData, target)
   const setActiveModifierBase = useSheetStore(state => state.setActiveModifierBase)
   const setModifierEntryEnabled = useSheetStore(state => state.setModifierEntryEnabled)
+  const setTargetSyncMode = useSheetStore(state => state.setTargetSyncMode)
+  const syncModifierTargetOnce = useSheetStore(state => state.syncModifierTargetOnce)
   const upsertUserModifierContribution = useSheetStore(state => state.upsertUserModifierContribution)
   const removeUserModifierContribution = useSheetStore(state => state.removeUserModifierContribution)
   const [addingBase, setAddingBase] = useState(false)
@@ -196,6 +198,8 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const [modifierValue, setModifierValue] = useState("")
   const [modifierError, setModifierError] = useState("")
   const finalValue = readTargetValue(sheetData, target)
+  const targetState = sheetData.modifierState?.targetStates?.[target]
+  const continuousSync = targetState?.syncMode === "continuous"
 
   const findUserContribution = (id: string) => (
     (sheetData.userModifierContributions ?? []).find(contribution => contribution.id === id)
@@ -440,6 +444,26 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
             </button>
           )}
         </div>
+      </div>
+
+      <div className="mb-2 flex items-center justify-between gap-2 border-t border-gray-200 pt-2">
+        <button
+          type="button"
+          className="h-7 rounded border border-gray-300 px-2 text-[11px] hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={summary.referenceTotal === undefined}
+          onClick={() => syncModifierTargetOnce(target)}
+        >
+          同步一次
+        </button>
+        <label className="flex items-center gap-1 text-[11px] text-gray-600">
+          <input
+            type="checkbox"
+            checked={continuousSync}
+            aria-label="持续同步"
+            onChange={event => setTargetSyncMode(target, event.target.checked ? "continuous" : "manual")}
+          />
+          持续同步
+        </label>
       </div>
 
       {summary.referenceTotal !== undefined && (

@@ -498,6 +498,57 @@ function migrateModifierTarget(target: string): ModifierTargetId {
   return (target === "armorValue" ? "armorMax" : target) as ModifierTargetId
 }
 
+function isModifierTargetId(target: string): target is ModifierTargetId {
+  if (
+    target === "evasion" ||
+    target === "armorMax" ||
+    target === "minorThreshold" ||
+    target === "majorThreshold" ||
+    target === "hpMax" ||
+    target === "stressMax" ||
+    target === "proficiency"
+  ) {
+    return true
+  }
+
+  if (
+    target === "agility.value" ||
+    target === "strength.value" ||
+    target === "finesse.value" ||
+    target === "instinct.value" ||
+    target === "presence.value" ||
+    target === "knowledge.value"
+  ) {
+    return true
+  }
+
+  return /^experienceValues\.(0|[1-9]\d*)$/.test(target)
+}
+
+function normalizeTargetStates(value: unknown): NonNullable<SheetData["modifierState"]>["targetStates"] {
+  if (!isRecord(value)) return {}
+
+  const targetStates: NonNullable<SheetData["modifierState"]>["targetStates"] = {}
+  Object.entries(value).forEach(([target, state]) => {
+    if (!isRecord(state)) return
+    const migratedTarget = migrateModifierTarget(target)
+    if (!isModifierTargetId(migratedTarget)) return
+
+    const nextState: NonNullable<SheetData["modifierState"]>["targetStates"][ModifierTargetId] = {}
+    if (typeof state.activeBaseId === "string") {
+      nextState.activeBaseId = state.activeBaseId
+    }
+    if (state.syncMode === "continuous") {
+      nextState.syncMode = "continuous"
+    }
+    if (Object.keys(nextState).length > 0) {
+      targetStates[migratedTarget] = nextState
+    }
+  })
+
+  return targetStates
+}
+
 function migrateSystemModifierEntryId(entryId: string): string {
   const equipmentArmorEntryIds: Record<string, string> = {
     "armor:current:armorValue": "equipment:armor:current:armorMax",
@@ -530,11 +581,13 @@ function toModifierContribution(value: unknown): ModifierContribution | undefine
   if (!isRecord(value.editable)) return undefined
   if (typeof value.editable.label !== "string") return undefined
   if (typeof value.editable.value !== "number") return undefined
+  const target = migrateModifierTarget(value.definition.target)
+  if (!isModifierTargetId(target)) return undefined
 
   return {
     id: value.id,
     definition: {
-      target: migrateModifierTarget(value.definition.target),
+      target,
       kind: value.definition.kind as ModifierEntryKind,
     },
     editable: {
@@ -575,8 +628,20 @@ function migrateModifierState(data: SheetData): SheetData {
 
   if (isRecord(legacyState.targetStates)) {
     Object.entries(legacyState.targetStates).forEach(([target, state]) => {
-      if (!isRecord(state) || typeof state.activeBaseId !== "string") return
-      targetStates[migrateModifierTarget(target)] = { activeBaseId: migrateSystemModifierEntryId(state.activeBaseId) }
+      if (!isRecord(state)) return
+      const migratedTarget = migrateModifierTarget(target)
+      if (!isModifierTargetId(migratedTarget)) return
+
+      const nextState: NonNullable<SheetData["modifierState"]>["targetStates"][ModifierTargetId] = {}
+      if (typeof state.activeBaseId === "string") {
+        nextState.activeBaseId = migrateSystemModifierEntryId(state.activeBaseId)
+      }
+      if (state.syncMode === "continuous") {
+        nextState.syncMode = "continuous"
+      }
+      if (Object.keys(nextState).length > 0) {
+        targetStates[migratedTarget] = nextState
+      }
     })
   }
 
@@ -594,6 +659,7 @@ function migrateModifierState(data: SheetData): SheetData {
   Object.entries(legacyByTarget).forEach(([target, rawTargetState]) => {
     if (!isRecord(rawTargetState)) return
     const migratedTarget = migrateModifierTarget(target)
+    if (!isModifierTargetId(migratedTarget)) return
 
     if (typeof rawTargetState.activeBaseId === "string") {
       targetStates[migratedTarget] = {
@@ -621,6 +687,8 @@ function migrateModifierState(data: SheetData): SheetData {
         ) {
           return
         }
+        const migratedEntryTarget = migrateModifierTarget(entry.target)
+        if (!isModifierTargetId(migratedEntryTarget)) return
         const migratedEntryId = migrateLegacyUserEntryId(entry.id, entry.target)
         if (seenUserContributionIds.has(migratedEntryId)) return
 
@@ -628,7 +696,7 @@ function migrateModifierState(data: SheetData): SheetData {
         userModifierContributions.push({
           id: migratedEntryId,
           definition: {
-            target: migrateModifierTarget(entry.target),
+            target: migratedEntryTarget,
             kind: entry.kind as ModifierEntryKind,
           },
           editable: {
@@ -660,7 +728,7 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
     migrated.modifierState = { targetStates: {}, entryStates: {} }
   } else {
     migrated.modifierState = {
-      targetStates: isRecord(migrated.modifierState.targetStates) ? migrated.modifierState.targetStates : {},
+      targetStates: normalizeTargetStates(migrated.modifierState.targetStates),
       entryStates: isRecord(migrated.modifierState.entryStates) ? migrated.modifierState.entryStates : {},
     }
   }

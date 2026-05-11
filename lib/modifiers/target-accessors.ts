@@ -62,7 +62,11 @@ export function writeTargetValue(sheetData: SheetData, target: ModifierTargetId,
     return { ...sheetData, experienceValues: values }
   }
 
-  if (target === "hpMax" || target === "stressMax" || target === "armorMax") {
+  if (target === "armorMax") {
+    return { ...sheetData, armorMax: value === "" ? "" : Number(value) }
+  }
+
+  if (target === "hpMax" || target === "stressMax") {
     return { ...sheetData, [target]: Number(value) }
   }
 

@@ -405,4 +405,56 @@ describe("ModifierFieldAnchor", () => {
     ])
     expect(screen.getByRole("textbox", { name: "编辑重命名基础名称" })).toBeInTheDocument()
   })
+
+  it("syncs the final value once from the popover", async () => {
+    resetSheetStore({
+      evasion: "10",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "Base", 12),
+        userContribution("user:evasion-mod", "evasion", "modifier", "Mod", 1),
+      ],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+    await userEvent.click(screen.getByRole("button", { name: "同步一次" }))
+
+    expect(sheet().evasion).toBe("13")
+  })
+
+  it("disables one-shot sync when base is unknown", async () => {
+    resetSheetStore({
+      evasion: "10",
+      modifierState: { targetStates: {}, entryStates: {} },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    expect(screen.getByRole("button", { name: "同步一次" })).toBeDisabled()
+  })
+
+  it("toggles continuous sync from the popover", async () => {
+    resetSheetStore({
+      evasion: "10",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "Base", 12),
+      ],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+    await userEvent.click(screen.getByRole("checkbox", { name: "持续同步" }))
+
+    expect(sheet().modifierState?.targetStates.evasion?.syncMode).toBe("continuous")
+    expect(sheet().evasion).toBe("12")
+  })
 })

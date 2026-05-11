@@ -15,8 +15,10 @@ import type {
     AutomationSourceId,
     ModifierEntryId,
     ModifierTargetId,
+    TargetSyncMode,
     UserModifierContribution,
 } from "@/lib/modifiers/types";
+import { applyContinuousTargetSync, syncTargetOnce } from "@/lib/modifiers/target-sync";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -125,6 +127,8 @@ interface SheetState {
     updateScrapMaterial: (category: string, index: number, value: number | string) => void;
 
     setActiveModifierBase: (target: ModifierTargetId, baseId: ModifierEntryId | undefined) => void;
+    setTargetSyncMode: (target: ModifierTargetId, syncMode: TargetSyncMode) => void;
+    syncModifierTargetOnce: (target: ModifierTargetId) => void;
     setModifierEntryEnabled: (entryId: ModifierEntryId, enabled: boolean) => void;
     upsertUserModifierContribution: (contribution: UserModifierContribution) => void;
     removeUserModifierContribution: (entryId: ModifierEntryId) => void;
@@ -142,6 +146,30 @@ const ensureModifierState = (sheetData: SheetData) => ({
         ...(sheetData.modifierState?.entryStates ?? {}),
     },
 });
+
+const cleanupTargetState = (state: { activeBaseId?: ModifierEntryId; syncMode?: TargetSyncMode }) => {
+    const next = { ...state };
+    if (!next.activeBaseId) {
+        delete next.activeBaseId;
+    }
+    if (next.syncMode === "manual") {
+        delete next.syncMode;
+    }
+    return Object.keys(next).length > 0 ? next : undefined;
+};
+
+const setTargetState = (
+    targetStates: ReturnType<typeof ensureModifierState>["targetStates"],
+    target: ModifierTargetId,
+    nextState: { activeBaseId?: ModifierEntryId; syncMode?: TargetSyncMode },
+) => {
+    const cleaned = cleanupTargetState(nextState);
+    if (cleaned) {
+        targetStates[target] = cleaned;
+    } else {
+        delete targetStates[target];
+    }
+};
 
 export const useSheetStore = create<SheetState>((set) => ({
     sheetData: defaultSheetData,
@@ -448,10 +476,10 @@ export const useSheetStore = create<SheetState>((set) => ({
         // 如果等级为空字符串，只更新等级和熟练度，不计算阈值
         if (level === "") {
             return {
-                sheetData: {
+                sheetData: applyContinuousTargetSync({
                     ...state.sheetData,
                     ...updates
-                }
+                })
             };
         }
 
@@ -460,10 +488,10 @@ export const useSheetStore = create<SheetState>((set) => ({
         // 验证等级范围 (1-10)，如果无效则只更新等级值和熟练度，不计算阈值
         if (isNaN(levelNum) || levelNum < 1 || levelNum > 10) {
             return {
-                sheetData: {
+                sheetData: applyContinuousTargetSync({
                     ...state.sheetData,
                     ...updates
-                }
+                })
             };
         }
 
@@ -482,10 +510,10 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
 
         return {
-            sheetData: {
+            sheetData: applyContinuousTargetSync({
                 ...state.sheetData,
                 ...updates
-            }
+            })
         };
     }),
 
@@ -511,10 +539,10 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
 
         return {
-            sheetData: {
+            sheetData: applyContinuousTargetSync({
                 ...state.sheetData,
                 ...updates
-            }
+            })
         };
     }),
 
@@ -539,10 +567,10 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
 
         return {
-            sheetData: {
+            sheetData: applyContinuousTargetSync({
                 ...state.sheetData,
                 ...updates
-            }
+            })
         };
     }),
 
@@ -598,14 +626,14 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
 
         return {
-            sheetData: {
+            sheetData: applyContinuousTargetSync({
                 ...state.sheetData,
                 equipment: {
                     ...state.sheetData.equipment,
                     armorSlot,
                 },
                 ...updates
-            }
+            })
         };
     }),
 
@@ -644,10 +672,10 @@ export const useSheetStore = create<SheetState>((set) => ({
             newCards[index] = emptyCard;
 
             return {
-                sheetData: {
+                sheetData: applyContinuousTargetSync({
                     ...state.sheetData,
                     cards: newCards
-                }
+                })
             };
         }
     }),
@@ -718,11 +746,11 @@ export const useSheetStore = create<SheetState>((set) => ({
 
             success = true;
             return {
-                sheetData: {
+                sheetData: applyContinuousTargetSync({
                     ...state.sheetData,
                     cards: newFocusedCards,
                     inventory_cards: newInventoryCards
-                }
+                })
             };
         });
 
@@ -881,10 +909,10 @@ export const useSheetStore = create<SheetState>((set) => ({
             newCards[index] = card;
 
             return {
-                sheetData: {
+                sheetData: applyContinuousTargetSync({
                     ...state.sheetData,
                     cards: newCards
-                }
+                })
             };
         }
     }),
@@ -892,21 +920,51 @@ export const useSheetStore = create<SheetState>((set) => ({
     setActiveModifierBase: (target, baseId) => set((state) => {
         const modifierState = ensureModifierState(state.sheetData);
         const targetStates = { ...modifierState.targetStates };
-        if (baseId) {
-            targetStates[target] = { activeBaseId: baseId };
-        } else {
-            delete targetStates[target];
-        }
+        const currentTargetState = targetStates[target] ?? {};
+        setTargetState(targetStates, target, {
+            ...currentTargetState,
+            activeBaseId: baseId,
+        });
 
         return {
-            sheetData: {
+            sheetData: applyContinuousTargetSync({
                 ...state.sheetData,
                 modifierState: {
                     ...modifierState,
                     targetStates,
                 },
+            }),
+        };
+    }),
+
+    setTargetSyncMode: (target, syncMode) => set((state) => {
+        const modifierState = ensureModifierState(state.sheetData);
+        const targetStates = { ...modifierState.targetStates };
+        const currentTargetState = targetStates[target] ?? {};
+
+        setTargetState(targetStates, target, {
+            ...currentTargetState,
+            syncMode,
+        });
+
+        const nextData = {
+            ...state.sheetData,
+            modifierState: {
+                ...modifierState,
+                targetStates,
             },
         };
+
+        return {
+            sheetData: syncMode === "continuous"
+                ? applyContinuousTargetSync(nextData)
+                : nextData,
+        };
+    }),
+
+    syncModifierTargetOnce: (target) => set((state) => {
+        const result = syncTargetOnce(state.sheetData, target);
+        return result.applied ? { sheetData: result.sheetData } : state;
     }),
 
     setModifierEntryEnabled: (entryId, enabled) => set((state) => {
@@ -930,13 +988,13 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
 
         return {
-            sheetData: {
+            sheetData: applyContinuousTargetSync({
                 ...state.sheetData,
                 modifierState: {
                     ...modifierState,
                     entryStates,
                 },
-            },
+            }),
         };
     }),
 
@@ -947,30 +1005,30 @@ export const useSheetStore = create<SheetState>((set) => ({
             : [...contributions, contribution];
 
         return {
-            sheetData: {
+            sheetData: applyContinuousTargetSync({
                 ...state.sheetData,
                 userModifierContributions: nextContributions,
-            },
+            }),
         };
     }),
 
     removeUserModifierContribution: (entryId) => set((state) => ({
-        sheetData: {
+        sheetData: applyContinuousTargetSync({
             ...state.sheetData,
             userModifierContributions: (state.sheetData.userModifierContributions ?? []).filter(
                 contribution => contribution.id !== entryId,
             ),
-        },
+        }),
     })),
 
     setAutomationSelection: (sourceId, selected, params) => set((state) => ({
-        sheetData: {
+        sheetData: applyContinuousTargetSync({
             ...state.sheetData,
             automationSelections: {
                 ...(state.sheetData.automationSelections ?? {}),
                 [sourceId]: params === undefined ? { selected } : { selected, params },
             },
-        },
+        }),
     })),
 
     // Handle profession change - auto-fill evasion and max HP at level 1
@@ -986,11 +1044,11 @@ export const useSheetStore = create<SheetState>((set) => ({
         // Handle profession deletion
         if (!newProfessionRef || !newProfessionRef.id) {
             set((state) => ({
-                sheetData: {
+                sheetData: applyContinuousTargetSync({
                     ...state.sheetData,
                     evasion: "",
                     hpMax: 6,
-                }
+                })
             }));
 
             showFadeNotification({
@@ -1007,11 +1065,11 @@ export const useSheetStore = create<SheetState>((set) => ({
 
             if (evasion !== undefined && hp !== undefined) {
                 set((state) => ({
-                    sheetData: {
+                    sheetData: applyContinuousTargetSync({
                         ...state.sheetData,
                         evasion: String(evasion),
                         hpMax: hp,
-                    }
+                    })
                 }));
 
                 showFadeNotification({

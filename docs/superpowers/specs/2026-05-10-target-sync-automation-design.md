@@ -79,6 +79,40 @@ interface TargetModifierState {
 
 target panel 提供两个动作。
 
+## 第一阶段范围
+
+第一阶段覆盖所有已经接入 `ModifierFieldAnchor` 的 target：
+
+- 六大属性。
+- 经历值。
+- `evasion`。
+- `armorMax`。
+- `minorThreshold`。
+- `majorThreshold`。
+- `hpMax`。
+- `stressMax`。
+- `proficiency`。
+
+第一阶段包含：
+
+- `TargetModifierState.syncMode` 持久化。
+- target panel 显示同步一次和持续同步控制。
+- 同步一次把当前 reference total 写入 final value。
+- 持续同步在 reference total 改变后写入 final value。
+- 持续同步缺 base 时按 target fallback 写入 final value。
+- store 层提供系统同步写入路径，避免和用户手动写入混淆。
+- `reconcileModifierState()` 保留 `syncMode`，不能因为清理 orphan base 丢掉 target 的同步模式。
+
+第一阶段不包含：
+
+- target auto base 泛化。
+- legacy base inference。
+- upgrade selection 简化。
+- 老存档打开后的 migration notice / onboarding 弹窗。
+- 重新设计旧职业、升级、护甲自动化的全部行为。
+
+这些后续功能可以继续建立在本阶段的 `syncMode` 和同步 helper 上。
+
 ### 同步一次
 
 一次性同步不是持久状态，只是一个按钮动作：
@@ -123,12 +157,75 @@ final value += delta
 
 原因是 delta 模型会在 provider 增删、取消升级、切换 base、重新加载和迁移时出现重复应用或漏回滚。
 
+## 触发同步与防循环
+
+持续同步不应通过 React `useEffect` 监听整个 `sheetData` 来实现。更合理的边界是 store 层的单向 post-processing：
+
+```text
+old sheetData
+-> store action 产生 next sheetData
+-> applyContinuousTargetSync(next sheetData)
+-> set final sheetData
+```
+
+凡是可能改变 reference total 的 store action，都应在 action 结束前调用同步 helper：
+
+- active base 改变。
+- entry enabled 改变。
+- user contribution 新增、修改、删除。
+- automation selection 改变。
+- 装备变化。
+- 等级变化。
+- 职业变化。
+- 未来 upgrade selection 变化。
+
+同步 helper 必须是纯函数：
+
+```ts
+function applyContinuousTargetSync(sheetData: SheetData): SheetData
+```
+
+它只接收 `SheetData`，只返回新的 `SheetData`，不调用 store action，也不触发 React state update。这样不会出现递归入口。
+
+防循环规则：
+
+1. 只处理 `targetStates[target].syncMode === "continuous"` 的 target。
+2. 每个 target 计算一个 desired value：
+   - 有 reference total：desired value = reference total。
+   - 无 active base：desired value = target fallback。
+3. 读取当前 final value。
+4. 如果当前 final value 与 desired value 等价，则不写。
+5. 如果不同，使用系统同步写入 helper 写入。
+
+伪代码：
+
+```ts
+function applyContinuousTargetSync(sheetData: SheetData): SheetData {
+  let next = sheetData
+
+  for (const target of continuousTargets(next)) {
+    const desiredValue = desiredSyncedValue(next, target)
+    const currentValue = readTargetValue(next, target)
+
+    if (isSameTargetValue(currentValue, desiredValue)) {
+      continue
+    }
+
+    next = writeTargetValueFromSync(next, target, desiredValue)
+  }
+
+  return next
+}
+```
+
+同步写入使用 `set(referenceTotal)`，不是 `add(delta)`。再次运行时，如果 reference total 和 final value 已经一致，就不会再写，因此最多一轮收敛。
+
 ## 手动修改最终值
 
 已经达成的共识：
 
 ```text
-如果用户手动修改某个 target 的最终值，直接关闭该 target 的持续同步。
+如果用户手动修改某个 target 的最终值，并且这次行为语义是 final value override，则关闭该 target 的持续同步。
 ```
 
 行为：
@@ -141,8 +238,25 @@ final value += delta
 
 实现上必须区分写入来源：
 
-- `user`：用户手动编辑最终值，应关闭 continuous sync。
+- `user`：用户手动编辑最终值，且这次编辑是 final override，应关闭 continuous sync。
 - `sync`：系统同步写最终值，不应反过来关闭 continuous sync。
+
+这里还有一个和 target auto base 交叉的规则：
+
+```text
+没有任何 base 时，用户在 final input 输入值
+= 用户在提供一个 base
+= source creation
+= 不应关闭 continuous sync
+```
+
+也就是说，不能把所有 final input 输入都无条件视为 override。更准确的分类是：
+
+- target 没有任何 base，且输入行为触发 auto base creation：这是 source creation，不关闭 sync。
+- target 已经有 base，用户直接改 final value：这是 final override，关闭 sync。
+- 用户在 modifier panel 里新增或修改 base / modifier：这是 source edit，不关闭 sync；如果 continuous sync 开启，final value 会跟随新的 reference total。
+
+第一阶段不实现 target auto base 泛化，但实现计划必须避免把这个规则写死成“一切用户输入都关闭 sync”。auto base 泛化落地时，应复用同一套写入来源分类。
 
 ## 缺少基值时的 fallback
 
@@ -356,6 +470,11 @@ experienceValues.1
 10. 已有 modifier 数据的存档不做 legacy base 推断。
 11. 经历 target 当前不需要因为 index 稳定性阻塞设计。
 12. migration 版本化是后续独立议题。
+13. 第一阶段覆盖所有已经接入 `ModifierFieldAnchor` 的 target。
+14. 持续同步应在 store action 后作为纯函数 post-processing 执行，不通过 React effect 监听全局数据。
+15. 同步 helper 不调用 store action，只返回新的 `SheetData`，并且只在 desired value 与当前 final value 不一致时写入。
+16. 用户 final input 写入不应被无条件视为 override；如果无 base 输入触发 auto base creation，它属于 source creation，不应关闭 sync。
+17. target auto base 泛化、legacy base inference、upgrade selection 简化和老存档提示弹窗不属于第一阶段。
 
 ## 待讨论问题
 

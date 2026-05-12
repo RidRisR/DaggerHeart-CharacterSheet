@@ -238,19 +238,6 @@ export default function CharacterSheet() {
     console.log(`handleProfessionChange called with ID: ${value}`);
 
     if (value === "none") {
-      // console.log("Clearing profession selection"); // Removed this log
-      setFormData((prev) => {
-        const updatedFormData = {
-          ...prev,
-          profession: "",
-          professionRef: { id: "", name: "" },
-          subclass: "",
-          subclassRef: { id: "", name: "" },
-        };
-        return updatedFormData;
-      });
-
-      // 清空职业时调用自动填写（会重置为默认值）
       autofillProfessionData(undefined, undefined);
     } else {
       if (cardsLoading) {
@@ -267,18 +254,6 @@ export default function CharacterSheet() {
 
         const newRef = { id: professionCard.id, name: fullName };
 
-        setFormData((prev) => {
-          const updatedFormData = {
-            ...prev,
-            profession: professionCard.id,
-            professionRef: newRef,
-            subclass: "",
-            subclassRef: { id: "", name: "" },
-          };
-          return updatedFormData;
-        });
-
-        // 选择职业时调用自动填写
         autofillProfessionData(newRef, professionCard);
       } else {
         console.warn(`handleProfessionChange: Profession card not found for ID: ${value}`);

@@ -991,9 +991,24 @@ export const useSheetStore = create<SheetState>((set) => ({
         }),
     })),
 
-    handleProfessionChange: () => set((state) => ({
-        sheetData: applyContinuousTargetSync(state.sheetData),
-    })),
+    handleProfessionChange: (newProfessionRef, newProfessionCard) => set((state) => {
+        const cards = [...(state.sheetData.cards || [])];
+        while (cards.length < 20) {
+            cards.push(createEmptyCard());
+        }
+        cards[0] = newProfessionCard ?? createEmptyCard();
+
+        return {
+            sheetData: applyContinuousTargetSync({
+                ...state.sheetData,
+                profession: newProfessionRef?.id ?? "",
+                professionRef: newProfessionRef ?? { id: "", name: "" },
+                subclass: "",
+                subclassRef: { id: "", name: "" },
+                cards,
+            }),
+        };
+    }),
 }));
 
 // Selector functions for better performance

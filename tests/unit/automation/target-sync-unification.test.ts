@@ -190,7 +190,6 @@ describe("target sync automation unification", () => {
       hpMax: 6,
     })
 
-    store().updateCard(0, professionCard("profession-ranger", 12, 7), false)
     store().handleProfessionChange(
       { id: "profession-ranger", name: "游侠" },
       professionCard("profession-ranger", 12, 7),
@@ -220,7 +219,6 @@ describe("target sync automation unification", () => {
       },
     })
 
-    store().updateCard(0, professionCard("profession-ranger", 12, 7), false)
     store().handleProfessionChange(
       { id: "profession-ranger", name: "游侠" },
       professionCard("profession-ranger", 12, 7),
@@ -228,6 +226,36 @@ describe("target sync automation unification", () => {
 
     expect(sheet().evasion).toBe("12")
     expect(sheet().hpMax).toBe(7)
+  })
+
+  it("falls back continuous profession targets when profession is cleared", () => {
+    resetSheetStore({
+      level: "1",
+      evasion: "12",
+      hpMax: 7,
+      cards: [
+        professionCard("profession-ranger", 12, 7),
+        ...Array.from({ length: 19 }, () => createEmptyCard()),
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "profession:current:evasion",
+            syncMode: "continuous",
+          },
+          hpMax: {
+            activeBaseId: "profession:current:hpMax",
+            syncMode: "continuous",
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().handleProfessionChange(undefined, undefined)
+
+    expect(sheet().evasion).toBe("")
+    expect(sheet().hpMax).toBe(6)
   })
 
   it("does not sync level source into proficiency or thresholds while targets are manual", () => {

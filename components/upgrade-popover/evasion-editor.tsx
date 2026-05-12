@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
-import { X, ChevronUp, ChevronDown, Check } from "lucide-react"
-import { parseNumberExpressionOr } from "@/lib/number-utils"
+import { X, Check } from "lucide-react"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 
 interface EvasionEditorProps {
@@ -19,57 +17,15 @@ export function EvasionEditor({
   toggleUpgradeCheckbox,
   onClose
 }: EvasionEditorProps) {
-  const { sheetData, setSheetData } = useSheetStore()
-
-  const currentEvasion = sheetData.evasion ?? "0"
-
-  // 使用本地状态管理编辑
-  const [localValue, setLocalValue] = useState(String(currentEvasion))
-
-  const handleLocalChange = (value: string) => {
-    setLocalValue(value)
-  }
-
-  const handleDecrement = () => {
-    // 支持表达式：先计算当前值，然后 -1
-    const currentValue = parseNumberExpressionOr(localValue, 0)
-    const newValue = currentValue - 1
-    setLocalValue(String(newValue))
-  }
-
-  const handleIncrement = () => {
-    // 支持表达式：先计算当前值，然后 +1
-    const currentValue = parseNumberExpressionOr(localValue, 0)
-    const newValue = currentValue + 1
-    setLocalValue(String(newValue))
-  }
-
   const handleConfirm = () => {
-    // 保存用户输入的字面字符串（可能是表达式如 "17+4"）
-    const trimmedValue = localValue.trim()
-
-    // 空字符串则不保存
-    if (!trimmedValue) {
-      setLocalValue(String(currentEvasion))
-      return
-    }
-
-    // 直接保存用户输入的字符串，不做计算
-    const finalValue = trimmedValue
-
-    if (finalValue !== currentEvasion) {
-      setSheetData({ evasion: finalValue })
-
-      // 显示成功通知
-      showFadeNotification({
-        message: `闪避值已更新为 ${finalValue}`,
-        type: "success",
-        position: "middle"
-      })
-    }
-
     const setAutomationSelection = useSheetStore.getState().setAutomationSelection
     setAutomationSelection(`upgrade:${checkKey}`, true, { target: "evasion" })
+
+    showFadeNotification({
+      message: "闪避值升级已记录",
+      type: "success",
+      position: "middle"
+    })
 
     // 勾选复选框
     toggleUpgradeCheckbox(checkKey, optionIndex, true)
@@ -77,9 +33,6 @@ export function EvasionEditor({
     // 关闭编辑器
     onClose?.()
   }
-
-  // 向上箭头仅在当前值可计算时启用
-  const canIncrement = localValue.trim() !== ''
 
   return (
     <div className="w-32">
@@ -92,40 +45,6 @@ export function EvasionEditor({
         >
           <X className="w-3 h-3 text-gray-500" />
         </button>
-      </div>
-
-      <div className="flex items-center gap-1 mb-3">
-        <button
-          onClick={handleDecrement}
-          disabled={!canIncrement}
-          className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          title="计算当前值 -1"
-        >
-          <ChevronDown className="w-3 h-3" />
-        </button>
-
-        <button
-          onClick={handleIncrement}
-          disabled={!canIncrement}
-          className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          title="计算当前值 +1"
-        >
-          <ChevronUp className="w-3 h-3" />
-        </button>
-
-        <input
-          type="text"
-          inputMode="numeric"
-          value={localValue}
-          onChange={(e) => handleLocalChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              handleConfirm()
-            }
-          }}
-          className="w-16 px-2 py-1 text-center text-sm font-bold border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-          placeholder="0"
-        />
       </div>
 
       <button

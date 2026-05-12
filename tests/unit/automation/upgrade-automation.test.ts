@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import { computeUpgradeAutomation, createUpgradeRevertEffects } from "@/lib/automation/upgrade-actions"
-import { revertEffects } from "@/lib/modifiers/effect-executor"
+import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
 
 function run(label: string, overrides = {}, currentlyChecked = false) {
   return computeUpgradeAutomation({
@@ -117,35 +116,5 @@ describe("升级选项自动化基线", () => {
     })
     expect(result.kind === "setSheetData" ? result.updates : undefined).toEqual({})
     expect(result.kind === "setSheetData" ? result.message : "").not.toContain("undefined")
-  })
-
-  it("升级回退效果只接受已知属性和非负整数经历索引", () => {
-    expect(createUpgradeRevertEffects({
-      attributes: ["agility", "bogus", "strength.value", "presence"],
-      experienceIndexes: [0, -1, 1.5, 2, "3"],
-    })).toEqual([
-      { operation: "add", target: "agility.value", value: 1 },
-      { operation: "add", target: "presence.value", value: 1 },
-      { operation: "add", target: "experienceValues.0", value: 1 },
-      { operation: "add", target: "experienceValues.2", value: 1 },
-    ])
-  })
-
-  it("升级回退效果基于记录的来源参数从当前最终值执行 -1", () => {
-    const effects = createUpgradeRevertEffects({
-      attributes: ["agility"],
-      experienceIndexes: [1],
-    })
-
-    const result = revertEffects({
-      ...defaultSheetData,
-      agility: { value: "8", checked: true, spellcasting: false },
-      experienceValues: ["", "5", "", "", ""],
-    }, effects)
-
-    expect(result.updates).toMatchObject({
-      agility: { value: "7", checked: true, spellcasting: false },
-      experienceValues: ["", "4", "", "", ""],
-    })
   })
 })

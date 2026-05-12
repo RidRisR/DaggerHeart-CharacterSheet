@@ -19,7 +19,7 @@ describe("升级回滚快照基线", () => {
     expect(currentStore.restoreEvasionSnapshot).toBeUndefined()
   })
 
-  it("新升级选择模型取消闪避升级时按当前最终值执行 -1", () => {
+  it("新升级选择模型取消闪避升级时只返回未选中 selection，不直接回滚最终值", () => {
     resetSheetStore({
       evasion: "20",
       automationSelections: {
@@ -38,7 +38,7 @@ describe("升级回滚快照基线", () => {
 
     expect(result).toMatchObject({
       kind: "setSheetData",
-      updates: { evasion: "19" },
+      updates: {},
       selection: {
         selected: false,
         params: { target: "evasion" },

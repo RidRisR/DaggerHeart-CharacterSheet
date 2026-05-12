@@ -7,12 +7,7 @@ import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
 import { createEmptyCard, type StandardCard } from "@/card/card-types"
 import type { SheetData } from "@/lib/sheet-data"
 import { showFadeNotification } from "@/components/ui/fade-notification"
-import {
-  computeUpgradeAutomation,
-  createUpgradeRevertEffects,
-  isUpgradeAttributeKey,
-} from "@/lib/automation/upgrade-actions"
-import { revertEffects } from "@/lib/modifiers/effect-executor"
+import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -152,48 +147,11 @@ export default function CharacterSheetPageTwo() {
       })
 
       if (result.kind === "setSheetData") {
-        if (result.selection?.selected === false && !result.selection.params) {
+        setFormData(result.updates)
+        if (result.selection) {
           const sourceId = `upgrade:${checkKeyOrTier}`
-          const params = safeFormData.automationSelections?.[sourceId]?.params ?? {}
-          const effects = createUpgradeRevertEffects(params)
-
-          if (effects.length > 0) {
-            const reverted = revertEffects(safeFormData, effects)
-            const updates = { ...reverted.updates }
-
-            if (Array.isArray(params.attributes)) {
-              params.attributes.forEach(attribute => {
-                if (!isUpgradeAttributeKey(attribute)) return
-                const reverted = (updates as Record<string, unknown>)[attribute]
-                  ?? safeFormData[attribute as keyof typeof safeFormData]
-                if (reverted && typeof reverted === "object" && "checked" in reverted) {
-                  ;(updates as Record<string, unknown>)[attribute] = {
-                    ...reverted,
-                    checked: false,
-                  }
-                }
-              })
-            }
-
-            setFormData(updates)
-            reverted.warnings.forEach(warning => {
-              showFadeNotification({
-                message: warning,
-                type: "info",
-                position: "middle",
-              })
-            })
-          }
-
           const setAutomationSelection = useSheetStore.getState().setAutomationSelection
-          setAutomationSelection(sourceId, false)
-        } else {
-          setFormData(result.updates)
-          if (result.selection) {
-            const sourceId = `upgrade:${checkKeyOrTier}`
-            const setAutomationSelection = useSheetStore.getState().setAutomationSelection
-            setAutomationSelection(sourceId, result.selection.selected, result.selection.params)
-          }
+          setAutomationSelection(sourceId, result.selection.selected, result.selection.params)
         }
         result.warnings?.forEach(warning => {
           showFadeNotification({

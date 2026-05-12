@@ -22,7 +22,7 @@ describe("升级取消流程（page-two 集成）", () => {
     useSheetStore.setState({ sheetData: { ...defaultSheetData } })
   })
 
-  it("取消属性升级会还原属性值、清除 checked 标志、清除升级勾选与 selection 记录", () => {
+  it("取消属性升级会清除升级勾选与 selection 记录，不直接回滚属性最终值", () => {
     seedStore({
       agility: { checked: true, value: "1", spellcasting: false },
       checkedUpgrades: {
@@ -43,12 +43,12 @@ describe("升级取消流程（page-two 集成）", () => {
     fireEvent.click(getByTestId("checkbox-tier1-0-0"))
 
     const after = sheet()
-    expect(after.agility).toEqual({ checked: false, value: "0", spellcasting: false })
+    expect(after.agility).toEqual({ checked: true, value: "1", spellcasting: false })
     expect((after.checkedUpgrades as any)["tier1-0-0"][0]).toBe(false)
     expect(after.automationSelections?.["upgrade:tier1-0-0"]).toEqual({ selected: false })
   })
 
-  it("取消经历加值升级会还原经历值、清除升级勾选与 selection 记录", () => {
+  it("取消经历加值升级会清除升级勾选与 selection 记录，不直接回滚经历最终值", () => {
     seedStore({
       experience: ["军人", "铁匠", "", "", ""],
       experienceValues: ["2", "3", "", "", ""],
@@ -70,7 +70,7 @@ describe("升级取消流程（page-two 集成）", () => {
     fireEvent.click(getByTestId("checkbox-tier1-3-0"))
 
     const after = sheet()
-    expect(after.experienceValues).toEqual(["1", "2", "", "", ""])
+    expect(after.experienceValues).toEqual(["2", "3", "", "", ""])
     expect((after.checkedUpgrades as any)["tier1-3-0"][3]).toBe(false)
     expect(after.automationSelections?.["upgrade:tier1-3-0"]).toEqual({ selected: false })
   })

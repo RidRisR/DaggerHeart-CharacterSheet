@@ -421,7 +421,10 @@ describe("ModifierFieldAnchor", () => {
 
     render(<ModifierFieldAnchor target="evasion" label="闪避" />)
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
-    await userEvent.click(screen.getByRole("button", { name: "同步一次" }))
+    const syncButton = screen.getByRole("button", { name: "同步" })
+    expect(syncButton).toHaveClass("bg-emerald-600")
+    expect(syncButton).not.toHaveClass("col-start-2")
+    await userEvent.click(syncButton)
 
     expect(sheet().evasion).toBe("13")
   })
@@ -435,7 +438,7 @@ describe("ModifierFieldAnchor", () => {
     render(<ModifierFieldAnchor target="evasion" label="闪避" />)
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
 
-    expect(screen.getByRole("button", { name: "同步一次" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "同步" })).toBeDisabled()
   })
 
   it("toggles continuous sync from the popover", async () => {

@@ -449,11 +449,11 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
       <div className="mb-2 flex items-center justify-between gap-2 border-t border-gray-200 pt-2">
         <button
           type="button"
-          className="h-7 rounded border border-gray-300 px-2 text-[11px] hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="h-7 rounded border border-emerald-700 bg-emerald-600 px-3 text-[11px] text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-200 disabled:text-gray-500 disabled:opacity-80"
           disabled={summary.referenceTotal === undefined}
           onClick={() => syncModifierTargetOnce(target)}
         >
-          同步一次
+          同步
         </button>
         <label className="flex items-center gap-1 text-[11px] text-gray-600">
           <input

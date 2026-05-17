@@ -152,4 +152,54 @@ describe("target auto calculation helper", () => {
 
     expect(applyAutoCalculationForTargets(data)).toBe(data)
   })
+
+  it("clamps HP boxes when auto calculation lowers hpMax from source changes", () => {
+    const data = sheet({
+      hp: Array(18).fill(false).map((_, index) => index < 6),
+      hpMax: 6,
+      userModifierContributions: [
+        {
+          id: "user:hp-base",
+          definition: { target: "hpMax", kind: "base" },
+          editable: { label: "Base", value: 3 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          hpMax: { activeBaseId: "user:hp-base", autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result.hpMax).toBe(3)
+    expect(result.hp?.slice(0, 6)).toEqual([true, true, true, false, false, false])
+  })
+
+  it("clears sparse legacy HP boxes at indexes outside the synced hpMax", () => {
+    const data = sheet({
+      hp: [false, false, false, true],
+      hpMax: 6,
+      userModifierContributions: [
+        {
+          id: "user:hp-base",
+          definition: { target: "hpMax", kind: "base" },
+          editable: { label: "Base", value: 3 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          hpMax: { activeBaseId: "user:hp-base", autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result.hpMax).toBe(3)
+    expect(result.hp).toEqual([false, false, false, false])
+  })
 })

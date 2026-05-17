@@ -31,6 +31,7 @@ import {
 import { applyAutoCalculationForTargets } from "@/lib/modifiers/target-sync";
 import { writeTargetValue } from "@/lib/modifiers/target-accessors";
 import { tryParseNumber } from "@/lib/number-utils";
+import { applyHpStressMaxInvariant } from "@/lib/modifiers/hp-stress-invariants";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -215,22 +216,6 @@ function canStoreRawFinalText(target: ModifierTargetId): boolean {
         target === "knowledge.value" ||
         target.startsWith("experienceValues.")
     );
-}
-
-function applyHpStressMaxInvariant(sheetData: SheetData, target: ModifierTargetId): SheetData {
-    if (target !== "hpMax" && target !== "stressMax") return sheetData;
-
-    const field = target === "hpMax" ? "hp" : "stress";
-    const max = sheetData[target];
-    if (typeof max !== "number") return sheetData;
-
-    const current = sheetData[field];
-    if (!Array.isArray(current) || current.filter(Boolean).length <= max) return sheetData;
-
-    return {
-        ...sheetData,
-        [field]: current.map((_, index) => index < max),
-    };
 }
 
 export const useSheetStore = create<SheetState>((set) => ({

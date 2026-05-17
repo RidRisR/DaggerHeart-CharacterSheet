@@ -1,5 +1,6 @@
 import { tryParseNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
+import { applyHpStressMaxInvariant } from "./hp-stress-invariants"
 import { getReferenceSummary } from "./registry"
 import { readTargetValue, writeTargetValue } from "./target-accessors"
 import type { ModifierTargetId, TargetModifierState } from "./types"
@@ -62,7 +63,7 @@ function isBlankTargetValue(value: unknown): boolean {
 }
 
 function writeTargetValueFromSync(sheetData: SheetData, target: ModifierTargetId, value: number | string): SheetData {
-  return writeTargetValue(sheetData, target, value)
+  return applyHpStressMaxInvariant(writeTargetValue(sheetData, target, value), target)
 }
 
 export function syncTargetOnce(sheetData: SheetData, target: ModifierTargetId): SyncTargetOnceResult {

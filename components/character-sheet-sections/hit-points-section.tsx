@@ -34,7 +34,7 @@ export function HitPointsSection() {
     if (commit) {
       if (/^\d+$/.test(value)) {
         const intValue = parseInt(value) || 0
-        if (intValue <= 18) {
+        if (intValue >= 1 && intValue <= 18) {
           commitModifierTargetValue(maxField, intValue)
         }
       }

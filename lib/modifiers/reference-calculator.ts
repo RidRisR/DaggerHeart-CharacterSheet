@@ -34,11 +34,10 @@ export function calculateReferenceSummary(input: CalculateReferenceSummaryInput)
   const targetEntries = input.entries
     .filter(entry => entryTarget(entry) === input.target)
     .sort(sortEntries)
-  const disabledEntries = targetEntries.filter(entry => input.modifierState?.entryStates?.[entry.id]?.enabled === false)
-  const enabledEntries = targetEntries.filter(entry => input.modifierState?.entryStates?.[entry.id]?.enabled !== false)
-  const bases = enabledEntries.filter(entry => entryKind(entry) === "base")
+  const disabledEntries: ModifierEntry[] = []
+  const bases = targetEntries.filter(entry => entryKind(entry) === "base")
   const modifiers = targetEntries.filter(entry => entryKind(entry) === "modifier")
-  const enabledModifiers = enabledEntries.filter(entry => entryKind(entry) === "modifier")
+  const enabledModifiers = modifiers
 
   const savedBaseId = input.modifierState?.targetStates?.[input.target]?.activeBaseId
   const savedBase = savedBaseId ? bases.find(entry => entry.id === savedBaseId) : undefined

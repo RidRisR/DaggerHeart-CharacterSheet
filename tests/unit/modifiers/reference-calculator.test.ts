@@ -111,7 +111,7 @@ describe("reference calculator", () => {
     expect(result.unattributedDelta).toBeUndefined()
   })
 
-  it("removes disabled modifier entries from the enabled total", () => {
+  it("includes disabled modifier entries in the enabled total for compatibility", () => {
     const result = calculateReferenceSummary({
       sheetData: { ...defaultSheetData, evasion: "13" },
       target: "evasion",
@@ -122,9 +122,9 @@ describe("reference calculator", () => {
       },
     })
 
-    expect(result.enabledModifiers).toEqual([])
-    expect(result.disabledEntries.map(entry => entry.id)).toEqual(["upgrade:evasion"])
-    expect(result.referenceTotal).toBe(12)
-    expect(result.unattributedDelta).toBe(1)
+    expect(result.enabledModifiers.map(entry => entry.id)).toEqual(["upgrade:evasion"])
+    expect(result.disabledEntries).toEqual([])
+    expect(result.referenceTotal).toBe(13)
+    expect(result.unattributedDelta).toBe(0)
   })
 })

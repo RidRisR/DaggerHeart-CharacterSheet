@@ -150,6 +150,7 @@ describe("other adjustments", () => {
       createManualFinalAdjustment("evasion", -1),
       { id: "bad", target: "not-a-target", kind: "manualFinalAdjustment", value: 1 },
       { id: "bad-value", target: "hpMax", kind: "manualFinalAdjustment", value: "1" },
+      { id: "bad-infinite", target: "hpMax", kind: "manualFinalAdjustment", value: Number.POSITIVE_INFINITY },
     ])
 
     expect(sanitized).toEqual([
@@ -179,7 +180,7 @@ Expected: FAIL because `@/lib/modifiers/other-adjustments` does not exist.
 
 - [ ] **Step 3: Add Other adjustment types**
 
-In `lib/modifiers/types.ts`, add:
+In `lib/modifiers/types.ts`, add Other adjustment types and the first-class sheet-level types that later tasks will read:
 
 ```ts
 export type OtherAdjustmentKind =
@@ -193,6 +194,18 @@ export interface OtherAdjustment {
   kind: OtherAdjustmentKind
   value: number
 }
+```
+
+In `lib/sheet-data.ts`, import `OtherAdjustment` and add:
+
+```ts
+otherAdjustments?: OtherAdjustment[]
+```
+
+In `lib/default-sheet-data.ts`, initialize:
+
+```ts
+otherAdjustments: []
 ```
 
 - [ ] **Step 4: Implement `lib/modifiers/other-adjustments.ts`**
@@ -284,24 +297,25 @@ export function sanitizeOtherAdjustments(value: unknown): OtherAdjustment[] {
     if (!item || typeof item !== "object") return []
     const raw = item as { id?: unknown; target?: unknown; kind?: unknown; value?: unknown }
 
-    if (typeof raw.target !== "string") return []
+    if (!isModifierTargetId(raw.target)) return []
     if (!isOtherAdjustmentKind(raw.kind)) return []
-    if (typeof raw.value !== "number") return []
+    if (typeof raw.value !== "number" || !Number.isFinite(raw.value)) return []
 
     const key = `${raw.target}:${raw.kind}`
     if (seen.has(key)) return []
     seen.add(key)
 
-    const target = raw.target as ModifierTargetId
     return [{
-      id: getOtherAdjustmentId(target, raw.kind),
-      target,
+      id: getOtherAdjustmentId(raw.target, raw.kind),
+      target: raw.target,
       kind: raw.kind,
       value: raw.value,
     }]
   })
 }
 ```
+
+`isModifierTargetId` must accept the explicit modifier targets and `experienceValues.${non-negative-integer}`. Do not accept arbitrary strings.
 
 - [ ] **Step 5: Run utility tests**
 
@@ -315,7 +329,148 @@ Expected: PASS.
 
 ---
 
-### Task 2: Upgrade States Types, Metadata, and Registry
+### Task 1A: Sheet Upgrade State Types, Defaults, Sanitizer, and Validator
+
+**Files:**
+- Modify: `lib/modifiers/types.ts`
+- Create: `lib/modifiers/upgrade-states.ts`
+- Modify: `lib/sheet-data.ts`
+- Modify: `lib/default-sheet-data.ts`
+- Modify: `lib/character-data-validator.ts`
+- Test: `tests/unit/modifiers/upgrade-states.test.ts`
+- Test: `tests/unit/character-data-validator.test.ts`
+
+- [ ] **Step 1: Write failing sanitizer and validator tests**
+
+Create `tests/unit/modifiers/upgrade-states.test.ts` covering:
+
+```ts
+expect(sanitizeUpgradeStates({
+  "tier1-1-0": { checked: true, params: { target: "hpMax" } },
+  "tier1-2-0": { checked: true, params: { target: "stressMax" } },
+  "tier1-5-0": { checked: true, params: { target: "evasion" } },
+  "tier2-1": { checked: true, params: { target: "proficiency" } },
+  "tier1-0-2": { checked: true, params: { attributes: ["agility", "strength"] } },
+  "tier1-3-0": { checked: true, params: { experienceIndexes: [0, 2] } },
+  "tier1-0-1": { checked: true },
+  "tier1-9-0": { checked: false, params: { target: "hpMax" } },
+  invalidTarget: { checked: true, params: { target: "armorMax" } },
+  invalidAttribute: { checked: true, params: { attributes: ["agility", "bad"] } },
+  invalidExperience: { checked: true, params: { experienceIndexes: [0, -1, 1.5] } },
+})).toEqual({
+  "tier1-1-0": { checked: true, params: { target: "hpMax" } },
+  "tier1-2-0": { checked: true, params: { target: "stressMax" } },
+  "tier1-5-0": { checked: true, params: { target: "evasion" } },
+  "tier2-1": { checked: true, params: { target: "proficiency" } },
+  "tier1-0-2": { checked: true, params: { attributes: ["agility", "strength"] } },
+  "tier1-3-0": { checked: true, params: { experienceIndexes: [0, 2] } },
+  "tier1-0-1": { checked: true },
+  "tier1-9-0": { checked: false },
+  invalidTarget: { checked: true },
+  invalidAttribute: { checked: true },
+  invalidExperience: { checked: true },
+})
+```
+
+Update `tests/unit/character-data-validator.test.ts` so import/export validation:
+
+- preserves valid `otherAdjustments`;
+- preserves valid `upgradeStates`;
+- sanitizes malformed `upgradeStates`;
+- does not output `checkedUpgrades`;
+- does not output `automationSelections`.
+
+- [ ] **Step 2: Run failing tests**
+
+Run:
+
+```bash
+npm run test:run -- tests/unit/modifiers/upgrade-states.test.ts tests/unit/character-data-validator.test.ts
+```
+
+Expected: FAIL because `upgrade-states.ts`, `upgradeStates`, and validator support do not exist yet.
+
+- [ ] **Step 3: Add upgrade state types and sheet defaults**
+
+In `lib/modifiers/types.ts`, add:
+
+```ts
+export type FixedUpgradeTargetId = "hpMax" | "stressMax" | "evasion" | "proficiency"
+export type AttributeKey = "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge"
+
+export type UpgradeStateParams =
+  | { target: FixedUpgradeTargetId }
+  | { attributes: AttributeKey[] }
+  | { experienceIndexes: number[] }
+
+export interface UpgradeState {
+  checked: boolean
+  params?: UpgradeStateParams
+}
+
+export type UpgradeStates = Record<string, UpgradeState>
+```
+
+In `lib/sheet-data.ts`, import `UpgradeStates` and add:
+
+```ts
+upgradeStates?: UpgradeStates
+```
+
+In `lib/default-sheet-data.ts`, initialize:
+
+```ts
+upgradeStates: {}
+```
+
+- [ ] **Step 4: Implement `lib/modifiers/upgrade-states.ts`**
+
+Create helper APIs:
+
+```ts
+sanitizeUpgradeStates(value: unknown): UpgradeStates
+isFixedUpgradeTargetId(value: unknown): value is FixedUpgradeTargetId
+isAttributeKey(value: unknown): value is AttributeKey
+mergeUpgradeState(current: UpgradeState | undefined, next: UpgradeState): UpgradeState
+```
+
+Rules:
+
+- invalid records are removed;
+- `{ checked: true }` is valid and means checked without provider params;
+- `{ checked: false, params: ... }` becomes `{ checked: false }`;
+- invalid params are removed, preserving `{ checked: true }` for checked states and `{ checked: false }` for unchecked states;
+- `mergeUpgradeState` must not drop existing params when the next state only changes `checked`.
+
+- [ ] **Step 5: Update validator**
+
+In `lib/character-data-validator.ts`, sanitize and retain:
+
+```ts
+otherAdjustments: sanitizeOtherAdjustments(...)
+upgradeStates: sanitizeUpgradeStates(...)
+```
+
+Remove legacy fields from validated output:
+
+```ts
+delete (data as any).checkedUpgrades
+delete (data as any).automationSelections
+```
+
+- [ ] **Step 6: Run sanitizer and validator tests**
+
+Run:
+
+```bash
+npm run test:run -- tests/unit/modifiers/upgrade-states.test.ts tests/unit/character-data-validator.test.ts
+```
+
+Expected: PASS.
+
+---
+
+### Task 2: Upgrade States Metadata and Registry
 
 **Files:**
 - Modify: `lib/modifiers/types.ts`
@@ -334,11 +489,13 @@ Append to `tests/unit/modifiers/source-definitions.test.ts`:
       upgradeStates: {
         "tier1-1-0": { checked: true, params: { target: "hpMax" } },
         "tier1-1-1": { checked: true, params: { target: "hpMax" } },
+        "tier1-2-0": { checked: true, params: { target: "stressMax" } },
         "tier1-5-0": { checked: true, params: { target: "evasion" } },
+        "tier2-1": { checked: true, params: { target: "proficiency" } },
         "tier1-0-2": { checked: true, params: { attributes: ["agility", "strength"] } },
         "tier1-3-0": { checked: true, params: { experienceIndexes: [0, 2] } },
         "tier1-0-1": { checked: true },
-        "tier1-2-0": { checked: false, params: { target: "stressMax" } },
+        "tier1-2-1": { checked: false, params: { target: "stressMax" } },
       },
       checkedUpgrades: undefined,
       automationSelections: undefined,
@@ -359,6 +516,14 @@ Append to `tests/unit/modifiers/source-definitions.test.ts`:
         definition: { target: "evasion", kind: "modifier" },
       }),
       expect.objectContaining({
+        id: "upgrade:tier1-2-0:stressMax",
+        definition: { target: "stressMax", kind: "modifier" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:tier2-1:proficiency",
+        definition: { target: "proficiency", kind: "modifier" },
+      }),
+      expect.objectContaining({
         id: "upgrade:tier1-0-2:agility.value",
         definition: { target: "agility.value", kind: "modifier" },
       }),
@@ -377,7 +542,8 @@ Append to `tests/unit/modifiers/source-definitions.test.ts`:
     ]))
 
     expect(entries.some(entry => entry.id === "upgrade:tier1-0-1:agility.value")).toBe(false)
-    expect(entries.some(entry => entry.id === "upgrade:tier1-2-0:stressMax")).toBe(false)
+    expect(entries.filter(entry => entry.id === "upgrade:tier2-1:proficiency")).toHaveLength(1)
+    expect(entries.some(entry => entry.id === "upgrade:tier1-2-1:stressMax")).toBe(false)
   })
 ```
 
@@ -391,25 +557,11 @@ npm run test:run -- tests/unit/modifiers/source-definitions.test.ts
 
 Expected: FAIL because `upgradeStates` is not read.
 
-- [ ] **Step 3: Add upgrade state types**
+- [ ] **Step 3: Add upgrade automation metadata type**
 
-In `lib/modifiers/types.ts`, add:
+`UpgradeState`, `UpgradeStateParams`, and `UpgradeStates` were added in Task 1A. In `lib/modifiers/types.ts`, add only:
 
 ```ts
-export type FixedUpgradeTargetId = "hpMax" | "stressMax" | "evasion" | "proficiency"
-
-export type UpgradeStateParams =
-  | { target: FixedUpgradeTargetId }
-  | { attributes: string[] }
-  | { experienceIndexes: number[] }
-
-export interface UpgradeState {
-  checked: boolean
-  params?: UpgradeStateParams
-}
-
-export type UpgradeStates = Record<string, UpgradeState>
-
 export type UpgradeAutomationMetadata =
   | { kind: "fixedTarget"; target: FixedUpgradeTargetId }
   | { kind: "attributeSelection"; count: 2 }
@@ -546,6 +698,8 @@ const calculatedFinalTotal = referenceTotal + otherTotal
 const unattributedDelta = finalValue === undefined ? undefined : finalValue - calculatedFinalTotal
 ```
 
+Every return path must include the new fields. If there is no active base and therefore no `referenceTotal`, return `otherAdjustments` for the target, `otherTotal`, `calculatedFinalTotal: undefined`, and keep `unattributedDelta: undefined`; do not silently drop the shape on early returns.
+
 - [ ] **Step 4: Update final input reconciliation tests**
 
 Change the existing "creates an unattributed delta when final input differs from an existing base" test to expect:
@@ -628,11 +782,11 @@ Expected: PASS.
 ### Task 4: Sheet Data Migration for Other Adjustments and Upgrade States
 
 **Files:**
-- Modify: `lib/sheet-data.ts`
-- Modify: `lib/default-sheet-data.ts`
 - Modify: `lib/sheet-data-migration.ts`
 - Test: `tests/unit/modifiers/migration.test.ts`
 - Test: `tests/unit/migration-versioning.test.ts`
+
+`lib/sheet-data.ts`, `lib/default-sheet-data.ts`, and `lib/character-data-validator.ts` were updated in Task 1A. This task may touch them only if migration tests expose a missed normalization detail.
 
 - [ ] **Step 1: Write failing migration tests**
 
@@ -696,23 +850,23 @@ npm run test:run -- tests/unit/modifiers/migration.test.ts
 
 Expected: FAIL because `upgradeStates` and `otherAdjustments` are not migrated.
 
-- [ ] **Step 3: Add new fields to SheetData and defaults**
+- [ ] **Step 3: Verify sheet fields from Task 1A**
 
-In `lib/sheet-data.ts`, add:
+Task 1A already added:
 
 ```ts
 upgradeStates?: UpgradeStates
 otherAdjustments?: OtherAdjustment[]
 ```
 
-Remove `checkedUpgrades` and `automationSelections` from the runtime interface, or mark them as migration-only deprecated inputs if TypeScript callers still need transitional access in `sheet-data-migration.ts`.
-
-In `lib/default-sheet-data.ts`, add:
+and default values:
 
 ```ts
 upgradeStates: {},
 otherAdjustments: [],
 ```
+
+In this migration task, do not re-add `checkedUpgrades` or `automationSelections` to the runtime interface. If migration code needs to read them, read through a raw legacy input type or `Record<string, unknown>`.
 
 - [ ] **Step 4: Implement v1 checkedUpgrades -> upgradeStates migration**
 
@@ -832,11 +986,13 @@ setUpgradeState: (checkKey, upgradeState) => set((state) => ({
     ...state.sheetData,
     upgradeStates: {
       ...(state.sheetData.upgradeStates ?? {}),
-      [checkKey]: upgradeState,
+      [checkKey]: mergeUpgradeState(state.sheetData.upgradeStates?.[checkKey], upgradeState),
     },
   }),
 }))
 ```
+
+This action must preserve existing `params` when the incoming state only changes `checked`. It must clear params only when the caller explicitly passes `{ checked: false }` or a complete replacement state that intentionally has no params.
 
 - [ ] **Step 4: Update upgrade action computation**
 
@@ -861,20 +1017,16 @@ upgradeState: selected
 
 In `components/character-sheet-page-two.tsx`:
 
-- Replace `toggleUpgradeCheckbox` implementation with `setUpgradeState(checkKey, { checked })`.
+- Replace `toggleUpgradeCheckbox` implementation with a merge-preserving call to `setUpgradeState(checkKey, { checked })`.
 - Read checked state from `safeFormData.upgradeStates?.[checkKey]?.checked`.
 - For fixed target options, call `setUpgradeState(checkKey, result.upgradeState)`.
+- Do not call generic toggle after writing a complete fixed-target `{ checked: true, params }` state.
+- For unchecked states, call `setUpgradeState(checkKey, { checked: false })` so stale params are cleared by `mergeUpgradeState`.
 - Stop writing `checkedUpgrades`.
 
 - [ ] **Step 6: Update parameterized editors**
 
-In `attribute-upgrade-editor.tsx`:
-
-```ts
-setUpgradeState(`upgrade:${checkKey}`, ...) // do not include upgrade: in key
-```
-
-Use checkKey as stored key:
+In `attribute-upgrade-editor.tsx`, use the raw `checkKey` as the stored key:
 
 ```ts
 setUpgradeState(checkKey, {
@@ -891,6 +1043,8 @@ setUpgradeState(checkKey, {
   params: { experienceIndexes: Array.from(selected) },
 })
 ```
+
+Do not call any generic checkbox toggle after these editor confirmations, because that can overwrite params.
 
 - [ ] **Step 7: Update upgrade section display helpers**
 

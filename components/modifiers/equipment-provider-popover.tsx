@@ -126,11 +126,15 @@ function EditableContributionRow({
 }
 
 function ArmorSummary({ armorSlot }: { armorSlot: ArmorSlot }) {
+  const armorMax = armorSlot.baseArmorMax ?? "未知"
+  const minorThreshold = armorSlot.baseThresholds.minor ?? "未知"
+  const majorThreshold = armorSlot.baseThresholds.major ?? "未知"
+
   return (
     <div className="grid grid-cols-3 gap-2 border-b border-gray-200 p-3 text-xs">
-      <span className="rounded bg-gray-50 px-2 py-1.5 text-center">护甲值 {armorSlot.baseArmorMax ?? 0}</span>
-      <span className="rounded bg-gray-50 px-2 py-1.5 text-center">重伤 {armorSlot.baseThresholds.minor ?? 0}</span>
-      <span className="rounded bg-gray-50 px-2 py-1.5 text-center">严重 {armorSlot.baseThresholds.major ?? 0}</span>
+      <span className="rounded bg-gray-50 px-2 py-1.5 text-center">护甲值 {armorMax}</span>
+      <span className="rounded bg-gray-50 px-2 py-1.5 text-center">重伤 {minorThreshold}</span>
+      <span className="rounded bg-gray-50 px-2 py-1.5 text-center">严重 {majorThreshold}</span>
     </div>
   )
 }

@@ -218,6 +218,29 @@ describe("EquipmentProviderAnchor", () => {
     expect(screen.queryByRole("textbox", { name: "护甲值" })).not.toBeInTheDocument()
   })
 
+  it("shows missing armor base summary values as unknown instead of zero", async () => {
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        armorSlot: {
+          ...defaultSheetData.equipment.armorSlot,
+          name: "自定义护甲",
+          baseArmorMax: null,
+          baseThresholds: { minor: null, major: null },
+        },
+      },
+    })
+
+    render(<EquipmentProviderAnchor slotRef={{ type: "armor" }} fallbackLabel="护甲" />)
+
+    await userEvent.click(screen.getByRole("button", { name: "查看自定义护甲来源" }))
+
+    expect(screen.getByText("护甲值 未知")).toBeInTheDocument()
+    expect(screen.getByText("重伤 未知")).toBeInTheDocument()
+    expect(screen.getByText("严重 未知")).toBeInTheDocument()
+    expect(screen.queryByText("护甲值 0")).not.toBeInTheDocument()
+  })
+
   it("closes when clicking outside or pressing Escape", async () => {
     resetSheetStore()
 
@@ -256,7 +279,10 @@ describe("equipment provider section integration", () => {
 
     render(<WeaponSection isPrimary slotType="primary" onOpenWeaponModal={onOpenWeaponModal} />)
 
-    await userEvent.click(screen.getByRole("button", { name: "查看阔剑来源" }))
+    const providerButton = screen.getByRole("button", { name: "查看阔剑来源" })
+    expect(providerButton.closest("div")).not.toHaveClass("hidden")
+
+    await userEvent.click(providerButton)
 
     expect(screen.getByRole("dialog", { name: "阔剑来源" })).toBeInTheDocument()
     expect(onOpenWeaponModal).not.toHaveBeenCalled()

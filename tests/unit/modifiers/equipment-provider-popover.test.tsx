@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react"
 import "@testing-library/jest-dom/vitest"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
+import { ArmorSection } from "@/components/character-sheet-sections/armor-section"
+import { InventoryWeaponSection } from "@/components/character-sheet-sections/inventory-weapon-section"
+import { WeaponSection } from "@/components/character-sheet-sections/weapon-section"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import type { EquipmentModifierContribution } from "@/lib/equipment/types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
@@ -193,5 +196,82 @@ describe("EquipmentProviderAnchor", () => {
     await userEvent.click(screen.getByRole("button", { name: "查看护甲来源" }))
     await userEvent.keyboard("{Escape}")
     expect(screen.queryByRole("dialog", { name: "护甲来源" })).not.toBeInTheDocument()
+  })
+})
+
+describe("equipment provider section integration", () => {
+  it("opens weapon provider panel without opening the weapon template modal", async () => {
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        weaponSlots: {
+          ...defaultSheetData.equipment.weaponSlots,
+          primary: {
+            name: "阔剑",
+            trait: "",
+            damage: "",
+            feature: "",
+            modifierContributions: [],
+          },
+        },
+      },
+    })
+    const onOpenWeaponModal = vi.fn()
+
+    render(<WeaponSection isPrimary slotType="primary" onOpenWeaponModal={onOpenWeaponModal} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "查看阔剑来源" }))
+
+    expect(screen.getByRole("dialog", { name: "阔剑来源" })).toBeInTheDocument()
+    expect(onOpenWeaponModal).not.toHaveBeenCalled()
+  })
+
+  it("opens inventory weapon provider panel", async () => {
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        weaponSlots: {
+          ...defaultSheetData.equipment.weaponSlots,
+          inventory: [
+            {
+              name: "备用短剑",
+              trait: "",
+              damage: "",
+              feature: "",
+              modifierContributions: [],
+            },
+            defaultSheetData.equipment.weaponSlots.inventory[1],
+          ],
+        },
+      },
+    })
+
+    render(<InventoryWeaponSection index={0} onOpenWeaponModal={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "查看备用短剑来源" }))
+    expect(screen.getByRole("dialog", { name: "备用短剑来源" })).toBeInTheDocument()
+  })
+
+  it("opens armor provider panel without opening the armor template modal", async () => {
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        armorSlot: {
+          name: "锁子甲",
+          baseArmorMax: 4,
+          baseThresholds: { minor: 7, major: 15 },
+          feature: "",
+          modifierContributions: [],
+        },
+      },
+    })
+    const onOpenArmorModal = vi.fn()
+
+    render(<ArmorSection onOpenArmorModal={onOpenArmorModal} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "查看锁子甲来源" }))
+
+    expect(screen.getByRole("dialog", { name: "锁子甲来源" })).toBeInTheDocument()
+    expect(onOpenArmorModal).not.toHaveBeenCalled()
   })
 })

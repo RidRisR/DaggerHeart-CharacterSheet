@@ -4,6 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
+import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
 import { formatArmorThreshold } from "@/lib/equipment/armor-utils"
 import type { ArmorSlot } from "@/lib/equipment/types"
@@ -109,6 +110,13 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
                   <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
                 </svg>
               </button>
+              <div className="w-px bg-gray-300 hidden group-hover:block"></div>
+              <div className="hidden group-hover:flex items-center justify-center px-1 print:hidden">
+                <EquipmentProviderAnchor
+                  slotRef={{ type: "armor" }}
+                  fallbackLabel="护甲"
+                />
+              </div>
             </div>
           )}
         </div>

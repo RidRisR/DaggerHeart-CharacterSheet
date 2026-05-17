@@ -18,6 +18,7 @@ import {
   assertSupportedSchemaVersion,
   detectSchemaVersion,
 } from './sheet-schema-version'
+import { sanitizeEquipmentModifierContributions } from "@/lib/equipment/contribution-utils"
 import { createEmptyEquipmentData } from "@/lib/equipment/defaults"
 import { parseArmorMax, parseArmorThreshold } from "@/lib/equipment/armor-utils"
 import type { ArmorSlot, WeaponSlot } from "@/lib/equipment/types"
@@ -316,10 +317,6 @@ function normalizedStringField(rawSlot: Record<string, unknown>, fallbackSlot: W
   return String((fallbackSlot as any)[key] ?? "")
 }
 
-function normalizeModifierContributions(value: unknown): ModifierContribution[] {
-  return sanitizeModifierContributions(value)
-}
-
 function normalizeWeaponSlot(value: unknown, fallbackSlot: WeaponSlot): WeaponSlot {
   if (!isRecord(value)) {
     return fallbackSlot
@@ -330,7 +327,7 @@ function normalizeWeaponSlot(value: unknown, fallbackSlot: WeaponSlot): WeaponSl
     trait: normalizedStringField(value, fallbackSlot, "trait"),
     damage: normalizedStringField(value, fallbackSlot, "damage"),
     feature: normalizedStringField(value, fallbackSlot, "feature"),
-    modifierContributions: normalizeModifierContributions(value.modifierContributions),
+    modifierContributions: sanitizeEquipmentModifierContributions(value.modifierContributions),
   }
 }
 
@@ -351,7 +348,7 @@ function normalizeArmorSlot(value: unknown, fallbackSlot: ArmorSlot): ArmorSlot 
     baseArmorMax: parsedBaseArmorMax,
     baseThresholds: parsedBaseThresholds,
     feature: normalizedStringField(value, fallbackSlot, "feature"),
-    modifierContributions: normalizeModifierContributions(value.modifierContributions),
+    modifierContributions: sanitizeEquipmentModifierContributions(value.modifierContributions),
   }
 }
 

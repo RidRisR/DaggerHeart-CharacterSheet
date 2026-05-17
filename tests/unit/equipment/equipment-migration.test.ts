@@ -219,4 +219,98 @@ describe("equipment data migration", () => {
       modifierContributions: [],
     })
   })
+
+  it("keeps only valid equipment modifier contributions for current-schema equipment slots", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      equipment: {
+        weaponSlots: {
+          primary: {
+            name: "塔盾",
+            trait: "",
+            damage: "",
+            feature: "",
+            modifierContributions: [
+              {
+                id: "valid-evasion",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "灵巧格挡", value: 1 },
+              },
+              {
+                id: "experience-target",
+                definition: { target: "experienceValues.0", kind: "modifier" },
+                editable: { label: "经历", value: 1 },
+              },
+              {
+                id: "base-kind",
+                definition: { target: "armorMax", kind: "base" },
+                editable: { label: "基础", value: 2 },
+              },
+              {
+                id: "bad-value",
+                definition: { target: "armorMax", kind: "modifier" },
+                editable: { label: "坏值", value: "2" },
+              },
+              {
+                id: "valid-evasion",
+                definition: { target: "armorMax", kind: "modifier" },
+                editable: { label: "重复", value: 2 },
+              },
+            ],
+          },
+          secondary: { name: "", trait: "", damage: "", feature: "", modifierContributions: [] },
+          inventory: [
+            { name: "", trait: "", damage: "", feature: "", modifierContributions: [] },
+            { name: "", trait: "", damage: "", feature: "", modifierContributions: [] },
+          ],
+        },
+        armorSlot: {
+          name: "链甲",
+          baseArmorMax: null,
+          baseThresholds: { minor: null, major: null },
+          feature: "",
+          modifierContributions: [
+            {
+              id: "valid-armor",
+              definition: { target: "armorMax", kind: "modifier" },
+              editable: { label: "稳固", value: 1 },
+            },
+            {
+              id: "armor-experience",
+              definition: { target: "experienceValues.1", kind: "modifier" },
+              editable: { label: "经历", value: 1 },
+            },
+          ],
+        },
+      },
+    } as any)
+
+    expect(migrated.equipment.weaponSlots.primary.modifierContributions).toEqual([
+      {
+        id: "valid-evasion",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "灵巧格挡", value: 1 },
+      },
+    ])
+    expect(migrated.equipment.armorSlot.modifierContributions).toEqual([
+      {
+        id: "valid-armor",
+        definition: { target: "armorMax", kind: "modifier" },
+        editable: { label: "稳固", value: 1 },
+      },
+    ])
+  })
+
+  it("keeps legacy flat equipment migration modifier contributions empty", () => {
+    const migrated = migrateSheetData(v1EquipmentInput({
+      primaryWeaponName: "阔剑",
+      armorName: "链甲",
+    }))
+
+    expect(migrated.equipment.weaponSlots.primary.modifierContributions).toEqual([])
+    expect(migrated.equipment.weaponSlots.secondary.modifierContributions).toEqual([])
+    expect(migrated.equipment.weaponSlots.inventory[0].modifierContributions).toEqual([])
+    expect(migrated.equipment.weaponSlots.inventory[1].modifierContributions).toEqual([])
+    expect(migrated.equipment.armorSlot.modifierContributions).toEqual([])
+  })
 })

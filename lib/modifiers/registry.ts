@@ -1,4 +1,5 @@
 import type { SheetData } from "@/lib/sheet-data"
+import { sanitizeEquipmentModifierContributions } from "@/lib/equipment/contribution-utils"
 import { contributionToEntry, entryTarget } from "./entry-utils"
 import { calculateReferenceSummary } from "./reference-calculator"
 import { collectSystemModifierEntries } from "./source-definitions"
@@ -13,7 +14,7 @@ function collectEquipmentModifierEntries(sheetData: SheetData): ModifierEntry[] 
   ]
 
   return sources.flatMap(({ slot, sourceId, priority }) =>
-    (slot.modifierContributions ?? []).map(contribution =>
+    sanitizeEquipmentModifierContributions(slot.modifierContributions).map(contribution =>
       contributionToEntry(contribution, {
         sourceType: "equipment",
         sourceId,

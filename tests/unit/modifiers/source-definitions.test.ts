@@ -145,6 +145,11 @@ describe("modifier source definitions", () => {
                 definition: { target: "armorMax", kind: "modifier" },
                 editable: { label: "壁垒", value: 2 },
               },
+              {
+                id: "primary-experience",
+                definition: { target: "experienceValues.0", kind: "modifier" },
+                editable: { label: "不应生效", value: 99 },
+              },
             ],
           },
           secondary: {
@@ -157,6 +162,11 @@ describe("modifier source definitions", () => {
                 id: "secondary-evasion",
                 definition: { target: "evasion", kind: "modifier" },
                 editable: { label: "灵巧格挡", value: 1 },
+              },
+              {
+                id: "secondary-base",
+                definition: { target: "armorMax", kind: "base" },
+                editable: { label: "不应生效", value: 99 },
               },
             ],
           },
@@ -186,6 +196,16 @@ describe("modifier source definitions", () => {
               definition: { target: "armorMax", kind: "modifier" },
               editable: { label: "稳固", value: 1 },
             },
+            {
+              id: "armor-experience",
+              definition: { target: "experienceValues.1", kind: "modifier" },
+              editable: { label: "不应生效", value: 99 },
+            },
+            {
+              id: "armor-base",
+              definition: { target: "evasion", kind: "base" },
+              editable: { label: "不应生效", value: 99 },
+            },
           ],
         },
       },
@@ -208,6 +228,10 @@ describe("modifier source definitions", () => {
         source: { type: "equipment", id: "armor:current" },
       }),
     ]))
+    expect(entries.some(entry => entry.id === "primary-experience")).toBe(false)
+    expect(entries.some(entry => entry.id === "secondary-base")).toBe(false)
+    expect(entries.some(entry => entry.id === "armor-experience")).toBe(false)
+    expect(entries.some(entry => entry.id === "armor-base")).toBe(false)
     expect(entries.some(entry => entry.id === "inventory-armor")).toBe(false)
   })
 

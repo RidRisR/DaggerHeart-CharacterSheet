@@ -124,7 +124,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
       expect(sheet().majorThreshold).toBe("11")
     })
 
-    it("护甲基础阈值为空时，自动计算按阈值目标回退为空值", () => {
+    it("护甲基础阈值为空时，自动计算保留现有非数字阈值", () => {
       resetSheetStore({
         level: "1",
         equipment: equipmentWithArmorThresholds(null, null),
@@ -147,8 +147,8 @@ describe("等级升级 - 熟练度提升逻辑", () => {
 
       store().updateLevel("5", "1")
 
-      expect(sheet().minorThreshold).toBe("")
-      expect(sheet().majorThreshold).toBe("")
+      expect(sheet().minorThreshold).toBe("manual-minor")
+      expect(sheet().majorThreshold).toBe("manual-major")
     })
   })
 

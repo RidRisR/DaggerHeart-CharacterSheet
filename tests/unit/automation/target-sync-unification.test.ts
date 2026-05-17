@@ -136,16 +136,16 @@ describe("target sync automation unification", () => {
     resetSheetStore({
       level: "3",
       armorMax: 1,
-      minorThreshold: "old-minor",
-      majorThreshold: "old-major",
+      minorThreshold: "1",
+      majorThreshold: "2",
     })
 
     store().selectArmor(armor!.id)
 
     expect(sheet().equipment.armorSlot.name).toBe(armor!.name)
     expect(sheet().armorMax).toBe(1)
-    expect(sheet().minorThreshold).toBe("old-minor")
-    expect(sheet().majorThreshold).toBe("old-major")
+    expect(sheet().minorThreshold).toBe("1")
+    expect(sheet().majorThreshold).toBe("2")
   })
 
   it("syncs armor source into final armor targets while targets use auto calculation", () => {
@@ -155,8 +155,8 @@ describe("target sync automation unification", () => {
     resetSheetStore({
       level: "3",
       armorMax: 1,
-      minorThreshold: "old-minor",
-      majorThreshold: "old-major",
+      minorThreshold: "1",
+      majorThreshold: "2",
       modifierState: {
         targetStates: {
           armorMax: {
@@ -228,7 +228,7 @@ describe("target sync automation unification", () => {
     expect(sheet().hpMax).toBe(7)
   })
 
-  it("falls back auto calculation profession targets when profession is cleared", () => {
+  it("keeps auto calculation profession targets when profession source is cleared", () => {
     resetSheetStore({
       level: "1",
       evasion: "12",
@@ -254,8 +254,8 @@ describe("target sync automation unification", () => {
 
     store().handleProfessionChange(undefined, undefined)
 
-    expect(sheet().evasion).toBe("")
-    expect(sheet().hpMax).toBe(6)
+    expect(sheet().evasion).toBe("12")
+    expect(sheet().hpMax).toBe(7)
   })
 
   it("does not sync level source into proficiency or thresholds while targets are manual", () => {

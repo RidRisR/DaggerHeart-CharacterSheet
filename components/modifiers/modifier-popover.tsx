@@ -191,7 +191,7 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const setTargetAutoCalculation = useSheetStore(state => state.setTargetAutoCalculation)
   const upsertUserModifierContribution = useSheetStore(state => state.upsertUserModifierContribution)
   const removeUserModifierContribution = useSheetStore(state => state.removeUserModifierContribution)
-  const deleteSpecialModifierBase = useSheetStore(state => state.deleteSpecialModifierBase)
+  const removeSpecialBaseContribution = useSheetStore(state => state.removeSpecialBaseContribution)
   const [addingBase, setAddingBase] = useState(false)
   const [baseName, setBaseName] = useState("")
   const [baseValue, setBaseValue] = useState("")
@@ -246,18 +246,11 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const deleteUserContribution = (entry: ModifierEntry) => {
     if (isTargetOwnedSpecialEntry(entry)) {
       if (entryKind(entry) === "base") {
-        deleteSpecialModifierBase(target, entry.id)
+        removeSpecialBaseContribution(target, entry.id)
         return
       }
 
-      useSheetStore.setState(state => ({
-        sheetData: {
-          ...state.sheetData,
-          userModifierContributions: (state.sheetData.userModifierContributions ?? []).filter(
-            contribution => contribution.id !== entry.id,
-          ),
-        },
-      }))
+      removeUserModifierContribution(entry.id)
       return
     }
 

@@ -480,20 +480,14 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.queryByRole("textbox", { name: `编辑${UNATTRIBUTED_DELTA_LABEL}名称` })).not.toBeInTheDocument()
 
     const valueInput = screen.getByRole("spinbutton", { name: `编辑${UNATTRIBUTED_DELTA_LABEL}数值` })
-    await userEvent.clear(valueInput)
-    await userEvent.type(valueInput, "2")
-    await userEvent.tab()
-    expect(sheet().userModifierContributions).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        id: getUnattributedDeltaId("evasion"),
-        editable: { label: UNATTRIBUTED_DELTA_LABEL, value: 2 },
-      }),
-    ]))
+    expect(valueInput).toHaveValue(3)
 
     await userEvent.click(screen.getByRole("button", { name: `删除${UNATTRIBUTED_DELTA_LABEL}` }))
     expect(sheet().userModifierContributions?.some(
       contribution => contribution.id === getUnattributedDeltaId("evasion"),
     )).toBe(false)
+    expect(sheet().evasion).toBe("12")
+    expect(screen.queryByText("未归因差额 +3")).not.toBeInTheDocument()
   })
 
   it("keeps a user-created modifier with the same delta label editable as a normal user source", async () => {

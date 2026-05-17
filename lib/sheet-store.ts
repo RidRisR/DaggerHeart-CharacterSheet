@@ -155,7 +155,7 @@ interface SheetState {
     setTargetAutoCalculation: (target: ModifierTargetId, enabled: boolean) => void;
     upsertUserModifierContribution: (contribution: UserModifierContribution) => void;
     removeUserModifierContribution: (entryId: ModifierEntryId) => void;
-    deleteSpecialModifierBase: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
+    removeSpecialBaseContribution: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
     setAutomationSelection: (sourceId: AutomationSourceId, selected: boolean, params?: Record<string, unknown>) => void;
 
     // Profession change handler
@@ -946,7 +946,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         }),
     })),
 
-    deleteSpecialModifierBase: (target, entryId) => set((state) => ({
+    removeSpecialBaseContribution: (target, entryId) => set((state) => ({
         sheetData: deleteSpecialBase(state.sheetData, target, entryId),
     })),
 

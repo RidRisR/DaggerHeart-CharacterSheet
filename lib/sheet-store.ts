@@ -217,6 +217,22 @@ function canStoreRawFinalText(target: ModifierTargetId): boolean {
     );
 }
 
+function applyHpStressMaxInvariant(sheetData: SheetData, target: ModifierTargetId): SheetData {
+    if (target !== "hpMax" && target !== "stressMax") return sheetData;
+
+    const field = target === "hpMax" ? "hp" : "stress";
+    const max = sheetData[target];
+    if (typeof max !== "number") return sheetData;
+
+    const current = sheetData[field];
+    if (!Array.isArray(current) || current.filter(Boolean).length <= max) return sheetData;
+
+    return {
+        ...sheetData,
+        [field]: current.map((_, index) => index < max),
+    };
+}
+
 export const useSheetStore = create<SheetState>((set) => ({
     sheetData: defaultSheetData,
     setSheetData: (updater) => {
@@ -445,19 +461,21 @@ export const useSheetStore = create<SheetState>((set) => ({
 
     updateHPMax: (value) => set((state) => {
         const autoCalculation = state.sheetData.modifierState?.targetStates?.hpMax?.autoCalculation === true;
+        const nextSheetData = autoCalculation
+            ? reconcileFinalInput(state.sheetData, "hpMax", value)
+            : writeTargetValue(state.sheetData, "hpMax", value);
         return {
-            sheetData: autoCalculation
-                ? reconcileFinalInput(state.sheetData, "hpMax", value)
-                : writeTargetValue(state.sheetData, "hpMax", value),
+            sheetData: applyHpStressMaxInvariant(nextSheetData, "hpMax"),
         };
     }),
 
     updateStressMax: (value) => set((state) => {
         const autoCalculation = state.sheetData.modifierState?.targetStates?.stressMax?.autoCalculation === true;
+        const nextSheetData = autoCalculation
+            ? reconcileFinalInput(state.sheetData, "stressMax", value)
+            : writeTargetValue(state.sheetData, "stressMax", value);
         return {
-            sheetData: autoCalculation
-                ? reconcileFinalInput(state.sheetData, "stressMax", value)
-                : writeTargetValue(state.sheetData, "stressMax", value),
+            sheetData: applyHpStressMaxInvariant(nextSheetData, "stressMax"),
         };
     }),
 
@@ -968,8 +986,9 @@ export const useSheetStore = create<SheetState>((set) => ({
 
             if (finalValue === undefined) return state;
 
+            const nextSheetData = writeTargetValue(state.sheetData, target, finalValue);
             return {
-                sheetData: writeTargetValue(state.sheetData, target, finalValue),
+                sheetData: applyHpStressMaxInvariant(nextSheetData, target),
             };
         }
 
@@ -981,8 +1000,9 @@ export const useSheetStore = create<SheetState>((set) => ({
             };
         }
 
+        const nextSheetData = reconcileFinalInput(state.sheetData, target, finalValue);
         return {
-            sheetData: reconcileFinalInput(state.sheetData, target, finalValue),
+            sheetData: applyHpStressMaxInvariant(nextSheetData, target),
         };
     }),
 

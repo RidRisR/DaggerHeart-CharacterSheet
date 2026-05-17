@@ -1,6 +1,5 @@
 "use client"
 
-import { useRef } from "react"
 import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store";
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
@@ -35,15 +34,9 @@ export function AttributesSection() {
     removeUserModifierContribution,
     commitModifierTargetValue,
   } = useSheetStore();
-  const editStartValues = useRef<Partial<Record<AttributeKey, string>>>({})
 
   const handleAttributeValueChange = (attribute: AttributeKey, value: string) => {
     updateAttribute(attribute, value)
-  }
-
-  const handleAttributeFocus = (attribute: AttributeKey) => {
-    const attrValue = formData[attribute]
-    editStartValues.current[attribute] = isAttributeValue(attrValue) ? attrValue.value : ""
   }
 
   const handleAttributeCommit = (attribute: AttributeKey) => {
@@ -66,7 +59,6 @@ export function AttributesSection() {
     }
 
     commitModifierTargetValue(target, submittedValue)
-    editStartValues.current[attribute] = submittedValue
   }
 
   const handleAttributeKeyDown = (event: React.KeyboardEvent<HTMLInputElement>, attribute: AttributeKey) => {
@@ -151,7 +143,6 @@ export function AttributesSection() {
                     const attrValue = formData[attr.key as keyof typeof formData];
                     return isAttributeValue(attrValue) ? attrValue.value : "";
                   })()}
-                  onFocus={() => handleAttributeFocus(attr.key as AttributeKey)}
                   onChange={(e) => handleAttributeValueChange(attr.key as AttributeKey, e.target.value)}
                   onBlur={() => handleAttributeCommit(attr.key as AttributeKey)}
                   onKeyDown={(event) => handleAttributeKeyDown(event, attr.key as AttributeKey)}

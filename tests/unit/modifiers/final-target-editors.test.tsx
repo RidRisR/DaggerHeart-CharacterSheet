@@ -188,4 +188,35 @@ describe("final target editors", () => {
       editable: { label: "未归因差额", value: 1 },
     })
   })
+
+  it("clamps checked HP boxes when HP max is committed below the current checked count", async () => {
+    resetSheetStore({
+      hp: Array(18).fill(false).map((_, index) => index < 6),
+      hpMax: 6,
+    })
+
+    render(<HitPointsSection />)
+    const input = screen.getAllByDisplayValue("6")[0]
+    await userEvent.clear(input)
+    await userEvent.type(input, "3")
+    await userEvent.tab()
+
+    expect(sheet().hpMax).toBe(3)
+    expect(sheet().hp?.slice(0, 6)).toEqual([true, true, true, false, false, false])
+    expect(countChecked(sheet().hp)).toBe(3)
+  })
+
+  it("clamps checked stress boxes when stress max is decremented below the current checked count", async () => {
+    resetSheetStore({
+      stress: Array(18).fill(false).map((_, index) => index < 6),
+      stressMax: 4,
+    })
+
+    render(<HitPointsSection />)
+    await userEvent.click(screen.getAllByRole("button", { name: "−" })[1])
+
+    expect(sheet().stressMax).toBe(3)
+    expect(sheet().stress?.slice(0, 6)).toEqual([true, true, true, false, false, false])
+    expect(countChecked(sheet().stress)).toBe(3)
+  })
 })

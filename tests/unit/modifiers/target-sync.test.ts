@@ -57,7 +57,7 @@ describe("target sync helper", () => {
     expect(result.sheetData).toBe(data)
   })
 
-  it("applies continuous sync for all continuous targets", () => {
+  it("applies continuous sync for all auto calculation targets", () => {
     const data = sheet({
       evasion: "10",
       hpMax: 6,
@@ -75,8 +75,8 @@ describe("target sync helper", () => {
       ],
       modifierState: {
         targetStates: {
-          evasion: { activeBaseId: "user:evasion-base", syncMode: "continuous" },
-          hpMax: { activeBaseId: "user:hp-base", syncMode: "manual" },
+          evasion: { activeBaseId: "user:evasion-base", autoCalculation: true },
+          hpMax: { activeBaseId: "user:hp-base" },
         },
         entryStates: {},
       },
@@ -88,7 +88,30 @@ describe("target sync helper", () => {
     expect(result.hpMax).toBe(6)
   })
 
-  it("uses fallback when continuous target has no base", () => {
+  it("applies continuous sync for legacy continuous targets", () => {
+    const data = sheet({
+      evasion: "10",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: "user:evasion-base", syncMode: "continuous" },
+        },
+        entryStates: {},
+      },
+    } as any)
+
+    const result = applyContinuousTargetSync(data)
+
+    expect(result.evasion).toBe("12")
+  })
+
+  it("uses fallback when auto calculation target has no base", () => {
     const data = sheet({
       evasion: "10",
       hpMax: 9,
@@ -96,10 +119,10 @@ describe("target sync helper", () => {
       armorMax: 3,
       modifierState: {
         targetStates: {
-          evasion: { syncMode: "continuous" },
-          hpMax: { syncMode: "continuous" },
-          stressMax: { syncMode: "continuous" },
-          armorMax: { syncMode: "continuous" },
+          evasion: { autoCalculation: true },
+          hpMax: { autoCalculation: true },
+          stressMax: { autoCalculation: true },
+          armorMax: { autoCalculation: true },
         },
         entryStates: {},
       },
@@ -124,7 +147,7 @@ describe("target sync helper", () => {
         },
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base", syncMode: "continuous" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: true } },
         entryStates: {},
       },
     })

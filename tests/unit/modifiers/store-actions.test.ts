@@ -75,7 +75,7 @@ describe("modifier store actions", () => {
     })
   })
 
-  it("applies continuous sync when modifier sources change", () => {
+  it("applies auto calculation when modifier sources change", () => {
     resetSheetStore({
       evasion: "10",
       userModifierContributions: [
@@ -89,12 +89,12 @@ describe("modifier store actions", () => {
         targetStates: {
           evasion: {
             activeBaseId: "user:evasion-base",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},
       },
-    } as any)
+    })
 
     store().upsertUserModifierContribution({
       id: "user:evasion-mod",
@@ -147,7 +147,7 @@ describe("modifier store actions", () => {
     expect(sheet().modifierState?.targetStates.evasion).not.toHaveProperty("autoCalculation")
   })
 
-  it("applies continuous sync after level changes update system entries", () => {
+  it("applies auto calculation after level changes update system entries", () => {
     const baseEquipment = defaultSheetData.equipment
     resetSheetStore({
       level: "1",
@@ -165,38 +165,38 @@ describe("modifier store actions", () => {
         targetStates: {
           minorThreshold: {
             activeBaseId: "equipment:armor:current:minorThreshold",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},
       },
-    } as any)
+    })
 
     store().updateLevel("2", "1")
 
     expect(sheet().minorThreshold).toBe("9")
   })
 
-  it("applies continuous sync after armor base max changes", () => {
+  it("applies auto calculation after armor base max changes", () => {
     resetSheetStore({
       armorMax: 0,
       modifierState: {
         targetStates: {
           armorMax: {
             activeBaseId: "equipment:armor:current:armorMax",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},
       },
-    } as any)
+    })
 
     store().updateArmorBaseMax("5")
 
     expect(sheet().armorMax).toBe(5)
   })
 
-  it("applies continuous sync after profession card source changes", () => {
+  it("applies auto calculation after profession card source changes", () => {
     resetSheetStore({
       evasion: "0",
       cards: [
@@ -218,12 +218,12 @@ describe("modifier store actions", () => {
         targetStates: {
           evasion: {
             activeBaseId: "profession:current:evasion",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},
       },
-    } as any)
+    })
 
     store().updateCard(0, {
       ...createEmptyCard("profession"),
@@ -239,6 +239,6 @@ describe("modifier store actions", () => {
     }, false)
 
     expect(sheet().evasion).toBe("12")
-    expect((sheet().modifierState?.targetStates.evasion as any)?.syncMode).toBe("continuous")
+    expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBe(true)
   })
 })

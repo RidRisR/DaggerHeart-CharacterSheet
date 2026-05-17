@@ -57,6 +57,10 @@ function isSameTargetValue(currentValue: unknown, desiredValue: number | string)
   return String(currentValue ?? "") === desiredValue
 }
 
+function isBlankTargetValue(value: unknown): boolean {
+  return value === "" || value === undefined || value === null
+}
+
 function writeTargetValueFromSync(sheetData: SheetData, target: ModifierTargetId, value: number | string): SheetData {
   return writeTargetValue(sheetData, target, value)
 }
@@ -98,11 +102,12 @@ export function applyAutoCalculationForTargets(sheetData: SheetData): SheetData 
   let changed = false
 
   autoCalculationTargets(sheetData).forEach(target => {
-    if (tryParseNumber(readTargetValue(next, target)) === undefined) return
+    const currentValue = readTargetValue(next, target)
+    if (!isBlankTargetValue(currentValue) && tryParseNumber(currentValue) === undefined) return
 
     const desiredValue = getReferenceSummary(next, target).referenceTotal
     if (desiredValue === undefined) return
-    if (isSameTargetValue(readTargetValue(next, target), desiredValue)) return
+    if (isSameTargetValue(currentValue, desiredValue)) return
 
     next = writeTargetValueFromSync(next, target, desiredValue)
     changed = true

@@ -85,6 +85,29 @@ describe("target auto calculation helper", () => {
     expect(result.evasion).toBe("12+敏捷")
   })
 
+  it("fills blank current finals from reference totals", () => {
+    const data = sheet({
+      evasion: "",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: "user:evasion-base", autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result.evasion).toBe("12")
+  })
+
   it("keeps existing values without fallback when auto target has no reference total", () => {
     const data = sheet({
       evasion: "10",

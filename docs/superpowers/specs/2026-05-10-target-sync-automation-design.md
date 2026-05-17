@@ -2,6 +2,13 @@
 
 日期：2026-05-10
 
+> **状态：已过时。** 本文使用 `syncMode: "manual" | "continuous"`、一次性
+> “同步”按钮和持续同步按钮来描述旧方案。当前模型已改为 `autoCalculation`：
+> 缺省开启，显式 `false` 才关闭；用户 final input 会被 reconciliation 接入来源
+> 系统。当前行为以
+> `docs/superpowers/specs/2026-05-17-final-input-automation-reconciliation-design.md`
+> 和 `lib/modifiers/target-sync.ts` 为准。
+
 ## 目的
 
 本文记录当前关于“自动化系统如何接入最新 modifier 价值系统”的设计共识。

@@ -1,5 +1,8 @@
 # Target Sync Automation Unification Implementation Plan
 
+> **状态：历史执行计划，已过时。** 本计划使用旧的 sync/continuous 术语，并引用已经删除的
+> `evasion-editor` 迁移步骤。当前自动计算模型以 final input reconciliation 设计和代码为准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make legacy automation stop writing modifier target final values directly; source changes update provider facts, and target sync decides whether final values change.

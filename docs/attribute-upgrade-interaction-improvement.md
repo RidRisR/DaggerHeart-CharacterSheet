@@ -1,5 +1,11 @@
 # 属性升级交互改进方案
 
+> **状态：已过时。** 本文记录旧的属性升级快照 / 回滚方案。当前升级系统不再依赖
+> 快照回滚；属性升级通过 `automationSelections` 记录选择，反选时弹确认，确认后只清除
+> selection 和勾选状态，不直接回滚最终属性值。当前行为以
+> `components/character-sheet-page-two-sections/upgrade-section.tsx` 和
+> `tests/integration/upgrade-cancel-flow.test.tsx` 为准。
+
 ## 文档信息
 - **创建日期**: 2025-01-13
 - **版本**: 1.0

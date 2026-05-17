@@ -2,6 +2,14 @@
 
 日期：2026-05-09
 
+> **状态：已过时。** 本文记录升级选项从“手填最终值”转为 selection/provider
+> 模型的早期讨论。当前实现已经落地：属性和经历升级记录 selection，闪避升级不再弹
+> 最终值输入框，取消属性/经历升级需要确认。当前行为以
+> `components/character-sheet-page-two-sections/upgrade-section.tsx`、
+> `components/upgrade-popover/attribute-upgrade-editor.tsx`、
+> `components/upgrade-popover/experience-values-editor.tsx` 和
+> `tests/integration/upgrade-cancel-flow.test.tsx` 为准。
+
 ## 目的
 
 本文记录第二个待讨论改进点：在新的 modifier 系统下，升级选项不应继续要求用户手动填写升级后的新最终值。升级 UI 应从“选择并手填新数值”简化为“选择升级对象”，由系统记录一个固定的 `+1` upgrade modifier。

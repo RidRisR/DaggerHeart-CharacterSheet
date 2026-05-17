@@ -1,5 +1,9 @@
 # Modifier Automation System Implementation Plan
 
+> **状态：历史执行计划，已过时。** 本计划描述的 final-value-first 自动化和 snapshot/rollback
+> 过渡步骤已经被当前 provider/target 架构、v2 迁移和 final input reconciliation 取代。
+> 它只记录当时的执行过程，不作为当前行为依据。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the first-phase modifier/reference system and unified automation execution layer without changing existing final-value-first sheet behavior.

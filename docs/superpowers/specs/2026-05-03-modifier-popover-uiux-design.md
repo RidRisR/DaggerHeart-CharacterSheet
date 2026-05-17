@@ -2,6 +2,11 @@
 
 日期：2026-05-03
 
+> **状态：已过时。** 本文记录早期 modifier popover UI 方案，其中 entry 开关、
+> 同步按钮、手动来源不影响最终值等设定已经不再是当前行为。当前 popover 语义以
+> `docs/superpowers/specs/2026-05-17-final-input-automation-reconciliation-design.md`
+> 和 `components/modifiers/modifier-popover.tsx` 为准。本文仅作为历史背景。
+
 ## 背景
 
 当前 modifier 来源弹窗只负责展示参考值来源。闪避和护甲值的问号按钮位于固定大小且 `overflow-hidden` 的小卡片内部，弹窗会被父容器裁切。弹窗打开后只能再次点击问号关闭，不能通过点击空白区域或键盘退出。底层 store 已有 active base、禁用 entry、用户自定义 entry 的 action，但 UI 尚未暴露这些能力。

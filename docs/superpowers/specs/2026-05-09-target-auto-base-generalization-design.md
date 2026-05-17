@@ -2,6 +2,12 @@
 
 日期：2026-05-09
 
+> **状态：已过时。** 本文讨论的 target auto base 泛化已经被 final input
+> reconciliation 统一吸收。当前规则区分用户交互输入创建 `手动基础值`、
+> 老存档迁移创建 `估算基础值`、已有 base 时创建 `未归因差额`。当前行为以
+> `docs/superpowers/specs/2026-05-17-final-input-automation-reconciliation-design.md`
+> 为准。
+
 ## 目的
 
 本文记录一个待讨论的 modifier 细节改进点：把当前只存在于六大属性输入框上的“自动创建手动基础值”能力，泛化为所有合适 modifier target 的通用行为。

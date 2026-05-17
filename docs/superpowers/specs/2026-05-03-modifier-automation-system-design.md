@@ -2,6 +2,14 @@
 
 日期：2026-05-03
 
+> **状态：已过时。** 本文记录 modifier 自动化早期方案，其中“最终值仍是事实”、
+> “自动化直接执行 effect / rollback”等内容已经被后续 provider/target 架构、
+> v1->v2 迁移边界和 final input reconciliation 取代。当前行为以
+> `docs/superpowers/specs/2026-05-04-modifier-provider-target-architecture-design.md`、
+> `docs/superpowers/specs/2026-05-11-v1-v2-migration-boundary-design.md` 和
+> `docs/superpowers/specs/2026-05-17-final-input-automation-reconciliation-design.md`
+> 为准。本文仅作为历史背景。
+
 ## 背景
 
 当前角色卡里的数值自动化分散在多个组件和 store action 中。职业卡、护甲、等级变化、升级选项、升级弹窗各自直接写入 `SheetData`，并且缺少统一的来源解释。用户可以看到最终值，但很难知道这个值来自职业、护甲、升级、手动填写，还是旧存档残留。

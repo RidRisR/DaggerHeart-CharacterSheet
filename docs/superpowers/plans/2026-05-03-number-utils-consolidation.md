@@ -1,5 +1,8 @@
 # Number Utils Consolidation Implementation Plan
 
+> **状态：历史执行计划，部分过时。** 本计划包含已经删除的旧文件路径，例如
+> `components/upgrade-popover/evasion-editor.tsx`。它只记录当时的执行过程，不作为当前代码结构依据。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Clarify number parsing APIs, remove `safeEvaluateExpression`, and migrate modifier-adjacent callers to explicit fallback or try-style functions.

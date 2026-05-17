@@ -97,11 +97,49 @@ export function UpgradeSection({
     return names.length > 0 ? names.join("、") : "未记录属性"
   }
 
+  const getSelectedExperienceTexts = (checkKey: string) => {
+    const selection = formData.automationSelections?.[`upgrade:${checkKey}`]
+    const experienceIndexes = selection?.params?.experienceIndexes
+    if (!Array.isArray(experienceIndexes)) return ["未记录经历"]
+
+    const texts = experienceIndexes
+      .filter((index): index is number => typeof index === "number")
+      .map(index => {
+        const text = formData.experience?.[index]
+        return text && text.trim() ? text : `第 ${index + 1} 项经历`
+      })
+
+    return texts.length > 0 ? texts : ["未记录经历"]
+  }
+
   const renderAttributeCancelConfirmation = (checkKey: string, index: number) => (
     <div className="w-48">
       <div className="mb-2 text-xs font-semibold text-gray-700">确定要取消升级吗？</div>
       <div className="mb-3 rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-600">
         {getSelectedAttributeNames(checkKey)}
+      </div>
+      <button
+        type="button"
+        className="w-full rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
+        onClick={() => {
+          handleUpgradeCheck(checkKey, index)
+          setOpenPopoverIndex(null)
+        }}
+      >
+        确定取消
+      </button>
+    </div>
+  )
+
+  const renderExperienceCancelConfirmation = (checkKey: string, index: number) => (
+    <div className="w-48">
+      <div className="mb-2 text-xs font-semibold text-gray-700">确定要取消升级吗？</div>
+      <div className="mb-3 space-y-1 rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-600">
+        {getSelectedExperienceTexts(checkKey).map((text, textIndex) => (
+          <div key={`${textIndex}-${text}`} className="truncate" title={text}>
+            {text}
+          </div>
+        ))}
       </div>
       <button
         type="button"
@@ -215,9 +253,17 @@ export function UpgradeSection({
     }
 
     if (isExperienceUpgradeOption(option.label)) {
-      const checkKey = typeof checkKeyOrBoxIndex === 'string'
+      const rawCheckKey = typeof checkKeyOrBoxIndex === 'string'
         ? checkKeyOrBoxIndex
         : `${tierKey}-${index}-${checkKeyOrBoxIndex}`
+      const isCancelConfirmation = rawCheckKey.endsWith(":cancel")
+      const checkKey = isCancelConfirmation
+        ? rawCheckKey.slice(0, -":cancel".length)
+        : rawCheckKey
+
+      if (isCancelConfirmation) {
+        return renderExperienceCancelConfirmation(checkKey, index)
+      }
 
       return (
         <ExperienceValuesEditor
@@ -348,7 +394,7 @@ export function UpgradeSection({
                           }`
                       }`}
                       onClick={() => {
-                        // 属性升级 / 经历升级：空白框打开气泡；属性反选需要确认
+                        // 属性升级 / 经历升级：空白框打开气泡；反选需要确认
                         if (isAttributeUpgradeOption(option.label) || isExperienceUpgradeOption(option.label)) {
                           const isChecked = isUpgradeChecked(checkKey, index)
                           if (!isChecked) {
@@ -358,8 +404,8 @@ export function UpgradeSection({
                             // 已选择的属性升级 → 打开取消确认
                             setOpenPopoverIndex(`${checkKey}:cancel`)
                           } else {
-                            // 已高亮复选框 → 触发回滚
-                            handleUpgradeCheck(checkKey, index)
+                            // 已选择的经历升级 → 打开取消确认
+                            setOpenPopoverIndex(`${checkKey}:cancel`)
                           }
                         } else {
                           // 其他选项：保持原有逻辑

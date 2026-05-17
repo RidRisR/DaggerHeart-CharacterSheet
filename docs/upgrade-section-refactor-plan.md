@@ -1,5 +1,11 @@
 # Upgrade Section 重构方案
 
+> **状态：已过时。** 本文记录旧升级区重构和回滚方案，包含快照、rollback、
+> `evasion-editor` 等已经移除或不再作为当前行为依据的内容。当前升级区行为以
+> `components/character-sheet-page-two-sections/upgrade-section.tsx`、
+> `lib/automation/upgrade-actions.ts` 和
+> `tests/integration/upgrade-cancel-flow.test.tsx` 为准。
+
 ## 文档信息
 - **创建日期**: 2025-01-13
 - **版本**: 2.0

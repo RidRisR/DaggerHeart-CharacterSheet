@@ -2,6 +2,11 @@
 
 日期：2026-05-03
 
+> **状态：已过时。** 本文记录早期“六大属性 auto base”方案。当前实现已被
+> `docs/superpowers/specs/2026-05-17-final-input-automation-reconciliation-design.md`
+> 取代：final input reconciliation 统一处理手动基础值、估算基础值和未归因差额。
+> 本文仅作为历史背景，不再作为当前行为依据。
+
 ## 背景
 
 六大属性输入框既承担最终值编辑，也承担初始属性填写。当前 modifier/reference 系统已经支持用户手动 base，但如果用户在 1 级创建角色时直接在空属性字段中输入数值，系统不会自动把这个输入记录为 base，导致来源弹窗显示“未知基础值”或未归因差额。

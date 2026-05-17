@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import "@testing-library/jest-dom/vitest"
-import { fireEvent, render, screen } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import { defaultSheetData } from "@/lib/default-sheet-data"
@@ -114,7 +114,45 @@ describe("升级取消流程（page-two 集成）", () => {
     expect(after.automationSelections?.["upgrade:tier1-0-0"]).toEqual({ selected: false })
   })
 
-  it("取消经历加值升级会清除升级勾选与 selection 记录，不直接回滚经历最终值", () => {
+  it("反选经历加值升级时点击外部会保留原有升级选择，并显示最新经历文本", async () => {
+    const user = userEvent.setup()
+    seedStore({
+      experience: ["老兵", "铁匠大师", "", "", ""],
+      experienceValues: ["2", "3", "", "", ""],
+      checkedUpgrades: {
+        tier1: {},
+        tier2: {},
+        tier3: {},
+        "tier1-3-0": { 3: true },
+      } as any,
+      automationSelections: {
+        "upgrade:tier1-3-0": {
+          selected: true,
+          params: { experienceIndexes: [0, 1] },
+        },
+      },
+    })
+
+    const { getByTestId } = render(<CharacterSheetPageTwo />)
+    await user.click(getByTestId("checkbox-tier1-3-0"))
+
+    expect(screen.getByText("确定要取消升级吗？")).toBeInTheDocument()
+    expect(screen.getByText("老兵")).toBeInTheDocument()
+    expect(screen.getByText("铁匠大师")).toBeInTheDocument()
+
+    await user.click(document.body)
+
+    const after = sheet()
+    expect(after.experienceValues).toEqual(["2", "3", "", "", ""])
+    expect((after.checkedUpgrades as any)["tier1-3-0"][3]).toBe(true)
+    expect(after.automationSelections?.["upgrade:tier1-3-0"]).toEqual({
+      selected: true,
+      params: { experienceIndexes: [0, 1] },
+    })
+  })
+
+  it("确认反选经历加值升级后才清除升级勾选与 selection 记录，不直接回滚经历最终值", async () => {
+    const user = userEvent.setup()
     seedStore({
       experience: ["军人", "铁匠", "", "", ""],
       experienceValues: ["2", "3", "", "", ""],
@@ -133,7 +171,8 @@ describe("升级取消流程（page-two 集成）", () => {
     })
 
     const { getByTestId } = render(<CharacterSheetPageTwo />)
-    fireEvent.click(getByTestId("checkbox-tier1-3-0"))
+    await user.click(getByTestId("checkbox-tier1-3-0"))
+    await user.click(screen.getByRole("button", { name: "确定取消" }))
 
     const after = sheet()
     expect(after.experienceValues).toEqual(["2", "3", "", "", ""])

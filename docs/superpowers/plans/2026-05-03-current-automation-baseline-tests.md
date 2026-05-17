@@ -1,5 +1,8 @@
 # Current Automation Baseline Tests Implementation Plan
 
+> **状态：历史执行计划，已过时。** 本计划冻结的是 modifier 改造前的旧自动化基线，
+> 包含 snapshot/rollback 和旧升级弹窗路径。当前行为以现有测试和最新 specs 为准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Freeze the current character-sheet automation behavior in tests before implementing the new modifier reference layer.

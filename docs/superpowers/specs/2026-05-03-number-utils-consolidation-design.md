@@ -2,6 +2,10 @@
 
 日期：2026-05-03
 
+> **状态：部分过时。** 本文的 number-utils API 方向仍可作为历史背景参考，但文中的
+> 具体改动清单包含已经删除的旧文件，例如 `components/upgrade-popover/evasion-editor.tsx`。
+> 当前升级区和 modifier 行为不要以本文的文件清单为准。
+
 ## 背景
 
 当前项目中存在多套数值解析方式：`tryParseNumber()`、`parseToNumber()`、`isValidNumber()`、`safeEvaluateExpression()`、组件内重复的 `safeEvaluateExpression()`，以及散落的 `parseInt()` / `Number()`。这些函数的输入范围和失败语义不统一，尤其会影响 modifier/reference 系统和后续“六大属性空字段首次输入自动创建基值”的判断。

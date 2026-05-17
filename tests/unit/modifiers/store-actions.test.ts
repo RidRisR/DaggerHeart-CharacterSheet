@@ -551,6 +551,72 @@ describe("modifier store actions", () => {
     expect(sheet().evasion).toBe("15")
   })
 
+  it("updates equipment contribution label without changing value", () => {
+    const baseEquipment = defaultSheetData.equipment
+    resetSheetStore({
+      equipment: {
+        ...baseEquipment,
+        weaponSlots: {
+          ...baseEquipment.weaponSlots,
+          primary: {
+            ...baseEquipment.weaponSlots.primary,
+            modifierContributions: [
+              {
+                id: "equipment:weapon:primary:existing",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "Old", value: 1 },
+              },
+            ],
+          },
+        },
+      },
+    })
+
+    store().updateEquipmentModifierContribution(
+      { type: "weapon", slot: "primary" },
+      "equipment:weapon:primary:existing",
+      { editable: { label: "New" } },
+    )
+
+    expect(sheet().equipment.weaponSlots.primary.modifierContributions[0].editable).toEqual({
+      label: "New",
+      value: 1,
+    })
+  })
+
+  it("updates equipment contribution value without changing label", () => {
+    const baseEquipment = defaultSheetData.equipment
+    resetSheetStore({
+      equipment: {
+        ...baseEquipment,
+        weaponSlots: {
+          ...baseEquipment.weaponSlots,
+          primary: {
+            ...baseEquipment.weaponSlots.primary,
+            modifierContributions: [
+              {
+                id: "equipment:weapon:primary:existing",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "Old", value: 1 },
+              },
+            ],
+          },
+        },
+      },
+    })
+
+    store().updateEquipmentModifierContribution(
+      { type: "weapon", slot: "primary" },
+      "equipment:weapon:primary:existing",
+      { editable: { value: 4 } },
+    )
+
+    expect(sheet().equipment.weaponSlots.primary.modifierContributions[0].editable).toEqual({
+      label: "Old",
+      value: 4,
+    })
+  })
+
   it("changes equipment contribution target by replacing id, preserving editable fields, and clearing old entry state", () => {
     const baseEquipment = defaultSheetData.equipment
     resetSheetStore({
@@ -644,6 +710,66 @@ describe("modifier store actions", () => {
     })
   })
 
+  it("does not change target or clear entry state when entry id belongs to another slot", () => {
+    const baseEquipment = defaultSheetData.equipment
+    resetSheetStore({
+      equipment: {
+        ...baseEquipment,
+        weaponSlots: {
+          ...baseEquipment.weaponSlots,
+          primary: {
+            ...baseEquipment.weaponSlots.primary,
+            modifierContributions: [
+              {
+                id: "equipment:weapon:primary:existing",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "Primary", value: 1 },
+              },
+            ],
+          },
+          secondary: {
+            ...baseEquipment.weaponSlots.secondary,
+            modifierContributions: [
+              {
+                id: "equipment:weapon:secondary:existing",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "Secondary", value: 2 },
+              },
+            ],
+          },
+        },
+      },
+      modifierState: {
+        targetStates: {},
+        entryStates: {
+          "equipment:weapon:secondary:existing": { enabled: false },
+        },
+      },
+    })
+
+    store().changeEquipmentModifierContributionTarget(
+      { type: "weapon", slot: "primary" },
+      "equipment:weapon:secondary:existing",
+      "armorMax",
+    )
+
+    expect(sheet().equipment.weaponSlots.primary.modifierContributions).toEqual([
+      {
+        id: "equipment:weapon:primary:existing",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "Primary", value: 1 },
+      },
+    ])
+    expect(sheet().equipment.weaponSlots.secondary.modifierContributions).toEqual([
+      {
+        id: "equipment:weapon:secondary:existing",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "Secondary", value: 2 },
+      },
+    ])
+    expect(sheet().modifierState?.entryStates["equipment:weapon:secondary:existing"]).toEqual({ enabled: false })
+  })
+
   it("removes equipment contributions, clears entry state, and recalculates", () => {
     const baseEquipment = defaultSheetData.equipment
     resetSheetStore({
@@ -693,6 +819,45 @@ describe("modifier store actions", () => {
     expect(sheet().equipment.weaponSlots.secondary.modifierContributions).toEqual([])
     expect(sheet().modifierState?.entryStates["equipment:weapon:secondary:existing"]).toBeUndefined()
     expect(sheet().evasion).toBe("12")
+  })
+
+  it("does not remove contributions or clear entry state when entry id does not exist in the slot", () => {
+    const baseEquipment = defaultSheetData.equipment
+    resetSheetStore({
+      equipment: {
+        ...baseEquipment,
+        armorSlot: {
+          ...baseEquipment.armorSlot,
+          modifierContributions: [
+            {
+              id: "equipment:armor:current:existing",
+              definition: { target: "evasion", kind: "modifier" },
+              editable: { label: "Armor", value: 1 },
+            },
+          ],
+        },
+      },
+      modifierState: {
+        targetStates: {},
+        entryStates: {
+          "equipment:weapon:primary:missing": { enabled: false },
+        },
+      },
+    })
+
+    store().removeEquipmentModifierContribution(
+      { type: "armor" },
+      "equipment:weapon:primary:missing",
+    )
+
+    expect(sheet().equipment.armorSlot.modifierContributions).toEqual([
+      {
+        id: "equipment:armor:current:existing",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "Armor", value: 1 },
+      },
+    ])
+    expect(sheet().modifierState?.entryStates["equipment:weapon:primary:missing"]).toEqual({ enabled: false })
   })
 
   it("keeps inventory weapon contribution ids inactive until swapped into an active slot", () => {

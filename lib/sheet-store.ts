@@ -65,6 +65,10 @@ type EquipmentModifierSlotRef =
     | { type: "inventoryWeapon"; index: 0 | 1 }
     | { type: "armor" }
 
+type EquipmentContributionUpdates = {
+    editable?: Partial<EquipmentModifierContribution["editable"]>
+}
+
 const weaponSlotSelectionId = (selection: WeaponSlotSelection) =>
     selection.slotType === "inventory" ? `inventory-${selection.index}` : selection.slotType
 
@@ -180,7 +184,7 @@ interface SheetState {
     updateEquipmentModifierContribution: (
         slotRef: EquipmentModifierSlotRef,
         entryId: ModifierEntryId,
-        updates: Partial<EquipmentModifierContribution>,
+        updates: EquipmentContributionUpdates,
     ) => void;
     changeEquipmentModifierContributionTarget: (
         slotRef: EquipmentModifierSlotRef,
@@ -1162,9 +1166,11 @@ export const useSheetStore = create<SheetState>((set) => ({
         if (!isEquipmentModifierTargetId(target)) return state;
 
         const sourceId = equipmentModifierSourceId(slotRef);
+        let matched = false;
         const updatedSheetData = updateEquipmentModifierSlot(state.sheetData, slotRef, contributions =>
             contributions.map(contribution => {
                 if (contribution.id !== entryId) return contribution;
+                matched = true;
 
                 return {
                     id: createAdHocEquipmentContributionId(sourceId),
@@ -1177,15 +1183,24 @@ export const useSheetStore = create<SheetState>((set) => ({
             }),
         );
 
+        if (!matched) return state;
+
         return {
             sheetData: applyAutoCalculationForTargets(deleteModifierEntryState(updatedSheetData, entryId)),
         };
     }),
 
     removeEquipmentModifierContribution: (slotRef, entryId) => set((state) => {
+        let matched = false;
         const updatedSheetData = updateEquipmentModifierSlot(state.sheetData, slotRef, contributions =>
-            contributions.filter(contribution => contribution.id !== entryId),
+            contributions.filter(contribution => {
+                if (contribution.id !== entryId) return true;
+                matched = true;
+                return false;
+            }),
         );
+
+        if (!matched) return state;
 
         return {
             sheetData: applyAutoCalculationForTargets(deleteModifierEntryState(updatedSheetData, entryId)),

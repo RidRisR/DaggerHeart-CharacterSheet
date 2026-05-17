@@ -7,6 +7,12 @@ import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { armorItems } from "@/data/list/armor";
 import { allWeapons } from "@/data/list/all-weapons";
 import { parseArmorMax, parseArmorThreshold } from "@/lib/equipment/armor-utils";
+import {
+    createDefaultEquipmentModifierContribution,
+    createEquipmentContributionId as createAdHocEquipmentContributionId,
+    isEquipmentModifierTargetId,
+    sanitizeEquipmentModifierContributions,
+} from "@/lib/equipment/contribution-utils";
 import { createEmptyArmorSlot, createEmptyWeaponSlot } from "@/lib/equipment/defaults";
 import { swapInventoryWeaponWithActiveSlot } from "@/lib/equipment/weapon-slot-utils";
 import {
@@ -16,7 +22,7 @@ import {
     createWeaponSlotFromName,
     createWeaponSlotFromTemplate,
 } from "@/lib/equipment/template-to-slot";
-import type { ArmorSlot, WeaponSlot } from "@/lib/equipment/types";
+import type { ArmorSlot, EquipmentModifierContribution, EquipmentModifierTargetId, WeaponSlot } from "@/lib/equipment/types";
 import type {
     AutomationSourceId,
     ModifierEntryId,
@@ -53,6 +59,11 @@ function createEquipmentContributionId(templateId: string): string {
 type WeaponSlotSelection =
     | { slotType: "primary" | "secondary" }
     | { slotType: "inventory"; index: 0 | 1 }
+
+type EquipmentModifierSlotRef =
+    | { type: "weapon"; slot: "primary" | "secondary" }
+    | { type: "inventoryWeapon"; index: 0 | 1 }
+    | { type: "armor" }
 
 const weaponSlotSelectionId = (selection: WeaponSlotSelection) =>
     selection.slotType === "inventory" ? `inventory-${selection.index}` : selection.slotType
@@ -165,6 +176,18 @@ interface SheetState {
     removeUserModifierContribution: (entryId: ModifierEntryId) => void;
     removeSpecialBaseContribution: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
     setAutomationSelection: (sourceId: AutomationSourceId, selected: boolean, params?: Record<string, unknown>) => void;
+    addEquipmentModifierContribution: (slotRef: EquipmentModifierSlotRef) => void;
+    updateEquipmentModifierContribution: (
+        slotRef: EquipmentModifierSlotRef,
+        entryId: ModifierEntryId,
+        updates: Partial<EquipmentModifierContribution>,
+    ) => void;
+    changeEquipmentModifierContributionTarget: (
+        slotRef: EquipmentModifierSlotRef,
+        entryId: ModifierEntryId,
+        target: EquipmentModifierTargetId,
+    ) => void;
+    removeEquipmentModifierContribution: (slotRef: EquipmentModifierSlotRef, entryId: ModifierEntryId) => void;
 
     // Profession change handler
     handleProfessionChange: (newProfessionRef: SheetCardReference | undefined, newProfessionCard: StandardCard | undefined) => void;
@@ -216,6 +239,86 @@ function canStoreRawFinalText(target: ModifierTargetId): boolean {
         target === "knowledge.value" ||
         target.startsWith("experienceValues.")
     );
+}
+
+function equipmentModifierSourceId(slotRef: EquipmentModifierSlotRef): string {
+    if (slotRef.type === "weapon") return `weapon:${slotRef.slot}`;
+    if (slotRef.type === "inventoryWeapon") return `inventory:${slotRef.index}`;
+    return "armor:current";
+}
+
+function updateEquipmentModifierSlot(
+    sheetData: SheetData,
+    slotRef: EquipmentModifierSlotRef,
+    updateContributions: (contributions: EquipmentModifierContribution[]) => EquipmentModifierContribution[],
+): SheetData {
+    const equipment = sheetData.equipment;
+
+    if (slotRef.type === "armor") {
+        const contributions = sanitizeEquipmentModifierContributions(equipment.armorSlot.modifierContributions);
+        return {
+            ...sheetData,
+            equipment: {
+                ...equipment,
+                armorSlot: {
+                    ...equipment.armorSlot,
+                    modifierContributions: updateContributions(contributions),
+                },
+            },
+        };
+    }
+
+    if (slotRef.type === "inventoryWeapon") {
+        const inventory = [...equipment.weaponSlots.inventory] as typeof equipment.weaponSlots.inventory;
+        const slot = inventory[slotRef.index];
+        const contributions = sanitizeEquipmentModifierContributions(slot.modifierContributions);
+        inventory[slotRef.index] = {
+            ...slot,
+            modifierContributions: updateContributions(contributions),
+        };
+        return {
+            ...sheetData,
+            equipment: {
+                ...equipment,
+                weaponSlots: {
+                    ...equipment.weaponSlots,
+                    inventory,
+                },
+            },
+        };
+    }
+
+    const slot = equipment.weaponSlots[slotRef.slot];
+    const contributions = sanitizeEquipmentModifierContributions(slot.modifierContributions);
+    return {
+        ...sheetData,
+        equipment: {
+            ...equipment,
+            weaponSlots: {
+                ...equipment.weaponSlots,
+                [slotRef.slot]: {
+                    ...slot,
+                    modifierContributions: updateContributions(contributions),
+                },
+            },
+        },
+    };
+}
+
+function deleteModifierEntryState(sheetData: SheetData, entryId: ModifierEntryId): SheetData {
+    if (!sheetData.modifierState?.entryStates?.[entryId]) return sheetData;
+
+    const modifierState = ensureModifierState(sheetData);
+    const entryStates = { ...modifierState.entryStates };
+    delete entryStates[entryId];
+
+    return {
+        ...sheetData,
+        modifierState: {
+            ...modifierState,
+            entryStates,
+        },
+    };
 }
 
 export const useSheetStore = create<SheetState>((set) => ({
@@ -1027,6 +1130,67 @@ export const useSheetStore = create<SheetState>((set) => ({
             },
         }),
     })),
+
+    addEquipmentModifierContribution: (slotRef) => set((state) => ({
+        sheetData: applyAutoCalculationForTargets(
+            updateEquipmentModifierSlot(state.sheetData, slotRef, contributions => [
+                ...contributions,
+                createDefaultEquipmentModifierContribution(equipmentModifierSourceId(slotRef)),
+            ]),
+        ),
+    })),
+
+    updateEquipmentModifierContribution: (slotRef, entryId, updates) => set((state) => ({
+        sheetData: applyAutoCalculationForTargets(
+            updateEquipmentModifierSlot(state.sheetData, slotRef, contributions =>
+                contributions.map(contribution => {
+                    if (contribution.id !== entryId) return contribution;
+
+                    return {
+                        ...contribution,
+                        editable: {
+                            label: updates.editable?.label ?? contribution.editable.label,
+                            value: updates.editable?.value ?? contribution.editable.value,
+                        },
+                    };
+                }),
+            ),
+        ),
+    })),
+
+    changeEquipmentModifierContributionTarget: (slotRef, entryId, target) => set((state) => {
+        if (!isEquipmentModifierTargetId(target)) return state;
+
+        const sourceId = equipmentModifierSourceId(slotRef);
+        const updatedSheetData = updateEquipmentModifierSlot(state.sheetData, slotRef, contributions =>
+            contributions.map(contribution => {
+                if (contribution.id !== entryId) return contribution;
+
+                return {
+                    id: createAdHocEquipmentContributionId(sourceId),
+                    definition: {
+                        target,
+                        kind: "modifier",
+                    },
+                    editable: contribution.editable,
+                };
+            }),
+        );
+
+        return {
+            sheetData: applyAutoCalculationForTargets(deleteModifierEntryState(updatedSheetData, entryId)),
+        };
+    }),
+
+    removeEquipmentModifierContribution: (slotRef, entryId) => set((state) => {
+        const updatedSheetData = updateEquipmentModifierSlot(state.sheetData, slotRef, contributions =>
+            contributions.filter(contribution => contribution.id !== entryId),
+        );
+
+        return {
+            sheetData: applyAutoCalculationForTargets(deleteModifierEntryState(updatedSheetData, entryId)),
+        };
+    }),
 
     handleProfessionChange: (newProfessionRef, newProfessionCard) => set((state) => {
         const cards = [...(state.sheetData.cards || [])];

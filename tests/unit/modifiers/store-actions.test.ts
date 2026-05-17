@@ -448,4 +448,301 @@ describe("modifier store actions", () => {
       },
     ])
   })
+
+  it("adds equipment modifier contributions and applies auto calculation", () => {
+    const baseEquipment = defaultSheetData.equipment
+    resetSheetStore({
+      evasion: "10",
+      equipment: {
+        ...baseEquipment,
+        weaponSlots: {
+          ...baseEquipment.weaponSlots,
+          primary: {
+            ...baseEquipment.weaponSlots.primary,
+            name: "Blade",
+          },
+        },
+      },
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().addEquipmentModifierContribution({ type: "weapon", slot: "primary" })
+    const contribution = sheet().equipment.weaponSlots.primary.modifierContributions[0]
+
+    expect(contribution).toMatchObject({
+      definition: { target: "evasion", kind: "modifier" },
+      editable: { label: "", value: 0 },
+    })
+    expect(contribution.id).toMatch(/^equipment:weapon:primary:/)
+    expect(sheet().evasion).toBe("12")
+  })
+
+  it("updates only equipment contribution editable fields and recalculates", () => {
+    const baseEquipment = defaultSheetData.equipment
+    resetSheetStore({
+      evasion: "10",
+      equipment: {
+        ...baseEquipment,
+        weaponSlots: {
+          ...baseEquipment.weaponSlots,
+          primary: {
+            ...baseEquipment.weaponSlots.primary,
+            name: "Blade",
+            modifierContributions: [
+              {
+                id: "equipment:weapon:primary:existing",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "Old", value: 1 },
+              },
+            ],
+          },
+        },
+      },
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().updateEquipmentModifierContribution(
+      { type: "weapon", slot: "primary" },
+      "equipment:weapon:primary:existing",
+      {
+        id: "ignored",
+        definition: { target: "armorMax", kind: "base" },
+        editable: { label: "New", value: 3 },
+      } as any,
+    )
+
+    expect(sheet().equipment.weaponSlots.primary.modifierContributions).toEqual([
+      {
+        id: "equipment:weapon:primary:existing",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "New", value: 3 },
+      },
+    ])
+    expect(sheet().evasion).toBe("15")
+  })
+
+  it("changes equipment contribution target by replacing id, preserving editable fields, and clearing old entry state", () => {
+    const baseEquipment = defaultSheetData.equipment
+    resetSheetStore({
+      evasion: "13",
+      armorMax: 0,
+      equipment: {
+        ...baseEquipment,
+        armorSlot: {
+          ...baseEquipment.armorSlot,
+          name: "Armor",
+          baseArmorMax: 3,
+          modifierContributions: [
+            {
+              id: "equipment:armor:current:old",
+              definition: { target: "evasion", kind: "modifier" },
+              editable: { label: "Guard", value: 2 },
+            },
+          ],
+        },
+      },
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Evasion Base", value: 11 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+          armorMax: {
+            activeBaseId: "equipment:armor:current:armorMax",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {
+          "equipment:armor:current:old": { enabled: false },
+        },
+      },
+    })
+
+    store().changeEquipmentModifierContributionTarget(
+      { type: "armor" },
+      "equipment:armor:current:old",
+      "armorMax",
+    )
+    const contribution = sheet().equipment.armorSlot.modifierContributions[0]
+
+    expect(contribution).toMatchObject({
+      definition: { target: "armorMax", kind: "modifier" },
+      editable: { label: "Guard", value: 2 },
+    })
+    expect(contribution.id).toMatch(/^equipment:armor:current:/)
+    expect(contribution.id).not.toBe("equipment:armor:current:old")
+    expect(sheet().modifierState?.entryStates["equipment:armor:current:old"]).toBeUndefined()
+    expect(sheet().evasion).toBe("11")
+    expect(sheet().armorMax).toBe(5)
+  })
+
+  it("ignores invalid equipment contribution targets", () => {
+    const baseEquipment = defaultSheetData.equipment
+    resetSheetStore({
+      equipment: {
+        ...baseEquipment,
+        armorSlot: {
+          ...baseEquipment.armorSlot,
+          modifierContributions: [
+            {
+              id: "equipment:armor:current:old",
+              definition: { target: "evasion", kind: "modifier" },
+              editable: { label: "Guard", value: 2 },
+            },
+          ],
+        },
+      },
+    })
+
+    store().changeEquipmentModifierContributionTarget(
+      { type: "armor" },
+      "equipment:armor:current:old",
+      "experienceValues.0" as any,
+    )
+
+    expect(sheet().equipment.armorSlot.modifierContributions[0]).toEqual({
+      id: "equipment:armor:current:old",
+      definition: { target: "evasion", kind: "modifier" },
+      editable: { label: "Guard", value: 2 },
+    })
+  })
+
+  it("removes equipment contributions, clears entry state, and recalculates", () => {
+    const baseEquipment = defaultSheetData.equipment
+    resetSheetStore({
+      evasion: "14",
+      equipment: {
+        ...baseEquipment,
+        weaponSlots: {
+          ...baseEquipment.weaponSlots,
+          secondary: {
+            ...baseEquipment.weaponSlots.secondary,
+            name: "Dagger",
+            modifierContributions: [
+              {
+                id: "equipment:weapon:secondary:existing",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "Quick", value: 2 },
+              },
+            ],
+          },
+        },
+      },
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {
+          "equipment:weapon:secondary:existing": { enabled: false },
+        },
+      },
+    })
+
+    store().removeEquipmentModifierContribution(
+      { type: "weapon", slot: "secondary" },
+      "equipment:weapon:secondary:existing",
+    )
+
+    expect(sheet().equipment.weaponSlots.secondary.modifierContributions).toEqual([])
+    expect(sheet().modifierState?.entryStates["equipment:weapon:secondary:existing"]).toBeUndefined()
+    expect(sheet().evasion).toBe("12")
+  })
+
+  it("keeps inventory weapon contribution ids inactive until swapped into an active slot", () => {
+    const baseEquipment = defaultSheetData.equipment
+    resetSheetStore({
+      evasion: "10",
+      equipment: {
+        ...baseEquipment,
+        weaponSlots: {
+          ...baseEquipment.weaponSlots,
+          inventory: [
+            {
+              ...baseEquipment.weaponSlots.inventory[0],
+              name: "Stored Blade",
+            },
+            baseEquipment.weaponSlots.inventory[1],
+          ],
+        },
+      },
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().addEquipmentModifierContribution({ type: "inventoryWeapon", index: 0 })
+    const contributionId = sheet().equipment.weaponSlots.inventory[0].modifierContributions[0].id
+    store().updateEquipmentModifierContribution(
+      { type: "inventoryWeapon", index: 0 },
+      contributionId,
+      { editable: { label: "Stored", value: 2 } },
+    )
+
+    expect(sheet().evasion).toBe("12")
+
+    store().swapInventoryWeaponToActiveSlot(0, "primary")
+
+    expect(sheet().equipment.weaponSlots.primary.modifierContributions[0].id).toBe(contributionId)
+    expect(sheet().evasion).toBe("14")
+  })
 })

@@ -117,4 +117,27 @@ describe("upgrade states", () => {
       checked: false,
     })
   })
+
+  it("drops invalid next params instead of preserving or applying them", () => {
+    expect(
+      mergeUpgradeState(
+        { checked: true, params: { target: "hpMax" } },
+        { checked: true, params: { target: "armorMax" } as any },
+      ),
+    ).toEqual({
+      checked: true,
+    })
+  })
+
+  it("preserves current params when checked update has params undefined", () => {
+    expect(
+      mergeUpgradeState(
+        { checked: true, params: { target: "hpMax" } },
+        { checked: true, params: undefined },
+      ),
+    ).toEqual({
+      checked: true,
+      params: { target: "hpMax" },
+    })
+  })
 })

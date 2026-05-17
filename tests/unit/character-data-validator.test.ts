@@ -200,6 +200,96 @@ describe('character data import validation', () => {
       'tier1-exp-0': {
         checked: false,
       },
+      tier1: {
+        checked: true,
+      },
+    })
+    expect('checkedUpgrades' in (result.data as any)).toBe(false)
+    expect('automationSelections' in (result.data as any)).toBe(false)
+  })
+
+  it('bridges legacy checkedUpgrades into upgradeStates during import validation', () => {
+    const payload = minimalPayload({
+      checkedUpgrades: {
+        tier1: {},
+        tier2: {},
+        tier3: {},
+        'tier1-5-0': { 5: true },
+        'tier1-1-0': { 1: false },
+      },
+    })
+
+    const result = validateJSONCharacterData(JSON.stringify(payload))
+
+    expect(result.valid).toBe(true)
+    expect(result.data?.upgradeStates).toEqual({
+      'tier1-5-0': { checked: true },
+    })
+    expect('checkedUpgrades' in (result.data as any)).toBe(false)
+  })
+
+  it('bridges legacy automationSelections into upgradeStates during import validation', () => {
+    const payload = minimalPayload({
+      automationSelections: {
+        'upgrade:tier1-5-0': {
+          selected: true,
+          params: { target: 'evasion' },
+        },
+        'upgrade:tier1-1-0': {
+          selected: false,
+          params: { target: 'hpMax' },
+        },
+      },
+    })
+
+    const result = validateJSONCharacterData(JSON.stringify(payload))
+
+    expect(result.valid).toBe(true)
+    expect(result.data?.upgradeStates).toEqual({
+      'tier1-5-0': { checked: true, params: { target: 'evasion' } },
+      'tier1-1-0': { checked: false },
+    })
+    expect('automationSelections' in (result.data as any)).toBe(false)
+  })
+
+  it('lets existing upgradeStates win while legacy fields fill missing check keys', () => {
+    const payload = minimalPayload({
+      upgradeStates: {
+        'tier1-5-0': {
+          checked: false,
+          params: { target: 'evasion' },
+        },
+        'tier1-0-2': {
+          checked: true,
+          params: { attributes: ['agility', 'strength'] },
+        },
+      },
+      checkedUpgrades: {
+        tier1: {},
+        tier2: {},
+        tier3: {},
+        'tier1-5-0': { 5: true },
+        'tier1-1-0': { 1: true },
+      },
+      automationSelections: {
+        'upgrade:tier1-0-2': {
+          selected: false,
+        },
+        'upgrade:tier2-1': {
+          selected: true,
+          params: { target: 'proficiency' },
+        },
+      },
+    })
+
+    const result = validateJSONCharacterData(JSON.stringify(payload))
+
+    expect(result.valid).toBe(true)
+    expect(result.data?.upgradeStates).toEqual({
+      'tier1-5-0': { checked: false },
+      'tier1-0-2': { checked: true, params: { attributes: ['agility', 'strength'] } },
+      'tier1-1-0': { checked: true },
+      'tier2-1': { checked: true, params: { target: 'proficiency' } },
     })
     expect('checkedUpgrades' in (result.data as any)).toBe(false)
     expect('automationSelections' in (result.data as any)).toBe(false)

@@ -14,7 +14,7 @@ import { defaultSheetData } from './default-sheet-data'
 import type { AttributeValue } from './sheet-data'
 import { LEGACY_EQUIPMENT_KEYS, migrateSheetData } from './sheet-data-migration'
 import { sanitizeOtherAdjustments } from '@/lib/modifiers/other-adjustments'
-import { sanitizeUpgradeStates } from '@/lib/modifiers/upgrade-states'
+import { mergeLegacyUpgradeStateFields } from '@/lib/modifiers/upgrade-states'
 
 export interface ValidationResult {
   valid: boolean
@@ -84,7 +84,7 @@ function sanitizeValidatedSheetData(data: SheetData): SheetData {
   const sanitized: SheetData = {
     ...data,
     otherAdjustments: sanitizeOtherAdjustments(data.otherAdjustments),
-    upgradeStates: sanitizeUpgradeStates(data.upgradeStates),
+    upgradeStates: mergeLegacyUpgradeStateFields(data),
   }
 
   delete (sanitized as any).checkedUpgrades
@@ -186,7 +186,7 @@ export function cleanAndNormalizeData(data: any): SheetData {
     modifierState: data.modifierState && typeof data.modifierState === "object" ? data.modifierState : undefined,
     userModifierContributions: Array.isArray(data.userModifierContributions) ? data.userModifierContributions : undefined,
     otherAdjustments: sanitizeOtherAdjustments(data.otherAdjustments),
-    upgradeStates: sanitizeUpgradeStates(data.upgradeStates),
+    upgradeStates: mergeLegacyUpgradeStateFields(data),
 
     // 战斗相关
     minorThreshold: data.minorThreshold ? String(data.minorThreshold) : undefined,

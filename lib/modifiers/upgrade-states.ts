@@ -86,7 +86,7 @@ export function mergeUpgradeState(current: UpgradeState | undefined, next: Upgra
     return { checked: false }
   }
 
-  if ("params" in next) {
+  if ("params" in next && next.params !== undefined) {
     return sanitizeUpgradeState(next) ?? { checked: true }
   }
 
@@ -96,4 +96,43 @@ export function mergeUpgradeState(current: UpgradeState | undefined, next: Upgra
   }
 
   return { checked: true }
+}
+
+export function mergeLegacyUpgradeStateFields(value: {
+  upgradeStates?: unknown
+  checkedUpgrades?: unknown
+  automationSelections?: unknown
+}): UpgradeStates {
+  const merged = sanitizeUpgradeStates(value.upgradeStates)
+
+  const addLegacyState = (checkKey: string, next: UpgradeState) => {
+    if (checkKey in merged) return
+    merged[checkKey] = mergeUpgradeState(undefined, next)
+  }
+
+  if (isRecord(value.checkedUpgrades)) {
+    Object.entries(value.checkedUpgrades).forEach(([checkKey, checkedByIndex]) => {
+      if (!isRecord(checkedByIndex)) return
+      if (Object.values(checkedByIndex).some(checked => checked === true)) {
+        addLegacyState(checkKey, { checked: true })
+      }
+    })
+  }
+
+  if (isRecord(value.automationSelections)) {
+    Object.entries(value.automationSelections).forEach(([sourceId, selection]) => {
+      if (!sourceId.startsWith("upgrade:") || !isRecord(selection)) return
+      if (typeof selection.selected !== "boolean") return
+
+      const checkKey = sourceId.slice("upgrade:".length)
+      if (!checkKey) return
+
+      addLegacyState(checkKey, {
+        checked: selection.selected,
+        params: selection.params as UpgradeState["params"],
+      })
+    })
+  }
+
+  return merged
 }

@@ -33,6 +33,28 @@ export interface OtherAdjustment {
   value: number
 }
 
+export type FixedUpgradeTargetId = "hpMax" | "stressMax" | "evasion" | "proficiency"
+
+export type AttributeKey =
+  | "agility"
+  | "strength"
+  | "finesse"
+  | "instinct"
+  | "presence"
+  | "knowledge"
+
+export type UpgradeStateParams =
+  | { target: FixedUpgradeTargetId }
+  | { attributes: AttributeKey[] }
+  | { experienceIndexes: number[] }
+
+export interface UpgradeState {
+  checked: boolean
+  params?: UpgradeStateParams
+}
+
+export type UpgradeStates = Record<string, UpgradeState>
+
 export type ModifierEntryId = string
 export type AutomationSourceId = string
 

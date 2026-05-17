@@ -6,6 +6,7 @@ import type {
   AutomationSelections,
   ModifierState,
   OtherAdjustment,
+  UpgradeStates,
   UserModifierContribution,
 } from "@/lib/modifiers/types"
 
@@ -297,6 +298,7 @@ export interface SheetData {
   modifierState?: ModifierState
   userModifierContributions?: UserModifierContribution[]
   otherAdjustments?: OtherAdjustment[]
+  upgradeStates?: UpgradeStates
   automationSelections?: AutomationSelections
   equipment: EquipmentData
   minorThreshold?: string

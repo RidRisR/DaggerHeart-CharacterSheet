@@ -139,6 +139,34 @@ describe('character data import validation', () => {
           editable: { label: 'Manual evasion modifier', value: 2 },
         },
       ],
+      otherAdjustments: [
+        {
+          id: 'stale-id',
+          target: 'evasion',
+          kind: 'manualFinalAdjustment',
+          value: 2,
+        },
+      ],
+      upgradeStates: {
+        'tier1-5-0': {
+          checked: true,
+          params: { target: 'evasion' },
+          extra: 'drop',
+        },
+        'tier1-0-2': {
+          checked: true,
+          params: { attributes: ['agility', 'not-real'] },
+        },
+        'tier1-exp-0': {
+          checked: false,
+          params: { experienceIndexes: [0, 1] },
+        },
+      },
+      checkedUpgrades: {
+        tier1: { 5: true },
+        tier2: {},
+        tier3: {},
+      },
       automationSelections: {
         'upgrade:tier1-5-0': {
           selected: true,
@@ -153,10 +181,28 @@ describe('character data import validation', () => {
     expect(result.data?.modifierState?.targetStates.evasion?.activeBaseId).toBe('user:evasion-base')
     expect(result.data?.modifierState?.entryStates['user:evasion-mod']).toBeUndefined()
     expect(result.data?.userModifierContributions).toEqual(payload.userModifierContributions)
-    expect(result.data?.automationSelections?.['upgrade:tier1-5-0']).toEqual({
-      selected: true,
-      params: { target: 'evasion' },
+    expect(result.data?.otherAdjustments).toEqual([
+      {
+        id: 'other:evasion:manual-final-adjustment',
+        target: 'evasion',
+        kind: 'manualFinalAdjustment',
+        value: 2,
+      },
+    ])
+    expect(result.data?.upgradeStates).toEqual({
+      'tier1-5-0': {
+        checked: true,
+        params: { target: 'evasion' },
+      },
+      'tier1-0-2': {
+        checked: true,
+      },
+      'tier1-exp-0': {
+        checked: false,
+      },
     })
+    expect('checkedUpgrades' in (result.data as any)).toBe(false)
+    expect('automationSelections' in (result.data as any)).toBe(false)
   })
 
   it('preserves legacy equipment fields until migration', () => {

@@ -13,6 +13,8 @@ import { StandardCard } from '@/card/card-types'
 import { defaultSheetData } from './default-sheet-data'
 import type { AttributeValue } from './sheet-data'
 import { LEGACY_EQUIPMENT_KEYS, migrateSheetData } from './sheet-data-migration'
+import { sanitizeOtherAdjustments } from '@/lib/modifiers/other-adjustments'
+import { sanitizeUpgradeStates } from '@/lib/modifiers/upgrade-states'
 
 export interface ValidationResult {
   valid: boolean
@@ -76,6 +78,19 @@ function validateRawImportCandidate(data: any): data is Record<string, unknown> 
 
 function validateCurrentSheetData(data: any): data is SheetData {
   return validateSheetData(data) && typeof data.schemaVersion === 'number'
+}
+
+function sanitizeValidatedSheetData(data: SheetData): SheetData {
+  const sanitized: SheetData = {
+    ...data,
+    otherAdjustments: sanitizeOtherAdjustments(data.otherAdjustments),
+    upgradeStates: sanitizeUpgradeStates(data.upgradeStates),
+  }
+
+  delete (sanitized as any).checkedUpgrades
+  delete (sanitized as any).automationSelections
+
+  return sanitized
 }
 
 /**
@@ -168,11 +183,10 @@ export function cleanAndNormalizeData(data: any): SheetData {
     cards: Array.isArray(data.cards) ? data.cards.filter(isValidCard) : [],
     inventory_cards: Array.isArray(data.inventory_cards) ? data.inventory_cards.filter(isValidCard) : undefined,
 
-    // 升级选项
-    checkedUpgrades: data.checkedUpgrades || undefined,
     modifierState: data.modifierState && typeof data.modifierState === "object" ? data.modifierState : undefined,
     userModifierContributions: Array.isArray(data.userModifierContributions) ? data.userModifierContributions : undefined,
-    automationSelections: data.automationSelections && typeof data.automationSelections === "object" ? data.automationSelections : undefined,
+    otherAdjustments: sanitizeOtherAdjustments(data.otherAdjustments),
+    upgradeStates: sanitizeUpgradeStates(data.upgradeStates),
 
     // 战斗相关
     minorThreshold: data.minorThreshold ? String(data.minorThreshold) : undefined,
@@ -229,7 +243,7 @@ export function cleanAndNormalizeData(data: any): SheetData {
 
   copyLegacyEquipmentInput(cleaned, data)
 
-  return cleaned as SheetData
+  return sanitizeValidatedSheetData(cleaned as SheetData)
 }
 
 function copyLegacyEquipmentInput(cleanedData: any, data: any) {
@@ -296,10 +310,11 @@ export function validateAndProcessCharacterData(rawData: any, source: 'json' | '
 
     // 2. 应用数据迁移。这里必须直接使用原始对象，避免默认值提前遮蔽旧字段。
     const migratedData = migrateSheetData(rawData)
+    const validatedData = sanitizeValidatedSheetData(migratedData)
     console.log(`[Data Validation] Applied data migrations for ${source.toUpperCase()}`)
 
     // 3. 迁移后再验证当前版本结构。
-    if (!validateCurrentSheetData(migratedData)) {
+    if (!validateCurrentSheetData(validatedData)) {
       return {
         valid: false,
         error: '角色数据结构验证失败，缺少必需字段或字段类型不正确',
@@ -308,13 +323,13 @@ export function validateAndProcessCharacterData(rawData: any, source: 'json' | '
     }
 
     // 4. 兼容性检查
-    const compatibility = validateCompatibility(migratedData)
+    const compatibility = validateCompatibility(validatedData)
 
-    console.log(`[Data Validation] ${source.toUpperCase()}数据验证成功:`, migratedData.name)
+    console.log(`[Data Validation] ${source.toUpperCase()}数据验证成功:`, validatedData.name)
 
     return {
       valid: true,
-      data: migratedData,
+      data: validatedData,
       warnings: compatibility.warnings
     }
 

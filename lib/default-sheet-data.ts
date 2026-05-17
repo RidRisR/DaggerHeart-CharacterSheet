@@ -67,6 +67,7 @@ export const defaultSheetData: SheetData = {
     },
     userModifierContributions: [],
     otherAdjustments: [],
+    upgradeStates: {},
     automationSelections: {},
     equipment: createEmptyEquipmentData(),
 

@@ -413,6 +413,28 @@ describe("modifier state migration", () => {
     )
   })
 
+  it("migrates root armorValue contribution ids with their target and remains idempotent", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      userModifierContributions: [{
+        id: "user:armorValue:unattributed-delta",
+        definition: { target: "armorValue", kind: "modifier" },
+        editable: { label: "未归因差额", value: 1 },
+      }],
+    } as any)
+    const twice = migrateSheetData(migrated)
+
+    expect(migrated.userModifierContributions).toEqual([{
+      id: getUnattributedDeltaId("armorMax"),
+      definition: { target: "armorMax", kind: "modifier" },
+      editable: { label: "未归因差额", value: 1 },
+    }])
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: "user:armorValue:unattributed-delta" }),
+    )
+    expect(twice.userModifierContributions).toEqual(migrated.userModifierContributions)
+  })
+
   it("keeps existing v2 special contributions idempotent", () => {
     const sheet = {
       schemaVersion: 2,

@@ -614,11 +614,12 @@ function toModifierContribution(value: unknown): ModifierContribution | undefine
   if (!isRecord(value.editable)) return undefined
   if (typeof value.editable.label !== "string") return undefined
   if (typeof value.editable.value !== "number") return undefined
-  const target = migrateModifierTarget(value.definition.target)
+  const originalTarget = value.definition.target
+  const target = migrateModifierTarget(originalTarget)
   if (!isModifierTargetId(target)) return undefined
 
   return {
-    id: value.id,
+    id: migrateLegacyUserEntryId(value.id, originalTarget),
     definition: {
       target,
       kind: value.definition.kind as ModifierEntryKind,

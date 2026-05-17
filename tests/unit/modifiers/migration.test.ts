@@ -103,6 +103,19 @@ describe("modifier state migration", () => {
     expect(migrated.modifierState?.entryStates["upgrade:evasion"]).toBeUndefined()
   })
 
+  it("drops legacy enabled true entry states because entry toggles are no longer supported", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      modifierState: {
+        targetStates: {},
+        entryStates: {
+          "user:evasion-mod": { enabled: true },
+        },
+      },
+    }))
+
+    expect(migrated.modifierState?.entryStates["user:evasion-mod"]).toBeUndefined()
+  })
+
   it("migrates legacy armorValue modifier state to armorMax", () => {
     const migrated = migrateSheetData(v1ModifierInput({
       armorName: "锁子甲",

@@ -567,9 +567,6 @@ function sanitizeModifierEntryState(value: unknown): NonNullable<SheetData["modi
   if (typeof value.order === "number") {
     next.order = value.order
   }
-  if (value.enabled === true) {
-    next.enabled = true
-  }
 
   return Object.keys(next).length > 0 ? next : undefined
 }

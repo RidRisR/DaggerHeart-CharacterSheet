@@ -58,6 +58,7 @@ export default function CharacterSheet() {
   const [armorModalOpen, setArmorModalOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [currentModal, setCurrentModal] = useState<{ type: "profession" | "ancestry" | "community" | "subclass"; field?: string; levelFilter?: number }>({ type: "profession" })
+  const [armorMaxDraft, setArmorMaxDraft] = useState<string | null>(null)
 
   const needsSyncRef = useRef(true)
   const initialRenderRef = useRef(true)
@@ -206,11 +207,21 @@ export default function CharacterSheet() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => {
-      if (name === "armorMax") {
-        return { ...prev, armorMax: parseNumberExpressionOr(value || "0", 0) };
-      }
+    if (name === "armorMax") {
+      setArmorMaxDraft(value)
 
+      if (value === "") return
+
+      const parsedValue = parseNumberExpressionOr(value, Number.NaN)
+      if (Number.isNaN(parsedValue)) return
+
+      setFormData((prev) => {
+        return { ...prev, armorMax: parsedValue };
+      })
+      return
+    }
+
+    setFormData((prev) => {
       return { ...prev, [name]: value };
     });
   }
@@ -219,6 +230,9 @@ export default function CharacterSheet() {
     const { name, value } = e.currentTarget
     if (name === "evasion" || name === "armorMax") {
       commitModifierTargetValue(name, value)
+      if (name === "armorMax") {
+        setArmorMaxDraft(null)
+      }
     }
   }
 
@@ -523,7 +537,7 @@ export default function CharacterSheet() {
                           <input
                             type="text"
                             name="armorMax"
-                            value={safeFormData.armorMax ?? ""}
+                            value={armorMaxDraft ?? safeFormData.armorMax ?? ""}
                             onChange={handleInputChange}
                             onBlur={handleModifierTargetCommit}
                             onKeyDown={(event) => {

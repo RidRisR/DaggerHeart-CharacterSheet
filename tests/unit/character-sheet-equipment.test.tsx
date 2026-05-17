@@ -18,4 +18,19 @@ describe("CharacterSheet equipment fields", () => {
 
     expect(sheet().armorMax).toBe(5)
   })
+
+  it("rejects non-numeric armor max input without overwriting the previous value", async () => {
+    const user = userEvent.setup()
+    resetSheetStore({ armorMax: 3 })
+
+    const { container } = render(<CharacterSheet />)
+    const input = container.querySelector<HTMLInputElement>('input[name="armorMax"]')
+    expect(input).toBeTruthy()
+
+    await user.clear(input!)
+    await user.type(input!, "abc")
+    await user.tab()
+
+    expect(sheet().armorMax).toBe(3)
+  })
 })

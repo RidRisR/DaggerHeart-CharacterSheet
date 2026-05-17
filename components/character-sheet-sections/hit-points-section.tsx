@@ -1,11 +1,13 @@
 "use client"
 
 import type React from "react"
+import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 
 export function HitPointsSection() {
   const { sheetData: formData, setSheetData, commitModifierTargetValue } = useSheetStore()
+  const [maxDrafts, setMaxDrafts] = useState<Partial<Record<"hpMax" | "stressMax", string>>>({})
   const baseThresholds = formData.equipment.armorSlot.baseThresholds
   const level = Number(formData.level)
   const thresholdPlaceholder = (baseThreshold: number | null) => {
@@ -29,11 +31,18 @@ export function HitPointsSection() {
   const handleMaxChange = (field: "hp" | "stress", value: string, commit = false) => {
     const maxField = `${field}Max` as "hpMax" | "stressMax"
     const currentField = field
-    // Allow empty string for easier editing
-    if (value === "") {
-      setSheetData((prev) => ({ ...prev, [maxField]: undefined }))
+
+    if (commit) {
+      commitModifierTargetValue(maxField, value)
+      setMaxDrafts((prev) => {
+        const next = { ...prev }
+        delete next[maxField]
+        return next
+      })
       return
     }
+
+    setMaxDrafts((prev) => ({ ...prev, [maxField]: value }))
 
     // Only allow numeric input
     if (!/^\d+$/.test(value)) return
@@ -42,11 +51,6 @@ export function HitPointsSection() {
     // Enforce max limits
     const maxLimit = 18
     if (intValue > maxLimit) return
-
-    if (commit) {
-      commitModifierTargetValue(maxField, intValue)
-      return
-    }
 
     setSheetData((prev) => {
       const newSheetData = { ...prev, [maxField]: intValue }
@@ -63,6 +67,11 @@ export function HitPointsSection() {
 
       return newSheetData
     })
+  }
+
+  const maxInputValue = (field: "hp" | "stress") => {
+    const maxField = `${field}Max` as "hpMax" | "stressMax"
+    return maxDrafts[maxField] ?? formData[maxField] ?? ""
   }
 
   // 增加上限
@@ -221,18 +230,12 @@ export function HitPointsSection() {
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              value={formData.hpMax ?? ""} // 使用空值合并运算符
+              value={maxInputValue("hp")}
               onChange={(e) => handleMaxChange("hp", e.target.value)}
-              onBlur={(e) => {
-                if (e.currentTarget.value !== "") {
-                  handleMaxChange("hp", e.currentTarget.value, true)
-                }
-              }}
+              onBlur={(e) => handleMaxChange("hp", e.currentTarget.value, true)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  if (e.currentTarget.value !== "") {
-                    handleMaxChange("hp", e.currentTarget.value, true)
-                  }
+                  handleMaxChange("hp", e.currentTarget.value, true)
                   e.currentTarget.blur()
                 }
               }}
@@ -275,18 +278,12 @@ export function HitPointsSection() {
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              value={formData.stressMax ?? ""} // 使用空值合并运算符
+              value={maxInputValue("stress")}
               onChange={(e) => handleMaxChange("stress", e.target.value)}
-              onBlur={(e) => {
-                if (e.currentTarget.value !== "") {
-                  handleMaxChange("stress", e.currentTarget.value, true)
-                }
-              }}
+              onBlur={(e) => handleMaxChange("stress", e.currentTarget.value, true)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  if (e.currentTarget.value !== "") {
-                    handleMaxChange("stress", e.currentTarget.value, true)
-                  }
+                  handleMaxChange("stress", e.currentTarget.value, true)
                   e.currentTarget.blur()
                 }
               }}

@@ -206,6 +206,38 @@ describe("final target editors", () => {
     expect(countChecked(sheet().hp)).toBe(3)
   })
 
+  it("rejects blank HP max commits without clearing the previous final value", async () => {
+    resetSheetStore({
+      hpMax: 6,
+      userModifierContributions: [
+        {
+          id: "user:hp-base",
+          definition: { target: "hpMax", kind: "base" },
+          editable: { label: "Base", value: 6 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          hpMax: {
+            activeBaseId: "user:hp-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    render(<HitPointsSection />)
+    const input = screen.getAllByDisplayValue("6")[0]
+    await userEvent.clear(input)
+    await userEvent.tab()
+
+    expect(sheet().hpMax).toBe(6)
+    expect(sheet().userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("hpMax") }),
+    )
+  })
+
   it("clamps checked stress boxes when stress max is decremented below the current checked count", async () => {
     resetSheetStore({
       stress: Array(18).fill(false).map((_, index) => index < 6),
@@ -218,5 +250,38 @@ describe("final target editors", () => {
     expect(sheet().stressMax).toBe(3)
     expect(sheet().stress?.slice(0, 6)).toEqual([true, true, true, false, false, false])
     expect(countChecked(sheet().stress)).toBe(3)
+  })
+
+  it("rejects blank stress max commits without clearing the previous final value", async () => {
+    resetSheetStore({
+      hpMax: 7,
+      stressMax: 6,
+      userModifierContributions: [
+        {
+          id: "user:stress-base",
+          definition: { target: "stressMax", kind: "base" },
+          editable: { label: "Base", value: 6 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          stressMax: {
+            activeBaseId: "user:stress-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    render(<HitPointsSection />)
+    const input = screen.getByDisplayValue("6")
+    await userEvent.clear(input)
+    await userEvent.tab()
+
+    expect(sheet().stressMax).toBe(6)
+    expect(sheet().userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("stressMax") }),
+    )
   })
 })

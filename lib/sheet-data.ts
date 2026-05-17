@@ -2,7 +2,12 @@
 
 import { StandardCard } from "@/card/card-types"
 import type { EquipmentData } from "@/lib/equipment/types"
-import type { AutomationSelections, ModifierState, UserModifierContribution } from "@/lib/modifiers/types"
+import type {
+  AutomationSelections,
+  ModifierState,
+  OtherAdjustment,
+  UserModifierContribution,
+} from "@/lib/modifiers/types"
 
 // ===== 多角色系统数据结构 =====
 export interface CharacterMetadata {
@@ -291,6 +296,7 @@ export interface SheetData {
   checkedUpgrades?: CheckedUpgrades
   modifierState?: ModifierState
   userModifierContributions?: UserModifierContribution[]
+  otherAdjustments?: OtherAdjustment[]
   automationSelections?: AutomationSelections
   equipment: EquipmentData
   minorThreshold?: string

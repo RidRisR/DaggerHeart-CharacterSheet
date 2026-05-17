@@ -21,6 +21,18 @@ export type ModifierTargetId =
   | AttributeTargetId
   | ExperienceTargetId
 
+export type OtherAdjustmentKind =
+  | "unknownMigrationDifference"
+  | "manualFinalAdjustment"
+  | "unattributedDifference"
+
+export interface OtherAdjustment {
+  id: string
+  target: ModifierTargetId
+  kind: OtherAdjustmentKind
+  value: number
+}
+
 export type ModifierEntryId = string
 export type AutomationSourceId = string
 

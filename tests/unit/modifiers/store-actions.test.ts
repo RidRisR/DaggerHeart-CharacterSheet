@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { createEmptyCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import { getUnattributedDeltaId } from "@/lib/modifiers/special-contributions"
+import {
+  getManualBaseId,
+  getUnattributedDeltaId,
+} from "@/lib/modifiers/special-contributions"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
 describe("modifier store actions", () => {
@@ -287,5 +290,99 @@ describe("modifier store actions", () => {
 
     expect(sheet().evasion).toBe("12")
     expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBe(true)
+  })
+
+  it("commits final target values directly when auto calculation is off", () => {
+    resetSheetStore({
+      evasion: "10",
+      userModifierContributions: [],
+      modifierState: {
+        targetStates: {
+          evasion: {},
+        },
+        entryStates: {},
+      },
+    })
+
+    store().commitModifierTargetValue("evasion", "15")
+
+    expect(sheet().evasion).toBe("15")
+    expect(sheet().userModifierContributions).toEqual([])
+  })
+
+  it("commits numeric final target values as unattributed delta when auto calculation has a base", () => {
+    resetSheetStore({
+      evasion: "12",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().commitModifierTargetValue("evasion", "15")
+
+    expect(sheet().evasion).toBe("15")
+    expect(sheet().userModifierContributions).toContainEqual({
+      id: getUnattributedDeltaId("evasion"),
+      definition: { target: "evasion", kind: "modifier" },
+      editable: { label: "未归因差额", value: 3 },
+    })
+  })
+
+  it("commits numeric final target values as manual base when auto calculation has no base", () => {
+    resetSheetStore({
+      evasion: "",
+      userModifierContributions: [],
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().commitModifierTargetValue("evasion", "12")
+
+    expect(sheet().evasion).toBe("12")
+    expect(sheet().userModifierContributions).toContainEqual({
+      id: getManualBaseId("evasion"),
+      definition: { target: "evasion", kind: "base" },
+      editable: { label: "手动基础值", value: 12 },
+    })
+    expect(sheet().modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: getManualBaseId("evasion"),
+      autoCalculation: true,
+    })
+  })
+
+  it("commits non-numeric final target text without creating modifier sources", () => {
+    resetSheetStore({
+      evasion: "12",
+      userModifierContributions: [],
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().commitModifierTargetValue("evasion", "12+敏捷")
+
+    expect(sheet().evasion).toBe("12+敏捷")
+    expect(sheet().userModifierContributions).toEqual([])
+    expect(sheet().modifierState?.targetStates.evasion).toEqual({ autoCalculation: true })
   })
 })

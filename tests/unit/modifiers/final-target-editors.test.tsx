@@ -1,0 +1,191 @@
+import { render, screen } from "@testing-library/react"
+import "@testing-library/jest-dom/vitest"
+import userEvent from "@testing-library/user-event"
+import { describe, expect, it } from "vitest"
+import { ExperienceSection } from "@/components/character-sheet-sections/experience-section"
+import { HitPointsSection } from "@/components/character-sheet-sections/hit-points-section"
+import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
+import { ProficiencyEditor } from "@/components/upgrade-popover/proficiency-editor"
+import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
+import { getUnattributedDeltaId } from "@/lib/modifiers/special-contributions"
+import { countChecked, resetSheetStore, sheet, store } from "../automation/test-helpers"
+
+describe("final target editors", () => {
+  it("reconciles experience value blur through final target commit", async () => {
+    resetSheetStore({
+      experience: ["Warrior", "", "", "", ""],
+      experienceValues: ["2", "", "", "", ""],
+      userModifierContributions: [
+        {
+          id: "user:experience-base",
+          definition: { target: "experienceValues.0", kind: "base" },
+          editable: { label: "Base", value: 2 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          "experienceValues.0": {
+            activeBaseId: "user:experience-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    render(<ExperienceSection />)
+    const input = screen.getByDisplayValue("2")
+    await userEvent.click(input)
+    await userEvent.clear(input)
+    await userEvent.type(input, "5")
+    await userEvent.tab()
+
+    expect(sheet().experienceValues?.[0]).toBe("5")
+    expect(sheet().userModifierContributions).toContainEqual({
+      id: getUnattributedDeltaId("experienceValues.0"),
+      definition: { target: "experienceValues.0", kind: "modifier" },
+      editable: { label: "未归因差额", value: 3 },
+    })
+  })
+
+  it("reconciles proficiency clicks through final target commit", () => {
+    resetSheetStore({
+      proficiency: [true, false, false, false, false, false],
+      userModifierContributions: [
+        {
+          id: "user:proficiency-base",
+          definition: { target: "proficiency", kind: "base" },
+          editable: { label: "Base", value: 1 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          proficiency: {
+            activeBaseId: "user:proficiency-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().updateProficiency(2)
+
+    expect(countChecked(sheet().proficiency)).toBe(3)
+    expect(sheet().userModifierContributions).toContainEqual({
+      id: getUnattributedDeltaId("proficiency"),
+      definition: { target: "proficiency", kind: "modifier" },
+      editable: { label: "未归因差额", value: 2 },
+    })
+  })
+
+  it("reconciles HP max editor increment through final target commit", async () => {
+    resetSheetStore({
+      hpMax: 6,
+      userModifierContributions: [
+        {
+          id: "user:hp-base",
+          definition: { target: "hpMax", kind: "base" },
+          editable: { label: "Base", value: 6 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          hpMax: {
+            activeBaseId: "user:hp-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    render(<HPMaxEditor />)
+    await userEvent.click(screen.getByRole("button", { name: "增加生命值上限 (+1)" }))
+
+    expect(sheet().hpMax).toBe(7)
+    expect(sheet().userModifierContributions).toContainEqual({
+      id: getUnattributedDeltaId("hpMax"),
+      definition: { target: "hpMax", kind: "modifier" },
+      editable: { label: "未归因差额", value: 1 },
+    })
+  })
+
+  it("reconciles stress max editor blur through final target commit", async () => {
+    resetSheetStore({
+      stressMax: 6,
+      userModifierContributions: [
+        {
+          id: "user:stress-base",
+          definition: { target: "stressMax", kind: "base" },
+          editable: { label: "Base", value: 6 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          stressMax: {
+            activeBaseId: "user:stress-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    render(<StressMaxEditor />)
+    const input = screen.getByDisplayValue("6")
+    await userEvent.clear(input)
+    await userEvent.type(input, "8")
+    await userEvent.tab()
+
+    expect(sheet().stressMax).toBe(8)
+    expect(sheet().userModifierContributions).toContainEqual({
+      id: getUnattributedDeltaId("stressMax"),
+      definition: { target: "stressMax", kind: "modifier" },
+      editable: { label: "未归因差额", value: 2 },
+    })
+  })
+
+  it("renders proficiency editor against the real final target", () => {
+    resetSheetStore()
+
+    render(<ProficiencyEditor />)
+
+    expect(screen.getByText("熟练度 (1/6)")).toBeInTheDocument()
+  })
+
+  it("reconciles threshold blur through final target commit", async () => {
+    resetSheetStore({
+      minorThreshold: "7",
+      userModifierContributions: [
+        {
+          id: "user:minor-threshold-base",
+          definition: { target: "minorThreshold", kind: "base" },
+          editable: { label: "Base", value: 7 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          minorThreshold: {
+            activeBaseId: "user:minor-threshold-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    render(<HitPointsSection />)
+    const input = screen.getByDisplayValue("7")
+    await userEvent.clear(input)
+    await userEvent.type(input, "9")
+    await userEvent.tab()
+
+    expect(sheet().minorThreshold).toBe("9")
+    expect(sheet().userModifierContributions).toContainEqual({
+      id: getUnattributedDeltaId("minorThreshold"),
+      definition: { target: "minorThreshold", kind: "modifier" },
+      editable: { label: "未归因差额", value: 1 },
+    })
+  })
+})

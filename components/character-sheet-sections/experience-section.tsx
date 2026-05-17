@@ -6,7 +6,7 @@ import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-ancho
 import type { ModifierTargetId } from "@/lib/modifiers/types"
 
 export function ExperienceSection() {
-  const { sheetData: formData, updateExperience, updateExperienceValues } = useSheetStore();
+  const { sheetData: formData, updateExperience, updateExperienceValues, commitModifierTargetValue } = useSheetStore();
   
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
@@ -15,6 +15,10 @@ export function ExperienceSection() {
 
   const experienceTexts = formData.experience || ["", "", "", "", ""]
   const experienceValues = formData.experienceValues || ["", "", "", "", ""]
+
+  const commitExperienceValue = (index: number, value: string) => {
+    commitModifierTargetValue(`experienceValues.${index}` as ModifierTargetId, value)
+  }
 
   return (
     <div className="py-1">
@@ -36,6 +40,13 @@ export function ExperienceSection() {
               value={experienceValues[i]}
               onChange={(e) => {
                 updateExperienceValues(i, e.target.value)
+              }}
+              onBlur={(event) => commitExperienceValue(i, event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  commitExperienceValue(i, event.currentTarget.value)
+                  event.currentTarget.blur()
+                }
               }}
               {...getElementProps(experienceValues[i], `exp-value-${i}`, "w-8 border border-gray-400 rounded ml-1 text-center print-empty-hide")}
               placeholder="#"

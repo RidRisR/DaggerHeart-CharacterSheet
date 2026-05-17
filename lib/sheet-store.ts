@@ -23,8 +23,14 @@ import type {
     ModifierTargetId,
     UserModifierContribution,
 } from "@/lib/modifiers/types";
-import { deleteSpecialBase, enableAutoCalculationForTarget } from "@/lib/modifiers/final-input-reconciliation";
+import {
+    deleteSpecialBase,
+    enableAutoCalculationForTarget,
+    reconcileFinalInput,
+} from "@/lib/modifiers/final-input-reconciliation";
 import { applyAutoCalculationForTargets } from "@/lib/modifiers/target-sync";
+import { writeTargetValue } from "@/lib/modifiers/target-accessors";
+import { tryParseNumber } from "@/lib/number-utils";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -153,6 +159,7 @@ interface SheetState {
 
     setActiveModifierBase: (target: ModifierTargetId, baseId: ModifierEntryId | undefined) => void;
     setTargetAutoCalculation: (target: ModifierTargetId, enabled: boolean) => void;
+    commitModifierTargetValue: (target: ModifierTargetId, value: unknown) => void;
     upsertUserModifierContribution: (contribution: UserModifierContribution) => void;
     removeUserModifierContribution: (entryId: ModifierEntryId) => void;
     removeSpecialBaseContribution: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
@@ -358,16 +365,21 @@ export const useSheetStore = create<SheetState>((set) => ({
         // 找到最后一个被点亮的 proficiency 的下标
         const lastLit = current.lastIndexOf(true);
         // 如果点击的正好是最后一个被点亮的 proficiency，则全部熄灭
+        let finalCount: number;
         if (index === lastLit && current[index]) {
+            finalCount = 0;
+        } else {
+            finalCount = index + 1;
+        }
+
+        const autoCalculation = state.sheetData.modifierState?.targetStates?.proficiency?.autoCalculation === true;
+        if (autoCalculation) {
             return {
-                sheetData: {
-                    ...state.sheetData,
-                    proficiency: current.map(() => false)
-                }
+                sheetData: reconcileFinalInput(state.sheetData, "proficiency", finalCount),
             };
         }
-        // 其它情况，点亮前 n 个
-        const newProficiency = current.map((_, i) => i <= index);
+
+        const newProficiency = current.map((_, i) => i < finalCount);
         return {
             sheetData: {
                 ...state.sheetData,
@@ -416,19 +428,23 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
     })),
 
-    updateHPMax: (value) => set((state) => ({
-        sheetData: {
-            ...state.sheetData,
-            hpMax: value
-        }
-    })),
+    updateHPMax: (value) => set((state) => {
+        const autoCalculation = state.sheetData.modifierState?.targetStates?.hpMax?.autoCalculation === true;
+        return {
+            sheetData: autoCalculation
+                ? reconcileFinalInput(state.sheetData, "hpMax", value)
+                : writeTargetValue(state.sheetData, "hpMax", value),
+        };
+    }),
 
-    updateStressMax: (value) => set((state) => ({
-        sheetData: {
-            ...state.sheetData,
-            stressMax: value
-        }
-    })),
+    updateStressMax: (value) => set((state) => {
+        const autoCalculation = state.sheetData.modifierState?.targetStates?.stressMax?.autoCalculation === true;
+        return {
+            sheetData: autoCalculation
+                ? reconcileFinalInput(state.sheetData, "stressMax", value)
+                : writeTargetValue(state.sheetData, "stressMax", value),
+        };
+    }),
 
     // Threshold calculation actions
     updateLevel: (level) => set((state) => ({
@@ -920,6 +936,19 @@ export const useSheetStore = create<SheetState>((set) => ({
                     targetStates,
                 },
             },
+        };
+    }),
+
+    commitModifierTargetValue: (target, value) => set((state) => {
+        const autoCalculation = state.sheetData.modifierState?.targetStates?.[target]?.autoCalculation === true;
+        if (!autoCalculation || tryParseNumber(value) === undefined) {
+            return {
+                sheetData: writeTargetValue(state.sheetData, target, String(value)),
+            };
+        }
+
+        return {
+            sheetData: reconcileFinalInput(state.sheetData, target, value),
         };
     }),
 

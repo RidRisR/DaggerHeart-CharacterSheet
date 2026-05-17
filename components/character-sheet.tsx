@@ -36,7 +36,7 @@ type WeaponSlotSelection =
   | { slotType: "inventory"; index: 0 | 1 }
 
 export default function CharacterSheet() {
-  const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, selectWeaponSlot, handleProfessionChange: autofillProfessionData } = useSheetStore();
+  const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, selectWeaponSlot, handleProfessionChange: autofillProfessionData, commitModifierTargetValue } = useSheetStore();
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
   const safeFormData = useSafeSheetData();
@@ -215,7 +215,12 @@ export default function CharacterSheet() {
     });
   }
 
-
+  const handleModifierTargetCommit = (e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>) => {
+    const { name, value } = e.currentTarget
+    if (name === "evasion" || name === "armorMax") {
+      commitModifierTargetValue(name, value)
+    }
+  }
 
 
 
@@ -483,6 +488,13 @@ export default function CharacterSheet() {
                           name="evasion"
                           value={safeFormData.evasion}
                           onChange={handleInputChange}
+                          onBlur={handleModifierTargetCommit}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              handleModifierTargetCommit(event)
+                              event.currentTarget.blur()
+                            }
+                          }}
                           placeholder={safeFormData.cards[0]?.professionSpecial?.["起始闪避"]?.toString() || ""}
                           className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-xl font-bold text-gray-800 placeholder-gray-400 print-empty-hide pb-1"
                         />
@@ -513,6 +525,13 @@ export default function CharacterSheet() {
                             name="armorMax"
                             value={safeFormData.armorMax ?? ""}
                             onChange={handleInputChange}
+                            onBlur={handleModifierTargetCommit}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                handleModifierTargetCommit(event)
+                                event.currentTarget.blur()
+                              }
+                            }}
                             placeholder={
                               safeFormData.equipment.armorSlot.baseArmorMax === null
                                 ? ""

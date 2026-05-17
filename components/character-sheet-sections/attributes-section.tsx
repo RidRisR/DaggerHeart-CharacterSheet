@@ -35,6 +35,7 @@ export function AttributesSection() {
     upsertUserModifierContribution,
     setActiveModifierBase,
     removeUserModifierContribution,
+    commitModifierTargetValue,
   } = useSheetStore();
   const editStartValues = useRef<Partial<Record<AttributeKey, string>>>({})
 
@@ -52,6 +53,7 @@ export function AttributesSection() {
     const attrValue = formData[attribute]
     const submittedValue = isAttributeValue(attrValue) ? attrValue.value : ""
     const existingUserBases = userBaseEntriesForTarget(formData, target)
+    const isAutoCalculationEnabled = formData.modifierState?.targetStates?.[target]?.autoCalculation === true
 
     const autoBase = getAttributeAutoBaseCreation({
       target,
@@ -60,7 +62,7 @@ export function AttributesSection() {
       submittedValue,
       existingUserBases,
     })
-    if (autoBase) {
+    if (autoBase && !isAutoCalculationEnabled) {
       upsertUserModifierContribution(autoBase)
       if (!formData.modifierState?.targetStates?.[target]?.activeBaseId) {
         setActiveModifierBase(target, autoBase.id)
@@ -82,6 +84,7 @@ export function AttributesSection() {
       }
     }
 
+    commitModifierTargetValue(target, submittedValue)
     editStartValues.current[attribute] = submittedValue
   }
 

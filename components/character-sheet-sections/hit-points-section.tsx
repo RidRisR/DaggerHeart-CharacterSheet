@@ -5,7 +5,7 @@ import { useSheetStore } from "@/lib/sheet-store"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 
 export function HitPointsSection() {
-  const { sheetData: formData, setSheetData } = useSheetStore()
+  const { sheetData: formData, setSheetData, commitModifierTargetValue } = useSheetStore()
   const baseThresholds = formData.equipment.armorSlot.baseThresholds
   const level = Number(formData.level)
   const thresholdPlaceholder = (baseThreshold: number | null) => {
@@ -20,7 +20,13 @@ export function HitPointsSection() {
     setSheetData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleMaxChange = (field: "hp" | "stress", value: string) => {
+  const commitTextTarget = (name: string, value: string) => {
+    if (name === "minorThreshold" || name === "majorThreshold") {
+      commitModifierTargetValue(name, value)
+    }
+  }
+
+  const handleMaxChange = (field: "hp" | "stress", value: string, commit = false) => {
     const maxField = `${field}Max` as "hpMax" | "stressMax"
     const currentField = field
     // Allow empty string for easier editing
@@ -36,6 +42,11 @@ export function HitPointsSection() {
     // Enforce max limits
     const maxLimit = 18
     if (intValue > maxLimit) return
+
+    if (commit) {
+      commitModifierTargetValue(maxField, intValue)
+      return
+    }
 
     setSheetData((prev) => {
       const newSheetData = { ...prev, [maxField]: intValue }
@@ -59,7 +70,7 @@ export function HitPointsSection() {
     const maxField = `${field}Max` as "hpMax" | "stressMax"
     const currentMax = formData[maxField] || 6
     if (currentMax < 18) {
-      handleMaxChange(field, String(currentMax + 1))
+      handleMaxChange(field, String(currentMax + 1), true)
     }
   }
 
@@ -68,7 +79,7 @@ export function HitPointsSection() {
     const maxField = `${field}Max` as "hpMax" | "stressMax"
     const currentMax = formData[maxField] || 6
     if (currentMax > 1) {
-      handleMaxChange(field, String(currentMax - 1))
+      handleMaxChange(field, String(currentMax - 1), true)
     }
   }
 
@@ -132,6 +143,13 @@ export function HitPointsSection() {
           name="minorThreshold"
           value={formData.minorThreshold || ""}
           onChange={handleInputChange}
+          onBlur={(event) => commitTextTarget(event.currentTarget.name, event.currentTarget.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              commitTextTarget(event.currentTarget.name, event.currentTarget.value)
+              event.currentTarget.blur()
+            }
+          }}
           placeholder={thresholdPlaceholder(baseThresholds.minor)}
           className="w-10 text-center text-m border border-gray-400 rounded mx-1 placeholder-gray-400 print-empty-hide"
         />
@@ -147,6 +165,13 @@ export function HitPointsSection() {
           name="majorThreshold"
           value={formData.majorThreshold || ""}
           onChange={handleInputChange}
+          onBlur={(event) => commitTextTarget(event.currentTarget.name, event.currentTarget.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              commitTextTarget(event.currentTarget.name, event.currentTarget.value)
+              event.currentTarget.blur()
+            }
+          }}
           placeholder={thresholdPlaceholder(baseThresholds.major)}
           className="w-10 text-center text-m border border-gray-400 rounded mx-1 placeholder-gray-400 print-empty-hide"
         />
@@ -198,6 +223,19 @@ export function HitPointsSection() {
               pattern="[0-9]*"
               value={formData.hpMax ?? ""} // 使用空值合并运算符
               onChange={(e) => handleMaxChange("hp", e.target.value)}
+              onBlur={(e) => {
+                if (e.currentTarget.value !== "") {
+                  handleMaxChange("hp", e.currentTarget.value, true)
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (e.currentTarget.value !== "") {
+                    handleMaxChange("hp", e.currentTarget.value, true)
+                  }
+                  e.currentTarget.blur()
+                }
+              }}
               onFocus={(e) => e.target.select()}
               placeholder="6"
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
@@ -239,6 +277,19 @@ export function HitPointsSection() {
               pattern="[0-9]*"
               value={formData.stressMax ?? ""} // 使用空值合并运算符
               onChange={(e) => handleMaxChange("stress", e.target.value)}
+              onBlur={(e) => {
+                if (e.currentTarget.value !== "") {
+                  handleMaxChange("stress", e.currentTarget.value, true)
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (e.currentTarget.value !== "") {
+                    handleMaxChange("stress", e.currentTarget.value, true)
+                  }
+                  e.currentTarget.blur()
+                }
+              }}
               onFocus={(e) => e.target.select()}
               placeholder="6"
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏

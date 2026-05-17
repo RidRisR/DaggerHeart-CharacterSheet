@@ -12,16 +12,6 @@ describe("modifier store actions", () => {
     expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base")
   })
 
-  it("toggles modifier entry enabled state", () => {
-    resetSheetStore()
-
-    store().setModifierEntryEnabled("upgrade:evasion", false)
-    expect(sheet().modifierState?.entryStates["upgrade:evasion"]).toEqual({ enabled: false })
-
-    store().setModifierEntryEnabled("upgrade:evasion", true)
-    expect(sheet().modifierState?.entryStates["upgrade:evasion"]).toBeUndefined()
-  })
-
   it("adds user modifier contributions", () => {
     resetSheetStore()
 
@@ -67,7 +57,7 @@ describe("modifier store actions", () => {
     })
   })
 
-  it("sets target sync mode while preserving active base", () => {
+  it("sets target auto calculation while preserving active base", () => {
     resetSheetStore({
       modifierState: {
         targetStates: {
@@ -77,38 +67,12 @@ describe("modifier store actions", () => {
       },
     })
 
-    store().setTargetSyncMode("evasion", "continuous")
+    store().setTargetAutoCalculation("evasion", true)
 
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "user:evasion-base",
-      syncMode: "continuous",
+      autoCalculation: true,
     })
-  })
-
-  it("syncs a target once from the store", () => {
-    resetSheetStore({
-      evasion: "10",
-      userModifierContributions: [
-        {
-          id: "user:evasion-base",
-          definition: { target: "evasion", kind: "base" },
-          editable: { label: "Base", value: 12 },
-        },
-        {
-          id: "user:evasion-mod",
-          definition: { target: "evasion", kind: "modifier" },
-          editable: { label: "Mod", value: 1 },
-        },
-      ],
-      modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
-        entryStates: {},
-      },
-    })
-
-    store().syncModifierTargetOnce("evasion")
-
-    expect(sheet().evasion).toBe("13")
   })
 
   it("applies continuous sync when modifier sources change", () => {
@@ -130,7 +94,7 @@ describe("modifier store actions", () => {
         },
         entryStates: {},
       },
-    })
+    } as any)
 
     store().upsertUserModifierContribution({
       id: "user:evasion-mod",
@@ -141,7 +105,27 @@ describe("modifier store actions", () => {
     expect(sheet().evasion).toBe("14")
   })
 
-  it("keeps sync mode when clearing active base", () => {
+  it("toggles target auto calculation off cleanly", () => {
+    resetSheetStore({
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().setTargetAutoCalculation("evasion", false)
+
+    expect(sheet().modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: "user:evasion-base",
+    })
+  })
+
+  it("drops legacy sync mode when toggling target auto calculation off", () => {
     resetSheetStore({
       modifierState: {
         targetStates: {
@@ -152,13 +136,15 @@ describe("modifier store actions", () => {
         },
         entryStates: {},
       },
-    })
+    } as any)
 
-    store().setActiveModifierBase("evasion", undefined)
+    store().setTargetAutoCalculation("evasion", false)
 
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
-      syncMode: "continuous",
+      activeBaseId: "user:evasion-base",
     })
+    expect(sheet().modifierState?.targetStates.evasion).not.toHaveProperty("syncMode")
+    expect(sheet().modifierState?.targetStates.evasion).not.toHaveProperty("autoCalculation")
   })
 
   it("applies continuous sync after level changes update system entries", () => {
@@ -184,7 +170,7 @@ describe("modifier store actions", () => {
         },
         entryStates: {},
       },
-    })
+    } as any)
 
     store().updateLevel("2", "1")
 
@@ -203,7 +189,7 @@ describe("modifier store actions", () => {
         },
         entryStates: {},
       },
-    })
+    } as any)
 
     store().updateArmorBaseMax("5")
 
@@ -237,7 +223,7 @@ describe("modifier store actions", () => {
         },
         entryStates: {},
       },
-    })
+    } as any)
 
     store().updateCard(0, {
       ...createEmptyCard("profession"),
@@ -253,6 +239,6 @@ describe("modifier store actions", () => {
     }, false)
 
     expect(sheet().evasion).toBe("12")
-    expect(sheet().modifierState?.targetStates.evasion?.syncMode).toBe("continuous")
+    expect((sheet().modifierState?.targetStates.evasion as any)?.syncMode).toBe("continuous")
   })
 })

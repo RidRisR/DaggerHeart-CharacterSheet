@@ -26,7 +26,7 @@ export function getTargetSyncFallbackValue(target: ModifierTargetId): number | s
 }
 
 function isContinuousState(state: TargetModifierState | undefined): boolean {
-  return state?.syncMode === "continuous"
+  return (state as (TargetModifierState & { syncMode?: unknown }) | undefined)?.syncMode === "continuous"
 }
 
 function continuousTargets(sheetData: SheetData): ModifierTargetId[] {

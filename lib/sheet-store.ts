@@ -21,10 +21,9 @@ import type {
     AutomationSourceId,
     ModifierEntryId,
     ModifierTargetId,
-    TargetSyncMode,
     UserModifierContribution,
 } from "@/lib/modifiers/types";
-import { applyContinuousTargetSync, syncTargetOnce } from "@/lib/modifiers/target-sync";
+import { applyContinuousTargetSync } from "@/lib/modifiers/target-sync";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -152,9 +151,7 @@ interface SheetState {
     updateScrapMaterial: (category: string, index: number, value: number | string) => void;
 
     setActiveModifierBase: (target: ModifierTargetId, baseId: ModifierEntryId | undefined) => void;
-    setTargetSyncMode: (target: ModifierTargetId, syncMode: TargetSyncMode) => void;
-    syncModifierTargetOnce: (target: ModifierTargetId) => void;
-    setModifierEntryEnabled: (entryId: ModifierEntryId, enabled: boolean) => void;
+    setTargetAutoCalculation: (target: ModifierTargetId, enabled: boolean) => void;
     upsertUserModifierContribution: (contribution: UserModifierContribution) => void;
     removeUserModifierContribution: (entryId: ModifierEntryId) => void;
     setAutomationSelection: (sourceId: AutomationSourceId, selected: boolean, params?: Record<string, unknown>) => void;
@@ -172,13 +169,13 @@ const ensureModifierState = (sheetData: SheetData) => ({
     },
 });
 
-const cleanupTargetState = (state: { activeBaseId?: ModifierEntryId; syncMode?: TargetSyncMode }) => {
-    const next = { ...state };
-    if (!next.activeBaseId) {
-        delete next.activeBaseId;
+const cleanupTargetState = (state: { activeBaseId?: ModifierEntryId; autoCalculation?: true }) => {
+    const next: { activeBaseId?: ModifierEntryId; autoCalculation?: true } = {};
+    if (state.activeBaseId) {
+        next.activeBaseId = state.activeBaseId;
     }
-    if (next.syncMode === "manual") {
-        delete next.syncMode;
+    if (state.autoCalculation === true) {
+        next.autoCalculation = true;
     }
     return Object.keys(next).length > 0 ? next : undefined;
 };
@@ -186,7 +183,7 @@ const cleanupTargetState = (state: { activeBaseId?: ModifierEntryId; syncMode?: 
 const setTargetState = (
     targetStates: ReturnType<typeof ensureModifierState>["targetStates"],
     target: ModifierTargetId,
-    nextState: { activeBaseId?: ModifierEntryId; syncMode?: TargetSyncMode },
+    nextState: { activeBaseId?: ModifierEntryId; autoCalculation?: true },
 ) => {
     const cleaned = cleanupTargetState(nextState);
     if (cleaned) {
@@ -897,64 +894,24 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
     }),
 
-    setTargetSyncMode: (target, syncMode) => set((state) => {
+    setTargetAutoCalculation: (target, enabled) => set((state) => {
         const modifierState = ensureModifierState(state.sheetData);
         const targetStates = { ...modifierState.targetStates };
         const currentTargetState = targetStates[target] ?? {};
 
         setTargetState(targetStates, target, {
             ...currentTargetState,
-            syncMode,
+            autoCalculation: enabled ? true : undefined,
         });
 
-        const nextData = {
-            ...state.sheetData,
-            modifierState: {
-                ...modifierState,
-                targetStates,
-            },
-        };
-
         return {
-            sheetData: syncMode === "continuous"
-                ? applyContinuousTargetSync(nextData)
-                : nextData,
-        };
-    }),
-
-    syncModifierTargetOnce: (target) => set((state) => {
-        const result = syncTargetOnce(state.sheetData, target);
-        return result.applied ? { sheetData: result.sheetData } : state;
-    }),
-
-    setModifierEntryEnabled: (entryId, enabled) => set((state) => {
-        const modifierState = ensureModifierState(state.sheetData);
-        const entryStates = { ...modifierState.entryStates };
-        const currentState = entryStates[entryId] ?? {};
-
-        if (enabled) {
-            const nextEntryState = { ...currentState };
-            delete nextEntryState.enabled;
-            if (Object.keys(nextEntryState).length > 0) {
-                entryStates[entryId] = nextEntryState;
-            } else {
-                delete entryStates[entryId];
-            }
-        } else {
-            entryStates[entryId] = {
-                ...currentState,
-                enabled: false,
-            };
-        }
-
-        return {
-            sheetData: applyContinuousTargetSync({
+            sheetData: {
                 ...state.sheetData,
                 modifierState: {
                     ...modifierState,
-                    entryStates,
+                    targetStates,
                 },
-            }),
+            },
         };
     }),
 

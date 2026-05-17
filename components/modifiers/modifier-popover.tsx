@@ -184,9 +184,7 @@ function AddEntryForm({
 export function ModifierPopover({ sheetData, target, label }: ModifierPopoverProps) {
   const summary = getReferenceSummary(sheetData, target)
   const setActiveModifierBase = useSheetStore(state => state.setActiveModifierBase)
-  const setModifierEntryEnabled = useSheetStore(state => state.setModifierEntryEnabled)
-  const setTargetSyncMode = useSheetStore(state => state.setTargetSyncMode)
-  const syncModifierTargetOnce = useSheetStore(state => state.syncModifierTargetOnce)
+  const setTargetAutoCalculation = useSheetStore(state => state.setTargetAutoCalculation)
   const upsertUserModifierContribution = useSheetStore(state => state.upsertUserModifierContribution)
   const removeUserModifierContribution = useSheetStore(state => state.removeUserModifierContribution)
   const [addingBase, setAddingBase] = useState(false)
@@ -199,7 +197,7 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const [modifierError, setModifierError] = useState("")
   const finalValue = readTargetValue(sheetData, target)
   const targetState = sheetData.modifierState?.targetStates?.[target]
-  const continuousSync = targetState?.syncMode === "continuous"
+  const autoCalculation = targetState?.autoCalculation === true
 
   const findUserContribution = (id: string) => (
     (sheetData.userModifierContributions ?? []).find(contribution => contribution.id === id)
@@ -388,12 +386,6 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
                   className={`flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1 ${checked ? "" : "text-gray-400 line-through"}`}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      aria-label={`${currentLabel} ${formatSigned(currentValue)}`}
-                      onChange={event => setModifierEntryEnabled(entry.id, event.target.checked)}
-                    />
                     {isUserEntry ? (
                       <EditableLabelInput entry={entry} onCommit={updateUserContributionLabel} />
                     ) : (
@@ -447,22 +439,14 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
       </div>
 
       <div className="mb-2 flex items-center justify-between gap-2 border-t border-gray-200 pt-2">
-        <button
-          type="button"
-          className="h-7 rounded border border-emerald-700 bg-emerald-600 px-3 text-[11px] text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-200 disabled:text-gray-500 disabled:opacity-80"
-          disabled={summary.referenceTotal === undefined}
-          onClick={() => syncModifierTargetOnce(target)}
-        >
-          同步
-        </button>
         <label className="flex items-center gap-1 text-[11px] text-gray-600">
           <input
             type="checkbox"
-            checked={continuousSync}
-            aria-label="持续同步"
-            onChange={event => setTargetSyncMode(target, event.target.checked ? "continuous" : "manual")}
+            checked={autoCalculation}
+            aria-label="自动计算"
+            onChange={event => setTargetAutoCalculation(target, event.target.checked)}
           />
-          持续同步
+          自动计算
         </label>
       </div>
 

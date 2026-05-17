@@ -63,11 +63,9 @@ export interface ModifierEntry {
   priority: number
 }
 
-export type TargetSyncMode = "manual" | "continuous"
-
 export interface TargetModifierState {
   activeBaseId?: ModifierEntryId
-  syncMode?: TargetSyncMode
+  autoCalculation?: true
 }
 
 export interface ModifierEntryState {

@@ -44,7 +44,34 @@ describe("modifier state reconciliation", () => {
     })
   })
 
-  it("preserves continuous sync mode when active base is still valid", () => {
+  it("preserves auto calculation when active base is still valid", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      userModifierContributions: [{
+        id: "user:evasion-base",
+        definition: { target: "evasion", kind: "base" },
+        editable: { label: "Base", value: 12 },
+      }],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    } as any
+
+    const reconciled = reconcileModifierState(sheetData)
+
+    expect(reconciled.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: "user:evasion-base",
+      autoCalculation: true,
+    })
+  })
+
+  it("normalizes legacy continuous sync mode to auto calculation", () => {
     const sheetData = {
       ...defaultSheetData,
       userModifierContributions: [{
@@ -67,11 +94,11 @@ describe("modifier state reconciliation", () => {
 
     expect(reconciled.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "user:evasion-base",
-      syncMode: "continuous",
+      autoCalculation: true,
     })
   })
 
-  it("keeps sync mode when active base becomes orphaned", () => {
+  it("keeps auto calculation when active base becomes orphaned", () => {
     const sheetData = {
       ...defaultSheetData,
       modifierState: {
@@ -88,7 +115,7 @@ describe("modifier state reconciliation", () => {
     const reconciled = reconcileModifierState(sheetData)
 
     expect(reconciled.modifierState?.targetStates.evasion).toEqual({
-      syncMode: "continuous",
+      autoCalculation: true,
     })
   })
 })

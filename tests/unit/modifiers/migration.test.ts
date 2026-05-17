@@ -235,7 +235,7 @@ describe("modifier state migration", () => {
     ]))
   })
 
-  it("preserves sync mode from current modifier state", () => {
+  it("normalizes legacy continuous sync mode from current modifier state", () => {
     const migrated = migrateSheetData({
       schemaVersion: 2,
       modifierState: {
@@ -247,8 +247,9 @@ describe("modifier state migration", () => {
     })
 
     expect(migrated.modifierState?.targetStates.evasion).toEqual({
-      syncMode: "continuous",
+      autoCalculation: true,
     })
+    expect(migrated.modifierState?.targetStates.evasion).not.toHaveProperty("syncMode")
   })
 
   it("drops invalid sync mode values", () => {

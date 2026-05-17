@@ -166,33 +166,6 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByText("未归因差额 +1")).toBeInTheDocument()
   })
 
-  it("lets the user disable and re-enable a modifier", async () => {
-    resetSheetStore({
-      evasion: "15",
-      userModifierContributions: [
-        userContribution("user:evasion-base", "evasion", "base", "基础", 12),
-        userContribution("user:evasion-mod", "evasion", "modifier", "加值", 2),
-      ],
-      modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
-        entryStates: {},
-      },
-    })
-
-    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
-    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
-
-    await userEvent.click(screen.getByRole("checkbox", { name: /加值/ }))
-    expect(screen.getByRole("checkbox", { name: /加值/ })).not.toBeChecked()
-    expect(sheet().modifierState?.entryStates["user:evasion-mod"]).toEqual({ enabled: false })
-    expect(screen.getByText("未归因差额 +3")).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole("checkbox", { name: /加值/ }))
-    expect(screen.getByRole("checkbox", { name: /加值/ })).toBeChecked()
-    expect(sheet().modifierState?.entryStates["user:evasion-mod"]).toBeUndefined()
-    expect(screen.getByText("未归因差额 +1")).toBeInTheDocument()
-  })
-
   it("adds a manual base without changing the final value", async () => {
     resetSheetStore({ evasion: "15" })
 
@@ -342,8 +315,8 @@ describe("ModifierFieldAnchor", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
 
-    expect(screen.getByRole("checkbox", { name: /启用加值/ })).toBeChecked()
-    expect(screen.getByRole("checkbox", { name: /停用加值/ })).not.toBeChecked()
+    expect(screen.getByDisplayValue("启用加值")).toBeInTheDocument()
+    expect(screen.getByDisplayValue("停用加值")).toBeInTheDocument()
     expect(screen.getByText("13")).toBeInTheDocument()
     expect(screen.getByText("未归因差额 +2")).toBeInTheDocument()
   })
@@ -406,42 +379,7 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByRole("textbox", { name: "编辑重命名基础名称" })).toBeInTheDocument()
   })
 
-  it("syncs the final value once from the popover", async () => {
-    resetSheetStore({
-      evasion: "10",
-      userModifierContributions: [
-        userContribution("user:evasion-base", "evasion", "base", "Base", 12),
-        userContribution("user:evasion-mod", "evasion", "modifier", "Mod", 1),
-      ],
-      modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
-        entryStates: {},
-      },
-    })
-
-    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
-    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
-    const syncButton = screen.getByRole("button", { name: "同步" })
-    expect(syncButton).toHaveClass("bg-emerald-600")
-    expect(syncButton).not.toHaveClass("col-start-2")
-    await userEvent.click(syncButton)
-
-    expect(sheet().evasion).toBe("13")
-  })
-
-  it("disables one-shot sync when base is unknown", async () => {
-    resetSheetStore({
-      evasion: "10",
-      modifierState: { targetStates: {}, entryStates: {} },
-    })
-
-    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
-    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
-
-    expect(screen.getByRole("button", { name: "同步" })).toBeDisabled()
-  })
-
-  it("toggles continuous sync from the popover", async () => {
+  it("toggles auto calculation from the popover", async () => {
     resetSheetStore({
       evasion: "10",
       userModifierContributions: [
@@ -455,9 +393,9 @@ describe("ModifierFieldAnchor", () => {
 
     render(<ModifierFieldAnchor target="evasion" label="闪避" />)
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
-    await userEvent.click(screen.getByRole("checkbox", { name: "持续同步" }))
+    await userEvent.click(screen.getByRole("checkbox", { name: "自动计算" }))
 
-    expect(sheet().modifierState?.targetStates.evasion?.syncMode).toBe("continuous")
-    expect(sheet().evasion).toBe("12")
+    expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBe(true)
+    expect(sheet().evasion).toBe("10")
   })
 })

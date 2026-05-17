@@ -125,7 +125,7 @@ user:${target}:manual-base
 - `kind = "base"`
 - label 固定为 `手动基础值`
 - value 保存解析后的数值
-- 如果当前没有 active base，则设为 active base
+- 创建后设为 active base
 - 这是 final input 专用维护项，不是普通用户自定义 base
 
 这个规则只描述用户交互输入。它的语义是：当 target 还没有基础锚点时，用户输入的数值就是在提供一个手动基础值。系统不应假设用户理解当前所有 modifier，也不应在交互场景中把这个输入优先解释成反推后的估算结果。
@@ -172,6 +172,8 @@ user:${target}:unattributed-delta
 ```
 
 不能按“当前 final 与新输入差值”叠加，否则会产生重复加值。
+
+如果存在 base 候选但没有 active base，应先按现有顺延规则选择第一个可用 base 作为 active base，然后按“已经有 base”处理。只有完全没有任何 base entry 时，才进入“没有任何 base”分支。
 
 ### 输入等于原始 reference
 
@@ -291,12 +293,11 @@ target-owned 未归因差额
 建议身份形态：
 
 ```ts
-id: `target:${target}:unattributed-delta`
-source.type: "target-reconciliation"
+id: `user:${target}:unattributed-delta`
 kind: "modifier"
 ```
 
-具体实现也可以用其它字段表达，但语义必须保留：identity 不依赖显示 label。
+第一阶段的 canonical id 使用 `user:` 前缀，因为存储复用 `userModifierContributions`。概念 ownership 仍然是 target-owned；实现必须通过 special id 或等价 metadata 识别它，不能通过 label 识别。
 
 ## 存储策略
 
@@ -367,7 +368,9 @@ user:${target}:unattributed-delta
 - user-owned 普通来源：提供删除按钮。
 - target-owned special 来源：提供删除按钮。
 
-实现上可以暂时继续尊重旧存档里的 `entryStates[entryId].enabled === false`，避免历史数据回归。但新的 UI 和新的业务流程不再创建或依赖 disabled entry state。
+项目尚未上线，不需要保留旧 disabled 行为作为用户可恢复状态。v2 迁移应清理或忽略 `entryStates[entryId].enabled === false`，避免出现“计算层尊重 disabled，但 UI 已经无法启用”的不可恢复状态。
+
+如果清理 disabled 可能改变旧 final value，迁移应通过 `未归因差额` / `估算基础值` 保留 final，而不是继续保留 disabled entry state。
 
 ## 清空 Final Input 的语义
 
@@ -409,6 +412,21 @@ base 12 + 未归因差额 2 = 14
 
 如果用户想表达数值为 0，应输入 `0`，而不是清空。
 
+## 删除 Special Base 的语义
+
+`手动基础值` 和 `估算基础值` 可以删除，但删除 active base 后必须有明确后果：
+
+1. 如果还有其它 base 候选，自动顺延选择第一个可用 base 作为 active base。
+2. 如果顺延后的 reference total 与当前 numeric final 不一致，自动计算开启时创建或更新 `未归因差额`，保留当前 final。
+3. 如果没有任何 base 剩余，清空 active base。
+4. 没有任何 base 且当前 final 为空时，后续用户输入 numeric final 会创建新的 `手动基础值`。
+5. 没有任何 base 且当前 final 有 numeric value 时，不立刻覆盖 final；后续用户再次提交 numeric final 时，仍按“没有任何 base”的交互规则创建新的 `手动基础值`。
+
+这保持了两个原则：
+
+- base 是 reference total 的锚点，删除 base 后不能凭空计算 `未归因差额`。
+- 用户在空 target 上输入 numeric final，语义仍然是提供新的手动基础值。
+
 ## 开启自动计算的行为
 
 用户从关闭自动计算切换到开启自动计算时：
@@ -426,7 +444,9 @@ base 12 + 未归因差额 2 = 14
    - 不在这里把用户输入反推成 `final value - modifiers total`；用户输入的语义是提供基础锚点。
 4. 如果 final value 无法解析为数字：
    - 可以开启自动计算，但不做初始接管。
-   - 后续用户提交可解析数字，或来源系统变得可计算后，再执行 reconciliation。
+   - 只要 final value 仍不可解析，就暂停该 target 的 reconciliation。
+   - source 之后变得可计算，也不能覆盖这个不可解析 final。
+   - 只有用户再次提交可解析数字后，才执行 reconciliation。
 5. 开启后不因为用户编辑 final value 而自动关闭。
 
 这个行为的目标是：开启自动计算时优先保留用户已有 final value，并把无法解释的差额整理进来源系统。
@@ -446,8 +466,12 @@ base 12 + 未归因差额 2 = 14
 - 有 base 且 final 与 reference 不一致时，差额应进入 `未归因差额`。
 - 没有 base 但 final 有数字时，应创建或更新 `估算基础值`。
 - 如果迁移时已有 modifiers，`估算基础值 = legacy final value - modifiers total`，目标是保留老存档 final value 不变。
+- `估算基础值` 的 `kind = "base"`，label 固定为 `估算基础值`。
+- 迁移创建 `估算基础值` 后，应设为 active base。
+- 如果迁移时存在 base 候选但没有 active base，应先顺延选择第一个可用 base；只有完全没有 base entry 时，才创建 `估算基础值`。
 - 没有 final 或 final 不可解析时，不强行创建来源项。
 - 迁移后的 target 默认开启自动计算，因为旧自动化已经统一接入自动计算系统。
+- `hpMax` / `stressMax` 的默认 6 是展示 / 读取 fallback，不等于 legacy final。没有显式 legacy final 时，不因为 fallback 6 创建 `估算基础值`。
 
 这样老存档打开后，不会因为自动化系统接管而突然改变角色卡上的最终数值。
 
@@ -496,17 +520,19 @@ base 12 + 未归因差额 2 = 14
 11. 用户需要具名来源时，应创建普通自定义 modifier。
 12. 清空 final input 只删除 `未归因差额`，不删除 base。
 13. 清空不等于输入 0。
-14. 开启自动计算时优先保留当前 final value，把差额整理进来源系统，而不是直接覆盖 final。
+14. 开启自动计算时优先保留当前 final value，把差额整理进来源系统，而不是直接覆盖 final；例外是“无 base 的用户交互输入”，它被视为提供新的 `手动基础值`。
 15. 自动计算关闭时，底部 `未归因差额` 是只读提示。
 16. 自动计算开启后，`未归因差额` 应成为加值列表中的实体 modifier。
 17. 实体 `未归因差额` 可以由用户修改 value 或删除，但不能改 label。
 18. `未归因差额` 是 target-owned special modifier，不是 provider-owned 系统加值，也不是 user-owned 普通加值。
-19. 系统识别 `未归因差额` 必须依赖稳定 id / source type，不能依赖 label；用户创建同名普通加值不会冲突。
-20. 新 UI 不提供 entry 级启用 / 禁用能力；旧 `entryStates.enabled` 只作为兼容状态保留。
+19. 系统识别 `未归因差额` 必须依赖稳定 id / metadata，不能依赖 label；用户创建同名普通加值不会冲突。
+20. 新 UI 不提供 entry 级启用 / 禁用能力；v2 迁移应清理或忽略旧 `entryStates.enabled`。
 21. special contribution 概念上是 target-owned，但第一阶段可以复用 `userModifierContributions` 存储，通过稳定 id / metadata 区分普通用户来源。
 22. 用户交互输入在没有 base 时创建 `手动基础值`；老存档迁移在没有 base 时创建 `估算基础值`。
 23. 老存档迁移应默认开启自动计算，并通过 `未归因差额` / `估算基础值` 保留旧 final value。
-24. final value 不可解析为数字时，不接管、不清空、不创建来源项。
+24. final value 不可解析为数字时，不接管、不清空、不创建来源项；即使 source 后续可计算，也保持暂停直到用户提交可解析数字。
+25. 有 base 候选但没有 active base 时，应先顺延选择第一个可用 base；只有完全没有 base entry 时，才创建 special base。
+26. 删除 active special base 后，如果还有其它 base 候选则顺延；如果没有 base 剩余，则清空 active base，等待用户后续输入或 provider 提供 base。
 
 ## 已定稿的 UI 决策
 
@@ -514,6 +540,8 @@ base 12 + 未归因差额 2 = 14
 2. 移除普通 UI 中的 `同步` 按钮。一次同步只是开启自动计算或内部 reconciliation 的动作。
 3. 第一阶段所有 target 都接入 final input reconciliation。
 4. 非文本输入也接入同一模型。点击格子提交新 final value 时，等价于提交 final input。
-5. `hpMax` / `stressMax` 的默认值 6 保持现有行为，不在本设计中修改。
-6. `手动基础值` / `估算基础值` / `未归因差额` 在 popover 中可以用轻量标记区分，例如 `自动计算` 或 `系统保留`；不需要第一阶段引入复杂说明。
+5. `hpMax` / `stressMax` 的默认值 6 保持现有行为，不在本设计中修改；它只是 fallback，不作为迁移输入。
+6. `手动基础值` / `估算基础值` / `未归因差额` 在 popover 中可以用轻量标记区分，例如 `自动计算`；避免使用 `系统保留`，以免和 provider-owned 系统来源混淆。
 7. 系统来源不显示操作按钮；用户来源和 target-owned special 来源在同一位置显示删除按钮。
+8. `开启自动计算` / `关闭自动计算` 是动作文案。实现时应配合开关状态或状态标签，避免用户误解当前状态。
+9. 系统来源只读行应展示来源类型或简短提示，让用户知道需要去职业、装备、升级等来源侧修改。

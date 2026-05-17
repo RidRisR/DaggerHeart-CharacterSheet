@@ -23,7 +23,8 @@ import type {
     ModifierTargetId,
     UserModifierContribution,
 } from "@/lib/modifiers/types";
-import { applyContinuousTargetSync } from "@/lib/modifiers/target-sync";
+import { enableAutoCalculationForTarget } from "@/lib/modifiers/final-input-reconciliation";
+import { applyAutoCalculationForTargets } from "@/lib/modifiers/target-sync";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -430,7 +431,7 @@ export const useSheetStore = create<SheetState>((set) => ({
 
     // Threshold calculation actions
     updateLevel: (level) => set((state) => ({
-        sheetData: applyContinuousTargetSync({
+        sheetData: applyAutoCalculationForTargets({
             ...state.sheetData,
             level,
         }),
@@ -443,7 +444,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
 
         return {
-            sheetData: applyContinuousTargetSync({
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
                 equipment: {
                     ...state.sheetData.equipment,
@@ -457,7 +458,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         const baseArmorMax = parseArmorMax(baseArmorMaxText);
 
         return {
-            sheetData: applyContinuousTargetSync({
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
                 equipment: {
                     ...state.sheetData.equipment,
@@ -504,7 +505,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
 
         return {
-            sheetData: applyContinuousTargetSync({
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
                 equipment: {
                     ...state.sheetData.equipment,
@@ -523,7 +524,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             inventory[selection.index] = slot;
 
             return {
-                sheetData: applyContinuousTargetSync({
+                sheetData: applyAutoCalculationForTargets({
                     ...state.sheetData,
                     equipment: {
                         ...state.sheetData.equipment,
@@ -537,7 +538,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
 
         return {
-            sheetData: applyContinuousTargetSync({
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
                 equipment: {
                     ...state.sheetData.equipment,
@@ -551,7 +552,7 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     updateActiveWeaponSlot: (slotType, updates) => set((state) => ({
-        sheetData: applyContinuousTargetSync({
+        sheetData: applyAutoCalculationForTargets({
             ...state.sheetData,
             equipment: {
                 ...state.sheetData.equipment,
@@ -574,7 +575,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
 
         return {
-            sheetData: applyContinuousTargetSync({
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
                 equipment: {
                     ...state.sheetData.equipment,
@@ -588,7 +589,7 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     swapInventoryWeaponToActiveSlot: (index, targetType) => set((state) => ({
-        sheetData: applyContinuousTargetSync({
+        sheetData: applyAutoCalculationForTargets({
             ...state.sheetData,
             equipment: swapInventoryWeaponWithActiveSlot(state.sheetData.equipment, index, targetType),
         }),
@@ -629,7 +630,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             newCards[index] = emptyCard;
 
             return {
-                sheetData: applyContinuousTargetSync({
+                sheetData: applyAutoCalculationForTargets({
                     ...state.sheetData,
                     cards: newCards
                 })
@@ -703,7 +704,7 @@ export const useSheetStore = create<SheetState>((set) => ({
 
             success = true;
             return {
-                sheetData: applyContinuousTargetSync({
+                sheetData: applyAutoCalculationForTargets({
                     ...state.sheetData,
                     cards: newFocusedCards,
                     inventory_cards: newInventoryCards
@@ -866,7 +867,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             newCards[index] = card;
 
             return {
-                sheetData: applyContinuousTargetSync({
+                sheetData: applyAutoCalculationForTargets({
                     ...state.sheetData,
                     cards: newCards
                 })
@@ -884,7 +885,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         });
 
         return {
-            sheetData: applyContinuousTargetSync({
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
                 modifierState: {
                     ...modifierState,
@@ -895,13 +896,19 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     setTargetAutoCalculation: (target, enabled) => set((state) => {
+        if (enabled) {
+            return {
+                sheetData: enableAutoCalculationForTarget(state.sheetData, target),
+            };
+        }
+
         const modifierState = ensureModifierState(state.sheetData);
         const targetStates = { ...modifierState.targetStates };
         const currentTargetState = targetStates[target] ?? {};
 
         setTargetState(targetStates, target, {
             ...currentTargetState,
-            autoCalculation: enabled ? true : undefined,
+            autoCalculation: undefined,
         });
 
         return {
@@ -922,7 +929,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             : [...contributions, contribution];
 
         return {
-            sheetData: applyContinuousTargetSync({
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
                 userModifierContributions: nextContributions,
             }),
@@ -930,7 +937,7 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     removeUserModifierContribution: (entryId) => set((state) => ({
-        sheetData: applyContinuousTargetSync({
+        sheetData: applyAutoCalculationForTargets({
             ...state.sheetData,
             userModifierContributions: (state.sheetData.userModifierContributions ?? []).filter(
                 contribution => contribution.id !== entryId,
@@ -939,7 +946,7 @@ export const useSheetStore = create<SheetState>((set) => ({
     })),
 
     setAutomationSelection: (sourceId, selected, params) => set((state) => ({
-        sheetData: applyContinuousTargetSync({
+        sheetData: applyAutoCalculationForTargets({
             ...state.sheetData,
             automationSelections: {
                 ...(state.sheetData.automationSelections ?? {}),
@@ -956,7 +963,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         cards[0] = newProfessionCard ?? createEmptyCard();
 
         return {
-            sheetData: applyContinuousTargetSync({
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
                 profession: newProfessionRef?.id ?? "",
                 professionRef: newProfessionRef ?? { id: "", name: "" },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import { applyContinuousTargetSync, getTargetSyncFallbackValue, syncTargetOnce } from "@/lib/modifiers/target-sync"
+import { applyAutoCalculationForTargets } from "@/lib/modifiers/target-sync"
 import type { SheetData } from "@/lib/sheet-data"
 
 function sheet(overrides: Partial<SheetData> = {}): SheetData {
@@ -10,8 +10,8 @@ function sheet(overrides: Partial<SheetData> = {}): SheetData {
   }
 }
 
-describe("target sync helper", () => {
-  it("syncs a target once from its reference total", () => {
+describe("target auto calculation helper", () => {
+  it("writes auto calculation target from its reference total", () => {
     const data = sheet({
       evasion: "10",
       userModifierContributions: [
@@ -27,70 +27,43 @@ describe("target sync helper", () => {
         },
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: true } },
         entryStates: {},
       },
     })
 
-    const result = syncTargetOnce(data, "evasion")
+    const result = applyAutoCalculationForTargets(data)
 
-    expect(result.applied).toBe(true)
-    expect(result.sheetData.evasion).toBe("13")
+    expect(result.evasion).toBe("13")
   })
 
-  it("does not sync once when target has no active base", () => {
+  it("does not write non-auto targets", () => {
     const data = sheet({
       evasion: "10",
-      userModifierContributions: [
-        {
-          id: "user:evasion-mod",
-          definition: { target: "evasion", kind: "modifier" },
-          editable: { label: "Mod", value: 1 },
-        },
-      ],
-      modifierState: { targetStates: {}, entryStates: {} },
-    })
-
-    const result = syncTargetOnce(data, "evasion")
-
-    expect(result.applied).toBe(false)
-    expect(result.sheetData).toBe(data)
-  })
-
-  it("applies continuous sync for all auto calculation targets", () => {
-    const data = sheet({
-      evasion: "10",
-      hpMax: 6,
       userModifierContributions: [
         {
           id: "user:evasion-base",
           definition: { target: "evasion", kind: "base" },
           editable: { label: "Base", value: 12 },
-        },
-        {
-          id: "user:hp-base",
-          definition: { target: "hpMax", kind: "base" },
-          editable: { label: "HP", value: 7 },
         },
       ],
       modifierState: {
         targetStates: {
-          evasion: { activeBaseId: "user:evasion-base", autoCalculation: true },
-          hpMax: { activeBaseId: "user:hp-base" },
+          evasion: { activeBaseId: "user:evasion-base" },
         },
         entryStates: {},
       },
     })
 
-    const result = applyContinuousTargetSync(data)
+    const result = applyAutoCalculationForTargets(data)
 
-    expect(result.evasion).toBe("12")
-    expect(result.hpMax).toBe(6)
+    expect(result).toBe(data)
+    expect(result.evasion).toBe("10")
   })
 
-  it("applies continuous sync for legacy continuous targets", () => {
+  it("does not overwrite non-numeric current finals", () => {
     const data = sheet({
-      evasion: "10",
+      evasion: "12+敏捷",
       userModifierContributions: [
         {
           id: "user:evasion-base",
@@ -100,18 +73,19 @@ describe("target sync helper", () => {
       ],
       modifierState: {
         targetStates: {
-          evasion: { activeBaseId: "user:evasion-base", syncMode: "continuous" },
+          evasion: { activeBaseId: "user:evasion-base", autoCalculation: true },
         },
         entryStates: {},
       },
-    } as any)
+    })
 
-    const result = applyContinuousTargetSync(data)
+    const result = applyAutoCalculationForTargets(data)
 
-    expect(result.evasion).toBe("12")
+    expect(result).toBe(data)
+    expect(result.evasion).toBe("12+敏捷")
   })
 
-  it("uses fallback when auto calculation target has no base", () => {
+  it("keeps existing values without fallback when auto target has no reference total", () => {
     const data = sheet({
       evasion: "10",
       hpMax: 9,
@@ -128,15 +102,16 @@ describe("target sync helper", () => {
       },
     })
 
-    const result = applyContinuousTargetSync(data)
+    const result = applyAutoCalculationForTargets(data)
 
-    expect(result.evasion).toBe("")
-    expect(result.hpMax).toBe(6)
-    expect(result.stressMax).toBe(6)
-    expect(result.armorMax).toBe("")
+    expect(result).toBe(data)
+    expect(result.evasion).toBe("10")
+    expect(result.hpMax).toBe(9)
+    expect(result.stressMax).toBe(8)
+    expect(result.armorMax).toBe(3)
   })
 
-  it("returns the same object when no synced value changes", () => {
+  it("returns the same object when no auto value changes", () => {
     const data = sheet({
       evasion: "12",
       userModifierContributions: [
@@ -152,16 +127,6 @@ describe("target sync helper", () => {
       },
     })
 
-    expect(applyContinuousTargetSync(data)).toBe(data)
-  })
-
-  it("defines fallback values for known target families", () => {
-    expect(getTargetSyncFallbackValue("agility.value")).toBe("")
-    expect(getTargetSyncFallbackValue("experienceValues.0")).toBe("")
-    expect(getTargetSyncFallbackValue("minorThreshold")).toBe("")
-    expect(getTargetSyncFallbackValue("hpMax")).toBe(6)
-    expect(getTargetSyncFallbackValue("stressMax")).toBe(6)
-    expect(getTargetSyncFallbackValue("armorMax")).toBe("")
-    expect(getTargetSyncFallbackValue("proficiency")).toBeUndefined()
+    expect(applyAutoCalculationForTargets(data)).toBe(data)
   })
 })

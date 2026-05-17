@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { createEmptyCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
+import { getUnattributedDeltaId } from "@/lib/modifiers/special-contributions"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
 describe("modifier store actions", () => {
@@ -57,8 +58,16 @@ describe("modifier store actions", () => {
     })
   })
 
-  it("sets target auto calculation while preserving active base", () => {
+  it("enables target auto calculation by preserving current final with unattributed delta", () => {
     resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
       modifierState: {
         targetStates: {
           evasion: { activeBaseId: "user:evasion-base" },
@@ -69,9 +78,15 @@ describe("modifier store actions", () => {
 
     store().setTargetAutoCalculation("evasion", true)
 
+    expect(sheet().evasion).toBe("15")
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "user:evasion-base",
       autoCalculation: true,
+    })
+    expect(sheet().userModifierContributions).toContainEqual({
+      id: getUnattributedDeltaId("evasion"),
+      definition: { target: "evasion", kind: "modifier" },
+      editable: { label: "未归因差额", value: 3 },
     })
   })
 
@@ -123,6 +138,38 @@ describe("modifier store actions", () => {
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "user:evasion-base",
     })
+  })
+
+  it("does not overwrite final from source changes after disabling auto calculation", () => {
+    resetSheetStore({
+      evasion: "14",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().setTargetAutoCalculation("evasion", false)
+    store().upsertUserModifierContribution({
+      id: "user:evasion-mod",
+      definition: { target: "evasion", kind: "modifier" },
+      editable: { label: "Mod", value: 4 },
+    })
+
+    expect(sheet().evasion).toBe("14")
+    expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBeUndefined()
   })
 
   it("drops legacy sync mode when toggling target auto calculation off", () => {

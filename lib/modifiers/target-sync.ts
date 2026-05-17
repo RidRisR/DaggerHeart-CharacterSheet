@@ -30,9 +30,19 @@ function isContinuousState(state: TargetModifierState | undefined): boolean {
   return state?.autoCalculation === true || legacyState?.syncMode === "continuous"
 }
 
+function isAutoCalculationState(state: TargetModifierState | undefined): boolean {
+  return state?.autoCalculation === true
+}
+
 function continuousTargets(sheetData: SheetData): ModifierTargetId[] {
   return Object.entries(sheetData.modifierState?.targetStates ?? {})
     .filter(([, state]) => isContinuousState(state))
+    .map(([target]) => target as ModifierTargetId)
+}
+
+function autoCalculationTargets(sheetData: SheetData): ModifierTargetId[] {
+  return Object.entries(sheetData.modifierState?.targetStates ?? {})
+    .filter(([, state]) => isAutoCalculationState(state))
     .map(([target]) => target as ModifierTargetId)
 }
 
@@ -73,6 +83,24 @@ export function applyContinuousTargetSync(sheetData: SheetData): SheetData {
 
   continuousTargets(sheetData).forEach(target => {
     const desiredValue = desiredContinuousValue(next, target)
+    if (desiredValue === undefined) return
+    if (isSameTargetValue(readTargetValue(next, target), desiredValue)) return
+
+    next = writeTargetValueFromSync(next, target, desiredValue)
+    changed = true
+  })
+
+  return changed ? next : sheetData
+}
+
+export function applyAutoCalculationForTargets(sheetData: SheetData): SheetData {
+  let next = sheetData
+  let changed = false
+
+  autoCalculationTargets(sheetData).forEach(target => {
+    if (tryParseNumber(readTargetValue(next, target)) === undefined) return
+
+    const desiredValue = getReferenceSummary(next, target).referenceTotal
     if (desiredValue === undefined) return
     if (isSameTargetValue(readTargetValue(next, target), desiredValue)) return
 

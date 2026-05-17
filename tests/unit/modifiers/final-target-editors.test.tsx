@@ -238,6 +238,30 @@ describe("final target editors", () => {
     )
   })
 
+  it("rejects HP max input with a numeric prefix without keeping the prefix", async () => {
+    resetSheetStore({ hpMax: 6 })
+
+    render(<HitPointsSection />)
+    const input = screen.getAllByDisplayValue("6")[0]
+    await userEvent.clear(input)
+    await userEvent.type(input, "7a")
+    await userEvent.tab()
+
+    expect(sheet().hpMax).toBe(6)
+  })
+
+  it("rejects HP max commits above the rendered box limit", async () => {
+    resetSheetStore({ hpMax: 6 })
+
+    render(<HitPointsSection />)
+    const input = screen.getAllByDisplayValue("6")[0]
+    await userEvent.clear(input)
+    await userEvent.type(input, "19")
+    await userEvent.tab()
+
+    expect(sheet().hpMax).toBe(6)
+  })
+
   it("clamps checked stress boxes when stress max is decremented below the current checked count", async () => {
     resetSheetStore({
       stress: Array(18).fill(false).map((_, index) => index < 6),
@@ -283,5 +307,20 @@ describe("final target editors", () => {
     expect(sheet().userModifierContributions).not.toContainEqual(
       expect.objectContaining({ id: getUnattributedDeltaId("stressMax") }),
     )
+  })
+
+  it("rejects stress max input with a numeric prefix without keeping the prefix", async () => {
+    resetSheetStore({
+      hpMax: 7,
+      stressMax: 6,
+    })
+
+    render(<HitPointsSection />)
+    const input = screen.getByDisplayValue("6")
+    await userEvent.clear(input)
+    await userEvent.type(input, "7a")
+    await userEvent.tab()
+
+    expect(sheet().stressMax).toBe(6)
   })
 })

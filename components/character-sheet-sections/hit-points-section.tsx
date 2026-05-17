@@ -30,10 +30,14 @@ export function HitPointsSection() {
 
   const handleMaxChange = (field: "hp" | "stress", value: string, commit = false) => {
     const maxField = `${field}Max` as "hpMax" | "stressMax"
-    const currentField = field
 
     if (commit) {
-      commitModifierTargetValue(maxField, value)
+      if (/^\d+$/.test(value)) {
+        const intValue = parseInt(value) || 0
+        if (intValue <= 18) {
+          commitModifierTargetValue(maxField, intValue)
+        }
+      }
       setMaxDrafts((prev) => {
         const next = { ...prev }
         delete next[maxField]
@@ -43,30 +47,6 @@ export function HitPointsSection() {
     }
 
     setMaxDrafts((prev) => ({ ...prev, [maxField]: value }))
-
-    // Only allow numeric input
-    if (!/^\d+$/.test(value)) return
-
-    const intValue = parseInt(value) || 0
-    // Enforce max limits
-    const maxLimit = 18
-    if (intValue > maxLimit) return
-
-    setSheetData((prev) => {
-      const newSheetData = { ...prev, [maxField]: intValue }
-      const currentArray = (newSheetData[currentField] as boolean[]) || []
-      const checkedCount = currentArray.filter(Boolean).length
-
-      if (checkedCount > intValue) {
-        const newArray = Array(currentArray.length).fill(false)
-        for (let i = 0; i < intValue; i++) {
-          newArray[i] = true
-        }
-        newSheetData[currentField] = newArray
-      }
-
-      return newSheetData
-    })
   }
 
   const maxInputValue = (field: "hp" | "stress") => {

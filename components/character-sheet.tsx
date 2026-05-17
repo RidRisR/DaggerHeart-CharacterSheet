@@ -209,15 +209,6 @@ export default function CharacterSheet() {
 
     if (name === "armorMax") {
       setArmorMaxDraft(value)
-
-      if (value === "") return
-
-      const parsedValue = parseNumberExpressionOr(value, Number.NaN)
-      if (Number.isNaN(parsedValue)) return
-
-      setFormData((prev) => {
-        return { ...prev, armorMax: parsedValue };
-      })
       return
     }
 

@@ -15,6 +15,7 @@ describe("CharacterSheet equipment fields", () => {
 
     await user.clear(input!)
     await user.type(input!, "5")
+    await user.tab()
 
     expect(sheet().armorMax).toBe(5)
   })
@@ -29,6 +30,21 @@ describe("CharacterSheet equipment fields", () => {
 
     await user.clear(input!)
     await user.type(input!, "abc")
+    await user.tab()
+
+    expect(sheet().armorMax).toBe(3)
+  })
+
+  it("rejects armor max input with a numeric prefix without keeping the prefix", async () => {
+    const user = userEvent.setup()
+    resetSheetStore({ armorMax: 3 })
+
+    const { container } = render(<CharacterSheet />)
+    const input = container.querySelector<HTMLInputElement>('input[name="armorMax"]')
+    expect(input).toBeTruthy()
+
+    await user.clear(input!)
+    await user.type(input!, "4x")
     await user.tab()
 
     expect(sheet().armorMax).toBe(3)

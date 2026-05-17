@@ -68,7 +68,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
     })
   })
 
-  describe("连续熟练度同步", () => {
+  describe("自动计算熟练度同步", () => {
     it.each([
       ["2", [true, true, false, false, false, false]],
       ["5", [true, true, true, false, false, false]],
@@ -81,7 +81,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
           targetStates: {
             proficiency: {
               activeBaseId: "level:base:proficiency",
-              syncMode: "continuous",
+              autoCalculation: true,
             },
           },
           entryStates: {},
@@ -95,8 +95,8 @@ describe("等级升级 - 熟练度提升逻辑", () => {
     })
   })
 
-  describe("连续伤害阈值同步", () => {
-    it("护甲基础阈值为活动基础且阈值连续同步时，等级变化同步护甲基础值加等级修正", () => {
+  describe("自动计算伤害阈值同步", () => {
+    it("护甲基础阈值为活动基础且阈值自动计算时，等级变化同步护甲基础值加等级修正", () => {
       resetSheetStore({
         level: "1",
         equipment: equipmentWithArmorThresholds(3, 6),
@@ -106,11 +106,11 @@ describe("等级升级 - 熟练度提升逻辑", () => {
           targetStates: {
             minorThreshold: {
               activeBaseId: "equipment:armor:current:minorThreshold",
-              syncMode: "continuous",
+              autoCalculation: true,
             },
             majorThreshold: {
               activeBaseId: "equipment:armor:current:majorThreshold",
-              syncMode: "continuous",
+              autoCalculation: true,
             },
           },
           entryStates: {},
@@ -124,7 +124,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
       expect(sheet().majorThreshold).toBe("11")
     })
 
-    it("护甲基础阈值为空时，连续同步按阈值目标回退为空值", () => {
+    it("护甲基础阈值为空时，自动计算按阈值目标回退为空值", () => {
       resetSheetStore({
         level: "1",
         equipment: equipmentWithArmorThresholds(null, null),
@@ -134,11 +134,11 @@ describe("等级升级 - 熟练度提升逻辑", () => {
           targetStates: {
             minorThreshold: {
               activeBaseId: "equipment:armor:current:minorThreshold",
-              syncMode: "continuous",
+              autoCalculation: true,
             },
             majorThreshold: {
               activeBaseId: "equipment:armor:current:majorThreshold",
-              syncMode: "continuous",
+              autoCalculation: true,
             },
           },
           entryStates: {},
@@ -170,7 +170,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
       expect(sheet().majorThreshold).toBe("11")
     })
 
-    it.each(["", "abc"])("连续模式更新为 %s 时，未产生等级熟练度但阈值按活动护甲基础回退", (level) => {
+    it.each(["", "abc"])("自动计算模式更新为 %s 时，未产生等级熟练度但阈值按活动护甲基础回退", (level) => {
       resetSheetStore({
         level: "5",
         proficiency: [true, true, true, false, false, false],
@@ -181,15 +181,15 @@ describe("等级升级 - 熟练度提升逻辑", () => {
           targetStates: {
             proficiency: {
               activeBaseId: "level:base:proficiency",
-              syncMode: "continuous",
+              autoCalculation: true,
             },
             minorThreshold: {
               activeBaseId: "equipment:armor:current:minorThreshold",
-              syncMode: "continuous",
+              autoCalculation: true,
             },
             majorThreshold: {
               activeBaseId: "equipment:armor:current:majorThreshold",
-              syncMode: "continuous",
+              autoCalculation: true,
             },
           },
           entryStates: {},

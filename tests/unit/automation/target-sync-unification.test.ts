@@ -48,7 +48,7 @@ describe("target sync automation unification", () => {
     expect(sheet().evasion).toBe("12")
   })
 
-  it("syncs weapon contribution into evasion while target is continuous", () => {
+  it("syncs weapon contribution into evasion while target uses auto calculation", () => {
     const giantSword = primaryWeapons.find(item => item.id === "builtin.weapon.primary.004")
     expect(giantSword).toBeTruthy()
 
@@ -63,7 +63,7 @@ describe("target sync automation unification", () => {
         targetStates: {
           evasion: {
             activeBaseId: "user:evasion-base",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},
@@ -101,7 +101,7 @@ describe("target sync automation unification", () => {
     expect(sheet().evasion).toBe("12")
   })
 
-  it("syncs upgrade source selection into evasion while target is continuous", () => {
+  it("syncs upgrade source selection into evasion while target uses auto calculation", () => {
     resetSheetStore({
       evasion: "12",
       userModifierContributions: [{
@@ -113,7 +113,7 @@ describe("target sync automation unification", () => {
         targetStates: {
           evasion: {
             activeBaseId: "user:evasion-base",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},
@@ -148,7 +148,7 @@ describe("target sync automation unification", () => {
     expect(sheet().majorThreshold).toBe("old-major")
   })
 
-  it("syncs armor source into final armor targets while targets are continuous", () => {
+  it("syncs armor source into final armor targets while targets use auto calculation", () => {
     const armor = armorItems.find(item => item.id === "builtin.armor.chainmail")
     expect(armor).toBeTruthy()
 
@@ -161,15 +161,15 @@ describe("target sync automation unification", () => {
         targetStates: {
           armorMax: {
             activeBaseId: "equipment:armor:current:armorMax",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
           minorThreshold: {
             activeBaseId: "equipment:armor:current:minorThreshold",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
           majorThreshold: {
             activeBaseId: "equipment:armor:current:majorThreshold",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},
@@ -199,7 +199,7 @@ describe("target sync automation unification", () => {
     expect(sheet().hpMax).toBe(6)
   })
 
-  it("syncs profession source into final targets while targets are continuous", () => {
+  it("syncs profession source into final targets while targets use auto calculation", () => {
     resetSheetStore({
       level: "1",
       evasion: "9",
@@ -208,11 +208,11 @@ describe("target sync automation unification", () => {
         targetStates: {
           evasion: {
             activeBaseId: "profession:current:evasion",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
           hpMax: {
             activeBaseId: "profession:current:hpMax",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},
@@ -228,7 +228,7 @@ describe("target sync automation unification", () => {
     expect(sheet().hpMax).toBe(7)
   })
 
-  it("falls back continuous profession targets when profession is cleared", () => {
+  it("falls back auto calculation profession targets when profession is cleared", () => {
     resetSheetStore({
       level: "1",
       evasion: "12",
@@ -241,11 +241,11 @@ describe("target sync automation unification", () => {
         targetStates: {
           evasion: {
             activeBaseId: "profession:current:evasion",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
           hpMax: {
             activeBaseId: "profession:current:hpMax",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},
@@ -281,7 +281,7 @@ describe("target sync automation unification", () => {
     expect(sheet().majorThreshold).toBe("manual-major")
   })
 
-  it("syncs level source into proficiency and thresholds while targets are continuous", () => {
+  it("syncs level source into proficiency and thresholds while targets use auto calculation", () => {
     resetSheetStore({
       level: "1",
       proficiency: [false, false, false, false, false, false],
@@ -298,15 +298,15 @@ describe("target sync automation unification", () => {
         targetStates: {
           proficiency: {
             activeBaseId: "level:base:proficiency",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
           minorThreshold: {
             activeBaseId: "equipment:armor:current:minorThreshold",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
           majorThreshold: {
             activeBaseId: "equipment:armor:current:majorThreshold",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},
@@ -332,7 +332,7 @@ describe("target sync automation unification", () => {
         targetStates: {
           evasion: {
             activeBaseId: "user:evasion-base",
-            syncMode: "continuous",
+            autoCalculation: true,
           },
         },
         entryStates: {},

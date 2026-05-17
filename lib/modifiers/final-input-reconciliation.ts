@@ -8,6 +8,7 @@ import {
   getUnattributedDeltaId,
 } from "./special-contributions"
 import { readTargetValue, writeTargetValue } from "./target-accessors"
+import { isTargetAutoCalculationEnabled } from "./target-sync"
 import type { ModifierContribution, ModifierEntryId, ModifierTargetId, TargetModifierState } from "./types"
 
 function withoutUnattributedDelta(sheetData: SheetData, target: ModifierTargetId): SheetData {
@@ -46,7 +47,7 @@ function writeTargetState(
 ): SheetData {
   const nextState: TargetModifierState = {}
   if (targetState.activeBaseId !== undefined) nextState.activeBaseId = targetState.activeBaseId
-  if (targetState.autoCalculation === true) nextState.autoCalculation = true
+  if (targetState.autoCalculation !== undefined) nextState.autoCalculation = targetState.autoCalculation
 
   const targetStates = { ...(sheetData.modifierState?.targetStates ?? {}) }
   if (Object.keys(nextState).length === 0) {
@@ -68,7 +69,7 @@ function reconcileDeltaForNumericFinal(
   sheetData: SheetData,
   target: ModifierTargetId,
   finalValue: number,
-  autoCalculation: true | undefined,
+  autoCalculation: boolean | undefined,
 ): SheetData {
   const summary = getReferenceSummary(withoutUnattributedDelta(sheetData, target), target)
   const activeBase = summary.activeBase ?? summary.bases[0]
@@ -170,7 +171,7 @@ export function deleteSpecialBase(
     autoCalculation,
   })
 
-  if (finalValue === undefined || autoCalculation !== true) return withState
+  if (finalValue === undefined || !isTargetAutoCalculationEnabled(sheetData.modifierState?.targetStates?.[target])) return withState
 
   return reconcileDeltaForNumericFinal(withState, target, finalValue, true)
 }

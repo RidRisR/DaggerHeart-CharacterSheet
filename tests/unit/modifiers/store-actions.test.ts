@@ -123,6 +123,35 @@ describe("modifier store actions", () => {
     expect(sheet().evasion).toBe("14")
   })
 
+  it("applies auto calculation by default when modifier sources change", () => {
+    resetSheetStore({
+      evasion: "10",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().upsertUserModifierContribution({
+      id: "user:evasion-mod",
+      definition: { target: "evasion", kind: "modifier" },
+      editable: { label: "Mod", value: 2 },
+    })
+
+    expect(sheet().evasion).toBe("14")
+  })
+
   it("toggles target auto calculation off cleanly", () => {
     resetSheetStore({
       modifierState: {
@@ -140,6 +169,7 @@ describe("modifier store actions", () => {
 
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "user:evasion-base",
+      autoCalculation: false,
     })
   })
 
@@ -172,7 +202,7 @@ describe("modifier store actions", () => {
     })
 
     expect(sheet().evasion).toBe("14")
-    expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBeUndefined()
+    expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBe(false)
   })
 
   it("drops legacy sync mode when toggling target auto calculation off", () => {
@@ -192,9 +222,9 @@ describe("modifier store actions", () => {
 
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "user:evasion-base",
+      autoCalculation: false,
     })
     expect(sheet().modifierState?.targetStates.evasion).not.toHaveProperty("syncMode")
-    expect(sheet().modifierState?.targetStates.evasion).not.toHaveProperty("autoCalculation")
   })
 
   it("applies auto calculation after level changes update system entries", () => {
@@ -298,7 +328,7 @@ describe("modifier store actions", () => {
       userModifierContributions: [],
       modifierState: {
         targetStates: {
-          evasion: {},
+          evasion: { autoCalculation: false },
         },
         entryStates: {},
       },

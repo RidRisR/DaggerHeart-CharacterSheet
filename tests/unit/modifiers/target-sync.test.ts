@@ -37,7 +37,7 @@ describe("target auto calculation helper", () => {
     expect(result.evasion).toBe("13")
   })
 
-  it("does not write non-auto targets", () => {
+  it("writes targets by default when auto calculation state is missing", () => {
     const data = sheet({
       evasion: "10",
       userModifierContributions: [
@@ -50,6 +50,29 @@ describe("target auto calculation helper", () => {
       modifierState: {
         targetStates: {
           evasion: { activeBaseId: "user:evasion-base" },
+        },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result.evasion).toBe("12")
+  })
+
+  it("does not write explicitly disabled auto calculation targets", () => {
+    const data = sheet({
+      evasion: "10",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: "user:evasion-base", autoCalculation: false },
         },
         entryStates: {},
       },

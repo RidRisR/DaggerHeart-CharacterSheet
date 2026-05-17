@@ -1,18 +1,26 @@
 import { tryParseNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import { applyHpStressMaxInvariant } from "./hp-stress-invariants"
-import { getReferenceSummary } from "./registry"
+import { collectModifierEntries, getReferenceSummary } from "./registry"
 import { readTargetValue, writeTargetValue } from "./target-accessors"
 import type { ModifierTargetId, TargetModifierState } from "./types"
 
-function isAutoCalculationState(state: TargetModifierState | undefined): boolean {
-  return state?.autoCalculation === true
+export function isTargetAutoCalculationEnabled(state: TargetModifierState | undefined): boolean {
+  return state?.autoCalculation !== false
 }
 
 function autoCalculationTargets(sheetData: SheetData): ModifierTargetId[] {
-  return Object.entries(sheetData.modifierState?.targetStates ?? {})
-    .filter(([, state]) => isAutoCalculationState(state))
-    .map(([target]) => target as ModifierTargetId)
+  const targets = new Set<ModifierTargetId>()
+  collectModifierEntries(sheetData).forEach(entry => {
+    targets.add(entry.definition.target)
+  })
+  Object.keys(sheetData.modifierState?.targetStates ?? {}).forEach(target => {
+    targets.add(target as ModifierTargetId)
+  })
+
+  return [...targets].filter(target => (
+    isTargetAutoCalculationEnabled(sheetData.modifierState?.targetStates?.[target])
+  ))
 }
 
 function isSameTargetValue(currentValue: unknown, desiredValue: number | string): boolean {

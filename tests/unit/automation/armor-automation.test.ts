@@ -15,6 +15,14 @@ describe("护甲自动化基线", () => {
       armorMax: 1,
       minorThreshold: "manual-minor",
       majorThreshold: "manual-major",
+      modifierState: {
+        targetStates: {
+          armorMax: { autoCalculation: false },
+          minorThreshold: { autoCalculation: false },
+          majorThreshold: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     store().selectArmor(armor!.id)
@@ -37,6 +45,14 @@ describe("护甲自动化基线", () => {
       armorMax: 2,
       minorThreshold: "manual-minor",
       majorThreshold: "manual-major",
+      modifierState: {
+        targetStates: {
+          armorMax: { autoCalculation: false },
+          minorThreshold: { autoCalculation: false },
+          majorThreshold: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
     const customArmor = JSON.stringify({
       名称: "自定义护甲",
@@ -94,6 +110,12 @@ describe("护甲自动化基线", () => {
         },
       },
       armorMax: 3,
+      modifierState: {
+        targetStates: {
+          armorMax: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     store().updateArmorBaseMax("6")

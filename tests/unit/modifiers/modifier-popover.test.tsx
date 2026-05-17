@@ -113,7 +113,7 @@ describe("ModifierFieldAnchor", () => {
         userContribution("user:evasion-mod", "evasion", "modifier", "临时加值", 1),
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: false } },
         entryStates: {},
       },
     })
@@ -173,7 +173,7 @@ describe("ModifierFieldAnchor", () => {
         userContribution("user:evasion-base-14", "evasion", "base", "基础 14", 14),
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base-12" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base-12", autoCalculation: false } },
         entryStates: {},
       },
     })
@@ -188,7 +188,15 @@ describe("ModifierFieldAnchor", () => {
   })
 
   it("adds a manual base without changing the final value", async () => {
-    resetSheetStore({ evasion: "15" })
+    resetSheetStore({
+      evasion: "15",
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
+    })
 
     render(<ModifierFieldAnchor target="evasion" label="闪避" />)
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
@@ -218,7 +226,7 @@ describe("ModifierFieldAnchor", () => {
         userContribution("user:evasion-base", "evasion", "base", "基础", 12),
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: false } },
         entryStates: {},
       },
     })
@@ -255,7 +263,7 @@ describe("ModifierFieldAnchor", () => {
         userContribution("user:evasion-base-other", "evasion", "base", "备用基础", 14),
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base-active" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base-active", autoCalculation: false } },
         entryStates: {},
       },
     })
@@ -277,7 +285,7 @@ describe("ModifierFieldAnchor", () => {
         userContribution("user:evasion-base", "evasion", "base", "基础", 12),
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: false } },
         entryStates: {},
       },
     })
@@ -327,7 +335,7 @@ describe("ModifierFieldAnchor", () => {
         userContribution("user:evasion-disabled", "evasion", "modifier", "停用加值", 2),
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: false } },
         entryStates: { "user:evasion-disabled": { enabled: false } },
       },
     })
@@ -351,7 +359,7 @@ describe("ModifierFieldAnchor", () => {
         userContribution("user:evasion-base", "evasion", "base", "手动基础闪避", 12),
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: false } },
         entryStates: {},
       },
     })
@@ -380,7 +388,7 @@ describe("ModifierFieldAnchor", () => {
         userContribution("user:evasion-base", "evasion", "base", "手动基础闪避", 12),
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: false } },
         entryStates: {},
       },
     })
@@ -409,7 +417,7 @@ describe("ModifierFieldAnchor", () => {
         userContribution("user:evasion-base", "evasion", "base", "Base", 12),
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: false } },
         entryStates: {},
       },
     })

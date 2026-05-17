@@ -28,7 +28,7 @@ import {
     enableAutoCalculationForTarget,
     reconcileFinalInput,
 } from "@/lib/modifiers/final-input-reconciliation";
-import { applyAutoCalculationForTargets } from "@/lib/modifiers/target-sync";
+import { applyAutoCalculationForTargets, isTargetAutoCalculationEnabled } from "@/lib/modifiers/target-sync";
 import { writeTargetValue } from "@/lib/modifiers/target-accessors";
 import { tryParseNumber } from "@/lib/number-utils";
 import { applyHpStressMaxInvariant } from "@/lib/modifiers/hp-stress-invariants";
@@ -179,13 +179,13 @@ const ensureModifierState = (sheetData: SheetData) => ({
     },
 });
 
-const cleanupTargetState = (state: { activeBaseId?: ModifierEntryId; autoCalculation?: true }) => {
-    const next: { activeBaseId?: ModifierEntryId; autoCalculation?: true } = {};
+const cleanupTargetState = (state: { activeBaseId?: ModifierEntryId; autoCalculation?: boolean }) => {
+    const next: { activeBaseId?: ModifierEntryId; autoCalculation?: boolean } = {};
     if (state.activeBaseId) {
         next.activeBaseId = state.activeBaseId;
     }
-    if (state.autoCalculation === true) {
-        next.autoCalculation = true;
+    if (state.autoCalculation !== undefined) {
+        next.autoCalculation = state.autoCalculation;
     }
     return Object.keys(next).length > 0 ? next : undefined;
 };
@@ -193,7 +193,7 @@ const cleanupTargetState = (state: { activeBaseId?: ModifierEntryId; autoCalcula
 const setTargetState = (
     targetStates: ReturnType<typeof ensureModifierState>["targetStates"],
     target: ModifierTargetId,
-    nextState: { activeBaseId?: ModifierEntryId; autoCalculation?: true },
+    nextState: { activeBaseId?: ModifierEntryId; autoCalculation?: boolean },
 ) => {
     const cleaned = cleanupTargetState(nextState);
     if (cleaned) {
@@ -388,7 +388,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             finalCount = index + 1;
         }
 
-        const autoCalculation = state.sheetData.modifierState?.targetStates?.proficiency?.autoCalculation === true;
+        const autoCalculation = isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.proficiency);
         if (autoCalculation) {
             return {
                 sheetData: reconcileFinalInput(state.sheetData, "proficiency", finalCount),
@@ -445,7 +445,7 @@ export const useSheetStore = create<SheetState>((set) => ({
     })),
 
     updateHPMax: (value) => set((state) => {
-        const autoCalculation = state.sheetData.modifierState?.targetStates?.hpMax?.autoCalculation === true;
+        const autoCalculation = isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.hpMax);
         const nextSheetData = autoCalculation
             ? reconcileFinalInput(state.sheetData, "hpMax", value)
             : writeTargetValue(state.sheetData, "hpMax", value);
@@ -455,7 +455,7 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     updateStressMax: (value) => set((state) => {
-        const autoCalculation = state.sheetData.modifierState?.targetStates?.stressMax?.autoCalculation === true;
+        const autoCalculation = isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.stressMax);
         const nextSheetData = autoCalculation
             ? reconcileFinalInput(state.sheetData, "stressMax", value)
             : writeTargetValue(state.sheetData, "stressMax", value);
@@ -943,7 +943,7 @@ export const useSheetStore = create<SheetState>((set) => ({
 
         setTargetState(targetStates, target, {
             ...currentTargetState,
-            autoCalculation: undefined,
+            autoCalculation: false,
         });
 
         return {
@@ -958,7 +958,7 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     commitModifierTargetValue: (target, value) => set((state) => {
-        const autoCalculation = state.sheetData.modifierState?.targetStates?.[target]?.autoCalculation === true;
+        const autoCalculation = isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.[target]);
         const finalValue = tryParseNumber(value);
         const storesRawText = canStoreRawFinalText(target);
 

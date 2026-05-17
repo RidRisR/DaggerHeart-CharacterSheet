@@ -37,6 +37,8 @@ provider entries
 
 内部状态也应表达为“自动计算是否开启”。一次性同步只是开启自动计算或执行内部 reconciliation 时的动作，不应成为持久化 mode。
 
+默认语义应是：所有存档、所有 target 默认开启自动计算。持久化状态中缺少 `autoCalculation` 不代表关闭，而代表使用默认开启。只有显式写入 `autoCalculation: false`，才表示用户对该 target 关闭自动计算。
+
 ## 兼容边界
 
 本设计只需要兼容已经发布过的存档状态：
@@ -58,6 +60,7 @@ provider entries
 
 当某个 target 的自动计算关闭时：
 
+- 存档里必须有显式关闭状态，例如 `modifierState.targetStates[target].autoCalculation === false`。
 - 用户编辑 final input，就是直接编辑最终值。
 - 系统不整理来源。
 - 系统不创建 base 或 modifier。
@@ -70,6 +73,7 @@ provider entries
 
 当某个 target 的自动计算开启时：
 
+- 这是默认状态；target 没有持久化状态时也应视为开启。
 - 开启瞬间应先接管当前 final value，而不是直接用 reference total 覆盖。
 - 如果当前 final value 与来源系统计算值不同，差额会进入专用来源项。
 - source 变化会持续同步到 final value。
@@ -525,29 +529,31 @@ base 12 + 未归因差额 2 = 14
 1. 用户直接编辑 final value 是合理行为，不应简单视为错误或 override。
 2. UI 不应主要暴露“一次同步 / 持续同步”概念。
 3. 用户侧只需要理解“自动计算关闭 / 开启”。
-4. 自动计算关闭时，final input 只写最终值。
-5. 自动计算开启时，final input 必须接入来源系统。
-6. 自动计算开启时，如果没有 base，用户输入创建或更新 `手动基础值`。
-7. 自动计算开启时，如果已有 base，用户输入创建或更新 `未归因差额`。
-8. `未归因差额` 每个 target 最多一个，重复编辑更新同一项。
-9. 计算 `未归因差额` 时必须排除旧的 `未归因差额` 自身。
-10. `手动基础值`、`估算基础值` 和 `未归因差额` 的 label 固定，value 可改。
-11. 用户需要具名来源时，应创建普通自定义 modifier。
-12. 清空 final input 只删除 `未归因差额`，不删除 base。
-13. 清空不等于输入 0。
-14. 开启自动计算时优先保留当前 final value，把差额整理进来源系统，而不是直接覆盖 final；例外是“无 base 的用户交互输入”，它被视为提供新的 `手动基础值`。
-15. 自动计算关闭时，底部 `未归因差额` 是只读提示。
-16. 自动计算开启后，`未归因差额` 应成为加值列表中的实体 modifier。
-17. 实体 `未归因差额` 可以由用户修改 value 或删除，但不能改 label。
-18. `未归因差额` 是 target-owned special modifier，不是 provider-owned 系统加值，也不是 user-owned 普通加值。
-19. 系统识别 `未归因差额` 必须依赖稳定 id / metadata，不能依赖 label；用户创建同名普通加值不会冲突。
-20. 新 UI 不提供 entry 级启用 / 禁用能力；v2 迁移应清理或忽略旧 `entryStates.enabled`。
-21. special contribution 概念上是 target-owned，但第一阶段可以复用 `userModifierContributions` 存储，通过稳定 id / metadata 区分普通用户来源。
-22. 用户交互输入在没有 base 时创建 `手动基础值`；老存档迁移在没有 base 时创建 `估算基础值`。
-23. 老存档迁移应默认开启自动计算，并通过 `未归因差额` / `估算基础值` 保留旧 final value。
-24. final value 不可解析为数字时，不接管、不清空、不创建来源项；即使 source 后续可计算，也保持暂停直到用户提交可解析数字。
-25. 有 base 候选但没有 active base 时，应先顺延选择第一个可用 base；只有完全没有 base entry 时，才创建 special base。
-26. 删除 active special base 后，如果还有其它 base 候选则顺延；如果没有 base 剩余，则清空 active base，等待用户后续输入或 provider 提供 base。
+4. 自动计算默认开启；缺少 target state 不代表关闭。
+5. 自动计算关闭必须显式保存为 `autoCalculation: false`。
+6. 自动计算关闭时，final input 只写最终值。
+7. 自动计算开启时，final input 必须接入来源系统。
+8. 自动计算开启时，如果没有 base，用户输入创建或更新 `手动基础值`。
+9. 自动计算开启时，如果已有 base，用户输入创建或更新 `未归因差额`。
+10. `未归因差额` 每个 target 最多一个，重复编辑更新同一项。
+11. 计算 `未归因差额` 时必须排除旧的 `未归因差额` 自身。
+12. `手动基础值`、`估算基础值` 和 `未归因差额` 的 label 固定，value 可改。
+13. 用户需要具名来源时，应创建普通自定义 modifier。
+14. 清空 final input 只删除 `未归因差额`，不删除 base。
+15. 清空不等于输入 0。
+16. 开启自动计算时优先保留当前 final value，把差额整理进来源系统，而不是直接覆盖 final；例外是“无 base 的用户交互输入”，它被视为提供新的 `手动基础值`。
+17. 自动计算关闭时，底部 `未归因差额` 是只读提示。
+18. 自动计算开启后，`未归因差额` 应成为加值列表中的实体 modifier。
+19. 实体 `未归因差额` 可以由用户修改 value 或删除，但不能改 label。
+20. `未归因差额` 是 target-owned special modifier，不是 provider-owned 系统加值，也不是 user-owned 普通加值。
+21. 系统识别 `未归因差额` 必须依赖稳定 id / metadata，不能依赖 label；用户创建同名普通加值不会冲突。
+22. 新 UI 不提供 entry 级启用 / 禁用能力；v2 迁移应清理或忽略旧 `entryStates.enabled`。
+23. special contribution 概念上是 target-owned，但第一阶段可以复用 `userModifierContributions` 存储，通过稳定 id / metadata 区分普通用户来源。
+24. 用户交互输入在没有 base 时创建 `手动基础值`；老存档迁移在没有 base 时创建 `估算基础值`。
+25. 老存档迁移应默认开启自动计算，并通过 `未归因差额` / `估算基础值` 保留旧 final value。
+26. final value 不可解析为数字时，不接管、不清空、不创建来源项；即使 source 后续可计算，也保持暂停直到用户提交可解析数字。
+27. 有 base 候选但没有 active base 时，应先顺延选择第一个可用 base；只有完全没有 base entry 时，才创建 special base。
+28. 删除 active special base 后，如果还有其它 base 候选则顺延；如果没有 base 剩余，则清空 active base，等待用户后续输入或 provider 提供 base。
 
 ## 已定稿的 UI 决策
 

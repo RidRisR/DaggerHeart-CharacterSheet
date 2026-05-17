@@ -65,7 +65,7 @@ export interface ModifierEntry {
 
 export interface TargetModifierState {
   activeBaseId?: ModifierEntryId
-  autoCalculation?: true
+  autoCalculation?: boolean
 }
 
 export interface ModifierEntryState {

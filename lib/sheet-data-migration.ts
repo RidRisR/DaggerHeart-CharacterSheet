@@ -549,7 +549,9 @@ function normalizeTargetStates(value: unknown): NonNullable<SheetData["modifierS
     if (typeof state.activeBaseId === "string") {
       nextState.activeBaseId = migrateSystemModifierEntryId(state.activeBaseId)
     }
-    if (state.autoCalculation === true || state.syncMode === "continuous") {
+    if (state.autoCalculation === false) {
+      nextState.autoCalculation = false
+    } else if (state.autoCalculation === true || state.syncMode === "continuous") {
       nextState.autoCalculation = true
     }
     if (Object.keys(nextState).length > 0) {
@@ -667,7 +669,9 @@ function migrateModifierState(data: SheetData): SheetData {
       if (typeof state.activeBaseId === "string") {
         nextState.activeBaseId = migrateSystemModifierEntryId(state.activeBaseId)
       }
-      if (state.autoCalculation === true || state.syncMode === "continuous") {
+      if (state.autoCalculation === false) {
+        nextState.autoCalculation = false
+      } else if (state.autoCalculation === true || state.syncMode === "continuous") {
         nextState.autoCalculation = true
       }
       if (Object.keys(nextState).length > 0) {

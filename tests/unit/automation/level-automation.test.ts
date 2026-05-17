@@ -14,6 +14,12 @@ describe("等级自动化基线", () => {
     resetSheetStore({
       level: "1",
       proficiency: [false, false, false, false, false, false],
+      modifierState: {
+        targetStates: {
+          proficiency: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     store().updateLevel("8", "1")
@@ -27,6 +33,12 @@ describe("等级自动化基线", () => {
     resetSheetStore({
       level: "1",
       proficiency: [true, true, true, true, true, false],
+      modifierState: {
+        targetStates: {
+          proficiency: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     store().updateLevel("8", "1")
@@ -82,6 +94,13 @@ describe("等级自动化基线", () => {
       },
       minorThreshold: "manual-minor",
       majorThreshold: "manual-major",
+      modifierState: {
+        targetStates: {
+          minorThreshold: { autoCalculation: false },
+          majorThreshold: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     store().updateLevel("5", "1")
@@ -104,6 +123,14 @@ describe("等级自动化基线", () => {
       minorThreshold: "8",
       majorThreshold: "11",
       proficiency: [true, true, false, false, false, false],
+      modifierState: {
+        targetStates: {
+          proficiency: { autoCalculation: false },
+          minorThreshold: { autoCalculation: false },
+          majorThreshold: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     store().updateLevel("")

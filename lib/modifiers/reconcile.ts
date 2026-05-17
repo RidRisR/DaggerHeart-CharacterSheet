@@ -50,7 +50,9 @@ export function reconcileModifierState(sheetData: SheetData): SheetData {
       nextState.activeBaseId = activeBaseId
     }
 
-    if (shouldPreserveAutoCalculation(legacyState)) {
+    if (legacyState.autoCalculation === false) {
+      nextState.autoCalculation = false
+    } else if (shouldPreserveAutoCalculation(legacyState)) {
       nextState.autoCalculation = true
     }
 

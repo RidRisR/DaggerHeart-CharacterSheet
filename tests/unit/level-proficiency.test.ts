@@ -42,6 +42,14 @@ describe("等级升级 - 熟练度提升逻辑", () => {
         agility: { value: "2", checked: true, spellcasting: false },
         strength: { value: "1", checked: true, spellcasting: false },
         finesse: { value: "0", checked: true, spellcasting: false },
+        modifierState: {
+          targetStates: {
+            proficiency: { autoCalculation: false },
+            minorThreshold: { autoCalculation: false },
+            majorThreshold: { autoCalculation: false },
+          },
+          entryStates: {},
+        },
       })
 
       store().updateLevel("5", "1")
@@ -160,6 +168,14 @@ describe("等级升级 - 熟练度提升逻辑", () => {
         minorThreshold: "8",
         majorThreshold: "11",
         equipment: equipmentWithArmorThresholds(3, 6),
+        modifierState: {
+          targetStates: {
+            proficiency: { autoCalculation: false },
+            minorThreshold: { autoCalculation: false },
+            majorThreshold: { autoCalculation: false },
+          },
+          entryStates: {},
+        },
       })
 
       store().updateLevel(level, "5")

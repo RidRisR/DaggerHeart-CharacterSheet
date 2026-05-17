@@ -21,7 +21,18 @@ describe("职业自动化基线", () => {
   beforeEach(() => resetSheetStore())
 
   it("1级选择职业时不再直接写入手动模式的闪避和生命上限", () => {
-    resetSheetStore({ level: "1", evasion: "", hpMax: 6 })
+    resetSheetStore({
+      level: "1",
+      evasion: "",
+      hpMax: 6,
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: false },
+          hpMax: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
+    })
 
     store().handleProfessionChange(
       { id: "profession-ranger", name: "游侠" },
@@ -33,7 +44,18 @@ describe("职业自动化基线", () => {
   })
 
   it("空等级选择职业时不再直接写入手动模式的闪避和生命上限", () => {
-    resetSheetStore({ level: "", evasion: "", hpMax: 6 })
+    resetSheetStore({
+      level: "",
+      evasion: "",
+      hpMax: 6,
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: false },
+          hpMax: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
+    })
 
     store().handleProfessionChange(
       { id: "profession-ranger", name: "游侠" },
@@ -45,7 +67,18 @@ describe("职业自动化基线", () => {
   })
 
   it("非1级选择职业不会覆盖现有闪避和生命上限", () => {
-    resetSheetStore({ level: "2", evasion: "15", hpMax: 9 })
+    resetSheetStore({
+      level: "2",
+      evasion: "15",
+      hpMax: 9,
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: false },
+          hpMax: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
+    })
 
     store().handleProfessionChange(
       { id: "profession-ranger", name: "游侠" },

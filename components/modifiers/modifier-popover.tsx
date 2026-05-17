@@ -9,6 +9,7 @@ import {
 } from "@/lib/modifiers/special-contributions"
 import { getReferenceSummary } from "@/lib/modifiers/registry"
 import { readTargetValue } from "@/lib/modifiers/target-accessors"
+import { isTargetAutoCalculationEnabled } from "@/lib/modifiers/target-sync"
 import type {
   ModifierEntry,
   ModifierEntryKind,
@@ -202,7 +203,7 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const [modifierError, setModifierError] = useState("")
   const finalValue = readTargetValue(sheetData, target)
   const targetState = sheetData.modifierState?.targetStates?.[target]
-  const autoCalculation = targetState?.autoCalculation === true
+  const autoCalculation = isTargetAutoCalculationEnabled(targetState)
 
   const findUserContribution = (id: string) => (
     (sheetData.userModifierContributions ?? []).find(contribution => contribution.id === id)

@@ -36,7 +36,7 @@ describe("target sync automation unification", () => {
       }],
       modifierState: {
         targetStates: {
-          evasion: { activeBaseId: "user:evasion-base" },
+          evasion: { activeBaseId: "user:evasion-base", autoCalculation: false },
         },
         entryStates: {},
       },
@@ -86,7 +86,7 @@ describe("target sync automation unification", () => {
       }],
       modifierState: {
         targetStates: {
-          evasion: { activeBaseId: "user:evasion-base" },
+          evasion: { activeBaseId: "user:evasion-base", autoCalculation: false },
         },
         entryStates: {},
       },
@@ -138,6 +138,14 @@ describe("target sync automation unification", () => {
       armorMax: 1,
       minorThreshold: "1",
       majorThreshold: "2",
+      modifierState: {
+        targetStates: {
+          armorMax: { autoCalculation: false },
+          minorThreshold: { autoCalculation: false },
+          majorThreshold: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     store().selectArmor(armor!.id)
@@ -188,6 +196,13 @@ describe("target sync automation unification", () => {
       level: "1",
       evasion: "9",
       hpMax: 6,
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: false },
+          hpMax: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     store().handleProfessionChange(
@@ -270,6 +285,14 @@ describe("target sync automation unification", () => {
           ...createEmptyArmorSlot(),
           baseThresholds: { minor: 3, major: 6 },
         },
+      },
+      modifierState: {
+        targetStates: {
+          proficiency: { autoCalculation: false },
+          minorThreshold: { autoCalculation: false },
+          majorThreshold: { autoCalculation: false },
+        },
+        entryStates: {},
       },
     })
 

@@ -40,6 +40,12 @@ describe("attribute auto base section behavior", () => {
       level: "1",
       agility: { value: "", checked: false, spellcasting: false },
       userModifierContributions: [],
+      modifierState: {
+        targetStates: {
+          "agility.value": { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     render(<AttributesSection />)
@@ -48,7 +54,7 @@ describe("attribute auto base section behavior", () => {
 
     expect(sheet().agility?.value).toBe("2")
     expect(sheet().userModifierContributions).toEqual([])
-    expect(sheet().modifierState?.targetStates["agility.value"]).toBeUndefined()
+    expect(sheet().modifierState?.targetStates["agility.value"]).toEqual({ autoCalculation: false })
   })
 
   it("does not create auto bases for signed, zero, or negative values when auto calculation is off", async () => {
@@ -56,6 +62,12 @@ describe("attribute auto base section behavior", () => {
       level: "",
       agility: { value: "", checked: false, spellcasting: false },
       userModifierContributions: [],
+      modifierState: {
+        targetStates: {
+          "agility.value": { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     render(<AttributesSection />)
@@ -69,6 +81,12 @@ describe("attribute auto base section behavior", () => {
       level: "abc",
       agility: { value: "", checked: false, spellcasting: false },
       userModifierContributions: [],
+      modifierState: {
+        targetStates: {
+          "agility.value": { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
     render(<AttributesSection />)
     await editAgility("0")
@@ -80,6 +98,12 @@ describe("attribute auto base section behavior", () => {
       level: "1",
       agility: { value: "", checked: false, spellcasting: false },
       userModifierContributions: [],
+      modifierState: {
+        targetStates: {
+          "agility.value": { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
     render(<AttributesSection />)
     await editAgility("-1")

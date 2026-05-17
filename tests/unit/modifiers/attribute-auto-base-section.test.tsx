@@ -35,58 +35,56 @@ async function editAgility(value: string) {
 }
 
 describe("attribute auto base section behavior", () => {
-  it("creates an auto base for a level 1 empty attribute expression while preserving final value text", async () => {
+  it("commits a level 1 empty attribute edit as final text without creating sources when auto calculation is off", async () => {
     resetSheetStore({
       level: "1",
       agility: { value: "", checked: false, spellcasting: false },
+      userModifierContributions: [],
     })
 
     render(<AttributesSection />)
 
-    await editAgility("12+1")
+    await editAgility("2")
 
-    expect(sheet().agility?.value).toBe("12+1")
-    expect(autoBase()).toMatchObject({
-      id: "user:agility.value:auto-base",
-      definition: {
-        target: "agility.value",
-        kind: "base",
-      },
-      editable: {
-        value: 13,
-      },
-    })
-    expect(sheet().modifierState?.targetStates["agility.value"]?.activeBaseId).toBe("user:agility.value:auto-base")
+    expect(sheet().agility?.value).toBe("2")
+    expect(sheet().userModifierContributions).toEqual([])
+    expect(sheet().modifierState?.targetStates["agility.value"]).toBeUndefined()
   })
 
-  it("creates auto bases for signed, zero, and negative values", async () => {
+  it("does not create auto bases for signed, zero, or negative values when auto calculation is off", async () => {
     resetSheetStore({
       level: "",
       agility: { value: "", checked: false, spellcasting: false },
+      userModifierContributions: [],
     })
 
     render(<AttributesSection />)
 
     await editAgility("+2")
-    expect(autoBase()?.editable.value).toBe(2)
+    expect(sheet().agility?.value).toBe("+2")
+    expect(sheet().userModifierContributions).toEqual([])
 
     cleanup()
     resetSheetStore({
       level: "abc",
       agility: { value: "", checked: false, spellcasting: false },
+      userModifierContributions: [],
     })
     render(<AttributesSection />)
     await editAgility("0")
-    expect(autoBase()?.editable.value).toBe(0)
+    expect(sheet().agility?.value).toBe("0")
+    expect(sheet().userModifierContributions).toEqual([])
 
     cleanup()
     resetSheetStore({
       level: "1",
       agility: { value: "", checked: false, spellcasting: false },
+      userModifierContributions: [],
     })
     render(<AttributesSection />)
     await editAgility("-1")
-    expect(autoBase()?.editable.value).toBe(-1)
+    expect(sheet().agility?.value).toBe("-1")
+    expect(sheet().userModifierContributions).toEqual([])
   })
 
   it("does not create an auto base above level 1, from non-empty starts, invalid expressions, or existing user bases", async () => {

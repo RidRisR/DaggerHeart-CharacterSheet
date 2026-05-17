@@ -202,6 +202,21 @@ const setTargetState = (
     }
 };
 
+function canStoreRawFinalText(target: ModifierTargetId): boolean {
+    return (
+        target === "evasion" ||
+        target === "minorThreshold" ||
+        target === "majorThreshold" ||
+        target === "agility.value" ||
+        target === "strength.value" ||
+        target === "finesse.value" ||
+        target === "instinct.value" ||
+        target === "presence.value" ||
+        target === "knowledge.value" ||
+        target.startsWith("experienceValues.")
+    );
+}
+
 export const useSheetStore = create<SheetState>((set) => ({
     sheetData: defaultSheetData,
     setSheetData: (updater) => {
@@ -941,14 +956,33 @@ export const useSheetStore = create<SheetState>((set) => ({
 
     commitModifierTargetValue: (target, value) => set((state) => {
         const autoCalculation = state.sheetData.modifierState?.targetStates?.[target]?.autoCalculation === true;
-        if (!autoCalculation || tryParseNumber(value) === undefined) {
+        const finalValue = tryParseNumber(value);
+        const storesRawText = canStoreRawFinalText(target);
+
+        if (!autoCalculation) {
+            if (storesRawText) {
+                return {
+                    sheetData: writeTargetValue(state.sheetData, target, String(value)),
+                };
+            }
+
+            if (finalValue === undefined) return state;
+
+            return {
+                sheetData: writeTargetValue(state.sheetData, target, finalValue),
+            };
+        }
+
+        if (finalValue === undefined) {
+            if (!storesRawText) return state;
+
             return {
                 sheetData: writeTargetValue(state.sheetData, target, String(value)),
             };
         }
 
         return {
-            sheetData: reconcileFinalInput(state.sheetData, target, value),
+            sheetData: reconcileFinalInput(state.sheetData, target, finalValue),
         };
     }),
 

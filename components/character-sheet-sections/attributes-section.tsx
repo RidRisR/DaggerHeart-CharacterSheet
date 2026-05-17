@@ -6,7 +6,6 @@ import { useSheetStore } from "@/lib/sheet-store";
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import type { AttributeTargetId, ModifierTargetId, UserModifierContribution } from "@/lib/modifiers/types"
 import {
-  getAttributeAutoBaseCreation,
   getAttributeAutoBaseId,
   shouldRemoveAttributeAutoBase,
 } from "@/lib/modifiers/attribute-auto-base"
@@ -32,7 +31,6 @@ export function AttributesSection() {
     updateAttribute,
     toggleAttributeChecked,
     setSheetData,
-    upsertUserModifierContribution,
     setActiveModifierBase,
     removeUserModifierContribution,
     commitModifierTargetValue,
@@ -53,23 +51,6 @@ export function AttributesSection() {
     const attrValue = formData[attribute]
     const submittedValue = isAttributeValue(attrValue) ? attrValue.value : ""
     const existingUserBases = userBaseEntriesForTarget(formData, target)
-    const isAutoCalculationEnabled = formData.modifierState?.targetStates?.[target]?.autoCalculation === true
-
-    const autoBase = getAttributeAutoBaseCreation({
-      target,
-      level: formData.level,
-      initialValue: editStartValues.current[attribute] ?? "",
-      submittedValue,
-      existingUserBases,
-    })
-    if (autoBase && !isAutoCalculationEnabled) {
-      upsertUserModifierContribution(autoBase)
-      if (!formData.modifierState?.targetStates?.[target]?.activeBaseId) {
-        setActiveModifierBase(target, autoBase.id)
-      }
-      editStartValues.current[attribute] = submittedValue
-      return
-    }
 
     if (shouldRemoveAttributeAutoBase({
       target,

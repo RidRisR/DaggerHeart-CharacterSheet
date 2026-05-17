@@ -385,4 +385,37 @@ describe("modifier store actions", () => {
     expect(sheet().userModifierContributions).toEqual([])
     expect(sheet().modifierState?.targetStates.evasion).toEqual({ autoCalculation: true })
   })
+
+  it("ignores non-numeric final input for numeric targets without creating modifier sources", () => {
+    resetSheetStore({
+      hpMax: 6,
+      userModifierContributions: [
+        {
+          id: "user:hp-base",
+          definition: { target: "hpMax", kind: "base" },
+          editable: { label: "Base", value: 6 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          hpMax: {
+            activeBaseId: "user:hp-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().commitModifierTargetValue("hpMax", "abc")
+
+    expect(sheet().hpMax).toBe(6)
+    expect(sheet().userModifierContributions).toEqual([
+      {
+        id: "user:hp-base",
+        definition: { target: "hpMax", kind: "base" },
+        editable: { label: "Base", value: 6 },
+      },
+    ])
+  })
 })

@@ -23,7 +23,7 @@ import type {
     ModifierTargetId,
     UserModifierContribution,
 } from "@/lib/modifiers/types";
-import { enableAutoCalculationForTarget } from "@/lib/modifiers/final-input-reconciliation";
+import { deleteSpecialBase, enableAutoCalculationForTarget } from "@/lib/modifiers/final-input-reconciliation";
 import { applyAutoCalculationForTargets } from "@/lib/modifiers/target-sync";
 
 // 施法属性映射关系
@@ -155,6 +155,7 @@ interface SheetState {
     setTargetAutoCalculation: (target: ModifierTargetId, enabled: boolean) => void;
     upsertUserModifierContribution: (contribution: UserModifierContribution) => void;
     removeUserModifierContribution: (entryId: ModifierEntryId) => void;
+    deleteSpecialModifierBase: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
     setAutomationSelection: (sourceId: AutomationSourceId, selected: boolean, params?: Record<string, unknown>) => void;
 
     // Profession change handler
@@ -943,6 +944,10 @@ export const useSheetStore = create<SheetState>((set) => ({
                 contribution => contribution.id !== entryId,
             ),
         }),
+    })),
+
+    deleteSpecialModifierBase: (target, entryId) => set((state) => ({
+        sheetData: deleteSpecialBase(state.sheetData, target, entryId),
     })),
 
     setAutomationSelection: (sourceId, selected, params) => set((state) => ({

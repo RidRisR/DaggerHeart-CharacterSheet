@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react"
 import { tryParseNumberExpression } from "@/lib/number-utils"
 import { entryKind, entryLabel, entryValue } from "@/lib/modifiers/entry-utils"
+import {
+  getUnattributedDeltaId,
+  isTargetOwnedSpecialContribution,
+} from "@/lib/modifiers/special-contributions"
 import { getReferenceSummary } from "@/lib/modifiers/registry"
 import { readTargetValue } from "@/lib/modifiers/target-accessors"
 import type {
@@ -187,6 +191,7 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const setTargetAutoCalculation = useSheetStore(state => state.setTargetAutoCalculation)
   const upsertUserModifierContribution = useSheetStore(state => state.upsertUserModifierContribution)
   const removeUserModifierContribution = useSheetStore(state => state.removeUserModifierContribution)
+  const deleteSpecialModifierBase = useSheetStore(state => state.deleteSpecialModifierBase)
   const [addingBase, setAddingBase] = useState(false)
   const [baseName, setBaseName] = useState("")
   const [baseValue, setBaseValue] = useState("")
@@ -201,6 +206,15 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
 
   const findUserContribution = (id: string) => (
     (sheetData.userModifierContributions ?? []).find(contribution => contribution.id === id)
+  )
+
+  const isTargetOwnedSpecialEntry = (entry: ModifierEntry) => {
+    const contribution = findUserContribution(entry.id)
+    return contribution ? isTargetOwnedSpecialContribution(contribution) : false
+  }
+
+  const hasMaterializedUnattributedDelta = (sheetData.userModifierContributions ?? []).some(
+    contribution => contribution.id === getUnattributedDeltaId(target),
   )
 
   const updateUserContributionValue = (id: string, value: number) => {
@@ -230,6 +244,23 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   }
 
   const deleteUserContribution = (entry: ModifierEntry) => {
+    if (isTargetOwnedSpecialEntry(entry)) {
+      if (entryKind(entry) === "base") {
+        deleteSpecialModifierBase(target, entry.id)
+        return
+      }
+
+      useSheetStore.setState(state => ({
+        sheetData: {
+          ...state.sheetData,
+          userModifierContributions: (state.sheetData.userModifierContributions ?? []).filter(
+            contribution => contribution.id !== entry.id,
+          ),
+        },
+      }))
+      return
+    }
+
     const activeBaseId = sheetData.modifierState?.targetStates?.[target]?.activeBaseId
     const isActiveBase = entryKind(entry) === "base"
       && (summary.activeBase?.id === entry.id || activeBaseId === entry.id)
@@ -307,6 +338,11 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
               const currentLabel = entryLabel(entry)
               const currentValue = entryValue(entry)
               const isUserEntry = entry.source.type === "user"
+              const isSpecialEntry = isTargetOwnedSpecialEntry(entry)
+              const canEditLabel = isUserEntry && !isSpecialEntry
+              const canEditValue = isUserEntry
+              const canDelete = isUserEntry
+              const sourceHint = isSpecialEntry ? "自动计算" : isUserEntry ? undefined : "系统来源"
 
               return (
                 <div key={entry.id} className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
@@ -318,18 +354,23 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
                       aria-label={`${currentLabel} ${currentValue}`}
                       onChange={() => setActiveModifierBase(target, entry.id)}
                     />
-                    {isUserEntry ? (
+                    {canEditLabel ? (
                       <EditableLabelInput entry={entry} onCommit={updateUserContributionLabel} />
                     ) : (
-                      <span className="truncate">{currentLabel}</span>
+                      <span className="min-w-0 flex-1 truncate">{currentLabel}</span>
+                    )}
+                    {sourceHint && (
+                      <span className="shrink-0 rounded bg-white px-1 py-0.5 text-[10px] text-gray-500">
+                        {sourceHint}
+                      </span>
                     )}
                   </div>
-                  {isUserEntry ? (
+                  {canEditValue ? (
                     <EditableValueInput entry={entry} onCommit={updateUserContributionValue} />
                   ) : (
                     <span className="font-semibold">{currentValue}</span>
                   )}
-                  {isUserEntry && (
+                  {canDelete && (
                     <button
                       type="button"
                       aria-label={`删除${currentLabel}`}
@@ -378,33 +419,42 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
               const currentLabel = entryLabel(entry)
               const currentValue = entryValue(entry)
               const isUserEntry = entry.source.type === "user"
-              const checked = sheetData.modifierState?.entryStates?.[entry.id]?.enabled !== false
-              const kind = entryKind(entry)
+              const isSpecialEntry = isTargetOwnedSpecialEntry(entry)
+              const canEditLabel = isUserEntry && !isSpecialEntry
+              const canEditValue = isUserEntry
+              const canDelete = isUserEntry
+              const sourceHint = isSpecialEntry ? "自动计算" : isUserEntry ? undefined : "系统来源"
+
               return (
                 <div
                   key={entry.id}
-                  className={`flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1 ${checked ? "" : "text-gray-400 line-through"}`}
+                  className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1"
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                    {isUserEntry ? (
+                    {canEditLabel ? (
                       <EditableLabelInput entry={entry} onCommit={updateUserContributionLabel} />
                     ) : (
-                      <span className="truncate">{currentLabel}</span>
+                      <span className="min-w-0 flex-1 truncate">{currentLabel}</span>
+                    )}
+                    {sourceHint && (
+                      <span className="shrink-0 rounded bg-white px-1 py-0.5 text-[10px] text-gray-500">
+                        {sourceHint}
+                      </span>
                     )}
                   </div>
-                  {isUserEntry ? (
+                  {canEditValue ? (
                     <EditableValueInput entry={entry} signed onCommit={updateUserContributionValue} />
                   ) : (
                     <span className="font-semibold">{formatSigned(currentValue)}</span>
                   )}
-                  {isUserEntry && (
+                  {canDelete && (
                     <button
                       type="button"
                       aria-label={`删除${currentLabel}`}
                       className="text-[11px] text-gray-400 hover:text-red-600"
                       onClick={() => deleteUserContribution(entry)}
                     >
-                      删除{kind === "base" ? "基值" : ""}
+                      删除
                     </button>
                   )}
                 </div>
@@ -439,15 +489,13 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
       </div>
 
       <div className="mb-2 flex items-center justify-between gap-2 border-t border-gray-200 pt-2">
-        <label className="flex items-center gap-1 text-[11px] text-gray-600">
-          <input
-            type="checkbox"
-            checked={autoCalculation}
-            aria-label="自动计算"
-            onChange={event => setTargetAutoCalculation(target, event.target.checked)}
-          />
-          自动计算
-        </label>
+        <button
+          type="button"
+          className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] text-gray-700 hover:bg-gray-50"
+          onClick={() => setTargetAutoCalculation(target, !autoCalculation)}
+        >
+          {autoCalculation ? "关闭自动计算" : "开启自动计算"}
+        </button>
       </div>
 
       {summary.referenceTotal !== undefined && (
@@ -457,7 +505,9 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
         </div>
       )}
 
-      {summary.unattributedDelta !== undefined && summary.unattributedDelta !== 0 && (
+      {summary.unattributedDelta !== undefined
+        && summary.unattributedDelta !== 0
+        && !(autoCalculation && hasMaterializedUnattributedDelta) && (
         <div className="mt-1 rounded bg-amber-50 px-2 py-1 text-amber-800">
           未归因差额 {formatSigned(summary.unattributedDelta)}
         </div>

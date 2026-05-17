@@ -2,9 +2,15 @@ import { render, screen } from "@testing-library/react"
 import "@testing-library/jest-dom/vitest"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
+import type { StandardCard } from "@/card/card-types"
 import CharacterSheet from "@/components/character-sheet"
 import { AttributesSection } from "@/components/character-sheet-sections/attributes-section"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
+import { defaultSheetData } from "@/lib/default-sheet-data"
+import {
+  getUnattributedDeltaId,
+  UNATTRIBUTED_DELTA_LABEL,
+} from "@/lib/modifiers/special-contributions"
 import type { ModifierEntryKind, ModifierTargetId, UserModifierContribution } from "@/lib/modifiers/types"
 import { resetSheetStore, sheet } from "../automation/test-helpers"
 
@@ -20,6 +26,21 @@ function userContribution(
     definition: { target, kind },
     editable: { label, value },
   }
+}
+
+function professionCard(evasion: number): StandardCard {
+  return {
+    id: "profession-ranger",
+    name: "游侠",
+    type: "profession",
+    class: "游侠",
+    professionSpecial: {
+      起始闪避: evasion,
+      起始生命: 6,
+      起始物品: "",
+      希望特性: "",
+    },
+  } as StandardCard
 }
 
 describe("ModifierFieldAnchor", () => {
@@ -297,7 +318,7 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.queryByText(/未归因差额/)).not.toBeInTheDocument()
   })
 
-  it("keeps disabled modifiers visible but removes them from active addends", async () => {
+  it("keeps legacy disabled modifiers visible without checkbox or disabled styling", async () => {
     resetSheetStore({
       evasion: "15",
       userModifierContributions: [
@@ -317,8 +338,10 @@ describe("ModifierFieldAnchor", () => {
 
     expect(screen.getByDisplayValue("启用加值")).toBeInTheDocument()
     expect(screen.getByDisplayValue("停用加值")).toBeInTheDocument()
-    expect(screen.getByText("13")).toBeInTheDocument()
-    expect(screen.getByText("未归因差额 +2")).toBeInTheDocument()
+    expect(screen.queryByRole("checkbox", { name: /停用加值|启用加值/ })).not.toBeInTheDocument()
+    expect(screen.getByDisplayValue("停用加值")).not.toHaveClass("line-through")
+    expect(screen.getByText("15")).toBeInTheDocument()
+    expect(screen.queryByText(/未归因差额/)).not.toBeInTheDocument()
   })
 
   it("edits a manual entry value on blur", async () => {
@@ -379,9 +402,9 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByRole("textbox", { name: "编辑重命名基础名称" })).toBeInTheDocument()
   })
 
-  it("toggles auto calculation from the popover", async () => {
+  it("uses explicit auto calculation actions without legacy sync controls", async () => {
     resetSheetStore({
-      evasion: "10",
+      evasion: "15",
       userModifierContributions: [
         userContribution("user:evasion-base", "evasion", "base", "Base", 12),
       ],
@@ -393,9 +416,112 @@ describe("ModifierFieldAnchor", () => {
 
     render(<ModifierFieldAnchor target="evasion" label="闪避" />)
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
-    await userEvent.click(screen.getByRole("checkbox", { name: "自动计算" }))
+
+    expect(screen.queryByRole("button", { name: "同步" })).not.toBeInTheDocument()
+    expect(screen.queryByText("持续同步")).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "开启自动计算" }))
 
     expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBe(true)
-    expect(sheet().evasion).toBe("10")
+    expect(sheet().evasion).toBe("15")
+    expect(sheet().userModifierContributions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: getUnattributedDeltaId("evasion"),
+        editable: { label: UNATTRIBUTED_DELTA_LABEL, value: 3 },
+      }),
+    ]))
+    expect(screen.getByRole("button", { name: "关闭自动计算" })).toBeInTheDocument()
+    expect(screen.queryByText("未归因差额 +3")).not.toBeInTheDocument()
+  })
+
+  it("shows provider-owned system sources as read-only with a source hint", async () => {
+    resetSheetStore({
+      evasion: "12",
+      cards: [professionCard(12), ...defaultSheetData.cards.slice(1)],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "profession:current:evasion" } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    expect(screen.getByText("游侠：起始闪避")).toBeInTheDocument()
+    expect(screen.getByText("系统来源")).toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "编辑游侠：起始闪避名称" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("spinbutton", { name: "编辑游侠：起始闪避数值" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "删除游侠：起始闪避" })).not.toBeInTheDocument()
+  })
+
+  it("treats target-owned special delta as fixed-label editable value and deletes it with special semantics", async () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "基础", 12),
+        userContribution(getUnattributedDeltaId("evasion"), "evasion", "modifier", UNATTRIBUTED_DELTA_LABEL, 3),
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    expect(screen.getByText(UNATTRIBUTED_DELTA_LABEL)).toBeInTheDocument()
+    expect(screen.getByText("自动计算")).toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: `编辑${UNATTRIBUTED_DELTA_LABEL}名称` })).not.toBeInTheDocument()
+
+    const valueInput = screen.getByRole("spinbutton", { name: `编辑${UNATTRIBUTED_DELTA_LABEL}数值` })
+    await userEvent.clear(valueInput)
+    await userEvent.type(valueInput, "2")
+    await userEvent.tab()
+    expect(sheet().userModifierContributions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: getUnattributedDeltaId("evasion"),
+        editable: { label: UNATTRIBUTED_DELTA_LABEL, value: 2 },
+      }),
+    ]))
+
+    await userEvent.click(screen.getByRole("button", { name: `删除${UNATTRIBUTED_DELTA_LABEL}` }))
+    expect(sheet().userModifierContributions?.some(
+      contribution => contribution.id === getUnattributedDeltaId("evasion"),
+    )).toBe(false)
+  })
+
+  it("keeps a user-created modifier with the same delta label editable as a normal user source", async () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "基础", 12),
+        userContribution("user:evasion-custom-delta", "evasion", "modifier", UNATTRIBUTED_DELTA_LABEL, 3),
+      ],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base" } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    const labelInput = screen.getByRole("textbox", { name: `编辑${UNATTRIBUTED_DELTA_LABEL}名称` })
+    await userEvent.clear(labelInput)
+    await userEvent.type(labelInput, "自定义差额")
+    await userEvent.tab()
+
+    expect(sheet().userModifierContributions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "user:evasion-custom-delta",
+        editable: { label: "自定义差额", value: 3 },
+      }),
+    ]))
   })
 })

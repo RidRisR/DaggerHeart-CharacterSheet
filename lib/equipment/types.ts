@@ -7,6 +7,13 @@ import type {
 
 export type EquipmentModifierTargetId = Exclude<ModifierTargetId, ExperienceTargetId>
 
+export interface EquipmentModifierContribution extends ModifierContribution {
+  definition: {
+    target: EquipmentModifierTargetId
+    kind: "modifier"
+  }
+}
+
 export interface EquipmentModifierContributionTemplate {
   id: string
   definition: {

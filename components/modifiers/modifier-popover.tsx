@@ -144,24 +144,24 @@ function AddEntryForm({
   const noun = kind === "base" ? "基值" : "加值"
 
   return (
-    <div className="rounded border border-gray-200 bg-gray-50 p-2">
-      <div className="grid grid-cols-[1fr_4.5rem] gap-2">
-        <label className="grid gap-0.5">
+    <div className="min-w-0 rounded border border-gray-200 bg-gray-50 p-2">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_3.75rem] gap-1.5">
+        <label className="grid min-w-0 gap-0.5">
           <span className="text-[11px] text-gray-500">{noun}名称</span>
           <input
             type="text"
             value={name}
             onChange={event => onNameChange(event.target.value)}
-            className="h-7 rounded border border-gray-300 px-1 text-xs"
+            className="h-7 min-w-0 w-full rounded border border-gray-300 px-1 text-xs"
           />
         </label>
-        <label className="grid gap-0.5">
+        <label className="grid min-w-0 gap-0.5">
           <span className="text-[11px] text-gray-500">{noun}数值</span>
           <input
             type="text"
             value={value}
             onChange={event => onValueChange(event.target.value)}
-            className="h-7 rounded border border-gray-300 px-1 text-xs"
+            className="h-7 min-w-0 w-full rounded border border-gray-300 px-1 text-xs"
           />
         </label>
       </div>

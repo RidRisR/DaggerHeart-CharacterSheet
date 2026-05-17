@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import "@testing-library/jest-dom/vitest"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
@@ -6,9 +6,10 @@ import { ArmorSection } from "@/components/character-sheet-sections/armor-sectio
 import { InventoryWeaponSection } from "@/components/character-sheet-sections/inventory-weapon-section"
 import { WeaponSection } from "@/components/character-sheet-sections/weapon-section"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
+import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import type { EquipmentModifierContribution } from "@/lib/equipment/types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import { resetSheetStore, sheet } from "../automation/test-helpers"
+import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
 function contribution(
   id: string,
@@ -157,6 +158,41 @@ describe("EquipmentProviderAnchor", () => {
     expect(screen.getByRole("textbox", { name: "修正名称" })).toHaveValue("锋利")
     expect(screen.queryByDisplayValue("经历污染")).not.toBeInTheDocument()
     expect(screen.queryByDisplayValue("基础污染")).not.toBeInTheDocument()
+  })
+
+  it("updates target panel source labels when the equipment name changes", async () => {
+    resetSheetStore({
+      evasion: "13",
+      equipment: {
+        ...defaultSheetData.equipment,
+        weaponSlots: {
+          ...defaultSheetData.equipment.weaponSlots,
+          primary: {
+            ...defaultSheetData.equipment.weaponSlots.primary,
+            name: "旧剑",
+            modifierContributions: [contribution("equipment:weapon:primary:evasion", "锋利", 1)],
+          },
+        },
+      },
+      modifierState: {
+        targetStates: { evasion: { autoCalculation: false } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    expect(screen.getByText("旧剑：锋利")).toBeInTheDocument()
+
+    act(() => {
+      store().updateActiveWeaponSlot("primary", { name: "新名" })
+    })
+
+    expect(await screen.findByText("新名：锋利")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText("旧剑：锋利")).not.toBeInTheDocument()
+    })
   })
 
   it("shows armor base values as read-only summary rows", async () => {

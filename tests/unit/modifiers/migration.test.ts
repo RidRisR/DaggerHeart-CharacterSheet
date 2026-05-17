@@ -135,6 +135,17 @@ describe("modifier state migration", () => {
     expect("armorBaseScore" in (migrated as any)).toBe(false)
   })
 
+  it("prefers legacy armorValue over hydrated armorMax when preserving armor final", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      armorMax: 0,
+      armorValue: "4",
+    }))
+
+    expect("armorValue" in (migrated as any)).toBe(false)
+    expect(migrated.armorMax).toBe(4)
+    expect(migrated.modifierState?.targetStates.armorMax?.autoCalculation).toBe(true)
+  })
+
   it("migrates old profession base ids before reconciling against competing user bases", () => {
     const migrated = migrateSheetData({
       schemaVersion: 2,
@@ -375,6 +386,22 @@ describe("modifier state migration", () => {
       },
       createEstimatedBaseContribution("evasion", 13),
     ]))
+  })
+
+  it("preserves legacy boolean-array proficiency final", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      level: "1",
+      proficiency: [true, true, true, false, false, false],
+    }))
+
+    expect(migrated.proficiency).toEqual([true, true, true, false, false, false])
+    expect(migrated.modifierState?.targetStates.proficiency).toEqual({
+      activeBaseId: "level:base:proficiency",
+      autoCalculation: true,
+    })
+    expect(migrated.userModifierContributions).toContainEqual(
+      createUnattributedDeltaContribution("proficiency", 2),
+    )
   })
 
   it("preserves non-numeric legacy final without creating a special contribution", () => {

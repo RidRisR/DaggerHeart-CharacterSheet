@@ -800,13 +800,16 @@ function legacyExplicitFinalValue(raw: Partial<SheetData> | any, target: Modifie
   }
 
   if (target === "armorMax") {
-    if (hasOwn(raw, "armorMax")) return raw.armorMax
     if (hasOwn(raw, "armorValue")) return raw.armorValue
+    if (hasOwn(raw, "armorMax")) return raw.armorMax
     return undefined
   }
 
   if (target === "proficiency") {
-    return hasOwn(raw, "proficiency") ? raw.proficiency : undefined
+    if (!hasOwn(raw, "proficiency")) return undefined
+    return Array.isArray(raw.proficiency)
+      ? raw.proficiency.filter(Boolean).length
+      : raw.proficiency
   }
 
   return hasOwn(raw, target) ? raw[target] : undefined

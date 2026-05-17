@@ -146,6 +146,49 @@ describe("final input reconciliation", () => {
     })
   })
 
+  it("keeps the active base when deleting an inactive special base", () => {
+    const earlierBase = {
+      ...createManualBaseContribution("evasion", 10),
+      id: "user:evasion-aaa-base",
+      editable: {
+        label: "排序靠前基础值",
+        value: 10,
+      },
+    }
+    const activeBase = {
+      ...createManualBaseContribution("evasion", 14),
+      id: "user:evasion-existing-base",
+      editable: {
+        label: "现有基础值",
+        value: 14,
+      },
+    }
+    const inactiveManualBase = createManualBaseContribution("evasion", 12)
+
+    const reconciled = deleteSpecialBase(sheet({
+      evasion: "15",
+      userModifierContributions: [inactiveManualBase, earlierBase, activeBase],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: activeBase.id, autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    }), "evasion", inactiveManualBase.id)
+
+    expect(reconciled.evasion).toBe("15")
+    expect(reconciled.userModifierContributions).not.toContainEqual(inactiveManualBase)
+    expect(reconciled.userModifierContributions).toContainEqual(earlierBase)
+    expect(reconciled.userModifierContributions).toContainEqual(activeBase)
+    expect(reconciled.userModifierContributions).toContainEqual(
+      createUnattributedDeltaContribution("evasion", 1),
+    )
+    expect(reconciled.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: activeBase.id,
+      autoCalculation: true,
+    })
+  })
+
   it("clears active base without creating a replacement when the last base is deleted", () => {
     const manualBase = createManualBaseContribution("evasion", 12)
     const reconciled = deleteSpecialBase(sheet({

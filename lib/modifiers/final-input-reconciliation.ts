@@ -150,7 +150,7 @@ export function deleteSpecialBase(
     userModifierContributions: removeContribution(sheetData.userModifierContributions ?? [], entryId),
   }
   const summary = getReferenceSummary(withoutUnattributedDelta(withoutDeleted, target), target)
-  const activeBase = summary.bases[0]
+  const activeBase = summary.activeBase ?? summary.bases[0]
   const autoCalculation = sheetData.modifierState?.targetStates?.[target]?.autoCalculation
   const finalValue = tryParseNumber(readTargetValue(sheetData, target))
 

@@ -37,12 +37,13 @@ function createUserEntryId(target: ModifierTargetId): string {
 interface EditableValueInputProps {
   entry: ModifierEntry
   onCommit: (id: string, value: number) => void
+  label?: string
   signed?: boolean
 }
 
-function EditableValueInput({ entry, onCommit, signed = false }: EditableValueInputProps) {
+function EditableValueInput({ entry, onCommit, label, signed = false }: EditableValueInputProps) {
   const currentValue = entryValue(entry)
-  const currentLabel = entryLabel(entry)
+  const currentLabel = label ?? entryLabel(entry)
   const displayValue = signed ? formatSigned(currentValue) : String(currentValue)
   const [value, setValue] = useState(displayValue)
 
@@ -166,7 +167,8 @@ function sourceBadgeLabel(entry: ModifierEntry, isSpecialEntry: boolean): string
 }
 
 function displayEntryLabel(entry: ModifierEntry): string {
-  const label = entryLabel(entry)
+  const fallbackLabel = entryKind(entry) === "base" ? "未命名基值" : "未命名修正值"
+  const label = entryLabel(entry) || fallbackLabel
   if (entry.source.type !== "upgrade") return label
   return label.replace(/^升级[:：]\s*/, "")
 }
@@ -174,10 +176,12 @@ function displayEntryLabel(entry: ModifierEntry): string {
 interface EditableLabelInputProps {
   entry: ModifierEntry
   onCommit: (id: string, label: string) => void
+  placeholder?: string
 }
 
-function EditableLabelInput({ entry, onCommit }: EditableLabelInputProps) {
+function EditableLabelInput({ entry, onCommit, placeholder }: EditableLabelInputProps) {
   const currentLabel = entryLabel(entry)
+  const accessibleLabel = currentLabel || placeholder || "未命名"
   const [label, setLabel] = useState(currentLabel)
 
   useEffect(() => {
@@ -196,7 +200,8 @@ function EditableLabelInput({ entry, onCommit }: EditableLabelInputProps) {
   return (
     <input
       type="text"
-      aria-label={`编辑${currentLabel}名称`}
+      aria-label={`编辑${accessibleLabel}名称`}
+      placeholder={placeholder}
       value={label}
       className="h-7 min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 text-xs hover:border-gray-300 focus:border-gray-300 focus:bg-white"
       onChange={event => setLabel(event.target.value)}
@@ -288,7 +293,7 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
       id,
       definition: { target, kind },
       editable: {
-        label: kind === "base" ? "未命名基值" : "未命名修正值",
+        label: "",
         value: 0,
       },
     }
@@ -341,13 +346,13 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
                       onDelete={canDelete ? () => deleteUserContribution(entry) : undefined}
                     />
                     {canEditLabel ? (
-                      <EditableLabelInput entry={entry} onCommit={updateUserContributionLabel} />
+                      <EditableLabelInput entry={entry} placeholder={currentLabel} onCommit={updateUserContributionLabel} />
                     ) : (
                       <ReadonlyLabelBox label={currentLabel} />
                     )}
                   </div>
                   {canEditValue ? (
-                    <EditableValueInput entry={entry} onCommit={updateUserContributionValue} />
+                    <EditableValueInput entry={entry} label={currentLabel} onCommit={updateUserContributionValue} />
                   ) : (
                     <ReadonlyValueBox value={currentValue} />
                   )}
@@ -391,13 +396,13 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
                       onDelete={canDelete ? () => deleteUserContribution(entry) : undefined}
                     />
                     {canEditLabel ? (
-                      <EditableLabelInput entry={entry} onCommit={updateUserContributionLabel} />
+                      <EditableLabelInput entry={entry} placeholder={currentLabel} onCommit={updateUserContributionLabel} />
                     ) : (
                       <ReadonlyLabelBox label={currentLabel} />
                     )}
                   </div>
                   {canEditValue ? (
-                    <EditableValueInput entry={entry} signed onCommit={updateUserContributionValue} />
+                    <EditableValueInput entry={entry} label={currentLabel} signed onCommit={updateUserContributionValue} />
                   ) : (
                     <ReadonlyValueBox value={formatSigned(currentValue)} />
                   )}

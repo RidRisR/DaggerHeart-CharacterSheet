@@ -209,14 +209,15 @@ describe("ModifierFieldAnchor", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "+ 自定义基值" }))
 
-    expect(screen.getByRole("textbox", { name: "编辑未命名基值名称" })).toHaveValue("未命名基值")
+    expect(screen.getByRole("textbox", { name: "编辑未命名基值名称" })).toHaveValue("")
+    expect(screen.getByRole("textbox", { name: "编辑未命名基值名称" })).toHaveAttribute("placeholder", "未命名基值")
     expect(screen.getByRole("textbox", { name: "编辑未命名基值数值" })).toHaveValue("0")
     expect(screen.getByText("总值")).toBeInTheDocument()
     expectUnattributedDelta("+15")
     expect(sheet().userModifierContributions).toEqual([
       expect.objectContaining({
         definition: { target: "evasion", kind: "base" },
-        editable: { label: "未命名基值", value: 0 },
+        editable: { label: "", value: 0 },
       }),
     ])
     expect(sheet().evasion).toBe("15")
@@ -240,13 +241,14 @@ describe("ModifierFieldAnchor", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "+ 自定义修正值" }))
 
-    expect(screen.getByRole("textbox", { name: "编辑未命名修正值名称" })).toHaveValue("未命名修正值")
+    expect(screen.getByRole("textbox", { name: "编辑未命名修正值名称" })).toHaveValue("")
+    expect(screen.getByRole("textbox", { name: "编辑未命名修正值名称" })).toHaveAttribute("placeholder", "未命名修正值")
     expect(screen.getByRole("textbox", { name: "编辑未命名修正值数值" })).toHaveValue("+0")
     expectUnattributedDelta("+3")
     expect(sheet().userModifierContributions).toEqual(expect.arrayContaining([
       expect.objectContaining({
         definition: { target: "evasion", kind: "modifier" },
-        editable: { label: "未命名修正值", value: 0 },
+        editable: { label: "", value: 0 },
       }),
     ]))
 

@@ -5,6 +5,7 @@ import {
   createEstimatedBaseContribution,
   createUnattributedDeltaContribution,
   getEstimatedBaseId,
+  getUnattributedDeltaId,
 } from "@/lib/modifiers/special-contributions"
 
 function v1ModifierInput(overrides: Record<string, unknown>) {
@@ -393,6 +394,22 @@ describe("modifier state migration", () => {
     expect(migrated.modifierState?.targetStates.hpMax).toBeUndefined()
     expect(migrated.userModifierContributions).not.toContainEqual(
       expect.objectContaining({ id: getEstimatedBaseId("hpMax") }),
+    )
+  })
+
+  it("safely clears non-numeric legacy armorValue without creating armorMax specials", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      armorValue: "四",
+    }))
+
+    expect("armorValue" in (migrated as any)).toBe(false)
+    expect(migrated.armorMax).toBe("")
+    expect(Number.isNaN(migrated.armorMax)).toBe(false)
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getEstimatedBaseId("armorMax") }),
+    )
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("armorMax") }),
     )
   })
 

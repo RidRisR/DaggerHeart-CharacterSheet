@@ -927,6 +927,9 @@ function preserveLegacyModifierFinals(
       }
 
       const summary = getReferenceSummary(migrated, target)
+      if (target === "armorMax") {
+        migrated = writeTargetValue(migrated, target, "")
+      }
       migrated = writeModifierTargetState(migrated, target, summary.activeBase?.id ?? summary.bases[0]?.id)
       return
     }

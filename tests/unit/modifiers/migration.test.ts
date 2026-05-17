@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 import type { StandardCard } from "@/card/card-types"
 import { migrateSheetData } from "@/lib/sheet-data-migration"
+import {
+  createEstimatedBaseContribution,
+  createUnattributedDeltaContribution,
+  getEstimatedBaseId,
+} from "@/lib/modifiers/special-contributions"
 
 function v1ModifierInput(overrides: Record<string, unknown>) {
   return {
@@ -31,8 +36,9 @@ describe("modifier state migration", () => {
     expect("armorValue" in (migrated as any)).toBe(false)
     expect(migrated.minorThreshold).toBe("10")
     expect(migrated.majorThreshold).toBe("20")
-    expect(migrated.modifierState).toEqual({ targetStates: {}, entryStates: {} })
-    expect(migrated.userModifierContributions).toEqual([])
+    expect(migrated.modifierState?.targetStates.evasion?.autoCalculation).toBe(true)
+    expect(migrated.modifierState?.targetStates.hpMax?.autoCalculation).toBe(true)
+    expect(migrated.modifierState?.entryStates).toEqual({})
     expect(migrated.automationSelections).toEqual({})
   })
 
@@ -74,9 +80,11 @@ describe("modifier state migration", () => {
     expect(migrated.automationSelections?.["upgrade:tier1-5-0"]?.params).toEqual({ target: "evasion" })
   })
 
-  it("migrates legacy disabled ids to entry states and reconciles orphan ids", () => {
+  it("drops legacy disabled entry ids instead of preserving enabled false states", () => {
     const migrated = migrateSheetData(v1ModifierInput({
       level: "1",
+      minorThreshold: "14",
+      armorThreshold: "10/13",
       modifierState: {
         byTarget: {
           minorThreshold: {
@@ -86,7 +94,11 @@ describe("modifier state migration", () => {
       },
     }))
 
-    expect(migrated.modifierState?.entryStates["level:current:minorThreshold"]).toEqual({ enabled: false })
+    expect(migrated.minorThreshold).toBe("14")
+    expect(migrated.modifierState?.entryStates).toEqual({})
+    expect(migrated.userModifierContributions).toContainEqual(
+      createUnattributedDeltaContribution("minorThreshold", 3),
+    )
     expect(migrated.modifierState?.entryStates["upgrade:evasion"]).toBeUndefined()
   })
 
@@ -111,8 +123,7 @@ describe("modifier state migration", () => {
 
     expect(migrated.modifierState?.targetStates.armorMax?.activeBaseId).toBe("equipment:armor:current:armorMax")
     expect(migrated.modifierState?.targetStates).not.toHaveProperty("armorValue")
-    expect(migrated.modifierState?.entryStates["equipment:armor:current:armorMax"]).toEqual({ enabled: false })
-    expect(migrated.modifierState?.entryStates["user:armor-mod"]).toEqual({ enabled: false })
+    expect(migrated.modifierState?.entryStates).toEqual({})
     expect(migrated.modifierState?.entryStates).not.toHaveProperty("armor:current:armorValue")
     expect(migrated.userModifierContributions).toContainEqual({
       id: "user:armor-mod",
@@ -155,9 +166,7 @@ describe("modifier state migration", () => {
 
     expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe("profession:current:evasion")
     expect(migrated.modifierState?.targetStates.hpMax?.activeBaseId).toBe("profession:current:hpMax")
-    expect(migrated.modifierState?.entryStates["profession:current:evasion"]).toEqual({ enabled: false })
-    expect(migrated.modifierState?.entryStates["profession:current:hpMax"]).toEqual({ enabled: false })
-    expect(migrated.modifierState?.entryStates["user:evasion-base"]).toEqual({ enabled: false })
+    expect(migrated.modifierState?.entryStates).toEqual({})
     expect(migrated.modifierState?.entryStates).not.toHaveProperty("profession:profession-warrior:evasion")
     expect(migrated.modifierState?.entryStates).not.toHaveProperty("profession:profession-warrior:hpMax")
   })
@@ -229,7 +238,7 @@ describe("modifier state migration", () => {
 
     expect(migrated.modifierState?.targetStates.proficiency?.activeBaseId).toBe("level:base:proficiency")
     expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base")
-    expect(migrated.modifierState?.entryStates["level:current:minorThreshold"]).toEqual({ enabled: false })
+    expect(migrated.modifierState?.entryStates).toEqual({})
     expect(migrated.userModifierContributions).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: "user:evasion-base" }),
     ]))
@@ -316,5 +325,100 @@ describe("modifier state migration", () => {
     })
 
     expect(migrated.userModifierContributions).toEqual([validContribution])
+  })
+
+  it("preserves legacy numeric final with an unattributed delta when a base exists", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      evasion: "15",
+      cards: [{
+        id: "profession-warrior",
+        type: "profession",
+        name: "战士",
+        professionSpecial: {
+          起始闪避: 12,
+        },
+      } as StandardCard],
+    }))
+
+    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.evasion).toBe("15")
+    expect(migrated.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: "profession:current:evasion",
+      autoCalculation: true,
+    })
+    expect(migrated.userModifierContributions).toContainEqual(
+      createUnattributedDeltaContribution("evasion", 3),
+    )
+  })
+
+  it("preserves legacy numeric final with an estimated base when no base exists", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      evasion: "15",
+      userModifierContributions: [{
+        id: "user:evasion-mod",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "旧加值", value: 2 },
+      }],
+    }))
+
+    expect(migrated.evasion).toBe("15")
+    expect(migrated.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: getEstimatedBaseId("evasion"),
+      autoCalculation: true,
+    })
+    expect(migrated.userModifierContributions).toEqual(expect.arrayContaining([
+      {
+        id: "user:evasion-mod",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "旧加值", value: 2 },
+      },
+      createEstimatedBaseContribution("evasion", 13),
+    ]))
+  })
+
+  it("preserves non-numeric legacy final without creating a special contribution", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      evasion: "12+敏捷",
+    }))
+
+    expect(migrated.evasion).toBe("12+敏捷")
+    expect(migrated.modifierState?.targetStates.evasion).toEqual({ autoCalculation: true })
+    expect(migrated.userModifierContributions).toEqual([])
+  })
+
+  it("does not create an estimated base from hpMax default fallback", () => {
+    const migrated = migrateSheetData(v1ModifierInput({}))
+
+    expect(migrated.hpMax).toBe(6)
+    expect(migrated.modifierState?.targetStates.hpMax).toBeUndefined()
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getEstimatedBaseId("hpMax") }),
+    )
+  })
+
+  it("keeps existing v2 special contributions idempotent", () => {
+    const sheet = {
+      schemaVersion: 2,
+      evasion: "15",
+      userModifierContributions: [
+        createEstimatedBaseContribution("evasion", 13),
+        createUnattributedDeltaContribution("evasion", 2),
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: getEstimatedBaseId("evasion"),
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    }
+
+    const once = migrateSheetData(sheet)
+    const twice = migrateSheetData(once)
+
+    expect(twice).toEqual(once)
+    expect(once.userModifierContributions?.filter(entry => entry.id === getEstimatedBaseId("evasion"))).toHaveLength(1)
   })
 })

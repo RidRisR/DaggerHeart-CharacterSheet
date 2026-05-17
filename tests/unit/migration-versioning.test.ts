@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { defaultSheetData } from '@/lib/default-sheet-data'
+import {
+  createEstimatedBaseContribution,
+  createUnattributedDeltaContribution,
+  getEstimatedBaseId,
+} from '@/lib/modifiers/special-contributions'
 import { migrateSheetData } from '@/lib/sheet-data-migration'
 import {
   CURRENT_SCHEMA_VERSION,
@@ -141,6 +146,50 @@ describe('sheet data version migration', () => {
       definition: { target: 'evasion', kind: 'base' },
       editable: { label: '手动基础闪避', value: 12 },
     }])
+  })
+
+  it('preserves v1 legacy finals with v2 special modifier contributions', () => {
+    const migrated = migrateSheetData(v1Sheet({
+      evasion: '15',
+      userModifierContributions: [{
+        id: 'user:evasion-mod',
+        definition: { target: 'evasion', kind: 'modifier' },
+        editable: { label: '旧加值', value: 2 },
+      }],
+    }))
+
+    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.evasion).toBe('15')
+    expect(migrated.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: getEstimatedBaseId('evasion'),
+      autoCalculation: true,
+    })
+    expect(migrated.userModifierContributions).toEqual(expect.arrayContaining([
+      {
+        id: 'user:evasion-mod',
+        definition: { target: 'evasion', kind: 'modifier' },
+        editable: { label: '旧加值', value: 2 },
+      },
+      createEstimatedBaseContribution('evasion', 13),
+    ]))
+  })
+
+  it('keeps v2 special modifier migration idempotent', () => {
+    const once = migrateSheetData(v1Sheet({
+      evasion: '15',
+      cards: [{
+        id: 'profession-warrior',
+        type: 'profession',
+        name: '战士',
+        professionSpecial: { 起始闪避: 12 },
+      }],
+    }))
+    const twice = migrateSheetData(once)
+
+    expect(twice).toEqual(once)
+    expect(once.userModifierContributions).toContainEqual(
+      createUnattributedDeltaContribution('evasion', 3),
+    )
   })
 
   it('keeps v2 data stable and idempotent', () => {

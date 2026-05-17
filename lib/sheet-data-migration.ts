@@ -21,7 +21,16 @@ import {
 import { createEmptyEquipmentData } from "@/lib/equipment/defaults"
 import { parseArmorMax, parseArmorThreshold } from "@/lib/equipment/armor-utils"
 import type { ArmorSlot, WeaponSlot } from "@/lib/equipment/types"
+import { tryParseNumber } from "@/lib/number-utils"
+import { collectModifierEntries, getReferenceSummary } from "@/lib/modifiers/registry"
 import { reconcileModifierState } from "@/lib/modifiers/reconcile"
+import {
+  createEstimatedBaseContribution,
+  createUnattributedDeltaContribution,
+  getEstimatedBaseId,
+  getUnattributedDeltaId,
+} from "@/lib/modifiers/special-contributions"
+import { writeTargetValue } from "@/lib/modifiers/target-accessors"
 import type { ModifierContribution, ModifierEntryKind, ModifierTargetId } from "@/lib/modifiers/types"
 
 const V1_SCHEMA_VERSION = 1
@@ -351,6 +360,16 @@ function normalizeEquipmentFromLegacy(data: SheetData | LegacyEquipmentInput, us
   const equipment = useExistingEquipment && isRecord((data as any).equipment) ? (data as any).equipment : {}
   const weaponSlots = isRecord(equipment.weaponSlots) ? equipment.weaponSlots : {}
   const inventorySlots = Array.isArray(weaponSlots.inventory) ? weaponSlots.inventory : []
+  const inventory: [WeaponSlot, WeaponSlot] = [
+    normalizeWeaponSlot(
+      inventorySlots[0],
+      legacyWeaponSlot(legacy, "inventoryWeapon1"),
+    ),
+    normalizeWeaponSlot(
+      inventorySlots[1],
+      legacyWeaponSlot(legacy, "inventoryWeapon2"),
+    ),
+  ]
 
   return {
     weaponSlots: {
@@ -362,16 +381,7 @@ function normalizeEquipmentFromLegacy(data: SheetData | LegacyEquipmentInput, us
         weaponSlots.secondary,
         legacyWeaponSlot(legacy, "secondaryWeapon"),
       ),
-      inventory: [
-        normalizeWeaponSlot(
-          inventorySlots[0],
-          legacyWeaponSlot(legacy, "inventoryWeapon1"),
-        ),
-        normalizeWeaponSlot(
-          inventorySlots[1],
-          legacyWeaponSlot(legacy, "inventoryWeapon2"),
-        ),
-      ],
+      inventory,
     },
     armorSlot: normalizeArmorSlot(equipment.armorSlot, legacyArmorSlot(legacy)),
   }
@@ -382,6 +392,16 @@ function normalizeCurrentEquipment(value: unknown) {
   const equipment = isRecord(value) ? value : {}
   const weaponSlots = isRecord(equipment.weaponSlots) ? equipment.weaponSlots : {}
   const inventorySlots = Array.isArray(weaponSlots.inventory) ? weaponSlots.inventory : []
+  const inventory: [WeaponSlot, WeaponSlot] = [
+    normalizeWeaponSlot(
+      inventorySlots[0],
+      emptyEquipment.weaponSlots.inventory[0],
+    ),
+    normalizeWeaponSlot(
+      inventorySlots[1],
+      emptyEquipment.weaponSlots.inventory[1],
+    ),
+  ]
 
   return {
     weaponSlots: {
@@ -393,16 +413,7 @@ function normalizeCurrentEquipment(value: unknown) {
         weaponSlots.secondary,
         emptyEquipment.weaponSlots.secondary,
       ),
-      inventory: [
-        normalizeWeaponSlot(
-          inventorySlots[0],
-          emptyEquipment.weaponSlots.inventory[0],
-        ),
-        normalizeWeaponSlot(
-          inventorySlots[1],
-          emptyEquipment.weaponSlots.inventory[1],
-        ),
-      ],
+      inventory,
     },
     armorSlot: normalizeArmorSlot(equipment.armorSlot, emptyEquipment.armorSlot),
   }
@@ -549,6 +560,20 @@ function normalizeTargetStates(value: unknown): NonNullable<SheetData["modifierS
   return targetStates
 }
 
+function sanitizeModifierEntryState(value: unknown): NonNullable<SheetData["modifierState"]>["entryStates"][string] | undefined {
+  if (!isRecord(value)) return undefined
+
+  const next: NonNullable<SheetData["modifierState"]>["entryStates"][string] = {}
+  if (typeof value.order === "number") {
+    next.order = value.order
+  }
+  if (value.enabled === true) {
+    next.enabled = true
+  }
+
+  return Object.keys(next).length > 0 ? next : undefined
+}
+
 function migrateSystemModifierEntryId(entryId: string): string {
   const equipmentArmorEntryIds: Record<string, string> = {
     "armor:current:armorValue": "equipment:armor:current:armorMax",
@@ -655,11 +680,12 @@ function migrateModifierState(data: SheetData): SheetData {
 
   if (isRecord(legacyState.entryStates)) {
     Object.entries(legacyState.entryStates).forEach(([entryId, state]) => {
-      if (!isRecord(state)) return
+      const sanitizedState = sanitizeModifierEntryState(state)
+      if (!sanitizedState) return
       const migratedEntryId = migrateSystemModifierEntryId(entryId)
       entryStates[migratedEntryId] = {
         ...(entryStates[migratedEntryId] ?? {}),
-        ...state,
+        ...sanitizedState,
       }
     })
   }
@@ -673,14 +699,6 @@ function migrateModifierState(data: SheetData): SheetData {
       targetStates[migratedTarget] = {
         activeBaseId: migrateModifierEntryIdForTarget(rawTargetState.activeBaseId, target),
       }
-    }
-
-    if (Array.isArray(rawTargetState.disabledEntryIds)) {
-      rawTargetState.disabledEntryIds.forEach(entryId => {
-        if (typeof entryId !== "string") return
-        const migratedEntryId = migrateModifierEntryIdForTarget(entryId, target)
-        entryStates[migratedEntryId] = { ...(entryStates[migratedEntryId] ?? {}), enabled: false }
-      })
     }
 
     if (Array.isArray(rawTargetState.userEntries)) {
@@ -727,6 +745,200 @@ function migrateModifierState(data: SheetData): SheetData {
   return reconcileModifierState(migrated)
 }
 
+const LEGACY_FINAL_TARGETS = [
+  "evasion",
+  "armorMax",
+  "minorThreshold",
+  "majorThreshold",
+  "hpMax",
+  "stressMax",
+  "proficiency",
+] as const satisfies readonly ModifierTargetId[]
+
+const LEGACY_ATTRIBUTE_FINAL_TARGETS = [
+  ["agility.value", "agility"],
+  ["strength.value", "strength"],
+  ["finesse.value", "finesse"],
+  ["instinct.value", "instinct"],
+  ["presence.value", "presence"],
+  ["knowledge.value", "knowledge"],
+] as const satisfies readonly [ModifierTargetId, keyof SheetData][]
+
+function upsertModifierContribution(
+  contributions: ModifierContribution[],
+  contribution: ModifierContribution,
+): ModifierContribution[] {
+  const index = contributions.findIndex(entry => entry.id === contribution.id)
+  if (index === -1) return [...contributions, contribution]
+
+  const next = [...contributions]
+  next[index] = contribution
+  return next
+}
+
+function removeModifierContribution(
+  contributions: ModifierContribution[],
+  entryId: string,
+): ModifierContribution[] {
+  return contributions.filter(contribution => contribution.id !== entryId)
+}
+
+function legacyExplicitFinalValue(raw: Partial<SheetData> | any, target: ModifierTargetId): unknown {
+  if (!isRecord(raw)) return undefined
+
+  const attributeTarget = LEGACY_ATTRIBUTE_FINAL_TARGETS.find(([attributeTarget]) => attributeTarget === target)
+  if (attributeTarget) {
+    const rawAttribute = raw[attributeTarget[1]]
+    return isRecord(rawAttribute) && hasOwn(rawAttribute, "value") ? rawAttribute.value : undefined
+  }
+
+  if (target.startsWith("experienceValues.")) {
+    const match = /^experienceValues\.(0|[1-9]\d*)$/.exec(target)
+    const index = match ? Number(match[1]) : undefined
+    return index !== undefined && Array.isArray(raw.experienceValues) ? raw.experienceValues[index] : undefined
+  }
+
+  if (target === "armorMax") {
+    if (hasOwn(raw, "armorMax")) return raw.armorMax
+    if (hasOwn(raw, "armorValue")) return raw.armorValue
+    return undefined
+  }
+
+  if (target === "proficiency") {
+    return hasOwn(raw, "proficiency") ? raw.proficiency : undefined
+  }
+
+  return hasOwn(raw, target) ? raw[target] : undefined
+}
+
+function isLegacyExplicitFinal(value: unknown): boolean {
+  return !(value === undefined || (typeof value === "string" && value.trim() === ""))
+}
+
+function collectLegacyExplicitFinals(raw: Partial<SheetData> | any): Partial<Record<ModifierTargetId, unknown>> {
+  const finals: Partial<Record<ModifierTargetId, unknown>> = {}
+
+  const targets = new Set<ModifierTargetId>(LEGACY_FINAL_TARGETS)
+  LEGACY_ATTRIBUTE_FINAL_TARGETS.forEach(([target]) => {
+    targets.add(target)
+  })
+  if (isRecord(raw) && Array.isArray(raw.experienceValues)) {
+    raw.experienceValues.forEach((_, index) => {
+      targets.add(`experienceValues.${index}` as ModifierTargetId)
+    })
+  }
+
+  targets.forEach(target => {
+    const value = legacyExplicitFinalValue(raw, target)
+    if (isLegacyExplicitFinal(value)) {
+      finals[target] = value
+    }
+  })
+
+  return finals
+}
+
+function writeModifierTargetState(
+  sheetData: SheetData,
+  target: ModifierTargetId,
+  activeBaseId: string | undefined,
+): SheetData {
+  const targetStates = { ...(sheetData.modifierState?.targetStates ?? {}) }
+  targetStates[target] = {
+    ...(activeBaseId ? { activeBaseId } : {}),
+    autoCalculation: true,
+  }
+
+  return {
+    ...sheetData,
+    modifierState: {
+      targetStates,
+      entryStates: sheetData.modifierState?.entryStates ?? {},
+    },
+  }
+}
+
+function preserveLegacyNumericFinal(
+  sheetData: SheetData,
+  target: ModifierTargetId,
+  finalValue: number,
+): SheetData {
+  const withoutDelta = {
+    ...sheetData,
+    userModifierContributions: removeModifierContribution(
+      sheetData.userModifierContributions ?? [],
+      getUnattributedDeltaId(target),
+    ),
+  }
+  const summary = getReferenceSummary(withoutDelta, target)
+  const activeBase = summary.activeBase ?? summary.bases[0]
+
+  if (!activeBase) {
+    const modifiersTotal = summary.enabledModifiers.reduce((sum, entry) => sum + entry.presentation.value, 0)
+    const estimatedBase = createEstimatedBaseContribution(target, finalValue - modifiersTotal)
+    const contributions = upsertModifierContribution(
+      removeModifierContribution(withoutDelta.userModifierContributions ?? [], getEstimatedBaseId(target)),
+      estimatedBase,
+    )
+    const withContributions = {
+      ...withoutDelta,
+      userModifierContributions: contributions,
+    }
+    const withFinal = writeTargetValue(withContributions, target, finalValue)
+    return writeModifierTargetState(withFinal, target, estimatedBase.id)
+  }
+
+  const referenceTotal = summary.referenceTotal ?? 0
+  const delta = finalValue - referenceTotal
+  const withoutExistingDelta = removeModifierContribution(
+    withoutDelta.userModifierContributions ?? [],
+    getUnattributedDeltaId(target),
+  )
+  const contributions = delta === 0
+    ? withoutExistingDelta
+    : upsertModifierContribution(withoutExistingDelta, createUnattributedDeltaContribution(target, delta))
+  const withContributions = {
+    ...withoutDelta,
+    userModifierContributions: contributions,
+  }
+  const withFinal = writeTargetValue(withContributions, target, finalValue)
+  return writeModifierTargetState(withFinal, target, activeBase.id)
+}
+
+function preserveLegacyModifierFinals(
+  data: SheetData,
+  legacyExplicitFinals: Partial<Record<ModifierTargetId, unknown>>,
+): SheetData {
+  let migrated = data
+  const targets = new Set<ModifierTargetId>(Object.keys(legacyExplicitFinals) as ModifierTargetId[])
+  collectModifierEntries(migrated).forEach(entry => {
+    targets.add(entry.definition.target)
+  })
+
+  targets.forEach(target => {
+    if (!isModifierTargetId(target)) return
+    const explicitFinal = legacyExplicitFinals[target]
+
+    if (explicitFinal !== undefined) {
+      const numericFinal = tryParseNumber(explicitFinal)
+      if (numericFinal !== undefined) {
+        migrated = preserveLegacyNumericFinal(migrated, target, numericFinal)
+        return
+      }
+
+      const summary = getReferenceSummary(migrated, target)
+      migrated = writeModifierTargetState(migrated, target, summary.activeBase?.id ?? summary.bases[0]?.id)
+      return
+    }
+
+    const summary = getReferenceSummary(migrated, target)
+    if (summary.entries.length === 0) return
+    migrated = writeModifierTargetState(migrated, target, summary.activeBase?.id ?? summary.bases[0]?.id)
+  })
+
+  return reconcileModifierState(migrated)
+}
+
 function normalizeCurrentModifierCollections(data: SheetData): SheetData {
   const migrated = { ...data }
 
@@ -738,11 +950,12 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
     const entryStates: NonNullable<SheetData["modifierState"]>["entryStates"] = {}
     if (isRecord(migrated.modifierState.entryStates)) {
       Object.entries(migrated.modifierState.entryStates).forEach(([entryId, state]) => {
-        if (!isRecord(state)) return
+        const sanitizedState = sanitizeModifierEntryState(state)
+        if (!sanitizedState) return
         const migratedEntryId = migrateSystemModifierEntryId(entryId)
         entryStates[migratedEntryId] = {
           ...(entryStates[migratedEntryId] ?? {}),
-          ...state,
+          ...sanitizedState,
         }
       })
     }
@@ -828,10 +1041,12 @@ function migrateV0ToV1(raw: Partial<SheetData> | any): Partial<SheetData> {
 
 function migrateV1ToV2(raw: Partial<SheetData> | any): Partial<SheetData> {
   const hasInputEquipment = isRecord(raw?.equipment)
+  const legacyExplicitFinals = collectLegacyExplicitFinals(raw)
   let migrated = { ...raw } as SheetData
 
   migrated = migrateEquipment(migrated, hasInputEquipment)
   migrated = migrateModifierState(migrated)
+  migrated = preserveLegacyModifierFinals(migrated, legacyExplicitFinals)
   migrated = stripLegacyEquipmentFields(migrated)
   migrated = cleanupDeprecatedFields(migrated)
 

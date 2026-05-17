@@ -108,7 +108,7 @@ modifier = 可叠加的修正来源
 
 ### 没有任何 base
 
-如果 target 没有任何 base，且用户输入可解析为数字，则创建或更新专用 base：
+如果 target 没有任何 base，且用户输入可解析为数字，则创建或更新交互输入产生的专用 base：
 
 ```text
 手动基础值
@@ -127,6 +127,10 @@ user:${target}:manual-base
 - value 保存解析后的数值
 - 如果当前没有 active base，则设为 active base
 - 这是 final input 专用维护项，不是普通用户自定义 base
+
+这个规则只描述用户交互输入。它的语义是：当 target 还没有基础锚点时，用户输入的数值就是在提供一个手动基础值。系统不应假设用户理解当前所有 modifier，也不应在交互场景中把这个输入优先解释成反推后的估算结果。
+
+老存档迁移是另一种场景，见“老存档迁移的含义”。
 
 ### 已经有 base
 
@@ -294,9 +298,31 @@ kind: "modifier"
 
 具体实现也可以用其它字段表达，但语义必须保留：identity 不依赖显示 label。
 
+## 存储策略
+
+为了保持当前数据模型简单，第一阶段不新增第三个持久化列表。
+
+概念上：
+
+- `手动基础值` 是 target-owned special base。
+- `估算基础值` 是 target-owned special base。
+- `未归因差额` 是 target-owned special modifier。
+
+存储上，它们可以继续复用现有 `userModifierContributions` 容器，并用稳定 id 约定区分：
+
+```ts
+user:${target}:manual-base
+user:${target}:estimated-base
+user:${target}:unattributed-delta
+```
+
+因此读取方不能仅凭“存在 `userModifierContributions` 里”就判断它是普通用户来源。必须同时识别 special id，或等价的 special source metadata。
+
+普通用户创建同名 label 不会冲突，因为 identity 不依赖 label。
+
 ## 专用项的编辑规则
 
-`手动基础值` 和 `未归因差额` 都是 final input reconciliation 的专用项。
+`手动基础值`、`估算基础值` 和 `未归因差额` 都是 final input reconciliation 的专用项。
 
 它们不是普通自定义来源。
 
@@ -305,6 +331,7 @@ kind: "modifier"
 - 系统识别靠稳定 id，不靠 label。
 - label 固定：
   - `手动基础值`
+  - `估算基础值`
   - `未归因差额`
 - value 可以被用户在 popover 中修改。
 - 用户可以删除这些项。
@@ -356,7 +383,7 @@ kind: "modifier"
 
 1. 如果存在 `未归因差额`，清空 final 后删除 `未归因差额`。
 2. 不删除任何 base。
-3. 不禁用任何系统 base。
+3. 不修改任何系统 base。
 4. 不把空值解释成 `0`。
 5. 删除 `未归因差额` 后，final value 重新同步为当前 reference total。
 
@@ -395,7 +422,8 @@ base 12 + 未归因差额 2 = 14
    - 创建或更新 `未归因差额`，使 reference total 追平当前 final value。
 3. 如果 final value 有数字，但没有 base：
    - 创建或更新 `手动基础值`。
-   - 如果当前已有 modifiers，则 `手动基础值 = final value - modifiers total`，避免 modifier 被重复叠加后改变 final。
+   - 交互场景中，`手动基础值` 的 value 使用用户提交的数值。
+   - 不在这里把用户输入反推成 `final value - modifiers total`；用户输入的语义是提供基础锚点。
 4. 如果 final value 无法解析为数字：
    - 可以开启自动计算，但不做初始接管。
    - 后续用户提交可解析数字，或来源系统变得可计算后，再执行 reconciliation。
@@ -416,8 +444,10 @@ base 12 + 未归因差额 2 = 14
 这意味着：
 
 - 有 base 且 final 与 reference 不一致时，差额应进入 `未归因差额`。
-- 没有 base 但 final 有数字时，应创建或更新 `手动基础值`。
+- 没有 base 但 final 有数字时，应创建或更新 `估算基础值`。
+- 如果迁移时已有 modifiers，`估算基础值 = legacy final value - modifiers total`，目标是保留老存档 final value 不变。
 - 没有 final 或 final 不可解析时，不强行创建来源项。
+- 迁移后的 target 默认开启自动计算，因为旧自动化已经统一接入自动计算系统。
 
 这样老存档打开后，不会因为自动化系统接管而突然改变角色卡上的最终数值。
 
@@ -434,7 +464,8 @@ base 12 + 未归因差额 2 = 14
 本文将它纳入更大的 final input reconciliation 模型：
 
 ```text
-没有 base => 手动基础值
+没有 base + 用户交互输入 => 手动基础值
+没有 base + 老存档迁移反推 => 估算基础值
 已有 base => 未归因差额
 ```
 
@@ -461,7 +492,7 @@ base 12 + 未归因差额 2 = 14
 7. 自动计算开启时，如果已有 base，用户输入创建或更新 `未归因差额`。
 8. `未归因差额` 每个 target 最多一个，重复编辑更新同一项。
 9. 计算 `未归因差额` 时必须排除旧的 `未归因差额` 自身。
-10. `手动基础值` 和 `未归因差额` 的 label 固定，value 可改。
+10. `手动基础值`、`估算基础值` 和 `未归因差额` 的 label 固定，value 可改。
 11. 用户需要具名来源时，应创建普通自定义 modifier。
 12. 清空 final input 只删除 `未归因差额`，不删除 base。
 13. 清空不等于输入 0。
@@ -472,6 +503,10 @@ base 12 + 未归因差额 2 = 14
 18. `未归因差额` 是 target-owned special modifier，不是 provider-owned 系统加值，也不是 user-owned 普通加值。
 19. 系统识别 `未归因差额` 必须依赖稳定 id / source type，不能依赖 label；用户创建同名普通加值不会冲突。
 20. 新 UI 不提供 entry 级启用 / 禁用能力；旧 `entryStates.enabled` 只作为兼容状态保留。
+21. special contribution 概念上是 target-owned，但第一阶段可以复用 `userModifierContributions` 存储，通过稳定 id / metadata 区分普通用户来源。
+22. 用户交互输入在没有 base 时创建 `手动基础值`；老存档迁移在没有 base 时创建 `估算基础值`。
+23. 老存档迁移应默认开启自动计算，并通过 `未归因差额` / `估算基础值` 保留旧 final value。
+24. final value 不可解析为数字时，不接管、不清空、不创建来源项。
 
 ## 已定稿的 UI 决策
 
@@ -480,5 +515,5 @@ base 12 + 未归因差额 2 = 14
 3. 第一阶段所有 target 都接入 final input reconciliation。
 4. 非文本输入也接入同一模型。点击格子提交新 final value 时，等价于提交 final input。
 5. `hpMax` / `stressMax` 的默认值 6 保持现有行为，不在本设计中修改。
-6. `手动基础值` / `未归因差额` 在 popover 中可以用轻量标记区分，例如 `自动计算` 或 `系统保留`；不需要第一阶段引入复杂说明。
+6. `手动基础值` / `估算基础值` / `未归因差额` 在 popover 中可以用轻量标记区分，例如 `自动计算` 或 `系统保留`；不需要第一阶段引入复杂说明。
 7. 系统来源不显示操作按钮；用户来源和 target-owned special 来源在同一位置显示删除按钮。

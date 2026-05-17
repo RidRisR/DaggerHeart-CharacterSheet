@@ -1,24 +1,6 @@
 import type { EquipmentModifierContribution, EquipmentModifierTargetId } from "@/lib/equipment/types"
 
-const equipmentModifierTargets = [
-  "evasion",
-  "armorMax",
-  "minorThreshold",
-  "majorThreshold",
-  "hpMax",
-  "stressMax",
-  "proficiency",
-  "agility.value",
-  "strength.value",
-  "finesse.value",
-  "instinct.value",
-  "presence.value",
-  "knowledge.value",
-] as const satisfies readonly EquipmentModifierTargetId[]
-
-export const EQUIPMENT_MODIFIER_TARGETS = equipmentModifierTargets
-
-export const EQUIPMENT_TARGET_LABELS: Record<EquipmentModifierTargetId, string> = {
+export const EQUIPMENT_TARGET_LABELS = {
   evasion: "闪避",
   armorMax: "护甲值",
   minorThreshold: "重伤阈值",
@@ -32,9 +14,11 @@ export const EQUIPMENT_TARGET_LABELS: Record<EquipmentModifierTargetId, string> 
   "instinct.value": "本能",
   "presence.value": "风度",
   "knowledge.value": "知识",
-}
+} as const satisfies Record<EquipmentModifierTargetId, string>
 
-const targetSet = new Set<string>(equipmentModifierTargets)
+export const EQUIPMENT_MODIFIER_TARGETS = Object.keys(EQUIPMENT_TARGET_LABELS) as EquipmentModifierTargetId[]
+
+const targetSet = new Set<string>(EQUIPMENT_MODIFIER_TARGETS)
 let generatedIdCounter = 0
 
 export function isEquipmentModifierTargetId(target: unknown): target is EquipmentModifierTargetId {
@@ -59,6 +43,8 @@ export function sanitizeEquipmentModifierContributions(value: unknown): Equipmen
     return []
   }
 
+  const seenIds = new Set<string>()
+
   return value.flatMap((item): EquipmentModifierContribution[] => {
     if (!item || typeof item !== "object") {
       return []
@@ -72,12 +58,15 @@ export function sanitizeEquipmentModifierContributions(value: unknown): Equipmen
 
     if (
       typeof contribution.id !== "string" ||
+      seenIds.has(contribution.id) ||
       !isEquipmentModifierTargetId(contribution.definition?.target) ||
       contribution.definition?.kind !== "modifier" ||
       typeof contribution.editable?.value !== "number"
     ) {
       return []
     }
+
+    seenIds.add(contribution.id)
 
     return [
       {

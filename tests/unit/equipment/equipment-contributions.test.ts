@@ -59,6 +59,39 @@ describe("equipment contribution utilities", () => {
     ])
   })
 
+  it("keeps the first valid contribution when duplicate ids are present", () => {
+    const sanitized = sanitizeEquipmentModifierContributions([
+      {
+        id: "duplicate",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "first", value: 1 },
+      },
+      {
+        id: "duplicate",
+        definition: { target: "armorMax", kind: "modifier" },
+        editable: { label: "second", value: 2 },
+      },
+      {
+        id: "unique",
+        definition: { target: "agility.value", kind: "modifier" },
+        editable: { label: "third", value: 3 },
+      },
+    ])
+
+    expect(sanitized).toEqual([
+      {
+        id: "duplicate",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "first", value: 1 },
+      },
+      {
+        id: "unique",
+        definition: { target: "agility.value", kind: "modifier" },
+        editable: { label: "third", value: 3 },
+      },
+    ])
+  })
+
   it("exposes user-facing target labels", () => {
     expect(EQUIPMENT_TARGET_LABELS.evasion).toBe("闪避")
     expect(EQUIPMENT_TARGET_LABELS["agility.value"]).toBe("敏捷")

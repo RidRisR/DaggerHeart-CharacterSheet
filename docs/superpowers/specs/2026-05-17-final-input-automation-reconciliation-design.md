@@ -230,6 +230,71 @@ final 15, reference 13
 
 如果自动计算开启后仍出现底部只读的 `未归因差额`，通常表示 reconciliation 没有完成，或当前状态无法被完整解释。
 
+## 来源所有权
+
+`未归因差额` 进入加值区后，仍不应被视为普通系统加值或普通用户加值。它是第三类来源：
+
+```text
+target-owned special modifier
+```
+
+因此加值区需要区分三种 ownership：
+
+### Provider-owned 系统加值
+
+来源是职业、武器、护甲、升级选项等 provider。
+
+规则：
+
+- 用户不能直接删除。
+- 用户可以禁用。
+- 要让它真正消失，应回到 provider 侧修改选择，例如取消升级、换装备。
+
+### User-owned 普通加值
+
+来源是用户通过自定义入口创建的普通 modifier。
+
+规则：
+
+- 用户可以修改 label。
+- 用户可以修改 value。
+- 用户可以禁用。
+- 用户可以删除。
+
+### Target-owned 未归因差额
+
+来源是 target final reconciliation。
+
+规则：
+
+- 用户不能修改 label。
+- 用户可以修改 value。
+- 用户可以禁用。
+- 用户可以删除。
+- 删除含义是：用户接受移除这段无法归因到具体来源的额外差额。
+
+`未归因差额` 可以删除，是因为它没有外部 provider 依赖。它不是“升级 +1”这类必须由 provider 生命周期控制的系统加值。
+
+系统必须靠稳定身份识别 target-owned `未归因差额`，不能靠 label。用户可以创建一个普通自定义加值，也叫 `未归因差额`，但它仍然只是 user-owned 普通加值：
+
+```text
+普通用户加值 label = 未归因差额
+=> 可改 label / value / 禁用 / 删除
+
+target-owned 未归因差额
+=> label 固定 / value 可改 / 可禁用 / 可删除
+```
+
+建议身份形态：
+
+```ts
+id: `target:${target}:unattributed-delta`
+source.type: "target-reconciliation"
+kind: "modifier"
+```
+
+具体实现也可以用其它字段表达，但语义必须保留：identity 不依赖显示 label。
+
 ## 专用项的编辑规则
 
 `手动基础值` 和 `未归因差额` 都是 final input reconciliation 的专用项。
@@ -387,12 +452,14 @@ base 12 + 未归因差额 2 = 14
 15. 自动计算关闭时，底部 `未归因差额` 是只读提示。
 16. 自动计算开启后，`未归因差额` 应成为加值列表中的实体 modifier。
 17. 实体 `未归因差额` 可以由用户修改 value、禁用或删除，但不能改 label。
+18. `未归因差额` 是 target-owned special modifier，不是 provider-owned 系统加值，也不是 user-owned 普通加值。
+19. 系统识别 `未归因差额` 必须依赖稳定 id / source type，不能依赖 label；用户创建同名普通加值不会冲突。
 
-## 待讨论问题
+## 已定稿的 UI 决策
 
-1. UI 文案使用“自动计算”还是“自动化”。
-2. 现有“同步”按钮是否完全移除，还是保留为高级/调试操作。
-3. 哪些 target 第一阶段接入 final input reconciliation。
-4. `proficiency` 这种非文本输入是否要支持 final input reconciliation，还是只通过已有格子交互。
-5. `hpMax` / `stressMax` 清空后 fallback 是否仍保持 6，还是在 final input reconciliation 层特殊处理。
-6. `手动基础值` / `未归因差额` 在 popover 中如何视觉区分普通用户来源。
+1. UI 文案使用 `开启自动计算` / `关闭自动计算`。
+2. 移除普通 UI 中的 `同步` 按钮。一次同步只是开启自动计算或内部 reconciliation 的动作。
+3. 第一阶段所有 target 都接入 final input reconciliation。
+4. 非文本输入也接入同一模型。点击格子提交新 final value 时，等价于提交 final input。
+5. `hpMax` / `stressMax` 的默认值 6 保持现有行为，不在本设计中修改。
+6. `手动基础值` / `未归因差额` 在 popover 中可以用轻量标记区分，例如 `自动计算` 或 `系统保留`；不需要第一阶段引入复杂说明。

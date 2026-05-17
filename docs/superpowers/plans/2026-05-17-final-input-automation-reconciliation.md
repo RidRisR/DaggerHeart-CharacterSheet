@@ -6,6 +6,8 @@
 
 **Architecture:** Keep schema version 2 and treat this as part of the modifier branch v2 migration. Add focused modifier helpers for special contribution identity, final-input reconciliation, and auto-calculation. Rewire store actions and modifier UI to use `autoCalculation?: true`, remove entry-level disable UI, and update v1 -> v2 migration to create `未归因差额` / `估算基础值` while preserving legacy final values.
 
+**Compatibility Boundary:** Only preserve behavior for save data from the published `main` branch and earlier unversioned saves that migrate through the main v0 -> v1 path. Modifier-branch intermediate save shapes were never released and do not need compatibility branches. Current modifier-branch migration code may be rewritten into the v1 -> v2 path as long as published main saves migrate safely and final v2 saves are idempotent on reload.
+
 **Tech Stack:** TypeScript, React, Zustand store, Vitest, React Testing Library, existing modifier registry/reference helpers.
 
 ---

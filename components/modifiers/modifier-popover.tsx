@@ -43,29 +43,29 @@ interface EditableValueInputProps {
 function EditableValueInput({ entry, onCommit, signed = false }: EditableValueInputProps) {
   const currentValue = entryValue(entry)
   const currentLabel = entryLabel(entry)
-  const [value, setValue] = useState(String(currentValue))
+  const displayValue = signed ? formatSigned(currentValue) : String(currentValue)
+  const [value, setValue] = useState(displayValue)
 
   useEffect(() => {
-    setValue(String(currentValue))
-  }, [currentValue])
+    setValue(displayValue)
+  }, [displayValue])
 
   const commit = () => {
     const parsedValue = tryParseNumberExpression(value)
     if (parsedValue === undefined || parsedValue === currentValue) {
-      setValue(String(currentValue))
+      setValue(displayValue)
       return
     }
     onCommit(entry.id, parsedValue)
   }
 
   return (
-    <span className="flex items-center gap-0.5">
-      {signed && currentValue >= 0 && <span className="font-semibold">+</span>}
+    <span className="flex w-12 shrink-0 items-center justify-end">
       <input
-        type="number"
+        type="text"
         aria-label={`编辑${currentLabel}数值`}
         value={value}
-        className="h-7 w-16 rounded border border-gray-300 px-1 text-right text-xs font-semibold"
+        className="h-6 w-full rounded border border-transparent bg-transparent px-1 text-right text-xs font-semibold hover:border-gray-300 focus:border-gray-300 focus:bg-white"
         onChange={event => setValue(event.target.value)}
         onBlur={commit}
         onKeyDown={event => {
@@ -75,9 +75,100 @@ function EditableValueInput({ entry, onCommit, signed = false }: EditableValueIn
           }
         }}
       />
-      {signed && <span aria-hidden="true" className="sr-only">{formatSigned(currentValue)}</span>}
     </span>
   )
+}
+
+function ReadonlyValueBox({ value }: { value: string | number }) {
+  return (
+    <span className="flex h-6 w-12 shrink-0 items-center justify-end rounded border border-transparent bg-transparent px-1 text-right text-xs font-semibold">
+      {value}
+    </span>
+  )
+}
+
+function ReadonlyLabelBox({ label }: { label: string }) {
+  return (
+    <span className="flex h-7 min-w-0 flex-1 items-center rounded border border-transparent bg-transparent px-1 text-xs">
+      <span className="min-w-0 truncate">{label}</span>
+    </span>
+  )
+}
+
+function SourceBadge({ label }: { label: string }) {
+  return (
+    <span className="shrink-0 rounded bg-white px-1 py-0.5 text-[10px] text-gray-500">
+      {label}
+    </span>
+  )
+}
+
+function SourceBadgeWithDelete({
+  label,
+  deleteLabel,
+  onDelete,
+}: {
+  label: string
+  deleteLabel?: string
+  onDelete?: () => void
+}) {
+  return (
+    <span className="relative inline-flex shrink-0">
+      <SourceBadge label={label} />
+      {deleteLabel && onDelete && (
+        <button
+          type="button"
+          aria-label={deleteLabel}
+          className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500/80 text-[9px] leading-none text-white opacity-0 shadow-sm transition-opacity hover:bg-red-600 group-hover:opacity-100 focus:opacity-100"
+          onClick={onDelete}
+        >
+          ×
+        </button>
+      )}
+    </span>
+  )
+}
+
+function AddSourceButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] leading-none text-gray-600 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900"
+      onClick={onClick}
+    >
+      +
+    </button>
+  )
+}
+
+function sourceBadgeLabel(entry: ModifierEntry, isSpecialEntry: boolean): string {
+  if (isSpecialEntry) return "同步"
+
+  switch (entry.source.type) {
+    case "profession":
+      return "职业"
+    case "equipment":
+      if (entry.source.id.startsWith("weapon:")) return "武器"
+      if (entry.source.id.startsWith("armor:")) return "护甲"
+      return "装备"
+    case "armor":
+      return "护甲"
+    case "level":
+      return "等级"
+    case "upgrade":
+      return "升级"
+    case "user":
+      return "用户"
+    default:
+      return "系统"
+  }
+}
+
+function displayEntryLabel(entry: ModifierEntry): string {
+  const label = entryLabel(entry)
+  if (entry.source.type !== "upgrade") return label
+  return label.replace(/^升级[:：]\s*/, "")
 }
 
 interface EditableLabelInputProps {
@@ -120,72 +211,6 @@ function EditableLabelInput({ entry, onCommit }: EditableLabelInputProps) {
   )
 }
 
-interface AddEntryFormProps {
-  kind: ModifierEntryKind
-  name: string
-  value: string
-  error: string
-  onNameChange: (value: string) => void
-  onValueChange: (value: string) => void
-  onConfirm: () => void
-  onCancel: () => void
-}
-
-function AddEntryForm({
-  kind,
-  name,
-  value,
-  error,
-  onNameChange,
-  onValueChange,
-  onConfirm,
-  onCancel,
-}: AddEntryFormProps) {
-  const noun = kind === "base" ? "基值" : "加值"
-
-  return (
-    <div className="min-w-0 rounded border border-gray-200 bg-gray-50 p-2">
-      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_3.75rem] gap-1.5">
-        <label className="grid min-w-0 gap-0.5">
-          <span className="text-[11px] text-gray-500">{noun}名称</span>
-          <input
-            type="text"
-            value={name}
-            onChange={event => onNameChange(event.target.value)}
-            className="h-7 min-w-0 w-full rounded border border-gray-300 px-1 text-xs"
-          />
-        </label>
-        <label className="grid min-w-0 gap-0.5">
-          <span className="text-[11px] text-gray-500">{noun}数值</span>
-          <input
-            type="text"
-            value={value}
-            onChange={event => onValueChange(event.target.value)}
-            className="h-7 min-w-0 w-full rounded border border-gray-300 px-1 text-xs"
-          />
-        </label>
-      </div>
-      {error && <div className="mt-1 text-[11px] text-red-600">{error}</div>}
-      <div className="mt-2 flex justify-end gap-1">
-        <button
-          type="button"
-          className="h-7 rounded border border-gray-300 px-2 text-xs hover:bg-white"
-          onClick={onCancel}
-        >
-          取消
-        </button>
-        <button
-          type="button"
-          className="h-7 rounded border border-gray-300 bg-white px-2 text-xs hover:bg-gray-100"
-          onClick={onConfirm}
-        >
-          确认添加{noun}
-        </button>
-      </div>
-    </div>
-  )
-}
-
 export function ModifierPopover({ sheetData, target, label }: ModifierPopoverProps) {
   const summary = getReferenceSummary(sheetData, target)
   const setActiveModifierBase = useSheetStore(state => state.setActiveModifierBase)
@@ -193,14 +218,6 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const upsertUserModifierContribution = useSheetStore(state => state.upsertUserModifierContribution)
   const removeUserModifierContribution = useSheetStore(state => state.removeUserModifierContribution)
   const removeSpecialBaseContribution = useSheetStore(state => state.removeSpecialBaseContribution)
-  const [addingBase, setAddingBase] = useState(false)
-  const [baseName, setBaseName] = useState("")
-  const [baseValue, setBaseValue] = useState("")
-  const [baseError, setBaseError] = useState("")
-  const [addingModifier, setAddingModifier] = useState(false)
-  const [modifierName, setModifierName] = useState("")
-  const [modifierValue, setModifierValue] = useState("")
-  const [modifierError, setModifierError] = useState("")
   const finalValue = readTargetValue(sheetData, target)
   const targetState = sheetData.modifierState?.targetStates?.[target]
   const autoCalculation = isTargetAutoCalculationEnabled(targetState)
@@ -266,23 +283,13 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   }
 
   const addUserEntry = (kind: ModifierEntryKind) => {
-    const name = kind === "base" ? baseName : modifierName
-    const rawValue = kind === "base" ? baseValue : modifierValue
-    const setError = kind === "base" ? setBaseError : setModifierError
-    const parsedValue = tryParseNumberExpression(rawValue)
-
-    if (parsedValue === undefined) {
-      setError("请输入数字")
-      return
-    }
-
     const id = createUserEntryId(target)
     const contribution: UserModifierContribution = {
       id,
       definition: { target, kind },
       editable: {
-        label: name.trim() || (kind === "base" ? "手动基础值" : "手动加值"),
-        value: parsedValue,
+        label: kind === "base" ? "未命名基值" : "未命名修正值",
+        value: 0,
       },
     }
 
@@ -290,56 +297,36 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
     if (kind === "base" && !summary.activeBase) {
       setActiveModifierBase(target, id)
     }
-
-    setError("")
-    if (kind === "base") {
-      setBaseName("")
-      setBaseValue("")
-      setAddingBase(false)
-    } else {
-      setModifierName("")
-      setModifierValue("")
-      setAddingModifier(false)
-    }
-  }
-
-  const cancelAddBase = () => {
-    setBaseName("")
-    setBaseValue("")
-    setBaseError("")
-    setAddingBase(false)
-  }
-
-  const cancelAddModifier = () => {
-    setModifierName("")
-    setModifierValue("")
-    setModifierError("")
-    setAddingModifier(false)
   }
 
   return (
     <div className="max-h-[28rem] w-80 overflow-y-auto rounded border border-gray-300 bg-white p-3 text-xs shadow-lg">
       <div className="mb-2 flex items-start justify-between gap-2">
-        <div className="font-semibold text-gray-900">{label}来源</div>
+        <div className="font-semibold text-gray-900">
+          {label}来源（{autoCalculation ? "同步中" : "暂停同步"}）
+        </div>
         <div className="text-[11px] text-gray-500">当前：{String(finalValue ?? "未知")}</div>
       </div>
 
       <div className="mb-2">
-        <div className="mb-1 text-[11px] font-medium text-gray-500">基础值</div>
+        <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-gray-500">
+          <span>基础值</span>
+          <AddSourceButton label="+ 自定义基值" onClick={() => addUserEntry("base")} />
+        </div>
         {summary.bases.length > 0 ? (
           <div className="space-y-1">
             {summary.bases.map(entry => {
-              const currentLabel = entryLabel(entry)
+              const currentLabel = displayEntryLabel(entry)
               const currentValue = entryValue(entry)
               const isUserEntry = entry.source.type === "user"
               const isSpecialEntry = isTargetOwnedSpecialEntry(entry)
               const canEditLabel = isUserEntry && !isSpecialEntry
               const canEditValue = isUserEntry
               const canDelete = isUserEntry
-              const sourceHint = isSpecialEntry ? "自动计算" : isUserEntry ? undefined : "系统来源"
+              const sourceHint = sourceBadgeLabel(entry, isSpecialEntry)
 
               return (
-                <div key={entry.id} className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
+                <div key={entry.id} className="group relative flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
                   <div className="flex min-w-0 flex-1 items-center gap-1.5">
                     <input
                       type="radio"
@@ -348,31 +335,21 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
                       aria-label={`${currentLabel} ${currentValue}`}
                       onChange={() => setActiveModifierBase(target, entry.id)}
                     />
+                    <SourceBadgeWithDelete
+                      label={sourceHint}
+                      deleteLabel={canDelete ? `删除${currentLabel}` : undefined}
+                      onDelete={canDelete ? () => deleteUserContribution(entry) : undefined}
+                    />
                     {canEditLabel ? (
                       <EditableLabelInput entry={entry} onCommit={updateUserContributionLabel} />
                     ) : (
-                      <span className="min-w-0 flex-1 truncate">{currentLabel}</span>
-                    )}
-                    {sourceHint && (
-                      <span className="shrink-0 rounded bg-white px-1 py-0.5 text-[10px] text-gray-500">
-                        {sourceHint}
-                      </span>
+                      <ReadonlyLabelBox label={currentLabel} />
                     )}
                   </div>
                   {canEditValue ? (
                     <EditableValueInput entry={entry} onCommit={updateUserContributionValue} />
                   ) : (
-                    <span className="font-semibold">{currentValue}</span>
-                  )}
-                  {canDelete && (
-                    <button
-                      type="button"
-                      aria-label={`删除${currentLabel}`}
-                      className="text-[11px] text-gray-400 hover:text-red-600"
-                      onClick={() => deleteUserContribution(entry)}
-                    >
-                      删除
-                    </button>
+                    <ReadonlyValueBox value={currentValue} />
                   )}
                 </div>
               )
@@ -381,131 +358,98 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
         ) : (
           <div className="rounded bg-gray-50 px-2 py-1 text-gray-500">未知基础值</div>
         )}
-        <div className="mt-1">
-          {addingBase ? (
-            <AddEntryForm
-              kind="base"
-              name={baseName}
-              value={baseValue}
-              error={baseError}
-              onNameChange={setBaseName}
-              onValueChange={setBaseValue}
-              onConfirm={() => addUserEntry("base")}
-              onCancel={cancelAddBase}
-            />
-          ) : (
-            <button
-              type="button"
-              className="rounded px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              onClick={() => setAddingBase(true)}
-            >
-              + 自定义基值
-            </button>
-          )}
-        </div>
       </div>
 
       <div className="mb-2">
-        <div className="mb-1 text-[11px] font-medium text-gray-500">加值</div>
+        <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-gray-500">
+          <span>修正值</span>
+          <AddSourceButton label="+ 自定义修正值" onClick={() => addUserEntry("modifier")} />
+        </div>
         {summary.modifiers.length > 0 ? (
           <div className="space-y-1">
             {summary.modifiers.map(entry => {
-              const currentLabel = entryLabel(entry)
+              const currentLabel = displayEntryLabel(entry)
               const currentValue = entryValue(entry)
               const isUserEntry = entry.source.type === "user"
               const isSpecialEntry = isTargetOwnedSpecialEntry(entry)
               const canEditLabel = isUserEntry && !isSpecialEntry
               const canEditValue = isUserEntry
               const canDelete = isUserEntry
-              const sourceHint = isSpecialEntry ? "自动计算" : isUserEntry ? undefined : "系统来源"
+              const sourceHint = sourceBadgeLabel(entry, isSpecialEntry)
 
               return (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1"
+                  className={[
+                    "group relative flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1",
+                  ].join(" ")}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                    <SourceBadgeWithDelete
+                      label={sourceHint}
+                      deleteLabel={canDelete ? `删除${currentLabel}` : undefined}
+                      onDelete={canDelete ? () => deleteUserContribution(entry) : undefined}
+                    />
                     {canEditLabel ? (
                       <EditableLabelInput entry={entry} onCommit={updateUserContributionLabel} />
                     ) : (
-                      <span className="min-w-0 flex-1 truncate">{currentLabel}</span>
-                    )}
-                    {sourceHint && (
-                      <span className="shrink-0 rounded bg-white px-1 py-0.5 text-[10px] text-gray-500">
-                        {sourceHint}
-                      </span>
+                      <ReadonlyLabelBox label={currentLabel} />
                     )}
                   </div>
                   {canEditValue ? (
                     <EditableValueInput entry={entry} signed onCommit={updateUserContributionValue} />
                   ) : (
-                    <span className="font-semibold">{formatSigned(currentValue)}</span>
-                  )}
-                  {canDelete && (
-                    <button
-                      type="button"
-                      aria-label={`删除${currentLabel}`}
-                      className="text-[11px] text-gray-400 hover:text-red-600"
-                      onClick={() => deleteUserContribution(entry)}
-                    >
-                      删除
-                    </button>
+                    <ReadonlyValueBox value={formatSigned(currentValue)} />
                   )}
                 </div>
               )
             })}
           </div>
         ) : (
-          <div className="rounded bg-gray-50 px-2 py-1 text-gray-500">无加值</div>
+          <div className="rounded bg-gray-50 px-2 py-1 text-gray-500">无修正值</div>
         )}
-        <div className="mt-1">
-          {addingModifier ? (
-            <AddEntryForm
-              kind="modifier"
-              name={modifierName}
-              value={modifierValue}
-              error={modifierError}
-              onNameChange={setModifierName}
-              onValueChange={setModifierValue}
-              onConfirm={() => addUserEntry("modifier")}
-              onCancel={cancelAddModifier}
-            />
-          ) : (
-            <button
-              type="button"
-              className="rounded px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              onClick={() => setAddingModifier(true)}
-            >
-              + 自定义加值
-            </button>
-          )}
-        </div>
       </div>
+
+      {(summary.referenceTotal !== undefined || (
+        summary.unattributedDelta !== undefined
+          && summary.unattributedDelta !== 0
+          && !(autoCalculation && hasMaterializedUnattributedDelta)
+      )) && (
+        <div className="mb-2">
+          <div className="mb-1 text-[11px] font-medium text-gray-500">总值</div>
+          <div className="space-y-1">
+            {summary.referenceTotal !== undefined && (
+              <div className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
+                <span className="text-gray-500">当前来源合计</span>
+                <ReadonlyValueBox value={summary.referenceTotal} />
+              </div>
+            )}
+            {summary.unattributedDelta !== undefined
+              && summary.unattributedDelta !== 0
+              && !(autoCalculation && hasMaterializedUnattributedDelta) && (
+              <div className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
+                <span className="text-gray-500">未归因差额</span>
+                <ReadonlyValueBox value={formatSigned(summary.unattributedDelta)} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="mb-2 flex items-center justify-between gap-2 border-t border-gray-200 pt-2">
         <button
           type="button"
-          className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] text-gray-700 hover:bg-gray-50"
+          className={[
+            "rounded border px-2 py-1 text-[11px] font-medium",
+            autoCalculation
+              ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+              : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100",
+          ].join(" ")}
           onClick={() => setTargetAutoCalculation(target, !autoCalculation)}
         >
           {autoCalculation ? "关闭自动计算" : "开启自动计算"}
         </button>
       </div>
-
-      {summary.referenceTotal !== undefined && (
-        <div className="flex justify-between border-t border-gray-200 pt-2">
-          <span className="text-gray-500">参考合计</span>
-          <span className="font-semibold">{summary.referenceTotal}</span>
-        </div>
-      )}
-
-      {summary.unattributedDelta !== undefined
-        && summary.unattributedDelta !== 0
-        && !(autoCalculation && hasMaterializedUnattributedDelta) && (
-        <div className="mt-1 rounded bg-amber-50 px-2 py-1 text-amber-800">
-          未归因差额 {formatSigned(summary.unattributedDelta)}
-        </div>
-      )}
 
     </div>
   )

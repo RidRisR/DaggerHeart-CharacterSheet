@@ -56,8 +56,13 @@ export function WeaponSection({
 
   return (
     <div className="mb-2.5">
-      <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">
-        {isPrimary ? "主武器" : "副武器"}
+      <h4 className="flex items-center justify-between font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">
+        <span>{isPrimary ? "主武器" : "副武器"}</span>
+        <EquipmentProviderAnchor
+          slotRef={{ type: "weapon", slot: slotType }}
+          fallbackLabel={isPrimary ? "主武器" : "副武器"}
+          size="compact"
+        />
       </h4>
       <div className="grid grid-cols-10 gap-1 -mt-0.5">
         <div className="col-span-4">
@@ -92,13 +97,6 @@ export function WeaponSection({
                   <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
                 </svg>
               </button>
-              <div className="w-px bg-gray-300"></div>
-              <div className="flex items-center justify-center px-1 print:hidden">
-                <EquipmentProviderAnchor
-                  slotRef={{ type: "weapon", slot: slotType }}
-                  fallbackLabel={isPrimary ? "主武器" : "副武器"}
-                />
-              </div>
             </div>
           )}
         </div>

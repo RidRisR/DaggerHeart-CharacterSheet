@@ -76,7 +76,14 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
 
   return (
     <div>
-      <h4 className="font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">护甲</h4>
+      <h4 className="flex items-center justify-between font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">
+        <span>护甲</span>
+        <EquipmentProviderAnchor
+          slotRef={{ type: "armor" }}
+          fallbackLabel="护甲"
+          size="compact"
+        />
+      </h4>
       <div className="grid grid-cols-10 gap-1 -mt-0.5">
         <div className="col-span-4">
           <label className="text-[8px] text-gray-600">名称</label>
@@ -110,13 +117,6 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
                   <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
                 </svg>
               </button>
-              <div className="w-px bg-gray-300"></div>
-              <div className="flex items-center justify-center px-1 print:hidden">
-                <EquipmentProviderAnchor
-                  slotRef={{ type: "armor" }}
-                  fallbackLabel="护甲"
-                />
-              </div>
             </div>
           )}
         </div>

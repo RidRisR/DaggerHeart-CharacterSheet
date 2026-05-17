@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   EQUIPMENT_MODIFIER_TARGETS,
   EQUIPMENT_TARGET_LABELS,
+  sanitizeEquipmentModifierContributions,
 } from "@/lib/equipment/contribution-utils"
 import type { ArmorSlot, EquipmentModifierContribution, WeaponSlot } from "@/lib/equipment/types"
 import { parseNumberExpressionOr } from "@/lib/number-utils"
@@ -141,7 +142,7 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
   const slot = slotForRef(sheetData, slotRef)
   const label = slot.name || fallbackLabel
   const compact = size === "compact"
-  const contributions = slot.modifierContributions as EquipmentModifierContribution[]
+  const contributions = sanitizeEquipmentModifierContributions(slot.modifierContributions)
 
   return (
     <span className={cn("inline-flex print:hidden", compact && "align-middle")}>

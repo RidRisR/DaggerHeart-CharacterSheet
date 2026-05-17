@@ -120,6 +120,42 @@ describe("EquipmentProviderAnchor", () => {
     expect(screen.queryByRole("button", { name: "删除未命名修正" })).not.toBeInTheDocument()
   })
 
+  it("filters invalid and base equipment contributions from the provider panel", async () => {
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        weaponSlots: {
+          ...defaultSheetData.equipment.weaponSlots,
+          primary: {
+            ...defaultSheetData.equipment.weaponSlots.primary,
+            name: "长剑",
+            modifierContributions: [
+              contribution("equipment:weapon:primary:valid", "锋利", 1),
+              {
+                id: "equipment:weapon:primary:experience",
+                definition: { target: "experienceValues.0", kind: "modifier" },
+                editable: { label: "经历污染", value: 2 },
+              },
+              {
+                id: "equipment:weapon:primary:base",
+                definition: { target: "evasion", kind: "base" },
+                editable: { label: "基础污染", value: 12 },
+              },
+            ],
+          },
+        },
+      },
+    })
+
+    render(<EquipmentProviderAnchor slotRef={{ type: "weapon", slot: "primary" }} fallbackLabel="主手武器" />)
+
+    await userEvent.click(screen.getByRole("button", { name: "查看长剑来源" }))
+
+    expect(screen.getByRole("textbox", { name: "修正名称" })).toHaveValue("锋利")
+    expect(screen.queryByDisplayValue("经历污染")).not.toBeInTheDocument()
+    expect(screen.queryByDisplayValue("基础污染")).not.toBeInTheDocument()
+  })
+
   it("shows armor base values as read-only summary rows", async () => {
     resetSheetStore({
       equipment: {

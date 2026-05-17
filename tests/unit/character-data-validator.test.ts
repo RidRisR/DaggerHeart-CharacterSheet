@@ -113,7 +113,7 @@ describe('character data import validation', () => {
     expect(result.data?.cards).toEqual([validCard])
   })
 
-  it('preserves persisted modifier fields through JSON import validation', () => {
+  it('preserves persisted modifier fields and drops legacy disabled entry states through JSON import validation', () => {
     const payload = {
       ...defaultSheetData,
       name: 'Modifier Import',
@@ -151,7 +151,7 @@ describe('character data import validation', () => {
 
     expect(result.valid).toBe(true)
     expect(result.data?.modifierState?.targetStates.evasion?.activeBaseId).toBe('user:evasion-base')
-    expect(result.data?.modifierState?.entryStates['user:evasion-mod']).toEqual({ enabled: false })
+    expect(result.data?.modifierState?.entryStates['user:evasion-mod']).toBeUndefined()
     expect(result.data?.userModifierContributions).toEqual(payload.userModifierContributions)
     expect(result.data?.automationSelections?.['upgrade:tier1-5-0']).toEqual({
       selected: true,

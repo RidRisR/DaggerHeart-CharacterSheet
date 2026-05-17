@@ -37,7 +37,7 @@ describe('migration regression baseline through v2', () => {
     })
     expect('includePageThreeInExport' in migrated).toBe(false)
     expect(migrated.inventory_cards).toHaveLength(20)
-    expect(migrated.agility).toEqual({ checked: true, value: '+2', spellcasting: false })
+    expect(migrated.agility).toEqual({ checked: true, value: '2', spellcasting: false })
     expect(migrated.strength).toEqual({ checked: false, value: '0', spellcasting: true })
     expect(migrated.hope).toBe(2)
     expect(migrated.hopeMax).toBe(6)

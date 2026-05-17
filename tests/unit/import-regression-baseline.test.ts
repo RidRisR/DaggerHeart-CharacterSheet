@@ -42,8 +42,8 @@ describe('main import and normalize regression baseline', () => {
     expect(htmlResult.data?.hope).toBe(3)
     expect((jsonResult.data as any).focused_card_ids).toEqual(['card-domain-1'])
     expect((htmlResult.data as any).focused_card_ids).toEqual(['card-domain-1'])
-    expect(jsonResult.data?.agility).toEqual({ checked: true, value: '+1', spellcasting: false })
-    expect(htmlResult.data?.agility).toEqual({ checked: true, value: '+1', spellcasting: false })
+    expect(jsonResult.data?.agility).toEqual({ checked: true, value: '1', spellcasting: false })
+    expect(htmlResult.data?.agility).toEqual({ checked: true, value: '1', spellcasting: false })
     expect(jsonResult.data?.pageVisibility).toEqual({
       rangerCompanion: false,
       armorTemplate: false,

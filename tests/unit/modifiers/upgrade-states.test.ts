@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   isAttributeKey,
   isFixedUpgradeTargetId,
+  mergeLegacyUpgradeStateFields,
   mergeUpgradeState,
   sanitizeUpgradeStates,
 } from "@/lib/modifiers/upgrade-states"
@@ -138,6 +139,41 @@ describe("upgrade states", () => {
     ).toEqual({
       checked: true,
       params: { target: "hpMax" },
+    })
+  })
+
+  it("preserves legacy automation params when checkedUpgrades has the same check key", () => {
+    expect(
+      mergeLegacyUpgradeStateFields({
+        checkedUpgrades: {
+          "tier1-5-0": { 5: true },
+        },
+        automationSelections: {
+          "upgrade:tier1-5-0": {
+            selected: true,
+            params: { target: "evasion" },
+          },
+        },
+      }),
+    ).toEqual({
+      "tier1-5-0": { checked: true, params: { target: "evasion" } },
+    })
+  })
+
+  it("does not bridge legacy checkedUpgrades bucket keys into upgradeStates", () => {
+    expect(
+      mergeLegacyUpgradeStateFields({
+        checkedUpgrades: {
+          tier1: { 5: true },
+          tier2: { 1: true },
+          tier3: { 2: true },
+          "tier1-5-0": { 5: true },
+          "tier2-1": { 1: true },
+        },
+      }),
+    ).toEqual({
+      "tier1-5-0": { checked: true },
+      "tier2-1": { checked: true },
     })
   })
 })

@@ -34,6 +34,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value)
 }
 
+function isCompleteLegacyCheckKey(value: string): boolean {
+  return value.includes("-")
+}
+
 function sanitizeUpgradeStateParams(value: unknown): UpgradeStateParams | undefined {
   if (!isRecord(value)) return undefined
 
@@ -110,15 +114,6 @@ export function mergeLegacyUpgradeStateFields(value: {
     merged[checkKey] = mergeUpgradeState(undefined, next)
   }
 
-  if (isRecord(value.checkedUpgrades)) {
-    Object.entries(value.checkedUpgrades).forEach(([checkKey, checkedByIndex]) => {
-      if (!isRecord(checkedByIndex)) return
-      if (Object.values(checkedByIndex).some(checked => checked === true)) {
-        addLegacyState(checkKey, { checked: true })
-      }
-    })
-  }
-
   if (isRecord(value.automationSelections)) {
     Object.entries(value.automationSelections).forEach(([sourceId, selection]) => {
       if (!sourceId.startsWith("upgrade:") || !isRecord(selection)) return
@@ -131,6 +126,15 @@ export function mergeLegacyUpgradeStateFields(value: {
         checked: selection.selected,
         params: selection.params as UpgradeState["params"],
       })
+    })
+  }
+
+  if (isRecord(value.checkedUpgrades)) {
+    Object.entries(value.checkedUpgrades).forEach(([checkKey, checkedByIndex]) => {
+      if (!isCompleteLegacyCheckKey(checkKey) || !isRecord(checkedByIndex)) return
+      if (Object.values(checkedByIndex).some(checked => checked === true)) {
+        addLegacyState(checkKey, { checked: true })
+      }
     })
   }
 

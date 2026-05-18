@@ -220,7 +220,7 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
               <div
                 role="tablist"
                 aria-label="备用武器槽位"
-                className="flex w-9 shrink-0 flex-col border-l border-gray-200 bg-gray-50 p-1"
+                className="flex w-9 shrink-0 self-stretch flex-col gap-1 border-l border-gray-200 bg-gray-50 p-1"
               >
                 {[0, 1].map(index => (
                   <button
@@ -230,7 +230,7 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
                     aria-label={`备用武器 ${index + 1}`}
                     aria-selected={selectedInventoryIndex === index}
                     className={cn(
-                      "flex h-8 items-center justify-center rounded text-xs font-semibold transition-colors",
+                      "flex min-h-0 flex-1 items-center justify-center rounded text-xs font-semibold transition-colors",
                       selectedInventoryIndex === index
                         ? "bg-gray-800 text-white"
                         : "bg-white text-gray-700 hover:bg-gray-100",

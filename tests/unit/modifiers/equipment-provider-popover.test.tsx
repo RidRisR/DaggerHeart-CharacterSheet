@@ -128,8 +128,11 @@ describe("EquipmentProviderAnchor", () => {
     await userEvent.click(screen.getByRole("button", { name: "查看备用短剑来源" }))
 
     expect(screen.getByRole("dialog", { name: "备用短剑来源" })).toBeInTheDocument()
+    expect(screen.getByRole("tablist", { name: "备用武器槽位" })).toHaveClass("self-stretch")
     expect(screen.getByRole("tab", { name: "备用武器 1" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("tab", { name: "备用武器 1" })).toHaveClass("flex-1")
     expect(screen.getByRole("tab", { name: "备用武器 2" })).toHaveAttribute("aria-selected", "false")
+    expect(screen.getByRole("tab", { name: "备用武器 2" })).toHaveClass("flex-1")
     expect(screen.getByRole("textbox", { name: "修正名称" })).toHaveValue("短剑护手")
 
     await userEvent.click(screen.getByRole("tab", { name: "备用武器 2" }))

@@ -340,7 +340,9 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByRole("textbox", { name: "编辑未命名基值名称" })).toHaveValue("")
     expect(screen.getByRole("textbox", { name: "编辑未命名基值名称" })).toHaveAttribute("placeholder", "未命名基值")
     expect(screen.getByRole("textbox", { name: "编辑未命名基值数值" })).toHaveValue("0")
-    expect(screen.getByText("总值")).toBeInTheDocument()
+    expect(screen.queryByText("总值")).not.toBeInTheDocument()
+    expect(screen.getByText("当前：15")).toHaveClass("font-semibold")
+    expect(screen.getByText("当前：15")).toHaveClass("tabular-nums")
     expectUnattributedDelta("+15")
     expect(sheet().userModifierContributions).toEqual([
       expect.objectContaining({
@@ -470,7 +472,7 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByDisplayValue("停用加值")).toBeInTheDocument()
     expect(screen.queryByRole("checkbox", { name: /停用加值|启用加值/ })).not.toBeInTheDocument()
     expect(screen.getByDisplayValue("停用加值")).not.toHaveClass("line-through")
-    expect(screen.getByText("15")).toBeInTheDocument()
+    expect(screen.getByText("当前：15")).toBeInTheDocument()
     expect(screen.queryByText(/未归因差额/)).not.toBeInTheDocument()
   })
 

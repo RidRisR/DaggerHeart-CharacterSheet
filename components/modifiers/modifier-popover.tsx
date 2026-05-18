@@ -371,7 +371,9 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
         <div className="font-semibold text-gray-900">
           {label}来源（{autoCalculation ? "同步中" : "暂停同步"}）
         </div>
-        <div className="text-[11px] text-gray-500">当前：{String(finalValue ?? "未知")}</div>
+        <div className="rounded border border-gray-200 bg-transparent px-2 py-1 text-xs font-semibold tabular-nums text-gray-700">
+          当前：{String(finalValue ?? "未知")}
+        </div>
       </div>
 
       <div className="mb-2">
@@ -509,18 +511,6 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
                 </div>
               )
             })}
-          </div>
-        </div>
-      )}
-
-      {summary.referenceTotal !== undefined && (
-        <div className="mb-2">
-          <div className="mb-1 text-[11px] font-medium text-gray-500">总值</div>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
-              <span className="text-gray-500">当前来源合计</span>
-              <ReadonlyValueBox value={summary.referenceTotal} />
-            </div>
           </div>
         </div>
       )}

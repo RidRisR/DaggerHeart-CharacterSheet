@@ -288,7 +288,7 @@ describe("equipment provider section integration", () => {
     expect(onOpenWeaponModal).not.toHaveBeenCalled()
   })
 
-  it("opens inventory weapon provider panel", async () => {
+  it("switches inventory weapon slots with tabs and opens the selected slot provider panel", async () => {
     resetSheetStore({
       equipment: {
         ...defaultSheetData.equipment,
@@ -302,16 +302,36 @@ describe("equipment provider section integration", () => {
               feature: "",
               modifierContributions: [],
             },
-            defaultSheetData.equipment.weaponSlots.inventory[1],
+            {
+              name: "备用长弓",
+              trait: "",
+              damage: "",
+              feature: "",
+              modifierContributions: [],
+            },
           ],
         },
       },
     })
+    const onOpenWeaponModal = vi.fn()
 
-    render(<InventoryWeaponSection index={0} onOpenWeaponModal={vi.fn()} />)
+    render(<InventoryWeaponSection index={0} onOpenWeaponModal={onOpenWeaponModal} />)
 
-    await userEvent.click(screen.getByRole("button", { name: "查看备用短剑来源" }))
-    expect(screen.getByRole("dialog", { name: "备用短剑来源" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "备用武器 1" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("button", { name: "备用短剑" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "备用长弓" })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("tab", { name: "备用武器 2" }))
+
+    expect(screen.getByRole("tab", { name: "备用武器 2" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("button", { name: "备用长弓" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "备用短剑" })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "备用长弓" }))
+    expect(onOpenWeaponModal).toHaveBeenCalledWith({ slotType: "inventory", index: 1 })
+
+    await userEvent.click(screen.getByRole("button", { name: "查看备用长弓来源" }))
+    expect(screen.getByRole("dialog", { name: "备用长弓来源" })).toBeInTheDocument()
   })
 
   it("opens armor provider panel without opening the armor template modal", async () => {

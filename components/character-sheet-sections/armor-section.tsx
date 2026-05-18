@@ -76,7 +76,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
 
   return (
     <div>
-      <h4 className="flex items-center justify-between font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">
+      <h4 className="flex items-center gap-1 font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">
         <span>护甲</span>
         <EquipmentProviderAnchor
           slotRef={{ type: "armor" }}

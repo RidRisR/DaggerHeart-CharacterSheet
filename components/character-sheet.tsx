@@ -641,14 +641,8 @@ export default function CharacterSheet() {
                 <InventorySection />
 
                 {/* Inventory Weapons */}
-                <h3 className="text-xs font-bold text-center">备用武器</h3>
                 <InventoryWeaponSection
                   index={0}
-                  onOpenWeaponModal={openWeaponModal}
-                />
-
-                <InventoryWeaponSection
-                  index={1}
                   onOpenWeaponModal={openWeaponModal}
                 />
 

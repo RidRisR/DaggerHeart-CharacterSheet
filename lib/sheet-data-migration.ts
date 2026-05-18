@@ -1058,7 +1058,7 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
   let migrated = { ...data }
 
   migrated.userModifierContributions = sanitizeModifierContributions(migrated.userModifierContributions)
-  migrated.otherAdjustments = sanitizeOtherAdjustments(migrated.otherAdjustments)
+  let otherAdjustments = sanitizeOtherAdjustments(migrated.otherAdjustments)
 
   const retainedContributions: ModifierContribution[] = []
   migrated.userModifierContributions.forEach(contribution => {
@@ -1068,11 +1068,11 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
     }
 
     const target = contribution.definition.target
-    const existingUnknownDifference = migrated.otherAdjustments.find(
+    const existingUnknownDifference = otherAdjustments.find(
       adjustment => adjustment.target === target && adjustment.kind === "unknownMigrationDifference",
     )
-    migrated.otherAdjustments = upsertOtherAdjustment(
-      migrated.otherAdjustments,
+    otherAdjustments = upsertOtherAdjustment(
+      otherAdjustments,
       createUnknownMigrationDifference(
         target,
         (existingUnknownDifference?.value ?? 0) + contribution.editable.value,
@@ -1080,7 +1080,7 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
     )
   })
   migrated.userModifierContributions = retainedContributions
-  migrated.otherAdjustments = sanitizeOtherAdjustments(migrated.otherAdjustments)
+  migrated.otherAdjustments = sanitizeOtherAdjustments(otherAdjustments)
   migrated = migrateLegacyUpgradeStates(migrated)
 
   if (!migrated.modifierState || typeof migrated.modifierState !== "object" || Array.isArray(migrated.modifierState)) {

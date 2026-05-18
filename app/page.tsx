@@ -195,6 +195,7 @@ export default function Home() {
   const [pendingCardIndex, setPendingCardIndex] = useState<number | null>(null)
   const [pendingCardIsInventory, setPendingCardIsInventory] = useState<boolean>(false)
   const [cardSelectionModalOpen, setCardSelectionModalOpen] = useState(false)
+  const previousCharacterIdRef = useRef<string | null>(null)
 
   // 使用角色管理Hook
   const {
@@ -256,23 +257,22 @@ export default function Home() {
   useEffect(() => {
     memoryMonitor.start()
 
-    // 订阅 sheet store 关键状态变化
-    const unsubscribeSheet = useSheetStore.subscribe((state, prevState) => {
-      if (state.currentCharacterId !== prevState.currentCharacterId) {
-        memoryMonitor.logAction({
-          timestamp: Date.now(),
-          type: 'store',
-          target: 'switchCharacter',
-          detail: state.currentCharacterId || undefined,
-        })
-      }
-    })
-
     return () => {
       memoryMonitor.stop()
-      unsubscribeSheet()
     }
   }, [])
+
+  useEffect(() => {
+    if (previousCharacterIdRef.current !== currentCharacterId) {
+      memoryMonitor.logAction({
+        timestamp: Date.now(),
+        type: 'store',
+        target: 'switchCharacter',
+        detail: currentCharacterId || undefined,
+      })
+      previousCharacterIdRef.current = currentCharacterId
+    }
+  }, [currentCharacterId])
 
   const closeCharacterManagementModal = () => {
     setCharacterManagementModalOpen(false)

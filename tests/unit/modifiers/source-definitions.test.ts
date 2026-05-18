@@ -330,30 +330,41 @@ describe("modifier source definitions", () => {
     } as unknown as SheetData
 
     const entries = collectSystemModifierEntries(sheetData)
+    const upgradeEntries = (sourceId: string) => entries.filter(entry => entry.source.id === sourceId)
 
-    expect(entries).toEqual(expect.arrayContaining([
+    expect(upgradeEntries("upgrade:tier1-1-0")).toEqual([
       expect.objectContaining({
         id: "upgrade:tier1-1-0:hpMax",
         definition: { target: "hpMax", kind: "modifier" },
         presentation: { label: "升级：生命上限 +1", value: 1 },
         source: { type: "upgrade", id: "upgrade:tier1-1-0" },
       }),
+    ])
+    expect(upgradeEntries("upgrade:tier1-1-1")).toEqual([
       expect.objectContaining({
         id: "upgrade:tier1-1-1:hpMax",
         definition: { target: "hpMax", kind: "modifier" },
       }),
+    ])
+    expect(upgradeEntries("upgrade:tier1-2-0")).toEqual([
       expect.objectContaining({
         id: "upgrade:tier1-2-0:stressMax",
         definition: { target: "stressMax", kind: "modifier" },
       }),
+    ])
+    expect(upgradeEntries("upgrade:tier1-5-0")).toEqual([
       expect.objectContaining({
         id: "upgrade:tier1-5-0:evasion",
         definition: { target: "evasion", kind: "modifier" },
       }),
+    ])
+    expect(upgradeEntries("upgrade:tier2-1")).toEqual([
       expect.objectContaining({
         id: "upgrade:tier2-1:proficiency",
         definition: { target: "proficiency", kind: "modifier" },
       }),
+    ])
+    expect(upgradeEntries("upgrade:tier1-0-2")).toEqual([
       expect.objectContaining({
         id: "upgrade:tier1-0-2:agility.value",
         definition: { target: "agility.value", kind: "modifier" },
@@ -362,6 +373,8 @@ describe("modifier source definitions", () => {
         id: "upgrade:tier1-0-2:strength.value",
         definition: { target: "strength.value", kind: "modifier" },
       }),
+    ])
+    expect(upgradeEntries("upgrade:tier1-3-0")).toEqual([
       expect.objectContaining({
         id: "upgrade:tier1-3-0:experienceValues.0",
         definition: { target: "experienceValues.0", kind: "modifier" },
@@ -370,11 +383,74 @@ describe("modifier source definitions", () => {
         id: "upgrade:tier1-3-0:experienceValues.2",
         definition: { target: "experienceValues.2", kind: "modifier" },
       }),
-    ]))
+    ])
 
     expect(entries.some(entry => entry.source.id === "upgrade:tier1-0-1")).toBe(false)
     expect(entries.filter(entry => entry.id === "upgrade:tier2-1:proficiency")).toHaveLength(1)
     expect(entries.some(entry => entry.source.id === "upgrade:tier1-2-1")).toBe(false)
+  })
+
+  it("deduplicates malformed upgrade attribute and experience params before emitting entries", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      upgradeStates: {
+        attributes: {
+          checked: true,
+          params: { attributes: ["agility", "strength", "agility", "knowledge", "strength"] },
+        },
+        experience: {
+          checked: true,
+          params: { experienceIndexes: [0, 2, 0, 4, 2] },
+        },
+      },
+    } as unknown as SheetData
+
+    const entries = collectSystemModifierEntries(sheetData)
+    const attributeEntries = entries.filter(entry => entry.source.id === "upgrade:attributes")
+    const experienceEntries = entries.filter(entry => entry.source.id === "upgrade:experience")
+
+    expect(attributeEntries).toEqual([
+      expect.objectContaining({
+        id: "upgrade:attributes:agility.value",
+        definition: { target: "agility.value", kind: "modifier" },
+        presentation: { label: "升级：敏捷 +1", value: 1 },
+        source: { type: "upgrade", id: "upgrade:attributes" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:attributes:strength.value",
+        definition: { target: "strength.value", kind: "modifier" },
+        presentation: { label: "升级：力量 +1", value: 1 },
+        source: { type: "upgrade", id: "upgrade:attributes" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:attributes:knowledge.value",
+        definition: { target: "knowledge.value", kind: "modifier" },
+        presentation: { label: "升级：知识 +1", value: 1 },
+        source: { type: "upgrade", id: "upgrade:attributes" },
+      }),
+    ])
+    expect(experienceEntries).toEqual([
+      expect.objectContaining({
+        id: "upgrade:experience:experienceValues.0",
+        definition: { target: "experienceValues.0", kind: "modifier" },
+        presentation: { label: "升级：经历 1 +1", value: 1 },
+        source: { type: "upgrade", id: "upgrade:experience" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:experience:experienceValues.2",
+        definition: { target: "experienceValues.2", kind: "modifier" },
+        presentation: { label: "升级：经历 3 +1", value: 1 },
+        source: { type: "upgrade", id: "upgrade:experience" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:experience:experienceValues.4",
+        definition: { target: "experienceValues.4", kind: "modifier" },
+        presentation: { label: "升级：经历 5 +1", value: 1 },
+        source: { type: "upgrade", id: "upgrade:experience" },
+      }),
+    ])
+    expect(new Set(attributeEntries.map(entry => entry.id)).size).toBe(attributeEntries.length)
+    expect(new Set(experienceEntries.map(entry => entry.id)).size).toBe(experienceEntries.length)
   })
 
   it("ignores malformed persisted upgrade state values", () => {

@@ -34,6 +34,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value)
 }
 
+function dedupe<T>(values: readonly T[]): T[] {
+  return Array.from(new Set(values))
+}
+
 function isCompleteLegacyCheckKey(value: string): boolean {
   return value.includes("-")
 }
@@ -48,13 +52,13 @@ function sanitizeUpgradeStateParams(value: unknown): UpgradeStateParams | undefi
   if ("attributes" in value) {
     if (!Array.isArray(value.attributes) || value.attributes.length === 0) return undefined
     if (!value.attributes.every(isAttributeKey)) return undefined
-    return { attributes: [...value.attributes] }
+    return { attributes: dedupe(value.attributes) }
   }
 
   if ("experienceIndexes" in value) {
     if (!Array.isArray(value.experienceIndexes) || value.experienceIndexes.length === 0) return undefined
     if (!value.experienceIndexes.every(index => Number.isSafeInteger(index) && index >= 0)) return undefined
-    return { experienceIndexes: [...value.experienceIndexes] }
+    return { experienceIndexes: dedupe(value.experienceIndexes) }
   }
 
   return undefined

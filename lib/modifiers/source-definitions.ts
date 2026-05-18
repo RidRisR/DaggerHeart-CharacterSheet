@@ -19,6 +19,14 @@ function isSelectionRecord(selection: unknown): selection is Record<string, unkn
   return typeof selection === "object" && selection !== null && !Array.isArray(selection)
 }
 
+function dedupe<T>(values: readonly T[]): T[] {
+  return Array.from(new Set(values))
+}
+
+function isValidExperienceIndex(index: unknown): index is number {
+  return Number.isSafeInteger(index) && index >= 0
+}
+
 function selectedUpgradeEntries(sourceId: string, state: unknown): ModifierEntry[] {
   if (!isSelectionRecord(state) || state.checked !== true) return []
   const params = isSelectionRecord(state.params)
@@ -59,10 +67,9 @@ function selectedUpgradeEntries(sourceId: string, state: unknown): ModifierEntry
   }
 
   if ("attributes" in params && Array.isArray(params.attributes)) {
-    return params.attributes.flatMap((attribute) => {
-      if (!isAttributeKey(attribute)) return []
+    return dedupe(params.attributes.filter(isAttributeKey)).map((attribute) => {
       const target = `${attribute}.value` as ModifierTargetId
-      return [createModifierEntry({
+      return createModifierEntry({
         id: `${sourceId}:${target}`,
         sourceId,
         target,
@@ -71,15 +78,14 @@ function selectedUpgradeEntries(sourceId: string, state: unknown): ModifierEntry
         value: 1,
         sourceType: "upgrade",
         priority: 200,
-      })]
+      })
     })
   }
 
   if ("experienceIndexes" in params && Array.isArray(params.experienceIndexes)) {
-    return params.experienceIndexes.flatMap((index) => {
-      if (!Number.isSafeInteger(index) || index < 0) return []
+    return dedupe(params.experienceIndexes.filter(isValidExperienceIndex)).map((index) => {
       const target = `experienceValues.${index}` as ModifierTargetId
-      return [createModifierEntry({
+      return createModifierEntry({
         id: `${sourceId}:${target}`,
         sourceId,
         target,
@@ -88,7 +94,7 @@ function selectedUpgradeEntries(sourceId: string, state: unknown): ModifierEntry
         value: 1,
         sourceType: "upgrade",
         priority: 200,
-      })]
+      })
     })
   }
 

@@ -45,6 +45,30 @@ describe("upgrade states", () => {
     })
   })
 
+  it("deduplicates attribute and experience params while preserving first occurrence order", () => {
+    expect(
+      sanitizeUpgradeStates({
+        "tier1-0-2": {
+          checked: true,
+          params: { attributes: ["agility", "strength", "agility", "knowledge", "strength"] },
+        },
+        "tier1-exp-0": {
+          checked: true,
+          params: { experienceIndexes: [0, 2, 0, 4, 2] },
+        },
+      }),
+    ).toEqual({
+      "tier1-0-2": {
+        checked: true,
+        params: { attributes: ["agility", "strength", "knowledge"] },
+      },
+      "tier1-exp-0": {
+        checked: true,
+        params: { experienceIndexes: [0, 2, 4] },
+      },
+    })
+  })
+
   it("keeps checked true states without params for migration history", () => {
     expect(sanitizeUpgradeStates({ "tier1-0-2": { checked: true } })).toEqual({
       "tier1-0-2": { checked: true },

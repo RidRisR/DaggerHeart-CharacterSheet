@@ -272,6 +272,46 @@ describe('character data import validation', () => {
     expect('automationSelections' in (result.data as any)).toBe(false)
   })
 
+  it('deduplicates imported upgrade state params during validation', () => {
+    const payload = minimalPayload({
+      upgradeStates: {
+        'tier1-0-2': {
+          checked: true,
+          params: { attributes: ['agility', 'strength', 'agility', 'knowledge', 'strength'] },
+        },
+        'tier1-exp-0': {
+          checked: true,
+          params: { experienceIndexes: [0, 2, 0, 4, 2] },
+        },
+      },
+      automationSelections: {
+        'upgrade:tier1-3-0': {
+          selected: true,
+          params: { experienceIndexes: [1, 3, 1] },
+        },
+      },
+    })
+
+    const result = validateJSONCharacterData(JSON.stringify(payload))
+
+    expect(result.valid).toBe(true)
+    expect(result.data?.upgradeStates).toEqual({
+      'tier1-0-2': {
+        checked: true,
+        params: { attributes: ['agility', 'strength', 'knowledge'] },
+      },
+      'tier1-exp-0': {
+        checked: true,
+        params: { experienceIndexes: [0, 2, 4] },
+      },
+      'tier1-3-0': {
+        checked: true,
+        params: { experienceIndexes: [1, 3] },
+      },
+    })
+    expect('automationSelections' in (result.data as any)).toBe(false)
+  })
+
   it('lets existing upgradeStates win while legacy fields fill missing check keys', () => {
     const payload = minimalPayload({
       upgradeStates: {

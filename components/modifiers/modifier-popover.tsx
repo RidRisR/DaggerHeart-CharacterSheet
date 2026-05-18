@@ -480,7 +480,7 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
 
       {otherRows.length > 0 && (
         <div className="mb-2">
-          <div className="mb-1 text-[11px] font-medium text-gray-500">其他</div>
+          <div className="mb-1 text-[11px] font-medium text-gray-500">差额</div>
           <div className="space-y-1">
             {otherRows.map(({ adjustment, saved }) => {
               const presentation = OTHER_ADJUSTMENT_PRESENTATION[adjustment.kind]

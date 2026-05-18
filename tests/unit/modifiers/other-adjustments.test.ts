@@ -47,7 +47,7 @@ describe("other adjustments", () => {
     })
     expect(OTHER_ADJUSTMENT_PRESENTATION.unattributedDifference).toEqual({
       badge: "同步",
-      label: "未归因差额",
+      label: "自动计算暂停期间差额",
       editable: false,
       removableWhenAutoCalculation: "autoOnly",
     })

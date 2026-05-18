@@ -45,7 +45,7 @@ export const OTHER_ADJUSTMENT_PRESENTATION = {
   },
   unattributedDifference: {
     badge: "同步",
-    label: "未归因差额",
+    label: "自动计算暂停期间差额",
     editable: false,
     removableWhenAutoCalculation: "autoOnly",
   },

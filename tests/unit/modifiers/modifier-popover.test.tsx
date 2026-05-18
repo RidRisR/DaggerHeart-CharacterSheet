@@ -50,7 +50,7 @@ function professionCard(evasion: number): StandardCard {
 }
 
 function expectUnattributedDelta(value: string) {
-  expect(screen.getByText("未归因差额")).toBeInTheDocument()
+  expect(screen.getByText("自动计算暂停期间差额")).toBeInTheDocument()
   expect(screen.getByText(value)).toBeInTheDocument()
 }
 
@@ -143,7 +143,7 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByRole("textbox", { name: "编辑手动基础闪避名称" })).toHaveValue("手动基础闪避")
     expect(screen.getByRole("textbox", { name: "编辑临时加值名称" })).toHaveValue("临时加值")
     expectUnattributedDelta("+2")
-    expect(within(sectionNamed("其他")).getByText("未归因差额")).toBeInTheDocument()
+    expect(within(sectionNamed("差额")).getByText("自动计算暂停期间差额")).toBeInTheDocument()
   })
 
   it("shows other adjustments separately from modifiers", async () => {
@@ -167,7 +167,7 @@ describe("ModifierFieldAnchor", () => {
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
 
     const modifierSection = sectionNamed("修正值")
-    const otherSection = sectionNamed("其他")
+    const otherSection = sectionNamed("差额")
 
     expect(within(otherSection).getByText("未知迁移差额")).toBeInTheDocument()
     expect(within(otherSection).getByText("手动修改终值")).toBeInTheDocument()
@@ -228,9 +228,9 @@ describe("ModifierFieldAnchor", () => {
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
 
     expect(screen.getByText("同步")).toBeInTheDocument()
-    expect(screen.queryByRole("textbox", { name: "编辑未归因差额数值" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "编辑自动计算暂停期间差额数值" })).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole("button", { name: "删除未归因差额" }))
+    await userEvent.click(screen.getByRole("button", { name: "删除自动计算暂停期间差额" }))
 
     expect(sheet().otherAdjustments?.some(
       adjustment => adjustment.id === getOtherAdjustmentId("evasion", "unattributedDifference"),
@@ -253,11 +253,11 @@ describe("ModifierFieldAnchor", () => {
     render(<ModifierFieldAnchor target="evasion" label="闪避" />)
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
 
-    const otherSection = sectionNamed("其他")
-    expect(within(otherSection).getByText("未归因差额")).toBeInTheDocument()
+    const otherSection = sectionNamed("差额")
+    expect(within(otherSection).getByText("自动计算暂停期间差额")).toBeInTheDocument()
     expect(within(otherSection).getByText("+3")).toBeInTheDocument()
-    expect(screen.queryByRole("textbox", { name: "编辑未归因差额数值" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "删除未归因差额" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "编辑自动计算暂停期间差额数值" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "删除自动计算暂停期间差额" })).not.toBeInTheDocument()
   })
 
   it("renders the popover outside the clipped anchor container", async () => {
@@ -447,7 +447,7 @@ describe("ModifierFieldAnchor", () => {
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
 
     expect(screen.getByText("未知基础值")).toBeInTheDocument()
-    expect(screen.queryByText(/未归因差额/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/自动计算暂停期间差额/)).not.toBeInTheDocument()
   })
 
   it("keeps legacy disabled modifiers visible without checkbox or disabled styling", async () => {
@@ -473,7 +473,7 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.queryByRole("checkbox", { name: /停用加值|启用加值/ })).not.toBeInTheDocument()
     expect(screen.getByDisplayValue("停用加值")).not.toHaveClass("line-through")
     expect(screen.getByText("总计：15")).toBeInTheDocument()
-    expect(screen.queryByText(/未归因差额/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/自动计算暂停期间差额/)).not.toBeInTheDocument()
   })
 
   it("edits a manual entry value on blur", async () => {
@@ -563,7 +563,7 @@ describe("ModifierFieldAnchor", () => {
     )).toBe(false)
     expect(screen.getByRole("button", { name: "关闭自动计算" })).toBeInTheDocument()
     expect(screen.getByText(/来源（同步中）/)).toBeInTheDocument()
-    expect(screen.queryByText("未归因差额 +3")).not.toBeInTheDocument()
+    expect(screen.queryByText("自动计算暂停期间差额 +3")).not.toBeInTheDocument()
   })
 
   it("shows provider-owned system sources as read-only with a source hint", async () => {
@@ -669,8 +669,8 @@ describe("ModifierFieldAnchor", () => {
     render(<ModifierFieldAnchor target="evasion" label="闪避" />)
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
 
-    expect(within(sectionNamed("其他")).getByText(UNATTRIBUTED_DELTA_LABEL)).toBeInTheDocument()
-    expect(within(sectionNamed("其他")).getByText("同步")).toBeInTheDocument()
+    expect(within(sectionNamed("差额")).getByText("自动计算暂停期间差额")).toBeInTheDocument()
+    expect(within(sectionNamed("差额")).getByText("同步")).toBeInTheDocument()
     expect(within(sectionNamed("修正值")).queryByText(UNATTRIBUTED_DELTA_LABEL)).not.toBeInTheDocument()
   })
 

@@ -19,8 +19,6 @@ interface ExperienceItem {
 
 export function ExperienceValuesEditor({
   checkKey,
-  optionIndex,
-  toggleUpgradeCheckbox,
   onClose
 }: ExperienceValuesEditorProps) {
   const { sheetData } = useSheetStore()
@@ -55,9 +53,12 @@ export function ExperienceValuesEditor({
   }
 
   const handleConfirm = () => {
-    const setAutomationSelection = useSheetStore.getState().setAutomationSelection
-    setAutomationSelection(`upgrade:${checkKey}`, true, {
-      experienceIndexes: Array.from(selected),
+    const setUpgradeState = useSheetStore.getState().setUpgradeState
+    setUpgradeState(checkKey, {
+      checked: true,
+      params: {
+        experienceIndexes: Array.from(selected),
+      },
     })
 
     showFadeNotification({
@@ -65,9 +66,6 @@ export function ExperienceValuesEditor({
       type: "success",
       position: "middle"
     })
-
-    // 勾选复选框
-    toggleUpgradeCheckbox(checkKey, optionIndex, true)
 
     // 关闭编辑器
     onClose?.()

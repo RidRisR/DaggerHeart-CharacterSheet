@@ -27,6 +27,7 @@ import type {
     AutomationSourceId,
     ModifierEntryId,
     ModifierTargetId,
+    UpgradeState,
     UserModifierContribution,
 } from "@/lib/modifiers/types";
 import {
@@ -39,6 +40,7 @@ import { applyAutoCalculationForTargets, isTargetAutoCalculationEnabled } from "
 import { writeTargetValue } from "@/lib/modifiers/target-accessors";
 import { tryParseNumber } from "@/lib/number-utils";
 import { applyHpStressMaxInvariant } from "@/lib/modifiers/hp-stress-invariants";
+import { mergeUpgradeState } from "@/lib/modifiers/upgrade-states";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -180,6 +182,7 @@ interface SheetState {
     upsertUserModifierContribution: (contribution: UserModifierContribution) => void;
     removeUserModifierContribution: (entryId: ModifierEntryId) => void;
     removeSpecialBaseContribution: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
+    setUpgradeState: (checkKey: string, state: UpgradeState) => void;
     setAutomationSelection: (sourceId: AutomationSourceId, selected: boolean, params?: Record<string, unknown>) => void;
     addEquipmentModifierContribution: (slotRef: EquipmentModifierSlotRef) => void;
     updateEquipmentModifierContribution: (
@@ -1111,15 +1114,29 @@ export const useSheetStore = create<SheetState>((set) => ({
         sheetData: deleteSpecialBase(state.sheetData, target, entryId),
     })),
 
-    setAutomationSelection: (sourceId, selected, params) => set((state) => ({
-        sheetData: applyAutoCalculationForTargets({
+    setUpgradeState: (checkKey, upgradeState) => set((state) => {
+        const nextSheetData: SheetData = {
             ...state.sheetData,
-            automationSelections: {
-                ...(state.sheetData.automationSelections ?? {}),
-                [sourceId]: params === undefined ? { selected } : { selected, params },
+            upgradeStates: {
+                ...(state.sheetData.upgradeStates ?? {}),
+                [checkKey]: mergeUpgradeState(state.sheetData.upgradeStates?.[checkKey], upgradeState),
             },
-        }),
-    })),
+        };
+        delete (nextSheetData as any).checkedUpgrades;
+        delete (nextSheetData as any).automationSelections;
+
+        return {
+            sheetData: applyAutoCalculationForTargets(nextSheetData),
+        };
+    }),
+
+    setAutomationSelection: (sourceId, selected, params) => {
+        const checkKey = sourceId.startsWith("upgrade:") ? sourceId.slice("upgrade:".length) : sourceId;
+        useSheetStore.getState().setUpgradeState(checkKey, {
+            checked: selected,
+            params: params as UpgradeState["params"],
+        });
+    },
 
     addEquipmentModifierContribution: (slotRef) => set((state) => ({
         sheetData: applyAutoCalculationForTargets(

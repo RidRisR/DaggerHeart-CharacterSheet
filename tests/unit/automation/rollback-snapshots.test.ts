@@ -19,12 +19,12 @@ describe("升级回滚快照基线", () => {
     expect(currentStore.restoreEvasionSnapshot).toBeUndefined()
   })
 
-  it("新升级选择模型取消闪避升级时只返回未选中 selection，不直接回滚最终值", () => {
+  it("新升级选择模型取消闪避升级时只返回未选中 upgrade state，不直接回滚最终值", () => {
     resetSheetStore({
       evasion: "20",
-      automationSelections: {
-        "upgrade:tier1-5-0": {
-          selected: true,
+      upgradeStates: {
+        "tier1-5-0": {
+          checked: true,
           params: { target: "evasion" },
         },
       },
@@ -32,17 +32,14 @@ describe("升级回滚快照基线", () => {
 
     const result = computeUpgradeAutomation({
       sheetData: sheet(),
-      option: { label: "获得闪避值+1。" },
+      option: { label: "任意文本", automation: { kind: "fixedTarget", target: "evasion" } },
       currentlyChecked: true,
     })
 
     expect(result).toMatchObject({
       kind: "setSheetData",
       updates: {},
-      selection: {
-        selected: false,
-        params: { target: "evasion" },
-      },
+      upgradeState: { checked: false },
     })
   })
 })

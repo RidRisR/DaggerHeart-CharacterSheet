@@ -5,7 +5,6 @@ import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
 import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
 import { createEmptyCard, type StandardCard } from "@/card/card-types"
-import type { SheetData } from "@/lib/sheet-data"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
 
@@ -18,6 +17,7 @@ import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 
 export default function CharacterSheetPageTwo() {
   const { setSheetData: setFormData } = useSheetStore();
+  const setUpgradeState = useSheetStore(state => state.setUpgradeState)
   const safeFormData = useSafeSheetData();
 
   // State for upgrade domain card modal
@@ -91,37 +91,8 @@ export default function CharacterSheetPageTwo() {
   }
 
   // 纯粹的状态切换函数：只负责设置复选框状态，无业务逻辑
-  const toggleUpgradeCheckbox = (checkKey: string, index: number, checked: boolean) => {
-    setFormData((prev) => {
-      const checkedUpgrades = prev.checkedUpgrades ?? {
-        tier1: {},
-        tier2: {},
-        tier3: {},
-      }
-
-      const newCheckedUpgrades: Record<string, Record<number, boolean>> = {
-        ...checkedUpgrades,
-        tier1: checkedUpgrades.tier1 ?? {},
-        tier2: checkedUpgrades.tier2 ?? {},
-        tier3: checkedUpgrades.tier3 ?? {},
-      }
-
-      // 确保 checkKey 对应的对象存在
-      if (!newCheckedUpgrades[checkKey]) {
-        newCheckedUpgrades[checkKey] = {}
-      }
-
-      // 设置勾选状态
-      newCheckedUpgrades[checkKey] = {
-        ...newCheckedUpgrades[checkKey],
-        [index]: checked,
-      }
-
-      return {
-        ...prev,
-        checkedUpgrades: newCheckedUpgrades as SheetData["checkedUpgrades"],
-      }
-    })
+  const toggleUpgradeCheckbox = (checkKey: string, _index: number, checked: boolean) => {
+    setUpgradeState(checkKey, { checked })
   }
 
   // Handle checkbox changes for upgrades
@@ -131,7 +102,7 @@ export default function CharacterSheetPageTwo() {
     const tier = tierMatch ? tierMatch[1] : checkKeyOrTier
 
     // 获取当前勾选状态（使用完整的 checkKeyOrTier）
-    const currentlyChecked = safeFormData.checkedUpgrades?.[checkKeyOrTier as keyof typeof safeFormData.checkedUpgrades]?.[index] ?? false
+    const currentlyChecked = safeFormData.upgradeStates?.[checkKeyOrTier]?.checked ?? false
     const newCheckedState = !currentlyChecked
 
     // 获取选项信息
@@ -148,10 +119,8 @@ export default function CharacterSheetPageTwo() {
 
       if (result.kind === "setSheetData") {
         setFormData(result.updates)
-        if (result.selection) {
-          const sourceId = `upgrade:${checkKeyOrTier}`
-          const setAutomationSelection = useSheetStore.getState().setAutomationSelection
-          setAutomationSelection(sourceId, result.selection.selected, result.selection.params)
+        if (result.upgradeState) {
+          setUpgradeState(checkKeyOrTier, result.upgradeState)
         }
         result.warnings?.forEach(warning => {
           showFadeNotification({
@@ -167,6 +136,9 @@ export default function CharacterSheetPageTwo() {
             position: "middle"
           })
         }
+        if (result.upgradeState) {
+          return
+        }
       }
 
       // 领域卡和子职业卡的选择现在由编辑按钮直接处理，不在这里处理
@@ -177,8 +149,8 @@ export default function CharacterSheetPageTwo() {
   }
 
   // Check if an upgrade is checked
-  const isUpgradeChecked = (tier: string, index: number): boolean => {
-    return !!safeFormData.checkedUpgrades?.[tier as keyof typeof safeFormData.checkedUpgrades]?.[index]
+  const isUpgradeChecked = (tier: string, _index: number): boolean => {
+    return !!safeFormData.upgradeStates?.[tier]?.checked
   }
 
   // 更新 getUpgradeOptions 函数以移除职业相关逻辑，并确保其与新的升级选项系统一致

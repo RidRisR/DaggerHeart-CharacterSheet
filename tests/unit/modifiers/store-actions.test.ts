@@ -51,19 +51,51 @@ describe("modifier store actions", () => {
     ])
   })
 
-  it("records and clears automation selections", () => {
+  it("sets fixed-target upgrade state and syncs auto-calculated evasion", () => {
+    resetSheetStore({
+      evasion: "12",
+      userModifierContributions: [{
+        id: "user:evasion-base",
+        definition: { target: "evasion", kind: "base" },
+        editable: { label: "手动基础闪避", value: 12 },
+      }],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().setUpgradeState("tier1-5-0", { checked: true, params: { target: "evasion" } })
+
+    expect(sheet().upgradeStates?.["tier1-5-0"]).toEqual({
+      checked: true,
+      params: { target: "evasion" },
+    })
+    expect(sheet().automationSelections).toBeUndefined()
+    expect(sheet().checkedUpgrades).toBeUndefined()
+    expect(sheet().evasion).toBe("13")
+  })
+
+  it("bridges legacy setAutomationSelection calls to upgradeStates without writing legacy selections", () => {
     resetSheetStore()
 
     store().setAutomationSelection("upgrade:tier1-5-0", true, { target: "evasion" })
-    expect(sheet().automationSelections?.["upgrade:tier1-5-0"]).toEqual({
-      selected: true,
+    expect(sheet().upgradeStates?.["tier1-5-0"]).toEqual({
+      checked: true,
       params: { target: "evasion" },
     })
+    expect(sheet().automationSelections).toBeUndefined()
 
     store().setAutomationSelection("upgrade:tier1-5-0", false)
-    expect(sheet().automationSelections?.["upgrade:tier1-5-0"]).toEqual({
-      selected: false,
+    expect(sheet().upgradeStates?.["tier1-5-0"]).toEqual({
+      checked: false,
     })
+    expect(sheet().automationSelections).toBeUndefined()
   })
 
   it("enables target auto calculation by preserving current final with saved unattributed difference", () => {

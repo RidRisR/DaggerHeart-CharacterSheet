@@ -86,8 +86,7 @@ export function UpgradeSection({
   }
 
   const getSelectedAttributeNames = (checkKey: string) => {
-    const selection = formData.automationSelections?.[`upgrade:${checkKey}`]
-    const attributes = selection?.params?.attributes
+    const attributes = formData.upgradeStates?.[checkKey]?.params?.attributes
     if (!Array.isArray(attributes)) return "未记录属性"
 
     const names = attributes
@@ -98,8 +97,7 @@ export function UpgradeSection({
   }
 
   const getSelectedExperienceTexts = (checkKey: string) => {
-    const selection = formData.automationSelections?.[`upgrade:${checkKey}`]
-    const experienceIndexes = selection?.params?.experienceIndexes
+    const experienceIndexes = formData.upgradeStates?.[checkKey]?.params?.experienceIndexes
     if (!Array.isArray(experienceIndexes)) return ["未记录经历"]
 
     const texts = experienceIndexes

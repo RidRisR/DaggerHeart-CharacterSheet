@@ -56,11 +56,6 @@ export const defaultSheetData: SheetData = {
     cards: Array(20).fill(0).map(() => createEmptyCard()),          // 聚焦卡组（20张）
     inventory_cards: Array(20).fill(0).map(() => createEmptyCard()), // 库存卡组（20张）
 
-    checkedUpgrades: {
-        tier1: {},
-        tier2: {},
-        tier3: {},
-    },
     modifierState: {
         targetStates: {},
         entryStates: {},
@@ -68,7 +63,6 @@ export const defaultSheetData: SheetData = {
     userModifierContributions: [],
     otherAdjustments: [],
     upgradeStates: {},
-    automationSelections: {},
     equipment: createEmptyEquipmentData(),
 
     // Companion fields

@@ -1,10 +1,11 @@
 import type { SheetData } from "@/lib/sheet-data"
-import type { AutomationSelection, ModifierTargetId } from "@/lib/modifiers/types"
+import type { FixedUpgradeTargetId, UpgradeAutomationMetadata, UpgradeState } from "@/lib/modifiers/types"
 
 export interface UpgradeOptionLike {
   label: string
   doubleBox?: boolean
   boxCount?: number
+  automation?: UpgradeAutomationMetadata
 }
 
 export interface UpgradeAutomationContext {
@@ -20,12 +21,12 @@ export type UpgradeAutomationResult =
       updates: Partial<SheetData>
       message?: string
       warnings?: string[]
-      selection?: AutomationSelection
+      upgradeState?: UpgradeState
     }
 
-function selectionOnlyTargetResult(
+function upgradeTargetResult(
   currentlyChecked: boolean,
-  target: ModifierTargetId,
+  target: FixedUpgradeTargetId,
   messageLabel: string,
 ): UpgradeAutomationResult {
   const selected = !currentlyChecked
@@ -34,54 +35,56 @@ function selectionOnlyTargetResult(
     kind: "setSheetData",
     updates: {},
     warnings: [],
-    selection: {
-      selected,
-      params: { target },
-    },
+    upgradeState: selected
+      ? { checked: true, params: { target } }
+      : { checked: false },
     message: selected
       ? `${messageLabel}升级已记录`
       : `${messageLabel}升级已取消`,
   }
 }
 
+const FIXED_TARGET_MESSAGE_LABELS: Record<FixedUpgradeTargetId, string> = {
+  evasion: "闪避值",
+  hpMax: "生命槽上限",
+  stressMax: "压力槽上限",
+  proficiency: "熟练度",
+}
+
 export function computeUpgradeAutomation(
   context: UpgradeAutomationContext,
 ): UpgradeAutomationResult {
   const { option, currentlyChecked } = context
-  const label = option.label
+  const automation = option.automation
 
-  if (label.includes("角色属性+1") && currentlyChecked) {
+  if (!automation || automation.kind === "none") {
+    return { kind: "none" }
+  }
+
+  if (automation.kind === "attributeSelection" && currentlyChecked) {
     return {
       kind: "setSheetData",
       updates: {},
       warnings: [],
-      selection: { selected: false },
+      upgradeState: { checked: false },
     }
   }
 
-  if (label.includes("经历获得额外") && currentlyChecked) {
+  if (automation.kind === "experienceSelection" && currentlyChecked) {
     return {
       kind: "setSheetData",
       updates: {},
       warnings: [],
-      selection: { selected: false },
+      upgradeState: { checked: false },
     }
   }
 
-  if (label.includes("闪避值")) {
-    return selectionOnlyTargetResult(currentlyChecked, "evasion", "闪避值")
-  }
-
-  if (label.includes("生命槽")) {
-    return selectionOnlyTargetResult(currentlyChecked, "hpMax", "生命槽上限")
-  }
-
-  if (label.includes("压力槽")) {
-    return selectionOnlyTargetResult(currentlyChecked, "stressMax", "压力槽上限")
-  }
-
-  if (label.includes("熟练度+1")) {
-    return selectionOnlyTargetResult(currentlyChecked, "proficiency", "熟练度")
+  if (automation.kind === "fixedTarget") {
+    return upgradeTargetResult(
+      currentlyChecked,
+      automation.target,
+      FIXED_TARGET_MESSAGE_LABELS[automation.target],
+    )
   }
 
   return { kind: "none" }

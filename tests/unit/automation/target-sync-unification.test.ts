@@ -92,12 +92,13 @@ describe("target sync automation unification", () => {
       },
     })
 
-    store().setAutomationSelection("upgrade:tier1-5-0", true, { target: "evasion" })
+    store().setUpgradeState("tier1-5-0", { checked: true, params: { target: "evasion" } })
 
-    expect(sheet().automationSelections?.["upgrade:tier1-5-0"]).toEqual({
-      selected: true,
+    expect(sheet().upgradeStates?.["tier1-5-0"]).toEqual({
+      checked: true,
       params: { target: "evasion" },
     })
+    expect(sheet().automationSelections).toBeUndefined()
     expect(sheet().evasion).toBe("12")
   })
 
@@ -120,12 +121,13 @@ describe("target sync automation unification", () => {
       },
     })
 
-    store().setAutomationSelection("upgrade:tier1-5-0", true, { target: "evasion" })
+    store().setUpgradeState("tier1-5-0", { checked: true, params: { target: "evasion" } })
 
-    expect(sheet().automationSelections?.["upgrade:tier1-5-0"]).toEqual({
-      selected: true,
+    expect(sheet().upgradeStates?.["tier1-5-0"]).toEqual({
+      checked: true,
       params: { target: "evasion" },
     })
+    expect(sheet().automationSelections).toBeUndefined()
     expect(sheet().evasion).toBe("13")
   })
 

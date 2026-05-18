@@ -30,7 +30,7 @@ const ATTRIBUTES = [
   { key: "knowledge", name: "知识" },
 ] as const
 
-export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleUpgradeCheckbox }: AttributeUpgradeEditorProps) {
+export function AttributeUpgradeEditor({ onClose, checkKey }: AttributeUpgradeEditorProps) {
   const { sheetData } = useSheetStore()
 
   const handleClose = () => {
@@ -51,9 +51,9 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
   const selectedCount = Object.values(selected).filter(Boolean).length
 
   const selectedUpgradeAttributes = new Set<string>()
-  Object.values(sheetData.automationSelections ?? {}).forEach(selection => {
-    if (!selection?.selected) return
-    const params = selection.params
+  Object.values(sheetData.upgradeStates ?? {}).forEach(state => {
+    if (!state?.checked) return
+    const params = state.params
     if (!params || typeof params !== "object" || Array.isArray(params)) return
     const attributes = (params as { attributes?: unknown }).attributes
     if (!Array.isArray(attributes)) return
@@ -99,15 +99,15 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
 
     const selectedAttributes = Object.entries(selected)
       .filter(([, isSelected]) => isSelected)
-      .map(([key]) => key)
+      .map(([key]) => key as keyof AttributeSelection)
 
-    const setAutomationSelection = useSheetStore.getState().setAutomationSelection
-    setAutomationSelection(`upgrade:${checkKey}`, true, {
-      attributes: selectedAttributes,
+    const setUpgradeState = useSheetStore.getState().setUpgradeState
+    setUpgradeState(checkKey, {
+      checked: true,
+      params: {
+        attributes: selectedAttributes,
+      },
     })
-
-    // 勾选复选框（使用新的状态切换函数）
-    toggleUpgradeCheckbox(checkKey, optionIndex, true)
 
     // 显示成功通知
     if (upgradedAttributes.length > 0) {

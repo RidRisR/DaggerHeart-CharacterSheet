@@ -7,11 +7,15 @@ import { defaultSheetData } from "@/lib/default-sheet-data"
 import { useSheetStore } from "@/lib/sheet-store"
 
 function seedStore(overrides: Parameters<typeof useSheetStore.setState>[0] extends infer _ ? Partial<typeof defaultSheetData> : never) {
+  const sheetData = {
+    ...defaultSheetData,
+    ...overrides,
+  }
+  delete (sheetData as any).checkedUpgrades
+  delete (sheetData as any).automationSelections
+
   useSheetStore.setState({
-    sheetData: {
-      ...defaultSheetData,
-      ...overrides,
-    },
+    sheetData,
   })
 }
 
@@ -28,22 +32,18 @@ describe("升级取消流程（page-two 集成）", () => {
     const user = userEvent.setup()
     seedStore({
       evasion: "12",
-      checkedUpgrades: {
-        tier1: {},
-        tier2: {},
-        tier3: {},
-      } as any,
     })
 
     const { getByTestId } = render(<CharacterSheetPageTwo />)
     await user.click(getByTestId("checkbox-tier1-5-0"))
 
     const after = sheet()
-    expect((after.checkedUpgrades as any)["tier1-5-0"][5]).toBe(true)
-    expect(after.automationSelections?.["upgrade:tier1-5-0"]).toEqual({
-      selected: true,
+    expect(after.upgradeStates?.["tier1-5-0"]).toEqual({
+      checked: true,
       params: { target: "evasion" },
     })
+    expect(after.automationSelections).toBeUndefined()
+    expect(after.checkedUpgrades).toBeUndefined()
     expect(screen.queryByText("闪避值 +1")).not.toBeInTheDocument()
   })
 
@@ -52,15 +52,9 @@ describe("升级取消流程（page-two 集成）", () => {
     seedStore({
       agility: { checked: true, value: "1", spellcasting: false },
       strength: { checked: true, value: "2", spellcasting: false },
-      checkedUpgrades: {
-        tier1: {},
-        tier2: {},
-        tier3: {},
-        "tier1-0-0": { 0: true },
-      } as any,
-      automationSelections: {
-        "upgrade:tier1-0-0": {
-          selected: true,
+      upgradeStates: {
+        "tier1-0-0": {
+          checked: true,
           params: { attributes: ["agility", "strength"] },
         },
       },
@@ -77,27 +71,22 @@ describe("升级取消流程（page-two 集成）", () => {
     const after = sheet()
     expect(after.agility).toEqual({ checked: true, value: "1", spellcasting: false })
     expect(after.strength).toEqual({ checked: true, value: "2", spellcasting: false })
-    expect((after.checkedUpgrades as any)["tier1-0-0"][0]).toBe(true)
-    expect(after.automationSelections?.["upgrade:tier1-0-0"]).toEqual({
-      selected: true,
+    expect(after.upgradeStates?.["tier1-0-0"]).toEqual({
+      checked: true,
       params: { attributes: ["agility", "strength"] },
     })
+    expect(after.automationSelections).toBeUndefined()
+    expect(after.checkedUpgrades).toBeUndefined()
   })
 
-  it("确认反选属性升级后才清除升级勾选与 selection 记录", async () => {
+  it("确认反选属性升级后才清除升级状态参数", async () => {
     const user = userEvent.setup()
     seedStore({
       agility: { checked: true, value: "1", spellcasting: false },
       strength: { checked: true, value: "2", spellcasting: false },
-      checkedUpgrades: {
-        tier1: {},
-        tier2: {},
-        tier3: {},
-        "tier1-0-0": { 0: true },
-      } as any,
-      automationSelections: {
-        "upgrade:tier1-0-0": {
-          selected: true,
+      upgradeStates: {
+        "tier1-0-0": {
+          checked: true,
           params: { attributes: ["agility", "strength"] },
         },
       },
@@ -110,8 +99,9 @@ describe("升级取消流程（page-two 集成）", () => {
     const after = sheet()
     expect(after.agility).toEqual({ checked: true, value: "1", spellcasting: false })
     expect(after.strength).toEqual({ checked: true, value: "2", spellcasting: false })
-    expect((after.checkedUpgrades as any)["tier1-0-0"][0]).toBe(false)
-    expect(after.automationSelections?.["upgrade:tier1-0-0"]).toEqual({ selected: false })
+    expect(after.upgradeStates?.["tier1-0-0"]).toEqual({ checked: false })
+    expect(after.automationSelections).toBeUndefined()
+    expect(after.checkedUpgrades).toBeUndefined()
   })
 
   it("反选经历加值升级时点击外部会保留原有升级选择，并显示最新经历文本", async () => {
@@ -119,15 +109,9 @@ describe("升级取消流程（page-two 集成）", () => {
     seedStore({
       experience: ["老兵", "铁匠大师", "", "", ""],
       experienceValues: ["2", "3", "", "", ""],
-      checkedUpgrades: {
-        tier1: {},
-        tier2: {},
-        tier3: {},
-        "tier1-3-0": { 3: true },
-      } as any,
-      automationSelections: {
-        "upgrade:tier1-3-0": {
-          selected: true,
+      upgradeStates: {
+        "tier1-3-0": {
+          checked: true,
           params: { experienceIndexes: [0, 1] },
         },
       },
@@ -144,27 +128,22 @@ describe("升级取消流程（page-two 集成）", () => {
 
     const after = sheet()
     expect(after.experienceValues).toEqual(["2", "3", "", "", ""])
-    expect((after.checkedUpgrades as any)["tier1-3-0"][3]).toBe(true)
-    expect(after.automationSelections?.["upgrade:tier1-3-0"]).toEqual({
-      selected: true,
+    expect(after.upgradeStates?.["tier1-3-0"]).toEqual({
+      checked: true,
       params: { experienceIndexes: [0, 1] },
     })
+    expect(after.automationSelections).toBeUndefined()
+    expect(after.checkedUpgrades).toBeUndefined()
   })
 
-  it("确认反选经历加值升级后才清除升级勾选与 selection 记录，不直接回滚经历最终值", async () => {
+  it("确认反选经历加值升级后才清除升级状态参数，不直接回滚经历最终值", async () => {
     const user = userEvent.setup()
     seedStore({
       experience: ["军人", "铁匠", "", "", ""],
       experienceValues: ["2", "3", "", "", ""],
-      checkedUpgrades: {
-        tier1: {},
-        tier2: {},
-        tier3: {},
-        "tier1-3-0": { 3: true },
-      } as any,
-      automationSelections: {
-        "upgrade:tier1-3-0": {
-          selected: true,
+      upgradeStates: {
+        "tier1-3-0": {
+          checked: true,
           params: { experienceIndexes: [0, 1] },
         },
       },
@@ -176,7 +155,31 @@ describe("升级取消流程（page-two 集成）", () => {
 
     const after = sheet()
     expect(after.experienceValues).toEqual(["2", "3", "", "", ""])
-    expect((after.checkedUpgrades as any)["tier1-3-0"][3]).toBe(false)
-    expect(after.automationSelections?.["upgrade:tier1-3-0"]).toEqual({ selected: false })
+    expect(after.upgradeStates?.["tier1-3-0"]).toEqual({ checked: false })
+    expect(after.automationSelections).toBeUndefined()
+    expect(after.checkedUpgrades).toBeUndefined()
+  })
+
+  it("参数化升级取消后重新点击会打开选择器且不复用旧 params", async () => {
+    const user = userEvent.setup()
+    seedStore({
+      agility: { checked: true, value: "1", spellcasting: false },
+      strength: { checked: true, value: "2", spellcasting: false },
+      upgradeStates: {
+        "tier1-0-0": {
+          checked: true,
+          params: { attributes: ["agility", "strength"] },
+        },
+      },
+    })
+
+    const { getByTestId } = render(<CharacterSheetPageTwo />)
+    await user.click(getByTestId("checkbox-tier1-0-0"))
+    await user.click(screen.getByRole("button", { name: "确定取消" }))
+    await user.click(getByTestId("checkbox-tier1-0-0"))
+
+    expect(screen.getByText("属性升级")).toBeInTheDocument()
+    expect(screen.getByText("选择两项未升级的属性 (0/2)")).toBeInTheDocument()
+    expect(sheet().upgradeStates?.["tier1-0-0"]).toEqual({ checked: false })
   })
 })

@@ -705,7 +705,7 @@ describe("modifier state migration", () => {
       "bad": { checked: true },
       "tier1-2-0": { checked: false },
       "tier1-1-1": { checked: true, params: { target: "hpMax" } },
-      "tier1-1-0": { checked: true },
+      "tier1-1-0": { checked: true, params: { target: "hpMax" } },
     })
     expect("checkedUpgrades" in (migrated as any)).toBe(false)
     expect("automationSelections" in (migrated as any)).toBe(false)
@@ -726,10 +726,30 @@ describe("modifier state migration", () => {
     } as any)
 
     expect(migrated.upgradeStates).toEqual({
-      "tier1-1-0": { checked: true },
+      "tier1-1-0": { checked: true, params: { target: "hpMax" } },
       "tier1-1-1": { checked: true, params: { target: "hpMax" } },
     })
     expect("checkedUpgrades" in (migrated as any)).toBe(false)
     expect("automationSelections" in (migrated as any)).toBe(false)
+  })
+
+  it("uses UI option indexing when normalizing current schema legacy checked upgrades", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      checkedUpgrades: {
+        "tier2-1-0": { 1: true },
+        "tier2-7": { 7: true },
+        "tier2-8": { 8: true },
+        "tier3-1-0": { 1: true },
+      },
+    } as any)
+
+    expect(migrated.upgradeStates).toEqual({
+      "tier2-1-0": { checked: true, params: { target: "hpMax" } },
+      "tier2-7": { checked: true, params: { target: "proficiency" } },
+      "tier2-8": { checked: true },
+      "tier3-1-0": { checked: true, params: { target: "hpMax" } },
+    })
+    expect("checkedUpgrades" in (migrated as any)).toBe(false)
   })
 })

@@ -192,7 +192,7 @@ export function cleanAndNormalizeData(data: any): SheetData {
     minorThreshold: data.minorThreshold ? String(data.minorThreshold) : undefined,
     majorThreshold: data.majorThreshold ? String(data.majorThreshold) : undefined,
     armorBonus: data.armorBonus ? String(data.armorBonus) : undefined,
-    armorMax: typeof data.armorMax === 'number' || data.armorMax === "" ? data.armorMax : undefined,
+    armorMax: typeof data.armorMax === 'number' || typeof data.armorMax === 'string' ? data.armorMax : undefined,
     hpMax: typeof data.hpMax === 'number' ? data.hpMax : undefined,
     stressMax: typeof data.stressMax === 'number' ? data.stressMax : undefined,
 

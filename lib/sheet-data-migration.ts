@@ -39,7 +39,7 @@ import {
   getUnattributedDeltaId,
 } from "@/lib/modifiers/special-contributions"
 import { writeTargetValue } from "@/lib/modifiers/target-accessors"
-import { mergeLegacyUpgradeStateFields, mergeUpgradeState, sanitizeUpgradeStates } from "@/lib/modifiers/upgrade-states"
+import { mergeUpgradeState, sanitizeUpgradeStates } from "@/lib/modifiers/upgrade-states"
 import type {
   ModifierContribution,
   ModifierEntryKind,
@@ -1038,9 +1038,8 @@ function preserveLegacyModifierFinals(
       }
 
       const summary = getReferenceSummary(migrated, target)
-      if (target === "armorMax") {
-        const withArmorFinal = migrated as typeof migrated & { armorMax: unknown }
-        withArmorFinal.armorMax = explicitFinal
+      if (target === "armorMax" && (typeof explicitFinal === "string" || typeof explicitFinal === "number")) {
+        migrated = { ...migrated, armorMax: explicitFinal }
       }
       migrated = writeModifierTargetState(migrated, target, summary.activeBase?.id ?? summary.bases[0]?.id)
       return
@@ -1055,11 +1054,11 @@ function preserveLegacyModifierFinals(
 }
 
 function normalizeCurrentModifierCollections(data: SheetData): SheetData {
-  const migrated = { ...data }
+  let migrated = { ...data }
 
   migrated.userModifierContributions = sanitizeModifierContributions(migrated.userModifierContributions)
   migrated.otherAdjustments = sanitizeOtherAdjustments(migrated.otherAdjustments)
-  migrated.upgradeStates = mergeLegacyUpgradeStateFields(migrated)
+  migrated = migrateLegacyUpgradeStates(migrated)
 
   if (!migrated.modifierState || typeof migrated.modifierState !== "object" || Array.isArray(migrated.modifierState)) {
     migrated.modifierState = { targetStates: {}, entryStates: {} }

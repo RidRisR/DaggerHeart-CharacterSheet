@@ -200,6 +200,21 @@ describe('sheet data version migration', () => {
     expect(twice).toEqual(once)
   })
 
+  it('normalizes v2 legacy checked upgrades with fixed target params', () => {
+    const migrated = migrateSheetData(v1Sheet({
+      schemaVersion: 2,
+      checkedUpgrades: {
+        'tier1-1-0': { 1: true },
+      },
+    }))
+
+    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.upgradeStates).toEqual({
+      'tier1-1-0': { checked: true, params: { target: 'hpMax' } },
+    })
+    expect('checkedUpgrades' in (migrated as any)).toBe(false)
+  })
+
   it('uses raw legacy fields before defaults can mask them', () => {
     const migrated = migrateSheetData(v0Sheet({
       includePageThreeInExport: true,

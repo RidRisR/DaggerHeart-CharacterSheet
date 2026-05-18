@@ -42,6 +42,19 @@ function getMaxCapacity(boolArray: boolean[] | undefined): number {
   return boolArray.length
 }
 
+function getNumericValue(value: number | string | undefined, fallback: number): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallback
+  }
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const num = Number(value)
+    return Number.isFinite(num) ? num : fallback
+  }
+
+  return fallback
+}
+
 function moveFirstNonNegativeAttributeToFront(
   attributes: Array<{ name: string; value: number }>
 ): Array<{ name: string; value: number }> {
@@ -108,7 +121,7 @@ export function exportToSealDice(sheetData: SheetData): string {
 
   // 护甲值：存档中的值表示损失，实际值 = 最大值 - 损失值
   const armorDamage = countTrueValues(sheetData.armorBoxes)
-  const maxArmor = sheetData.armorMax || getMaxCapacity(sheetData.armorBoxes) || 0
+  const maxArmor = getNumericValue(sheetData.armorMax, getMaxCapacity(sheetData.armorBoxes) || 0)
   const currentArmor = maxArmor - armorDamage
   attributes.push(`护甲${currentArmor}`)
   attributes.push(`护甲上限${maxArmor}`)

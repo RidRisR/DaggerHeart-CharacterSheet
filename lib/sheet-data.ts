@@ -304,7 +304,7 @@ export interface SheetData {
   minorThreshold?: string
   majorThreshold?: string
   armorBonus?: string
-  armorMax?: number | ""
+  armorMax?: number | string
   hpMax?: number
   stressMax?: number
   // 伙伴相关

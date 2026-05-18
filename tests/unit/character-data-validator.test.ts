@@ -225,6 +225,29 @@ describe('character data import validation', () => {
     expect('checkedUpgrades' in (result.data as any)).toBe(false)
   })
 
+  it('bridges current schema legacy checkedUpgrades with fixed target params during import validation', () => {
+    const payload = minimalPayload({
+      schemaVersion: 2,
+      checkedUpgrades: {
+        'tier1-1-0': { 1: true },
+        'tier2-1-0': { 1: true },
+        'tier2-7': { 7: true },
+        'tier2-8': { 8: true },
+      },
+    })
+
+    const result = validateJSONCharacterData(JSON.stringify(payload))
+
+    expect(result.valid).toBe(true)
+    expect(result.data?.upgradeStates).toEqual({
+      'tier1-1-0': { checked: true, params: { target: 'hpMax' } },
+      'tier2-1-0': { checked: true, params: { target: 'hpMax' } },
+      'tier2-7': { checked: true, params: { target: 'proficiency' } },
+      'tier2-8': { checked: true },
+    })
+    expect('checkedUpgrades' in (result.data as any)).toBe(false)
+  })
+
   it('keeps legacy automation params when checkedUpgrades has the same check key during import validation', () => {
     const payload = minimalPayload({
       checkedUpgrades: {

@@ -311,57 +311,82 @@ describe("modifier source definitions", () => {
     expect(proficiencyTotal).toBe(3)
   })
 
-  it("derives selected upgrade modifier entries from automation selections", () => {
+  it("collects upgrade entries from unified upgrade states", () => {
     const sheetData = {
       ...defaultSheetData,
-      automationSelections: {
-        "upgrade:tier1-5-0": {
-          selected: true,
-          params: { target: "evasion" },
-        },
-        "upgrade:tier1-0-0": {
-          selected: true,
-          params: { attributes: ["agility", "strength"] },
-        },
-        "upgrade:tier2-6": {
-          selected: true,
-          params: { target: "proficiency" },
-        },
+      upgradeStates: {
+        "tier1-1-0": { checked: true, params: { target: "hpMax" } },
+        "tier1-1-1": { checked: true, params: { target: "hpMax" } },
+        "tier1-2-0": { checked: true, params: { target: "stressMax" } },
+        "tier1-5-0": { checked: true, params: { target: "evasion" } },
+        "tier2-1": { checked: true, params: { target: "proficiency" } },
+        "tier1-0-2": { checked: true, params: { attributes: ["agility", "strength"] } },
+        "tier1-3-0": { checked: true, params: { experienceIndexes: [0, 2] } },
+        "tier1-0-1": { checked: true },
+        "tier1-2-1": { checked: false, params: { target: "stressMax" } },
       },
-    }
+      checkedUpgrades: undefined,
+      automationSelections: undefined,
+    } as unknown as SheetData
 
     const entries = collectSystemModifierEntries(sheetData)
 
-    expect(entries).toContainEqual(expect.objectContaining({
-      id: "upgrade:tier1-5-0:evasion",
-      definition: { target: "evasion", kind: "modifier" },
-      presentation: { label: "升级：闪避 +1", value: 1 },
-      source: { type: "upgrade", id: "upgrade:tier1-5-0" },
-    }))
-    expect(entries).toContainEqual(expect.objectContaining({
-      id: "upgrade:tier1-0-0:agility.value",
-      definition: { target: "agility.value", kind: "modifier" },
-      presentation: { label: "升级：敏捷 +1", value: 1 },
-      source: { type: "upgrade", id: "upgrade:tier1-0-0" },
-    }))
-    expect(entries).toContainEqual(expect.objectContaining({
-      id: "upgrade:tier2-6:proficiency",
-      definition: { target: "proficiency", kind: "modifier" },
-      presentation: { label: "升级：熟练度 +1", value: 1 },
-      source: { type: "upgrade", id: "upgrade:tier2-6" },
-    }))
+    expect(entries).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "upgrade:tier1-1-0:hpMax",
+        definition: { target: "hpMax", kind: "modifier" },
+        presentation: { label: "升级：生命上限 +1", value: 1 },
+        source: { type: "upgrade", id: "upgrade:tier1-1-0" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:tier1-1-1:hpMax",
+        definition: { target: "hpMax", kind: "modifier" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:tier1-2-0:stressMax",
+        definition: { target: "stressMax", kind: "modifier" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:tier1-5-0:evasion",
+        definition: { target: "evasion", kind: "modifier" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:tier2-1:proficiency",
+        definition: { target: "proficiency", kind: "modifier" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:tier1-0-2:agility.value",
+        definition: { target: "agility.value", kind: "modifier" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:tier1-0-2:strength.value",
+        definition: { target: "strength.value", kind: "modifier" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:tier1-3-0:experienceValues.0",
+        definition: { target: "experienceValues.0", kind: "modifier" },
+      }),
+      expect.objectContaining({
+        id: "upgrade:tier1-3-0:experienceValues.2",
+        definition: { target: "experienceValues.2", kind: "modifier" },
+      }),
+    ]))
+
+    expect(entries.some(entry => entry.source.id === "upgrade:tier1-0-1")).toBe(false)
+    expect(entries.filter(entry => entry.id === "upgrade:tier2-1:proficiency")).toHaveLength(1)
+    expect(entries.some(entry => entry.source.id === "upgrade:tier1-2-1")).toBe(false)
   })
 
-  it("ignores malformed persisted automation selection values", () => {
+  it("ignores malformed persisted upgrade state values", () => {
     const sheetData = {
       ...defaultSheetData,
-      automationSelections: {
-        "upgrade:null": null,
-        "upgrade:array": [],
-        "upgrade:string": "selected",
-        "upgrade:number": 1,
-        "upgrade:valid": {
-          selected: true,
+      upgradeStates: {
+        null: null,
+        array: [],
+        string: "selected",
+        number: 1,
+        valid: {
+          checked: true,
           params: { target: "evasion" },
         },
       },
@@ -377,16 +402,16 @@ describe("modifier source definitions", () => {
     }))
   })
 
-  it("ignores invalid experience index automation params", () => {
+  it("ignores invalid experience index upgrade state params", () => {
     const sheetData = {
       ...defaultSheetData,
-      automationSelections: {
-        "upgrade:experience": {
-          selected: true,
+      upgradeStates: {
+        experience: {
+          checked: true,
           params: { experienceIndexes: [0, Number.NaN, Infinity, -1, 1.5, "2"] },
         },
       },
-    }
+    } as unknown as SheetData
 
     const entries = collectSystemModifierEntries(sheetData)
       .filter(entry => entry.source.id === "upgrade:experience")
@@ -397,6 +422,23 @@ describe("modifier source definitions", () => {
       presentation: { label: "升级：经历 1 +1", value: 1 },
       source: { type: "upgrade", id: "upgrade:experience" },
     })])
+  })
+
+  it("does not read legacy automation selections for upgrade entries", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      upgradeStates: {},
+      automationSelections: {
+        "upgrade:tier1-5-0": {
+          selected: true,
+          params: { target: "evasion" },
+        },
+      },
+    } as unknown as SheetData
+
+    const entries = collectSystemModifierEntries(sheetData)
+
+    expect(entries.some(entry => entry.id === "upgrade:tier1-5-0:evasion")).toBe(false)
   })
 
   it("does not emit profession entries from the default empty profession card", () => {
@@ -434,9 +476,9 @@ describe("modifier source definitions", () => {
         definition: { target: "evasion", kind: "base" },
         editable: { label: "手动基础闪避", value: 14 },
       }],
-      automationSelections: {
-        "upgrade:tier1-5-0": {
-          selected: true,
+      upgradeStates: {
+        "tier1-5-0": {
+          checked: true,
           params: { target: "evasion" },
         },
       },

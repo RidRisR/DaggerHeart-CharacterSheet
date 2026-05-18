@@ -1,7 +1,8 @@
 import { tryParseNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import { createModifierEntry } from "./entry-utils"
-import type { ModifierEntry, ModifierTargetId } from "./types"
+import type { ModifierEntry, ModifierTargetId, UpgradeStateParams } from "./types"
+import { isAttributeKey, isFixedUpgradeTargetId } from "./upgrade-states"
 
 const ATTRIBUTE_LABELS: Record<string, string> = {
   agility: "敏捷",
@@ -18,44 +19,48 @@ function isSelectionRecord(selection: unknown): selection is Record<string, unkn
   return typeof selection === "object" && selection !== null && !Array.isArray(selection)
 }
 
-function selectedUpgradeEntries(sourceId: string, selection: unknown): ModifierEntry[] {
-  if (!isSelectionRecord(selection) || selection.selected !== true) return []
-  const params = isSelectionRecord(selection.params) ? selection.params : {}
+function selectedUpgradeEntries(sourceId: string, state: unknown): ModifierEntry[] {
+  if (!isSelectionRecord(state) || state.checked !== true) return []
+  const params = isSelectionRecord(state.params)
+    ? state.params as UpgradeStateParams
+    : undefined
+  if (!params) return []
 
-  if (params.target === "evasion") {
-    return [createModifierEntry({
-      id: `${sourceId}:evasion`,
-      sourceId,
-      target: "evasion",
-      kind: "modifier",
-      label: "升级：闪避 +1",
-      value: 1,
-      sourceType: "upgrade",
-      priority: 200,
-    })]
-  }
+  if ("target" in params && isFixedUpgradeTargetId(params.target)) {
+    if (params.target === "evasion") {
+      return [createModifierEntry({
+        id: `${sourceId}:evasion`,
+        sourceId,
+        target: "evasion",
+        kind: "modifier",
+        label: "升级：闪避 +1",
+        value: 1,
+        sourceType: "upgrade",
+        priority: 200,
+      })]
+    }
 
-  if (params.target === "hpMax" || params.target === "stressMax" || params.target === "proficiency") {
     const labelMap = {
       hpMax: "升级：生命上限 +1",
       stressMax: "升级：压力上限 +1",
       proficiency: "升级：熟练度 +1",
     } as const
+    const target = params.target
     return [createModifierEntry({
-      id: `${sourceId}:${params.target}`,
+      id: `${sourceId}:${target}`,
       sourceId,
-      target: params.target,
+      target,
       kind: "modifier",
-      label: labelMap[params.target],
+      label: labelMap[target],
       value: 1,
       sourceType: "upgrade",
       priority: 200,
     })]
   }
 
-  if (Array.isArray(params.attributes)) {
+  if ("attributes" in params && Array.isArray(params.attributes)) {
     return params.attributes.flatMap((attribute) => {
-      if (typeof attribute !== "string" || !(attribute in ATTRIBUTE_LABELS)) return []
+      if (!isAttributeKey(attribute)) return []
       const target = `${attribute}.value` as ModifierTargetId
       return [createModifierEntry({
         id: `${sourceId}:${target}`,
@@ -70,9 +75,9 @@ function selectedUpgradeEntries(sourceId: string, selection: unknown): ModifierE
     })
   }
 
-  if (Array.isArray(params.experienceIndexes)) {
+  if ("experienceIndexes" in params && Array.isArray(params.experienceIndexes)) {
     return params.experienceIndexes.flatMap((index) => {
-      if (!Number.isInteger(index) || index < 0) return []
+      if (!Number.isSafeInteger(index) || index < 0) return []
       const target = `experienceValues.${index}` as ModifierTargetId
       return [createModifierEntry({
         id: `${sourceId}:${target}`,
@@ -214,8 +219,8 @@ export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntr
     })
   }
 
-  Object.entries(sheetData.automationSelections ?? {}).forEach(([sourceId, selection]) => {
-    entries.push(...selectedUpgradeEntries(sourceId, selection))
+  Object.entries(sheetData.upgradeStates ?? {}).forEach(([checkKey, state]) => {
+    entries.push(...selectedUpgradeEntries(`upgrade:${checkKey}`, state))
   })
 
   return entries

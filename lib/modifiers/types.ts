@@ -55,6 +55,12 @@ export interface UpgradeState {
 
 export type UpgradeStates = Record<string, UpgradeState>
 
+export type UpgradeAutomationMetadata =
+  | { kind: "fixedTarget"; target: FixedUpgradeTargetId }
+  | { kind: "attributeSelection"; count: 2 }
+  | { kind: "experienceSelection"; count: 2 }
+  | { kind: "none" }
+
 export type ModifierEntryId = string
 export type AutomationSourceId = string
 

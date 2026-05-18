@@ -187,6 +187,11 @@ export function AttributeUpgradeEditor({ onClose, checkKey }: AttributeUpgradeEd
           自由
         </button>
       </div>
+      {mode === "free" && (
+        <div className="mb-2 text-[11px] leading-snug text-gray-500">
+          自由模式不会标记属性升级
+        </div>
+      )}
 
       {unupgradedCount < 2 ? (
         <div className="text-xs text-gray-500 py-4 text-center bg-gray-50 rounded border border-gray-200">

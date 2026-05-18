@@ -157,6 +157,24 @@ describe("升级编辑器组件烟雾测试", () => {
     expect(screen.getByRole("button", { name: /应用升级/ })).toBeEnabled()
   })
 
+  it("AttributeUpgradeEditor 自由模式说明不会标记属性升级", async () => {
+    const user = userEvent.setup()
+    const toggleUpgradeCheckbox = vi.fn()
+    resetSheetStore()
+
+    render(
+      <AttributeUpgradeEditor
+        checkKey="tier1-0-0"
+        optionIndex={0}
+        toggleUpgradeCheckbox={toggleUpgradeCheckbox}
+      />,
+    )
+
+    await user.click(screen.getByRole("button", { name: "自由" }))
+
+    expect(screen.getByText("自由模式不会标记属性升级")).toBeInTheDocument()
+  })
+
   it("AttributeUpgradeEditor 确认后写入 upgradeStates 参数", async () => {
     const user = userEvent.setup()
     const toggleUpgradeCheckbox = vi.fn()

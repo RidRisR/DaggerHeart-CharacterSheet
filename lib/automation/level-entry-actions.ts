@@ -29,6 +29,16 @@ export type LevelEntryAutomationResult = {
   notifications: LevelEntryNotification[]
 }
 
+const keepSheetData = (sheetData: SheetData): SheetData => sheetData
+
+const proficiencyIncreaseNotificationAutomation: LevelEntryAction = {
+  apply: keepSheetData,
+  notification: (enteredLevel) => ({
+    message: `等级提升至${enteredLevel}级，已提升了熟练度`,
+    type: "success",
+  }),
+}
+
 const clearAttributeUpgradeMarksAutomation: LevelEntryAction = {
   apply: clearAttributeUpgradeMarks,
   notification: (enteredLevel) => ({
@@ -38,6 +48,7 @@ const clearAttributeUpgradeMarksAutomation: LevelEntryAction = {
 }
 
 export const LEVEL_ENTRY_AUTOMATIONS: LevelEntryAutomationRegistry = {
+  2: [proficiencyIncreaseNotificationAutomation],
   5: [clearAttributeUpgradeMarksAutomation],
   8: [clearAttributeUpgradeMarksAutomation],
 }

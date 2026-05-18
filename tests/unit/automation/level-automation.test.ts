@@ -101,7 +101,20 @@ describe("等级自动化基线", () => {
     })
   })
 
-  it("从 1 级进入 8 级时按 5 级、8 级顺序提示等级回调结果", () => {
+  it("从 1 级进入 2 级时提示提升熟练度", () => {
+    resetSheetStore({
+      level: "1",
+    })
+
+    store().updateLevel("2")
+
+    expect(showFadeNotification).toHaveBeenCalledWith({
+      message: "等级提升至2级，已提升了熟练度",
+      type: "success",
+    })
+  })
+
+  it("从 1 级进入 8 级时按 2 级、5 级、8 级顺序提示等级回调结果", () => {
     resetSheetStore({
       level: "1",
     })
@@ -109,10 +122,14 @@ describe("等级自动化基线", () => {
     store().updateLevel("8")
 
     expect(showFadeNotification).toHaveBeenNthCalledWith(1, {
-      message: "等级提升至5级，已清除属性升级标记，并提升了熟练度",
+      message: "等级提升至2级，已提升了熟练度",
       type: "success",
     })
     expect(showFadeNotification).toHaveBeenNthCalledWith(2, {
+      message: "等级提升至5级，已清除属性升级标记，并提升了熟练度",
+      type: "success",
+    })
+    expect(showFadeNotification).toHaveBeenNthCalledWith(3, {
       message: "等级提升至8级，已清除属性升级标记，并提升了熟练度",
       type: "success",
     })

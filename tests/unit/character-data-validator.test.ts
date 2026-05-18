@@ -220,7 +220,7 @@ describe('character data import validation', () => {
 
     expect(result.valid).toBe(true)
     expect(result.data?.upgradeStates).toEqual({
-      'tier1-5-0': { checked: true },
+      'tier1-5-0': { checked: true, params: { target: 'evasion' } },
     })
     expect('checkedUpgrades' in (result.data as any)).toBe(false)
   })
@@ -348,7 +348,7 @@ describe('character data import validation', () => {
     expect(result.data?.upgradeStates).toEqual({
       'tier1-5-0': { checked: false },
       'tier1-0-2': { checked: true, params: { attributes: ['agility', 'strength'] } },
-      'tier1-1-0': { checked: true },
+      'tier1-1-0': { checked: true, params: { target: 'hpMax' } },
       'tier2-1': { checked: true, params: { target: 'proficiency' } },
     })
     expect('checkedUpgrades' in (result.data as any)).toBe(false)

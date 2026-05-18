@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { defaultSheetData } from '@/lib/default-sheet-data'
+import { createUnknownMigrationDifference } from '@/lib/modifiers/other-adjustments'
 import {
   createEstimatedBaseContribution,
-  createUnattributedDeltaContribution,
   getEstimatedBaseId,
 } from '@/lib/modifiers/special-contributions'
 import { migrateSheetData } from '@/lib/sheet-data-migration'
@@ -174,7 +174,7 @@ describe('sheet data version migration', () => {
     ]))
   })
 
-  it('keeps v2 special modifier migration idempotent', () => {
+  it('keeps v2 unknown migration differences idempotent', () => {
     const once = migrateSheetData(v1Sheet({
       evasion: '15',
       cards: [{
@@ -187,8 +187,8 @@ describe('sheet data version migration', () => {
     const twice = migrateSheetData(once)
 
     expect(twice).toEqual(once)
-    expect(once.userModifierContributions).toContainEqual(
-      createUnattributedDeltaContribution('evasion', 3),
+    expect(once.otherAdjustments).toContainEqual(
+      createUnknownMigrationDifference('evasion', 3),
     )
   })
 

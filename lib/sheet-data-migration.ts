@@ -13,6 +13,7 @@
 import type { SheetData, AttributeValue } from './sheet-data'
 import { defaultSheetData } from './default-sheet-data'
 import { createEmptyCard, type StandardCard } from '@/card/card-types'
+import { upgradeOptionsData } from "@/data/list/upgrade"
 import {
   CURRENT_SCHEMA_VERSION,
   assertSupportedSchemaVersion,
@@ -26,13 +27,27 @@ import { tryParseNumber } from "@/lib/number-utils"
 import { collectModifierEntries, getReferenceSummary } from "@/lib/modifiers/registry"
 import { reconcileModifierState } from "@/lib/modifiers/reconcile"
 import {
+  createUnknownMigrationDifference,
+  getOtherAdjustmentId,
+  removeOtherAdjustment,
+  sanitizeOtherAdjustments,
+  upsertOtherAdjustment,
+} from "@/lib/modifiers/other-adjustments"
+import {
   createEstimatedBaseContribution,
-  createUnattributedDeltaContribution,
   getEstimatedBaseId,
   getUnattributedDeltaId,
 } from "@/lib/modifiers/special-contributions"
 import { writeTargetValue } from "@/lib/modifiers/target-accessors"
-import type { ModifierContribution, ModifierEntryKind, ModifierTargetId } from "@/lib/modifiers/types"
+import { mergeUpgradeState, sanitizeUpgradeStates } from "@/lib/modifiers/upgrade-states"
+import type {
+  ModifierContribution,
+  ModifierEntryKind,
+  ModifierTargetId,
+  UpgradeAutomationMetadata,
+  UpgradeState,
+  UpgradeStates,
+} from "@/lib/modifiers/types"
 
 const V1_SCHEMA_VERSION = 1
 const V2_SCHEMA_VERSION = 2
@@ -502,6 +517,75 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
+function isCompleteLegacyCheckKey(value: string): boolean {
+  return value.includes("-")
+}
+
+function legacyUpgradeAutomationForCheckKey(checkKey: string): UpgradeAutomationMetadata | undefined {
+  const match = /^(tier[123])-(\d+)(?:-\d+)?$/.exec(checkKey)
+  if (!match) return undefined
+
+  const tier = match[1] as keyof typeof upgradeOptionsData.tierSpecificUpgrades
+  const optionIndex = Number(match[2])
+  const tierSpecificAutomation = upgradeOptionsData.tierSpecificUpgrades[tier]?.[optionIndex]?.automation
+  const baseAutomation = upgradeOptionsData.baseUpgrades[optionIndex]?.automation
+
+  if (tier !== "tier1" && tierSpecificAutomation && tierSpecificAutomation.kind !== "none") {
+    return tierSpecificAutomation
+  }
+
+  return baseAutomation ?? tierSpecificAutomation
+}
+
+function legacyCheckedUpgradeState(checkKey: string): UpgradeState {
+  const automation = legacyUpgradeAutomationForCheckKey(checkKey)
+  if (automation?.kind === "fixedTarget") {
+    return {
+      checked: true,
+      params: { target: automation.target },
+    }
+  }
+
+  return { checked: true }
+}
+
+function migrateLegacyUpgradeStates(data: SheetData): SheetData {
+  const upgradeStates: UpgradeStates = sanitizeUpgradeStates(data.upgradeStates)
+
+  const addLegacyState = (checkKey: string, next: UpgradeState) => {
+    if (!checkKey) return
+    if (checkKey in upgradeStates) return
+    upgradeStates[checkKey] = mergeUpgradeState(undefined, next)
+  }
+
+  if (isRecord(data.automationSelections)) {
+    Object.entries(data.automationSelections).forEach(([sourceId, selection]) => {
+      if (!sourceId.startsWith("upgrade:") || !isRecord(selection)) return
+      if (typeof selection.selected !== "boolean") return
+
+      const checkKey = sourceId.slice("upgrade:".length)
+      addLegacyState(checkKey, {
+        checked: selection.selected,
+        params: selection.params as UpgradeState["params"],
+      })
+    })
+  }
+
+  if (isRecord(data.checkedUpgrades)) {
+    Object.entries(data.checkedUpgrades).forEach(([checkKey, checkedByIndex]) => {
+      if (!isCompleteLegacyCheckKey(checkKey) || !isRecord(checkedByIndex)) return
+      if (Object.values(checkedByIndex).some(checked => checked === true)) {
+        addLegacyState(checkKey, legacyCheckedUpgradeState(checkKey))
+      }
+    })
+  }
+
+  return {
+    ...data,
+    upgradeStates,
+  }
+}
+
 function migrateModifierTarget(target: string): ModifierTargetId {
   return (target === "armorValue" ? "armorMax" : target) as ModifierTargetId
 }
@@ -736,11 +820,6 @@ function migrateModifierState(data: SheetData): SheetData {
   migrated.modifierState = { targetStates, entryStates }
   migrated.userModifierContributions = userModifierContributions
 
-  if (!migrated.automationSelections || typeof migrated.automationSelections !== "object" || Array.isArray(migrated.automationSelections)) {
-    migrated.automationSelections = {}
-    console.log("[Migration] Added automationSelections field")
-  }
-
   return reconcileModifierState(migrated)
 }
 
@@ -780,6 +859,12 @@ function removeModifierContribution(
   entryId: string,
 ): ModifierContribution[] {
   return contributions.filter(contribution => contribution.id !== entryId)
+}
+
+function legacyMigrationBaseline(target: ModifierTargetId): number | undefined {
+  if (target === "stressMax") return 6
+  if (target.startsWith("experienceValues.")) return 2
+  return undefined
 }
 
 function legacyExplicitFinalValue(raw: Partial<SheetData> | any, target: ModifierTargetId): unknown {
@@ -876,32 +961,48 @@ function preserveLegacyNumericFinal(
   const activeBase = summary.activeBase ?? summary.bases[0]
 
   if (!activeBase) {
+    const baseline = legacyMigrationBaseline(target)
     const modifiersTotal = summary.enabledModifiers.reduce((sum, entry) => sum + entry.presentation.value, 0)
-    const estimatedBase = createEstimatedBaseContribution(target, finalValue - modifiersTotal)
+    const estimatedBase = createEstimatedBaseContribution(target, baseline ?? finalValue - modifiersTotal)
     const contributions = upsertModifierContribution(
       removeModifierContribution(withoutDelta.userModifierContributions ?? [], getEstimatedBaseId(target)),
       estimatedBase,
     )
+    const referenceTotal = estimatedBase.editable.value + modifiersTotal
+    const delta = baseline === undefined
+      ? 0
+      : finalValue - referenceTotal - summary.otherTotal
+    const otherAdjustments = delta === 0
+      ? removeOtherAdjustment(withoutDelta.otherAdjustments, getOtherAdjustmentId(target, "unknownMigrationDifference"))
+      : upsertOtherAdjustment(
+        withoutDelta.otherAdjustments,
+        createUnknownMigrationDifference(target, delta),
+      )
     const withContributions = {
       ...withoutDelta,
       userModifierContributions: contributions,
+      otherAdjustments,
     }
     const withFinal = writeTargetValue(withContributions, target, finalValue)
     return writeModifierTargetState(withFinal, target, estimatedBase.id)
   }
 
   const referenceTotal = summary.referenceTotal ?? 0
-  const delta = finalValue - referenceTotal
+  const delta = finalValue - referenceTotal - summary.otherTotal
   const withoutExistingDelta = removeModifierContribution(
     withoutDelta.userModifierContributions ?? [],
     getUnattributedDeltaId(target),
   )
-  const contributions = delta === 0
-    ? withoutExistingDelta
-    : upsertModifierContribution(withoutExistingDelta, createUnattributedDeltaContribution(target, delta))
+  const otherAdjustments = delta === 0
+    ? removeOtherAdjustment(withoutDelta.otherAdjustments, getOtherAdjustmentId(target, "unknownMigrationDifference"))
+    : upsertOtherAdjustment(
+      withoutDelta.otherAdjustments,
+      createUnknownMigrationDifference(target, delta),
+    )
   const withContributions = {
     ...withoutDelta,
-    userModifierContributions: contributions,
+    userModifierContributions: withoutExistingDelta,
+    otherAdjustments,
   }
   const withFinal = writeTargetValue(withContributions, target, finalValue)
   return writeModifierTargetState(withFinal, target, activeBase.id)
@@ -948,6 +1049,8 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
   const migrated = { ...data }
 
   migrated.userModifierContributions = sanitizeModifierContributions(migrated.userModifierContributions)
+  migrated.otherAdjustments = sanitizeOtherAdjustments(migrated.otherAdjustments)
+  migrated.upgradeStates = sanitizeUpgradeStates(migrated.upgradeStates)
 
   if (!migrated.modifierState || typeof migrated.modifierState !== "object" || Array.isArray(migrated.modifierState)) {
     migrated.modifierState = { targetStates: {}, entryStates: {} }
@@ -971,10 +1074,6 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
     }
   }
 
-  if (!migrated.automationSelections || typeof migrated.automationSelections !== "object" || Array.isArray(migrated.automationSelections)) {
-    migrated.automationSelections = {}
-  }
-
   return migrated
 }
 
@@ -991,6 +1090,13 @@ function cleanupDeprecatedFields(data: SheetData): SheetData {
     console.log('[Migration] Removed deprecated includePageThreeInExport field')
   }
 
+  return migrated
+}
+
+function cleanupLegacyUpgradeFields(data: SheetData): SheetData {
+  const migrated = { ...data }
+  delete (migrated as any).checkedUpgrades
+  delete (migrated as any).automationSelections
   return migrated
 }
 
@@ -1020,6 +1126,7 @@ export function normalizeCurrentSheetData(data: Partial<SheetData> | any): Sheet
   normalized.equipment = normalizeCurrentEquipment(normalized.equipment)
   normalized = normalizeCurrentModifierCollections(normalized)
   normalized = reconcileModifierState(normalized)
+  normalized = cleanupLegacyUpgradeFields(normalized)
 
   return cleanupDeprecatedFields(normalized)
 }
@@ -1051,6 +1158,7 @@ function migrateV1ToV2(raw: Partial<SheetData> | any): Partial<SheetData> {
 
   migrated = migrateEquipment(migrated, hasInputEquipment)
   migrated = migrateModifierState(migrated)
+  migrated = migrateLegacyUpgradeStates(migrated)
   migrated = preserveLegacyModifierFinals(migrated, legacyExplicitFinals)
   migrated = stripLegacyEquipmentFields(migrated)
   migrated = cleanupDeprecatedFields(migrated)

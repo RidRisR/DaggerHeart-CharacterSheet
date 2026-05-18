@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { StandardCard } from "@/card/card-types"
 import { migrateSheetData } from "@/lib/sheet-data-migration"
+import { createUnknownMigrationDifference } from "@/lib/modifiers/other-adjustments"
 import {
   createEstimatedBaseContribution,
   createUnattributedDeltaContribution,
@@ -40,7 +41,8 @@ describe("modifier state migration", () => {
     expect(migrated.modifierState?.targetStates.evasion?.autoCalculation).toBe(true)
     expect(migrated.modifierState?.targetStates.hpMax?.autoCalculation).toBe(true)
     expect(migrated.modifierState?.entryStates).toEqual({})
-    expect(migrated.automationSelections).toEqual({})
+    expect("checkedUpgrades" in (migrated as any)).toBe(false)
+    expect("automationSelections" in (migrated as any)).toBe(false)
   })
 
   it("migrates legacy byTarget active base and user entries to provider contributions", () => {
@@ -77,8 +79,8 @@ describe("modifier state migration", () => {
       definition: { target: "evasion", kind: "base" },
       editable: { label: "手动基础闪避", value: 12 },
     }])
-    expect(migrated.automationSelections?.["upgrade:tier1-5-0"]?.selected).toBe(true)
-    expect(migrated.automationSelections?.["upgrade:tier1-5-0"]?.params).toEqual({ target: "evasion" })
+    expect(migrated.upgradeStates?.["tier1-5-0"]).toEqual({ checked: true, params: { target: "evasion" } })
+    expect("automationSelections" in (migrated as any)).toBe(false)
   })
 
   it("drops legacy disabled entry ids instead of preserving enabled false states", () => {
@@ -97,8 +99,11 @@ describe("modifier state migration", () => {
 
     expect(migrated.minorThreshold).toBe("14")
     expect(migrated.modifierState?.entryStates).toEqual({})
-    expect(migrated.userModifierContributions).toContainEqual(
-      createUnattributedDeltaContribution("minorThreshold", 3),
+    expect(migrated.otherAdjustments).toContainEqual(
+      createUnknownMigrationDifference("minorThreshold", 3),
+    )
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("minorThreshold") }),
     )
     expect(migrated.modifierState?.entryStates["upgrade:evasion"]).toBeUndefined()
   })
@@ -222,7 +227,7 @@ describe("modifier state migration", () => {
     ])
   })
 
-  it("replaces invalid array-backed modifier state and automation selections", () => {
+  it("replaces invalid array-backed modifier state and removes legacy automation selections", () => {
     const migrated = migrateSheetData({
       schemaVersion: 2,
       modifierState: [],
@@ -230,7 +235,7 @@ describe("modifier state migration", () => {
     })
 
     expect(migrated.modifierState).toEqual({ targetStates: {}, entryStates: {} })
-    expect(migrated.automationSelections).toEqual({})
+    expect("automationSelections" in (migrated as any)).toBe(false)
   })
 
   it("preserves new modifier state while merging legacy byTarget state", () => {
@@ -352,7 +357,7 @@ describe("modifier state migration", () => {
     expect(migrated.userModifierContributions).toEqual([validContribution])
   })
 
-  it("preserves legacy numeric final with an unattributed delta when a base exists", () => {
+  it("preserves legacy numeric final with an unknown migration difference when a base exists", () => {
     const migrated = migrateSheetData(v1ModifierInput({
       evasion: "15",
       cards: [{
@@ -371,8 +376,9 @@ describe("modifier state migration", () => {
       activeBaseId: "profession:current:evasion",
       autoCalculation: true,
     })
-    expect(migrated.userModifierContributions).toContainEqual(
-      createUnattributedDeltaContribution("evasion", 3),
+    expect(migrated.otherAdjustments).toContainEqual(createUnknownMigrationDifference("evasion", 3))
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("evasion") }),
     )
   })
 
@@ -399,6 +405,7 @@ describe("modifier state migration", () => {
       },
       createEstimatedBaseContribution("evasion", 13),
     ]))
+    expect(migrated.otherAdjustments).toEqual([])
   })
 
   it("preserves legacy boolean-array proficiency final", () => {
@@ -412,8 +419,9 @@ describe("modifier state migration", () => {
       activeBaseId: "level:base:proficiency",
       autoCalculation: true,
     })
-    expect(migrated.userModifierContributions).toContainEqual(
-      createUnattributedDeltaContribution("proficiency", 2),
+    expect(migrated.otherAdjustments).toContainEqual(createUnknownMigrationDifference("proficiency", 2))
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("proficiency") }),
     )
   })
 
@@ -425,6 +433,26 @@ describe("modifier state migration", () => {
     expect(migrated.evasion).toBe("12+敏捷")
     expect(migrated.modifierState?.targetStates.evasion).toEqual({ autoCalculation: true })
     expect(migrated.userModifierContributions).toEqual([])
+    expect(migrated.otherAdjustments).toEqual([])
+  })
+
+  it("does not create other adjustments for blank legacy finals", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      evasion: "   ",
+      cards: [{
+        id: "profession-warrior",
+        type: "profession",
+        name: "战士",
+        professionSpecial: {
+          起始闪避: 12,
+        },
+      } as StandardCard],
+    }))
+
+    expect(migrated.otherAdjustments).toEqual([])
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("evasion") }),
+    )
   })
 
   it("does not create an estimated base from hpMax default fallback", () => {
@@ -499,5 +527,139 @@ describe("modifier state migration", () => {
 
     expect(twice).toEqual(once)
     expect(once.userModifierContributions?.filter(entry => entry.id === getEstimatedBaseId("evasion"))).toHaveLength(1)
+  })
+
+  it("migrates fixed checked upgrades to upgrade states before preserving legacy finals", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      hpMax: 8,
+      cards: [{
+        id: "profession-warrior",
+        type: "profession",
+        name: "战士",
+        professionSpecial: {
+          起始生命: 6,
+        },
+      } as StandardCard],
+      checkedUpgrades: {
+        "tier1-1-0": { 1: true },
+        "tier1-1-1": { 1: true },
+      },
+    }))
+
+    expect(migrated.upgradeStates).toMatchObject({
+      "tier1-1-0": { checked: true, params: { target: "hpMax" } },
+      "tier1-1-1": { checked: true, params: { target: "hpMax" } },
+    })
+    expect(migrated.hpMax).toBe(8)
+    expect(migrated.otherAdjustments).toEqual([])
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("hpMax") }),
+    )
+    expect("checkedUpgrades" in (migrated as any)).toBe(false)
+    expect("automationSelections" in (migrated as any)).toBe(false)
+  })
+
+  it("migrates parameterized checked upgrades without guessing params", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      checkedUpgrades: {
+        "tier1-0-2": { 0: true },
+        "tier1-3-0": { 3: true },
+      },
+    }))
+
+    expect(migrated.upgradeStates).toMatchObject({
+      "tier1-0-2": { checked: true },
+      "tier1-3-0": { checked: true },
+    })
+  })
+
+  it("migrates legacy automation selection source ids to raw upgrade state keys with params", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      automationSelections: {
+        "upgrade:tier1-2-0": {
+          selected: true,
+          params: { target: "stressMax" },
+        },
+      },
+    }))
+
+    expect(migrated.upgradeStates).toMatchObject({
+      "tier1-2-0": { checked: true, params: { target: "stressMax" } },
+    })
+    expect(migrated.upgradeStates).not.toHaveProperty("upgrade:tier1-2-0")
+    expect("automationSelections" in (migrated as any)).toBe(false)
+  })
+
+  it("uses stressMax baseline 6 before creating migration differences", () => {
+    const baseline = migrateSheetData(v1ModifierInput({ stressMax: 6 }))
+    const increased = migrateSheetData(v1ModifierInput({ stressMax: 8 }))
+
+    expect(baseline.userModifierContributions).toContainEqual(
+      createEstimatedBaseContribution("stressMax", 6),
+    )
+    expect(baseline.otherAdjustments).toEqual([])
+
+    expect(increased.userModifierContributions).toContainEqual(
+      createEstimatedBaseContribution("stressMax", 6),
+    )
+    expect(increased.otherAdjustments).toContainEqual(
+      createUnknownMigrationDifference("stressMax", 2),
+    )
+  })
+
+  it("uses experience value baseline 2 before creating migration differences", () => {
+    const baseline = migrateSheetData(v1ModifierInput({
+      experienceValues: ["2"],
+    }))
+    const increased = migrateSheetData(v1ModifierInput({
+      experienceValues: ["4"],
+    }))
+
+    expect(baseline.userModifierContributions).toContainEqual(
+      createEstimatedBaseContribution("experienceValues.0", 2),
+    )
+    expect(baseline.otherAdjustments).toEqual([])
+
+    expect(increased.userModifierContributions).toContainEqual(
+      createEstimatedBaseContribution("experienceValues.0", 2),
+    )
+    expect(increased.otherAdjustments).toContainEqual(
+      createUnknownMigrationDifference("experienceValues.0", 2),
+    )
+  })
+
+  it("normalizes current other adjustments and upgrade states while removing legacy upgrade fields", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      otherAdjustments: [
+        { id: "stale", target: "evasion", kind: "unknownMigrationDifference", value: 2 },
+        { id: "bad", target: "not-a-target", kind: "unknownMigrationDifference", value: 1 },
+      ],
+      upgradeStates: {
+        "tier1-5-0": { checked: true, params: { target: "evasion" }, extra: "drop" },
+        "bad": { checked: true, params: { target: "armorMax" } },
+        "tier1-2-0": { checked: false, params: { target: "stressMax" } },
+      },
+      checkedUpgrades: {
+        "tier1-1-0": { 1: true },
+      },
+      automationSelections: {
+        "upgrade:tier1-1-1": {
+          selected: true,
+          params: { target: "hpMax" },
+        },
+      },
+    } as any)
+
+    expect(migrated.otherAdjustments).toEqual([
+      createUnknownMigrationDifference("evasion", 2),
+    ])
+    expect(migrated.upgradeStates).toEqual({
+      "tier1-5-0": { checked: true, params: { target: "evasion" } },
+      "bad": { checked: true },
+      "tier1-2-0": { checked: false },
+    })
+    expect("checkedUpgrades" in (migrated as any)).toBe(false)
+    expect("automationSelections" in (migrated as any)).toBe(false)
   })
 })

@@ -22,7 +22,7 @@ describe("等级自动化基线", () => {
       },
     })
 
-    store().updateLevel("8", "1")
+    store().updateLevel("8")
 
     expect(sheet().level).toBe("8")
     expect(countChecked(sheet().proficiency)).toBe(0)
@@ -41,7 +41,7 @@ describe("等级自动化基线", () => {
       },
     })
 
-    store().updateLevel("8", "1")
+    store().updateLevel("8")
 
     expect(sheet().level).toBe("8")
     expect(countChecked(sheet().proficiency)).toBe(5)
@@ -54,14 +54,14 @@ describe("等级自动化基线", () => {
       proficiency: [true, true, false, false, false, false],
     })
 
-    store().updateLevel("3", "5")
+    store().updateLevel("3")
 
     expect(sheet().level).toBe("3")
     expect(countChecked(sheet().proficiency)).toBe(2)
     expect(sheet().proficiency).toEqual([true, true, false, false, false, false])
   })
 
-  it("等级变化不再直接重置六属性升级标记", () => {
+  it("从 1 级进入 5 级时重置六属性升级标记", () => {
     resetSheetStore({
       level: "1",
       agility: { value: "2", checked: true, spellcasting: false },
@@ -72,7 +72,28 @@ describe("等级自动化基线", () => {
       knowledge: { value: "0", checked: true, spellcasting: false },
     })
 
-    store().updateLevel("5", "1")
+    store().updateLevel("5")
+
+    expect(sheet().agility?.checked).toBe(false)
+    expect(sheet().strength?.checked).toBe(false)
+    expect(sheet().finesse?.checked).toBe(false)
+    expect(sheet().instinct?.checked).toBe(false)
+    expect(sheet().presence?.checked).toBe(false)
+    expect(sheet().knowledge?.checked).toBe(false)
+  })
+
+  it("从 8 级降到 4 级时不重置六属性升级标记", () => {
+    resetSheetStore({
+      level: "8",
+      agility: { value: "2", checked: true, spellcasting: false },
+      strength: { value: "1", checked: true, spellcasting: false },
+      finesse: { value: "0", checked: true, spellcasting: false },
+      instinct: { value: "0", checked: true, spellcasting: false },
+      presence: { value: "0", checked: true, spellcasting: false },
+      knowledge: { value: "0", checked: true, spellcasting: false },
+    })
+
+    store().updateLevel("4")
 
     expect(sheet().agility?.checked).toBe(true)
     expect(sheet().strength?.checked).toBe(true)
@@ -103,7 +124,7 @@ describe("等级自动化基线", () => {
       },
     })
 
-    store().updateLevel("5", "1")
+    store().updateLevel("5")
 
     expect(sheet().level).toBe("5")
     expect(sheet().minorThreshold).toBe("manual-minor")

@@ -72,7 +72,13 @@ function sanitizeUpgradeState(value: unknown): UpgradeState | undefined {
   }
 
   const params = sanitizeUpgradeStateParams(value.params)
-  return params ? { checked: true, params } : { checked: true }
+  if (!params) return { checked: true }
+
+  if ("attributes" in params && value.attributeMarksApplied === true) {
+    return { checked: true, params, attributeMarksApplied: true }
+  }
+
+  return { checked: true, params }
 }
 
 export function sanitizeUpgradeStates(value: unknown): UpgradeStates {
@@ -100,7 +106,7 @@ export function mergeUpgradeState(current: UpgradeState | undefined, next: Upgra
 
   const currentState = sanitizeUpgradeState(current)
   if (currentState?.checked && currentState.params) {
-    return { checked: true, params: currentState.params }
+    return currentState
   }
 
   return { checked: true }

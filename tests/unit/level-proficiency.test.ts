@@ -32,7 +32,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
   })
 
   describe("手动模式", () => {
-    it("等级变化只更新等级，不直接改熟练度、阈值或属性升级标记", () => {
+    it("等级变化只更新等级，不直接改熟练度或阈值，进入 5 级会重置属性升级标记", () => {
       resetSheetStore({
         level: "1",
         proficiency: [true, false, false, false, false, false],
@@ -52,15 +52,15 @@ describe("等级升级 - 熟练度提升逻辑", () => {
         },
       })
 
-      store().updateLevel("5", "1")
+      store().updateLevel("5")
 
       expect(sheet().level).toBe("5")
       expect(sheet().proficiency).toEqual([true, false, false, false, false, false])
       expect(sheet().minorThreshold).toBe("manual-minor")
       expect(sheet().majorThreshold).toBe("manual-major")
-      expect(sheet().agility?.checked).toBe(true)
-      expect(sheet().strength?.checked).toBe(true)
-      expect(sheet().finesse?.checked).toBe(true)
+      expect(sheet().agility?.checked).toBe(false)
+      expect(sheet().strength?.checked).toBe(false)
+      expect(sheet().finesse?.checked).toBe(false)
     })
 
     it("降级不直接改手动模式的熟练度", () => {
@@ -69,7 +69,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
         proficiency: [true, true, false, false, false, false],
       })
 
-      store().updateLevel("3", "5")
+      store().updateLevel("3")
 
       expect(sheet().level).toBe("3")
       expect(sheet().proficiency).toEqual([true, true, false, false, false, false])
@@ -96,7 +96,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
         },
       })
 
-      store().updateLevel(level, "1")
+      store().updateLevel(level)
 
       expect(sheet().level).toBe(level)
       expect(sheet().proficiency).toEqual(expected)
@@ -125,7 +125,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
         },
       })
 
-      store().updateLevel("5", "1")
+      store().updateLevel("5")
 
       expect(sheet().level).toBe("5")
       expect(sheet().minorThreshold).toBe("8")
@@ -153,7 +153,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
         },
       })
 
-      store().updateLevel("5", "1")
+      store().updateLevel("5")
 
       expect(sheet().minorThreshold).toBe("manual-minor")
       expect(sheet().majorThreshold).toBe("manual-major")
@@ -178,7 +178,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
         },
       })
 
-      store().updateLevel(level, "5")
+      store().updateLevel(level)
 
       expect(sheet().level).toBe(level)
       expect(sheet().proficiency).toEqual([true, true, false, false, false, false])
@@ -212,7 +212,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
         },
       })
 
-      store().updateLevel(level, "5")
+      store().updateLevel(level)
 
       expect(sheet().level).toBe(level)
       expect(sheet().proficiency).toEqual([true, true, true, false, false, false])

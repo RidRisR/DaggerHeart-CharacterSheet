@@ -49,6 +49,7 @@ export type UpgradeStateParams =
 export interface UpgradeState {
   checked: boolean
   params?: UpgradeStateParams
+  attributeMarksApplied?: true
 }
 
 export type UpgradeStates = Record<string, UpgradeState>

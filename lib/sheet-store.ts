@@ -46,6 +46,7 @@ import {
     sanitizeOtherAdjustments,
     upsertOtherAdjustment as upsertOtherAdjustmentInList,
 } from "@/lib/modifiers/other-adjustments";
+import { applyLevelEntryAutomations } from "@/lib/automation/level-entry-actions";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -160,7 +161,7 @@ interface SheetState {
     updateStressMax: (value: number) => void;
 
     // Threshold calculation actions
-    updateLevel: (level: string, oldLevel?: string) => void;
+    updateLevel: (level: string) => void;
     updateArmorBaseThresholds: (baseThresholds: string) => void;
     updateArmorBaseMax: (baseArmorMax: string) => void;
     selectArmor: (armorId: string) => void;
@@ -582,12 +583,15 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     // Threshold calculation actions
-    updateLevel: (level) => set((state) => ({
-        sheetData: applyAutoCalculationForTargets({
-            ...state.sheetData,
-            level,
-        }),
-    })),
+    updateLevel: (level) => set((state) => {
+        const nextSheetData = applyLevelEntryAutomations(state.sheetData, level);
+        return {
+            sheetData: applyAutoCalculationForTargets({
+                ...nextSheetData,
+                level,
+            }),
+        };
+    }),
 
     updateArmorBaseThresholds: (baseThresholds) => set((state) => {
         const armorSlot: ArmorSlot = {

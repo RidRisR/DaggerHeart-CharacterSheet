@@ -40,6 +40,12 @@ function contributionLabel(contribution: EquipmentModifierContribution): string 
   return contribution.editable.label || "未命名修正"
 }
 
+function contributionSectionLabel(slotRef: EquipmentSlotRef): string {
+  if (slotRef.type === "armor") return "护甲修正"
+  if (slotRef.type === "inventoryWeapon") return slotRef.index === 0 ? "备用武器一修正" : "备用武器二修正"
+  return slotRef.slot === "primary" ? "主武器修正" : "副武器修正"
+}
+
 function EditableContributionRow({
   contribution,
   slotRef,
@@ -190,7 +196,7 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
               {isArmorSlot(effectiveSlotRef, slot) && <ArmorSummary armorSlot={slot} />}
               <div className="space-y-2 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-600">装备修正</span>
+                  <span className="text-xs font-semibold text-gray-600">{contributionSectionLabel(effectiveSlotRef)}</span>
                   <button
                     type="button"
                     aria-label="新增修正"

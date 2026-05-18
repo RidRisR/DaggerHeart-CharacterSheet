@@ -25,6 +25,34 @@ function contribution(
 }
 
 describe("EquipmentProviderAnchor", () => {
+  it("uses slot-specific contribution section labels", async () => {
+    resetSheetStore()
+
+    const primary = render(<EquipmentProviderAnchor slotRef={{ type: "weapon", slot: "primary" }} fallbackLabel="主武器" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看主武器来源" }))
+    expect(screen.getByText("主武器修正")).toBeInTheDocument()
+    expect(screen.queryByText("装备修正")).not.toBeInTheDocument()
+    primary.unmount()
+
+    const secondary = render(<EquipmentProviderAnchor slotRef={{ type: "weapon", slot: "secondary" }} fallbackLabel="副武器" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看副武器来源" }))
+    expect(screen.getByText("副武器修正")).toBeInTheDocument()
+    secondary.unmount()
+
+    const armor = render(<EquipmentProviderAnchor slotRef={{ type: "armor" }} fallbackLabel="护甲" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看护甲来源" }))
+    expect(screen.getByText("护甲修正")).toBeInTheDocument()
+    armor.unmount()
+
+    const inventory = render(<EquipmentProviderAnchor slotRef={{ type: "inventoryWeapon", index: 0 }} fallbackLabel="备用武器 1" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看备用武器 1来源" }))
+    expect(screen.getByText("备用武器一修正")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("tab", { name: "备用武器 2" }))
+    expect(screen.getByText("备用武器二修正")).toBeInTheDocument()
+    inventory.unmount()
+  })
+
   it("opens a provider popover using the slot name when available", async () => {
     resetSheetStore({
       equipment: {

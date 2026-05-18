@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import { AttributesSection } from "@/components/character-sheet-sections/attributes-section"
 import { getAttributeAutoBaseId } from "@/lib/modifiers/attribute-auto-base"
+import { createManualFinalAdjustment } from "@/lib/modifiers/other-adjustments"
 import { getManualBaseId, getUnattributedDeltaId } from "@/lib/modifiers/special-contributions"
 import type { UserModifierContribution } from "@/lib/modifiers/types"
 import { resetSheetStore, sheet } from "../automation/test-helpers"
@@ -241,11 +242,12 @@ describe("attribute auto base section behavior", () => {
     await userEvent.tab()
 
     expect(sheet().agility?.value).toBe("15")
-    expect(sheet().userModifierContributions).toContainEqual({
-      id: getUnattributedDeltaId("agility.value"),
-      definition: { target: "agility.value", kind: "modifier" },
-      editable: { label: "未归因差额", value: 14 },
-    })
+    expect(sheet().otherAdjustments).toContainEqual(
+      createManualFinalAdjustment("agility.value", 14),
+    )
+    expect(sheet().userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("agility.value") }),
+    )
   })
 
   it("uses final target reconciliation instead of auto-base creation for auto-calculated empty attributes", async () => {

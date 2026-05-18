@@ -45,7 +45,7 @@ export function applyAutoCalculationForTargets(sheetData: SheetData): SheetData 
     const currentValue = readTargetValue(next, target)
     if (!isBlankTargetValue(currentValue) && tryParseNumber(currentValue) === undefined) return
 
-    const desiredValue = getReferenceSummary(next, target).referenceTotal
+    const desiredValue = getReferenceSummary(next, target).calculatedFinalTotal
     if (desiredValue === undefined) return
     if (isSameTargetValue(currentValue, desiredValue)) return
 

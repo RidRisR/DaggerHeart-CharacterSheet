@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { defaultSheetData } from "@/lib/default-sheet-data"
+import { createUnknownMigrationDifference } from "@/lib/modifiers/other-adjustments"
 import { applyAutoCalculationForTargets } from "@/lib/modifiers/target-sync"
 import type { SheetData } from "@/lib/sheet-data"
 
@@ -35,6 +36,28 @@ describe("target auto calculation helper", () => {
     const result = applyAutoCalculationForTargets(data)
 
     expect(result.evasion).toBe("13")
+  })
+
+  it("writes auto calculation target from calculated final total including saved other", () => {
+    const data = sheet({
+      evasion: "10",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      otherAdjustments: [createUnknownMigrationDifference("evasion", 2)],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: true } },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result.evasion).toBe("14")
   })
 
   it("writes targets by default when auto calculation state is missing", () => {

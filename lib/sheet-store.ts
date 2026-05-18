@@ -31,6 +31,7 @@ import type {
 } from "@/lib/modifiers/types";
 import {
     deleteSpecialBase,
+    disableAutoCalculationForTarget,
     enableAutoCalculationForTarget,
     reconcileFinalInput,
 } from "@/lib/modifiers/final-input-reconciliation";
@@ -1044,23 +1045,8 @@ export const useSheetStore = create<SheetState>((set) => ({
             };
         }
 
-        const modifierState = ensureModifierState(state.sheetData);
-        const targetStates = { ...modifierState.targetStates };
-        const currentTargetState = targetStates[target] ?? {};
-
-        setTargetState(targetStates, target, {
-            ...currentTargetState,
-            autoCalculation: false,
-        });
-
         return {
-            sheetData: {
-                ...state.sheetData,
-                modifierState: {
-                    ...modifierState,
-                    targetStates,
-                },
-            },
+            sheetData: disableAutoCalculationForTarget(state.sheetData, target),
         };
     }),
 

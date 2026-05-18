@@ -1,8 +1,9 @@
 import { tryParseNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import { entryKind, entryTarget, entryValue } from "./entry-utils"
+import { sanitizeOtherAdjustments } from "./other-adjustments"
 import { readTargetValue } from "./target-accessors"
-import type { ModifierEntry, ModifierState, ModifierTargetId } from "./types"
+import type { ModifierEntry, ModifierState, ModifierTargetId, OtherAdjustment } from "./types"
 
 export interface ReferenceSummary {
   target: ModifierTargetId
@@ -15,6 +16,9 @@ export interface ReferenceSummary {
   activeBaseChanged: boolean
   unknownBase: boolean
   referenceTotal?: number
+  otherAdjustments: OtherAdjustment[]
+  otherTotal: number
+  calculatedFinalTotal?: number
   unattributedDelta?: number
 }
 
@@ -38,6 +42,10 @@ export function calculateReferenceSummary(input: CalculateReferenceSummaryInput)
   const bases = targetEntries.filter(entry => entryKind(entry) === "base")
   const modifiers = targetEntries.filter(entry => entryKind(entry) === "modifier")
   const enabledModifiers = modifiers
+  const otherAdjustments = sanitizeOtherAdjustments(input.sheetData.otherAdjustments).filter(
+    adjustment => adjustment.target === input.target,
+  )
+  const otherTotal = otherAdjustments.reduce((sum, adjustment) => sum + adjustment.value, 0)
 
   const savedBaseId = input.modifierState?.targetStates?.[input.target]?.activeBaseId
   const savedBase = savedBaseId ? bases.find(entry => entry.id === savedBaseId) : undefined
@@ -55,10 +63,15 @@ export function calculateReferenceSummary(input: CalculateReferenceSummaryInput)
       activeBase: undefined,
       activeBaseChanged: false,
       unknownBase: true,
+      otherAdjustments,
+      otherTotal,
+      calculatedFinalTotal: undefined,
+      unattributedDelta: undefined,
     }
   }
 
   const referenceTotal = entryValue(activeBase) + enabledModifiers.reduce((sum, entry) => sum + entryValue(entry), 0)
+  const calculatedFinalTotal = referenceTotal + otherTotal
   const finalValue = tryParseNumber(readTargetValue(input.sheetData, input.target))
 
   return {
@@ -72,6 +85,9 @@ export function calculateReferenceSummary(input: CalculateReferenceSummaryInput)
     activeBaseChanged,
     unknownBase: false,
     referenceTotal,
-    unattributedDelta: finalValue === undefined ? undefined : finalValue - referenceTotal,
+    otherAdjustments,
+    otherTotal,
+    calculatedFinalTotal,
+    unattributedDelta: finalValue === undefined ? undefined : finalValue - calculatedFinalTotal,
   }
 }

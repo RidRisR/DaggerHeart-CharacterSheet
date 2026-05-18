@@ -7,6 +7,7 @@ import { HitPointsSection } from "@/components/character-sheet-sections/hit-poin
 import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
 import { ProficiencyEditor } from "@/components/upgrade-popover/proficiency-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
+import { createManualFinalAdjustment } from "@/lib/modifiers/other-adjustments"
 import { getUnattributedDeltaId } from "@/lib/modifiers/special-contributions"
 import { countChecked, resetSheetStore, sheet, store } from "../automation/test-helpers"
 
@@ -41,11 +42,12 @@ describe("final target editors", () => {
     await userEvent.tab()
 
     expect(sheet().experienceValues?.[0]).toBe("5")
-    expect(sheet().userModifierContributions).toContainEqual({
-      id: getUnattributedDeltaId("experienceValues.0"),
-      definition: { target: "experienceValues.0", kind: "modifier" },
-      editable: { label: "未归因差额", value: 3 },
-    })
+    expect(sheet().otherAdjustments).toContainEqual(
+      createManualFinalAdjustment("experienceValues.0", 3),
+    )
+    expect(sheet().userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("experienceValues.0") }),
+    )
   })
 
   it("reconciles proficiency clicks through final target commit", () => {
@@ -72,11 +74,12 @@ describe("final target editors", () => {
     store().updateProficiency(2)
 
     expect(countChecked(sheet().proficiency)).toBe(3)
-    expect(sheet().userModifierContributions).toContainEqual({
-      id: getUnattributedDeltaId("proficiency"),
-      definition: { target: "proficiency", kind: "modifier" },
-      editable: { label: "未归因差额", value: 2 },
-    })
+    expect(sheet().otherAdjustments).toContainEqual(
+      createManualFinalAdjustment("proficiency", 2),
+    )
+    expect(sheet().userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("proficiency") }),
+    )
   })
 
   it("reconciles HP max editor increment through final target commit", async () => {
@@ -104,11 +107,12 @@ describe("final target editors", () => {
     await userEvent.click(screen.getByRole("button", { name: "增加生命值上限 (+1)" }))
 
     expect(sheet().hpMax).toBe(7)
-    expect(sheet().userModifierContributions).toContainEqual({
-      id: getUnattributedDeltaId("hpMax"),
-      definition: { target: "hpMax", kind: "modifier" },
-      editable: { label: "未归因差额", value: 1 },
-    })
+    expect(sheet().otherAdjustments).toContainEqual(
+      createManualFinalAdjustment("hpMax", 1),
+    )
+    expect(sheet().userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("hpMax") }),
+    )
   })
 
   it("reconciles stress max editor blur through final target commit", async () => {
@@ -139,11 +143,12 @@ describe("final target editors", () => {
     await userEvent.tab()
 
     expect(sheet().stressMax).toBe(8)
-    expect(sheet().userModifierContributions).toContainEqual({
-      id: getUnattributedDeltaId("stressMax"),
-      definition: { target: "stressMax", kind: "modifier" },
-      editable: { label: "未归因差额", value: 2 },
-    })
+    expect(sheet().otherAdjustments).toContainEqual(
+      createManualFinalAdjustment("stressMax", 2),
+    )
+    expect(sheet().userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("stressMax") }),
+    )
   })
 
   it("renders proficiency editor against the real final target", () => {
@@ -182,11 +187,12 @@ describe("final target editors", () => {
     await userEvent.tab()
 
     expect(sheet().minorThreshold).toBe("9")
-    expect(sheet().userModifierContributions).toContainEqual({
-      id: getUnattributedDeltaId("minorThreshold"),
-      definition: { target: "minorThreshold", kind: "modifier" },
-      editable: { label: "未归因差额", value: 1 },
-    })
+    expect(sheet().otherAdjustments).toContainEqual(
+      createManualFinalAdjustment("minorThreshold", 1),
+    )
+    expect(sheet().userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("minorThreshold") }),
+    )
   })
 
   it("clamps checked HP boxes when HP max is committed below the current checked count", async () => {

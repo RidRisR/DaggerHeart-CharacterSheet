@@ -5,6 +5,11 @@ import {
   getManualBaseId,
   getUnattributedDeltaId,
 } from "@/lib/modifiers/special-contributions"
+import {
+  createManualFinalAdjustment,
+  createUnattributedDifference,
+  createUnknownMigrationDifference,
+} from "@/lib/modifiers/other-adjustments"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
 describe("modifier store actions", () => {
@@ -61,7 +66,7 @@ describe("modifier store actions", () => {
     })
   })
 
-  it("enables target auto calculation by preserving current final with unattributed delta", () => {
+  it("enables target auto calculation by preserving current final with saved unattributed difference", () => {
     resetSheetStore({
       evasion: "15",
       userModifierContributions: [
@@ -86,11 +91,10 @@ describe("modifier store actions", () => {
       activeBaseId: "user:evasion-base",
       autoCalculation: true,
     })
-    expect(sheet().userModifierContributions).toContainEqual({
-      id: getUnattributedDeltaId("evasion"),
-      definition: { target: "evasion", kind: "modifier" },
-      editable: { label: "未归因差额", value: 3 },
-    })
+    expect(sheet().otherAdjustments).toContainEqual(createUnattributedDifference("evasion", 3))
+    expect(sheet().userModifierContributions?.some(
+      contribution => contribution.id === getUnattributedDeltaId("evasion"),
+    )).toBe(false)
   })
 
   it("applies auto calculation when modifier sources change", () => {
@@ -167,6 +171,36 @@ describe("modifier store actions", () => {
 
     store().setTargetAutoCalculation("evasion", false)
 
+    expect(sheet().modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: "user:evasion-base",
+      autoCalculation: false,
+    })
+  })
+
+  it("toggles target auto calculation off by deleting saved unattributed difference and preserving final", () => {
+    resetSheetStore({
+      evasion: "15",
+      otherAdjustments: [
+        createUnknownMigrationDifference("evasion", 1),
+        createUnattributedDifference("evasion", 2),
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().setTargetAutoCalculation("evasion", false)
+
+    expect(sheet().evasion).toBe("15")
+    expect(sheet().otherAdjustments).toEqual([
+      createUnknownMigrationDifference("evasion", 1),
+    ])
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "user:evasion-base",
       autoCalculation: false,
@@ -340,7 +374,7 @@ describe("modifier store actions", () => {
     expect(sheet().userModifierContributions).toEqual([])
   })
 
-  it("commits numeric final target values as unattributed delta when auto calculation has a base", () => {
+  it("commits numeric final target values as manual final adjustment when auto calculation has a base", () => {
     resetSheetStore({
       evasion: "12",
       userModifierContributions: [
@@ -364,11 +398,10 @@ describe("modifier store actions", () => {
     store().commitModifierTargetValue("evasion", "15")
 
     expect(sheet().evasion).toBe("15")
-    expect(sheet().userModifierContributions).toContainEqual({
-      id: getUnattributedDeltaId("evasion"),
-      definition: { target: "evasion", kind: "modifier" },
-      editable: { label: "未归因差额", value: 3 },
-    })
+    expect(sheet().otherAdjustments).toContainEqual(createManualFinalAdjustment("evasion", 3))
+    expect(sheet().userModifierContributions?.some(
+      contribution => contribution.id === getUnattributedDeltaId("evasion"),
+    )).toBe(false)
   })
 
   it("commits numeric final target values as manual base when auto calculation has no base", () => {

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { createModifierEntry } from "@/lib/modifiers/entry-utils"
+import {
+  createManualFinalAdjustment,
+  createUnknownMigrationDifference,
+} from "@/lib/modifiers/other-adjustments"
 import { calculateReferenceSummary } from "@/lib/modifiers/reference-calculator"
 import type { ModifierEntry } from "@/lib/modifiers/types"
 
@@ -41,6 +45,29 @@ describe("reference calculator", () => {
     expect(result.referenceTotal).toBe(13)
     expect(result.unattributedDelta).toBe(2)
     expect(result.unknownBase).toBe(false)
+  })
+
+  it("separates known modifiers from saved other adjustments", () => {
+    const unknownMigration = createUnknownMigrationDifference("evasion", 1)
+    const manualFinal = createManualFinalAdjustment("evasion", 2)
+
+    const result = calculateReferenceSummary({
+      sheetData: {
+        ...defaultSheetData,
+        evasion: "16",
+        otherAdjustments: [unknownMigration, manualFinal],
+      },
+      target: "evasion",
+      entries,
+      modifierState: { targetStates: {}, entryStates: {} },
+    })
+
+    expect(result.modifiers.map(entry => entry.id)).toEqual(["upgrade:evasion"])
+    expect(result.otherAdjustments).toEqual([unknownMigration, manualFinal])
+    expect(result.referenceTotal).toBe(13)
+    expect(result.otherTotal).toBe(3)
+    expect(result.calculatedFinalTotal).toBe(16)
+    expect(result.unattributedDelta).toBe(0)
   })
 
   it("uses saved active base when it still exists", () => {
@@ -86,8 +113,13 @@ describe("reference calculator", () => {
   })
 
   it("does not calculate total or delta when no base exists", () => {
+    const unknownMigration = createUnknownMigrationDifference("evasion", 2)
     const result = calculateReferenceSummary({
-      sheetData: { ...defaultSheetData, evasion: "13" },
+      sheetData: {
+        ...defaultSheetData,
+        evasion: "13",
+        otherAdjustments: [unknownMigration],
+      },
       target: "evasion",
       entries: entries.filter(entry => entry.definition.kind !== "base"),
       modifierState: { targetStates: {}, entryStates: {} },
@@ -96,6 +128,9 @@ describe("reference calculator", () => {
     expect(result.activeBase).toBeUndefined()
     expect(result.unknownBase).toBe(true)
     expect(result.referenceTotal).toBeUndefined()
+    expect(result.otherAdjustments).toEqual([unknownMigration])
+    expect(result.otherTotal).toBe(2)
+    expect(result.calculatedFinalTotal).toBeUndefined()
     expect(result.unattributedDelta).toBeUndefined()
   })
 

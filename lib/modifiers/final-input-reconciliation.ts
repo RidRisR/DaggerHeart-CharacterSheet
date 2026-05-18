@@ -1,9 +1,16 @@
 import { tryParseNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
+import {
+  createManualFinalAdjustment,
+  createUnattributedDifference,
+  getOtherAdjustmentId,
+  removeOtherAdjustment,
+  sanitizeOtherAdjustments,
+  upsertOtherAdjustment,
+} from "./other-adjustments"
 import { getReferenceSummary } from "./registry"
 import {
   createManualBaseContribution,
-  createUnattributedDeltaContribution,
   getManualBaseId,
   getUnattributedDeltaId,
 } from "./special-contributions"
@@ -17,6 +24,16 @@ function withoutUnattributedDelta(sheetData: SheetData, target: ModifierTargetId
     ...sheetData,
     userModifierContributions: (sheetData.userModifierContributions ?? []).filter(
       contribution => contribution.id !== deltaId,
+    ),
+  }
+}
+
+function withoutSavedUnattributedDifference(sheetData: SheetData, target: ModifierTargetId): SheetData {
+  return {
+    ...withoutUnattributedDelta(sheetData, target),
+    otherAdjustments: removeOtherAdjustment(
+      sheetData.otherAdjustments,
+      getOtherAdjustmentId(target, "unattributedDifference"),
     ),
   }
 }
@@ -65,6 +82,57 @@ function writeTargetState(
   }
 }
 
+function sumSavedOtherExcluding(
+  sheetData: SheetData,
+  target: ModifierTargetId,
+  excludedKind: "manualFinalAdjustment" | "unattributedDifference",
+): number {
+  return sanitizeOtherAdjustments(sheetData.otherAdjustments).reduce((sum, adjustment) => {
+    if (adjustment.target !== target || adjustment.kind === excludedKind) return sum
+    return sum + adjustment.value
+  }, 0)
+}
+
+function writeManualFinalAdjustment(
+  sheetData: SheetData,
+  target: ModifierTargetId,
+  finalValue: number,
+  referenceTotal: number,
+): SheetData {
+  const manualAdjustmentId = getOtherAdjustmentId(target, "manualFinalAdjustment")
+  const otherTotalExcludingManual = sumSavedOtherExcluding(sheetData, target, "manualFinalAdjustment")
+  const delta = finalValue - referenceTotal - otherTotalExcludingManual
+  const withoutManual = removeOtherAdjustment(sheetData.otherAdjustments, manualAdjustmentId)
+  const otherAdjustments = delta === 0
+    ? withoutManual
+    : upsertOtherAdjustment(withoutManual, createManualFinalAdjustment(target, delta))
+
+  return {
+    ...sheetData,
+    otherAdjustments,
+  }
+}
+
+function writeMaterializedUnattributedDifference(
+  sheetData: SheetData,
+  target: ModifierTargetId,
+  finalValue: number,
+  referenceTotal: number,
+): SheetData {
+  const unattributedAdjustmentId = getOtherAdjustmentId(target, "unattributedDifference")
+  const otherTotalExcludingUnattributed = sumSavedOtherExcluding(sheetData, target, "unattributedDifference")
+  const delta = finalValue - referenceTotal - otherTotalExcludingUnattributed
+  const withoutUnattributed = removeOtherAdjustment(sheetData.otherAdjustments, unattributedAdjustmentId)
+  const otherAdjustments = delta === 0
+    ? withoutUnattributed
+    : upsertOtherAdjustment(withoutUnattributed, createUnattributedDifference(target, delta))
+
+  return {
+    ...sheetData,
+    otherAdjustments,
+  }
+}
+
 function reconcileDeltaForNumericFinal(
   sheetData: SheetData,
   target: ModifierTargetId,
@@ -93,17 +161,14 @@ function reconcileDeltaForNumericFinal(
   }
 
   const referenceTotal = summary.referenceTotal ?? 0
-  const delta = finalValue - referenceTotal
   let contributions = removeContribution(sheetData.userModifierContributions ?? [], getUnattributedDeltaId(target))
-  if (delta !== 0) {
-    contributions = upsertContribution(contributions, createUnattributedDeltaContribution(target, delta))
-  }
 
   const withContributions = {
     ...sheetData,
     userModifierContributions: contributions,
   }
-  const withTarget = writeTargetValue(withContributions, target, finalValue)
+  const withManualFinalAdjustment = writeManualFinalAdjustment(withContributions, target, finalValue, referenceTotal)
+  const withTarget = writeTargetValue(withManualFinalAdjustment, target, finalValue)
   return writeTargetState(withTarget, target, {
     activeBaseId: activeBase.id,
     autoCalculation,
@@ -138,7 +203,36 @@ export function enableAutoCalculationForTarget(
     })
   }
 
-  return reconcileDeltaForNumericFinal(sheetData, target, finalValue, true)
+  const summary = getReferenceSummary(withoutUnattributedDelta(sheetData, target), target)
+  const activeBase = summary.activeBase ?? summary.bases[0]
+
+  if (!activeBase || summary.referenceTotal === undefined) {
+    return reconcileDeltaForNumericFinal(sheetData, target, finalValue, true)
+  }
+
+  const withContributions = withoutUnattributedDelta(sheetData, target)
+  const withUnattributedDifference = writeMaterializedUnattributedDifference(
+    withContributions,
+    target,
+    finalValue,
+    summary.referenceTotal,
+  )
+  const withTarget = writeTargetValue(withUnattributedDifference, target, finalValue)
+  return writeTargetState(withTarget, target, {
+    activeBaseId: activeBase.id,
+    autoCalculation: true,
+  })
+}
+
+export function disableAutoCalculationForTarget(
+  sheetData: SheetData,
+  target: ModifierTargetId,
+): SheetData {
+  const withUnattributedRemoved = withoutSavedUnattributedDifference(sheetData, target)
+  return writeTargetState(withUnattributedRemoved, target, {
+    ...sheetData.modifierState?.targetStates?.[target],
+    autoCalculation: false,
+  })
 }
 
 export function deleteSpecialBase(

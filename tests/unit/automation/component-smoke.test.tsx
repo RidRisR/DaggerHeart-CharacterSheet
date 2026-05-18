@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import "@testing-library/jest-dom/vitest"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-upgrade-editor"
@@ -60,7 +61,8 @@ describe("升级编辑器组件烟雾测试", () => {
     expect(screen.queryByTitle("减少经历加值 (-1)")).toBeNull()
   })
 
-  it("AttributeUpgradeEditor 将已记录在 upgradeStates 的属性视为不可再升级", () => {
+  it("AttributeUpgradeEditor 标准模式只将 AttributeValue.checked 视为不可再升级", async () => {
+    const user = userEvent.setup()
     const toggleUpgradeCheckbox = vi.fn()
     resetSheetStore({
       agility: { checked: false, value: "1", spellcasting: false },
@@ -85,7 +87,11 @@ describe("升级编辑器组件烟雾测试", () => {
       />,
     )
 
-    expect(screen.getByText("需要至少2个未升级属性")).toBeTruthy()
+    await user.click(screen.getByTestId("attribute-upgrade-option-agility"))
+    await user.click(screen.getByTestId("attribute-upgrade-option-strength"))
+
+    expect(screen.queryByText("需要至少2个未升级属性")).toBeNull()
+    expect(screen.getByRole("button", { name: /应用升级/ })).toBeEnabled()
   })
 
   it("AttributeUpgradeEditor 确认后写入 upgradeStates 参数", async () => {
@@ -108,7 +114,10 @@ describe("升级编辑器组件烟雾测试", () => {
     expect(sheet().upgradeStates?.["tier1-0-0"]).toEqual({
       checked: true,
       params: { attributes: ["agility", "strength"] },
+      attributeMarksApplied: true,
     })
+    expect(sheet().agility?.checked).toBe(true)
+    expect(sheet().strength?.checked).toBe(true)
     expect("automationSelections" in (sheet() as any)).toBe(false)
     expect("checkedUpgrades" in (sheet() as any)).toBe(false)
     expect(toggleUpgradeCheckbox).not.toHaveBeenCalled()

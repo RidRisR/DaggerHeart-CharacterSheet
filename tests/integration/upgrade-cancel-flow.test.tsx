@@ -47,6 +47,52 @@ describe("升级取消流程（page-two 集成）", () => {
     expect(screen.queryByText("闪避值 +1")).not.toBeInTheDocument()
   })
 
+  it("标准模式应用属性升级时标记所选属性并记录标记归属", async () => {
+    const user = userEvent.setup()
+    seedStore({
+      agility: { checked: false, value: "1", spellcasting: false },
+      strength: { checked: false, value: "2", spellcasting: false },
+    })
+
+    const { getByTestId } = render(<CharacterSheetPageTwo />)
+    await user.click(getByTestId("checkbox-tier1-0-0"))
+    await user.click(await screen.findByTestId("attribute-upgrade-option-agility"))
+    await user.click(screen.getByTestId("attribute-upgrade-option-strength"))
+    await user.click(screen.getByRole("button", { name: /应用升级/ }))
+
+    const after = sheet()
+    expect(after.agility).toEqual({ checked: true, value: "1", spellcasting: false })
+    expect(after.strength).toEqual({ checked: true, value: "2", spellcasting: false })
+    expect(after.upgradeStates?.["tier1-0-0"]).toEqual({
+      checked: true,
+      params: { attributes: ["agility", "strength"] },
+      attributeMarksApplied: true,
+    })
+  })
+
+  it("自由模式允许选择已标记属性且不记录标记归属", async () => {
+    const user = userEvent.setup()
+    seedStore({
+      agility: { checked: true, value: "1", spellcasting: false },
+      strength: { checked: true, value: "2", spellcasting: false },
+    })
+
+    const { getByTestId } = render(<CharacterSheetPageTwo />)
+    await user.click(getByTestId("checkbox-tier1-0-0"))
+    await user.click(await screen.findByRole("button", { name: "自由" }))
+    await user.click(screen.getByTestId("attribute-upgrade-option-agility"))
+    await user.click(screen.getByTestId("attribute-upgrade-option-strength"))
+    await user.click(screen.getByRole("button", { name: /应用升级/ }))
+
+    const after = sheet()
+    expect(after.agility).toEqual({ checked: true, value: "1", spellcasting: false })
+    expect(after.strength).toEqual({ checked: true, value: "2", spellcasting: false })
+    expect(after.upgradeStates?.["tier1-0-0"]).toEqual({
+      checked: true,
+      params: { attributes: ["agility", "strength"] },
+    })
+  })
+
   it("反选属性升级时点击外部会保留原有升级选择", async () => {
     const user = userEvent.setup()
     seedStore({
@@ -99,6 +145,32 @@ describe("升级取消流程（page-two 集成）", () => {
     const after = sheet()
     expect(after.agility).toEqual({ checked: true, value: "1", spellcasting: false })
     expect(after.strength).toEqual({ checked: true, value: "2", spellcasting: false })
+    expect(after.upgradeStates?.["tier1-0-0"]).toEqual({ checked: false })
+    expect("automationSelections" in (after as any)).toBe(false)
+    expect("checkedUpgrades" in (after as any)).toBe(false)
+  })
+
+  it("确认反选带标记归属的属性升级后会返还属性黑点", async () => {
+    const user = userEvent.setup()
+    seedStore({
+      agility: { checked: true, value: "1", spellcasting: false },
+      strength: { checked: true, value: "2", spellcasting: false },
+      upgradeStates: {
+        "tier1-0-0": {
+          checked: true,
+          params: { attributes: ["agility", "strength"] },
+          attributeMarksApplied: true,
+        },
+      },
+    })
+
+    const { getByTestId } = render(<CharacterSheetPageTwo />)
+    await user.click(getByTestId("checkbox-tier1-0-0"))
+    await user.click(screen.getByRole("button", { name: "确定取消" }))
+
+    const after = sheet()
+    expect(after.agility).toEqual({ checked: false, value: "1", spellcasting: false })
+    expect(after.strength).toEqual({ checked: false, value: "2", spellcasting: false })
     expect(after.upgradeStates?.["tier1-0-0"]).toEqual({ checked: false })
     expect("automationSelections" in (after as any)).toBe(false)
     expect("checkedUpgrades" in (after as any)).toBe(false)

@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
 import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
+import type { AttributeValue, SheetData } from "@/lib/sheet-data"
 import { createEmptyCard, type StandardCard } from "@/card/card-types"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
@@ -14,6 +15,18 @@ import { CardDeckSection } from "@/components/character-sheet-page-two-sections/
 import { UpgradeSection } from "@/components/character-sheet-page-two-sections/upgrade-section"
 import { PageHeader } from "@/components/page-header"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
+
+type AttributeKey = "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge"
+
+const ATTRIBUTE_KEYS: AttributeKey[] = ["agility", "strength", "finesse", "instinct", "presence", "knowledge"]
+
+function isAttributeKey(value: unknown): value is AttributeKey {
+  return typeof value === "string" && ATTRIBUTE_KEYS.includes(value as AttributeKey)
+}
+
+function isAttributeValue(value: unknown): value is AttributeValue {
+  return typeof value === "object" && value !== null && "checked" in value && "value" in value
+}
 
 export default function CharacterSheetPageTwo() {
   const { setSheetData: setFormData } = useSheetStore();
@@ -95,6 +108,34 @@ export default function CharacterSheetPageTwo() {
     setUpgradeState(checkKey, { checked })
   }
 
+  const returnAppliedAttributeMarks = (checkKey: string) => {
+    setFormData((prev: SheetData) => {
+      const previousState = prev.upgradeStates?.[checkKey]
+      const attributes = previousState?.params && "attributes" in previousState.params
+        ? previousState.params.attributes
+        : undefined
+
+      if (previousState?.attributeMarksApplied !== true || !Array.isArray(attributes)) {
+        return {}
+      }
+
+      const updates: Partial<SheetData> = {}
+      attributes
+        .filter(isAttributeKey)
+        .forEach(attribute => {
+          const currentAttribute = prev[attribute]
+          if (isAttributeValue(currentAttribute)) {
+            updates[attribute] = {
+              ...currentAttribute,
+              checked: false,
+            }
+          }
+        })
+
+      return updates
+    })
+  }
+
   // Handle checkbox changes for upgrades
   const handleUpgradeCheck = (checkKeyOrTier: string, index: number) => {
     // 提取 tier（从 "tier1-0-2" 提取出 "tier1"）
@@ -120,6 +161,9 @@ export default function CharacterSheetPageTwo() {
       if (result.kind === "setSheetData") {
         setFormData(result.updates)
         if (result.upgradeState) {
+          if (result.upgradeState.checked === false) {
+            returnAppliedAttributeMarks(checkKeyOrTier)
+          }
           setUpgradeState(checkKeyOrTier, result.upgradeState)
         }
         result.warnings?.forEach(warning => {

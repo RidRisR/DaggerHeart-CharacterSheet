@@ -24,26 +24,6 @@ function userBaseEntriesForTarget(formData: SheetData, target: AttributeTargetId
     .filter(contribution => contribution.definition.target === target && contribution.definition.kind === "base")
 }
 
-function collectUpgradedAttributes(formData: SheetData): Set<string> {
-  const upgradedAttributes = new Set<string>()
-
-  Object.values(formData.upgradeStates ?? {}).forEach(state => {
-    if (!state?.checked) return
-    const params = state.params
-    if (!params || typeof params !== "object" || Array.isArray(params)) return
-    const attributes = (params as { attributes?: unknown }).attributes
-    if (!Array.isArray(attributes)) return
-
-    attributes.forEach(attribute => {
-      if (typeof attribute === "string") {
-        upgradedAttributes.add(attribute)
-      }
-    })
-  })
-
-  return upgradedAttributes
-}
-
 export function AttributesSection() {
   const {
     sheetData: formData,
@@ -54,8 +34,6 @@ export function AttributesSection() {
     removeUserModifierContribution,
     commitModifierTargetValue,
   } = useSheetStore();
-  const upgradedAttributes = collectUpgradedAttributes(formData)
-
   const handleAttributeValueChange = (attribute: AttributeKey, value: string) => {
     updateAttribute(attribute, value)
   }
@@ -145,10 +123,11 @@ export function AttributesSection() {
               </div>
               {(() => {
                 const attrValue = formData[attr.key as keyof typeof formData];
-                const isUpgraded = (isAttributeValue(attrValue) && attrValue.checked) || upgradedAttributes.has(attr.key);
+                const isUpgraded = isAttributeValue(attrValue) && attrValue.checked;
 
                 return (
                   <div
+                    data-testid={`attribute-upgrade-marker-${attr.key}`}
                     className={`w-2 h-2 rounded-full border border-white cursor-pointer ${isUpgraded ? "bg-gray-800" : "bg-white"
                       }`}
                     onClick={() => handleBooleanChange(attr.key as keyof SheetData)}

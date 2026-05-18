@@ -465,14 +465,15 @@ describe("modifier state migration", () => {
     )
   })
 
-  it("safely clears non-numeric legacy armorValue without creating armorMax specials", () => {
+  it("preserves non-numeric legacy armorValue final without creating armorMax specials", () => {
     const migrated = migrateSheetData(v1ModifierInput({
       armorValue: "四",
     }))
 
     expect("armorValue" in (migrated as any)).toBe(false)
-    expect(migrated.armorMax).toBe("")
+    expect(migrated.armorMax).toBe("四")
     expect(Number.isNaN(migrated.armorMax)).toBe(false)
+    expect(migrated.modifierState?.targetStates.armorMax?.autoCalculation).toBe(true)
     expect(migrated.userModifierContributions).not.toContainEqual(
       expect.objectContaining({ id: getEstimatedBaseId("armorMax") }),
     )
@@ -573,6 +574,22 @@ describe("modifier state migration", () => {
     })
   })
 
+  it("uses UI option indexing when migrating tier2 checked upgrade automation", () => {
+    const migrated = migrateSheetData(v1ModifierInput({
+      checkedUpgrades: {
+        "tier2-1-0": { 1: true },
+        "tier2-7": { 7: true },
+        "tier2-8": { 8: true },
+      },
+    }))
+
+    expect(migrated.upgradeStates).toMatchObject({
+      "tier2-1-0": { checked: true, params: { target: "hpMax" } },
+      "tier2-7": { checked: true, params: { target: "proficiency" } },
+      "tier2-8": { checked: true },
+    })
+  })
+
   it("migrates legacy automation selection source ids to raw upgrade state keys with params", () => {
     const migrated = migrateSheetData(v1ModifierInput({
       automationSelections: {
@@ -588,6 +605,35 @@ describe("modifier state migration", () => {
     })
     expect(migrated.upgradeStates).not.toHaveProperty("upgrade:tier1-2-0")
     expect("automationSelections" in (migrated as any)).toBe(false)
+  })
+
+  it("replaces stale unknown migration difference without subtracting its old value", () => {
+    const manualOtherAdjustment = {
+      id: "other:evasion:manual-final-adjustment",
+      target: "evasion",
+      kind: "manualFinalAdjustment",
+      value: 1,
+    }
+    const migrated = migrateSheetData(v1ModifierInput({
+      evasion: "16",
+      cards: [{
+        id: "profession-warrior",
+        type: "profession",
+        name: "战士",
+        professionSpecial: {
+          起始闪避: 12,
+        },
+      } as StandardCard],
+      otherAdjustments: [
+        createUnknownMigrationDifference("evasion", 2),
+        manualOtherAdjustment,
+      ],
+    }))
+
+    expect(migrated.otherAdjustments).toEqual([
+      createUnknownMigrationDifference("evasion", 3),
+      manualOtherAdjustment,
+    ])
   })
 
   it("uses stressMax baseline 6 before creating migration differences", () => {
@@ -658,6 +704,30 @@ describe("modifier state migration", () => {
       "tier1-5-0": { checked: true, params: { target: "evasion" } },
       "bad": { checked: true },
       "tier1-2-0": { checked: false },
+      "tier1-1-1": { checked: true, params: { target: "hpMax" } },
+      "tier1-1-0": { checked: true },
+    })
+    expect("checkedUpgrades" in (migrated as any)).toBe(false)
+    expect("automationSelections" in (migrated as any)).toBe(false)
+  })
+
+  it("bridges legacy upgrade fields when normalizing current schema data", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      checkedUpgrades: {
+        "tier1-1-0": { 1: true },
+      },
+      automationSelections: {
+        "upgrade:tier1-1-1": {
+          selected: true,
+          params: { target: "hpMax" },
+        },
+      },
+    } as any)
+
+    expect(migrated.upgradeStates).toEqual({
+      "tier1-1-0": { checked: true },
+      "tier1-1-1": { checked: true, params: { target: "hpMax" } },
     })
     expect("checkedUpgrades" in (migrated as any)).toBe(false)
     expect("automationSelections" in (migrated as any)).toBe(false)

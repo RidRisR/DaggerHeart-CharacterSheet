@@ -39,7 +39,7 @@ import {
   getUnattributedDeltaId,
 } from "@/lib/modifiers/special-contributions"
 import { writeTargetValue } from "@/lib/modifiers/target-accessors"
-import { mergeUpgradeState, sanitizeUpgradeStates } from "@/lib/modifiers/upgrade-states"
+import { mergeLegacyUpgradeStateFields, mergeUpgradeState, sanitizeUpgradeStates } from "@/lib/modifiers/upgrade-states"
 import type {
   ModifierContribution,
   ModifierEntryKind,
@@ -527,14 +527,11 @@ function legacyUpgradeAutomationForCheckKey(checkKey: string): UpgradeAutomation
 
   const tier = match[1] as keyof typeof upgradeOptionsData.tierSpecificUpgrades
   const optionIndex = Number(match[2])
-  const tierSpecificAutomation = upgradeOptionsData.tierSpecificUpgrades[tier]?.[optionIndex]?.automation
   const baseAutomation = upgradeOptionsData.baseUpgrades[optionIndex]?.automation
+  if (baseAutomation) return baseAutomation
 
-  if (tier !== "tier1" && tierSpecificAutomation && tierSpecificAutomation.kind !== "none") {
-    return tierSpecificAutomation
-  }
-
-  return baseAutomation ?? tierSpecificAutomation
+  const tierSpecificIndex = optionIndex - upgradeOptionsData.baseUpgrades.length
+  return upgradeOptionsData.tierSpecificUpgrades[tier]?.[tierSpecificIndex]?.automation
 }
 
 function legacyCheckedUpgradeState(checkKey: string): UpgradeState {
@@ -867,6 +864,17 @@ function legacyMigrationBaseline(target: ModifierTargetId): number | undefined {
   return undefined
 }
 
+function otherTotalExcludingUnknownMigrationDifference(
+  otherAdjustments: unknown,
+  target: ModifierTargetId,
+): number {
+  return sanitizeOtherAdjustments(otherAdjustments).reduce((sum, adjustment) => {
+    if (adjustment.target !== target) return sum
+    if (adjustment.kind === "unknownMigrationDifference") return sum
+    return sum + adjustment.value
+  }, 0)
+}
+
 function legacyExplicitFinalValue(raw: Partial<SheetData> | any, target: ModifierTargetId): unknown {
   if (!isRecord(raw)) return undefined
 
@@ -971,7 +979,7 @@ function preserveLegacyNumericFinal(
     const referenceTotal = estimatedBase.editable.value + modifiersTotal
     const delta = baseline === undefined
       ? 0
-      : finalValue - referenceTotal - summary.otherTotal
+      : finalValue - referenceTotal - otherTotalExcludingUnknownMigrationDifference(withoutDelta.otherAdjustments, target)
     const otherAdjustments = delta === 0
       ? removeOtherAdjustment(withoutDelta.otherAdjustments, getOtherAdjustmentId(target, "unknownMigrationDifference"))
       : upsertOtherAdjustment(
@@ -988,7 +996,7 @@ function preserveLegacyNumericFinal(
   }
 
   const referenceTotal = summary.referenceTotal ?? 0
-  const delta = finalValue - referenceTotal - summary.otherTotal
+  const delta = finalValue - referenceTotal - otherTotalExcludingUnknownMigrationDifference(withoutDelta.otherAdjustments, target)
   const withoutExistingDelta = removeModifierContribution(
     withoutDelta.userModifierContributions ?? [],
     getUnattributedDeltaId(target),
@@ -1031,7 +1039,8 @@ function preserveLegacyModifierFinals(
 
       const summary = getReferenceSummary(migrated, target)
       if (target === "armorMax") {
-        migrated = writeTargetValue(migrated, target, "")
+        const withArmorFinal = migrated as typeof migrated & { armorMax: unknown }
+        withArmorFinal.armorMax = explicitFinal
       }
       migrated = writeModifierTargetState(migrated, target, summary.activeBase?.id ?? summary.bases[0]?.id)
       return
@@ -1050,7 +1059,7 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
 
   migrated.userModifierContributions = sanitizeModifierContributions(migrated.userModifierContributions)
   migrated.otherAdjustments = sanitizeOtherAdjustments(migrated.otherAdjustments)
-  migrated.upgradeStates = sanitizeUpgradeStates(migrated.upgradeStates)
+  migrated.upgradeStates = mergeLegacyUpgradeStateFields(migrated)
 
   if (!migrated.modifierState || typeof migrated.modifierState !== "object" || Array.isArray(migrated.modifierState)) {
     migrated.modifierState = { targetStates: {}, entryStates: {} }

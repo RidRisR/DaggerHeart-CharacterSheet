@@ -18,16 +18,39 @@ describe('exportToSealDice', () => {
     expect(result).toContain('敏捷-1')
   })
 
-  it('falls back to armor box capacity when armorMax is not numeric', () => {
+  it('exports zero armor values when armorMax is not numeric', () => {
     const result = exportToSealDice({
       ...defaultSheetData,
       armorMax: '四',
+    })
+
+    expect(result).toContain('护甲0')
+    expect(result).toContain('护甲上限0')
+    expect(result).not.toContain('护甲NaN')
+    expect(result).not.toContain('护甲上限四')
+    expect(result).not.toContain('护甲上限12')
+  })
+
+  it('keeps numeric armorMax export behavior', () => {
+    const result = exportToSealDice({
+      ...defaultSheetData,
+      armorMax: 4,
       armorBoxes: [true, false, false, false],
     })
 
     expect(result).toContain('护甲3')
     expect(result).toContain('护甲上限4')
-    expect(result).not.toContain('护甲NaN')
-    expect(result).not.toContain('护甲上限四')
+  })
+
+  it('does not export negative current armor when armor damage exceeds armorMax', () => {
+    const result = exportToSealDice({
+      ...defaultSheetData,
+      armorMax: 1,
+      armorBoxes: [true, true],
+    })
+
+    expect(result).toContain('护甲0')
+    expect(result).toContain('护甲上限1')
+    expect(result).not.toContain('护甲-1')
   })
 })

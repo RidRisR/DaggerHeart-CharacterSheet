@@ -121,8 +121,8 @@ export function exportToSealDice(sheetData: SheetData): string {
 
   // 护甲值：存档中的值表示损失，实际值 = 最大值 - 损失值
   const armorDamage = countTrueValues(sheetData.armorBoxes)
-  const maxArmor = getNumericValue(sheetData.armorMax, getMaxCapacity(sheetData.armorBoxes) || 0)
-  const currentArmor = maxArmor - armorDamage
+  const maxArmor = getNumericValue(sheetData.armorMax, 0)
+  const currentArmor = Math.max(0, maxArmor - armorDamage)
   attributes.push(`护甲${currentArmor}`)
   attributes.push(`护甲上限${maxArmor}`)
 

@@ -24,7 +24,7 @@ function dedupe<T>(values: readonly T[]): T[] {
 }
 
 function isValidExperienceIndex(index: unknown): index is number {
-  return Number.isSafeInteger(index) && index >= 0
+  return typeof index === "number" && Number.isSafeInteger(index) && index >= 0
 }
 
 function selectedUpgradeEntries(sourceId: string, state: unknown): ModifierEntry[] {

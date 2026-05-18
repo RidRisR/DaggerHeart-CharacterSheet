@@ -86,18 +86,19 @@ export function UpgradeSection({
   }
 
   const getSelectedAttributeNames = (checkKey: string) => {
-    const attributes = formData.upgradeStates?.[checkKey]?.params?.attributes
+    const params = formData.upgradeStates?.[checkKey]?.params
+    const attributes = params && "attributes" in params ? params.attributes : undefined
     if (!Array.isArray(attributes)) return "未记录属性"
 
     const names = attributes
-      .filter((attribute): attribute is string => typeof attribute === "string")
       .map(attribute => ATTRIBUTE_NAMES[attribute] ?? attribute)
 
     return names.length > 0 ? names.join("、") : "未记录属性"
   }
 
   const getSelectedExperienceTexts = (checkKey: string) => {
-    const experienceIndexes = formData.upgradeStates?.[checkKey]?.params?.experienceIndexes
+    const params = formData.upgradeStates?.[checkKey]?.params
+    const experienceIndexes = params && "experienceIndexes" in params ? params.experienceIndexes : undefined
     if (!Array.isArray(experienceIndexes)) return ["未记录经历"]
 
     const texts = experienceIndexes

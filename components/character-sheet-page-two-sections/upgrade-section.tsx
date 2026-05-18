@@ -96,6 +96,12 @@ export function UpgradeSection({
     return names.length > 0 ? names.join("、") : "未记录属性"
   }
 
+  const getAttributeCancelMarkText = (checkKey: string) => {
+    return formData.upgradeStates?.[checkKey]?.attributeMarksApplied === true
+      ? "将回退属性升级标记"
+      : "属性升级标记将不会被修改"
+  }
+
   const getSelectedExperienceTexts = (checkKey: string) => {
     const params = formData.upgradeStates?.[checkKey]?.params
     const experienceIndexes = params && "experienceIndexes" in params ? params.experienceIndexes : undefined
@@ -116,6 +122,9 @@ export function UpgradeSection({
       <div className="mb-2 text-xs font-semibold text-gray-700">确定要取消升级吗？</div>
       <div className="mb-3 rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-600">
         {getSelectedAttributeNames(checkKey)}
+      </div>
+      <div className="mb-3 text-[11px] leading-snug text-gray-500">
+        {getAttributeCancelMarkText(checkKey)}
       </div>
       <button
         type="button"

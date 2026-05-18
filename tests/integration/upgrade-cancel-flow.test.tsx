@@ -111,6 +111,7 @@ describe("升级取消流程（page-two 集成）", () => {
 
     expect(screen.getByText("确定要取消升级吗？")).toBeInTheDocument()
     expect(screen.getByText("敏捷、力量")).toBeInTheDocument()
+    expect(screen.getByText("属性升级标记将不会被修改")).toBeInTheDocument()
 
     await user.click(document.body)
 
@@ -140,6 +141,7 @@ describe("升级取消流程（page-two 集成）", () => {
 
     const { getByTestId } = render(<CharacterSheetPageTwo />)
     await user.click(getByTestId("checkbox-tier1-0-0"))
+    expect(screen.getByText("属性升级标记将不会被修改")).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "确定取消" }))
 
     const after = sheet()
@@ -166,6 +168,7 @@ describe("升级取消流程（page-two 集成）", () => {
 
     const { getByTestId } = render(<CharacterSheetPageTwo />)
     await user.click(getByTestId("checkbox-tier1-0-0"))
+    expect(screen.getByText("将回退属性升级标记")).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "确定取消" }))
 
     const after = sheet()

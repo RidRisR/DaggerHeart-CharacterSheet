@@ -248,15 +248,15 @@ describe('character data import validation', () => {
     expect('checkedUpgrades' in (result.data as any)).toBe(false)
   })
 
-  it('keeps legacy automation params when checkedUpgrades has the same check key during import validation', () => {
+  it('ignores unpublished legacy automation params when checkedUpgrades has the same check key during import validation', () => {
     const payload = minimalPayload({
       checkedUpgrades: {
-        'tier1-5-0': { 5: true },
+        'tier1-3-0': { 3: true },
       },
       automationSelections: {
-        'upgrade:tier1-5-0': {
+        'upgrade:tier1-3-0': {
           selected: true,
-          params: { target: 'evasion' },
+          params: { experienceIndexes: [0, 1] },
         },
       },
     })
@@ -265,13 +265,13 @@ describe('character data import validation', () => {
 
     expect(result.valid).toBe(true)
     expect(result.data?.upgradeStates).toEqual({
-      'tier1-5-0': { checked: true, params: { target: 'evasion' } },
+      'tier1-3-0': { checked: true },
     })
     expect('checkedUpgrades' in (result.data as any)).toBe(false)
     expect('automationSelections' in (result.data as any)).toBe(false)
   })
 
-  it('bridges legacy automationSelections into upgradeStates during import validation', () => {
+  it('drops unpublished legacy automationSelections during import validation', () => {
     const payload = minimalPayload({
       automationSelections: {
         'upgrade:tier1-5-0': {
@@ -288,10 +288,7 @@ describe('character data import validation', () => {
     const result = validateJSONCharacterData(JSON.stringify(payload))
 
     expect(result.valid).toBe(true)
-    expect(result.data?.upgradeStates).toEqual({
-      'tier1-5-0': { checked: true, params: { target: 'evasion' } },
-      'tier1-1-0': { checked: false },
-    })
+    expect(result.data?.upgradeStates).toEqual({})
     expect('automationSelections' in (result.data as any)).toBe(false)
   })
 
@@ -307,12 +304,6 @@ describe('character data import validation', () => {
           params: { experienceIndexes: [0, 2, 0, 4, 2] },
         },
       },
-      automationSelections: {
-        'upgrade:tier1-3-0': {
-          selected: true,
-          params: { experienceIndexes: [1, 3, 1] },
-        },
-      },
     })
 
     const result = validateJSONCharacterData(JSON.stringify(payload))
@@ -326,10 +317,6 @@ describe('character data import validation', () => {
       'tier1-exp-0': {
         checked: true,
         params: { experienceIndexes: [0, 2, 4] },
-      },
-      'tier1-3-0': {
-        checked: true,
-        params: { experienceIndexes: [1, 3] },
       },
     })
     expect('automationSelections' in (result.data as any)).toBe(false)
@@ -372,10 +359,20 @@ describe('character data import validation', () => {
       'tier1-5-0': { checked: false },
       'tier1-0-2': { checked: true, params: { attributes: ['agility', 'strength'] } },
       'tier1-1-0': { checked: true, params: { target: 'hpMax' } },
-      'tier2-1': { checked: true, params: { target: 'proficiency' } },
     })
     expect('checkedUpgrades' in (result.data as any)).toBe(false)
     expect('automationSelections' in (result.data as any)).toBe(false)
+  })
+
+  it('drops legacy armorBonus during import validation', () => {
+    const payload = minimalPayload({
+      armorBonus: '2',
+    })
+
+    const result = validateJSONCharacterData(JSON.stringify(payload))
+
+    expect(result.valid).toBe(true)
+    expect('armorBonus' in (result.data as any)).toBe(false)
   })
 
   it('preserves legacy equipment fields until migration', () => {

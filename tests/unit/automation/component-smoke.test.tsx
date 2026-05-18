@@ -35,7 +35,7 @@ describe("升级编辑器组件烟雾测试", () => {
       params: { experienceIndexes: [0, 1] },
     })
     expect("automationSelections" in (sheet() as any)).toBe(false)
-    expect(sheet().checkedUpgrades).toBeUndefined()
+    expect("checkedUpgrades" in (sheet() as any)).toBe(false)
     expect(toggleUpgradeCheckbox).not.toHaveBeenCalled()
   })
 
@@ -110,7 +110,7 @@ describe("升级编辑器组件烟雾测试", () => {
       params: { attributes: ["agility", "strength"] },
     })
     expect("automationSelections" in (sheet() as any)).toBe(false)
-    expect(sheet().checkedUpgrades).toBeUndefined()
+    expect("checkedUpgrades" in (sheet() as any)).toBe(false)
     expect(toggleUpgradeCheckbox).not.toHaveBeenCalled()
   })
 

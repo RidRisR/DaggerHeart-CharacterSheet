@@ -79,7 +79,7 @@ describe("modifier store actions", () => {
       params: { target: "evasion" },
     })
     expect("automationSelections" in (sheet() as any)).toBe(false)
-    expect(sheet().checkedUpgrades).toBeUndefined()
+    expect("checkedUpgrades" in (sheet() as any)).toBe(false)
     expect(sheet().evasion).toBe("13")
   })
 

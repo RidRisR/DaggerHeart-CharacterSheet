@@ -548,7 +548,7 @@ function legacyCheckedUpgradeState(checkKey: string): UpgradeState {
 }
 
 type LegacyUpgradeStateInput = SheetData & {
-  automationSelections?: unknown
+  checkedUpgrades?: unknown
 }
 
 function migrateLegacyUpgradeStates(data: LegacyUpgradeStateInput): SheetData {
@@ -558,19 +558,6 @@ function migrateLegacyUpgradeStates(data: LegacyUpgradeStateInput): SheetData {
     if (!checkKey) return
     if (checkKey in upgradeStates) return
     upgradeStates[checkKey] = mergeUpgradeState(undefined, next)
-  }
-
-  if (isRecord(data.automationSelections)) {
-    Object.entries(data.automationSelections).forEach(([sourceId, selection]) => {
-      if (!sourceId.startsWith("upgrade:") || !isRecord(selection)) return
-      if (typeof selection.selected !== "boolean") return
-
-      const checkKey = sourceId.slice("upgrade:".length)
-      addLegacyState(checkKey, {
-        checked: selection.selected,
-        params: selection.params as UpgradeState["params"],
-      })
-    })
   }
 
   if (isRecord(data.checkedUpgrades)) {
@@ -1124,6 +1111,8 @@ function cleanupDeprecatedFields(data: SheetData): SheetData {
     delete (migrated as any).includePageThreeInExport
     console.log('[Migration] Removed deprecated includePageThreeInExport field')
   }
+
+  delete (migrated as any).armorBonus
 
   return migrated
 }

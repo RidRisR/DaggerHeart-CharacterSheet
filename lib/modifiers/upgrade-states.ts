@@ -109,28 +109,12 @@ export function mergeUpgradeState(current: UpgradeState | undefined, next: Upgra
 export function mergeLegacyUpgradeStateFields(value: {
   upgradeStates?: unknown
   checkedUpgrades?: unknown
-  automationSelections?: unknown
 }): UpgradeStates {
   const merged = sanitizeUpgradeStates(value.upgradeStates)
 
   const addLegacyState = (checkKey: string, next: UpgradeState) => {
     if (checkKey in merged) return
     merged[checkKey] = mergeUpgradeState(undefined, next)
-  }
-
-  if (isRecord(value.automationSelections)) {
-    Object.entries(value.automationSelections).forEach(([sourceId, selection]) => {
-      if (!sourceId.startsWith("upgrade:") || !isRecord(selection)) return
-      if (typeof selection.selected !== "boolean") return
-
-      const checkKey = sourceId.slice("upgrade:".length)
-      if (!checkKey) return
-
-      addLegacyState(checkKey, {
-        checked: selection.selected,
-        params: selection.params as UpgradeState["params"],
-      })
-    })
   }
 
   if (isRecord(value.checkedUpgrades)) {

@@ -166,21 +166,21 @@ describe("upgrade states", () => {
     })
   })
 
-  it("preserves legacy automation params when checkedUpgrades has the same check key", () => {
+  it("ignores unpublished legacy automation params when checkedUpgrades has the same check key", () => {
     expect(
       mergeLegacyUpgradeStateFields({
         checkedUpgrades: {
-          "tier1-5-0": { 5: true },
+          "tier1-3-0": { 3: true },
         },
         automationSelections: {
-          "upgrade:tier1-5-0": {
+          "upgrade:tier1-3-0": {
             selected: true,
-            params: { target: "evasion" },
+            params: { experienceIndexes: [0, 1] },
           },
         },
-      }),
+      } as any),
     ).toEqual({
-      "tier1-5-0": { checked: true, params: { target: "evasion" } },
+      "tier1-3-0": { checked: true },
     })
   })
 

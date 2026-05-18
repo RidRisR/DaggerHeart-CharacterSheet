@@ -1,5 +1,3 @@
-import type { SheetData } from "@/lib/sheet-data"
-
 export type AttributeTargetId =
   | "agility.value"
   | "strength.value"
@@ -62,7 +60,6 @@ export type UpgradeAutomationMetadata =
   | { kind: "none" }
 
 export type ModifierEntryId = string
-export type AutomationSourceId = string
 
 export type ModifierEntryKind = "base" | "modifier"
 export type ModifierSourceType = "profession" | "armor" | "level" | "upgrade" | "user" | "equipment"
@@ -116,44 +113,4 @@ export interface ModifierEntryState {
 export interface ModifierState {
   targetStates: Partial<Record<ModifierTargetId, TargetModifierState>>
   entryStates: Partial<Record<ModifierEntryId, ModifierEntryState>>
-}
-
-export interface AddEffect {
-  operation: "add"
-  target: ModifierTargetId
-  value: number
-}
-
-export interface SetBaseEffect {
-  operation: "setBase"
-  target: ModifierTargetId
-  value: number | string
-}
-
-export interface RecalculateEffect {
-  operation: "recalculate"
-  target: ModifierTargetId
-  formulaId: string
-}
-
-export type AutomationEffect = AddEffect | SetBaseEffect | RecalculateEffect
-
-export interface AutomationContext {
-  sheetData: SheetData
-  sourceId?: AutomationSourceId
-  params?: Record<string, unknown>
-}
-
-export interface AutomationSourceDefinition {
-  id: AutomationSourceId
-  sourceType: ModifierSourceType
-  label: string
-  createEffects: (context: AutomationContext) => AutomationEffect[]
-  createModifierEntries: (context: AutomationContext) => ModifierEntry[]
-}
-
-export interface ApplyEffectsResult {
-  sheetData: SheetData
-  updates: Partial<SheetData>
-  warnings: string[]
 }

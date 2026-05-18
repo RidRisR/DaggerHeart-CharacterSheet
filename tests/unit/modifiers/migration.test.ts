@@ -65,12 +65,6 @@ describe("modifier state migration", () => {
           },
         },
       },
-      automationSelections: {
-        "upgrade:tier1-5-0": {
-          selected: true,
-          params: { target: "evasion" },
-        },
-      },
     }))
 
     expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base")
@@ -79,7 +73,7 @@ describe("modifier state migration", () => {
       definition: { target: "evasion", kind: "base" },
       editable: { label: "手动基础闪避", value: 12 },
     }])
-    expect(migrated.upgradeStates?.["tier1-5-0"]).toEqual({ checked: true, params: { target: "evasion" } })
+    expect(migrated.upgradeStates?.["tier1-5-0"]).toBeUndefined()
     expect("automationSelections" in (migrated as any)).toBe(false)
   })
 
@@ -608,7 +602,7 @@ describe("modifier state migration", () => {
     })
   })
 
-  it("migrates legacy automation selection source ids to raw upgrade state keys with params", () => {
+  it("drops unpublished legacy automation selection source ids instead of migrating them", () => {
     const migrated = migrateSheetData(v1ModifierInput({
       automationSelections: {
         "upgrade:tier1-2-0": {
@@ -618,9 +612,7 @@ describe("modifier state migration", () => {
       },
     }))
 
-    expect(migrated.upgradeStates).toMatchObject({
-      "tier1-2-0": { checked: true, params: { target: "stressMax" } },
-    })
+    expect(migrated.upgradeStates).not.toHaveProperty("tier1-2-0")
     expect(migrated.upgradeStates).not.toHaveProperty("upgrade:tier1-2-0")
     expect("automationSelections" in (migrated as any)).toBe(false)
   })
@@ -722,7 +714,6 @@ describe("modifier state migration", () => {
       "tier1-5-0": { checked: true, params: { target: "evasion" } },
       "bad": { checked: true },
       "tier1-2-0": { checked: false },
-      "tier1-1-1": { checked: true, params: { target: "hpMax" } },
       "tier1-1-0": { checked: true, params: { target: "hpMax" } },
     })
     expect("checkedUpgrades" in (migrated as any)).toBe(false)
@@ -735,17 +726,10 @@ describe("modifier state migration", () => {
       checkedUpgrades: {
         "tier1-1-0": { 1: true },
       },
-      automationSelections: {
-        "upgrade:tier1-1-1": {
-          selected: true,
-          params: { target: "hpMax" },
-        },
-      },
     } as any)
 
     expect(migrated.upgradeStates).toEqual({
       "tier1-1-0": { checked: true, params: { target: "hpMax" } },
-      "tier1-1-1": { checked: true, params: { target: "hpMax" } },
     })
     expect("checkedUpgrades" in (migrated as any)).toBe(false)
     expect("automationSelections" in (migrated as any)).toBe(false)

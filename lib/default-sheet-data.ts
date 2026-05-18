@@ -42,7 +42,6 @@ export const defaultSheetData: SheetData = {
     stressMax: 6, // Defaulting to 6 as it's a common base
 
     armorBoxes: Array(12).fill(false),
-    armorBonus: "",
     armorMax: 0,
 
     minorThreshold: "",

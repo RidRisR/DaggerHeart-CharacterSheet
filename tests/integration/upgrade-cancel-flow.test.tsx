@@ -43,7 +43,7 @@ describe("升级取消流程（page-two 集成）", () => {
       params: { target: "evasion" },
     })
     expect("automationSelections" in (after as any)).toBe(false)
-    expect(after.checkedUpgrades).toBeUndefined()
+    expect("checkedUpgrades" in (after as any)).toBe(false)
     expect(screen.queryByText("闪避值 +1")).not.toBeInTheDocument()
   })
 
@@ -76,7 +76,7 @@ describe("升级取消流程（page-two 集成）", () => {
       params: { attributes: ["agility", "strength"] },
     })
     expect("automationSelections" in (after as any)).toBe(false)
-    expect(after.checkedUpgrades).toBeUndefined()
+    expect("checkedUpgrades" in (after as any)).toBe(false)
   })
 
   it("确认反选属性升级后才清除升级状态参数", async () => {
@@ -101,7 +101,7 @@ describe("升级取消流程（page-two 集成）", () => {
     expect(after.strength).toEqual({ checked: true, value: "2", spellcasting: false })
     expect(after.upgradeStates?.["tier1-0-0"]).toEqual({ checked: false })
     expect("automationSelections" in (after as any)).toBe(false)
-    expect(after.checkedUpgrades).toBeUndefined()
+    expect("checkedUpgrades" in (after as any)).toBe(false)
   })
 
   it("反选经历加值升级时点击外部会保留原有升级选择，并显示最新经历文本", async () => {
@@ -133,7 +133,7 @@ describe("升级取消流程（page-two 集成）", () => {
       params: { experienceIndexes: [0, 1] },
     })
     expect("automationSelections" in (after as any)).toBe(false)
-    expect(after.checkedUpgrades).toBeUndefined()
+    expect("checkedUpgrades" in (after as any)).toBe(false)
   })
 
   it("确认反选经历加值升级后才清除升级状态参数，不直接回滚经历最终值", async () => {
@@ -157,7 +157,7 @@ describe("升级取消流程（page-two 集成）", () => {
     expect(after.experienceValues).toEqual(["2", "3", "", "", ""])
     expect(after.upgradeStates?.["tier1-3-0"]).toEqual({ checked: false })
     expect("automationSelections" in (after as any)).toBe(false)
-    expect(after.checkedUpgrades).toBeUndefined()
+    expect("checkedUpgrades" in (after as any)).toBe(false)
   })
 
   it("参数化升级取消后重新点击会打开选择器且不复用旧 params", async () => {

@@ -36,6 +36,26 @@ async function editAgility(value: string) {
 }
 
 describe("attribute auto base section behavior", () => {
+  it("marks attributes recorded in upgrade states as upgraded in the attribute header", () => {
+    resetSheetStore({
+      agility: { value: "1", checked: false, spellcasting: false },
+      strength: { value: "1", checked: false, spellcasting: false },
+      upgradeStates: {
+        "tier1-0-0": {
+          checked: true,
+          params: { attributes: ["agility", "strength"] },
+        },
+      },
+    })
+
+    const { container } = render(<AttributesSection />)
+
+    const markers = container.querySelectorAll(".w-2.h-2.rounded-full")
+    expect(markers[0]).toHaveClass("bg-gray-800")
+    expect(markers[1]).toHaveClass("bg-gray-800")
+    expect(markers[2]).toHaveClass("bg-white")
+  })
+
   it("commits a level 1 empty attribute edit as final text without creating sources when auto calculation is off", async () => {
     resetSheetStore({
       level: "1",

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import "@testing-library/jest-dom/vitest"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
@@ -11,6 +11,12 @@ import {
   getUnattributedDeltaId,
   UNATTRIBUTED_DELTA_LABEL,
 } from "@/lib/modifiers/special-contributions"
+import {
+  createManualFinalAdjustment,
+  createUnattributedDifference,
+  createUnknownMigrationDifference,
+  getOtherAdjustmentId,
+} from "@/lib/modifiers/other-adjustments"
 import type { ModifierEntryKind, ModifierTargetId, UserModifierContribution } from "@/lib/modifiers/types"
 import { resetSheetStore, sheet } from "../automation/test-helpers"
 
@@ -46,6 +52,13 @@ function professionCard(evasion: number): StandardCard {
 function expectUnattributedDelta(value: string) {
   expect(screen.getByText("未归因差额")).toBeInTheDocument()
   expect(screen.getByText(value)).toBeInTheDocument()
+}
+
+function sectionNamed(title: string): HTMLElement {
+  const heading = screen.getByText(title)
+  const section = heading.closest(".mb-2")
+  expect(section).toBeInTheDocument()
+  return section as HTMLElement
 }
 
 describe("ModifierFieldAnchor", () => {
@@ -110,7 +123,7 @@ describe("ModifierFieldAnchor", () => {
     expect(button).toHaveClass("w-3.5")
   })
 
-  it("shows base, modifier, and unattributed delta", async () => {
+  it("shows base, modifier, and derived unattributed difference in other", async () => {
     resetSheetStore({
       evasion: "15",
       userModifierContributions: [
@@ -130,6 +143,121 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByRole("textbox", { name: "编辑手动基础闪避名称" })).toHaveValue("手动基础闪避")
     expect(screen.getByRole("textbox", { name: "编辑临时加值名称" })).toHaveValue("临时加值")
     expectUnattributedDelta("+2")
+    expect(within(sectionNamed("其他")).getByText("未归因差额")).toBeInTheDocument()
+  })
+
+  it("shows other adjustments separately from modifiers", async () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "手动基础闪避", 12),
+        userContribution("user:evasion-mod", "evasion", "modifier", "临时加值", 1),
+      ],
+      otherAdjustments: [
+        createUnknownMigrationDifference("evasion", 1),
+        createManualFinalAdjustment("evasion", 2),
+      ],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: true } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    const modifierSection = sectionNamed("修正值")
+    const otherSection = sectionNamed("其他")
+
+    expect(within(otherSection).getByText("未知迁移差额")).toBeInTheDocument()
+    expect(within(otherSection).getByText("手动修改终值")).toBeInTheDocument()
+    expect(within(otherSection).getByText("迁移")).toBeInTheDocument()
+    expect(within(otherSection).getByText("用户")).toBeInTheDocument()
+    expect(within(modifierSection).queryByText("未知迁移差额")).not.toBeInTheDocument()
+    expect(within(modifierSection).queryByText("手动修改终值")).not.toBeInTheDocument()
+  })
+
+  it("edits and deletes editable other adjustments", async () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "基础", 12),
+      ],
+      otherAdjustments: [
+        createUnknownMigrationDifference("evasion", 1),
+        createManualFinalAdjustment("evasion", 2),
+      ],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: false } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    const migrationInput = screen.getByRole("textbox", { name: "编辑未知迁移差额数值" })
+    await userEvent.clear(migrationInput)
+    await userEvent.type(migrationInput, "4")
+    await userEvent.tab()
+
+    expect(sheet().otherAdjustments).toContainEqual(createUnknownMigrationDifference("evasion", 4))
+
+    await userEvent.click(screen.getByRole("button", { name: "删除手动修改终值" }))
+    expect(sheet().otherAdjustments?.some(
+      adjustment => adjustment.id === getOtherAdjustmentId("evasion", "manualFinalAdjustment"),
+    )).toBe(false)
+  })
+
+  it("allows deleting but not editing a saved sync other adjustment when auto calculation is on", async () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "基础", 12),
+      ],
+      otherAdjustments: [
+        createUnattributedDifference("evasion", 3),
+      ],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: true } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    expect(screen.getByText("同步")).toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "编辑未归因差额数值" })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "删除未归因差额" }))
+
+    expect(sheet().otherAdjustments?.some(
+      adjustment => adjustment.id === getOtherAdjustmentId("evasion", "unattributedDifference"),
+    )).toBe(false)
+    expect(sheet().evasion).toBe("12")
+  })
+
+  it("shows derived sync other adjustment as read-only when auto calculation is off", async () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "基础", 12),
+      ],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: false } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    const otherSection = sectionNamed("其他")
+    expect(within(otherSection).getByText("未归因差额")).toBeInTheDocument()
+    expect(within(otherSection).getByText("+3")).toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "编辑未归因差额数值" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "删除未归因差额" })).not.toBeInTheDocument()
   })
 
   it("renders the popover outside the clipped anchor container", async () => {
@@ -427,12 +555,10 @@ describe("ModifierFieldAnchor", () => {
 
     expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBe(true)
     expect(sheet().evasion).toBe("15")
-    expect(sheet().userModifierContributions).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        id: getUnattributedDeltaId("evasion"),
-        editable: { label: UNATTRIBUTED_DELTA_LABEL, value: 3 },
-      }),
-    ]))
+    expect(sheet().otherAdjustments).toContainEqual(createUnattributedDifference("evasion", 3))
+    expect(sheet().userModifierContributions?.some(
+      contribution => contribution.id === getUnattributedDeltaId("evasion"),
+    )).toBe(false)
     expect(screen.getByRole("button", { name: "关闭自动计算" })).toBeInTheDocument()
     expect(screen.getByText(/来源（同步中）/)).toBeInTheDocument()
     expect(screen.queryByText("未归因差额 +3")).not.toBeInTheDocument()
@@ -461,9 +587,9 @@ describe("ModifierFieldAnchor", () => {
   it("shows upgrade provider as a source badge without repeating the upgrade prefix in the label", async () => {
     resetSheetStore({
       evasion: "13",
-      automationSelections: {
-        "upgrade:tier1-5-0": {
-          selected: true,
+      upgradeStates: {
+        "tier1-5-0": {
+          checked: true,
           params: { target: "evasion" },
         },
       },
@@ -520,13 +646,13 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByText("皮甲：闪避")).toBeInTheDocument()
   })
 
-  it("treats target-owned special delta as fixed-label editable value and deletes it with special semantics", async () => {
+  it("keeps saved sync other adjustment outside normal modifiers", async () => {
     resetSheetStore({
       evasion: "15",
       userModifierContributions: [
         userContribution("user:evasion-base", "evasion", "base", "基础", 12),
-        userContribution(getUnattributedDeltaId("evasion"), "evasion", "modifier", UNATTRIBUTED_DELTA_LABEL, 3),
       ],
+      otherAdjustments: [createUnattributedDifference("evasion", 3)],
       modifierState: {
         targetStates: {
           evasion: {
@@ -541,19 +667,9 @@ describe("ModifierFieldAnchor", () => {
     render(<ModifierFieldAnchor target="evasion" label="闪避" />)
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
 
-    expect(screen.getByText(UNATTRIBUTED_DELTA_LABEL)).toBeInTheDocument()
-    expect(screen.getByText("同步")).toBeInTheDocument()
-    expect(screen.queryByRole("textbox", { name: `编辑${UNATTRIBUTED_DELTA_LABEL}名称` })).not.toBeInTheDocument()
-
-    const valueInput = screen.getByRole("textbox", { name: `编辑${UNATTRIBUTED_DELTA_LABEL}数值` })
-    expect(valueInput).toHaveValue("+3")
-
-    await userEvent.click(screen.getByRole("button", { name: `删除${UNATTRIBUTED_DELTA_LABEL}` }))
-    expect(sheet().userModifierContributions?.some(
-      contribution => contribution.id === getUnattributedDeltaId("evasion"),
-    )).toBe(false)
-    expect(sheet().evasion).toBe("12")
-    expect(screen.queryByText("未归因差额 +3")).not.toBeInTheDocument()
+    expect(within(sectionNamed("其他")).getByText(UNATTRIBUTED_DELTA_LABEL)).toBeInTheDocument()
+    expect(within(sectionNamed("其他")).getByText("同步")).toBeInTheDocument()
+    expect(within(sectionNamed("修正值")).queryByText(UNATTRIBUTED_DELTA_LABEL)).not.toBeInTheDocument()
   })
 
   it("keeps a user-created modifier with the same delta label editable as a normal user source", async () => {

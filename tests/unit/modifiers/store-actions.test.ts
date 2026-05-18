@@ -9,7 +9,9 @@ import {
   createManualFinalAdjustment,
   createUnattributedDifference,
   createUnknownMigrationDifference,
+  getOtherAdjustmentId,
 } from "@/lib/modifiers/other-adjustments"
+import { getReferenceSummary } from "@/lib/modifiers/registry"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
 describe("modifier store actions", () => {
@@ -157,6 +159,109 @@ describe("modifier store actions", () => {
     })
 
     expect(sheet().evasion).toBe("14")
+  })
+
+  it("recalculates final when editable other adjustments change with auto calculation on", () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      otherAdjustments: [
+        createUnknownMigrationDifference("evasion", 1),
+        createManualFinalAdjustment("evasion", 2),
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().upsertOtherAdjustment(createUnknownMigrationDifference("evasion", 4))
+    expect(sheet().otherAdjustments).toContainEqual(createUnknownMigrationDifference("evasion", 4))
+    expect(sheet().evasion).toBe("18")
+
+    store().removeOtherAdjustment(getOtherAdjustmentId("evasion", "manualFinalAdjustment"))
+    expect(sheet().otherAdjustments).toEqual([createUnknownMigrationDifference("evasion", 4)])
+    expect(sheet().evasion).toBe("16")
+  })
+
+  it("preserves final and changes derived unattributed difference when editable other adjustments change with auto calculation off", () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      otherAdjustments: [
+        createUnknownMigrationDifference("evasion", 1),
+        createManualFinalAdjustment("evasion", 2),
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: false,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().upsertOtherAdjustment(createUnknownMigrationDifference("evasion", 4))
+    expect(sheet().evasion).toBe("15")
+    expect(getReferenceSummary(sheet(), "evasion").unattributedDelta).toBe(-3)
+
+    store().removeOtherAdjustment(getOtherAdjustmentId("evasion", "manualFinalAdjustment"))
+    expect(sheet().evasion).toBe("15")
+    expect(sheet().otherAdjustments).toEqual([createUnknownMigrationDifference("evasion", 4)])
+    expect(getReferenceSummary(sheet(), "evasion").unattributedDelta).toBe(-1)
+  })
+
+  it("only removes saved unattributed difference when auto calculation is enabled", () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      otherAdjustments: [
+        createUnattributedDifference("evasion", 3),
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: false,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().removeOtherAdjustment(getOtherAdjustmentId("evasion", "unattributedDifference"))
+    expect(sheet().otherAdjustments).toEqual([createUnattributedDifference("evasion", 3)])
+    expect(sheet().evasion).toBe("15")
+
+    store().setTargetAutoCalculation("evasion", true)
+    store().removeOtherAdjustment(getOtherAdjustmentId("evasion", "unattributedDifference"))
+    expect(sheet().otherAdjustments).toEqual([])
+    expect(sheet().evasion).toBe("12")
   })
 
   it("applies auto calculation by default when modifier sources change", () => {

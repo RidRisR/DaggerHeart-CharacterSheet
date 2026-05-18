@@ -4,9 +4,12 @@ import { useEffect, useState } from "react"
 import { tryParseNumberExpression } from "@/lib/number-utils"
 import { entryKind, entryLabel, entryValue } from "@/lib/modifiers/entry-utils"
 import {
-  getUnattributedDeltaId,
   isTargetOwnedSpecialContribution,
 } from "@/lib/modifiers/special-contributions"
+import {
+  createUnattributedDifference,
+  OTHER_ADJUSTMENT_PRESENTATION,
+} from "@/lib/modifiers/other-adjustments"
 import { getReferenceSummary } from "@/lib/modifiers/registry"
 import { readTargetValue } from "@/lib/modifiers/target-accessors"
 import { isTargetAutoCalculationEnabled } from "@/lib/modifiers/target-sync"
@@ -14,6 +17,7 @@ import type {
   ModifierEntry,
   ModifierEntryKind,
   ModifierTargetId,
+  OtherAdjustment,
   UserModifierContribution,
 } from "@/lib/modifiers/types"
 import type { SheetData } from "@/lib/sheet-data"
@@ -92,6 +96,53 @@ function ReadonlyLabelBox({ label }: { label: string }) {
   return (
     <span className="flex h-7 min-w-0 flex-1 items-center rounded border border-transparent bg-transparent px-1 text-xs">
       <span className="min-w-0 truncate">{label}</span>
+    </span>
+  )
+}
+
+function EditableOtherValueInput({
+  adjustment,
+  onCommit,
+}: {
+  adjustment: OtherAdjustment
+  onCommit: (adjustment: OtherAdjustment) => void
+}) {
+  const presentation = OTHER_ADJUSTMENT_PRESENTATION[adjustment.kind]
+  const displayValue = formatSigned(adjustment.value)
+  const [value, setValue] = useState(displayValue)
+
+  useEffect(() => {
+    setValue(displayValue)
+  }, [displayValue])
+
+  const commit = () => {
+    const parsedValue = tryParseNumberExpression(value)
+    if (parsedValue === undefined || parsedValue === adjustment.value) {
+      setValue(displayValue)
+      return
+    }
+    onCommit({
+      ...adjustment,
+      value: parsedValue,
+    })
+  }
+
+  return (
+    <span className="flex w-12 shrink-0 items-center justify-end">
+      <input
+        type="text"
+        aria-label={`编辑${presentation.label}数值`}
+        value={value}
+        className="h-6 w-full rounded border border-transparent bg-transparent px-1 text-right text-xs font-semibold hover:border-gray-300 focus:border-gray-300 focus:bg-white"
+        onChange={event => setValue(event.target.value)}
+        onBlur={commit}
+        onKeyDown={event => {
+          if (event.key === "Enter") {
+            commit()
+            event.currentTarget.blur()
+          }
+        }}
+      />
     </span>
   )
 }
@@ -222,10 +273,24 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const setTargetAutoCalculation = useSheetStore(state => state.setTargetAutoCalculation)
   const upsertUserModifierContribution = useSheetStore(state => state.upsertUserModifierContribution)
   const removeUserModifierContribution = useSheetStore(state => state.removeUserModifierContribution)
+  const upsertOtherAdjustment = useSheetStore(state => state.upsertOtherAdjustment)
+  const removeOtherAdjustment = useSheetStore(state => state.removeOtherAdjustment)
   const removeSpecialBaseContribution = useSheetStore(state => state.removeSpecialBaseContribution)
   const finalValue = readTargetValue(sheetData, target)
   const targetState = sheetData.modifierState?.targetStates?.[target]
   const autoCalculation = isTargetAutoCalculationEnabled(targetState)
+  const derivedUnattributedDifference = !autoCalculation
+    && summary.unattributedDelta !== undefined
+    && summary.unattributedDelta !== 0
+    ? {
+        ...createUnattributedDifference(target, summary.unattributedDelta),
+        id: `derived:other:${target}:unattributed-difference`,
+      }
+    : undefined
+  const otherRows = [
+    ...summary.otherAdjustments.map(adjustment => ({ adjustment, saved: true })),
+    ...(derivedUnattributedDifference ? [{ adjustment: derivedUnattributedDifference, saved: false }] : []),
+  ]
 
   const findUserContribution = (id: string) => (
     (sheetData.userModifierContributions ?? []).find(contribution => contribution.id === id)
@@ -235,10 +300,6 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
     const contribution = findUserContribution(entry.id)
     return contribution ? isTargetOwnedSpecialContribution(contribution) : false
   }
-
-  const hasMaterializedUnattributedDelta = (sheetData.userModifierContributions ?? []).some(
-    contribution => contribution.id === getUnattributedDeltaId(target),
-  )
 
   const updateUserContributionValue = (id: string, value: number) => {
     const contribution = findUserContribution(id)
@@ -415,28 +476,51 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
         )}
       </div>
 
-      {(summary.referenceTotal !== undefined || (
-        summary.unattributedDelta !== undefined
-          && summary.unattributedDelta !== 0
-          && !(autoCalculation && hasMaterializedUnattributedDelta)
-      )) && (
+      {otherRows.length > 0 && (
+        <div className="mb-2">
+          <div className="mb-1 text-[11px] font-medium text-gray-500">其他</div>
+          <div className="space-y-1">
+            {otherRows.map(({ adjustment, saved }) => {
+              const presentation = OTHER_ADJUSTMENT_PRESENTATION[adjustment.kind]
+              const canEdit = saved && presentation.editable
+              const canDelete = saved && (
+                presentation.removableWhenAutoCalculation === "always" ||
+                (presentation.removableWhenAutoCalculation === "autoOnly" && autoCalculation)
+              )
+
+              return (
+                <div
+                  key={adjustment.id}
+                  className="group relative flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                    <SourceBadgeWithDelete
+                      label={presentation.badge}
+                      deleteLabel={canDelete ? `删除${presentation.label}` : undefined}
+                      onDelete={canDelete ? () => removeOtherAdjustment(adjustment.id) : undefined}
+                    />
+                    <ReadonlyLabelBox label={presentation.label} />
+                  </div>
+                  {canEdit ? (
+                    <EditableOtherValueInput adjustment={adjustment} onCommit={upsertOtherAdjustment} />
+                  ) : (
+                    <ReadonlyValueBox value={formatSigned(adjustment.value)} />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {summary.referenceTotal !== undefined && (
         <div className="mb-2">
           <div className="mb-1 text-[11px] font-medium text-gray-500">总值</div>
           <div className="space-y-1">
-            {summary.referenceTotal !== undefined && (
-              <div className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
-                <span className="text-gray-500">当前来源合计</span>
-                <ReadonlyValueBox value={summary.referenceTotal} />
-              </div>
-            )}
-            {summary.unattributedDelta !== undefined
-              && summary.unattributedDelta !== 0
-              && !(autoCalculation && hasMaterializedUnattributedDelta) && (
-              <div className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
-                <span className="text-gray-500">未归因差额</span>
-                <ReadonlyValueBox value={formatSigned(summary.unattributedDelta)} />
-              </div>
-            )}
+            <div className="flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1">
+              <span className="text-gray-500">当前来源合计</span>
+              <ReadonlyValueBox value={summary.referenceTotal} />
+            </div>
           </div>
         </div>
       )}

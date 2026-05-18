@@ -27,6 +27,7 @@ import type {
     AutomationSourceId,
     ModifierEntryId,
     ModifierTargetId,
+    OtherAdjustment,
     UpgradeState,
     UserModifierContribution,
 } from "@/lib/modifiers/types";
@@ -41,6 +42,11 @@ import { writeTargetValue } from "@/lib/modifiers/target-accessors";
 import { tryParseNumber } from "@/lib/number-utils";
 import { applyHpStressMaxInvariant } from "@/lib/modifiers/hp-stress-invariants";
 import { mergeUpgradeState } from "@/lib/modifiers/upgrade-states";
+import {
+    removeOtherAdjustment as removeOtherAdjustmentFromList,
+    sanitizeOtherAdjustments,
+    upsertOtherAdjustment as upsertOtherAdjustmentInList,
+} from "@/lib/modifiers/other-adjustments";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -181,6 +187,8 @@ interface SheetState {
     commitModifierTargetValue: (target: ModifierTargetId, value: unknown) => void;
     upsertUserModifierContribution: (contribution: UserModifierContribution) => void;
     removeUserModifierContribution: (entryId: ModifierEntryId) => void;
+    upsertOtherAdjustment: (adjustment: OtherAdjustment) => void;
+    removeOtherAdjustment: (entryId: string) => void;
     removeSpecialBaseContribution: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
     setUpgradeState: (checkKey: string, state: UpgradeState) => void;
     setAutomationSelection: (sourceId: AutomationSourceId, selected: boolean, params?: Record<string, unknown>) => void;
@@ -1109,6 +1117,44 @@ export const useSheetStore = create<SheetState>((set) => ({
             ),
         }),
     })),
+
+    upsertOtherAdjustment: (adjustment) => set((state) => {
+        const nextSheetData: SheetData = {
+            ...state.sheetData,
+            otherAdjustments: upsertOtherAdjustmentInList(state.sheetData.otherAdjustments, adjustment),
+        };
+
+        if (!isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.[adjustment.target])) {
+            return { sheetData: nextSheetData };
+        }
+
+        return {
+            sheetData: applyAutoCalculationForTargets(nextSheetData),
+        };
+    }),
+
+    removeOtherAdjustment: (entryId) => set((state) => {
+        const adjustment = sanitizeOtherAdjustments(state.sheetData.otherAdjustments).find(
+            item => item.id === entryId,
+        );
+        if (!adjustment) return state;
+
+        const autoCalculation = isTargetAutoCalculationEnabled(
+            state.sheetData.modifierState?.targetStates?.[adjustment.target],
+        );
+        if (adjustment.kind === "unattributedDifference" && !autoCalculation) return state;
+
+        const nextSheetData: SheetData = {
+            ...state.sheetData,
+            otherAdjustments: removeOtherAdjustmentFromList(state.sheetData.otherAdjustments, entryId),
+        };
+
+        if (!autoCalculation) return { sheetData: nextSheetData };
+
+        return {
+            sheetData: applyAutoCalculationForTargets(nextSheetData),
+        };
+    }),
 
     removeSpecialBaseContribution: (target, entryId) => set((state) => ({
         sheetData: deleteSpecialBase(state.sheetData, target, entryId),

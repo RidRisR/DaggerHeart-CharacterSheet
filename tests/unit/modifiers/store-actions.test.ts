@@ -407,7 +407,7 @@ describe("modifier store actions", () => {
       },
     })
 
-    store().updateLevel("2", "1")
+    store().updateLevel("2")
 
     expect(sheet().minorThreshold).toBe("9")
   })

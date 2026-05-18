@@ -298,7 +298,7 @@ describe("target sync automation unification", () => {
       },
     })
 
-    store().updateLevel("5", "1")
+    store().updateLevel("5")
 
     expect(sheet().level).toBe("5")
     expect(sheet().proficiency).toEqual([false, false, false, false, false, false])
@@ -338,7 +338,7 @@ describe("target sync automation unification", () => {
       },
     })
 
-    store().updateLevel("5", "1")
+    store().updateLevel("5")
 
     expect(sheet().proficiency).toEqual([true, true, true, false, false, false])
     expect(sheet().minorThreshold).toBe("8")

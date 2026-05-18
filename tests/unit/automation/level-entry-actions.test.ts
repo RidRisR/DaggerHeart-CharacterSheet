@@ -4,6 +4,7 @@ import {
   applyLevelEntryAutomations,
   enteredLevelsBetween,
   normalizeLevelForEntryAutomation,
+  runLevelEntryAutomations,
 } from "@/lib/automation/level-entry-actions"
 import { mergeUpgradeState, sanitizeUpgradeStates } from "@/lib/modifiers/upgrade-states"
 
@@ -61,6 +62,28 @@ describe("level entry automation", () => {
       checked: true,
       params: { target: "evasion" },
     })
+  })
+
+  it("runs matching per-level automations in entered level order", () => {
+    const calls: string[] = []
+
+    const sheet = runLevelEntryAutomations(
+      { ...defaultSheetData, level: "1", name: "start" },
+      enteredLevelsBetween("1", "8"),
+      {
+        5: [(currentSheet) => {
+          calls.push(`5:${currentSheet.name}`)
+          return { ...currentSheet, name: "after-5" }
+        }],
+        8: [(currentSheet) => {
+          calls.push(`8:${currentSheet.name}`)
+          return { ...currentSheet, name: "after-8" }
+        }],
+      },
+    )
+
+    expect(calls).toEqual(["5:start", "8:after-5"])
+    expect(sheet.name).toBe("after-8")
   })
 })
 

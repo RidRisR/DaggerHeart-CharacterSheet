@@ -11,8 +11,9 @@ const ATTRIBUTE_KEYS = [
 ] as const satisfies readonly AttributeKey[]
 
 type LevelEntryAction = (sheetData: SheetData) => SheetData
+type LevelEntryAutomationRegistry = Partial<Record<number, readonly LevelEntryAction[]>>
 
-export const LEVEL_ENTRY_AUTOMATIONS: Partial<Record<number, readonly LevelEntryAction[]>> = {
+export const LEVEL_ENTRY_AUTOMATIONS: LevelEntryAutomationRegistry = {
   5: [clearAttributeUpgradeMarks],
   8: [clearAttributeUpgradeMarks],
 }
@@ -71,12 +72,24 @@ export function clearAttributeUpgradeMarks(sheetData: SheetData): SheetData {
   return nextSheetData
 }
 
-export function applyLevelEntryAutomations(sheetData: SheetData, newLevel: string): SheetData {
-  return enteredLevelsBetween(sheetData.level, newLevel).reduce((currentSheetData, enteredLevel) => {
-    const automations = LEVEL_ENTRY_AUTOMATIONS[enteredLevel] ?? []
+export function runLevelEntryAutomations(
+  sheetData: SheetData,
+  enteredLevels: readonly number[],
+  registry: LevelEntryAutomationRegistry,
+): SheetData {
+  return enteredLevels.reduce((currentSheetData, enteredLevel) => {
+    const automations = registry[enteredLevel] ?? []
     return automations.reduce(
       (automatedSheetData, automation) => automation(automatedSheetData),
       currentSheetData,
     )
   }, sheetData)
+}
+
+export function applyLevelEntryAutomations(sheetData: SheetData, newLevel: string): SheetData {
+  return runLevelEntryAutomations(
+    sheetData,
+    enteredLevelsBetween(sheetData.level, newLevel),
+    LEVEL_ENTRY_AUTOMATIONS,
+  )
 }

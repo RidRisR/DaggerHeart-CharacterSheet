@@ -62,7 +62,7 @@ export function HeaderSection({
 
     // 如果等级真的发生了变化，触发完整的等级更新逻辑
     if (oldLevelNum !== newLevelNum) {
-      updateLevel(endLevel, startLevel)
+      updateLevel(endLevel)
     }
 
     // 清除编辑状态
@@ -384,11 +384,9 @@ export function HeaderSection({
         <button
           type="button"
           onClick={() => {
-            const oldLevel = formData.level || ""
-
             // 如果当前等级为空或无效，升到1级
             if (!formData.level || formData.level.trim() === "") {
-              updateLevel("1", oldLevel)
+              updateLevel("1")
               return
             }
 
@@ -400,7 +398,7 @@ export function HeaderSection({
 
             // 否则加1，最大为10
             const newLevel = Math.min(currentLevel + 1, 10)
-            updateLevel(String(newLevel), oldLevel)
+            updateLevel(String(newLevel))
           }}
           className="mt-1 px-2 py-0.5 bg-gray-600 hover:bg-gray-500 text-white text-[10px] font-bold rounded print:hidden transition-colors disabled:bg-gray-700 disabled:cursor-not-allowed"
           disabled={parseInt(formData.level) >= 10}

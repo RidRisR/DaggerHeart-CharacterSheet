@@ -578,15 +578,14 @@ export function UpgradeSection({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  const oldLevel = formData.level || ""
                   if (!formData.level || formData.level.trim() === "") {
-                    updateLevel("1", oldLevel)
+                    updateLevel("1")
                     return
                   }
                   const currentLevel = parseInt(formData.level)
                   if (currentLevel >= 10) return
                   const newLevel = Math.min(currentLevel + 1, 10)
-                  updateLevel(String(newLevel), oldLevel)
+                  updateLevel(String(newLevel))
                 }}
                 className="px-2 py-0.5 bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold transition-colors whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={parseInt(formData.level) >= 10}

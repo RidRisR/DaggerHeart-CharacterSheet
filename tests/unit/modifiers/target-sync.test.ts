@@ -154,7 +154,39 @@ describe("target auto calculation helper", () => {
     expect(result.evasion).toBe("12")
   })
 
-  it("keeps existing values without fallback when auto target has no reference total", () => {
+  it("clears auto calculation finals when a target has no base", () => {
+    const data = sheet({
+      evasion: "10",
+      hpMax: 9,
+      stressMax: 8,
+      armorMax: 3,
+      minorThreshold: "12",
+      majorThreshold: "24",
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: true },
+          hpMax: { autoCalculation: true },
+          stressMax: { autoCalculation: true },
+          armorMax: { autoCalculation: true },
+          minorThreshold: { autoCalculation: true },
+          majorThreshold: { autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result).not.toBe(data)
+    expect(result.evasion).toBe("")
+    expect(result.hpMax).toBe("")
+    expect(result.stressMax).toBe("")
+    expect(result.armorMax).toBe("")
+    expect(result.minorThreshold).toBe("")
+    expect(result.majorThreshold).toBe("")
+  })
+
+  it("keeps manual finals when auto calculation is disabled and a target has no base", () => {
     const data = sheet({
       evasion: "10",
       hpMax: 9,
@@ -162,10 +194,10 @@ describe("target auto calculation helper", () => {
       armorMax: 3,
       modifierState: {
         targetStates: {
-          evasion: { autoCalculation: true },
-          hpMax: { autoCalculation: true },
-          stressMax: { autoCalculation: true },
-          armorMax: { autoCalculation: true },
+          evasion: { autoCalculation: false },
+          hpMax: { autoCalculation: false },
+          stressMax: { autoCalculation: false },
+          armorMax: { autoCalculation: false },
         },
         entryStates: {},
       },
@@ -178,6 +210,29 @@ describe("target auto calculation helper", () => {
     expect(result.hpMax).toBe(9)
     expect(result.stressMax).toBe(8)
     expect(result.armorMax).toBe(3)
+  })
+
+  it("falls back to another base when the saved active base disappeared", () => {
+    const data = sheet({
+      evasion: "10",
+      userModifierContributions: [
+        {
+          id: "user:evasion-fallback-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Fallback", value: 14 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: "user:evasion-missing-base", autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result.evasion).toBe("14")
   })
 
   it("returns the same object when no auto value changes", () => {

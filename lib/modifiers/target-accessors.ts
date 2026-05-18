@@ -67,7 +67,7 @@ export function writeTargetValue(sheetData: SheetData, target: ModifierTargetId,
   }
 
   if (target === "hpMax" || target === "stressMax") {
-    return { ...sheetData, [target]: Number(value) }
+    return { ...sheetData, [target]: value === "" ? "" : Number(value) }
   }
 
   if (target === "proficiency") {

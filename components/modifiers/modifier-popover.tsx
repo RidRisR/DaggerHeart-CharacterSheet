@@ -371,7 +371,7 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
         <div className="font-semibold text-gray-900">
           {label}来源（{autoCalculation ? "同步中" : "暂停同步"}）
         </div>
-        <div className="rounded border border-gray-200 bg-transparent px-2 py-1 text-xs font-semibold tabular-nums text-gray-700">
+        <div className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold tabular-nums text-gray-700">
           总计：{String(finalValue ?? "未知")}
         </div>
       </div>

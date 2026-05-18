@@ -1,9 +1,15 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { showFadeNotification } from "@/components/ui/fade-notification"
 import { createEmptyArmorSlot, createEmptyEquipmentData } from "@/lib/equipment/defaults"
 import { countChecked, resetSheetStore, sheet, store } from "./test-helpers"
 
+vi.mock("@/components/ui/fade-notification", () => ({
+  showFadeNotification: vi.fn(),
+}))
+
 describe("等级自动化基线", () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     resetSheetStore({
       level: "",
       proficiency: [false, false, false, false, false, false],
@@ -80,6 +86,36 @@ describe("等级自动化基线", () => {
     expect(sheet().instinct?.checked).toBe(false)
     expect(sheet().presence?.checked).toBe(false)
     expect(sheet().knowledge?.checked).toBe(false)
+  })
+
+  it("从 1 级进入 5 级时提示属性升级标记已清除并提升熟练度", () => {
+    resetSheetStore({
+      level: "1",
+    })
+
+    store().updateLevel("5")
+
+    expect(showFadeNotification).toHaveBeenCalledWith({
+      message: "等级提升至5级，已清除属性升级标记，并提升了熟练度",
+      type: "success",
+    })
+  })
+
+  it("从 1 级进入 8 级时按 5 级、8 级顺序提示等级回调结果", () => {
+    resetSheetStore({
+      level: "1",
+    })
+
+    store().updateLevel("8")
+
+    expect(showFadeNotification).toHaveBeenNthCalledWith(1, {
+      message: "等级提升至5级，已清除属性升级标记，并提升了熟练度",
+      type: "success",
+    })
+    expect(showFadeNotification).toHaveBeenNthCalledWith(2, {
+      message: "等级提升至8级，已清除属性升级标记，并提升了熟练度",
+      type: "success",
+    })
   })
 
   it("从 8 级降到 4 级时不重置六属性升级标记", () => {

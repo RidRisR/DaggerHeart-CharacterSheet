@@ -10,12 +10,36 @@ const ATTRIBUTE_KEYS = [
   "knowledge",
 ] as const satisfies readonly AttributeKey[]
 
-type LevelEntryAction = (sheetData: SheetData) => SheetData
+type LevelEntryNotification = {
+  message: string
+  type: "success" | "error" | "info"
+}
+
+type LevelEntryActionHandler = (sheetData: SheetData) => SheetData
+type LevelEntryAction =
+  | LevelEntryActionHandler
+  | {
+    apply: LevelEntryActionHandler
+    notification?: (enteredLevel: number) => LevelEntryNotification
+  }
 type LevelEntryAutomationRegistry = Partial<Record<number, readonly LevelEntryAction[]>>
 
+export type LevelEntryAutomationResult = {
+  sheetData: SheetData
+  notifications: LevelEntryNotification[]
+}
+
+const clearAttributeUpgradeMarksAutomation: LevelEntryAction = {
+  apply: clearAttributeUpgradeMarks,
+  notification: (enteredLevel) => ({
+    message: `等级提升至${enteredLevel}级，已清除属性升级标记，并提升了熟练度`,
+    type: "success",
+  }),
+}
+
 export const LEVEL_ENTRY_AUTOMATIONS: LevelEntryAutomationRegistry = {
-  5: [clearAttributeUpgradeMarks],
-  8: [clearAttributeUpgradeMarks],
+  5: [clearAttributeUpgradeMarksAutomation],
+  8: [clearAttributeUpgradeMarksAutomation],
 }
 
 function isAttributeValue(value: unknown): value is AttributeValue {
@@ -77,17 +101,48 @@ export function runLevelEntryAutomations(
   enteredLevels: readonly number[],
   registry: LevelEntryAutomationRegistry,
 ): SheetData {
-  return enteredLevels.reduce((currentSheetData, enteredLevel) => {
+  return runLevelEntryAutomationsWithNotifications(sheetData, enteredLevels, registry).sheetData
+}
+
+export function runLevelEntryAutomationsWithNotifications(
+  sheetData: SheetData,
+  enteredLevels: readonly number[],
+  registry: LevelEntryAutomationRegistry,
+): LevelEntryAutomationResult {
+  return enteredLevels.reduce<LevelEntryAutomationResult>((currentResult, enteredLevel) => {
     const automations = registry[enteredLevel] ?? []
-    return automations.reduce(
-      (automatedSheetData, automation) => automation(automatedSheetData),
-      currentSheetData,
-    )
-  }, sheetData)
+    return automations.reduce<LevelEntryAutomationResult>((automatedResult, automation) => {
+      if (typeof automation === "function") {
+        return {
+          ...automatedResult,
+          sheetData: automation(automatedResult.sheetData),
+        }
+      }
+
+      return {
+        sheetData: automation.apply(automatedResult.sheetData),
+        notifications: [
+          ...automatedResult.notifications,
+          ...(automation.notification ? [automation.notification(enteredLevel)] : []),
+        ],
+      }
+    }, currentResult)
+  }, { sheetData, notifications: [] })
 }
 
 export function applyLevelEntryAutomations(sheetData: SheetData, newLevel: string): SheetData {
   return runLevelEntryAutomations(
+    sheetData,
+    enteredLevelsBetween(sheetData.level, newLevel),
+    LEVEL_ENTRY_AUTOMATIONS,
+  )
+}
+
+export function applyLevelEntryAutomationsWithNotifications(
+  sheetData: SheetData,
+  newLevel: string,
+): LevelEntryAutomationResult {
+  return runLevelEntryAutomationsWithNotifications(
     sheetData,
     enteredLevelsBetween(sheetData.level, newLevel),
     LEVEL_ENTRY_AUTOMATIONS,

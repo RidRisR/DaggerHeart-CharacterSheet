@@ -46,7 +46,8 @@ import {
     sanitizeOtherAdjustments,
     upsertOtherAdjustment as upsertOtherAdjustmentInList,
 } from "@/lib/modifiers/other-adjustments";
-import { applyLevelEntryAutomations } from "@/lib/automation/level-entry-actions";
+import { applyLevelEntryAutomationsWithNotifications } from "@/lib/automation/level-entry-actions";
+import { showFadeNotification } from "@/components/ui/fade-notification";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -584,10 +585,14 @@ export const useSheetStore = create<SheetState>((set) => ({
 
     // Threshold calculation actions
     updateLevel: (level) => set((state) => {
-        const nextSheetData = applyLevelEntryAutomations(state.sheetData, level);
+        const automationResult = applyLevelEntryAutomationsWithNotifications(state.sheetData, level);
+        automationResult.notifications.forEach((notification) => {
+            showFadeNotification(notification);
+        });
+
         return {
             sheetData: applyAutoCalculationForTargets({
-                ...nextSheetData,
+                ...automationResult.sheetData,
                 level,
             }),
         };

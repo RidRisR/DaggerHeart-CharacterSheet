@@ -42,7 +42,7 @@ describe("升级取消流程（page-two 集成）", () => {
       checked: true,
       params: { target: "evasion" },
     })
-    expect(after.automationSelections).toBeUndefined()
+    expect("automationSelections" in (after as any)).toBe(false)
     expect(after.checkedUpgrades).toBeUndefined()
     expect(screen.queryByText("闪避值 +1")).not.toBeInTheDocument()
   })
@@ -75,7 +75,7 @@ describe("升级取消流程（page-two 集成）", () => {
       checked: true,
       params: { attributes: ["agility", "strength"] },
     })
-    expect(after.automationSelections).toBeUndefined()
+    expect("automationSelections" in (after as any)).toBe(false)
     expect(after.checkedUpgrades).toBeUndefined()
   })
 
@@ -100,7 +100,7 @@ describe("升级取消流程（page-two 集成）", () => {
     expect(after.agility).toEqual({ checked: true, value: "1", spellcasting: false })
     expect(after.strength).toEqual({ checked: true, value: "2", spellcasting: false })
     expect(after.upgradeStates?.["tier1-0-0"]).toEqual({ checked: false })
-    expect(after.automationSelections).toBeUndefined()
+    expect("automationSelections" in (after as any)).toBe(false)
     expect(after.checkedUpgrades).toBeUndefined()
   })
 
@@ -132,7 +132,7 @@ describe("升级取消流程（page-two 集成）", () => {
       checked: true,
       params: { experienceIndexes: [0, 1] },
     })
-    expect(after.automationSelections).toBeUndefined()
+    expect("automationSelections" in (after as any)).toBe(false)
     expect(after.checkedUpgrades).toBeUndefined()
   })
 
@@ -156,7 +156,7 @@ describe("升级取消流程（page-two 集成）", () => {
     const after = sheet()
     expect(after.experienceValues).toEqual(["2", "3", "", "", ""])
     expect(after.upgradeStates?.["tier1-3-0"]).toEqual({ checked: false })
-    expect(after.automationSelections).toBeUndefined()
+    expect("automationSelections" in (after as any)).toBe(false)
     expect(after.checkedUpgrades).toBeUndefined()
   })
 

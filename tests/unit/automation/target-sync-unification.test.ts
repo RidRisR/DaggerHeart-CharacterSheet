@@ -98,7 +98,7 @@ describe("target sync automation unification", () => {
       checked: true,
       params: { target: "evasion" },
     })
-    expect(sheet().automationSelections).toBeUndefined()
+    expect("automationSelections" in (sheet() as any)).toBe(false)
     expect(sheet().evasion).toBe("12")
   })
 
@@ -127,7 +127,7 @@ describe("target sync automation unification", () => {
       checked: true,
       params: { target: "evasion" },
     })
-    expect(sheet().automationSelections).toBeUndefined()
+    expect("automationSelections" in (sheet() as any)).toBe(false)
     expect(sheet().evasion).toBe("13")
   })
 

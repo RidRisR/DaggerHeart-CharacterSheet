@@ -3,7 +3,6 @@
 import { StandardCard } from "@/card/card-types"
 import type { EquipmentData } from "@/lib/equipment/types"
 import type {
-  AutomationSelections,
   ModifierState,
   OtherAdjustment,
   UpgradeStates,
@@ -299,7 +298,6 @@ export interface SheetData {
   userModifierContributions?: UserModifierContribution[]
   otherAdjustments?: OtherAdjustment[]
   upgradeStates?: UpgradeStates
-  automationSelections?: AutomationSelections
   equipment: EquipmentData
   minorThreshold?: string
   majorThreshold?: string

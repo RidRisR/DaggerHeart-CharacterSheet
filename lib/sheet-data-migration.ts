@@ -547,7 +547,11 @@ function legacyCheckedUpgradeState(checkKey: string): UpgradeState {
   return { checked: true }
 }
 
-function migrateLegacyUpgradeStates(data: SheetData): SheetData {
+type LegacyUpgradeStateInput = SheetData & {
+  automationSelections?: unknown
+}
+
+function migrateLegacyUpgradeStates(data: LegacyUpgradeStateInput): SheetData {
   const upgradeStates: UpgradeStates = sanitizeUpgradeStates(data.upgradeStates)
 
   const addLegacyState = (checkKey: string, next: UpgradeState) => {

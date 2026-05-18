@@ -78,26 +78,9 @@ describe("modifier store actions", () => {
       checked: true,
       params: { target: "evasion" },
     })
-    expect(sheet().automationSelections).toBeUndefined()
+    expect("automationSelections" in (sheet() as any)).toBe(false)
     expect(sheet().checkedUpgrades).toBeUndefined()
     expect(sheet().evasion).toBe("13")
-  })
-
-  it("bridges legacy setAutomationSelection calls to upgradeStates without writing legacy selections", () => {
-    resetSheetStore()
-
-    store().setAutomationSelection("upgrade:tier1-5-0", true, { target: "evasion" })
-    expect(sheet().upgradeStates?.["tier1-5-0"]).toEqual({
-      checked: true,
-      params: { target: "evasion" },
-    })
-    expect(sheet().automationSelections).toBeUndefined()
-
-    store().setAutomationSelection("upgrade:tier1-5-0", false)
-    expect(sheet().upgradeStates?.["tier1-5-0"]).toEqual({
-      checked: false,
-    })
-    expect(sheet().automationSelections).toBeUndefined()
   })
 
   it("enables target auto calculation by preserving current final with saved unattributed difference", () => {

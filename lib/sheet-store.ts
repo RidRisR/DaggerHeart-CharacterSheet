@@ -24,7 +24,6 @@ import {
 } from "@/lib/equipment/template-to-slot";
 import type { ArmorSlot, EquipmentModifierContribution, EquipmentModifierTargetId, WeaponSlot } from "@/lib/equipment/types";
 import type {
-    AutomationSourceId,
     ModifierEntryId,
     ModifierTargetId,
     OtherAdjustment,
@@ -191,7 +190,6 @@ interface SheetState {
     removeOtherAdjustment: (entryId: string) => void;
     removeSpecialBaseContribution: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
     setUpgradeState: (checkKey: string, state: UpgradeState) => void;
-    setAutomationSelection: (sourceId: AutomationSourceId, selected: boolean, params?: Record<string, unknown>) => void;
     addEquipmentModifierContribution: (slotRef: EquipmentModifierSlotRef) => void;
     updateEquipmentModifierContribution: (
         slotRef: EquipmentModifierSlotRef,
@@ -1174,14 +1172,6 @@ export const useSheetStore = create<SheetState>((set) => ({
             sheetData: applyAutoCalculationForTargets(nextSheetData),
         };
     }),
-
-    setAutomationSelection: (sourceId, selected, params) => {
-        const checkKey = sourceId.startsWith("upgrade:") ? sourceId.slice("upgrade:".length) : sourceId;
-        useSheetStore.getState().setUpgradeState(checkKey, {
-            checked: selected,
-            params: params as UpgradeState["params"],
-        });
-    },
 
     addEquipmentModifierContribution: (slotRef) => set((state) => ({
         sheetData: applyAutoCalculationForTargets(

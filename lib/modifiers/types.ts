@@ -118,13 +118,6 @@ export interface ModifierState {
   entryStates: Partial<Record<ModifierEntryId, ModifierEntryState>>
 }
 
-export interface AutomationSelection {
-  selected: boolean
-  params?: Record<string, unknown>
-}
-
-export type AutomationSelections = Record<AutomationSourceId, AutomationSelection>
-
 export interface AddEffect {
   operation: "add"
   target: ModifierTargetId
@@ -147,7 +140,6 @@ export type AutomationEffect = AddEffect | SetBaseEffect | RecalculateEffect
 
 export interface AutomationContext {
   sheetData: SheetData
-  selections?: AutomationSelections
   sourceId?: AutomationSourceId
   params?: Record<string, unknown>
 }

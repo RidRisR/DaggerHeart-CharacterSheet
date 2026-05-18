@@ -14,6 +14,7 @@ import {
   getOtherAdjustmentId,
 } from "@/lib/modifiers/other-adjustments"
 import {
+  createUnattributedDeltaContribution,
   createManualBaseContribution,
   getManualBaseId,
   getUnattributedDeltaId,
@@ -41,6 +42,28 @@ describe("final input reconciliation", () => {
     expect(reconciled.userModifierContributions).toEqual([
       createManualBaseContribution("evasion", 12),
     ])
+    expect(reconciled.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: getManualBaseId("evasion"),
+      autoCalculation: true,
+    })
+  })
+
+  it("clears same-target saved other adjustments when numeric final creates a manual base without an existing base", () => {
+    const otherTargetAdjustment = createUnknownMigrationDifference("armorMax", 2)
+    const reconciled = reconcileFinalInput(sheet({
+      otherAdjustments: [
+        createUnknownMigrationDifference("evasion", 1),
+        createManualFinalAdjustment("evasion", 3),
+        createUnattributedDifference("evasion", 4),
+        otherTargetAdjustment,
+      ],
+    }), "evasion", "12")
+
+    expect(reconciled.evasion).toBe("12")
+    expect(reconciled.userModifierContributions).toEqual([
+      createManualBaseContribution("evasion", 12),
+    ])
+    expect(reconciled.otherAdjustments).toEqual([otherTargetAdjustment])
     expect(reconciled.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: getManualBaseId("evasion"),
       autoCalculation: true,
@@ -326,6 +349,36 @@ describe("final input reconciliation", () => {
     expect(reconciled.otherAdjustments?.some(
       adjustment => adjustment.id === getOtherAdjustmentId("evasion", "manualFinalAdjustment"),
     )).toBe(false)
+    expect(reconciled.modifierState?.targetStates.evasion).toEqual({
+      autoCalculation: true,
+    })
+  })
+
+  it("clears same-target saved other adjustments when deleting the last base", () => {
+    const manualBase = createManualBaseContribution("evasion", 12)
+    const unattributedDelta = createUnattributedDeltaContribution("evasion", 3)
+    const otherTargetAdjustment = createUnknownMigrationDifference("armorMax", 2)
+    const reconciled = deleteSpecialBase(sheet({
+      evasion: "15",
+      userModifierContributions: [manualBase, unattributedDelta],
+      otherAdjustments: [
+        createUnknownMigrationDifference("evasion", 1),
+        createManualFinalAdjustment("evasion", 3),
+        createUnattributedDifference("evasion", 4),
+        otherTargetAdjustment,
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: manualBase.id, autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    }), "evasion", manualBase.id)
+
+    expect(reconciled.evasion).toBe("15")
+    expect(reconciled.userModifierContributions).not.toContainEqual(manualBase)
+    expect(reconciled.userModifierContributions?.some(entry => entry.id === getUnattributedDeltaId("evasion"))).toBe(false)
+    expect(reconciled.otherAdjustments).toEqual([otherTargetAdjustment])
     expect(reconciled.modifierState?.targetStates.evasion).toEqual({
       autoCalculation: true,
     })

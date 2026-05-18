@@ -38,6 +38,15 @@ function withoutSavedUnattributedDifference(sheetData: SheetData, target: Modifi
   }
 }
 
+function withoutSavedOtherAdjustmentsForTarget(sheetData: SheetData, target: ModifierTargetId): SheetData {
+  return {
+    ...sheetData,
+    otherAdjustments: sanitizeOtherAdjustments(sheetData.otherAdjustments).filter(
+      adjustment => adjustment.target !== target,
+    ),
+  }
+}
+
 function upsertContribution(
   contributions: ModifierContribution[],
   contribution: ModifierContribution,
@@ -153,7 +162,8 @@ function reconcileDeltaForNumericFinal(
       ...sheetData,
       userModifierContributions: contributions,
     }
-    const withTarget = writeTargetValue(withContributions, target, finalValue)
+    const withoutTargetOther = withoutSavedOtherAdjustmentsForTarget(withContributions, target)
+    const withTarget = writeTargetValue(withoutTargetOther, target, finalValue)
     return writeTargetState(withTarget, target, {
       activeBaseId: getManualBaseId(target),
       autoCalculation: true,
@@ -257,7 +267,8 @@ export function deleteSpecialBase(
         getUnattributedDeltaId(target),
       ),
     }
-    return writeTargetState(withoutDelta, target, { autoCalculation })
+    const withoutTargetOther = withoutSavedOtherAdjustmentsForTarget(withoutDelta, target)
+    return writeTargetState(withoutTargetOther, target, { autoCalculation })
   }
 
   const withState = writeTargetState(withoutDeleted, target, {

@@ -2,12 +2,75 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { HeaderSection } from "@/components/character-sheet-sections/header-section"
 import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-upgrade-editor"
 import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-values-editor"
 import { resetSheetStore, sheet } from "./test-helpers"
 
 describe("升级编辑器组件烟雾测试", () => {
   beforeEach(() => resetSheetStore())
+
+  it("HeaderSection 手动提交等级输入时运行 level-entry automation", async () => {
+    const user = userEvent.setup()
+    resetSheetStore({
+      level: "1",
+      agility: { checked: true, value: "1", spellcasting: false },
+      strength: { checked: true, value: "2", spellcasting: false },
+      upgradeStates: {
+        "tier1-0-0": {
+          checked: true,
+          params: { attributes: ["agility", "strength"] },
+          attributeMarksApplied: true,
+        },
+      },
+    })
+
+    const { container } = render(
+      <HeaderSection
+        onOpenProfessionModal={vi.fn()}
+        onOpenAncestryModal={vi.fn()}
+        onOpenCommunityModal={vi.fn()}
+        onOpenSubclassModal={vi.fn()}
+      />,
+    )
+
+    const levelInput = container.querySelector<HTMLInputElement>('input[name="level"]')
+    expect(levelInput).not.toBeNull()
+
+    await user.click(levelInput!)
+    await user.clear(levelInput!)
+    await user.type(levelInput!, "5")
+    await user.tab()
+
+    expect(sheet().level).toBe("5")
+    expect(sheet().agility?.checked).toBe(false)
+    expect(sheet().strength?.checked).toBe(false)
+    expect(sheet().upgradeStates?.["tier1-0-0"]).toEqual({
+      checked: true,
+      params: { attributes: ["agility", "strength"] },
+    })
+  })
+
+  it("HeaderSection 非等级文本字段仍在输入时写入 store", async () => {
+    const user = userEvent.setup()
+    resetSheetStore({ name: "" })
+
+    const { container } = render(
+      <HeaderSection
+        onOpenProfessionModal={vi.fn()}
+        onOpenAncestryModal={vi.fn()}
+        onOpenCommunityModal={vi.fn()}
+        onOpenSubclassModal={vi.fn()}
+      />,
+    )
+
+    const nameInput = container.querySelector<HTMLInputElement>('input[name="name"]')
+    expect(nameInput).not.toBeNull()
+
+    await user.type(nameInput!, "阿岚")
+
+    expect(sheet().name).toBe("阿岚")
+  })
 
   it("ExperienceValuesEditor 确认后记录两项经历升级并勾选对应升级项", async () => {
     const user = userEvent.setup()

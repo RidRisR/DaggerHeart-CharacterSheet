@@ -37,6 +37,7 @@ import {
   createEstimatedBaseContribution,
   getEstimatedBaseId,
   getUnattributedDeltaId,
+  isUnattributedDeltaContribution,
 } from "@/lib/modifiers/special-contributions"
 import { writeTargetValue } from "@/lib/modifiers/target-accessors"
 import { mergeUpgradeState, sanitizeUpgradeStates } from "@/lib/modifiers/upgrade-states"
@@ -1057,6 +1058,28 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
   let migrated = { ...data }
 
   migrated.userModifierContributions = sanitizeModifierContributions(migrated.userModifierContributions)
+  migrated.otherAdjustments = sanitizeOtherAdjustments(migrated.otherAdjustments)
+
+  const retainedContributions: ModifierContribution[] = []
+  migrated.userModifierContributions.forEach(contribution => {
+    if (!isUnattributedDeltaContribution(contribution)) {
+      retainedContributions.push(contribution)
+      return
+    }
+
+    const target = contribution.definition.target
+    const existingUnknownDifference = migrated.otherAdjustments.find(
+      adjustment => adjustment.target === target && adjustment.kind === "unknownMigrationDifference",
+    )
+    migrated.otherAdjustments = upsertOtherAdjustment(
+      migrated.otherAdjustments,
+      createUnknownMigrationDifference(
+        target,
+        (existingUnknownDifference?.value ?? 0) + contribution.editable.value,
+      ),
+    )
+  })
+  migrated.userModifierContributions = retainedContributions
   migrated.otherAdjustments = sanitizeOtherAdjustments(migrated.otherAdjustments)
   migrated = migrateLegacyUpgradeStates(migrated)
 

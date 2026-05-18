@@ -482,7 +482,7 @@ describe("modifier state migration", () => {
     )
   })
 
-  it("migrates root armorValue contribution ids with their target and remains idempotent", () => {
+  it("migrates root armorValue unattributed delta ids into armorMax other adjustments and remains idempotent", () => {
     const migrated = migrateSheetData({
       schemaVersion: 2,
       userModifierContributions: [{
@@ -493,24 +493,21 @@ describe("modifier state migration", () => {
     } as any)
     const twice = migrateSheetData(migrated)
 
-    expect(migrated.userModifierContributions).toEqual([{
-      id: getUnattributedDeltaId("armorMax"),
-      definition: { target: "armorMax", kind: "modifier" },
-      editable: { label: "未归因差额", value: 1 },
-    }])
+    expect(migrated.userModifierContributions).toEqual([])
+    expect(migrated.otherAdjustments).toContainEqual(createUnknownMigrationDifference("armorMax", 1))
     expect(migrated.userModifierContributions).not.toContainEqual(
       expect.objectContaining({ id: "user:armorValue:unattributed-delta" }),
     )
-    expect(twice.userModifierContributions).toEqual(migrated.userModifierContributions)
+    expect(twice).toEqual(migrated)
   })
 
-  it("keeps existing v2 special contributions idempotent", () => {
+  it("moves current-schema unattributed delta contributions into other adjustments", () => {
     const sheet = {
       schemaVersion: 2,
       evasion: "15",
       userModifierContributions: [
         createEstimatedBaseContribution("evasion", 13),
-        createUnattributedDeltaContribution("evasion", 2),
+        createUnattributedDeltaContribution("evasion", 3),
       ],
       modifierState: {
         targetStates: {
@@ -528,6 +525,27 @@ describe("modifier state migration", () => {
 
     expect(twice).toEqual(once)
     expect(once.userModifierContributions?.filter(entry => entry.id === getEstimatedBaseId("evasion"))).toHaveLength(1)
+    expect(once.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("evasion") }),
+    )
+    expect(once.otherAdjustments).toContainEqual(createUnknownMigrationDifference("evasion", 3))
+  })
+
+  it("merges current-schema unattributed delta contributions with existing unknown migration differences", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      userModifierContributions: [
+        createUnattributedDeltaContribution("evasion", 3),
+      ],
+      otherAdjustments: [
+        createUnknownMigrationDifference("evasion", 2),
+      ],
+    })
+
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      expect.objectContaining({ id: getUnattributedDeltaId("evasion") }),
+    )
+    expect(migrated.otherAdjustments).toContainEqual(createUnknownMigrationDifference("evasion", 5))
   })
 
   it("migrates fixed checked upgrades to upgrade states before preserving legacy finals", () => {

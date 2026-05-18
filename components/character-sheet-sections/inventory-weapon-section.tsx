@@ -3,7 +3,6 @@
 import type React from "react"
 import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
-import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { WeaponSlot } from "@/lib/equipment/types"
@@ -102,13 +101,6 @@ export function InventoryWeaponSection({
                   <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
                 </svg>
               </button>
-              <div className="w-px bg-gray-300"></div>
-              <div className="flex items-center justify-center px-1 print:hidden">
-                <EquipmentProviderAnchor
-                  slotRef={{ type: "inventoryWeapon", index }}
-                  fallbackLabel={`备用武器 ${index + 1}`}
-                />
-              </div>
             </div>
           )}
         </div>

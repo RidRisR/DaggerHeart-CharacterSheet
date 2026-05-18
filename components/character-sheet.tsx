@@ -29,6 +29,7 @@ import ProfessionDescriptionSection from "@/components/character-sheet-sections/
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
+import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { parseNumberExpressionOr } from "@/lib/number-utils"
 
 type WeaponSlotSelection =
@@ -641,7 +642,14 @@ export default function CharacterSheet() {
                 <InventorySection />
 
                 {/* Inventory Weapons */}
-                <h3 className="text-xs font-bold text-center">备用武器</h3>
+                <h3 className="flex items-center justify-center gap-1 text-xs font-bold">
+                  <span>备用武器</span>
+                  <EquipmentProviderAnchor
+                    slotRef={{ type: "inventoryWeapon", index: 0 }}
+                    fallbackLabel="备用武器 1"
+                    size="compact"
+                  />
+                </h3>
                 <InventoryWeaponSection
                   index={0}
                   onOpenWeaponModal={openWeaponModal}

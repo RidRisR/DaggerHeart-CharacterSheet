@@ -5,7 +5,7 @@ import CharacterSheet from "@/components/character-sheet"
 import { resetSheetStore, sheet } from "./automation/test-helpers"
 
 describe("CharacterSheet equipment fields", () => {
-  it("places active weapon and armor provider anchors in their section headers", () => {
+  it("places equipment provider anchors in section headers", () => {
     resetSheetStore()
 
     render(<CharacterSheet />)
@@ -13,13 +13,16 @@ describe("CharacterSheet equipment fields", () => {
     const primaryHeader = screen.getByText("主武器").closest("h4")
     const secondaryHeader = screen.getByText("副武器").closest("h4")
     const armorHeader = screen.getByText("护甲").closest("h4")
+    const inventoryWeaponsHeader = screen.getByText("备用武器").closest("h3")
 
     expect(primaryHeader).toBeTruthy()
     expect(secondaryHeader).toBeTruthy()
     expect(armorHeader).toBeTruthy()
+    expect(inventoryWeaponsHeader).toBeTruthy()
     expect(within(primaryHeader!).getByRole("button", { name: "查看主武器来源" })).toBeTruthy()
     expect(within(secondaryHeader!).getByRole("button", { name: "查看副武器来源" })).toBeTruthy()
     expect(within(armorHeader!).getByRole("button", { name: "查看护甲来源" })).toBeTruthy()
+    expect(within(inventoryWeaponsHeader!).getByRole("button", { name: "查看备用武器 1来源" })).toBeTruthy()
   })
 
   it("stores the final armor max input as a number", async () => {

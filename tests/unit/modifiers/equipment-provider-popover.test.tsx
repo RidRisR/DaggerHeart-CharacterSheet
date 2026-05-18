@@ -101,6 +101,50 @@ describe("EquipmentProviderAnchor", () => {
     expect(updated.id).not.toBe("equipment:inventory:0:one")
   })
 
+  it("switches inventory weapon slots inside the provider popover", async () => {
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        weaponSlots: {
+          ...defaultSheetData.equipment.weaponSlots,
+          inventory: [
+            {
+              ...defaultSheetData.equipment.weaponSlots.inventory[0],
+              name: "备用短剑",
+              modifierContributions: [contribution("equipment:inventory:0:one", "短剑护手", 1)],
+            },
+            {
+              ...defaultSheetData.equipment.weaponSlots.inventory[1],
+              name: "备用长弓",
+              modifierContributions: [contribution("equipment:inventory:1:one", "长弓护手", 2)],
+            },
+          ],
+        },
+      },
+    })
+
+    render(<EquipmentProviderAnchor slotRef={{ type: "inventoryWeapon", index: 0 }} fallbackLabel="备用武器 1" />)
+
+    await userEvent.click(screen.getByRole("button", { name: "查看备用短剑来源" }))
+
+    expect(screen.getByRole("dialog", { name: "备用短剑来源" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "备用武器 1" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("tab", { name: "备用武器 2" })).toHaveAttribute("aria-selected", "false")
+    expect(screen.getByRole("textbox", { name: "修正名称" })).toHaveValue("短剑护手")
+
+    await userEvent.click(screen.getByRole("tab", { name: "备用武器 2" }))
+
+    expect(screen.getByRole("dialog", { name: "备用长弓来源" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "备用武器 2" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("textbox", { name: "修正名称" })).toHaveValue("长弓护手")
+
+    await userEvent.clear(screen.getByRole("textbox", { name: "修正名称" }))
+    await userEvent.type(screen.getByRole("textbox", { name: "修正名称" }), "长弓握把")
+
+    expect(sheet().equipment.weaponSlots.inventory[0].modifierContributions[0].editable.label).toBe("短剑护手")
+    expect(sheet().equipment.weaponSlots.inventory[1].modifierContributions[0].editable.label).toBe("长弓握把")
+  })
+
   it("deletes contributions using the unnamed fallback in the accessible label", async () => {
     resetSheetStore({
       equipment: {
@@ -288,7 +332,7 @@ describe("equipment provider section integration", () => {
     expect(onOpenWeaponModal).not.toHaveBeenCalled()
   })
 
-  it("opens inventory weapon provider panel", async () => {
+  it("keeps inventory weapon rows separate without row-level provider anchors", async () => {
     resetSheetStore({
       equipment: {
         ...defaultSheetData.equipment,
@@ -310,8 +354,8 @@ describe("equipment provider section integration", () => {
 
     render(<InventoryWeaponSection index={0} onOpenWeaponModal={vi.fn()} />)
 
-    await userEvent.click(screen.getByRole("button", { name: "查看备用短剑来源" }))
-    expect(screen.getByRole("dialog", { name: "备用短剑来源" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "备用短剑" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "查看备用短剑来源" })).not.toBeInTheDocument()
   })
 
   it("opens armor provider panel without opening the armor template modal", async () => {

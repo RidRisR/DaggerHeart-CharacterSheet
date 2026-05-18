@@ -141,12 +141,26 @@ function ArmorSummary({ armorSlot }: { armorSlot: ArmorSlot }) {
 
 export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "default" }: EquipmentProviderAnchorProps) {
   const [open, setOpen] = useState(false)
+  const [selectedInventoryIndex, setSelectedInventoryIndex] = useState<0 | 1>(
+    slotRef.type === "inventoryWeapon" ? slotRef.index : 0,
+  )
   const sheetData = useSheetStore(state => state.sheetData)
   const addContribution = useSheetStore(state => state.addEquipmentModifierContribution)
-  const slot = slotForRef(sheetData, slotRef)
-  const label = slot.name || fallbackLabel
+  const isInventoryWeapon = slotRef.type === "inventoryWeapon"
+  const effectiveSlotRef: EquipmentSlotRef = isInventoryWeapon
+    ? { type: "inventoryWeapon", index: selectedInventoryIndex }
+    : slotRef
+  const slot = slotForRef(sheetData, effectiveSlotRef)
+  const labelFallback = isInventoryWeapon ? `备用武器 ${selectedInventoryIndex + 1}` : fallbackLabel
+  const label = slot.name || labelFallback
   const compact = size === "compact"
   const contributions = sanitizeEquipmentModifierContributions(slot.modifierContributions)
+
+  useEffect(() => {
+    if (open && slotRef.type === "inventoryWeapon") {
+      setSelectedInventoryIndex(slotRef.index)
+    }
+  }, [open, slotRef])
 
   return (
     <span className={cn("inline-flex print:hidden", compact && "align-middle")}>
@@ -169,37 +183,65 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
           align="end"
           sideOffset={4}
           collisionPadding={8}
-          className="w-[26rem] p-0 print:hidden"
+          className={cn("p-0 print:hidden", isInventoryWeapon ? "w-[28rem]" : "w-[26rem]")}
         >
-          <div className="max-h-[min(28rem,80vh)] overflow-y-auto">
-            {isArmorSlot(slotRef, slot) && <ArmorSummary armorSlot={slot} />}
-            <div className="space-y-2 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-600">装备修正</span>
-                <button
-                  type="button"
-                  aria-label="新增修正"
-                  className="inline-flex h-7 items-center gap-1 rounded border border-gray-300 bg-white px-2 text-xs hover:bg-gray-50"
-                  onClick={() => addContribution(slotRef)}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  新增修正
-                </button>
-              </div>
-              {contributions.length === 0 ? (
-                <p className="py-3 text-center text-xs text-gray-500">暂无修正</p>
-              ) : (
-                <div className="space-y-2">
-                  {contributions.map(contribution => (
-                    <EditableContributionRow
-                      key={contribution.id}
-                      contribution={contribution}
-                      slotRef={slotRef}
-                    />
-                  ))}
+          <div className={cn("max-h-[min(28rem,80vh)]", isInventoryWeapon ? "flex" : "overflow-y-auto")}>
+            <div className="min-w-0 flex-1 overflow-y-auto">
+              {isArmorSlot(effectiveSlotRef, slot) && <ArmorSummary armorSlot={slot} />}
+              <div className="space-y-2 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-600">装备修正</span>
+                  <button
+                    type="button"
+                    aria-label="新增修正"
+                    className="inline-flex h-7 items-center gap-1 rounded border border-gray-300 bg-white px-2 text-xs hover:bg-gray-50"
+                    onClick={() => addContribution(effectiveSlotRef)}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    新增修正
+                  </button>
                 </div>
-              )}
+                {contributions.length === 0 ? (
+                  <p className="py-3 text-center text-xs text-gray-500">暂无修正</p>
+                ) : (
+                  <div className="space-y-2">
+                    {contributions.map(contribution => (
+                      <EditableContributionRow
+                        key={contribution.id}
+                        contribution={contribution}
+                        slotRef={effectiveSlotRef}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
+            {isInventoryWeapon && (
+              <div
+                role="tablist"
+                aria-label="备用武器槽位"
+                className="flex w-9 shrink-0 flex-col border-l border-gray-200 bg-gray-50 p-1"
+              >
+                {[0, 1].map(index => (
+                  <button
+                    key={index}
+                    type="button"
+                    role="tab"
+                    aria-label={`备用武器 ${index + 1}`}
+                    aria-selected={selectedInventoryIndex === index}
+                    className={cn(
+                      "flex h-8 items-center justify-center rounded text-xs font-semibold transition-colors",
+                      selectedInventoryIndex === index
+                        ? "bg-gray-800 text-white"
+                        : "bg-white text-gray-700 hover:bg-gray-100",
+                    )}
+                    onClick={() => setSelectedInventoryIndex(index as 0 | 1)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </PopoverContent>
       </Popover>

@@ -230,7 +230,7 @@ describe("modifier store actions", () => {
     expect(getReferenceSummary(sheet(), "evasion").unattributedDelta).toBe(-1)
   })
 
-  it("only removes saved unattributed difference when auto calculation is enabled", () => {
+  it("removes saved unattributed difference without recalculating final when auto calculation is disabled", () => {
     resetSheetStore({
       evasion: "15",
       userModifierContributions: [
@@ -255,9 +255,10 @@ describe("modifier store actions", () => {
     })
 
     store().removeOtherAdjustment(getOtherAdjustmentId("evasion", "unattributedDifference"))
-    expect(sheet().otherAdjustments).toEqual([createUnattributedDifference("evasion", 3)])
+    expect(sheet().otherAdjustments).toEqual([])
     expect(sheet().evasion).toBe("15")
 
+    store().upsertOtherAdjustment(createUnattributedDifference("evasion", 3))
     store().setTargetAutoCalculation("evasion", true)
     store().removeOtherAdjustment(getOtherAdjustmentId("evasion", "unattributedDifference"))
     expect(sheet().otherAdjustments).toEqual([])

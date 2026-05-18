@@ -1142,7 +1142,6 @@ export const useSheetStore = create<SheetState>((set) => ({
         const autoCalculation = isTargetAutoCalculationEnabled(
             state.sheetData.modifierState?.targetStates?.[adjustment.target],
         );
-        if (adjustment.kind === "unattributedDifference" && !autoCalculation) return state;
 
         const nextSheetData: SheetData = {
             ...state.sheetData,

@@ -117,11 +117,11 @@ source definitions 根据当前结构自然生成或移除：
 - `baseThresholds.minor !== null` 时生成 `equipment:armor:current:minorThreshold`。
 - `baseThresholds.major !== null` 时生成 `equipment:armor:current:majorThreshold`。
 
-final 同步完全交给 modifier reference 系统：
+source 更新后必须进入 automatic-calculation sync boundary；护甲输入本身只改变 source 数据，不直接写 Final Value、不直接管理 active base：
 
-- 自动计算开启且该 target 有 base：按 base + modifiers + other adjustments 重算。
-- 自动计算开启且该 target 无 base：final 为空。
-- 自动计算关闭：final 不写回，但 source/reference 实时更新。
+- 自动计算开启且该 target 有 Reference Total：按 Reference Total + Other Adjustments 派生 Calculated Final Value，并按规则写回 Final Value。
+- 自动计算开启且该 target 无 Reference Total：Calculated Final Value 不存在，Final Value 写为空。
+- 自动计算关闭：Final Value 不写回，但 source / reference / active base 实时更新。
 - 当前 active base 消失但仍有其他 base：顺延到其他有效 base。
 
 ## 自定义护甲弹窗

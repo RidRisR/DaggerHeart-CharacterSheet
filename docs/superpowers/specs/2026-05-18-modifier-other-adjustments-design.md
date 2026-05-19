@@ -41,16 +41,18 @@ target popover 中的来源列表分成三栏：
 
 - `基础值`：已知 base 来源。
 - `修正值`：已知 modifier 来源。
-- `其他`：影响最终值，但不属于已知基础值或已知修正来源的调整。
+- `其他`：影响 Calculated Final Value，但不属于已知基础值或已知修正来源的调整。
 
 总计不是一个栏目。总计仍由标题栏或摘要区域表达。
 
 计算关系：
 
 ```text
-reference total = active base + known modifiers
-final value = reference total + other adjustments
+Reference Total = active base + known modifiers
+Calculated Final Value = Reference Total + Other Adjustments
 ```
+
+Final Value 是 Stored Final Value。只有 automatic-calculation sync boundary 的 Final Writeback 阶段才可能把 Calculated Final Value 写回 Final Value。
 
 ## 其他项类型
 
@@ -58,7 +60,7 @@ final value = reference total + other adjustments
 
 ### 未知迁移差额
 
-迁移旧存档时，为了保留旧 `final value` 产生。
+迁移旧存档时，为了保留旧 `Final Value` 产生。
 
 系统知道它来自迁移，但不知道旧规则来源。它可能原本来自旧武器、升级、用户手填或其它旧自动化行为。
 
@@ -77,7 +79,7 @@ label: 未知迁移差额
 
 ### 手动修改终值
 
-用户明确提交 final input 后产生。
+用户明确提交 Final Value input 后产生。
 
 它不表示普通规则修正，而表示用户直接改变了最终值。
 
@@ -99,10 +101,10 @@ label: 手动修改终值
 `未归因差额` 只表示自动计算关闭期间的动态差额：
 
 ```text
-final value - reference total - 已保存 other adjustments
+locked Final Value - Calculated Final Value excluding derived unattributed difference
 ```
 
-它解释的是：自动计算关闭时，final value 被锁住，而已知来源发生变化后产生的差距。
+它解释的是：自动计算关闭时，Final Value 被锁住，而已知来源发生变化后产生的差距。
 
 展示：
 
@@ -115,25 +117,25 @@ label: 未归因差额
 
 - 自动计算关闭期间：运行时派生，不保存，实时变化，不可编辑、不可删除、不可归零。
 - 自动计算开启时：如果当前派生的 `未归因差额` 非 0，必须物化并保存为“其他”项。
-- 保存后：固定为当时的值，不再跟随 source/reference 变化，可删除。
+- 保存后：作为 materialized Other Adjustment 固定为当时的值，不再跟随 source/reference 变化，可删除。
 - 再次关闭自动计算时：删除已保存的 `未归因差额`，回到运行时派生模式。
 
 ## 自动计算语义
 
-自动计算开关只控制系统是否写回 final value。
+自动计算开关只控制系统是否写回 Final Value。
 
 ### 自动计算开启
 
-- provider / reference / 其他实时更新。
-- final value 按公式写回。
-- 删除任何“其他”项都会立刻按剩余 reference 和剩余“其他”项重算 final value。
+- Source State / Reference Total / Calculated Final Value / active base 实时更新。
+- Final Value 按 Final Writeback 规则写回 Calculated Final Value。
+- 删除任何“其他”项都会立刻按剩余 Reference Total 和剩余“其他”项重算 Calculated Final Value，并在允许时写回 Final Value。
 
 ### 自动计算关闭
 
-- provider / reference / 其他仍实时更新。
-- final value 不被系统写回。
-- `未归因差额` 运行时派生，用于解释 locked final value 与当前计算值之间的差距。
-- 删除可编辑“其他”项不会写回 final value；剩余差额由运行时派生的 `未归因差额` 接住。
+- Source State / Reference Total / Calculated Final Value / active base 仍实时更新。
+- Final Value 不被系统写回。
+- `未归因差额` 运行时派生，用于解释 locked Final Value 与当前 Calculated Final Value 之间的差距。
+- 删除可编辑“其他”项不会写回 Final Value；剩余差额由运行时派生的 `未归因差额` 接住。
 
 ## 存储
 
@@ -177,14 +179,14 @@ other:${target}:unattributed-difference
 
 ### Final 不可解析
 
-如果 final value 不可解析为数字：
+如果 Final Value 不可解析为数字：
 
 - 原样保留。
 - 不创建“其他”差额。
 - 不自动覆盖。
 - 直到用户提交可解析数字。
 
-不可解析 final 后续被用户改成可解析数字时，产生的差额归类为 `手动修改终值`。
+不可解析 Final Value 后续被用户改成可解析数字时，产生的差额归类为 `手动修改终值`。
 
 ### 无 Reference Total
 
@@ -197,9 +199,9 @@ other:${target}:unattributed-difference
 
 ## 迁移规则
 
-迁移必须优先保留旧存档 final value。
+迁移必须优先保留旧存档 Final Value。
 
-如果迁移时有可计算 reference total，且 legacy final 可解析为数字：
+如果迁移时有可计算 Reference Total，且 legacy Final Value 可解析为数字：
 
 ```text
 未知迁移差额 = legacy final - reference total - 其它已保存 other adjustments

@@ -2,9 +2,16 @@
 
 日期：2026-05-04
 
+> **状态：保留为领域背景。** 本文的装备数据结构、contribution 身份、
+> 主/副/备用武器语义仍是有效背景；“装备变更后的自动计算入口”已经由
+> `CONTEXT.md` 和
+> `docs/superpowers/specs/2026-05-19-automatic-calculation-boundary-design.md`
+> 统一定义。执行实现前不要以本文早期的 “不触发 reconciliation / 不自动写
+> final target” 作为当前行为依据。
+
 本文记录当前已经达成的装备、护甲与 modifier provider 改造决策。它不是实现计划；后续实现前仍需要拆成正式 spec 和 plan。
 
-全局 modifier provider / registry / target state 架构以 `docs/superpowers/specs/2026-05-04-modifier-provider-target-architecture-design.md` 为准。本文只记录装备 provider 相关的数据和 UI 决策。
+全局 modifier provider / registry / target state 架构的历史背景见 `docs/superpowers/specs/2026-05-04-modifier-provider-target-architecture-design.md`；当前自动计算入口、Source/Derived/Stored State 术语和 Final Value 回写规则以 `CONTEXT.md` 和 05-19 自动计算边界 spec 为准。本文只记录装备 provider 相关的数据和 UI 决策。
 
 ## 范围
 
@@ -22,7 +29,7 @@
 - 攻击掷骰、伤害骰、条件型效果。
 - 经历值目标 `experienceValues.${number}`。
 - “应用参考值到最终字段”按钮。
-- 每次 provider mutation 后立刻执行 modifier state reconciliation。
+- 旧方案中的 “每次 provider mutation 后立刻执行 modifier state reconciliation” 机制。当前 modifier-aware 装备变更必须进入统一自动计算同步边界。
 - 将所有 final target 字符串字段改成 number。
 
 ## 核心原则
@@ -34,12 +41,12 @@
 - 选择预设装备只是一种填表动作，会初始化装备文本和 contributions。
 - 写入 `SheetData` 后，装备不再长期依赖 `data/list` 中的模板。
 
-现有自动化行为保持不变：
+装备变更后的自动计算行为以统一边界为准：
 
-- 选择护甲仍自动填写护甲值和伤害阈值。
-- 手动编辑护甲基础值仍同步最终护甲值。
-- 手动编辑护甲基础阈值仍同步最终伤害阈值。
-- 装备 modifier contributions 不自动写入 final target。
+- 选择护甲、编辑护甲基础值、编辑基础阈值、编辑装备 contributions，本质上都是 Source State mutation。
+- Source State mutation 必须进入自动计算同步边界，由边界解析当前 registry、active base、Reference Total、Other Adjustments 和 Calculated Final Value。
+- `targetStates[target].autoCalculation` 唯一区别是算完后是否回写 Stored Final Value：开启且未被用户 final 输入阻塞时，回写 Calculated Final Value；关闭时保留用户锁定的 Final Value。
+- 装备代码不应直接写 `armorMax`、`minorThreshold`、`majorThreshold` 等 Final Value 字段，也不应自行管理 active base。它只更新装备 Source State，然后把整张表交给同步边界。
 
 ## 新装备结构
 

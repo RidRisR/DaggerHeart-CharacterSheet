@@ -231,7 +231,7 @@ v1 只有 `checkedUpgrades`，没有 provider selection。
 
 ## Final Value Preservation
 
-迁移必须先生成 `upgradeStates` 和对应 provider entries，再计算 `未知迁移差额` 来保留 legacy final value。
+迁移必须先生成 `upgradeStates` 和对应 provider entries，再计算 `未知迁移差额` 来保留 legacy Final Value / Stored Final Value。
 
 顺序必须是：
 
@@ -239,7 +239,7 @@ v1 只有 `checkedUpgrades`，没有 provider selection。
 legacy checkedUpgrades
 -> upgradeStates
 -> registry sees upgrade provider entries
--> preserve legacy final through unknown migration difference
+-> preserve legacy Final Value through Other Adjustment kind "unknownMigrationDifference"
 ```
 
 原因：固定 target 升级不应同时表达为 provider entry 和迁移差额。
@@ -248,7 +248,7 @@ legacy checkedUpgrades
 
 - 迁移只保留 `checked: true`。
 - 不生成 provider entry。
-- legacy final 如果超出 reference，由 `未知迁移差额` 解释。
+- legacy Final Value 如果超出 Reference Total，由 `未知迁移差额` 解释。
 
 ## 缺少 Params 的历史升级
 
@@ -265,7 +265,7 @@ upgradeStates[checkKey] = { checked: true }
 - 取消时只设置 `checked: false`。
 - 提示用户历史选择参数缺失。
 - 不做 provider 回滚。
-- 不直接修改 final value。
+- 不直接修改 Final Value；provider/source 变化仍应通过 automatic-calculation sync boundary 归一化 source / reference / active base，并按自动计算状态决定 Final Value writeback。
 
 原因：系统不知道应回滚哪些具体属性或经历。
 

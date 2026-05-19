@@ -221,7 +221,7 @@ oldLevel?: string
 5. 找出本次进入的所有等级。
 6. 按等级从小到大执行对应自动化函数。
 7. 每个自动化函数接收上一步返回的最新 `SheetData`。
-8. 最后执行 `applyAutoCalculationForTargets`，同步实时 modifier target。
+8. 最后进入 automatic-calculation sync boundary，同步实时 modifier target。当前实现可以继续使用 `applyAutoCalculationForTargets` 名称，但语义上它是 boundary executor，而不是局部 target helper。
 
 示例：
 
@@ -287,7 +287,7 @@ oldLevel?: string
 - 等级对严重伤害阈值的修正。
 - 等级对熟练度的基础值和阈值修正。
 
-这些来源继续由 modifier source registry 根据当前等级生成，并由 `applyAutoCalculationForTargets` 同步。
+这些来源继续由 modifier source registry 根据当前等级生成，并由 automatic-calculation sync boundary 全量归一化、派生 Reference Total / Calculated Final Value，再按自动计算开关决定是否写回 Final Value。
 
 自动计算开启时，实时等级来源可以随当前等级升降。
 
@@ -330,4 +330,3 @@ oldLevel?: string
 15. `updateLevel` 只接收新等级，从 store 当前数据读取旧等级。
 16. 空字符串或非法等级在等级进入自动化判断中按 1 级处理。
 17. 实时等级来源仍随当前等级重算，不受等级进入自动化是否触发影响。
-

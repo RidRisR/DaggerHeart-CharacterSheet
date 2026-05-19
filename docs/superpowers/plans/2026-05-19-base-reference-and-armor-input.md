@@ -1,5 +1,10 @@
 # Base Reference And Armor Input Implementation Plan
 
+> **状态：执行前需更新。** 本计划仍覆盖当前 no-base 和护甲输入目标，但其中部分测试 fixture
+> 和步骤早于 `2026-05-19-automatic-calculation-boundary-design.md`。执行前必须更新：
+> `applyAutoCalculationForTargets` 视为共享 boundary executor；同步范围为有限 Modifier Target Universe；
+> disabled target 仍归一化 source/reference/active base；`autoCalculation: true` 不作为独立持久化偏好。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** First enforce the modifier invariant that final values require a real base, then make armor value and threshold inputs editable without hidden stale values.

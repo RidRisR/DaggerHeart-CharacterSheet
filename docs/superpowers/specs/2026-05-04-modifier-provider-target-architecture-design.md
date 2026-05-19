@@ -2,6 +2,14 @@
 
 日期：2026-05-04
 
+> **状态：保留为架构背景。** Provider、Registry、Target/Calculator
+> 三层分工仍是当前 modifier 系统的核心语言；本文的“第一阶段边界”、
+> load/migration-only reconciliation 和 `automationSelections` 口径早于 05-19
+> 自动计算边界设计。当前同步入口、Source/Derived/Stored State 术语、
+> Final Value writeback 规则和 Modifier Target Universe 以 `CONTEXT.md` 与
+> `docs/superpowers/specs/2026-05-19-automatic-calculation-boundary-design.md`
+> 为准。
+
 ## 目的
 
 本文记录 modifier provider 与 target 分离设计的当前共识。它用于解释涉及哪些结构、这些结构分别在哪里使用，以及第一阶段架构边界。

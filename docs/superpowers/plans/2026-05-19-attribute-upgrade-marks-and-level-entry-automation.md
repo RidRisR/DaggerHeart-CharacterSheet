@@ -1,5 +1,10 @@
 # Attribute Upgrade Marks and Level Entry Automation Implementation Plan
 
+> **状态：执行前需校准。** 本计划仍可作为属性黑点和等级进入自动化依据；但等级/升级是
+> modifier-aware behavior，完成 source mutation 后必须进入 automatic-calculation sync boundary。
+> 不应把 `applyAutoCalculationForTargets` 当作局部 helper，也不应通过裸 `setSheetData`
+> 或 raw diff 推断自动计算意图。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Restore attribute upgrade marks, add standard/free attribute upgrade modes, and introduce ordered level-entry automation for 5/8 mark resets.
@@ -466,4 +471,3 @@ Type consistency:
 
 - `attributeMarksApplied?: true` is consistently used on `UpgradeState`.
 - `updateLevel(level: string): void` is consistently used after cleanup.
-

@@ -641,19 +641,32 @@ describe("modifier state migration", () => {
     ])
   })
 
-  it("uses legacy stressMax final as estimated base without hidden baseline", () => {
-    const baseline = migrateSheetData(v1ModifierInput({ stressMax: 6 }))
-    const increased = migrateSheetData(v1ModifierInput({ stressMax: 8 }))
+  it("uses the system stress base for legacy stressMax 6 without creating an estimated base", () => {
+    const migrated = migrateSheetData(v1ModifierInput({ stressMax: 6 }))
 
-    expect(baseline.userModifierContributions).toContainEqual(
+    expect(migrated.stressMax).toBe(6)
+    expect(migrated.userModifierContributions).not.toContainEqual(
       createEstimatedBaseContribution("stressMax", 6),
     )
-    expect(baseline.otherAdjustments).toEqual([])
+    expect(migrated.modifierState?.targetStates.stressMax).toEqual({
+      activeBaseId: "level:base:stressMax",
+    })
+    expect(migrated.otherAdjustments).toEqual([])
+  })
 
-    expect(increased.userModifierContributions).toContainEqual(
+  it("preserves legacy stressMax differences relative to the system stress base", () => {
+    const migrated = migrateSheetData(v1ModifierInput({ stressMax: 8 }))
+
+    expect(migrated.stressMax).toBe(8)
+    expect(migrated.userModifierContributions).not.toContainEqual(
       createEstimatedBaseContribution("stressMax", 8),
     )
-    expect(increased.otherAdjustments).toEqual([])
+    expect(migrated.modifierState?.targetStates.stressMax).toEqual({
+      activeBaseId: "level:base:stressMax",
+    })
+    expect(migrated.otherAdjustments).toContainEqual(
+      createUnknownMigrationDifference("stressMax", 2),
+    )
   })
 
   it("uses experience value baseline 2 before creating migration differences", () => {

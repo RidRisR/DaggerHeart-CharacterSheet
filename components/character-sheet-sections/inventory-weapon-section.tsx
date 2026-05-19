@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
 import { showFadeNotification } from "@/components/ui/fade-notification"
-import type { WeaponSlot } from "@/lib/equipment/types"
+import type { WeaponSlot } from "@/automation/equipment/types"
 
 interface InventoryWeaponSectionProps {
   index: 0 | 1

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import { armorItems } from "@/data/list/armor"
-import { createEmptyArmorSlot, createEmptyEquipmentData } from "@/lib/equipment/defaults"
-import type { EquipmentData } from "@/lib/equipment/types"
+import { createEmptyArmorSlot, createEmptyEquipmentData } from "@/automation/equipment/defaults"
+import type { EquipmentData } from "@/automation/equipment/types"
 import { resetSheetStore, sheet, store } from "./test-helpers"
 
 describe("护甲自动化基线", () => {

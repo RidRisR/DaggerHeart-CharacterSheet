@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
+import { computeUpgradeAutomation } from "@/automation/actions/upgrade-actions"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import type { UpgradeAutomationMetadata } from "@/lib/modifiers/types"
+import type { UpgradeAutomationMetadata } from "@/automation/core/types"
 
 function run(
   label: string,

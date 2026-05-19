@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { createEmptyCard, type StandardCard } from "@/card/card-types"
 import { armorItems } from "@/data/list/armor"
 import { primaryWeapons } from "@/data/list/primary-weapon"
-import { createEmptyArmorSlot, createEmptyEquipmentData } from "@/lib/equipment/defaults"
+import { createEmptyArmorSlot, createEmptyEquipmentData } from "@/automation/equipment/defaults"
 import { resetSheetStore, sheet, store } from "./test-helpers"
 
 function professionCard(id: string, evasion: number, hp: number): StandardCard {

@@ -7,7 +7,7 @@ import { InventoryWeaponSection } from "@/components/character-sheet-sections/in
 import { WeaponSection } from "@/components/character-sheet-sections/weapon-section"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
-import type { EquipmentModifierContribution } from "@/lib/equipment/types"
+import type { EquipmentModifierContribution } from "@/automation/equipment/types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 

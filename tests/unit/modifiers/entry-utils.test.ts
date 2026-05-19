@@ -6,8 +6,8 @@ import {
   entryLabel,
   entryTarget,
   entryValue,
-} from "@/lib/modifiers/entry-utils"
-import type { ModifierContribution } from "@/lib/modifiers/types"
+} from "@/automation/core/entry-utils"
+import type { ModifierContribution } from "@/automation/core/types"
 
 describe("modifier entry utilities", () => {
   it("creates a structured runtime entry", () => {

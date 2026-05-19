@@ -1,5 +1,5 @@
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
-import { createEmptyEquipmentData } from "@/lib/equipment/defaults";
+import { createEmptyEquipmentData } from "@/automation/equipment/defaults";
 import type { SheetData } from "./sheet-data";
 import { CURRENT_SCHEMA_VERSION } from "./sheet-schema-version";
 

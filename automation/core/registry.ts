@@ -1,5 +1,5 @@
 import type { SheetData } from "@/lib/sheet-data"
-import { sanitizeEquipmentModifierContributions } from "@/lib/equipment/contribution-utils"
+import { sanitizeEquipmentModifierContributions } from "@/automation/equipment/contribution-utils"
 import { contributionToEntry, entryTarget } from "./entry-utils"
 import { calculateReferenceSummary } from "./reference-calculator"
 import { collectSystemModifierEntries } from "./source-definitions"

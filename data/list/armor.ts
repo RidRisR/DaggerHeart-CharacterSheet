@@ -1,4 +1,4 @@
-import type { EquipmentModifierContributionTemplate } from "@/lib/equipment/types"
+import type { EquipmentModifierContributionTemplate } from "@/automation/equipment/types"
 
 export interface ArmorItem {
     id: string;

@@ -14,7 +14,7 @@ import {
   sanitizeOtherAdjustments,
   sumOtherAdjustments,
   upsertOtherAdjustment,
-} from "@/lib/modifiers/other-adjustments"
+} from "@/automation/core/other-adjustments"
 
 describe("other adjustments", () => {
   it("creates stable per-target ids", () => {

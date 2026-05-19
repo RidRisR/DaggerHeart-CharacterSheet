@@ -13,8 +13,8 @@ import { StandardCard } from '@/card/card-types'
 import { defaultSheetData } from './default-sheet-data'
 import type { AttributeValue } from './sheet-data'
 import { LEGACY_EQUIPMENT_KEYS, migrateSheetData } from './sheet-data-migration'
-import { sanitizeOtherAdjustments } from '@/lib/modifiers/other-adjustments'
-import { mergeLegacyUpgradeStateFields } from '@/lib/modifiers/upgrade-states'
+import { sanitizeOtherAdjustments } from '@/automation/core/other-adjustments'
+import { mergeLegacyUpgradeStateFields } from '@/automation/core/upgrade-states'
 
 export interface ValidationResult {
   valid: boolean

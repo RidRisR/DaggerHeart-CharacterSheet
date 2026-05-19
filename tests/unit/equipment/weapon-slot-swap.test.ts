@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { createEmptyEquipmentData } from "@/lib/equipment/defaults"
-import { swapInventoryWeaponWithActiveSlot } from "@/lib/equipment/weapon-slot-utils"
+import { createEmptyEquipmentData } from "@/automation/equipment/defaults"
+import { swapInventoryWeaponWithActiveSlot } from "@/automation/equipment/weapon-slot-utils"
 
 describe("weapon slot swap", () => {
   it("swaps an inventory slot with primary including contributions", () => {

@@ -2,23 +2,23 @@
 
 import { useEffect, useState } from "react"
 import { tryParseNumberExpression } from "@/lib/number-utils"
-import { entryKind, entryLabel, entryValue } from "@/lib/modifiers/entry-utils"
+import { entryKind, entryLabel, entryValue } from "@/automation/core/entry-utils"
 import {
   isTargetOwnedSpecialContribution,
-} from "@/lib/modifiers/special-contributions"
+} from "@/automation/core/special-contributions"
 import {
   createUnattributedDifference,
   OTHER_ADJUSTMENT_PRESENTATION,
-} from "@/lib/modifiers/other-adjustments"
-import { getReferenceSummary } from "@/lib/modifiers/registry"
-import { isTargetAutoCalculationEnabled } from "@/lib/modifiers/target-sync"
+} from "@/automation/core/other-adjustments"
+import { getReferenceSummary } from "@/automation/core/registry"
+import { isTargetAutoCalculationEnabled } from "@/automation/core/target-sync"
 import type {
   ModifierEntry,
   ModifierEntryKind,
   ModifierTargetId,
   OtherAdjustment,
   UserModifierContribution,
-} from "@/lib/modifiers/types"
+} from "@/automation/core/types"
 import type { SheetData } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store"
 

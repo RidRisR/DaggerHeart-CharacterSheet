@@ -5,7 +5,7 @@ import { CircleHelp } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { useSheetStore } from "@/lib/sheet-store"
-import type { ModifierTargetId } from "@/lib/modifiers/types"
+import type { ModifierTargetId } from "@/automation/core/types"
 import { ModifierPopover } from "./modifier-popover"
 
 interface ModifierFieldAnchorProps {

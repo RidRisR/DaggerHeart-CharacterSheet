@@ -6,19 +6,19 @@ import {
   disableAutoCalculationForTarget,
   enableAutoCalculationForTarget,
   reconcileFinalInput,
-} from "@/lib/modifiers/final-input-reconciliation"
+} from "@/automation/core/final-input-reconciliation"
 import {
   createManualFinalAdjustment,
   createUnattributedDifference,
   createUnknownMigrationDifference,
   getOtherAdjustmentId,
-} from "@/lib/modifiers/other-adjustments"
+} from "@/automation/core/other-adjustments"
 import {
   createUnattributedDeltaContribution,
   createManualBaseContribution,
   getManualBaseId,
   getUnattributedDeltaId,
-} from "@/lib/modifiers/special-contributions"
+} from "@/automation/core/special-contributions"
 import type { SheetData } from "@/lib/sheet-data"
 
 function sheet(overrides: Partial<SheetData> = {}): SheetData {

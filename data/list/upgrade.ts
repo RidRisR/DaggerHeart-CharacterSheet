@@ -1,4 +1,4 @@
-import type { UpgradeAutomationMetadata } from "@/lib/modifiers/types"
+import type { UpgradeAutomationMetadata } from "@/automation/core/types"
 
 interface UpgradeOptionData {
   label: string

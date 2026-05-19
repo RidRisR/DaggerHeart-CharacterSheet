@@ -6,7 +6,7 @@ import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
-import type { ArmorSlot } from "@/lib/equipment/types"
+import type { ArmorSlot } from "@/automation/equipment/types"
 
 interface ArmorSectionProps {
   onOpenArmorModal: () => void;

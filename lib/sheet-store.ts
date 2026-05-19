@@ -6,47 +6,47 @@ import type { SheetData, AttributeValue, ArmorTemplateData, SheetCardReference }
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { armorItems } from "@/data/list/armor";
 import { allWeapons } from "@/data/list/all-weapons";
-import { parseArmorMax, parseArmorThreshold, parseArmorThresholdSide } from "@/lib/equipment/armor-utils";
+import { parseArmorMax, parseArmorThreshold, parseArmorThresholdSide } from "@/automation/equipment/armor-utils";
 import {
     createDefaultEquipmentModifierContribution,
     createEquipmentContributionId as createAdHocEquipmentContributionId,
     isEquipmentModifierTargetId,
     sanitizeEquipmentModifierContributions,
-} from "@/lib/equipment/contribution-utils";
-import { createEmptyArmorSlot, createEmptyWeaponSlot } from "@/lib/equipment/defaults";
-import { swapInventoryWeaponWithActiveSlot } from "@/lib/equipment/weapon-slot-utils";
+} from "@/automation/equipment/contribution-utils";
+import { createEmptyArmorSlot, createEmptyWeaponSlot } from "@/automation/equipment/defaults";
+import { swapInventoryWeaponWithActiveSlot } from "@/automation/equipment/weapon-slot-utils";
 import {
     createArmorSlotFromCustomPayload,
     createArmorSlotFromTemplate,
     createWeaponSlotFromCustomPayload,
     createWeaponSlotFromName,
     createWeaponSlotFromTemplate,
-} from "@/lib/equipment/template-to-slot";
-import type { ArmorSlot, EquipmentModifierContribution, EquipmentModifierTargetId, WeaponSlot } from "@/lib/equipment/types";
+} from "@/automation/equipment/template-to-slot";
+import type { ArmorSlot, EquipmentModifierContribution, EquipmentModifierTargetId, WeaponSlot } from "@/automation/equipment/types";
 import type {
     ModifierEntryId,
     ModifierTargetId,
     OtherAdjustment,
     UpgradeState,
     UserModifierContribution,
-} from "@/lib/modifiers/types";
+} from "@/automation/core/types";
 import {
     deleteSpecialBase,
     disableAutoCalculationForTarget,
     enableAutoCalculationForTarget,
     reconcileFinalInput,
-} from "@/lib/modifiers/final-input-reconciliation";
-import { applyAutoCalculationForTargets, isTargetAutoCalculationEnabled } from "@/lib/modifiers/target-sync";
-import { writeTargetValue } from "@/lib/modifiers/target-accessors";
+} from "@/automation/core/final-input-reconciliation";
+import { applyAutoCalculationForTargets, isTargetAutoCalculationEnabled } from "@/automation/core/target-sync";
+import { writeTargetValue } from "@/automation/core/target-accessors";
 import { tryParseNumberExpression } from "@/lib/number-utils";
-import { applyHpStressMaxInvariant } from "@/lib/modifiers/hp-stress-invariants";
-import { mergeUpgradeState } from "@/lib/modifiers/upgrade-states";
+import { applyHpStressMaxInvariant } from "@/automation/core/hp-stress-invariants";
+import { mergeUpgradeState } from "@/automation/core/upgrade-states";
 import {
     removeOtherAdjustment as removeOtherAdjustmentFromList,
     sanitizeOtherAdjustments,
     upsertOtherAdjustment as upsertOtherAdjustmentInList,
-} from "@/lib/modifiers/other-adjustments";
-import { applyLevelEntryAutomationsWithNotifications } from "@/lib/automation/level-entry-actions";
+} from "@/automation/core/other-adjustments";
+import { applyLevelEntryAutomationsWithNotifications } from "@/automation/actions/level-entry-actions";
 import { showFadeNotification } from "@/components/ui/fade-notification";
 
 // 施法属性映射关系

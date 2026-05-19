@@ -3,7 +3,7 @@ import type {
   ModifierContribution,
   ModifierEntryKind,
   ModifierTargetId,
-} from "@/lib/modifiers/types"
+} from "@/automation/core/types"
 
 export type EquipmentModifierTargetId = Exclude<ModifierTargetId, ExperienceTargetId>
 

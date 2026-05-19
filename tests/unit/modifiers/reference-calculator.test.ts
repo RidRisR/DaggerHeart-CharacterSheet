@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import { createModifierEntry } from "@/lib/modifiers/entry-utils"
+import { createModifierEntry } from "@/automation/core/entry-utils"
 import {
   createManualFinalAdjustment,
   createUnknownMigrationDifference,
-} from "@/lib/modifiers/other-adjustments"
-import { calculateReferenceSummary } from "@/lib/modifiers/reference-calculator"
-import type { ModifierEntry } from "@/lib/modifiers/types"
+} from "@/automation/core/other-adjustments"
+import { calculateReferenceSummary } from "@/automation/core/reference-calculator"
+import type { ModifierEntry } from "@/automation/core/types"
 
 const entries: ModifierEntry[] = [
   createModifierEntry({

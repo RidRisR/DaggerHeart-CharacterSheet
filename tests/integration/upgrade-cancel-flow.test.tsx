@@ -5,8 +5,8 @@ import userEvent from "@testing-library/user-event"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { useSheetStore } from "@/lib/sheet-store"
-import { createEstimatedBaseContribution } from "@/lib/modifiers/special-contributions"
-import type { ModifierContribution, ModifierTargetId } from "@/lib/modifiers/types"
+import { createEstimatedBaseContribution } from "@/automation/core/special-contributions"
+import type { ModifierContribution, ModifierTargetId } from "@/automation/core/types"
 
 const ATTRIBUTE_TARGETS = [
   ["agility", "agility.value"],

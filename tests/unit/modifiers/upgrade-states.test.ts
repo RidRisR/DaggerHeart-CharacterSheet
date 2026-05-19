@@ -6,7 +6,7 @@ import {
   mergeLegacyUpgradeStateFields,
   mergeUpgradeState,
   sanitizeUpgradeStates,
-} from "@/lib/modifiers/upgrade-states"
+} from "@/automation/core/upgrade-states"
 
 describe("upgrade states", () => {
   it("recognizes only supported fixed targets and attribute keys", () => {

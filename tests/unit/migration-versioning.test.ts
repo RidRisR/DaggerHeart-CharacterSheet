@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { defaultSheetData } from '@/lib/default-sheet-data'
-import { createUnknownMigrationDifference } from '@/lib/modifiers/other-adjustments'
+import { createUnknownMigrationDifference } from '@/automation/core/other-adjustments'
 import {
   createEstimatedBaseContribution,
   getEstimatedBaseId,
-} from '@/lib/modifiers/special-contributions'
+} from '@/automation/core/special-contributions'
 import { migrateSheetData } from '@/lib/sheet-data-migration'
 import {
   CURRENT_SCHEMA_VERSION,

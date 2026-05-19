@@ -87,7 +87,7 @@ describe("equipment data migration", () => {
     expect("armorValue" in runtime).toBe(false)
   })
 
-  it("normalizes invalid armor rule fields to null", () => {
+  it("parses legacy armor thresholds side by side and normalizes invalid rule fields", () => {
     const migrated = migrateSheetData(v1EquipmentInput({
       armorName: "奇怪护甲",
       armorBaseScore: "heavy",
@@ -97,6 +97,18 @@ describe("equipment data migration", () => {
     expect(migrated.equipment.armorSlot).toMatchObject({
       name: "奇怪护甲",
       baseArmorMax: null,
+      baseThresholds: { minor: 7, major: null },
+    })
+  })
+
+  it("normalizes fully unparseable legacy armor thresholds to null", () => {
+    const migrated = migrateSheetData(v1EquipmentInput({
+      armorName: "损坏护甲",
+      armorThreshold: "bad/worse",
+    }))
+
+    expect(migrated.equipment.armorSlot).toMatchObject({
+      name: "损坏护甲",
       baseThresholds: { minor: null, major: null },
     })
   })

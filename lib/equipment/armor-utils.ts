@@ -1,7 +1,7 @@
-import { tryParseNumber } from "@/lib/number-utils"
+import { tryParseNumber, tryParseNumberExpression } from "@/lib/number-utils"
 
-function parseThresholdSide(value: unknown): number | null {
-  const parsed = tryParseNumber(value)
+export function parseArmorThresholdSide(value: unknown): number | null {
+  const parsed = tryParseNumber(value) ?? tryParseNumberExpression(value)
   return parsed === undefined ? null : parsed
 }
 
@@ -19,29 +19,30 @@ export function parseArmorThreshold(value: unknown): { minor: number | null; maj
     const thresholds = value as { minor?: unknown; major?: unknown }
 
     return {
-      minor: parseThresholdSide(thresholds.minor),
-      major: parseThresholdSide(thresholds.major),
+      minor: parseArmorThresholdSide(thresholds.minor),
+      major: parseArmorThresholdSide(thresholds.major),
     }
   }
 
-  const text = String(value ?? "").replace(/[()]/g, "")
+  const text = String(value ?? "").replace(/[()]/g, "").trim()
   const parts = text.split("/")
+
+  if (parts.length === 1) {
+    return {
+      minor: parseArmorThresholdSide(parts[0]),
+      major: null,
+    }
+  }
 
   if (parts.length !== 2) {
     return { minor: null, major: null }
   }
 
   const [minorRaw, majorRaw] = parts
-  const minor = parseThresholdSide(minorRaw)
-  const major = parseThresholdSide(majorRaw)
-
-  if (minor === null || major === null) {
-    return { minor: null, major: null }
-  }
 
   return {
-    minor,
-    major,
+    minor: parseArmorThresholdSide(minorRaw),
+    major: parseArmorThresholdSide(majorRaw),
   }
 }
 

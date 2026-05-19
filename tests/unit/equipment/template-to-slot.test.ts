@@ -183,4 +183,31 @@ describe("template to slot conversion", () => {
       modifierContributions: [],
     })
   })
+
+  it.each([
+    ["9/", { minor: 9, major: null }],
+    ["/21", { minor: null, major: 21 }],
+    ["9/abc", { minor: 9, major: null }],
+    ["abc/21", { minor: null, major: 21 }],
+    ["9", { minor: 9, major: null }],
+    ["abc", { minor: null, major: null }],
+  ])("parses half-structured armor threshold payload %s", (threshold, expected) => {
+    const slot = createArmorSlotFromCustomPayload({
+      名称: "自定义护甲",
+      护甲值: "4",
+      伤害阈值: threshold,
+    })
+
+    expect(slot.baseThresholds).toEqual(expected)
+  })
+
+  it("parses structured armor threshold payload sides independently", () => {
+    const slot = createArmorSlotFromCustomPayload({
+      名称: "自定义护甲",
+      护甲值: "4",
+      伤害阈值: { minor: "10+3", major: "bad" },
+    })
+
+    expect(slot.baseThresholds).toEqual({ minor: 13, major: null })
+  })
 })

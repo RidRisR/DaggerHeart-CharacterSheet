@@ -227,6 +227,25 @@ describe("final input reconciliation", () => {
     ])
   })
 
+  it("enables auto calculation without creating source state when no reference total exists", () => {
+    const reconciled = enableAutoCalculationForTarget(sheet({
+      evasion: "12",
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
+    }), "evasion")
+
+    expect(reconciled.evasion).toBe("12")
+    expect(reconciled.userModifierContributions).toEqual([])
+    expect(reconciled.otherAdjustments ?? []).toEqual([])
+    expect(reconciled.modifierState?.targetStates.evasion).toEqual({
+      autoCalculation: true,
+    })
+  })
+
   it("disables auto calculation by deleting saved unattributed difference and preserving final", () => {
     const reconciled = disableAutoCalculationForTarget(sheet({
       evasion: "15",

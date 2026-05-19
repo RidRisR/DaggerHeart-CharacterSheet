@@ -162,7 +162,6 @@ describe('sheet data version migration', () => {
     expect(migrated.evasion).toBe('15')
     expect(migrated.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: getEstimatedBaseId('evasion'),
-      autoCalculation: true,
     })
     expect(migrated.userModifierContributions).toEqual(expect.arrayContaining([
       {

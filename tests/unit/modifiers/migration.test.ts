@@ -38,8 +38,8 @@ describe("modifier state migration", () => {
     expect("armorValue" in (migrated as any)).toBe(false)
     expect(migrated.minorThreshold).toBe("10")
     expect(migrated.majorThreshold).toBe("20")
-    expect(migrated.modifierState?.targetStates.evasion?.autoCalculation).toBe(true)
-    expect(migrated.modifierState?.targetStates.hpMax?.autoCalculation).toBe(true)
+    expect(migrated.modifierState?.targetStates.evasion?.autoCalculation).toBeUndefined()
+    expect(migrated.modifierState?.targetStates.hpMax?.autoCalculation).toBeUndefined()
     expect(migrated.modifierState?.entryStates).toEqual({})
     expect("checkedUpgrades" in (migrated as any)).toBe(false)
     expect("automationSelections" in (migrated as any)).toBe(false)
@@ -155,7 +155,7 @@ describe("modifier state migration", () => {
 
     expect("armorValue" in (migrated as any)).toBe(false)
     expect(migrated.armorMax).toBe(4)
-    expect(migrated.modifierState?.targetStates.armorMax?.autoCalculation).toBe(true)
+    expect(migrated.modifierState?.targetStates.armorMax?.autoCalculation).toBeUndefined()
   })
 
   it("migrates old profession base ids before reconciling against competing user bases", () => {
@@ -279,10 +279,8 @@ describe("modifier state migration", () => {
       },
     })
 
-    expect(migrated.modifierState?.targetStates.evasion).toEqual({
-      autoCalculation: true,
-    })
-    expect(migrated.modifierState?.targetStates.evasion).not.toHaveProperty("syncMode")
+    expect(migrated.modifierState?.targetStates.evasion).toBeUndefined()
+    expect(migrated.modifierState?.targetStates).not.toHaveProperty("syncMode")
   })
 
   it("drops invalid sync mode values", () => {
@@ -368,7 +366,6 @@ describe("modifier state migration", () => {
     expect(migrated.evasion).toBe("15")
     expect(migrated.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "profession:current:evasion",
-      autoCalculation: true,
     })
     expect(migrated.otherAdjustments).toContainEqual(createUnknownMigrationDifference("evasion", 3))
     expect(migrated.userModifierContributions).not.toContainEqual(
@@ -389,7 +386,6 @@ describe("modifier state migration", () => {
     expect(migrated.evasion).toBe("15")
     expect(migrated.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: getEstimatedBaseId("evasion"),
-      autoCalculation: true,
     })
     expect(migrated.userModifierContributions).toEqual(expect.arrayContaining([
       {
@@ -411,7 +407,6 @@ describe("modifier state migration", () => {
     expect(migrated.proficiency).toEqual([true, true, true, false, false, false])
     expect(migrated.modifierState?.targetStates.proficiency).toEqual({
       activeBaseId: "level:base:proficiency",
-      autoCalculation: true,
     })
     expect(migrated.otherAdjustments).toContainEqual(createUnknownMigrationDifference("proficiency", 2))
     expect(migrated.userModifierContributions).not.toContainEqual(
@@ -425,7 +420,7 @@ describe("modifier state migration", () => {
     }))
 
     expect(migrated.evasion).toBe("12+敏捷")
-    expect(migrated.modifierState?.targetStates.evasion).toEqual({ autoCalculation: true })
+    expect(migrated.modifierState?.targetStates.evasion).toBeUndefined()
     expect(migrated.userModifierContributions).toEqual([])
     expect(migrated.otherAdjustments).toEqual([])
   })
@@ -467,7 +462,7 @@ describe("modifier state migration", () => {
     expect("armorValue" in (migrated as any)).toBe(false)
     expect(migrated.armorMax).toBe("四")
     expect(Number.isNaN(migrated.armorMax)).toBe(false)
-    expect(migrated.modifierState?.targetStates.armorMax?.autoCalculation).toBe(true)
+    expect(migrated.modifierState?.targetStates.armorMax?.autoCalculation).toBeUndefined()
     expect(migrated.userModifierContributions).not.toContainEqual(
       expect.objectContaining({ id: getEstimatedBaseId("armorMax") }),
     )

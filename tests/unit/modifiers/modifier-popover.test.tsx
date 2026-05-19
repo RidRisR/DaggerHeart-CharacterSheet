@@ -388,7 +388,7 @@ describe("ModifierFieldAnchor", () => {
     expect(sheet().evasion).toBe("15")
   })
 
-  it("clears the active base when deleting the active user base", async () => {
+  it("falls forward when deleting the active user base", async () => {
     resetSheetStore({
       evasion: "15",
       userModifierContributions: [
@@ -405,7 +405,7 @@ describe("ModifierFieldAnchor", () => {
     await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
     await userEvent.click(screen.getByRole("button", { name: "删除当前基础" }))
 
-    expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBeUndefined()
+    expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base-other")
     expect(sheet().userModifierContributions?.some(
       contribution => contribution.id === "user:evasion-base-active",
     )).toBe(false)
@@ -555,7 +555,7 @@ describe("ModifierFieldAnchor", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "开启自动计算" }))
 
-    expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBe(true)
+    expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBeUndefined()
     expect(sheet().evasion).toBe("15")
     expect(sheet().otherAdjustments).toContainEqual(createUnattributedDifference("evasion", 3))
     expect(sheet().userModifierContributions?.some(

@@ -217,7 +217,10 @@ export function enableAutoCalculationForTarget(
   const activeBase = summary.activeBase ?? summary.bases[0]
 
   if (!activeBase || summary.referenceTotal === undefined) {
-    return reconcileDeltaForNumericFinal(sheetData, target, finalValue, true)
+    return writeTargetState(withoutUnattributedDelta(sheetData, target), target, {
+      ...sheetData.modifierState?.targetStates?.[target],
+      autoCalculation: true,
+    })
   }
 
   const withContributions = withoutUnattributedDelta(sheetData, target)

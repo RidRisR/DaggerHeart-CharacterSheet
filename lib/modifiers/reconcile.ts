@@ -12,10 +12,6 @@ type LegacyTargetModifierState = NonNullable<ModifierState["targetStates"][Modif
   syncMode?: unknown
 }
 
-function shouldPreserveAutoCalculation(state: LegacyTargetModifierState): boolean {
-  return state.autoCalculation === true || state.syncMode === "continuous"
-}
-
 export function reconcileModifierState(sheetData: SheetData): SheetData {
   const entries = collectModifierEntries(sheetData)
   const entryIds = new Set(entries.map(entry => entry.id))
@@ -52,8 +48,6 @@ export function reconcileModifierState(sheetData: SheetData): SheetData {
 
     if (legacyState.autoCalculation === false) {
       nextState.autoCalculation = false
-    } else if (shouldPreserveAutoCalculation(legacyState)) {
-      nextState.autoCalculation = true
     }
 
     if (Object.keys(nextState).length > 0) {

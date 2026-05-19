@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { createEmptyCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import {
+  createManualBaseContribution,
   getManualBaseId,
   getUnattributedDeltaId,
 } from "@/lib/modifiers/special-contributions"
@@ -16,7 +17,15 @@ import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
 describe("modifier store actions", () => {
   it("sets active base for a target", () => {
-    resetSheetStore()
+    resetSheetStore({
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+    })
 
     store().setActiveModifierBase("evasion", "user:evasion-base")
 
@@ -106,12 +115,51 @@ describe("modifier store actions", () => {
     expect(sheet().evasion).toBe("15")
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "user:evasion-base",
-      autoCalculation: true,
     })
     expect(sheet().otherAdjustments).toContainEqual(createUnattributedDifference("evasion", 3))
     expect(sheet().userModifierContributions?.some(
       contribution => contribution.id === getUnattributedDeltaId("evasion"),
     )).toBe(false)
+  })
+
+  it("enables target auto calculation without creating a manual base when no reference total exists", () => {
+    resetSheetStore({
+      evasion: "12",
+      userModifierContributions: [],
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().setTargetAutoCalculation("evasion", true)
+
+    expect(sheet().evasion).toBe("")
+    expect(sheet().userModifierContributions).toEqual([])
+    expect(sheet().otherAdjustments ?? []).toEqual([])
+    expect(sheet().modifierState?.targetStates.evasion).toBeUndefined()
+  })
+
+  it("enables target auto calculation without adjustments when no-base final is unparseable", () => {
+    resetSheetStore({
+      evasion: "12+敏捷",
+      userModifierContributions: [],
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().setTargetAutoCalculation("evasion", true)
+
+    expect(sheet().evasion).toBe("12+敏捷")
+    expect(sheet().userModifierContributions).toEqual([])
+    expect(sheet().otherAdjustments ?? []).toEqual([])
+    expect(sheet().modifierState?.targetStates.evasion).toBeUndefined()
   })
 
   it("applies auto calculation when modifier sources change", () => {
@@ -293,7 +341,6 @@ describe("modifier store actions", () => {
     store().setTargetAutoCalculation("evasion", false)
 
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
-      activeBaseId: "user:evasion-base",
       autoCalculation: false,
     })
   })
@@ -323,7 +370,6 @@ describe("modifier store actions", () => {
       createUnknownMigrationDifference("evasion", 1),
     ])
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
-      activeBaseId: "user:evasion-base",
       autoCalculation: false,
     })
   })
@@ -376,7 +422,6 @@ describe("modifier store actions", () => {
     store().setTargetAutoCalculation("evasion", false)
 
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
-      activeBaseId: "user:evasion-base",
       autoCalculation: false,
     })
     expect(sheet().modifierState?.targetStates.evasion).not.toHaveProperty("syncMode")
@@ -592,7 +637,8 @@ describe("modifier store actions", () => {
     }, false)
 
     expect(sheet().evasion).toBe("12")
-    expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBe(true)
+    expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBe("profession:current:evasion")
+    expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBeUndefined()
   })
 
   it("commits final target values directly when auto calculation is off", () => {
@@ -665,8 +711,56 @@ describe("modifier store actions", () => {
     })
     expect(sheet().modifierState?.targetStates.evasion).toEqual({
       activeBaseId: getManualBaseId("evasion"),
-      autoCalculation: true,
     })
+  })
+
+  it("syncs calculated final after numeric final creates a manual base", () => {
+    resetSheetStore({
+      evasion: "",
+      userModifierContributions: [
+        {
+          id: "user:evasion-mod",
+          definition: { target: "evasion", kind: "modifier" },
+          editable: { label: "Penalty", value: -2 },
+        },
+      ],
+      modifierState: { targetStates: {}, entryStates: {} },
+    })
+
+    store().commitModifierTargetValue("evasion", "5")
+
+    expect(sheet().evasion).toBe("3")
+    expect(sheet().userModifierContributions).toContainEqual(createManualBaseContribution("evasion", 5))
+  })
+
+  it("clears final after removing the last special base while enabled", () => {
+    const manualBase = createManualBaseContribution("evasion", 12)
+    resetSheetStore({
+      evasion: "12",
+      userModifierContributions: [manualBase],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: manualBase.id } },
+        entryStates: {},
+      },
+    })
+
+    store().removeSpecialBaseContribution("evasion", manualBase.id)
+
+    expect(sheet().evasion).toBe("")
+    expect(sheet().modifierState?.targetStates.evasion).toBeUndefined()
+  })
+
+  it("syncs current-schema replacement before committing it", () => {
+    resetSheetStore()
+
+    store().replaceSheetData({
+      ...defaultSheetData,
+      evasion: "",
+      userModifierContributions: [createManualBaseContribution("evasion", 12)],
+      modifierState: { targetStates: {}, entryStates: {} },
+    })
+
+    expect(sheet().evasion).toBe("12")
   })
 
   it("commits non-numeric final target text without creating modifier sources", () => {
@@ -685,7 +779,7 @@ describe("modifier store actions", () => {
 
     expect(sheet().evasion).toBe("12+敏捷")
     expect(sheet().userModifierContributions).toEqual([])
-    expect(sheet().modifierState?.targetStates.evasion).toEqual({ autoCalculation: true })
+    expect(sheet().modifierState?.targetStates.evasion).toBeUndefined()
   })
 
   it("ignores non-numeric final input for numeric targets without creating modifier sources", () => {

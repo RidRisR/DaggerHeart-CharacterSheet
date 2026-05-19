@@ -1,26 +1,49 @@
 import { tryParseNumber } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import { applyHpStressMaxInvariant } from "./hp-stress-invariants"
-import { collectModifierEntries, getReferenceSummary } from "./registry"
+import { sanitizeOtherAdjustments } from "./other-adjustments"
+import { calculateReferenceSummary } from "./reference-calculator"
+import { collectModifierEntries } from "./registry"
 import { readTargetValue, writeTargetValue } from "./target-accessors"
-import type { ModifierTargetId, TargetModifierState } from "./types"
+import type { ModifierEntry, ModifierTargetId, ModifierState, TargetModifierState } from "./types"
 
 export function isTargetAutoCalculationEnabled(state: TargetModifierState | undefined): boolean {
   return state?.autoCalculation !== false
 }
 
-function autoCalculationTargets(sheetData: SheetData): ModifierTargetId[] {
+const FIXED_TARGETS: ModifierTargetId[] = [
+  "evasion",
+  "armorMax",
+  "minorThreshold",
+  "majorThreshold",
+  "hpMax",
+  "stressMax",
+  "proficiency",
+  "agility.value",
+  "strength.value",
+  "finesse.value",
+  "instinct.value",
+  "presence.value",
+  "knowledge.value",
+]
+
+function modifierTargetUniverse(sheetData: SheetData, entries: ModifierEntry[]): ModifierTargetId[] {
   const targets = new Set<ModifierTargetId>()
-  collectModifierEntries(sheetData).forEach(entry => {
+  FIXED_TARGETS.forEach(target => targets.add(target))
+  for (let index = 0; index < 5; index += 1) {
+    targets.add(`experienceValues.${index}` as ModifierTargetId)
+  }
+  entries.forEach(entry => {
     targets.add(entry.definition.target)
   })
   Object.keys(sheetData.modifierState?.targetStates ?? {}).forEach(target => {
     targets.add(target as ModifierTargetId)
   })
+  sanitizeOtherAdjustments(sheetData.otherAdjustments).forEach(adjustment => {
+    targets.add(adjustment.target)
+  })
 
-  return [...targets].filter(target => (
-    isTargetAutoCalculationEnabled(sheetData.modifierState?.targetStates?.[target])
-  ))
+  return [...targets]
 }
 
 function isSameTargetValue(currentValue: unknown, desiredValue: number | string): boolean {
@@ -37,45 +60,93 @@ function writeTargetValueFromSync(sheetData: SheetData, target: ModifierTargetId
   return applyHpStressMaxInvariant(writeTargetValue(sheetData, target, value), target)
 }
 
-function writeActiveBaseIdFromSync(sheetData: SheetData, target: ModifierTargetId, activeBaseId: string): SheetData {
-  const currentTargetState = sheetData.modifierState?.targetStates?.[target]
-  if (currentTargetState?.activeBaseId === activeBaseId) return sheetData
+function normalizeEntryStates(sheetData: SheetData, entries: ModifierEntry[]): SheetData {
+  const entryIds = new Set(entries.map(entry => entry.id))
+  const currentEntryStates = sheetData.modifierState?.entryStates ?? {}
+  const nextEntryStates: ModifierState["entryStates"] = {}
+  let changed = false
+
+  Object.entries(currentEntryStates).forEach(([entryId, state]) => {
+    if (!entryIds.has(entryId)) {
+      changed = true
+      return
+    }
+    nextEntryStates[entryId] = state
+  })
+
+  if (!changed) return sheetData
 
   return {
     ...sheetData,
     modifierState: {
-      targetStates: {
-        ...(sheetData.modifierState?.targetStates ?? {}),
-        [target]: {
-          ...currentTargetState,
-          activeBaseId,
-        },
-      },
+      targetStates: sheetData.modifierState?.targetStates ?? {},
+      entryStates: nextEntryStates,
+    },
+  }
+}
+
+function writeNormalizedTargetState(
+  sheetData: SheetData,
+  target: ModifierTargetId,
+  activeBaseId: string | undefined,
+): SheetData {
+  const currentTargetState = sheetData.modifierState?.targetStates?.[target]
+  const nextTargetState: TargetModifierState = {}
+
+  if (activeBaseId !== undefined) nextTargetState.activeBaseId = activeBaseId
+  if (currentTargetState?.autoCalculation === false) nextTargetState.autoCalculation = false
+
+  const currentTargetStates = sheetData.modifierState?.targetStates ?? {}
+  const currentStateExists = target in currentTargetStates
+  const nextStateKeys = Object.keys(nextTargetState)
+  const stateMatches = nextStateKeys.length === Object.keys(currentTargetState ?? {}).length
+    && currentTargetState?.activeBaseId === nextTargetState.activeBaseId
+    && currentTargetState?.autoCalculation === nextTargetState.autoCalculation
+
+  if ((nextStateKeys.length === 0 && !currentStateExists) || stateMatches) return sheetData
+
+  const targetStates = { ...currentTargetStates }
+  if (nextStateKeys.length === 0) {
+    delete targetStates[target]
+  } else {
+    targetStates[target] = nextTargetState
+  }
+
+  return {
+    ...sheetData,
+    modifierState: {
+      targetStates,
       entryStates: sheetData.modifierState?.entryStates ?? {},
     },
   }
 }
 
 export function applyAutoCalculationForTargets(sheetData: SheetData): SheetData {
-  let next = sheetData
-  let changed = false
+  const entries = collectModifierEntries(sheetData)
+  let next = normalizeEntryStates(sheetData, entries)
+  let changed = next !== sheetData
 
-  autoCalculationTargets(sheetData).forEach(target => {
+  modifierTargetUniverse(next, entries).forEach(target => {
     const currentValue = readTargetValue(next, target)
-    if (!isBlankTargetValue(currentValue) && tryParseNumber(currentValue) === undefined) return
 
-    const summary = getReferenceSummary(next, target)
+    const summary = calculateReferenceSummary({
+      sheetData: next,
+      target,
+      entries,
+      modifierState: next.modifierState,
+    })
     const activeBaseId = summary.activeBase?.id
-    const desiredValue = summary.calculatedFinalTotal ?? ""
-    const valueMatches = isSameTargetValue(currentValue, desiredValue)
-    const targetState = next.modifierState?.targetStates?.[target]
-    const shouldTrackBase = activeBaseId !== undefined
-      && targetState?.activeBaseId !== activeBaseId
-
-    if (shouldTrackBase) {
-      next = writeActiveBaseIdFromSync(next, target, activeBaseId)
+    const withNormalizedState = writeNormalizedTargetState(next, target, activeBaseId)
+    if (withNormalizedState !== next) {
+      next = withNormalizedState
       changed = true
     }
+
+    if (!isTargetAutoCalculationEnabled(next.modifierState?.targetStates?.[target])) return
+    if (!isBlankTargetValue(currentValue) && tryParseNumber(currentValue) === undefined) return
+
+    const desiredValue = summary.calculatedFinalTotal ?? ""
+    const valueMatches = isSameTargetValue(currentValue, desiredValue)
 
     if (!valueMatches) {
       next = writeTargetValueFromSync(next, target, desiredValue)

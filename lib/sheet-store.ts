@@ -365,7 +365,7 @@ export const useSheetStore = create<SheetState>((set) => ({
         const finalData = syncSubclassSpellcasting(newData, state.sheetData);
 
         return {
-            sheetData: finalData,
+            sheetData: applyAutoCalculationForTargets(finalData),
         };
     }),
 
@@ -511,16 +511,16 @@ export const useSheetStore = create<SheetState>((set) => ({
         const autoCalculation = isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.proficiency);
         if (autoCalculation) {
             return {
-                sheetData: reconcileFinalInput(state.sheetData, "proficiency", finalCount),
+                sheetData: applyAutoCalculationForTargets(reconcileFinalInput(state.sheetData, "proficiency", finalCount)),
             };
         }
 
         const newProficiency = current.map((_, i) => i < finalCount);
         return {
-            sheetData: {
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
                 proficiency: newProficiency
-            }
+            })
         };
     }),
 
@@ -570,7 +570,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             ? reconcileFinalInput(state.sheetData, "hpMax", value)
             : writeTargetValue(state.sheetData, "hpMax", value);
         return {
-            sheetData: applyHpStressMaxInvariant(nextSheetData, "hpMax"),
+            sheetData: applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, "hpMax")),
         };
     }),
 
@@ -580,7 +580,7 @@ export const useSheetStore = create<SheetState>((set) => ({
             ? reconcileFinalInput(state.sheetData, "stressMax", value)
             : writeTargetValue(state.sheetData, "stressMax", value);
         return {
-            sheetData: applyHpStressMaxInvariant(nextSheetData, "stressMax"),
+            sheetData: applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, "stressMax")),
         };
     }),
 
@@ -1084,12 +1084,12 @@ export const useSheetStore = create<SheetState>((set) => ({
     setTargetAutoCalculation: (target, enabled) => set((state) => {
         if (enabled) {
             return {
-                sheetData: enableAutoCalculationForTarget(state.sheetData, target),
+                sheetData: applyAutoCalculationForTargets(enableAutoCalculationForTarget(state.sheetData, target)),
             };
         }
 
         return {
-            sheetData: disableAutoCalculationForTarget(state.sheetData, target),
+            sheetData: applyAutoCalculationForTargets(disableAutoCalculationForTarget(state.sheetData, target)),
         };
     }),
 
@@ -1099,17 +1099,17 @@ export const useSheetStore = create<SheetState>((set) => ({
         const storesRawText = canStoreRawFinalText(target);
 
         if (!autoCalculation) {
+            let nextSheetData: SheetData;
             if (storesRawText) {
-                return {
-                    sheetData: writeTargetValue(state.sheetData, target, String(value)),
-                };
+                nextSheetData = writeTargetValue(state.sheetData, target, String(value));
+            } else {
+                if (finalValue === undefined) return state;
+
+                nextSheetData = writeTargetValue(state.sheetData, target, finalValue);
             }
 
-            if (finalValue === undefined) return state;
-
-            const nextSheetData = writeTargetValue(state.sheetData, target, finalValue);
             return {
-                sheetData: applyHpStressMaxInvariant(nextSheetData, target),
+                sheetData: applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, target)),
             };
         }
 
@@ -1117,13 +1117,13 @@ export const useSheetStore = create<SheetState>((set) => ({
             if (!storesRawText) return state;
 
             return {
-                sheetData: writeTargetValue(state.sheetData, target, String(value)),
+                sheetData: applyAutoCalculationForTargets(writeTargetValue(state.sheetData, target, String(value))),
             };
         }
 
         const nextSheetData = reconcileFinalInput(state.sheetData, target, finalValue);
         return {
-            sheetData: applyHpStressMaxInvariant(nextSheetData, target),
+            sheetData: applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, target)),
         };
     }),
 
@@ -1156,10 +1156,6 @@ export const useSheetStore = create<SheetState>((set) => ({
             otherAdjustments: upsertOtherAdjustmentInList(state.sheetData.otherAdjustments, adjustment),
         };
 
-        if (!isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.[adjustment.target])) {
-            return { sheetData: nextSheetData };
-        }
-
         return {
             sheetData: applyAutoCalculationForTargets(nextSheetData),
         };
@@ -1171,16 +1167,10 @@ export const useSheetStore = create<SheetState>((set) => ({
         );
         if (!adjustment) return state;
 
-        const autoCalculation = isTargetAutoCalculationEnabled(
-            state.sheetData.modifierState?.targetStates?.[adjustment.target],
-        );
-
         const nextSheetData: SheetData = {
             ...state.sheetData,
             otherAdjustments: removeOtherAdjustmentFromList(state.sheetData.otherAdjustments, entryId),
         };
-
-        if (!autoCalculation) return { sheetData: nextSheetData };
 
         return {
             sheetData: applyAutoCalculationForTargets(nextSheetData),
@@ -1188,7 +1178,7 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     removeSpecialBaseContribution: (target, entryId) => set((state) => ({
-        sheetData: deleteSpecialBase(state.sheetData, target, entryId),
+        sheetData: applyAutoCalculationForTargets(deleteSpecialBase(state.sheetData, target, entryId)),
     })),
 
     setUpgradeState: (checkKey, upgradeState) => set((state) => {

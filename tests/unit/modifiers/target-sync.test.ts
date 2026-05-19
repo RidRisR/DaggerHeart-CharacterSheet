@@ -88,9 +88,58 @@ describe("target auto calculation helper", () => {
     expect(result.evasion).toBe("12")
   })
 
+  it("normalizes disabled targets without rewriting their final values", () => {
+    const data = sheet({
+      evasion: "10",
+      userModifierContributions: [
+        {
+          id: "user:evasion-fallback-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Fallback", value: 14 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: "user:evasion-missing-base", autoCalculation: false },
+        },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result.evasion).toBe("10")
+    expect(result.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: "user:evasion-fallback-base",
+      autoCalculation: false,
+    })
+  })
+
+  it("cleans empty enabled target state after writing default-on finals", () => {
+    const data = sheet({
+      evasion: "10",
+      modifierState: {
+        targetStates: { evasion: { autoCalculation: true } },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result.evasion).toBe("")
+    expect(result.modifierState?.targetStates.evasion).toBeUndefined()
+  })
+
+  it("includes fixed targets even when only the stored final is stale", () => {
+    const result = applyAutoCalculationForTargets(sheet({ evasion: "15" }))
+
+    expect(result.evasion).toBe("")
+  })
+
   it("does not write explicitly disabled auto calculation targets", () => {
     const data = sheet({
       evasion: "10",
+      armorMax: "",
       userModifierContributions: [
         {
           id: "user:evasion-base",
@@ -109,13 +158,17 @@ describe("target auto calculation helper", () => {
 
     const result = applyAutoCalculationForTargets(data)
 
-    expect(result).toBe(data)
     expect(result.evasion).toBe("10")
+    expect(result.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: "user:evasion-base",
+      autoCalculation: false,
+    })
   })
 
   it("does not overwrite non-numeric current finals", () => {
     const data = sheet({
       evasion: "12+敏捷",
+      armorMax: "",
       userModifierContributions: [
         {
           id: "user:evasion-base",
@@ -134,8 +187,10 @@ describe("target auto calculation helper", () => {
 
     const result = applyAutoCalculationForTargets(data)
 
-    expect(result).toBe(data)
     expect(result.evasion).toBe("12+敏捷")
+    expect(result.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: "user:evasion-base",
+    })
   })
 
   it("records active base when the auto calculated final already matches", () => {
@@ -271,6 +326,7 @@ describe("target auto calculation helper", () => {
   it("returns the same object when no auto value changes", () => {
     const data = sheet({
       evasion: "12",
+      armorMax: "",
       userModifierContributions: [
         {
           id: "user:evasion-base",
@@ -280,7 +336,7 @@ describe("target auto calculation helper", () => {
       ],
       modifierState: {
         targetStates: {
-          evasion: { activeBaseId: "user:evasion-base", autoCalculation: true },
+          evasion: { activeBaseId: "user:evasion-base" },
           proficiency: { activeBaseId: "level:base:proficiency" },
         },
         entryStates: {},

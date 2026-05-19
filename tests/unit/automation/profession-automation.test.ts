@@ -89,21 +89,21 @@ describe("职业自动化基线", () => {
     expect(sheet().hpMax).toBe(9)
   })
 
-  it("1级清空职业时只清空职业来源，不直接覆盖手动最终值", () => {
+  it("1级清空职业后无 base target 写为空", () => {
     resetSheetStore({ level: "1", evasion: "12", hpMax: 7 })
 
     store().handleProfessionChange(undefined, undefined)
 
-    expect(sheet().evasion).toBe("12")
-    expect(sheet().hpMax).toBe(7)
+    expect(sheet().evasion).toBe("")
+    expect(sheet().hpMax).toBe("")
   })
 
-  it("非1级清空职业不会覆盖现有数值", () => {
+  it("非1级清空职业后无 base target 写为空", () => {
     resetSheetStore({ level: "3", evasion: "14", hpMax: 8 })
 
     store().handleProfessionChange(undefined, undefined)
 
-    expect(sheet().evasion).toBe("14")
-    expect(sheet().hpMax).toBe(8)
+    expect(sheet().evasion).toBe("")
+    expect(sheet().hpMax).toBe("")
   })
 })

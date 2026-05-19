@@ -215,7 +215,7 @@ describe("等级升级 - 熟练度提升逻辑", () => {
       store().updateLevel(level)
 
       expect(sheet().level).toBe(level)
-      expect(sheet().proficiency).toEqual([true, true, true, false, false, false])
+      expect(sheet().proficiency).toEqual([false, false, false, false, false, false])
       expect(sheet().minorThreshold).toBe("3")
       expect(sheet().majorThreshold).toBe("6")
     })

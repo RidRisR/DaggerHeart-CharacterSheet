@@ -10,7 +10,7 @@ interface NewExperienceEditorProps {
 }
 
 export function NewExperienceEditor({ onClose }: NewExperienceEditorProps) {
-  const { sheetData, setSheetData } = useSheetStore()
+  const { sheetData, addExperienceWithModifierValue } = useSheetStore()
 
   const experience = sheetData.experience || ["", "", "", "", ""]
   const experienceValues = sheetData.experienceValues || ["", "", "", "", ""]
@@ -35,18 +35,7 @@ export function NewExperienceEditor({ onClose }: NewExperienceEditorProps) {
   const handleConfirm = () => {
     if (!hasEmptySlot || !newContent.trim()) return
 
-    // 更新经历内容
-    const newExperience = [...experience]
-    newExperience[emptySlotIndex] = newContent.trim()
-
-    // 更新经历加值
-    const newExperienceValues = [...experienceValues]
-    newExperienceValues[emptySlotIndex] = newValue
-
-    setSheetData({
-      experience: newExperience,
-      experienceValues: newExperienceValues
-    })
+    addExperienceWithModifierValue(newContent, newValue)
 
     // 显示成功通知
     showFadeNotification({

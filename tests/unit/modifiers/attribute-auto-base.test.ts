@@ -4,8 +4,8 @@ import {
   getAttributeAutoBaseCreation,
   getAttributeAutoBaseId,
   shouldRemoveAttributeAutoBase,
-} from "@/lib/modifiers/attribute-auto-base"
-import type { UserModifierContribution } from "@/lib/modifiers/types"
+} from "@/automation/core/attribute-auto-base"
+import type { UserModifierContribution } from "@/automation/core/types"
 
 function userBase(id: string): UserModifierContribution {
   return {

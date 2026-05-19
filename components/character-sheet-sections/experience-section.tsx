@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store";
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
-import type { ModifierTargetId } from "@/lib/modifiers/types"
+import type { ModifierTargetId } from "@/automation/core/types"
 
 export function ExperienceSection() {
   const { sheetData: formData, updateExperience, commitModifierTargetValue } = useSheetStore();

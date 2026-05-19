@@ -1,4 +1,4 @@
-import type { ModifierTargetId, OtherAdjustment, OtherAdjustmentKind } from "@/lib/modifiers/types"
+import type { ModifierTargetId, OtherAdjustment, OtherAdjustmentKind } from "@/automation/core/types"
 
 const KIND_ID_SEGMENTS: Record<OtherAdjustmentKind, string> = {
   unknownMigrationDifference: "unknown-migration-difference",

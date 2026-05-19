@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import { createUnknownMigrationDifference } from "@/lib/modifiers/other-adjustments"
-import { applyAutoCalculationForTargets } from "@/lib/modifiers/target-sync"
+import { createUnknownMigrationDifference } from "@/automation/core/other-adjustments"
+import { applyAutoCalculationForTargets } from "@/automation/core/target-sync"
 import type { SheetData } from "@/lib/sheet-data"
 
 function sheet(overrides: Partial<SheetData> = {}): SheetData {

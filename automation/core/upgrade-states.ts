@@ -4,7 +4,7 @@ import type {
   UpgradeState,
   UpgradeStateParams,
   UpgradeStates,
-} from "@/lib/modifiers/types"
+} from "@/automation/core/types"
 
 const FIXED_UPGRADE_TARGET_IDS = [
   "hpMax",

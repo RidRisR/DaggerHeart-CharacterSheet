@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest"
 import type { StandardCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { migrateSheetData } from "@/lib/sheet-data-migration"
-import { createUnknownMigrationDifference } from "@/lib/modifiers/other-adjustments"
+import { createUnknownMigrationDifference } from "@/automation/core/other-adjustments"
 import {
   createEstimatedBaseContribution,
   createUnattributedDeltaContribution,
   getEstimatedBaseId,
   getUnattributedDeltaId,
-} from "@/lib/modifiers/special-contributions"
+} from "@/automation/core/special-contributions"
 
 function v1ModifierInput(overrides: Record<string, unknown>) {
   return {

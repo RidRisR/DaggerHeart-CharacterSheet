@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showFadeNotification } from "@/components/ui/fade-notification"
-import { createEmptyArmorSlot, createEmptyEquipmentData } from "@/lib/equipment/defaults"
+import { createEmptyArmorSlot, createEmptyEquipmentData } from "@/automation/equipment/defaults"
 import { countChecked, resetSheetStore, sheet, store } from "./test-helpers"
 
 vi.mock("@/components/ui/fade-notification", () => ({

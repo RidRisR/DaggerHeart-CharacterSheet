@@ -5,7 +5,7 @@ import {
   createArmorSlotFromCustomPayload,
   createArmorSlotFromTemplate,
   createWeaponSlotFromTemplate,
-} from "@/lib/equipment/template-to-slot"
+} from "@/automation/equipment/template-to-slot"
 
 describe("equipment template ids", () => {
   it("weapon templates expose unique stable builtin ids", () => {

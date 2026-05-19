@@ -5,15 +5,15 @@ import {
   createManualBaseContribution,
   getManualBaseId,
   getUnattributedDeltaId,
-} from "@/lib/modifiers/special-contributions"
+} from "@/automation/core/special-contributions"
 import {
   createManualFinalAdjustment,
   createUnattributedDifference,
   createUnknownMigrationDifference,
   getOtherAdjustmentId,
-} from "@/lib/modifiers/other-adjustments"
-import type { ModifierTargetId } from "@/lib/modifiers/types"
-import { getReferenceSummary } from "@/lib/modifiers/registry"
+} from "@/automation/core/other-adjustments"
+import type { ModifierTargetId } from "@/automation/core/types"
+import { getReferenceSummary } from "@/automation/core/registry"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
 describe("modifier store actions", () => {

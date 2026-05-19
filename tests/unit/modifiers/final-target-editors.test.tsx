@@ -8,8 +8,8 @@ import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
 import { NewExperienceEditor } from "@/components/upgrade-popover/new-experience-editor"
 import { ProficiencyEditor } from "@/components/upgrade-popover/proficiency-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
-import { createManualFinalAdjustment } from "@/lib/modifiers/other-adjustments"
-import { createManualBaseContribution, getUnattributedDeltaId } from "@/lib/modifiers/special-contributions"
+import { createManualFinalAdjustment } from "@/automation/core/other-adjustments"
+import { createManualBaseContribution, getUnattributedDeltaId } from "@/automation/core/special-contributions"
 import { countChecked, resetSheetStore, sheet, store } from "../automation/test-helpers"
 
 describe("final target editors", () => {

@@ -1,4 +1,4 @@
-import type { EquipmentModifierContribution, EquipmentModifierTargetId } from "@/lib/equipment/types"
+import type { EquipmentModifierContribution, EquipmentModifierTargetId } from "@/automation/equipment/types"
 
 export const EQUIPMENT_TARGET_LABELS = {
   evasion: "闪避",

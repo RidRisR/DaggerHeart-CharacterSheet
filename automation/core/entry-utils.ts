@@ -5,7 +5,7 @@ import type {
   ModifierEntryKind,
   ModifierSourceType,
   ModifierTargetId,
-} from "@/lib/modifiers/types"
+} from "@/automation/core/types"
 
 interface CreateModifierEntryInput {
   id: ModifierEntryId

@@ -1,5 +1,5 @@
 import type { AttributeValue, SheetData } from "@/lib/sheet-data"
-import type { AttributeKey } from "@/lib/modifiers/types"
+import type { AttributeKey } from "@/automation/core/types"
 
 const ATTRIBUTE_KEYS = [
   "agility",

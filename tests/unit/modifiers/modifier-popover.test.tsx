@@ -10,14 +10,14 @@ import { defaultSheetData } from "@/lib/default-sheet-data"
 import {
   getUnattributedDeltaId,
   UNATTRIBUTED_DELTA_LABEL,
-} from "@/lib/modifiers/special-contributions"
+} from "@/automation/core/special-contributions"
 import {
   createManualFinalAdjustment,
   createUnattributedDifference,
   createUnknownMigrationDifference,
   getOtherAdjustmentId,
-} from "@/lib/modifiers/other-adjustments"
-import type { ModifierEntryKind, ModifierTargetId, UserModifierContribution } from "@/lib/modifiers/types"
+} from "@/automation/core/other-adjustments"
+import type { ModifierEntryKind, ModifierTargetId, UserModifierContribution } from "@/automation/core/types"
 import { resetSheetStore, sheet } from "../automation/test-helpers"
 
 function userContribution(

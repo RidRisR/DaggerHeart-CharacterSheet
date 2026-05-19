@@ -1,4 +1,4 @@
-import type { ModifierContribution, ModifierTargetId } from "@/lib/modifiers/types"
+import type { ModifierContribution, ModifierTargetId } from "@/automation/core/types"
 
 export const MANUAL_BASE_LABEL = "手动基础值"
 export const ESTIMATED_BASE_LABEL = "估算基础值"

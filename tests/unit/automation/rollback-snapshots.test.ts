@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest"
-import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
+import { computeUpgradeAutomation } from "@/automation/actions/upgrade-actions"
 import { resetSheetStore, sheet, store } from "./test-helpers"
 
 describe("升级回滚快照基线", () => {

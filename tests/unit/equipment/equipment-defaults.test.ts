@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { createEmptyArmorSlot, createEmptyEquipmentData, createEmptyWeaponSlot } from "@/lib/equipment/defaults"
-import { parseArmorMax, parseArmorThreshold } from "@/lib/equipment/armor-utils"
+import { createEmptyArmorSlot, createEmptyEquipmentData, createEmptyWeaponSlot } from "@/automation/equipment/defaults"
+import { parseArmorMax, parseArmorThreshold } from "@/automation/equipment/armor-utils"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 
 describe("equipment defaults", () => {

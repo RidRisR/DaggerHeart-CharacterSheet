@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event"
 import { HeaderSection } from "@/components/character-sheet-sections/header-section"
 import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-upgrade-editor"
 import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-values-editor"
-import { createEstimatedBaseContribution } from "@/lib/modifiers/special-contributions"
+import { createEstimatedBaseContribution } from "@/automation/core/special-contributions"
 import { resetSheetStore, sheet } from "./test-helpers"
 
 describe("升级编辑器组件烟雾测试", () => {

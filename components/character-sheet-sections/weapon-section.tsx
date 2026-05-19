@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
-import type { WeaponSlot } from "@/lib/equipment/types"
+import type { WeaponSlot } from "@/automation/equipment/types"
 
 interface WeaponSectionProps {
   isPrimary?: boolean

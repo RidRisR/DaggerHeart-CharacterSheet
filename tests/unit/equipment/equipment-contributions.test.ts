@@ -4,7 +4,7 @@ import {
   createEquipmentContributionId,
   EQUIPMENT_TARGET_LABELS,
   sanitizeEquipmentModifierContributions,
-} from "@/lib/equipment/contribution-utils"
+} from "@/automation/equipment/contribution-utils"
 
 describe("equipment contribution utilities", () => {
   it("creates default modifier contributions with empty label placeholders stored as data", () => {

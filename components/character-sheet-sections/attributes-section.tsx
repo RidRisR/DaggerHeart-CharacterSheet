@@ -4,11 +4,11 @@ import { useState } from "react"
 import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store";
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
-import type { AttributeTargetId, ModifierTargetId, UserModifierContribution } from "@/lib/modifiers/types"
+import type { AttributeTargetId, ModifierTargetId, UserModifierContribution } from "@/automation/core/types"
 import {
   getAttributeAutoBaseId,
   shouldRemoveAttributeAutoBase,
-} from "@/lib/modifiers/attribute-auto-base"
+} from "@/automation/core/attribute-auto-base"
 
 type AttributeKey = "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge"
 

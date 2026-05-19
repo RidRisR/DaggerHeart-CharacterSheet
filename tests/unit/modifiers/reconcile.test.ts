@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import { reconcileModifierState } from "@/lib/modifiers/reconcile"
+import { reconcileModifierState } from "@/automation/core/reconcile"
 import type { SheetData } from "@/lib/sheet-data"
 
 describe("modifier state reconciliation", () => {

@@ -1,5 +1,5 @@
 import type { SheetData } from "@/lib/sheet-data"
-import type { FixedUpgradeTargetId, UpgradeAutomationMetadata, UpgradeState } from "@/lib/modifiers/types"
+import type { FixedUpgradeTargetId, UpgradeAutomationMetadata, UpgradeState } from "@/automation/core/types"
 
 export interface UpgradeOptionLike {
   label: string

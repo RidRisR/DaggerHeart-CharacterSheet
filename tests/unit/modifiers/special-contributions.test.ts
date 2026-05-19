@@ -14,8 +14,8 @@ import {
   isManualBaseContribution,
   isTargetOwnedSpecialContribution,
   isUnattributedDeltaContribution,
-} from "@/lib/modifiers/special-contributions"
-import type { ModifierContribution } from "@/lib/modifiers/types"
+} from "@/automation/core/special-contributions"
+import type { ModifierContribution } from "@/automation/core/types"
 
 describe("special modifier contributions", () => {
   it("returns stable special contribution ids", () => {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 import type { StandardCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
-import { collectModifierEntries } from "@/lib/modifiers/registry"
-import { collectSystemModifierEntries } from "@/lib/modifiers/source-definitions"
+import { collectModifierEntries } from "@/automation/core/registry"
+import { collectSystemModifierEntries } from "@/automation/core/source-definitions"
 import type { SheetData } from "@/lib/sheet-data"
 
 describe("modifier source definitions", () => {

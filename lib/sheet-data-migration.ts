@@ -26,33 +26,33 @@ import {
 import {
   createEquipmentContributionId,
   sanitizeEquipmentModifierContributions,
-} from "@/lib/equipment/contribution-utils"
-import { createEmptyEquipmentData } from "@/lib/equipment/defaults"
+} from "@/automation/equipment/contribution-utils"
+import { createEmptyEquipmentData } from "@/automation/equipment/defaults"
 import {
   createArmorSlotFromTemplate,
   createWeaponSlotFromTemplate,
-} from "@/lib/equipment/template-to-slot"
-import { parseArmorMax, parseArmorThreshold } from "@/lib/equipment/armor-utils"
-import type { ArmorSlot, WeaponSlot } from "@/lib/equipment/types"
+} from "@/automation/equipment/template-to-slot"
+import { parseArmorMax, parseArmorThreshold } from "@/automation/equipment/armor-utils"
+import type { ArmorSlot, WeaponSlot } from "@/automation/equipment/types"
 import { tryParseNumber } from "@/lib/number-utils"
-import { collectModifierEntries, getReferenceSummary } from "@/lib/modifiers/registry"
-import { reconcileModifierState } from "@/lib/modifiers/reconcile"
+import { collectModifierEntries, getReferenceSummary } from "@/automation/core/registry"
+import { reconcileModifierState } from "@/automation/core/reconcile"
 import {
   createUnknownMigrationDifference,
   getOtherAdjustmentId,
   removeOtherAdjustment,
   sanitizeOtherAdjustments,
   upsertOtherAdjustment,
-} from "@/lib/modifiers/other-adjustments"
+} from "@/automation/core/other-adjustments"
 import {
   createEstimatedBaseContribution,
   getEstimatedBaseId,
   getUnattributedDeltaId,
   isEstimatedBaseContribution,
   isUnattributedDeltaContribution,
-} from "@/lib/modifiers/special-contributions"
-import { writeTargetValue } from "@/lib/modifiers/target-accessors"
-import { mergeUpgradeState, sanitizeUpgradeStates } from "@/lib/modifiers/upgrade-states"
+} from "@/automation/core/special-contributions"
+import { writeTargetValue } from "@/automation/core/target-accessors"
+import { mergeUpgradeState, sanitizeUpgradeStates } from "@/automation/core/upgrade-states"
 import type {
   ModifierContribution,
   ModifierEntryKind,
@@ -60,7 +60,7 @@ import type {
   UpgradeAutomationMetadata,
   UpgradeState,
   UpgradeStates,
-} from "@/lib/modifiers/types"
+} from "@/automation/core/types"
 
 const V1_SCHEMA_VERSION = 1
 const V2_SCHEMA_VERSION = 2

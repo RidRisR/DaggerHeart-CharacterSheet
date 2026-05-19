@@ -7,8 +7,8 @@ import {
   EQUIPMENT_MODIFIER_TARGETS,
   EQUIPMENT_TARGET_LABELS,
   sanitizeEquipmentModifierContributions,
-} from "@/lib/equipment/contribution-utils"
-import type { ArmorSlot, EquipmentModifierContribution, WeaponSlot } from "@/lib/equipment/types"
+} from "@/automation/equipment/contribution-utils"
+import type { ArmorSlot, EquipmentModifierContribution, WeaponSlot } from "@/automation/equipment/types"
 import { parseNumberExpressionOr } from "@/lib/number-utils"
 import { useSheetStore } from "@/lib/sheet-store"
 import { cn } from "@/lib/utils"

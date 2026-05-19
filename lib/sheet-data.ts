@@ -1,13 +1,13 @@
 // types/form-data.ts
 
 import { StandardCard } from "@/card/card-types"
-import type { EquipmentData } from "@/lib/equipment/types"
+import type { EquipmentData } from "@/automation/equipment/types"
 import type {
   ModifierState,
   OtherAdjustment,
   UpgradeStates,
   UserModifierContribution,
-} from "@/lib/modifiers/types"
+} from "@/automation/core/types"
 
 // ===== 多角色系统数据结构 =====
 export interface CharacterMetadata {

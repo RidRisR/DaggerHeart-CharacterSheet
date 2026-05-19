@@ -7,7 +7,7 @@ import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
 import type { AttributeValue, SheetData } from "@/lib/sheet-data"
 import { createEmptyCard, type StandardCard } from "@/card/card-types"
 import { showFadeNotification } from "@/components/ui/fade-notification"
-import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
+import { computeUpgradeAutomation } from "@/automation/actions/upgrade-actions"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"

@@ -5,8 +5,8 @@ import {
   enteredLevelsBetween,
   normalizeLevelForEntryAutomation,
   runLevelEntryAutomations,
-} from "@/lib/automation/level-entry-actions"
-import { mergeUpgradeState, sanitizeUpgradeStates } from "@/lib/modifiers/upgrade-states"
+} from "@/automation/actions/level-entry-actions"
+import { mergeUpgradeState, sanitizeUpgradeStates } from "@/automation/core/upgrade-states"
 
 describe("level entry automation", () => {
   it.each([

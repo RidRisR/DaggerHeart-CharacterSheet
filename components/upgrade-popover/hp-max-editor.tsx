@@ -12,7 +12,7 @@ interface HPMaxEditorProps {
 export function HPMaxEditor({ onClose }: HPMaxEditorProps) {
   const { sheetData } = useSheetStore()
   const updateHPMax = useSheetStore(state => state.updateHPMax)
-  const currentHPMax = sheetData.hpMax ?? 6
+  const currentHPMax = sheetData.hpMax ?? ""
   const [inputValue, setInputValue] = useState(String(currentHPMax))
 
   // 同步外部变化
@@ -28,7 +28,7 @@ export function HPMaxEditor({ onClose }: HPMaxEditorProps) {
   const handleBlur = () => {
     // 失焦时应用更改
     if (isValidNumber(inputValue)) {
-      const numValue = parseToNumber(inputValue, 6)
+      const numValue = parseToNumber(inputValue, 0)
       const finalValue = Math.min(Math.max(numValue, 1), 18)
       updateHPMax(finalValue)
       setInputValue(String(finalValue))
@@ -39,9 +39,9 @@ export function HPMaxEditor({ onClose }: HPMaxEditorProps) {
   }
 
   const handleIncrement = () => {
-    if (!isValidNumber(inputValue)) return
+    if (inputValue.trim() !== "" && !isValidNumber(inputValue)) return
 
-    const currentValue = parseToNumber(inputValue, currentHPMax)
+    const currentValue = inputValue.trim() === "" ? 0 : parseToNumber(inputValue, 0)
     const newValue = Math.min(currentValue + 1, 18)
 
     setInputValue(String(newValue))
@@ -49,7 +49,7 @@ export function HPMaxEditor({ onClose }: HPMaxEditorProps) {
   }
 
   // 判断是否可以增加
-  const canIncrement = isValidNumber(inputValue) && parseToNumber(inputValue, 0) < 18
+  const canIncrement = inputValue.trim() === "" || (isValidNumber(inputValue) && parseToNumber(inputValue, 0) < 18)
 
   return (
     <div className="w-24">

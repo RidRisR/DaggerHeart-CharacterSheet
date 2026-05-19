@@ -2,10 +2,9 @@
 
 import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
-import { X, ChevronUp, ChevronDown } from "lucide-react"
-import { isValidNumber, parseToNumber } from "@/lib/number-utils"
+import type { AttributeValue, SheetData } from "@/lib/sheet-data"
+import { X } from "lucide-react"
 import { showFadeNotification } from "@/components/ui/fade-notification"
-import type { AttributeValue } from "@/lib/sheet-data"
 
 interface AttributeUpgradeEditorProps {
   onClose?: () => void
@@ -23,15 +22,6 @@ interface AttributeSelection {
   knowledge: boolean
 }
 
-interface AttributeValues {
-  agility: string
-  strength: string
-  finesse: string
-  instinct: string
-  presence: string
-  knowledge: string
-}
-
 const ATTRIBUTES = [
   { key: "agility", name: "敏捷" },
   { key: "strength", name: "力量" },
@@ -41,89 +31,54 @@ const ATTRIBUTES = [
   { key: "knowledge", name: "知识" },
 ] as const
 
-export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleUpgradeCheckbox }: AttributeUpgradeEditorProps) {
-  const { sheetData } = useSheetStore()
-  const updateAttribute = useSheetStore(state => state.updateAttribute)
-  const toggleAttributeChecked = useSheetStore(state => state.toggleAttributeChecked)
-  const saveAttributeUpgradeRecord = useSheetStore(state => state.saveAttributeUpgradeRecord)
+function isAttributeValue(value: unknown): value is AttributeValue {
+  return typeof value === "object" && value !== null && "checked" in value && "value" in value
+}
 
-  const handleClose = () => {
-    // 关闭时不做任何修改，直接关闭
-    onClose?.()
-  }
-
-  // 在组件 mount 时保存 beforeState 快照
-  const [beforeState] = useState<Record<string, AttributeValue>>(() => {
-    return {
-      agility: {
-        value: sheetData.agility?.value ?? "0",
-        checked: sheetData.agility?.checked ?? false,
-        ...(sheetData.agility?.spellcasting !== undefined && { spellcasting: sheetData.agility.spellcasting })
-      },
-      strength: {
-        value: sheetData.strength?.value ?? "0",
-        checked: sheetData.strength?.checked ?? false,
-        ...(sheetData.strength?.spellcasting !== undefined && { spellcasting: sheetData.strength.spellcasting })
-      },
-      finesse: {
-        value: sheetData.finesse?.value ?? "0",
-        checked: sheetData.finesse?.checked ?? false,
-        ...(sheetData.finesse?.spellcasting !== undefined && { spellcasting: sheetData.finesse.spellcasting })
-      },
-      instinct: {
-        value: sheetData.instinct?.value ?? "0",
-        checked: sheetData.instinct?.checked ?? false,
-        ...(sheetData.instinct?.spellcasting !== undefined && { spellcasting: sheetData.instinct.spellcasting })
-      },
-      presence: {
-        value: sheetData.presence?.value ?? "0",
-        checked: sheetData.presence?.checked ?? false,
-        ...(sheetData.presence?.spellcasting !== undefined && { spellcasting: sheetData.presence.spellcasting })
-      },
-      knowledge: {
-        value: sheetData.knowledge?.value ?? "0",
-        checked: sheetData.knowledge?.checked ?? false,
-        ...(sheetData.knowledge?.spellcasting !== undefined && { spellcasting: sheetData.knowledge.spellcasting })
-      },
-    }
-  })
-
-  // 初始化原始值
-  const [originalValues] = useState<AttributeValues>(() => ({
-    agility: typeof sheetData.agility === "object" && sheetData.agility !== null && "value" in sheetData.agility ? sheetData.agility.value : "0",
-    strength: typeof sheetData.strength === "object" && sheetData.strength !== null && "value" in sheetData.strength ? sheetData.strength.value : "0",
-    finesse: typeof sheetData.finesse === "object" && sheetData.finesse !== null && "value" in sheetData.finesse ? sheetData.finesse.value : "0",
-    instinct: typeof sheetData.instinct === "object" && sheetData.instinct !== null && "value" in sheetData.instinct ? sheetData.instinct.value : "0",
-    presence: typeof sheetData.presence === "object" && sheetData.presence !== null && "value" in sheetData.presence ? sheetData.presence.value : "0",
-    knowledge: typeof sheetData.knowledge === "object" && sheetData.knowledge !== null && "value" in sheetData.knowledge ? sheetData.knowledge.value : "0",
-  }))
-
-  const [selected, setSelected] = useState<AttributeSelection>({
+function emptySelection(): AttributeSelection {
+  return {
     agility: false,
     strength: false,
     finesse: false,
     instinct: false,
     presence: false,
     knowledge: false,
-  })
+  }
+}
 
-  // 当前编辑中的值（仅选中的属性）
-  const [editingValues, setEditingValues] = useState<AttributeValues>(() => ({...originalValues}))
+export function AttributeUpgradeEditor({ onClose, checkKey }: AttributeUpgradeEditorProps) {
+  const { sheetData, setSheetData, setUpgradeState } = useSheetStore()
+  const [mode, setMode] = useState<"standard" | "free">("standard")
+
+  const handleClose = () => {
+    // 关闭时不做任何修改，直接关闭
+    onClose?.()
+  }
+
+  const [selected, setSelected] = useState<AttributeSelection>(emptySelection)
 
   // 计算已选择数量
   const selectedCount = Object.values(selected).filter(Boolean).length
 
+  const isAttributeUpgraded = (key: keyof AttributeSelection) => {
+    if (mode === "free") return false
+    const attrData = sheetData[key]
+    return isAttributeValue(attrData) && attrData.checked
+  }
+
   // 获取未升级的属性数量
-  const unupgradedCount = ATTRIBUTES.filter(attr => {
-    const attrData = sheetData[attr.key]
-    return typeof attrData === "object" && attrData !== null && "checked" in attrData && !attrData.checked
-  }).length
+  const unupgradedCount = mode === "standard"
+    ? ATTRIBUTES.filter(attr => !isAttributeUpgraded(attr.key)).length
+    : ATTRIBUTES.length
+
+  const handleModeChange = (nextMode: "standard" | "free") => {
+    setMode(nextMode)
+    setSelected(emptySelection())
+  }
 
   const handleToggle = (key: keyof AttributeSelection) => {
-    const attrData = sheetData[key]
-
     // 如果该属性已升级,不允许选择
-    if (typeof attrData === "object" && attrData !== null && "checked" in attrData && attrData.checked) {
+    if (isAttributeUpgraded(key)) {
       return
     }
 
@@ -132,93 +87,61 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
       return
     }
 
-    const isCurrentlySelected = selected[key]
-
-    // 如果取消选择，恢复原始值
-    if (isCurrentlySelected) {
-      setEditingValues(prev => ({ ...prev, [key]: originalValues[key] }))
-    }
-
     setSelected(prev => ({ ...prev, [key]: !prev[key] }))
-  }
-
-  const handleValueChange = (key: keyof AttributeValues, value: string) => {
-    setEditingValues(prev => ({ ...prev, [key]: value }))
-  }
-
-  const handleIncrement = (key: keyof AttributeValues) => {
-    const currentValue = editingValues[key]
-    if (isValidNumber(currentValue)) {
-      const numValue = parseToNumber(currentValue, 0)
-      setEditingValues(prev => ({ ...prev, [key]: String(numValue + 1) }))
-    }
-  }
-
-  const handleDecrement = (key: keyof AttributeValues) => {
-    const currentValue = editingValues[key]
-    if (isValidNumber(currentValue)) {
-      const numValue = parseToNumber(currentValue, 0)
-      setEditingValues(prev => ({ ...prev, [key]: String(numValue - 1) }))
-    }
   }
 
   const handleApply = () => {
     // 收集升级的属性名称（用于通知）
     const upgradedAttributes: string[] = []
 
-    // 1. 先构造 afterState（基于 beforeState + 选择的修改）
-    const afterState: Record<string, AttributeValue> = {
-      agility: { ...beforeState.agility },
-      strength: { ...beforeState.strength },
-      finesse: { ...beforeState.finesse },
-      instinct: { ...beforeState.instinct },
-      presence: { ...beforeState.presence },
-      knowledge: { ...beforeState.knowledge },
-    }
-
-    // 更新 afterState 中被选中的属性
     Object.entries(selected).forEach(([key, isSelected]) => {
       if (isSelected) {
-        afterState[key] = {
-          ...afterState[key],
-          value: editingValues[key as keyof AttributeValues],
-          checked: true,
-        }
-
         // 记录升级的属性名称
         const attrInfo = ATTRIBUTES.find(a => a.key === key)
         if (attrInfo) upgradedAttributes.push(attrInfo.name)
       }
     })
 
-    // 2. 应用属性修改到 store
-    Object.entries(selected).forEach(([key, isSelected]) => {
-      if (isSelected) {
-        // 直接使用编辑后的值
-        const editedValue = editingValues[key as keyof AttributeValues]
-        updateAttribute(key as keyof typeof sheetData, editedValue)
+    const selectedAttributes = Object.entries(selected)
+      .filter(([, isSelected]) => isSelected)
+      .map(([key]) => key as keyof AttributeSelection)
 
-        // 标记为已升级
-        toggleAttributeChecked(key as keyof typeof sheetData)
-      }
+    if (mode === "standard") {
+      setSheetData((prev: SheetData) => {
+        const updates: Partial<SheetData> = {}
+
+        selectedAttributes.forEach(attribute => {
+          const currentAttribute = prev[attribute]
+          if (isAttributeValue(currentAttribute)) {
+            updates[attribute] = {
+              ...currentAttribute,
+              checked: true,
+            }
+          }
+        })
+
+        return updates
+      })
+    }
+
+    setUpgradeState(checkKey, {
+      checked: true,
+      params: {
+        attributes: selectedAttributes,
+      },
+      ...(mode === "standard" ? { attributeMarksApplied: true as const } : {}),
     })
 
-    // 3. 保存快照到 store
-    saveAttributeUpgradeRecord(checkKey, beforeState, afterState)
-
-    // 4. 勾选复选框（使用新的状态切换函数）
-    toggleUpgradeCheckbox(checkKey, optionIndex, true)
-
-    // 5. 显示成功通知
+    // 显示成功通知
     if (upgradedAttributes.length > 0) {
       showFadeNotification({
-        message: `已升级属性：${upgradedAttributes.join('、')}`,
+        message: `已记录属性升级：${upgradedAttributes.join('、')}`,
         type: "success",
         position: "middle"
       })
     }
 
-    // 6. 关闭气泡
+    // 关闭气泡
     onClose?.()
   }
 
@@ -239,7 +162,35 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
       </div>
 
       <div className="text-xs text-gray-600 mb-2">
-        选择并<strong>修改两项</strong>未升级的属性 ({selectedCount}/2)
+        {mode === "standard" ? "选择两项未升级的属性" : "选择两项属性"} ({selectedCount}/2)
+      </div>
+
+      <div className="mb-2 grid grid-cols-2 rounded border border-gray-300 p-0.5 text-xs">
+        <button
+          type="button"
+          onClick={() => handleModeChange("standard")}
+          className={`rounded px-2 py-1 font-medium transition-colors ${mode === "standard"
+            ? "bg-gray-800 text-white"
+            : "text-gray-600 hover:bg-gray-100"
+          }`}
+        >
+          标准
+        </button>
+        <button
+          type="button"
+          onClick={() => handleModeChange("free")}
+          className={`rounded px-2 py-1 font-medium transition-colors ${mode === "free"
+            ? "bg-gray-800 text-white"
+            : "text-gray-600 hover:bg-gray-100"
+          }`}
+        >
+          自由
+        </button>
+      </div>
+      <div className="mb-2 text-[11px] leading-snug text-gray-500">
+        {mode === "standard"
+          ? "将自动添加属性升级标记"
+          : "属性升级标记将不会被修改"}
       </div>
 
       {unupgradedCount < 2 ? (
@@ -253,18 +204,20 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
           <div className="space-y-1 mb-3">
             {ATTRIBUTES.map(({ key, name }) => {
               const attrData = sheetData[key]
-              const isUpgraded = typeof attrData === "object" && attrData !== null && "checked" in attrData && attrData.checked
-              const isSpellcasting = typeof attrData === "object" && attrData !== null && "spellcasting" in attrData && attrData.spellcasting
+              const isUpgraded = isAttributeUpgraded(key)
+              const isSpellcasting = isAttributeValue(attrData) && attrData.spellcasting
               const isSelected = selected[key]
               const isDisabled = isUpgraded || (selectedCount >= 2 && !isSelected)
-              const displayValue = editingValues[key]
 
               return (
-                <div
+                <button
+                  type="button"
                   key={key}
+                  data-testid={`attribute-upgrade-option-${key}`}
+                  disabled={isDisabled}
                   onClick={() => !isDisabled && handleToggle(key)}
                   className={`
-                    flex items-center justify-between px-2 py-1.5 rounded border transition-colors
+                    flex w-full items-center justify-between px-2 py-1.5 rounded border text-left transition-colors
                     ${isDisabled
                     ? "bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed"
                     : "bg-white border-gray-300 cursor-pointer hover:bg-gray-50"
@@ -283,40 +236,12 @@ export function AttributeUpgradeEditor({ onClose, checkKey, optionIndex, toggleU
                       )}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                    {isSelected && isValidNumber(displayValue) && (
-                      <>
-                        <button
-                          onClick={() => handleDecrement(key)}
-                          className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                          title="减少属性值 (-1)"
-                        >
-                          <ChevronDown className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => handleIncrement(key)}
-                          className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                          title="增加属性值 (+1)"
-                        >
-                          <ChevronUp className="w-3 h-3" />
-                        </button>
-                      </>
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    {isSelected && (
+                      <span className="font-medium text-blue-700">已选择</span>
                     )}
-                    <input
-                      type="text"
-                      value={displayValue}
-                      onChange={(e) => handleValueChange(key, e.target.value)}
-                      disabled={!isSelected}
-                      className={`
-                        w-16 px-1 py-0.5 text-xs text-center border rounded
-                        ${isSelected
-                          ? "bg-white border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          : "bg-gray-50 border-gray-200 text-gray-600"
-                        }
-                      `}
-                    />
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>

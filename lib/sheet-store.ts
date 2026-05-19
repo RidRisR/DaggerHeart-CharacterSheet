@@ -6,7 +6,7 @@ import type { SheetData, AttributeValue, ArmorTemplateData, SheetCardReference }
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { armorItems } from "@/data/list/armor";
 import { allWeapons } from "@/data/list/all-weapons";
-import { parseArmorMax, parseArmorThreshold } from "@/lib/equipment/armor-utils";
+import { parseArmorMax, parseArmorThreshold, parseArmorThresholdSide } from "@/lib/equipment/armor-utils";
 import {
     createDefaultEquipmentModifierContribution,
     createEquipmentContributionId as createAdHocEquipmentContributionId,
@@ -164,6 +164,7 @@ interface SheetState {
     // Threshold calculation actions
     updateLevel: (level: string) => void;
     updateArmorBaseThresholds: (baseThresholds: string) => void;
+    updateArmorBaseThresholdSide: (side: "minor" | "major", value: string) => void;
     updateArmorBaseMax: (baseArmorMax: string) => void;
     selectArmor: (armorId: string) => void;
     selectWeaponSlot: (selection: WeaponSlotSelection, weaponId: string) => void;
@@ -602,6 +603,30 @@ export const useSheetStore = create<SheetState>((set) => ({
         const armorSlot: ArmorSlot = {
             ...state.sheetData.equipment.armorSlot,
             baseThresholds: parseArmorThreshold(baseThresholds),
+        };
+
+        return {
+            sheetData: applyAutoCalculationForTargets({
+                ...state.sheetData,
+                equipment: {
+                    ...state.sheetData.equipment,
+                    armorSlot,
+                },
+            }),
+        };
+    }),
+
+    updateArmorBaseThresholdSide: (side, value) => set((state) => {
+        const baseThresholds = value.includes("/")
+            ? parseArmorThreshold(value)
+            : {
+                ...state.sheetData.equipment.armorSlot.baseThresholds,
+                [side]: parseArmorThresholdSide(value),
+            };
+
+        const armorSlot: ArmorSlot = {
+            ...state.sheetData.equipment.armorSlot,
+            baseThresholds,
         };
 
         return {

@@ -431,6 +431,108 @@ describe("modifier store actions", () => {
     expect(sheet().armorMax).toBe(5)
   })
 
+  it("updates one armor threshold side without changing the other side", () => {
+    resetSheetStore({
+      level: "1",
+      minorThreshold: "8",
+      majorThreshold: "16",
+      equipment: {
+        ...defaultSheetData.equipment,
+        armorSlot: {
+          ...defaultSheetData.equipment.armorSlot,
+          baseThresholds: { minor: 7, major: 15 },
+        },
+      },
+      modifierState: {
+        targetStates: {
+          minorThreshold: {
+            activeBaseId: "equipment:armor:current:minorThreshold",
+            autoCalculation: true,
+          },
+          majorThreshold: {
+            activeBaseId: "equipment:armor:current:majorThreshold",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().updateArmorBaseThresholdSide("minor", "10+3")
+
+    expect(sheet().equipment.armorSlot.baseThresholds).toEqual({ minor: 13, major: 15 })
+    expect(sheet().minorThreshold).toBe("14")
+    expect(sheet().majorThreshold).toBe("16")
+  })
+
+  it("clears only the edited armor threshold side when side input is invalid", () => {
+    resetSheetStore({
+      level: "1",
+      minorThreshold: "8",
+      majorThreshold: "16",
+      equipment: {
+        ...defaultSheetData.equipment,
+        armorSlot: {
+          ...defaultSheetData.equipment.armorSlot,
+          baseThresholds: { minor: 7, major: 15 },
+        },
+      },
+      modifierState: {
+        targetStates: {
+          minorThreshold: {
+            activeBaseId: "equipment:armor:current:minorThreshold",
+            autoCalculation: true,
+          },
+          majorThreshold: {
+            activeBaseId: "equipment:armor:current:majorThreshold",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().updateArmorBaseThresholdSide("minor", "bad")
+
+    expect(sheet().equipment.armorSlot.baseThresholds).toEqual({ minor: null, major: 15 })
+    expect(sheet().minorThreshold).toBe("")
+    expect(sheet().majorThreshold).toBe("16")
+  })
+
+  it("updates both armor threshold sides when side input contains a slash", () => {
+    resetSheetStore({
+      level: "1",
+      minorThreshold: "8",
+      majorThreshold: "16",
+      equipment: {
+        ...defaultSheetData.equipment,
+        armorSlot: {
+          ...defaultSheetData.equipment.armorSlot,
+          baseThresholds: { minor: 7, major: 15 },
+        },
+      },
+      modifierState: {
+        targetStates: {
+          minorThreshold: {
+            activeBaseId: "equipment:armor:current:minorThreshold",
+            autoCalculation: true,
+          },
+          majorThreshold: {
+            activeBaseId: "equipment:armor:current:majorThreshold",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().updateArmorBaseThresholdSide("major", "9/21")
+
+    expect(sheet().equipment.armorSlot.baseThresholds).toEqual({ minor: 9, major: 21 })
+    expect(sheet().minorThreshold).toBe("10")
+    expect(sheet().majorThreshold).toBe("22")
+  })
+
   it("applies auto calculation after profession card source changes", () => {
     resetSheetStore({
       evasion: "0",

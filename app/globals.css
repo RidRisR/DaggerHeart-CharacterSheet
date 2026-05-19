@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --font-serif: Georgia, serif;
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
+}
+
 /* 全局固定字体大小，防止浏览器字体设置影响 */
 * {
   /* 禁用浏览器的最小字体大小限制 */

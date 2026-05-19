@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event"
 import { HeaderSection } from "@/components/character-sheet-sections/header-section"
 import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-upgrade-editor"
 import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-values-editor"
+import { createEstimatedBaseContribution } from "@/lib/modifiers/special-contributions"
 import { resetSheetStore, sheet } from "./test-helpers"
 
 describe("升级编辑器组件烟雾测试", () => {
@@ -78,6 +79,10 @@ describe("升级编辑器组件烟雾测试", () => {
     resetSheetStore({
       experience: ["军人", "铁匠", "", "", ""],
       experienceValues: ["1", "2", "", "", ""],
+      userModifierContributions: [
+        createEstimatedBaseContribution("experienceValues.0", 1),
+        createEstimatedBaseContribution("experienceValues.1", 2),
+      ],
     })
 
     render(
@@ -92,8 +97,8 @@ describe("升级编辑器组件烟雾测试", () => {
     await user.click(screen.getByText("铁匠"))
     await user.click(screen.getByRole("button", { name: /应用升级/ }))
 
-    expect(sheet().experienceValues?.[0]).toBe("1")
-    expect(sheet().experienceValues?.[1]).toBe("2")
+    expect(sheet().experienceValues?.[0]).toBe("2")
+    expect(sheet().experienceValues?.[1]).toBe("3")
     expect(sheet().upgradeStates?.["tier1-3-0"]).toEqual({
       checked: true,
       params: { experienceIndexes: [0, 1] },

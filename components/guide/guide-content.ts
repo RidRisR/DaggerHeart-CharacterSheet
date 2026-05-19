@@ -48,6 +48,7 @@ export interface GuideStep {
 }
 
 const isFilled = (val: any) => val !== undefined && val !== null && String(val).trim() !== '';
+const isFilledNumber = (val: any) => typeof val === "number" && Number.isFinite(val);
 
 // 引导步骤数据
 export const guideSteps: GuideStep[] = [
@@ -205,7 +206,7 @@ export const guideSteps: GuideStep[] = [
                 }
             }
             console.log("Expected HP:", expectedHp, "Form HP Max:", formData.hpMax);
-            if (expectedHp !== undefined && String(formData.hpMax || 6) !== String(expectedHp)) {
+            if (expectedHp !== undefined && String(formData.hpMax ?? "") !== String(expectedHp)) {
                 return false;
             }
             return true;
@@ -246,38 +247,36 @@ export const guideSteps: GuideStep[] = [
         title: "选择初始武器",
         content: "现在请选择您的初始武器。请从<strong>T1</strong>武器表中选择\n1.<strong>一把双手主武器</strong>;\n2. 或者 <strong>一把单手主武器和一把单手副武器</strong>。\n填写在主武器和副武器栏位上。",
         validation: (formData) => {
-            return isFilled(formData.primaryWeaponName);
+            return isFilled(formData.equipment?.weaponSlots?.primary?.name);
         }
     },
     {
         id: "step9",
         title: "选择初始护甲",
         content: (formData: any): string => {
-            const isArmorSelected = formData?.armorName && formData?.armorBaseScore !== undefined && formData?.armorThreshold !== undefined && String(formData.armorName).trim() !== '';
+            const armorSlot = formData?.equipment?.armorSlot;
+            const baseArmorMax = armorSlot?.baseArmorMax;
+            const baseThresholds = armorSlot?.baseThresholds;
+            const isArmorSelected = isFilled(armorSlot?.name)
+                && isFilledNumber(baseArmorMax)
+                && isFilledNumber(baseThresholds?.minor)
+                && isFilledNumber(baseThresholds?.major);
             if (!isArmorSelected) {
                 return "现在请选择您的初始护甲。请从<strong>T1</strong>护甲表中选择并装备一套护甲，然后填写在装备-护甲栏位上。已装备护甲为您提供护甲值和护甲伤害阈值。\n<strong>护甲值</strong>代表您的护甲可以承受多少次攻击。<strong>伤害阈值</strong>是护甲提供的减伤等级,决定了需要造成多少伤害才能真正伤害到您。";
             }
-            // 处理护甲值
-            const armorValue = formData?.armorBaseScore !== undefined && formData?.armorBaseScore !== null
-                ? String(formData.armorBaseScore)
-                : "未知";
-            // 处理护甲伤害阈值
-            let armorThresholdDisplay = "未知";
-            if (typeof formData?.armorThreshold === "string" && formData.armorThreshold.trim() !== "") {
-                let match = formData.armorThreshold.match(/\(?\s*([0-9]+)\s*\/\s*([0-9]+)\s*\)?/);
-                if (match) {
-                    const t1 = parseInt(match[1], 10) + 1;
-                    const t2 = parseInt(match[2], 10) + 1;
-                    armorThresholdDisplay = `(${t1}, ${t2})`;
-                } else {
-                    armorThresholdDisplay = formData.armorThreshold;
-                }
-            }
-            return `<strong>您的护甲值是 ${armorValue} </strong>，意味着您的护甲在维修前可以承受 ${armorValue} 次攻击，请<strong>填写</strong>在角色卡左上角的<strong>护甲值</strong>栏位中。\n已装备护甲提供基本的护甲阈值，您的等级会提供额外的等级加成，加成和当前等级相同（如一级+1）。<strong>您的护甲伤害阈值是 ${armorThresholdDisplay}</strong >。 \n请<strong>填写</strong>在'生命值与压力'下方的<strong>伤害阈值</strong>栏位中。`;
+            const level = Number.parseInt(String(formData?.level ?? "1"), 10);
+            const levelBonus = Number.isFinite(level) ? level : 1;
+            const armorMaxDisplay = String(baseArmorMax);
+            const thresholdsDisplay = `(${baseThresholds.minor + levelBonus}, ${baseThresholds.major + levelBonus})`;
+            return `<strong>您的护甲值是 ${armorMaxDisplay} </strong>，意味着您的护甲在维修前可以承受 ${armorMaxDisplay} 次攻击，请<strong>填写</strong>在角色卡左上角的<strong>护甲值</strong>栏位中。\n已装备护甲提供基本的护甲阈值，您的等级会提供额外的等级加成，加成和当前等级相同（如一级+1）。<strong>您的护甲伤害阈值是 ${thresholdsDisplay}</strong >。 \n请<strong>填写</strong>在'生命值与压力'下方的<strong>伤害阈值</strong>栏位中。`;
         },
         validation: (formData) => {
-            return isFilled(formData.armorName)
-                && isFilled(formData.armorValue)
+            const armorSlot = formData?.equipment?.armorSlot;
+            return isFilled(armorSlot?.name)
+                && isFilledNumber(armorSlot?.baseArmorMax)
+                && isFilledNumber(armorSlot?.baseThresholds?.minor)
+                && isFilledNumber(armorSlot?.baseThresholds?.major)
+                && isFilled(formData.armorMax)
                 && isFilled(formData.majorThreshold)
                 && isFilled(formData.minorThreshold);
         }

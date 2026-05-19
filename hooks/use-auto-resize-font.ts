@@ -64,10 +64,18 @@ export function useAutoResizeFont({
         }
     }, [activeTooltip, enableTooltip])
 
+    const updateTextOverflow = useCallback((id: string, isOverflowing: boolean) => {
+        setTextOverflows(prev => {
+            if (!isOverflowing && !(id in prev)) return prev
+            if (prev[id] === isOverflowing) return prev
+            return { ...prev, [id]: isOverflowing }
+        })
+    }, [])
+
     // 检查文本是否溢出
     const checkTextOverflow = useCallback((element: HTMLInputElement, text: string, id: string) => {
         if (!element || !text || text.trim() === '') {
-            setTextOverflows(prev => ({ ...prev, [id]: false }))
+            updateTextOverflow(id, false)
             return false
         }
 
@@ -94,9 +102,9 @@ export function useAutoResizeFont({
 
         document.body.removeChild(tempSpan)
 
-        setTextOverflows(prev => ({ ...prev, [id]: isOverflowing }))
+        updateTextOverflow(id, isOverflowing)
         return isOverflowing
-    }, [])
+    }, [updateTextOverflow])
 
     // 计算打印时需要的字体大小
     const calculatePrintFontSize = useCallback((element: HTMLInputElement, text: string) => {
@@ -195,7 +203,7 @@ export function useAutoResizeFont({
                 }
             }
         }
-    }, [textOverflows, enableTooltip, tooltipDelay, activeTooltip, checkTextOverflow, calculatePrintFontSize, maxFontSize])
+    }, [textOverflows, enableTooltip, tooltipDelay, activeTooltip, checkTextOverflow, calculatePrintFontSize, maxFontSize, minFontSize])
 
     // 清理
     useEffect(() => {

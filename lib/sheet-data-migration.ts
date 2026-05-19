@@ -851,7 +851,6 @@ function removeModifierContribution(
 }
 
 function legacyMigrationBaseline(target: ModifierTargetId): number | undefined {
-  if (target === "stressMax") return 6
   if (target.startsWith("experienceValues.")) return 2
   return undefined
 }

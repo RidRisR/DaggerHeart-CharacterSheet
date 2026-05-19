@@ -452,7 +452,7 @@ describe("modifier state migration", () => {
   it("does not create an estimated base from hpMax default fallback", () => {
     const migrated = migrateSheetData(v1ModifierInput({}))
 
-    expect(migrated.hpMax).toBe(6)
+    expect(migrated.hpMax).toBe("")
     expect(migrated.modifierState?.targetStates.hpMax).toBeUndefined()
     expect(migrated.userModifierContributions).not.toContainEqual(
       expect.objectContaining({ id: getEstimatedBaseId("hpMax") }),
@@ -646,7 +646,7 @@ describe("modifier state migration", () => {
     ])
   })
 
-  it("uses stressMax baseline 6 before creating migration differences", () => {
+  it("uses legacy stressMax final as estimated base without hidden baseline", () => {
     const baseline = migrateSheetData(v1ModifierInput({ stressMax: 6 }))
     const increased = migrateSheetData(v1ModifierInput({ stressMax: 8 }))
 
@@ -656,11 +656,9 @@ describe("modifier state migration", () => {
     expect(baseline.otherAdjustments).toEqual([])
 
     expect(increased.userModifierContributions).toContainEqual(
-      createEstimatedBaseContribution("stressMax", 6),
+      createEstimatedBaseContribution("stressMax", 8),
     )
-    expect(increased.otherAdjustments).toContainEqual(
-      createUnknownMigrationDifference("stressMax", 2),
-    )
+    expect(increased.otherAdjustments).toEqual([])
   })
 
   it("uses experience value baseline 2 before creating migration differences", () => {

@@ -151,6 +151,21 @@ describe("final target editors", () => {
     )
   })
 
+  it("does not render hidden default six boxes when hp and stress max are blank", () => {
+    resetSheetStore({
+      hpMax: "",
+      stressMax: "",
+      hp: Array(18).fill(false),
+      stress: Array(18).fill(false),
+    })
+
+    render(<HitPointsSection />)
+
+    expect(screen.getAllByDisplayValue("").length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByTitle("减少HP上限")).toBeDisabled()
+    expect(screen.getByTitle("减少压力上限")).toBeDisabled()
+  })
+
   it("renders proficiency editor against the real final target", () => {
     resetSheetStore()
 

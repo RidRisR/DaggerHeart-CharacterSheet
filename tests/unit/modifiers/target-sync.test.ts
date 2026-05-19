@@ -12,6 +12,11 @@ function sheet(overrides: Partial<SheetData> = {}): SheetData {
 }
 
 describe("target auto calculation helper", () => {
+  it("starts hp and stress max as blank finals without hidden default bases", () => {
+    expect(defaultSheetData.hpMax).toBe("")
+    expect(defaultSheetData.stressMax).toBe("")
+  })
+
   it("writes auto calculation target from its reference total", () => {
     const data = sheet({
       evasion: "10",

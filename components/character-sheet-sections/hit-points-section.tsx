@@ -16,6 +16,10 @@ export function HitPointsSection() {
     }
     return String(baseThreshold + level)
   }
+  const numericMax = (value: unknown) => {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -57,7 +61,7 @@ export function HitPointsSection() {
   // 增加上限
   const handleIncreaseMax = (field: "hp" | "stress") => {
     const maxField = `${field}Max` as "hpMax" | "stressMax"
-    const currentMax = formData[maxField] || 6
+    const currentMax = numericMax(formData[maxField])
     if (currentMax < 18) {
       handleMaxChange(field, String(currentMax + 1), true)
     }
@@ -66,7 +70,7 @@ export function HitPointsSection() {
   // 减少上限
   const handleDecreaseMax = (field: "hp" | "stress") => {
     const maxField = `${field}Max` as "hpMax" | "stressMax"
-    const currentMax = formData[maxField] || 6
+    const currentMax = numericMax(formData[maxField])
     if (currentMax > 1) {
       handleMaxChange(field, String(currentMax - 1), true)
     }
@@ -189,7 +193,7 @@ export function HitPointsSection() {
             <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 print:hidden">
               <button
                 onClick={() => handleDecreaseMax("hp")}
-                disabled={(formData.hpMax || 6) <= 1}
+                disabled={numericMax(formData.hpMax) <= 1}
                 className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
                 title="减少HP上限"
               >
@@ -197,7 +201,7 @@ export function HitPointsSection() {
               </button>
               <button
                 onClick={() => handleIncreaseMax("hp")}
-                disabled={(formData.hpMax || 6) >= 18}
+                disabled={numericMax(formData.hpMax) >= 18}
                 className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
                 title="增加HP上限"
               >
@@ -220,12 +224,12 @@ export function HitPointsSection() {
                 }
               }}
               onFocus={(e) => e.target.select()}
-              placeholder="6"
+              placeholder=""
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>
         </div>
-        {renderBoxes("hp", Number(formData.hpMax || formData.cards?.[0]?.professionSpecial?.["起始生命"] || 6), 18)}
+        {renderBoxes("hp", numericMax(formData.hpMax), 18)}
 
         <div className="flex items-center justify-between group">
           <span className="font-bold mr-2 text-xs">
@@ -237,7 +241,7 @@ export function HitPointsSection() {
             <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 print:hidden">
               <button
                 onClick={() => handleDecreaseMax("stress")}
-                disabled={(formData.stressMax || 6) <= 1}
+                disabled={numericMax(formData.stressMax) <= 1}
                 className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
                 title="减少压力上限"
               >
@@ -245,7 +249,7 @@ export function HitPointsSection() {
               </button>
               <button
                 onClick={() => handleIncreaseMax("stress")}
-                disabled={(formData.stressMax || 6) >= 18}
+                disabled={numericMax(formData.stressMax) >= 18}
                 className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-base sm:text-sm text-gray-400 sm:text-gray-800 transition-colors"
                 title="增加压力上限"
               >
@@ -268,12 +272,12 @@ export function HitPointsSection() {
                 }
               }}
               onFocus={(e) => e.target.select()}
-              placeholder="6"
+              placeholder=""
               className="w-8 text-center border border-gray-400 rounded text-xs print:hidden" // 打印时隐藏
             />
           </div>
         </div>
-        {renderBoxes("stress", Number(formData.stressMax || 6), 18)}
+        {renderBoxes("stress", numericMax(formData.stressMax), 18)}
       </div>
     </div>
   )

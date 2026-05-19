@@ -12,7 +12,7 @@ interface StressMaxEditorProps {
 export function StressMaxEditor({ onClose }: StressMaxEditorProps) {
   const { sheetData } = useSheetStore()
   const updateStressMax = useSheetStore(state => state.updateStressMax)
-  const currentStressMax = sheetData.stressMax ?? 6
+  const currentStressMax = sheetData.stressMax ?? ""
   const [inputValue, setInputValue] = useState(String(currentStressMax))
 
   // 同步外部变化
@@ -28,7 +28,7 @@ export function StressMaxEditor({ onClose }: StressMaxEditorProps) {
   const handleBlur = () => {
     // 失焦时应用更改
     if (isValidNumber(inputValue)) {
-      const numValue = parseToNumber(inputValue, 6)
+      const numValue = parseToNumber(inputValue, 0)
       const finalValue = Math.min(Math.max(numValue, 1), 12)
       updateStressMax(finalValue)
       setInputValue(String(finalValue))
@@ -39,9 +39,9 @@ export function StressMaxEditor({ onClose }: StressMaxEditorProps) {
   }
 
   const handleIncrement = () => {
-    if (!isValidNumber(inputValue)) return
+    if (inputValue.trim() !== "" && !isValidNumber(inputValue)) return
 
-    const currentValue = parseToNumber(inputValue, currentStressMax)
+    const currentValue = inputValue.trim() === "" ? 0 : parseToNumber(inputValue, 0)
     const newValue = Math.min(currentValue + 1, 12)
 
     setInputValue(String(newValue))
@@ -49,7 +49,7 @@ export function StressMaxEditor({ onClose }: StressMaxEditorProps) {
   }
 
   // 判断是否可以增加
-  const canIncrement = isValidNumber(inputValue) && parseToNumber(inputValue, 0) < 12
+  const canIncrement = inputValue.trim() === "" || (isValidNumber(inputValue) && parseToNumber(inputValue, 0) < 12)
 
   return (
     <div className="w-28">

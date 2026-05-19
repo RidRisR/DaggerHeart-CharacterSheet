@@ -32,16 +32,6 @@ function countTrueValues(boolArray: boolean[] | undefined): number {
   return boolArray.filter(Boolean).length
 }
 
-/**
- * 计算布尔数组的最大容量
- * @param boolArray 布尔数组
- * @returns 数组长度
- */
-function getMaxCapacity(boolArray: boolean[] | undefined): number {
-  if (!boolArray) return 0
-  return boolArray.length
-}
-
 function getNumericValue(value: number | string | undefined, fallback: number): number {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : fallback
@@ -101,13 +91,13 @@ export function exportToSealDice(sheetData: SheetData): string {
 
   // 状态数值 - 生命值：存档中的值表示损失，实际值 = 最大值 - 损失值
   const hpDamage = countTrueValues(sheetData.hp)
-  const maxHp = sheetData.hpMax || getMaxCapacity(sheetData.hp) || 6
-  const currentHp = maxHp - hpDamage
+  const maxHp = getNumericValue(sheetData.hpMax, 0)
+  const currentHp = Math.max(0, maxHp - hpDamage)
   attributes.push(`生命${currentHp}`)
   attributes.push(`生命上限${maxHp}`)
 
   const currentStress = countTrueValues(sheetData.stress)
-  const maxStress = sheetData.stressMax || getMaxCapacity(sheetData.stress) || 6
+  const maxStress = getNumericValue(sheetData.stressMax, 0)
   attributes.push(`压力${currentStress}`)
   attributes.push(`压力上限${maxStress}`)
 

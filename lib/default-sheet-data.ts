@@ -38,8 +38,8 @@ export const defaultSheetData: SheetData = {
 
     hp: Array(18).fill(false),
     stress: Array(18).fill(false),
-    hpMax: 6, // Defaulting to 6 as it's a common base
-    stressMax: 6, // Defaulting to 6 as it's a common base
+    hpMax: "",
+    stressMax: "",
 
     armorBoxes: Array(12).fill(false),
     armorMax: 0,

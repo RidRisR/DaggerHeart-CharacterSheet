@@ -90,6 +90,14 @@ describe("护甲自动化基线", () => {
       armorMax: 4,
       minorThreshold: "9",
       majorThreshold: "18",
+      modifierState: {
+        targetStates: {
+          armorMax: { autoCalculation: false },
+          minorThreshold: { autoCalculation: false },
+          majorThreshold: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
     })
 
     store().selectArmor("none")

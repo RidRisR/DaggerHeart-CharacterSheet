@@ -192,8 +192,8 @@ export function cleanAndNormalizeData(data: any): SheetData {
     minorThreshold: data.minorThreshold ? String(data.minorThreshold) : undefined,
     majorThreshold: data.majorThreshold ? String(data.majorThreshold) : undefined,
     armorMax: typeof data.armorMax === 'number' || typeof data.armorMax === 'string' ? data.armorMax : undefined,
-    hpMax: typeof data.hpMax === 'number' ? data.hpMax : undefined,
-    stressMax: typeof data.stressMax === 'number' ? data.stressMax : undefined,
+    hpMax: typeof data.hpMax === 'number' || typeof data.hpMax === 'string' ? data.hpMax : undefined,
+    stressMax: typeof data.stressMax === 'number' || typeof data.stressMax === 'string' ? data.stressMax : undefined,
 
     // 伙伴相关
     companionImage: data.companionImage ? String(data.companionImage) : undefined,

@@ -1,8 +1,23 @@
 import { Weapon } from "./primary-weapon";
+import type { EquipmentModifierContributionTemplate } from "@/lib/equipment/types"
+
+function weaponModifierContribution(
+    id: string,
+    target: EquipmentModifierContributionTemplate["definition"]["target"],
+    label: string,
+    value: number,
+): EquipmentModifierContributionTemplate {
+    return {
+        id,
+        definition: { target, kind: "modifier" },
+        editable: { label, value },
+    }
+}
 
 export const secondaryWeapons: Weapon[] = [
 // 位阶1 (等级1)
     {
+        id: "builtin.weapon.secondary.001",
         名称: "短剑",
         等级: "T1",
         属性: "敏捷",
@@ -14,6 +29,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "近战时主武器伤害+2",
     },
     {
+        id: "builtin.weapon.secondary.002",
         名称: "圆盾",
         等级: "T1",
         属性: "力量",
@@ -23,8 +39,12 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+1",
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "保护", 1),
+        ],
     },
     {
+        id: "builtin.weapon.secondary.tower-shield",
         名称: "塔盾",
         等级: "T1",
         属性: "力量",
@@ -34,8 +54,21 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "壁垒",
         描述: "+2 护甲值，-1 闪避值", // Corrected
+        modifierContributions: [
+            {
+                id: "armor-max",
+                definition: { target: "armorMax", kind: "modifier" },
+                editable: { label: "壁垒", value: 2 },
+            },
+            {
+                id: "evasion",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "壁垒", value: -1 },
+            },
+        ],
     },
     {
+        id: "builtin.weapon.secondary.004",
         名称: "小匕首",
         等级: "T1",
         属性: "灵巧",
@@ -47,6 +80,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "近战时主武器伤害+2",
     },
     {
+        id: "builtin.weapon.secondary.005",
         名称: "鞭子",
         等级: "T1",
         属性: "风度",
@@ -58,6 +92,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "标记 1 压力点，将所有近战范围内的敌人击退至近距离", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.006",
         名称: "抓钩",
         等级: "T1",
         属性: "灵巧",
@@ -69,6 +104,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "进行一次成功的攻击后，你可以将目标拉至你的近战范围内", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.007",
         名称: "手弩",
         等级: "T1",
         属性: "灵巧",
@@ -82,6 +118,7 @@ export const secondaryWeapons: Weapon[] = [
 
     // 位阶2 (等级2-4)
     {
+        id: "builtin.weapon.secondary.008",
         名称: "改良短剑",
         等级: "T2",
         属性: "敏捷",
@@ -93,6 +130,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "近战时主武器伤害+3",
     },
     {
+        id: "builtin.weapon.secondary.009",
         名称: "改良圆盾",
         等级: "T2",
         属性: "力量",
@@ -102,8 +140,12 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+2",
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "保护", 2),
+        ],
     },
     {
+        id: "builtin.weapon.secondary.010",
         名称: "改良塔盾",
         等级: "T2",
         属性: "力量",
@@ -113,8 +155,21 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "壁垒",
         描述: "护甲值+3，闪避值-1", // Corrected
+        modifierContributions: [
+            {
+                id: "armor-max",
+                definition: { target: "armorMax", kind: "modifier" },
+                editable: { label: "壁垒", value: 3 },
+            },
+            {
+                id: "evasion",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "壁垒", value: -1 },
+            },
+        ],
     },
     {
+        id: "builtin.weapon.secondary.011",
         名称: "改良小匕首",
         等级: "T2",
         属性: "灵巧",
@@ -126,6 +181,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "近战时主武器伤害+3",
     },
     {
+        id: "builtin.weapon.secondary.012",
         名称: "改良鞭子",
         等级: "T2",
         属性: "风度",
@@ -137,6 +193,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "标记 1 压力点，将所有近战范围内的敌人击退至近距离", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.013",
         名称: "改良抓钩",
         等级: "T2",
         属性: "灵巧",
@@ -148,6 +205,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "进行一次成功的攻击后，你可以将目标拉至你的近战范围内", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.014",
         名称: "改良手弩",
         等级: "T2",
         属性: "灵巧",
@@ -159,6 +217,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "",
     },
     {
+        id: "builtin.weapon.secondary.015",
         名称: "尖刺盾牌",
         等级: "T2",
         属性: "力量",
@@ -168,8 +227,12 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "两用",
         描述: "护甲值+1，近战时主武器伤害+1", // Corrected
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "两用", 1),
+        ],
     },
     {
+        id: "builtin.weapon.secondary.016",
         名称: "格挡匕首",
         等级: "T2",
         属性: "灵巧",
@@ -181,6 +244,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "被攻击时，投出本武器的伤害骰，计算伤害时，移除攻击者所有相同点数的骰子。", 
     },
     {
+        id: "builtin.weapon.secondary.017",
         名称: "回力斧",
         等级: "T2",
         属性: "敏捷",
@@ -194,6 +258,7 @@ export const secondaryWeapons: Weapon[] = [
 
     // 位阶3 (等级5-7)
     {
+        id: "builtin.weapon.secondary.018",
         名称: "高级短剑",
         等级: "T3",
         属性: "敏捷",
@@ -205,6 +270,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "近战时主武器伤害+4",
     },
     {
+        id: "builtin.weapon.secondary.019",
         名称: "高级圆盾",
         等级: "T3",
         属性: "力量",
@@ -214,8 +280,12 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+3",
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "保护", 3),
+        ],
     },
     {
+        id: "builtin.weapon.secondary.020",
         名称: "高级塔盾",
         等级: "T3",
         属性: "力量",
@@ -225,8 +295,21 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "壁垒",
         描述: "护甲值+4，闪避值-1", // Corrected
+        modifierContributions: [
+            {
+                id: "armor-max",
+                definition: { target: "armorMax", kind: "modifier" },
+                editable: { label: "壁垒", value: 4 },
+            },
+            {
+                id: "evasion",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "壁垒", value: -1 },
+            },
+        ],
     },
     {
+        id: "builtin.weapon.secondary.021",
         名称: "高级小匕首",
         等级: "T3",
         属性: "灵巧",
@@ -238,6 +321,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "近战时主武器伤害+4",
     },
     {
+        id: "builtin.weapon.secondary.022",
         名称: "高级鞭子",
         等级: "T3",
         属性: "风度",
@@ -249,6 +333,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "标记 1 压力点，将所有近战范围内的敌人击退至近距离", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.023",
         名称: "高级抓钩",
         等级: "T3",
         属性: "灵巧",
@@ -260,6 +345,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "进行一次成功的攻击后，你可以将目标拉至你的近战范围内", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.024",
         名称: "高级手弩",
         等级: "T3",
         属性: "灵巧",
@@ -271,6 +357,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "",
     },
     {
+        id: "builtin.weapon.secondary.025",
         名称: "小盾",
         等级: "T3",
         属性: "敏捷",
@@ -282,6 +369,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "受到攻击时，你可以标记 1 护甲槽，将你的可用护甲槽添加到你的闪避值中", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.026",
         名称: "强力拳套",
         等级: "T3",
         属性: "知识",
@@ -293,6 +381,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "标记 1 压力点，为主武器的攻击熟练+1", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.027",
         名称: "弹弓",
         等级: "T3",
         属性: "灵巧",
@@ -306,6 +395,7 @@ export const secondaryWeapons: Weapon[] = [
 
     // 位阶4 (等级8-10)
     {
+        id: "builtin.weapon.secondary.028",
         名称: "传奇短剑",
         等级: "T4",
         属性: "敏捷",
@@ -317,6 +407,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "近战时主武器伤害+5",
     },
     {
+        id: "builtin.weapon.secondary.029",
         名称: "传奇圆盾",
         等级: "T4",
         属性: "力量",
@@ -326,8 +417,12 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "保护",
         描述: "护甲值+4",
+        modifierContributions: [
+            weaponModifierContribution("armor-max", "armorMax", "保护", 4),
+        ],
     },
     {
+        id: "builtin.weapon.secondary.030",
         名称: "传奇塔盾",
         等级: "T4",
         属性: "力量",
@@ -337,8 +432,21 @@ export const secondaryWeapons: Weapon[] = [
         负荷: "副手",
         特性名称: "壁垒",
         描述: "护甲值+5，闪避值-1", // Corrected
+        modifierContributions: [
+            {
+                id: "armor-max",
+                definition: { target: "armorMax", kind: "modifier" },
+                editable: { label: "壁垒", value: 5 },
+            },
+            {
+                id: "evasion",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "壁垒", value: -1 },
+            },
+        ],
     },
     {
+        id: "builtin.weapon.secondary.031",
         名称: "传奇小匕首",
         等级: "T4",
         属性: "灵巧",
@@ -350,6 +458,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "近战时主武器伤害+5",
     },
     {
+        id: "builtin.weapon.secondary.032",
         名称: "传奇鞭子",
         等级: "T4",
         属性: "风度",
@@ -361,6 +470,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "标记 1 压力点，将所有近战范围内的敌人击退至近距离", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.033",
         名称: "传奇抓钩",
         等级: "T4",
         属性: "灵巧",
@@ -372,6 +482,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "进行一次成功的攻击后，你可以将目标拉至你的近战范围内", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.034",
         名称: "传奇手弩",
         等级: "T4",
         属性: "灵巧",
@@ -383,6 +494,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "",
     },
     {
+        id: "builtin.weapon.secondary.035",
         名称: "勇气之盾",
         等级: "T4",
         属性: "敏捷",
@@ -394,6 +506,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "当你标记 1 护甲槽时，它将为你和所有近战范围内受到同源伤害的盟友减免伤害。", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.036",
         名称: "拳爪",
         等级: "T4",
         属性: "力量",
@@ -405,6 +518,7 @@ export const secondaryWeapons: Weapon[] = [
         描述: "使用主武器攻击时，你可以同时使用本武器对另一名近战范围内的敌人造成伤害", // Corrected
     },
     {
+        id: "builtin.weapon.secondary.037",
         名称: "引物碎片",
         等级: "T4",
         属性: "本能",

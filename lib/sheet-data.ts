@@ -242,6 +242,7 @@ export interface NotebookData {
 }
 
 export interface SheetData {
+  schemaVersion: number
   // 通用属性
   name: string
   characterImage?: string
@@ -362,4 +363,3 @@ export interface SheetData {
   // ===== 临时索引签名，兼容动态key访问，后续逐步收敛类型安全 =====
   // [key: string]: any // 已废弃，彻底类型安全后移除
 }
-

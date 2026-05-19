@@ -210,4 +210,15 @@ describe("template to slot conversion", () => {
 
     expect(slot.baseThresholds).toEqual({ minor: 13, major: null })
   })
+
+  it("keeps half-structured custom modal armor threshold objects", () => {
+    const slot = createArmorSlotFromCustomPayload({
+      名称: "自定义护甲",
+      护甲值: "5+1",
+      伤害阈值: { minor: "8", major: "" },
+    })
+
+    expect(slot.baseArmorMax).toBe(6)
+    expect(slot.baseThresholds).toEqual({ minor: 8, major: null })
+  })
 })

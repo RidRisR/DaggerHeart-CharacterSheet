@@ -19,7 +19,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
   const [customLevel, setCustomLevel] = useState<Level | "">("");
   const [customDamageThreshold1, setCustomDamageThreshold1] = useState("");
   const [customDamageThreshold2, setCustomDamageThreshold2] = useState("");
-  const [customArmorValue, setCustomArmorValue] = useState<number | "">("");
+  const [customArmorValue, setCustomArmorValue] = useState("");
   const [customFeatureName, setCustomFeatureName] = useState("");
   const [customDescription, setCustomDescription] = useState("");
   const [isCustom, setIsCustom] = useState(false);
@@ -181,7 +181,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">伤害阈值</label>
                   <div className="flex gap-1 items-center">
                     <input
-                      type="number"
+                      type="text"
                       className="w-full border rounded px-2 py-2 text-sm min-h-[2.5rem]"
                       placeholder="重伤阈值"
                       value={customDamageThreshold1}
@@ -189,7 +189,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                     />
                     <span className="text-gray-500">/</span>
                     <input
-                      type="number"
+                      type="text"
                       className="w-full border rounded px-2 py-2 text-sm min-h-[2.5rem]"
                       placeholder="严重阈值"
                       value={customDamageThreshold2}
@@ -200,11 +200,11 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">护甲值</label>
                   <input
-                    type="number"
+                    type="text"
                     className="w-full border rounded px-2 py-2 text-sm min-h-[2.5rem]"
                     placeholder="护甲值"
                     value={customArmorValue}
-                    onChange={e => setCustomArmorValue(e.target.value ? parseInt(e.target.value) : "")}
+                    onChange={e => setCustomArmorValue(e.target.value)}
                   />
                 </div>
                 <div>
@@ -232,14 +232,15 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                   size="sm"
                   onClick={() => {
                     if (customName) {
-                      const damageThreshold = customDamageThreshold1 && customDamageThreshold2
-                        ? `${customDamageThreshold1}/${customDamageThreshold2}`
-                        : (customDamageThreshold1 || customDamageThreshold2 || "");
+                      const damageThreshold = {
+                        minor: customDamageThreshold1,
+                        major: customDamageThreshold2,
+                      };
                       const customArmorData = {
                         名称: customName,
                         等级: customLevel || "",
                         伤害阈值: damageThreshold,
-                        护甲值: customArmorValue || 0,
+                        护甲值: customArmorValue,
                         特性名称: customFeatureName,
                         描述: customDescription
                       };
@@ -300,9 +301,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                     <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{customName}</td>
                     <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{customLevel}</td>
                     <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">
-                      {customDamageThreshold1 && customDamageThreshold2
-                        ? `${customDamageThreshold1}/${customDamageThreshold2}`
-                        : (customDamageThreshold1 || customDamageThreshold2 || "")}
+                      {`${customDamageThreshold1}/${customDamageThreshold2}`}
                     </td>
                     <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{customArmorValue}</td>
                     <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{customFeatureName}</td>

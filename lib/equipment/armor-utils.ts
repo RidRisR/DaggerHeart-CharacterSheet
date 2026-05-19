@@ -10,7 +10,7 @@ export function parseArmorMax(value: unknown): number | null {
     return null
   }
 
-  const parsed = tryParseNumber(value)
+  const parsed = tryParseNumber(value) ?? tryParseNumberExpression(value)
   return parsed === undefined ? null : parsed
 }
 

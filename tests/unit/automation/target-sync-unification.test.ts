@@ -245,7 +245,7 @@ describe("target sync automation unification", () => {
     expect(sheet().hpMax).toBe(7)
   })
 
-  it("keeps auto calculation profession targets when profession source is cleared", () => {
+  it("clears auto calculation profession targets when profession source is cleared", () => {
     resetSheetStore({
       level: "1",
       evasion: "12",
@@ -271,8 +271,8 @@ describe("target sync automation unification", () => {
 
     store().handleProfessionChange(undefined, undefined)
 
-    expect(sheet().evasion).toBe("12")
-    expect(sheet().hpMax).toBe(7)
+    expect(sheet().evasion).toBe("")
+    expect(sheet().hpMax).toBe("")
   })
 
   it("does not sync level source into proficiency or thresholds while targets are manual", () => {

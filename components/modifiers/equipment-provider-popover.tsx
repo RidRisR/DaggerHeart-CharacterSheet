@@ -137,10 +137,10 @@ function ArmorSummary({ armorSlot }: { armorSlot: ArmorSlot }) {
   const majorThreshold = armorSlot.baseThresholds.major ?? "未知"
 
   return (
-    <div className="grid grid-cols-3 gap-2 border-b border-gray-200 p-3 text-xs">
-      <span className="rounded bg-gray-50 px-2 py-1.5 text-center">护甲值 {armorMax}</span>
-      <span className="rounded bg-gray-50 px-2 py-1.5 text-center">重伤 {minorThreshold}</span>
-      <span className="rounded bg-gray-50 px-2 py-1.5 text-center">严重 {majorThreshold}</span>
+    <div className="grid grid-cols-3 gap-2 border-b border-slate-200 p-3 text-xs">
+      <span className="rounded border border-slate-200 bg-white px-2 py-1.5 text-center">护甲值 {armorMax}</span>
+      <span className="rounded border border-slate-200 bg-white px-2 py-1.5 text-center">重伤 {minorThreshold}</span>
+      <span className="rounded border border-slate-200 bg-white px-2 py-1.5 text-center">严重 {majorThreshold}</span>
     </div>
   )
 }
@@ -189,7 +189,10 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
           align="end"
           sideOffset={4}
           collisionPadding={8}
-          className={cn("p-0 print:hidden", isInventoryWeapon ? "w-[28rem]" : "w-[26rem]")}
+          className={cn(
+            "border-slate-300 bg-slate-50 p-0 shadow-xl print:hidden",
+            isInventoryWeapon ? "w-[28rem]" : "w-[26rem]",
+          )}
         >
           <div className={cn("max-h-[min(28rem,80vh)]", isInventoryWeapon ? "flex" : "overflow-y-auto")}>
             <div className="min-w-0 flex-1 overflow-y-auto">
@@ -200,7 +203,7 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
                   <button
                     type="button"
                     aria-label="新增修正"
-                    className="inline-flex h-7 items-center gap-1 rounded border border-gray-300 bg-white px-2 text-xs hover:bg-gray-50"
+                    className="inline-flex h-7 items-center gap-1 rounded border border-slate-300 bg-white px-2 text-xs hover:bg-slate-100"
                     onClick={() => addContribution(effectiveSlotRef)}
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -226,7 +229,7 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
               <div
                 role="tablist"
                 aria-label="备用武器槽位"
-                className="flex w-9 shrink-0 self-stretch flex-col gap-1 border-l border-gray-200 bg-gray-50 p-1"
+                className="flex w-9 shrink-0 self-stretch flex-col gap-1 border-l border-slate-200 bg-slate-100 p-1"
               >
                 {[0, 1].map(index => (
                   <button
@@ -239,7 +242,7 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
                       "flex min-h-0 flex-1 items-center justify-center rounded text-xs font-semibold transition-colors",
                       selectedInventoryIndex === index
                         ? "bg-gray-800 text-white"
-                        : "bg-white text-gray-700 hover:bg-gray-100",
+                        : "bg-white text-gray-700 hover:bg-slate-50",
                     )}
                     onClick={() => setSelectedInventoryIndex(index as 0 | 1)}
                   >

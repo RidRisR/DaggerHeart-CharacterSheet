@@ -40,7 +40,7 @@ export function ModifierFieldAnchor({ target, label, size = "default" }: Modifie
           align="end"
           sideOffset={4}
           collisionPadding={8}
-          className="w-80 p-0 print:hidden"
+          className="w-80 border-slate-300 bg-slate-50 p-0 shadow-xl print:hidden"
         >
           <ModifierPopover sheetData={sheetData} target={target} label={label} onClose={() => setOpen(false)} />
         </PopoverContent>

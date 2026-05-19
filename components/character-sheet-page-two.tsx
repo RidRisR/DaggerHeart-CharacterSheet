@@ -4,9 +4,10 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
 import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
-import { createEmptyCard, isEmptyCard, type StandardCard } from "@/card/card-types"
+import type { AttributeValue, SheetData } from "@/lib/sheet-data"
+import { createEmptyCard, type StandardCard } from "@/card/card-types"
 import { showFadeNotification } from "@/components/ui/fade-notification"
-import { parseToNumber } from "@/lib/number-utils"
+import { computeUpgradeAutomation } from "@/lib/automation/upgrade-actions"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -15,11 +16,22 @@ import { UpgradeSection } from "@/components/character-sheet-page-two-sections/u
 import { PageHeader } from "@/components/page-header"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 
+type AttributeKey = "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge"
+
+const ATTRIBUTE_KEYS: AttributeKey[] = ["agility", "strength", "finesse", "instinct", "presence", "knowledge"]
+
+function isAttributeKey(value: unknown): value is AttributeKey {
+  return typeof value === "string" && ATTRIBUTE_KEYS.includes(value as AttributeKey)
+}
+
+function isAttributeValue(value: unknown): value is AttributeValue {
+  return typeof value === "object" && value !== null && "checked" in value && "value" in value
+}
+
 export default function CharacterSheetPageTwo() {
   const { setSheetData: setFormData } = useSheetStore();
+  const setUpgradeState = useSheetStore(state => state.setUpgradeState)
   const safeFormData = useSafeSheetData();
-  const updateHPMax = useSheetStore(state => state.updateHPMax);
-  const updateStressMax = useSheetStore(state => state.updateStressMax);
 
   // State for upgrade domain card modal
   const [upgradeDomainModalOpen, setUpgradeDomainModalOpen] = useState(false);
@@ -28,7 +40,7 @@ export default function CharacterSheetPageTwo() {
   // State for upgrade subclass card modal
   const [upgradeSubclassModalOpen, setUpgradeSubclassModalOpen] = useState(false);
   const [upgradeSubclassCardIndex, setUpgradeSubclassCardIndex] = useState<number>(-1);
-  const [upgradeSubclassProfession, setUpgradeSubclassProfession] = useState<string | undefined>(undefined);
+  const [, setUpgradeSubclassProfession] = useState<string | undefined>(undefined);
 
   // 使用ref来避免无限循环
   const isUpdatingRef = useRef(false)
@@ -92,36 +104,35 @@ export default function CharacterSheetPageTwo() {
   }
 
   // 纯粹的状态切换函数：只负责设置复选框状态，无业务逻辑
-  const toggleUpgradeCheckbox = (checkKey: string, index: number, checked: boolean) => {
-    setFormData((prev) => {
-      const checkedUpgrades = prev.checkedUpgrades ?? {
-        tier1: {},
-        tier2: {},
-        tier3: {},
+  const toggleUpgradeCheckbox = (checkKey: string, _index: number, checked: boolean) => {
+    setUpgradeState(checkKey, { checked })
+  }
+
+  const returnAppliedAttributeMarks = (checkKey: string) => {
+    setFormData((prev: SheetData) => {
+      const previousState = prev.upgradeStates?.[checkKey]
+      const attributes = previousState?.params && "attributes" in previousState.params
+        ? previousState.params.attributes
+        : undefined
+
+      if (previousState?.attributeMarksApplied !== true || !Array.isArray(attributes)) {
+        return {}
       }
 
-      const newCheckedUpgrades: Record<string, Record<number, boolean>> = {
-        ...checkedUpgrades,
-        tier1: checkedUpgrades.tier1 ?? {},
-        tier2: checkedUpgrades.tier2 ?? {},
-        tier3: checkedUpgrades.tier3 ?? {},
-      }
+      const updates: Partial<SheetData> = {}
+      attributes
+        .filter(isAttributeKey)
+        .forEach(attribute => {
+          const currentAttribute = prev[attribute]
+          if (isAttributeValue(currentAttribute)) {
+            updates[attribute] = {
+              ...currentAttribute,
+              checked: false,
+            }
+          }
+        })
 
-      // 确保 checkKey 对应的对象存在
-      if (!newCheckedUpgrades[checkKey]) {
-        newCheckedUpgrades[checkKey] = {}
-      }
-
-      // 设置勾选状态
-      newCheckedUpgrades[checkKey] = {
-        ...newCheckedUpgrades[checkKey],
-        [index]: checked,
-      }
-
-      return {
-        ...prev,
-        checkedUpgrades: newCheckedUpgrades as any,
-      }
+      return updates
     })
   }
 
@@ -132,7 +143,7 @@ export default function CharacterSheetPageTwo() {
     const tier = tierMatch ? tierMatch[1] : checkKeyOrTier
 
     // 获取当前勾选状态（使用完整的 checkKeyOrTier）
-    const currentlyChecked = safeFormData.checkedUpgrades?.[checkKeyOrTier as keyof typeof safeFormData.checkedUpgrades]?.[index] ?? false
+    const currentlyChecked = safeFormData.upgradeStates?.[checkKeyOrTier]?.checked ?? false
     const newCheckedState = !currentlyChecked
 
     // 获取选项信息
@@ -141,175 +152,36 @@ export default function CharacterSheetPageTwo() {
     const option = options[index]
 
     if (option) {
-      const label = option.label
+      const result = computeUpgradeAutomation({
+        sheetData: safeFormData,
+        option,
+        currentlyChecked,
+      })
 
-      // 属性升级的回滚逻辑
-      if (label.includes("角色属性+1") && currentlyChecked) {
-        const rollbackAttributeUpgrade = useSheetStore.getState().rollbackAttributeUpgrade
-        const result = rollbackAttributeUpgrade(checkKeyOrTier)
-
-        if (result.success) {
-          showFadeNotification({
-            message: "已撤回属性升级，属性值已恢复",
-            type: "success",
-            position: "middle"
-          })
-        } else {
-          if (result.reason === 'no-record') {
-            showFadeNotification({
-              message: "升级记录已丢失，无法自动回滚，请手动调整属性值",
-              type: "error",
-              position: "middle"
-            })
-          } else if (result.reason === 'conflict') {
-            showFadeNotification({
-              message: "属性已被其他操作修改，无法自动回滚，请手动调整",
-              type: "error",
-              position: "middle"
-            })
+      if (result.kind === "setSheetData") {
+        setFormData(result.updates)
+        if (result.upgradeState) {
+          if (result.upgradeState.checked === false) {
+            returnAppliedAttributeMarks(checkKeyOrTier)
           }
+          setUpgradeState(checkKeyOrTier, result.upgradeState)
         }
-
-        // 无论成功与否，都取消勾选
-        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
-        return  // 早返回，不执行后续逻辑
-      }
-
-      // 经历升级的回滚逻辑
-      if (label.includes("经历获得额外") && currentlyChecked) {
-        const restoreExperienceValuesSnapshot = useSheetStore.getState().restoreExperienceValuesSnapshot
-        const result = restoreExperienceValuesSnapshot()
-
-        if (result.reason === 'conflict') {
+        result.warnings?.forEach(warning => {
           showFadeNotification({
-            message: "检测到经历加值已被其他升级修改，无法回滚",
-            type: "error",
+            message: warning,
+            type: "info",
             position: "middle"
           })
-        } else if (result.reason === 'no-snapshot') {
+        })
+        if (result.message) {
           showFadeNotification({
-            message: "经历升级的记录已丢失，请手动回滚",
-            type: "error",
-            position: "middle"
-          })
-        } else {
-          showFadeNotification({
-            message: "已撤回经历升级，经历加值已恢复",
+            message: result.message,
             type: "success",
             position: "middle"
           })
         }
-
-        // 取消勾选
-        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
-        return  // 早返回，不执行后续逻辑
-      }
-
-      // 闪避值升级的回滚逻辑
-      if (label.includes("闪避值") && currentlyChecked) {
-        const restoreEvasionSnapshot = useSheetStore.getState().restoreEvasionSnapshot
-        const result = restoreEvasionSnapshot()
-
-        if (result.reason === 'conflict') {
-          showFadeNotification({
-            message: "检测到闪避值已被其他升级修改，无法回滚",
-            type: "error",
-            position: "middle"
-          })
-        } else if (result.reason === 'no-snapshot') {
-          showFadeNotification({
-            message: "闪避值升级的记录已丢失，请手动回滚",
-            type: "error",
-            position: "middle"
-          })
-        } else {
-          showFadeNotification({
-            message: "已撤回闪避值升级，闪避值已恢复",
-            type: "success",
-            position: "middle"
-          })
-        }
-
-        // 取消勾选
-        toggleUpgradeCheckbox(checkKeyOrTier, index, false)
-        return  // 早返回，不执行后续逻辑
-      }
-
-      // 处理生命槽
-      if (label.includes("生命槽")) {
-        const currentHP = safeFormData.hpMax || 6
-        if (newCheckedState) {
-          const newValue = Math.min(currentHP + 1, 18)
-          updateHPMax(newValue)
-          showFadeNotification({
-            message: `生命槽上限 +1，当前为 ${newValue}`,
-            type: "success",
-            position: "middle"
-          })
-        } else {
-          const newValue = Math.max(currentHP - 1, 1)
-          updateHPMax(newValue)
-          showFadeNotification({
-            message: `生命槽上限 -1，当前为 ${newValue}`,
-            type: "success",
-            position: "middle"
-          })
-        }
-      }
-
-      // 处理压力槽
-      if (label.includes("压力槽")) {
-        const currentStress = safeFormData.stressMax || 6
-        if (newCheckedState) {
-          const newValue = Math.min(currentStress + 1, 18)
-          updateStressMax(newValue)
-          showFadeNotification({
-            message: `压力槽上限 +1，当前为 ${newValue}`,
-            type: "success",
-            position: "middle"
-          })
-        } else {
-          const newValue = Math.max(currentStress - 1, 1)
-          updateStressMax(newValue)
-          showFadeNotification({
-            message: `压力槽上限 -1，当前为 ${newValue}`,
-            type: "success",
-            position: "middle"
-          })
-        }
-      }
-
-      // 处理熟练度
-      if (label.includes("熟练度+1")) {
-        const currentProficiency = Array.isArray(safeFormData.proficiency)
-          ? safeFormData.proficiency
-          : Array(6).fill(false)
-        const currentCount = currentProficiency.filter(v => v === true).length
-
-        if (newCheckedState) {
-          // 增加熟练度
-          if (currentCount < 6) {
-            const newProficiency = [...currentProficiency]
-            newProficiency[currentCount] = true
-            setFormData({ proficiency: newProficiency })
-            showFadeNotification({
-              message: `熟练度 +1，当前为 ${currentCount + 1}/6`,
-              type: "success",
-              position: "middle"
-            })
-          }
-        } else {
-          // 减少熟练度
-          if (currentCount > 0) {
-            const newProficiency = [...currentProficiency]
-            newProficiency[currentCount - 1] = false
-            setFormData({ proficiency: newProficiency })
-            showFadeNotification({
-              message: `熟练度 -1，当前为 ${currentCount - 1}/6`,
-              type: "success",
-              position: "middle"
-            })
-          }
+        if (result.upgradeState) {
+          return
         }
       }
 
@@ -321,8 +193,8 @@ export default function CharacterSheetPageTwo() {
   }
 
   // Check if an upgrade is checked
-  const isUpgradeChecked = (tier: string, index: number): boolean => {
-    return !!safeFormData.checkedUpgrades?.[tier as keyof typeof safeFormData.checkedUpgrades]?.[index]
+  const isUpgradeChecked = (tier: string, _index: number): boolean => {
+    return !!safeFormData.upgradeStates?.[tier]?.checked
   }
 
   // 更新 getUpgradeOptions 函数以移除职业相关逻辑，并确保其与新的升级选项系统一致
@@ -348,7 +220,7 @@ export default function CharacterSheetPageTwo() {
   }
 
   // Handle opening the domain card modal from upgrade section
-  const handleOpenUpgradeDomainModal = (cardIndex: number, _levels?: string[]) => {
+  const handleOpenUpgradeDomainModal = (cardIndex: number) => {
     setUpgradeDomainCardIndex(cardIndex)
     setUpgradeDomainModalOpen(true)
   }

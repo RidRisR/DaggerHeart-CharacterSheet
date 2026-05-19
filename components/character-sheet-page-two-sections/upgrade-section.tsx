@@ -8,7 +8,6 @@ import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
 import { ExperienceValuesEditor } from "@/components/upgrade-popover/experience-values-editor"
 import { AttributeUpgradeEditor } from "@/components/upgrade-popover/attribute-upgrade-editor"
-import { EvasionEditor } from "@/components/upgrade-popover/evasion-editor"
 import { DomainCardSelector } from "@/components/upgrade-popover/domain-card-selector"
 import { ProficiencyEditor } from "@/components/upgrade-popover/proficiency-editor"
 import { SubclassCardSelector } from "@/components/upgrade-popover/subclass-card-selector"
@@ -27,6 +26,15 @@ interface UpgradeSectionProps {
   onCardChange?: (index: number, card: StandardCard) => void
   onOpenCardModal?: (index: number, levels?: string[]) => void
   onOpenSubclassModal?: (index: number, profession?: string) => void
+}
+
+const ATTRIBUTE_NAMES: Record<string, string> = {
+  agility: "敏捷",
+  strength: "力量",
+  finesse: "灵巧",
+  instinct: "本能",
+  presence: "风度",
+  knowledge: "知识",
 }
 
 export function UpgradeSection({
@@ -66,7 +74,7 @@ export function UpgradeSection({
       // isStressUpgradeOption(label) ||       // 直接勾选/取消勾选即可 +1/-1
       // isExperienceUpgradeOption(label) ||   // 经历升级现在通过点击复选框打开气泡
       isDomainCardOption(label) ||             // 点击按钮直接打开 modal
-      // isDodgeUpgradeOption(label) ||        // 闪避值现在通过点击复选框打开气泡
+      // isDodgeUpgradeOption(label) ||        // 闪避值直接点击记录升级
       // isProficiencyUpgradeOption(label) ||  // 直接勾选/取消勾选即可 +1/-1
       isSubclassUpgradeOption(label)           // 点击按钮直接打开 modal
     )
@@ -76,6 +84,83 @@ export function UpgradeSection({
   const shouldDirectlyOpenModal = (label: string) => {
     return isDomainCardOption(label) || isSubclassUpgradeOption(label)
   }
+
+  const getSelectedAttributeNames = (checkKey: string) => {
+    const params = formData.upgradeStates?.[checkKey]?.params
+    const attributes = params && "attributes" in params ? params.attributes : undefined
+    if (!Array.isArray(attributes)) return "未记录属性"
+
+    const names = attributes
+      .map(attribute => ATTRIBUTE_NAMES[attribute] ?? attribute)
+
+    return names.length > 0 ? names.join("、") : "未记录属性"
+  }
+
+  const getAttributeCancelMarkText = (checkKey: string) => {
+    return formData.upgradeStates?.[checkKey]?.attributeMarksApplied === true
+      ? "将回退属性升级标记"
+      : "属性升级标记将不会被修改"
+  }
+
+  const getSelectedExperienceTexts = (checkKey: string) => {
+    const params = formData.upgradeStates?.[checkKey]?.params
+    const experienceIndexes = params && "experienceIndexes" in params ? params.experienceIndexes : undefined
+    if (!Array.isArray(experienceIndexes)) return ["未记录经历"]
+
+    const texts = experienceIndexes
+      .filter((index): index is number => typeof index === "number")
+      .map(index => {
+        const text = formData.experience?.[index]
+        return text && text.trim() ? text : `第 ${index + 1} 项经历`
+      })
+
+    return texts.length > 0 ? texts : ["未记录经历"]
+  }
+
+  const renderAttributeCancelConfirmation = (checkKey: string, index: number) => (
+    <div className="w-48">
+      <div className="mb-2 text-xs font-semibold text-gray-700">确定要取消升级吗？</div>
+      <div className="mb-3 rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-600">
+        {getSelectedAttributeNames(checkKey)}
+      </div>
+      <div className="mb-3 text-[11px] leading-snug text-gray-500">
+        {getAttributeCancelMarkText(checkKey)}
+      </div>
+      <button
+        type="button"
+        className="w-full rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
+        onClick={() => {
+          handleUpgradeCheck(checkKey, index)
+          setOpenPopoverIndex(null)
+        }}
+      >
+        确定取消
+      </button>
+    </div>
+  )
+
+  const renderExperienceCancelConfirmation = (checkKey: string, index: number) => (
+    <div className="w-48">
+      <div className="mb-2 text-xs font-semibold text-gray-700">确定要取消升级吗？</div>
+      <div className="mb-3 space-y-1 rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-600">
+        {getSelectedExperienceTexts(checkKey).map((text, textIndex) => (
+          <div key={`${textIndex}-${text}`} className="truncate" title={text}>
+            {text}
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="w-full rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
+        onClick={() => {
+          handleUpgradeCheck(checkKey, index)
+          setOpenPopoverIndex(null)
+        }}
+      >
+        确定取消
+      </button>
+    </div>
+  )
 
   // Handle direct modal opening for domain/subclass cards
   const handleDirectModalOpen = (option: any) => {
@@ -145,9 +230,17 @@ export function UpgradeSection({
   const renderEditor = (option: any, index: number, checkKeyOrBoxIndex: number | string) => {
     if (isAttributeUpgradeOption(option.label)) {
       // 如果传入的是字符串，就是完整的 checkKey；否则是 boxIndex，需要构造
-      const checkKey = typeof checkKeyOrBoxIndex === 'string'
+      const rawCheckKey = typeof checkKeyOrBoxIndex === 'string'
         ? checkKeyOrBoxIndex
         : `${tierKey}-${index}-${checkKeyOrBoxIndex}`
+      const isCancelConfirmation = rawCheckKey.endsWith(":cancel")
+      const checkKey = isCancelConfirmation
+        ? rawCheckKey.slice(0, -":cancel".length)
+        : rawCheckKey
+
+      if (isCancelConfirmation) {
+        return renderAttributeCancelConfirmation(checkKey, index)
+      }
 
       return (
         <AttributeUpgradeEditor
@@ -168,9 +261,17 @@ export function UpgradeSection({
     }
 
     if (isExperienceUpgradeOption(option.label)) {
-      const checkKey = typeof checkKeyOrBoxIndex === 'string'
+      const rawCheckKey = typeof checkKeyOrBoxIndex === 'string'
         ? checkKeyOrBoxIndex
         : `${tierKey}-${index}-${checkKeyOrBoxIndex}`
+      const isCancelConfirmation = rawCheckKey.endsWith(":cancel")
+      const checkKey = isCancelConfirmation
+        ? rawCheckKey.slice(0, -":cancel".length)
+        : rawCheckKey
+
+      if (isCancelConfirmation) {
+        return renderExperienceCancelConfirmation(checkKey, index)
+      }
 
       return (
         <ExperienceValuesEditor
@@ -193,21 +294,6 @@ export function UpgradeSection({
             setOpenPopoverIndex(null)
             onOpenCardModal?.(slotIndex, levels)
           }}
-        />
-      )
-    }
-
-    if (isDodgeUpgradeOption(option.label)) {
-      const checkKey = typeof checkKeyOrBoxIndex === 'string'
-        ? checkKeyOrBoxIndex
-        : `${tierKey}-${index}-${checkKeyOrBoxIndex}`
-
-      return (
-        <EvasionEditor
-          checkKey={checkKey}
-          optionIndex={index}
-          toggleUpgradeCheckbox={toggleUpgradeCheckbox}
-          onClose={() => setOpenPopoverIndex(null)}
         />
       )
     }
@@ -276,11 +362,10 @@ export function UpgradeSection({
           {getUpgradeOptions(tier).map((option, index) => {
             const isAttrUpgrade = isAttributeUpgradeOption(option.label)
             const isExpUpgrade = isExperienceUpgradeOption(option.label)
-            const isEvasionUpgrade = isDodgeUpgradeOption(option.label)
-            const needsPopover = isAttrUpgrade || isExpUpgrade || isEvasionUpgrade
+            const needsPopover = isAttrUpgrade || isExpUpgrade
             return (
               <div key={`${tierKey}-${index}`} className="flex items-start !text-[10px] leading-[1.6]">
-              {/* 属性升级 / 经历升级 / 闪避值升级：包裹 Popover 以便定位 */}
+              {/* 属性升级 / 经历升级：包裹 Popover 以便定位 */}
               {needsPopover ? (
                 <Popover
                   open={openPopoverIndex !== null && openPopoverIndex.startsWith(`${tierKey}-${index}-`)}
@@ -317,15 +402,18 @@ export function UpgradeSection({
                           }`
                       }`}
                       onClick={() => {
-                        // 属性升级 / 经历升级 / 闪避值升级选项：特殊处理
-                        if (isAttributeUpgradeOption(option.label) || isExperienceUpgradeOption(option.label) || isDodgeUpgradeOption(option.label)) {
+                        // 属性升级 / 经历升级：空白框打开气泡；反选需要确认
+                        if (isAttributeUpgradeOption(option.label) || isExperienceUpgradeOption(option.label)) {
                           const isChecked = isUpgradeChecked(checkKey, index)
                           if (!isChecked) {
                             // 空白复选框 → 打开气泡编辑器
                             setOpenPopoverIndex(checkKey)
+                          } else if (isAttributeUpgradeOption(option.label)) {
+                            // 已选择的属性升级 → 打开取消确认
+                            setOpenPopoverIndex(`${checkKey}:cancel`)
                           } else {
-                            // 已高亮复选框 → 触发回滚
-                            handleUpgradeCheck(checkKey, index)
+                            // 已选择的经历升级 → 打开取消确认
+                            setOpenPopoverIndex(`${checkKey}:cancel`)
                           }
                         } else {
                           // 其他选项：保持原有逻辑
@@ -499,15 +587,14 @@ export function UpgradeSection({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  const oldLevel = formData.level || ""
                   if (!formData.level || formData.level.trim() === "") {
-                    updateLevel("1", oldLevel)
+                    updateLevel("1")
                     return
                   }
                   const currentLevel = parseInt(formData.level)
                   if (currentLevel >= 10) return
                   const newLevel = Math.min(currentLevel + 1, 10)
-                  updateLevel(String(newLevel), oldLevel)
+                  updateLevel(String(newLevel))
                 }}
                 className="px-2 py-0.5 bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold transition-colors whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={parseInt(formData.level) >= 10}

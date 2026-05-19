@@ -462,19 +462,19 @@ describe("modifier source definitions", () => {
       expect.objectContaining({
         id: "upgrade:experience:experienceValues.0",
         definition: { target: "experienceValues.0", kind: "modifier" },
-        presentation: { label: "升级：经历 1 +1", value: 1 },
+        presentation: { label: "升级：经历一 +1", value: 1 },
         source: { type: "upgrade", id: "upgrade:experience" },
       }),
       expect.objectContaining({
         id: "upgrade:experience:experienceValues.2",
         definition: { target: "experienceValues.2", kind: "modifier" },
-        presentation: { label: "升级：经历 3 +1", value: 1 },
+        presentation: { label: "升级：经历三 +1", value: 1 },
         source: { type: "upgrade", id: "upgrade:experience" },
       }),
       expect.objectContaining({
         id: "upgrade:experience:experienceValues.4",
         definition: { target: "experienceValues.4", kind: "modifier" },
-        presentation: { label: "升级：经历 5 +1", value: 1 },
+        presentation: { label: "升级：经历五 +1", value: 1 },
         source: { type: "upgrade", id: "upgrade:experience" },
       }),
     ])
@@ -524,7 +524,7 @@ describe("modifier source definitions", () => {
     expect(entries).toEqual([expect.objectContaining({
       id: "upgrade:experience:experienceValues.0",
       definition: { target: "experienceValues.0", kind: "modifier" },
-      presentation: { label: "升级：经历 1 +1", value: 1 },
+      presentation: { label: "升级：经历一 +1", value: 1 },
       source: { type: "upgrade", id: "upgrade:experience" },
     })])
   })

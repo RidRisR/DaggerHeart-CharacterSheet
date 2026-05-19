@@ -6,6 +6,8 @@ import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import type { ModifierTargetId } from "@/automation/core/types"
 
+const EXPERIENCE_TARGET_LABELS = ["经历一", "经历二", "经历三", "经历四", "经历五"]
+
 export function ExperienceSection() {
   const { sheetData: formData, updateExperience, commitModifierTargetValue } = useSheetStore();
   const [valueDrafts, setValueDrafts] = useState<Partial<Record<number, string>>>({})
@@ -58,7 +60,7 @@ export function ExperienceSection() {
               {...getElementProps(valueDrafts[i] ?? experienceValues[i], `exp-value-${i}`, "w-8 border border-gray-400 rounded ml-1 text-center print-empty-hide")}
               placeholder="#"
             />
-            <ModifierFieldAnchor target={`experienceValues.${i}` as ModifierTargetId} label={`经历 ${i + 1}`} />
+            <ModifierFieldAnchor target={`experienceValues.${i}` as ModifierTargetId} label={EXPERIENCE_TARGET_LABELS[i] ?? `经历 ${i + 1}`} />
           </div>
         ))}
       </div>

@@ -13,6 +13,8 @@ const ATTRIBUTE_LABELS: Record<string, string> = {
   knowledge: "知识",
 }
 
+const EXPERIENCE_TARGET_LABELS = ["经历一", "经历二", "经历三", "经历四", "经历五"]
+
 const PROFICIENCY_LEVEL_THRESHOLDS = [2, 5, 8]
 
 function isSelectionRecord(selection: unknown): selection is Record<string, unknown> {
@@ -85,12 +87,13 @@ function selectedUpgradeEntries(sourceId: string, state: unknown): ModifierEntry
   if ("experienceIndexes" in params && Array.isArray(params.experienceIndexes)) {
     return dedupe(params.experienceIndexes.filter(isValidExperienceIndex)).map((index) => {
       const target = `experienceValues.${index}` as ModifierTargetId
+      const label = EXPERIENCE_TARGET_LABELS[index] ?? `经历 ${index + 1}`
       return createModifierEntry({
         id: `${sourceId}:${target}`,
         sourceId,
         target,
         kind: "modifier",
-        label: `升级：经历 ${index + 1} +1`,
+        label: `升级：${label} +1`,
         value: 1,
         sourceType: "upgrade",
         priority: 200,

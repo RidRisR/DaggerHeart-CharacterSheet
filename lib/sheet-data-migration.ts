@@ -37,6 +37,7 @@ import {
   createEstimatedBaseContribution,
   getEstimatedBaseId,
   getUnattributedDeltaId,
+  isEstimatedBaseContribution,
   isUnattributedDeltaContribution,
 } from "@/lib/modifiers/special-contributions"
 import { writeTargetValue } from "@/lib/modifiers/target-accessors"
@@ -1044,14 +1045,29 @@ function preserveLegacyModifierFinals(
   return reconcileModifierState(migrated)
 }
 
+function isDuplicateSystemStressBase(contribution: ModifierContribution): boolean {
+  return (
+    isEstimatedBaseContribution(contribution) &&
+    contribution.definition.target === "stressMax" &&
+    contribution.definition.kind === "base" &&
+    contribution.editable.value === 6
+  )
+}
+
 function normalizeCurrentModifierCollections(data: SheetData): SheetData {
   let migrated = { ...data }
 
   migrated.userModifierContributions = sanitizeModifierContributions(migrated.userModifierContributions)
   let otherAdjustments = sanitizeOtherAdjustments(migrated.otherAdjustments)
+  let removedDuplicateSystemStressBase = false
 
   const retainedContributions: ModifierContribution[] = []
   migrated.userModifierContributions.forEach(contribution => {
+    if (isDuplicateSystemStressBase(contribution)) {
+      removedDuplicateSystemStressBase = true
+      return
+    }
+
     if (!isUnattributedDeltaContribution(contribution)) {
       retainedContributions.push(contribution)
       return
@@ -1092,6 +1108,20 @@ function normalizeCurrentModifierCollections(data: SheetData): SheetData {
     migrated.modifierState = {
       targetStates: normalizeTargetStates(migrated.modifierState.targetStates),
       entryStates,
+    }
+  }
+
+  if (removedDuplicateSystemStressBase) {
+    const currentStressState = migrated.modifierState.targetStates.stressMax ?? {}
+    migrated.modifierState = {
+      ...migrated.modifierState,
+      targetStates: {
+        ...migrated.modifierState.targetStates,
+        stressMax: {
+          activeBaseId: "level:base:stressMax",
+          ...(currentStressState.autoCalculation === false ? { autoCalculation: false } : {}),
+        },
+      },
     }
   }
 

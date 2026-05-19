@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { StandardCard } from "@/card/card-types"
+import { defaultSheetData } from "@/lib/default-sheet-data"
 import { migrateSheetData } from "@/lib/sheet-data-migration"
 import { createUnknownMigrationDifference } from "@/lib/modifiers/other-adjustments"
 import {
@@ -667,6 +668,33 @@ describe("modifier state migration", () => {
     expect(migrated.otherAdjustments).toContainEqual(
       createUnknownMigrationDifference("stressMax", 2),
     )
+  })
+
+  it("removes duplicate estimated stress base 6 from current data", () => {
+    const migrated = migrateSheetData({
+      ...defaultSheetData,
+      userModifierContributions: [
+        createEstimatedBaseContribution("stressMax", 6),
+      ],
+      modifierState: {
+        targetStates: {
+          stressMax: {
+            activeBaseId: getEstimatedBaseId("stressMax"),
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+      stressMax: 6,
+    })
+
+    expect(migrated.userModifierContributions).not.toContainEqual(
+      createEstimatedBaseContribution("stressMax", 6),
+    )
+    expect(migrated.modifierState?.targetStates.stressMax).toEqual({
+      activeBaseId: "level:base:stressMax",
+    })
+    expect(migrated.stressMax).toBe(6)
   })
 
   it("uses experience value baseline 2 before creating migration differences", () => {

@@ -146,6 +146,28 @@ describe("ModifierFieldAnchor", () => {
     expect(within(sectionNamed("差额")).getByText("自动计算暂停期间差额")).toBeInTheDocument()
   })
 
+  it("shows calculated final total instead of stored final value", async () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        userContribution("user:evasion-base", "evasion", "base", "手动基础闪避", 12),
+        userContribution("user:evasion-mod", "evasion", "modifier", "临时加值", 1),
+      ],
+      modifierState: {
+        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: false } },
+        entryStates: {},
+      },
+    })
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    expect(screen.getByText("总计：13")).toBeInTheDocument()
+    expect(screen.queryByText("总计：15")).not.toBeInTheDocument()
+    expectUnattributedDelta("+2")
+  })
+
   it("shows other adjustments separately from modifiers", async () => {
     resetSheetStore({
       evasion: "15",
@@ -341,8 +363,8 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByRole("textbox", { name: "编辑未命名基值名称" })).toHaveAttribute("placeholder", "未命名基值")
     expect(screen.getByRole("textbox", { name: "编辑未命名基值数值" })).toHaveValue("0")
     expect(screen.queryByText("总值")).not.toBeInTheDocument()
-    expect(screen.getByText("总计：15")).toHaveClass("font-semibold")
-    expect(screen.getByText("总计：15")).toHaveClass("tabular-nums")
+    expect(screen.getByText("总计：0")).toHaveClass("font-semibold")
+    expect(screen.getByText("总计：0")).toHaveClass("tabular-nums")
     expectUnattributedDelta("+15")
     expect(sheet().userModifierContributions).toEqual([
       expect.objectContaining({

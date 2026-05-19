@@ -11,7 +11,6 @@ import {
   OTHER_ADJUSTMENT_PRESENTATION,
 } from "@/lib/modifiers/other-adjustments"
 import { getReferenceSummary } from "@/lib/modifiers/registry"
-import { readTargetValue } from "@/lib/modifiers/target-accessors"
 import { isTargetAutoCalculationEnabled } from "@/lib/modifiers/target-sync"
 import type {
   ModifierEntry,
@@ -276,7 +275,6 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
   const upsertOtherAdjustment = useSheetStore(state => state.upsertOtherAdjustment)
   const removeOtherAdjustment = useSheetStore(state => state.removeOtherAdjustment)
   const removeSpecialBaseContribution = useSheetStore(state => state.removeSpecialBaseContribution)
-  const finalValue = readTargetValue(sheetData, target)
   const targetState = sheetData.modifierState?.targetStates?.[target]
   const autoCalculation = isTargetAutoCalculationEnabled(targetState)
   const derivedUnattributedDifference = !autoCalculation
@@ -372,7 +370,7 @@ export function ModifierPopover({ sheetData, target, label }: ModifierPopoverPro
           {label}来源（{autoCalculation ? "同步中" : "暂停同步"}）
         </div>
         <div className="rounded border border-gray-200 bg-transparent px-2 py-1 text-xs font-semibold tabular-nums text-gray-700">
-          总计：{String(finalValue ?? "未知")}
+          总计：{String(summary.calculatedFinalTotal ?? "未知")}
         </div>
       </div>
 

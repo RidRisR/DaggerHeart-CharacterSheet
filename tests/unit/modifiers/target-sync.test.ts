@@ -101,6 +101,7 @@ describe("target auto calculation helper", () => {
       modifierState: {
         targetStates: {
           evasion: { activeBaseId: "user:evasion-base", autoCalculation: false },
+          proficiency: { activeBaseId: "level:base:proficiency" },
         },
         entryStates: {},
       },
@@ -125,6 +126,7 @@ describe("target auto calculation helper", () => {
       modifierState: {
         targetStates: {
           evasion: { activeBaseId: "user:evasion-base", autoCalculation: true },
+          proficiency: { activeBaseId: "level:base:proficiency" },
         },
         entryStates: {},
       },
@@ -134,6 +136,31 @@ describe("target auto calculation helper", () => {
 
     expect(result).toBe(data)
     expect(result.evasion).toBe("12+敏捷")
+  })
+
+  it("records active base when the auto calculated final already matches", () => {
+    const data = sheet({
+      evasion: "12",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          proficiency: { activeBaseId: "level:base:proficiency" },
+        },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result).not.toBe(data)
+    expect(result.evasion).toBe("12")
+    expect(result.modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base")
   })
 
   it("fills blank current finals from reference totals", () => {
@@ -203,6 +230,7 @@ describe("target auto calculation helper", () => {
           hpMax: { autoCalculation: false },
           stressMax: { autoCalculation: false },
           armorMax: { autoCalculation: false },
+          proficiency: { activeBaseId: "level:base:proficiency" },
         },
         entryStates: {},
       },
@@ -251,7 +279,10 @@ describe("target auto calculation helper", () => {
         },
       ],
       modifierState: {
-        targetStates: { evasion: { activeBaseId: "user:evasion-base", autoCalculation: true } },
+        targetStates: {
+          evasion: { activeBaseId: "user:evasion-base", autoCalculation: true },
+          proficiency: { activeBaseId: "level:base:proficiency" },
+        },
         entryStates: {},
       },
     })

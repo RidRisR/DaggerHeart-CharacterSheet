@@ -37,6 +37,25 @@ function writeTargetValueFromSync(sheetData: SheetData, target: ModifierTargetId
   return applyHpStressMaxInvariant(writeTargetValue(sheetData, target, value), target)
 }
 
+function writeActiveBaseIdFromSync(sheetData: SheetData, target: ModifierTargetId, activeBaseId: string): SheetData {
+  const currentTargetState = sheetData.modifierState?.targetStates?.[target]
+  if (currentTargetState?.activeBaseId === activeBaseId) return sheetData
+
+  return {
+    ...sheetData,
+    modifierState: {
+      targetStates: {
+        ...(sheetData.modifierState?.targetStates ?? {}),
+        [target]: {
+          ...currentTargetState,
+          activeBaseId,
+        },
+      },
+      entryStates: sheetData.modifierState?.entryStates ?? {},
+    },
+  }
+}
+
 export function applyAutoCalculationForTargets(sheetData: SheetData): SheetData {
   let next = sheetData
   let changed = false
@@ -45,11 +64,23 @@ export function applyAutoCalculationForTargets(sheetData: SheetData): SheetData 
     const currentValue = readTargetValue(next, target)
     if (!isBlankTargetValue(currentValue) && tryParseNumber(currentValue) === undefined) return
 
-    const desiredValue = getReferenceSummary(next, target).calculatedFinalTotal ?? ""
-    if (isSameTargetValue(currentValue, desiredValue)) return
+    const summary = getReferenceSummary(next, target)
+    const activeBaseId = summary.activeBase?.id
+    const desiredValue = summary.calculatedFinalTotal ?? ""
+    const valueMatches = isSameTargetValue(currentValue, desiredValue)
+    const targetState = next.modifierState?.targetStates?.[target]
+    const shouldTrackBase = activeBaseId !== undefined
+      && targetState?.activeBaseId !== activeBaseId
 
-    next = writeTargetValueFromSync(next, target, desiredValue)
-    changed = true
+    if (shouldTrackBase) {
+      next = writeActiveBaseIdFromSync(next, target, activeBaseId)
+      changed = true
+    }
+
+    if (!valueMatches) {
+      next = writeTargetValueFromSync(next, target, desiredValue)
+      changed = true
+    }
   })
 
   return changed ? next : sheetData

@@ -431,6 +431,22 @@ describe("modifier store actions", () => {
     expect(sheet().armorMax).toBe(5)
   })
 
+  it("tracks default auto armor base so clearing it clears the final", () => {
+    resetSheetStore()
+
+    store().updateArmorBaseMax("5")
+
+    expect(sheet().armorMax).toBe(5)
+    expect(sheet().modifierState?.targetStates.armorMax?.activeBaseId).toBe(
+      "equipment:armor:current:armorMax",
+    )
+
+    store().updateArmorBaseMax("")
+
+    expect(sheet().equipment.armorSlot.baseArmorMax).toBe(null)
+    expect(sheet().armorMax).toBe("")
+  })
+
   it("updates one armor threshold side without changing the other side", () => {
     resetSheetStore({
       level: "1",

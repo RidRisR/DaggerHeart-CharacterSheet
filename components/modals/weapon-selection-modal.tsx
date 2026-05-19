@@ -1,5 +1,6 @@
 "use client"
 import { allWeapons } from "@/data/list/all-weapons";
+import type { AllWeapon } from "@/data/list/all-weapons";
 import { Button } from "@/components/ui/button";
 import { useMemo, useEffect, useState, useRef } from 'react'; // Added useRef
 import InfiniteScroll from 'react-infinite-scroll-component'; // Added import
@@ -21,23 +22,9 @@ type Load = typeof LOADS[number];
 interface WeaponModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (weaponId: string, weaponType: 'primary' | 'secondary') => void;
+  onSelect: (weaponId: string) => void;
   title: string;
   weaponSlotType: "primary" | "secondary" | "inventory";
-}
-
-interface Weapon {
-  名称: string;
-  等级: Level; // Changed from string
-  属性: Check; // Changed from string
-  伤害类型: Attribute; // Changed from string
-  范围: Range; // Changed from string
-  伤害: string;
-  负荷: string;
-  特性名称: string;
-  描述: string;
-  id: string;
-  weaponType: "primary" | "secondary";
 }
 
 export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponSlotType }: WeaponModalProps) {
@@ -62,12 +49,12 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
   const [weaponTypeFilter, setWeaponTypeFilter] = useState<"" | "primary" | "secondary">("");
 
   // State for pagination
-  const [displayedWeapons, setDisplayedWeapons] = useState<Weapon[]>([]);
+  const [displayedWeapons, setDisplayedWeapons] = useState<AllWeapon[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
 
 
-  const availableWeapons: Weapon[] = useMemo(() => {
+  const availableWeapons: AllWeapon[] = useMemo(() => {
     if (weaponSlotType === "inventory") {
       return allWeapons; // Use allWeapons directly
     }
@@ -182,7 +169,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
               setCustomLoad("");
               setCustomFeatureName("");
               setCustomDescription("");
-              onSelect("none", customWeaponType);
+              onSelect("none");
             }}
             className="bg-red-500 hover:bg-red-600 text-white w-full sm:w-auto min-h-[2.5rem]"
             size="sm"
@@ -380,7 +367,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
                       描述: customDescription,
                       weaponType: customWeaponType
                     };
-                    onSelect(JSON.stringify(customWeaponData), customWeaponType);
+                    onSelect(JSON.stringify(customWeaponData));
                     setIsCustom(false);
                     setCustomName("");
                     setCustomLevel("");
@@ -412,7 +399,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
                   setCustomLoad("");
                   setCustomFeatureName("");
                   setCustomDescription("");
-                  onSelect("none", customWeaponType);
+                  onSelect("none");
                 }}
                 className="bg-red-500 hover:bg-red-600 text-white min-h-[2.5rem] w-full sm:w-auto"
               >
@@ -474,7 +461,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
                         setCustomLoad("");
                         setCustomFeatureName("");
                         setCustomDescription("");
-                        onSelect(weapon.id, weapon.weaponType);
+                        onSelect(weapon.id);
                       }}
                     ><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.等级}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.名称}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.weaponType === "primary" ? "主武器" : "副武器"}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.伤害类型}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.负荷}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.范围}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.属性}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.伤害}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.特性名称}</td><td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{weapon.描述}</td></tr>
                   ))}

@@ -25,14 +25,14 @@ export function HeaderSection({
   const containerRef = useRef<HTMLDivElement>(null)
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState("")
-  const [editingStartLevel, setEditingStartLevel] = useState<string | null>(null)
+  const [levelEditingValue, setLevelEditingValue] = useState<string | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     if (name === 'level') {
       // 只允许空字符串或 1-10 的数字
       if (value === '' || /^([1-9]|10)$/.test(value)) {
-        setSheetData((prev) => ({ ...prev, level: value }))
+        setLevelEditingValue(value)
       }
       // 非法输入直接忽略
     } else {
@@ -41,8 +41,7 @@ export function HeaderSection({
   }
 
   const handleLevelFocus = () => {
-    // 记录编辑开始时的等级（空视为"1"）
-    setEditingStartLevel(formData.level || "1")
+    setLevelEditingValue(formData.level)
   }
 
   const handleLevelKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -52,21 +51,19 @@ export function HeaderSection({
   }
 
   const handleLevelBlur = () => {
-    // 编辑完成，获取起始和结束等级
-    const startLevel = editingStartLevel || "1"
-    const endLevel = formData.level  // 保留原始值（可能是空）
+    const committedLevel = levelEditingValue ?? formData.level
 
     // 用于比较的数值（空视为1级）
-    const oldLevelNum = parseInt(startLevel)
-    const newLevelNum = parseInt(endLevel || "1")
+    const oldLevelNum = parseInt(formData.level || "1")
+    const newLevelNum = parseInt(committedLevel || "1")
 
     // 如果等级真的发生了变化，触发完整的等级更新逻辑
-    if (oldLevelNum !== newLevelNum) {
-      updateLevel(endLevel, startLevel)
+    if (oldLevelNum !== newLevelNum || committedLevel !== formData.level) {
+      updateLevel(committedLevel)
     }
 
     // 清除编辑状态
-    setEditingStartLevel(null)
+    setLevelEditingValue(null)
   }
 
   const openProfessionModal = () => {
@@ -371,7 +368,7 @@ export function HeaderSection({
             <input
               type="text"
               name="level"
-              value={formData.level}
+              value={levelEditingValue ?? formData.level}
               placeholder="1"
               onChange={handleInputChange}
               onFocus={handleLevelFocus}
@@ -384,11 +381,9 @@ export function HeaderSection({
         <button
           type="button"
           onClick={() => {
-            const oldLevel = formData.level || ""
-
             // 如果当前等级为空或无效，升到1级
             if (!formData.level || formData.level.trim() === "") {
-              updateLevel("1", oldLevel)
+              updateLevel("1")
               return
             }
 
@@ -400,7 +395,7 @@ export function HeaderSection({
 
             // 否则加1，最大为10
             const newLevel = Math.min(currentLevel + 1, 10)
-            updateLevel(String(newLevel), oldLevel)
+            updateLevel(String(newLevel))
           }}
           className="mt-1 px-2 py-0.5 bg-gray-600 hover:bg-gray-500 text-white text-[10px] font-bold rounded print:hidden transition-colors disabled:bg-gray-700 disabled:cursor-not-allowed"
           disabled={parseInt(formData.level) >= 10}

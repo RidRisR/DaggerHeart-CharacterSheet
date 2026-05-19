@@ -42,8 +42,8 @@ describe('main import and normalize regression baseline', () => {
     expect(htmlResult.data?.hope).toBe(3)
     expect((jsonResult.data as any).focused_card_ids).toEqual(['card-domain-1'])
     expect((htmlResult.data as any).focused_card_ids).toEqual(['card-domain-1'])
-    expect(jsonResult.data?.agility).toEqual({ checked: true, value: '+1', spellcasting: false })
-    expect(htmlResult.data?.agility).toEqual({ checked: true, value: '+1', spellcasting: false })
+    expect(jsonResult.data?.agility).toEqual({ checked: true, value: '1', spellcasting: false })
+    expect(htmlResult.data?.agility).toEqual({ checked: true, value: '1', spellcasting: false })
     expect(jsonResult.data?.pageVisibility).toEqual({
       rangerCompanion: false,
       armorTemplate: false,
@@ -54,8 +54,8 @@ describe('main import and normalize regression baseline', () => {
       armorTemplate: false,
       adventureNotes: false,
     })
-    expect(jsonResult.data?.schemaVersion).toBe(1)
-    expect(htmlResult.data?.schemaVersion).toBe(1)
+    expect(jsonResult.data?.schemaVersion).toBe(2)
+    expect(htmlResult.data?.schemaVersion).toBe(2)
   })
 
   it('captures current import invalid card filtering behavior', () => {
@@ -68,6 +68,6 @@ describe('main import and normalize regression baseline', () => {
 
     expect(result.valid).toBe(true)
     expect(result.data?.cards).toEqual([validCard])
-    expect(result.data?.schemaVersion).toBe(1)
+    expect(result.data?.schemaVersion).toBe(2)
   })
 })

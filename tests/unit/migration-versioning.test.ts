@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { defaultSheetData } from '@/lib/default-sheet-data'
+import { createUnknownMigrationDifference } from '@/lib/modifiers/other-adjustments'
+import {
+  createEstimatedBaseContribution,
+  getEstimatedBaseId,
+} from '@/lib/modifiers/special-contributions'
 import { migrateSheetData } from '@/lib/sheet-data-migration'
 import {
   CURRENT_SCHEMA_VERSION,
@@ -26,10 +31,35 @@ function v0Sheet(overrides: Record<string, unknown> = {}) {
   } as any
 }
 
+function v1Sheet(overrides: Record<string, unknown> = {}) {
+  return {
+    ...v0Sheet(),
+    schemaVersion: 1,
+    hope: 3,
+    hopeMax: 4,
+    pageVisibility: {
+      rangerCompanion: false,
+      armorTemplate: false,
+      adventureNotes: false,
+    },
+    inventory_cards: Array(20).fill(0).map((_, index) => ({
+      id: `inventory-card-${index}`,
+      name: `Inventory Card ${index}`,
+      type: 'domain',
+    })),
+    notebook: {
+      pages: [{ id: 'page-1', lines: [] }],
+      currentPageIndex: 0,
+      isOpen: false,
+    },
+    ...overrides,
+  } as any
+}
+
 describe('sheet schema version', () => {
-  it('starts main versioning at schema version 1', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(1)
-    expect(defaultSheetData.schemaVersion).toBe(1)
+  it('uses schema version 2 on the modifier branch', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBe(2)
+    expect(defaultSheetData.schemaVersion).toBe(2)
   })
 
   it('treats missing, invalid, or non-integer schema versions as v0', () => {
@@ -42,29 +72,146 @@ describe('sheet schema version', () => {
   it('detects supported numeric schema versions', () => {
     expect(detectSchemaVersion({ schemaVersion: 0 })).toBe(0)
     expect(detectSchemaVersion({ schemaVersion: 1 })).toBe(1)
+    expect(detectSchemaVersion({ schemaVersion: 2 })).toBe(2)
   })
 
   it('rejects saves from newer schema versions', () => {
-    expect(() => assertSupportedSchemaVersion(2)).toThrow(/newer schema version/i)
+    expect(() => assertSupportedSchemaVersion(3)).toThrow(/newer schema version/i)
   })
 })
 
 describe('sheet data version migration', () => {
-  it('migrates v0 data to v1 and writes schemaVersion', () => {
+  it('migrates v0 data to v2 through the full version chain', () => {
     const migrated = migrateSheetData(v0Sheet())
 
-    expect(migrated.schemaVersion).toBe(1)
+    expect(migrated.schemaVersion).toBe(2)
     expect(migrated.hope).toBe(3)
     expect(migrated.hopeMax).toBe(4)
     expect(migrated.inventory_cards).toHaveLength(20)
     expect(migrated.notebook?.pages).toHaveLength(1)
   })
 
-  it('keeps v1 data stable and idempotent', () => {
-    const once = migrateSheetData(v0Sheet())
+  it('migrates v1 data to v2 and moves legacy equipment fields', () => {
+    const migrated = migrateSheetData(v1Sheet({
+      primaryWeaponName: '阔剑',
+      primaryWeaponTrait: '物理/单手/近战',
+      primaryWeaponDamage: '敏捷: d8',
+      primaryWeaponFeature: '可靠',
+      armorName: '链甲',
+      armorBaseScore: '4',
+      armorThreshold: '7/15',
+      armorFeature: '重型',
+    }))
+
+    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.equipment.weaponSlots.primary).toMatchObject({
+      name: '阔剑',
+      trait: '物理/单手/近战',
+      damage: '敏捷: d8',
+      feature: '可靠',
+    })
+    expect(migrated.equipment.armorSlot).toMatchObject({
+      name: '链甲',
+      baseArmorMax: 4,
+      baseThresholds: { minor: 7, major: 15 },
+      feature: '重型',
+    })
+    expect('primaryWeaponName' in (migrated as any)).toBe(false)
+    expect('armorName' in (migrated as any)).toBe(false)
+  })
+
+  it('migrates v1 modifier byTarget state to v2 state maps', () => {
+    const migrated = migrateSheetData(v1Sheet({
+      modifierState: {
+        byTarget: {
+          evasion: {
+            activeBaseId: 'user:evasion-base',
+            disabledEntryIds: ['upgrade:evasion'],
+            userEntries: [{
+              id: 'user:evasion-base',
+              target: 'evasion',
+              kind: 'base',
+              label: '手动基础闪避',
+              value: 12,
+            }],
+          },
+        },
+      },
+    }))
+
+    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe('user:evasion-base')
+    expect(migrated.userModifierContributions).toEqual([{
+      id: 'user:evasion-base',
+      definition: { target: 'evasion', kind: 'base' },
+      editable: { label: '手动基础闪避', value: 12 },
+    }])
+  })
+
+  it('preserves v1 legacy finals with v2 special modifier contributions', () => {
+    const migrated = migrateSheetData(v1Sheet({
+      evasion: '15',
+      userModifierContributions: [{
+        id: 'user:evasion-mod',
+        definition: { target: 'evasion', kind: 'modifier' },
+        editable: { label: '旧加值', value: 2 },
+      }],
+    }))
+
+    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.evasion).toBe('15')
+    expect(migrated.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: getEstimatedBaseId('evasion'),
+    })
+    expect(migrated.userModifierContributions).toEqual(expect.arrayContaining([
+      {
+        id: 'user:evasion-mod',
+        definition: { target: 'evasion', kind: 'modifier' },
+        editable: { label: '旧加值', value: 2 },
+      },
+      createEstimatedBaseContribution('evasion', 13),
+    ]))
+  })
+
+  it('keeps v2 unknown migration differences idempotent', () => {
+    const once = migrateSheetData(v1Sheet({
+      evasion: '15',
+      cards: [{
+        id: 'profession-warrior',
+        type: 'profession',
+        name: '战士',
+        professionSpecial: { 起始闪避: 12 },
+      }],
+    }))
     const twice = migrateSheetData(once)
 
     expect(twice).toEqual(once)
+    expect(once.otherAdjustments).toContainEqual(
+      createUnknownMigrationDifference('evasion', 3),
+    )
+  })
+
+  it('keeps v2 data stable and idempotent', () => {
+    const once = migrateSheetData(v0Sheet())
+    const twice = migrateSheetData(once)
+
+    expect(once.schemaVersion).toBe(2)
+    expect(twice).toEqual(once)
+  })
+
+  it('normalizes v2 legacy checked upgrades with fixed target params', () => {
+    const migrated = migrateSheetData(v1Sheet({
+      schemaVersion: 2,
+      checkedUpgrades: {
+        'tier1-1-0': { 1: true },
+      },
+    }))
+
+    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.upgradeStates).toEqual({
+      'tier1-1-0': { checked: true, params: { target: 'hpMax' } },
+    })
+    expect('checkedUpgrades' in (migrated as any)).toBe(false)
   })
 
   it('uses raw legacy fields before defaults can mask them', () => {
@@ -81,6 +228,6 @@ describe('sheet data version migration', () => {
   })
 
   it('throws for newer schema versions', () => {
-    expect(() => migrateSheetData(v0Sheet({ schemaVersion: 2 }))).toThrow(/newer schema version/i)
+    expect(() => migrateSheetData(v0Sheet({ schemaVersion: 3 }))).toThrow(/newer schema version/i)
   })
 })

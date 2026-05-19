@@ -4,9 +4,50 @@ import { create } from "zustand";
 import { defaultSheetData } from "./default-sheet-data";
 import type { SheetData, AttributeValue, ArmorTemplateData, SheetCardReference } from "./sheet-data";
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
-import { armorItems, type ArmorItem } from "@/data/list/armor";
+import { armorItems } from "@/data/list/armor";
+import { allWeapons } from "@/data/list/all-weapons";
+import { parseArmorMax, parseArmorThreshold, parseArmorThresholdSide } from "@/lib/equipment/armor-utils";
+import {
+    createDefaultEquipmentModifierContribution,
+    createEquipmentContributionId as createAdHocEquipmentContributionId,
+    isEquipmentModifierTargetId,
+    sanitizeEquipmentModifierContributions,
+} from "@/lib/equipment/contribution-utils";
+import { createEmptyArmorSlot, createEmptyWeaponSlot } from "@/lib/equipment/defaults";
+import { swapInventoryWeaponWithActiveSlot } from "@/lib/equipment/weapon-slot-utils";
+import {
+    createArmorSlotFromCustomPayload,
+    createArmorSlotFromTemplate,
+    createWeaponSlotFromCustomPayload,
+    createWeaponSlotFromName,
+    createWeaponSlotFromTemplate,
+} from "@/lib/equipment/template-to-slot";
+import type { ArmorSlot, EquipmentModifierContribution, EquipmentModifierTargetId, WeaponSlot } from "@/lib/equipment/types";
+import type {
+    ModifierEntryId,
+    ModifierTargetId,
+    OtherAdjustment,
+    UpgradeState,
+    UserModifierContribution,
+} from "@/lib/modifiers/types";
+import {
+    deleteSpecialBase,
+    disableAutoCalculationForTarget,
+    enableAutoCalculationForTarget,
+    reconcileFinalInput,
+} from "@/lib/modifiers/final-input-reconciliation";
+import { applyAutoCalculationForTargets, isTargetAutoCalculationEnabled } from "@/lib/modifiers/target-sync";
+import { writeTargetValue } from "@/lib/modifiers/target-accessors";
+import { tryParseNumberExpression } from "@/lib/number-utils";
+import { applyHpStressMaxInvariant } from "@/lib/modifiers/hp-stress-invariants";
+import { mergeUpgradeState } from "@/lib/modifiers/upgrade-states";
+import {
+    removeOtherAdjustment as removeOtherAdjustmentFromList,
+    sanitizeOtherAdjustments,
+    upsertOtherAdjustment as upsertOtherAdjustmentInList,
+} from "@/lib/modifiers/other-adjustments";
+import { applyLevelEntryAutomationsWithNotifications } from "@/lib/automation/level-entry-actions";
 import { showFadeNotification } from "@/components/ui/fade-notification";
-import { parseToNumber } from "./number-utils";
 
 // 施法属性映射关系
 const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
@@ -18,65 +59,49 @@ const SPELLCASTING_ATTRIBUTE_MAP: Record<string, keyof SheetData> = {
     "知识": "knowledge"
 };
 
-// 按显示长度智能分割文本到两行的函数
-const splitFeatureText = (text: string): [string, string] => {
-    if (!text) return ["", ""];
+let equipmentContributionSequence = 0;
 
-    // 估算每行可容纳的字符数（基于输入框宽度和字体大小）
-    const maxCharsPerLine = 29; // 匹配输入框的maxLength
+function createEquipmentContributionId(templateId: string): string {
+    equipmentContributionSequence += 1;
+    return `equipment:${templateId}:${equipmentContributionSequence}`;
+}
 
-    // 如果文本长度小于等于一行容量，全部放在第一行
-    if (text.length <= maxCharsPerLine) {
-        return [text, ""];
+type WeaponSlotSelection =
+    | { slotType: "primary" | "secondary" }
+    | { slotType: "inventory"; index: 0 | 1 }
+
+type EquipmentModifierSlotRef =
+    | { type: "weapon"; slot: "primary" | "secondary" }
+    | { type: "inventoryWeapon"; index: 0 | 1 }
+    | { type: "armor" }
+
+type EquipmentContributionUpdates = {
+    editable?: Partial<EquipmentModifierContribution["editable"]>
+}
+
+const weaponSlotSelectionId = (selection: WeaponSlotSelection) =>
+    selection.slotType === "inventory" ? `inventory-${selection.index}` : selection.slotType
+
+const createWeaponContributionId = (selection: WeaponSlotSelection, templateContributionId: string) => {
+    return `equipment:${weaponSlotSelectionId(selection)}:${Date.now()}:${Math.random().toString(36).slice(2)}:${templateContributionId}`;
+}
+
+function createSelectedWeaponSlot(selection: WeaponSlotSelection, weaponId: string): WeaponSlot {
+    if (weaponId === "none") {
+        return createEmptyWeaponSlot()
     }
 
-    // 寻找合适的分割点
-    let splitIndex = maxCharsPerLine;
-
-    // 只在空格处分割，或者下一行开头是标点符号时才在标点符号处分割
-    for (let i = maxCharsPerLine; i >= Math.max(0, maxCharsPerLine - 5); i--) {
-        const char = text[i];
-        const nextChar = text[i + 1];
-
-        // 在空格处分割
-        if (char === ' ') {
-            splitIndex = i + 1;
-            break;
-        }
-
-        // 只有当下一行开头是标点符号时，才在标点符号处分割
-        const punctuation = ['，', '。', '：', ';', ',', ':'];
-        if (punctuation.includes(char) && nextChar && punctuation.includes(nextChar)) {
-            splitIndex = i + 1;
-            break;
-        }
+    const template = allWeapons.find((weapon) => weapon.id === weaponId)
+    if (template) {
+        return createWeaponSlotFromTemplate(template, (templateContributionId) =>
+            createWeaponContributionId(selection, templateContributionId),
+        )
     }
 
-    return [
-        text.substring(0, splitIndex).trim(),
-        text.substring(splitIndex).trim()
-    ];
-};
-
-// 属性升级记录接口（用于回滚功能）
-interface AttributeUpgradeRecord {
-    tierKey: string  // 格式："tier1-0-2"（tier-optionIndex-boxIndex）
-    timestamp: number
-    beforeState: {
-        agility: AttributeValue
-        strength: AttributeValue
-        finesse: AttributeValue
-        instinct: AttributeValue
-        presence: AttributeValue
-        knowledge: AttributeValue
-    }
-    afterState: {
-        agility: AttributeValue
-        strength: AttributeValue
-        finesse: AttributeValue
-        instinct: AttributeValue
-        presence: AttributeValue
-        knowledge: AttributeValue
+    try {
+        return createWeaponSlotFromCustomPayload(JSON.parse(weaponId))
+    } catch {
+        return createWeaponSlotFromName(weaponId)
     }
 }
 
@@ -123,24 +148,28 @@ interface SheetState {
     replaceSheetData: (data: SheetData) => void;
 
     // Granular actions for better performance and cleaner code
-    updateAttribute: (attribute: keyof SheetData, value: string) => void;
     toggleAttributeChecked: (attribute: keyof SheetData) => void;
     updateGold: (index: number) => void;
     updateHope: (index: number) => void;
     updateArmorBox: (index: number) => void;
     updateProficiency: (index: number) => void;
     updateExperience: (index: number, value: string) => void;
-    updateExperienceValues: (index: number, value: string) => void;
+    addExperienceWithModifierValue: (text: string, value: string) => void;
     updateHP: (index: number, checked: boolean) => void;
     updateName: (name: string) => void;
     updateHPMax: (value: number) => void;
     updateStressMax: (value: number) => void;
 
     // Threshold calculation actions
-    updateLevel: (level: string, oldLevel?: string) => void;
-    updateArmorThresholdWithDamage: (armorThreshold: string) => void;
-    updateArmorBaseScore: (armorBaseScore: string) => void;
+    updateLevel: (level: string) => void;
+    updateArmorBaseThresholds: (baseThresholds: string) => void;
+    updateArmorBaseThresholdSide: (side: "minor" | "major", value: string) => void;
+    updateArmorBaseMax: (baseArmorMax: string) => void;
     selectArmor: (armorId: string) => void;
+    selectWeaponSlot: (selection: WeaponSlotSelection, weaponId: string) => void;
+    updateActiveWeaponSlot: (slotType: "primary" | "secondary", updates: Partial<WeaponSlot>) => void;
+    updateInventoryWeaponSlot: (index: 0 | 1, updates: Partial<WeaponSlot>) => void;
+    swapInventoryWeaponToActiveSlot: (index: 0 | 1, targetType: "primary" | "secondary") => void;
 
     // Card management actions
     deleteCard: (index: number, isInventory: boolean) => void;
@@ -154,29 +183,186 @@ interface SheetState {
     updateUpgrade: (tier: string, upgradeName: string, value: boolean | boolean[]) => void;
     updateScrapMaterial: (category: string, index: number, value: number | string) => void;
 
-    // Attribute upgrade rollback actions
-    attributeUpgradeHistory: Record<string, AttributeUpgradeRecord>;
-    saveAttributeUpgradeRecord: (tierKey: string, beforeState: Record<string, AttributeValue>, afterState: Record<string, AttributeValue>) => void;
-    rollbackAttributeUpgrade: (tierKey: string) => { success: boolean; reason?: 'no-record' | 'conflict' | 'success' };
-
-    // Experience values upgrade snapshot (not in sheetData, won't be persisted)
-    experienceValuesSnapshot?: {
-        before: Record<number, string>;
-        after: Record<number, string>;
-    };
-    createExperienceValuesSnapshot: (modifiedIndices: number[], afterValues: Record<number, string>) => void;
-    restoreExperienceValuesSnapshot: () => { success: boolean; reason?: 'no-snapshot' | 'conflict' | 'success' };
-
-    // Evasion upgrade snapshot (not in sheetData, won't be persisted)
-    evasionSnapshot?: {
-        before: string;
-        after: string;
-    };
-    createEvasionSnapshot: (afterValue: string) => void;
-    restoreEvasionSnapshot: () => { success: boolean; reason?: 'no-snapshot' | 'conflict' | 'success' };
+    setActiveModifierBase: (target: ModifierTargetId, baseId: ModifierEntryId | undefined) => void;
+    setTargetAutoCalculation: (target: ModifierTargetId, enabled: boolean) => void;
+    commitModifierTargetValue: (target: ModifierTargetId, value: unknown) => void;
+    upsertUserModifierContribution: (contribution: UserModifierContribution) => void;
+    removeUserModifierContribution: (entryId: ModifierEntryId) => void;
+    upsertOtherAdjustment: (adjustment: OtherAdjustment) => void;
+    removeOtherAdjustment: (entryId: string) => void;
+    removeSpecialBaseContribution: (target: ModifierTargetId, entryId: ModifierEntryId) => void;
+    setUpgradeState: (checkKey: string, state: UpgradeState) => void;
+    addEquipmentModifierContribution: (slotRef: EquipmentModifierSlotRef) => void;
+    updateEquipmentModifierContribution: (
+        slotRef: EquipmentModifierSlotRef,
+        entryId: ModifierEntryId,
+        updates: EquipmentContributionUpdates,
+    ) => void;
+    changeEquipmentModifierContributionTarget: (
+        slotRef: EquipmentModifierSlotRef,
+        entryId: ModifierEntryId,
+        target: EquipmentModifierTargetId,
+    ) => void;
+    removeEquipmentModifierContribution: (slotRef: EquipmentModifierSlotRef, entryId: ModifierEntryId) => void;
 
     // Profession change handler
     handleProfessionChange: (newProfessionRef: SheetCardReference | undefined, newProfessionCard: StandardCard | undefined) => void;
+}
+
+const ensureModifierState = (sheetData: SheetData) => ({
+    targetStates: {
+        ...(sheetData.modifierState?.targetStates ?? {}),
+    },
+    entryStates: {
+        ...(sheetData.modifierState?.entryStates ?? {}),
+    },
+});
+
+const cleanupTargetState = (state: { activeBaseId?: ModifierEntryId; autoCalculation?: boolean }) => {
+    const next: { activeBaseId?: ModifierEntryId; autoCalculation?: boolean } = {};
+    if (state.activeBaseId) {
+        next.activeBaseId = state.activeBaseId;
+    }
+    if (state.autoCalculation !== undefined) {
+        next.autoCalculation = state.autoCalculation;
+    }
+    return Object.keys(next).length > 0 ? next : undefined;
+};
+
+const setTargetState = (
+    targetStates: ReturnType<typeof ensureModifierState>["targetStates"],
+    target: ModifierTargetId,
+    nextState: { activeBaseId?: ModifierEntryId; autoCalculation?: boolean },
+) => {
+    const cleaned = cleanupTargetState(nextState);
+    if (cleaned) {
+        targetStates[target] = cleaned;
+    } else {
+        delete targetStates[target];
+    }
+};
+
+function canStoreRawFinalText(target: ModifierTargetId): boolean {
+    return (
+        target === "evasion" ||
+        target === "minorThreshold" ||
+        target === "majorThreshold" ||
+        target === "agility.value" ||
+        target === "strength.value" ||
+        target === "finesse.value" ||
+        target === "instinct.value" ||
+        target === "presence.value" ||
+        target === "knowledge.value" ||
+        target.startsWith("experienceValues.")
+    );
+}
+
+function applyModifierTargetValueSubmission(sheetData: SheetData, target: ModifierTargetId, value: unknown): SheetData | undefined {
+    const autoCalculation = isTargetAutoCalculationEnabled(sheetData.modifierState?.targetStates?.[target]);
+    const finalValue = tryParseNumberExpression(value);
+    const storesRawText = canStoreRawFinalText(target);
+
+    if (!autoCalculation) {
+        let nextSheetData: SheetData;
+        if (finalValue !== undefined) {
+            nextSheetData = writeTargetValue(sheetData, target, finalValue);
+        } else if (storesRawText) {
+            nextSheetData = writeTargetValue(sheetData, target, String(value));
+        } else {
+            return undefined;
+        }
+
+        return applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, target));
+    }
+
+    if (finalValue === undefined) {
+        if (!storesRawText) return undefined;
+
+        return applyAutoCalculationForTargets(writeTargetValue(sheetData, target, String(value)));
+    }
+
+    const nextSheetData = reconcileFinalInput(sheetData, target, finalValue);
+    return applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, target));
+}
+
+function equipmentModifierSourceId(slotRef: EquipmentModifierSlotRef): string {
+    if (slotRef.type === "weapon") return `weapon:${slotRef.slot}`;
+    if (slotRef.type === "inventoryWeapon") return `inventory:${slotRef.index}`;
+    return "armor:current";
+}
+
+function updateEquipmentModifierSlot(
+    sheetData: SheetData,
+    slotRef: EquipmentModifierSlotRef,
+    updateContributions: (contributions: EquipmentModifierContribution[]) => EquipmentModifierContribution[],
+): SheetData {
+    const equipment = sheetData.equipment;
+
+    if (slotRef.type === "armor") {
+        const contributions = sanitizeEquipmentModifierContributions(equipment.armorSlot.modifierContributions);
+        return {
+            ...sheetData,
+            equipment: {
+                ...equipment,
+                armorSlot: {
+                    ...equipment.armorSlot,
+                    modifierContributions: updateContributions(contributions),
+                },
+            },
+        };
+    }
+
+    if (slotRef.type === "inventoryWeapon") {
+        const inventory = [...equipment.weaponSlots.inventory] as typeof equipment.weaponSlots.inventory;
+        const slot = inventory[slotRef.index];
+        const contributions = sanitizeEquipmentModifierContributions(slot.modifierContributions);
+        inventory[slotRef.index] = {
+            ...slot,
+            modifierContributions: updateContributions(contributions),
+        };
+        return {
+            ...sheetData,
+            equipment: {
+                ...equipment,
+                weaponSlots: {
+                    ...equipment.weaponSlots,
+                    inventory,
+                },
+            },
+        };
+    }
+
+    const slot = equipment.weaponSlots[slotRef.slot];
+    const contributions = sanitizeEquipmentModifierContributions(slot.modifierContributions);
+    return {
+        ...sheetData,
+        equipment: {
+            ...equipment,
+            weaponSlots: {
+                ...equipment.weaponSlots,
+                [slotRef.slot]: {
+                    ...slot,
+                    modifierContributions: updateContributions(contributions),
+                },
+            },
+        },
+    };
+}
+
+function deleteModifierEntryState(sheetData: SheetData, entryId: ModifierEntryId): SheetData {
+    if (!sheetData.modifierState?.entryStates?.[entryId]) return sheetData;
+
+    const modifierState = ensureModifierState(sheetData);
+    const entryStates = { ...modifierState.entryStates };
+    delete entryStates[entryId];
+
+    return {
+        ...sheetData,
+        modifierState: {
+            ...modifierState,
+            entryStates,
+        },
+    };
 }
 
 export const useSheetStore = create<SheetState>((set) => ({
@@ -187,8 +373,8 @@ export const useSheetStore = create<SheetState>((set) => ({
             const rawUpdatedData = typeof updater === 'function' ? updater(oldData) : updater;
             let newData = { ...oldData, ...rawUpdatedData };
 
-            // 检查 armorValue 是否改变，如果改变则清空所有 armorBoxes
-            if ('armorValue' in rawUpdatedData && rawUpdatedData.armorValue !== oldData.armorValue) {
+            // 检查 armorMax 是否改变，如果改变则清空所有 armorBoxes
+            if ('armorMax' in rawUpdatedData && rawUpdatedData.armorMax !== oldData.armorMax) {
                 newData = {
                     ...newData,
                     armorBoxes: Array(12).fill(false)
@@ -205,30 +391,12 @@ export const useSheetStore = create<SheetState>((set) => ({
         // 应用子职业施法属性同步
         const finalData = syncSubclassSpellcasting(newData, state.sheetData);
 
-        // 清空所有撤回快照，防止跨角色混淆
-        // 当切换角色或导入数据时，旧角色的升级快照不应该影响新角色
         return {
-            sheetData: finalData,
-            attributeUpgradeHistory: {},
-            experienceValuesSnapshot: undefined,
-            evasionSnapshot: undefined,
+            sheetData: applyAutoCalculationForTargets(finalData),
         };
     }),
 
     // Granular actions
-    updateAttribute: (attribute, value) => set((state) => {
-        const currentAttribute = state.sheetData[attribute];
-        if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
-            return {
-                sheetData: {
-                    ...state.sheetData,
-                    [attribute]: { ...currentAttribute, value },
-                }
-            };
-        }
-        return state;
-    }),
-
     toggleAttributeChecked: (attribute) => set((state) => {
         const currentAttribute = state.sheetData[attribute];
         if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
@@ -347,21 +515,26 @@ export const useSheetStore = create<SheetState>((set) => ({
         // 找到最后一个被点亮的 proficiency 的下标
         const lastLit = current.lastIndexOf(true);
         // 如果点击的正好是最后一个被点亮的 proficiency，则全部熄灭
+        let finalCount: number;
         if (index === lastLit && current[index]) {
+            finalCount = 0;
+        } else {
+            finalCount = index + 1;
+        }
+
+        const autoCalculation = isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.proficiency);
+        if (autoCalculation) {
             return {
-                sheetData: {
-                    ...state.sheetData,
-                    proficiency: current.map(() => false)
-                }
+                sheetData: applyAutoCalculationForTargets(reconcileFinalInput(state.sheetData, "proficiency", finalCount)),
             };
         }
-        // 其它情况，点亮前 n 个
-        const newProficiency = current.map((_, i) => i <= index);
+
+        const newProficiency = current.map((_, i) => i < finalCount);
         return {
-            sheetData: {
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
                 proficiency: newProficiency
-            }
+            })
         };
     }),
 
@@ -376,15 +549,23 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
     }),
 
-    updateExperienceValues: (index, value) => set((state) => {
-        const newExperienceValues = [...(state.sheetData.experienceValues || [])];
-        newExperienceValues[index] = value;
-        return {
-            sheetData: {
-                ...state.sheetData,
-                experienceValues: newExperienceValues
-            }
-        };
+    addExperienceWithModifierValue: (text, value) => set((state) => {
+        const experience = [...(state.sheetData.experience || ["", "", "", "", ""])];
+        const experienceValues = [...(state.sheetData.experienceValues || ["", "", "", "", ""])];
+        const trimmedText = text.trim();
+        if (!trimmedText) return state;
+
+        const emptySlotIndex = experience.findIndex((item, index) => item === "" && experienceValues[index] === "");
+        if (emptySlotIndex === -1) return state;
+
+        experience[emptySlotIndex] = trimmedText;
+        const target = `experienceValues.${emptySlotIndex}` as ModifierTargetId;
+        const nextSheetData = applyModifierTargetValueSubmission({
+            ...state.sheetData,
+            experience,
+        }, target, value);
+
+        return nextSheetData ? { sheetData: nextSheetData } : state;
     }),
 
     updateHP: (index, checked) => set((state) => {
@@ -405,370 +586,222 @@ export const useSheetStore = create<SheetState>((set) => ({
         }
     })),
 
-    updateHPMax: (value) => set((state) => ({
-        sheetData: {
-            ...state.sheetData,
-            hpMax: value
-        }
-    })),
+    updateHPMax: (value) => set((state) => {
+        const autoCalculation = isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.hpMax);
+        const nextSheetData = autoCalculation
+            ? reconcileFinalInput(state.sheetData, "hpMax", value)
+            : writeTargetValue(state.sheetData, "hpMax", value);
+        return {
+            sheetData: applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, "hpMax")),
+        };
+    }),
 
-    updateStressMax: (value) => set((state) => ({
-        sheetData: {
-            ...state.sheetData,
-            stressMax: value
-        }
-    })),
+    updateStressMax: (value) => set((state) => {
+        const autoCalculation = isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.stressMax);
+        const nextSheetData = autoCalculation
+            ? reconcileFinalInput(state.sheetData, "stressMax", value)
+            : writeTargetValue(state.sheetData, "stressMax", value);
+        return {
+            sheetData: applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, "stressMax")),
+        };
+    }),
 
     // Threshold calculation actions
-    updateLevel: (level, oldLevel) => set((state) => {
-        const updates: Partial<SheetData> = { level };
-
-        // 检查是否需要增加熟练度（当达到2、5、8级时）
-        // 使用传入的 oldLevel，如果未提供则从 store 读取
-        const prevLevel = parseToNumber(oldLevel ?? state.sheetData.level, 1)
-        const newLevel = parseToNumber(level, 1)
-
-        const proficiencyLevels = [2, 5, 8]
-
-        // 计算跨越了多少个熟练度阈值
-        let proficiencyIncrements = 0
-        for (const threshold of proficiencyLevels) {
-            if (prevLevel < threshold && newLevel >= threshold) {
-                proficiencyIncrements++  // 累加，不 break
-            }
-        }
-
-        // 如果需要增加熟练度
-        if (proficiencyIncrements > 0) {
-            const currentProficiency = Array.isArray(state.sheetData.proficiency)
-                ? state.sheetData.proficiency
-                : Array(6).fill(false)
-
-            // 计算当前熟练度数量
-            const currentCount = currentProficiency.filter(v => v === true).length
-
-            // 计算可以增加的数量（不超过上限6）
-            const actualIncrements = Math.min(proficiencyIncrements, 6 - currentCount)
-
-            if (actualIncrements > 0) {
-                const newProficiency = [...currentProficiency]
-
-                // 批量添加熟练度
-                for (let i = 0; i < actualIncrements; i++) {
-                    newProficiency[currentCount + i] = true
-                }
-
-                updates.proficiency = newProficiency
-
-                // 清空所有属性的升级标记
-                type AttributeKey = 'agility' | 'strength' | 'finesse' | 'instinct' | 'presence' | 'knowledge'
-                const attributeKeys: AttributeKey[] = [
-                    'agility', 'strength', 'finesse',
-                    'instinct', 'presence', 'knowledge'
-                ]
-
-                attributeKeys.forEach(key => {
-                    const attr = state.sheetData[key]
-                    if (attr && typeof attr === 'object' && 'checked' in attr) {
-                        updates[key] = { ...attr, checked: false }
-                    }
-                })
-
-                // 更新通知消息，显示实际增加的数量
-                const message = actualIncrements === 1
-                    ? `等级提升至${newLevel}级，熟练度+1（${currentCount} → ${currentCount + actualIncrements}），属性升级标记已重置`
-                    : `等级提升至${newLevel}级，熟练度+${actualIncrements}（${currentCount} → ${currentCount + actualIncrements}），属性升级标记已重置`
-
-                showFadeNotification({
-                    message,
-                    type: "success"
-                })
-            }
-        }
-
-        // 如果等级为空字符串，只更新等级和熟练度，不计算阈值
-        if (level === "") {
-            return {
-                sheetData: {
-                    ...state.sheetData,
-                    ...updates
-                }
-            };
-        }
-
-        const levelNum = parseInt(level);
-
-        // 验证等级范围 (1-10)，如果无效则只更新等级值和熟练度，不计算阈值
-        if (isNaN(levelNum) || levelNum < 1 || levelNum > 10) {
-            return {
-                sheetData: {
-                    ...state.sheetData,
-                    ...updates
-                }
-            };
-        }
-
-        // 如果有护甲阈值，计算伤害阈值
-        if (state.sheetData.armorThreshold) {
-            const thresholds = state.sheetData.armorThreshold.split('/');
-            if (thresholds.length === 2) {
-                const minor = parseInt(thresholds[0]?.trim());
-                const major = parseInt(thresholds[1]?.trim());
-
-                if (!isNaN(minor) && !isNaN(major)) {
-                    const newMinor = minor + levelNum;
-                    const newMajor = major + levelNum;
-                    updates.minorThreshold = String(newMinor);
-                    updates.majorThreshold = String(newMajor);
-
-                    // 显示通知
-                    showFadeNotification({
-                        message: `因等级更新，自动更新伤害阈值`,
-                        type: "success"
-                    });
-                }
-            }
-        }
+    updateLevel: (level) => set((state) => {
+        const automationResult = applyLevelEntryAutomationsWithNotifications(state.sheetData, level);
+        automationResult.notifications.forEach((notification) => {
+            showFadeNotification(notification);
+        });
 
         return {
-            sheetData: {
-                ...state.sheetData,
-                ...updates
-            }
+            sheetData: applyAutoCalculationForTargets({
+                ...automationResult.sheetData,
+                level,
+            }),
         };
     }),
 
-    updateArmorThresholdWithDamage: (armorThreshold) => set((state) => {
-        const updates: Partial<SheetData> = { armorThreshold };
-
-        // 解析护甲阈值
-        const thresholds = armorThreshold.split('/');
-        if (thresholds.length !== 2) {
-            // 无效格式，只更新护甲阈值
-            return {
-                sheetData: {
-                    ...state.sheetData,
-                    ...updates
-                }
-            };
-        }
-
-        const minor = parseInt(thresholds[0]?.trim());
-        const major = parseInt(thresholds[1]?.trim());
-
-        if (isNaN(minor) || isNaN(major)) {
-            // 无效数字，只更新护甲阈值
-            return {
-                sheetData: {
-                    ...state.sheetData,
-                    ...updates
-                }
-            };
-        }
-
-        // 如果有等级，计算伤害阈值
-        const levelNum = parseInt(state.sheetData.level);
-        if (!isNaN(levelNum) && levelNum >= 1 && levelNum <= 10) {
-            const newMinor = minor + levelNum;
-            const newMajor = major + levelNum;
-            updates.minorThreshold = String(newMinor);
-            updates.majorThreshold = String(newMajor);
-
-            // 显示通知
-            showFadeNotification({
-                message: `因护甲信息更新，自动更新伤害阈值`,
-                type: "success"
-            });
-        }
+    updateArmorBaseThresholds: (baseThresholds) => set((state) => {
+        const armorSlot: ArmorSlot = {
+            ...state.sheetData.equipment.armorSlot,
+            baseThresholds: parseArmorThreshold(baseThresholds),
+        };
 
         return {
-            sheetData: {
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
-                ...updates
-            }
+                equipment: {
+                    ...state.sheetData.equipment,
+                    armorSlot,
+                },
+            }),
         };
     }),
 
-    updateArmorBaseScore: (armorBaseScore) => set((state) => {
-        // 解析护甲值为数字，用于更新 armorMax
-        const armorMaxValue = parseToNumber(armorBaseScore, 0);
+    updateArmorBaseThresholdSide: (side, value) => set((state) => {
+        const baseThresholds = value.includes("/")
+            ? parseArmorThreshold(value)
+            : {
+                ...state.sheetData.equipment.armorSlot.baseThresholds,
+                [side]: parseArmorThresholdSide(value),
+            };
 
-        const updates: Partial<SheetData> = {
-            armorBaseScore,
-            armorValue: armorBaseScore,  // 同步更新护甲值
-            armorMax: armorMaxValue       // 同步更新护甲上限
+        const armorSlot: ArmorSlot = {
+            ...state.sheetData.equipment.armorSlot,
+            baseThresholds,
         };
 
-        // 显示通知
-        if (armorBaseScore) {
-            showFadeNotification({
-                message: `因护甲信息更新，护甲值已更新为 ${armorBaseScore}`,
-                type: "success"
-            });
-        }
+        return {
+            sheetData: applyAutoCalculationForTargets({
+                ...state.sheetData,
+                equipment: {
+                    ...state.sheetData.equipment,
+                    armorSlot,
+                },
+            }),
+        };
+    }),
+
+    updateArmorBaseMax: (baseArmorMaxText) => set((state) => {
+        const baseArmorMax = parseArmorMax(baseArmorMaxText);
 
         return {
-            sheetData: {
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
-                ...updates
-            }
+                equipment: {
+                    ...state.sheetData.equipment,
+                    armorSlot: {
+                        ...state.sheetData.equipment.armorSlot,
+                        baseArmorMax,
+                    },
+                },
+            }),
         };
     }),
 
     selectArmor: (armorId: string) => set((state) => {
-        const updates: Partial<SheetData> = {};
+        let armorSlot: ArmorSlot;
 
         if (armorId === "none") {
-            // 清空所有护甲相关字段
-            updates.armorName = "";
-            updates.armorBaseScore = "";
-            updates.armorThreshold = "";
-            updates.armorFeature = "";
-            updates.minorThreshold = "";
-            updates.majorThreshold = "";
-            updates.armorValue = "";  // 清空护甲值
-            updates.armorMax = 0;      // 清空护甲上限
-
-            // 显示通知
-            showFadeNotification({
-                message: "护甲信息无效或清空，伤害阈值已重置",
-                type: "info"
-            });
+            armorSlot = createEmptyArmorSlot();
         } else {
-            // 首先检查是否为JSON格式（自定义护甲）
             let isCustomArmor = false;
-            let customArmorData: any = null;
+            let customArmorData: unknown = null;
 
             try {
                 customArmorData = JSON.parse(armorId);
                 isCustomArmor = true;
             } catch (e) {
-                // 不是JSON格式，继续处理
+                // 不是JSON格式，继续按内置模板 id 处理
             }
 
             if (isCustomArmor && customArmorData) {
-                // 处理自定义护甲
-                updates.armorName = customArmorData.名称 || armorId;
-                updates.armorBaseScore = String(customArmorData.护甲值 || "");
-                updates.armorThreshold = customArmorData.伤害阈值 || "";
-                const featureText = `${customArmorData.特性名称 ? customArmorData.特性名称 + ': ' : ''}${customArmorData.描述 || ''}`.trim();
-                const [feature1, feature2] = splitFeatureText(featureText);
-                updates.armorFeature = feature2 ? `${feature1}\n${feature2}` : feature1;
-
-                // 自动更新护甲值和护甲上限
-                const armorValueStr = String(customArmorData.护甲值 || "");
-                updates.armorValue = armorValueStr;
-                updates.armorMax = parseToNumber(armorValueStr, 0);
-
-                // 计算伤害阈值
-                if (customArmorData.伤害阈值) {
-                    const thresholds = customArmorData.伤害阈值.split('/');
-                    if (thresholds.length === 2) {
-                        const minor = parseInt(thresholds[0]?.trim());
-                        const major = parseInt(thresholds[1]?.trim());
-                        const levelNum = parseInt(state.sheetData.level);
-
-                        if (!isNaN(minor) && !isNaN(major) && !isNaN(levelNum) && levelNum >= 1 && levelNum <= 10) {
-                            const newMinor = minor + levelNum;
-                            const newMajor = major + levelNum;
-                            updates.minorThreshold = String(newMinor);
-                            updates.majorThreshold = String(newMajor);
-
-                            // 显示通知
-                            showFadeNotification({
-                                message: `因护甲信息更新，自动更新护甲值和伤害阈值`,
-                                type: "success"
-                            });
-                        } else {
-                            // 如果没有等级或等级无效，仍然提示护甲值已更新
-                            showFadeNotification({
-                                message: `因护甲信息更新，自动更新护甲值`,
-                                type: "success"
-                            });
-                        }
-                    } else {
-                        // 如果护甲阈值格式不正确，仅提示护甲值已更新
-                        showFadeNotification({
-                            message: `因护甲信息更新，自动更新护甲值`,
-                            type: "success"
-                        });
-                    }
-                } else {
-                    // 如果没有护甲阈值，仅提示护甲值已更新
-                    showFadeNotification({
-                        message: `因护甲信息更新，自动更新护甲值`,
-                        type: "success"
-                    });
-                }
+                armorSlot = createArmorSlotFromCustomPayload(customArmorData);
             } else {
-                // 尝试从预设护甲列表中查找
-                const armor = armorItems.find((a: ArmorItem) => a.名称 === armorId);
+                const armor = armorItems.find((armor) => armor.id === armorId);
 
                 if (armor) {
-                    // 使用预设护甲
-                    updates.armorName = armor.名称;
-                    updates.armorBaseScore = String(armor.护甲值);
-                    updates.armorThreshold = armor.伤害阈值;
-                    const featureText = `${armor.特性名称}${armor.特性名称 && armor.描述 ? ": " : ""}${armor.描述}`;
-                    const [feature1, feature2] = splitFeatureText(featureText);
-                    updates.armorFeature = feature2 ? `${feature1}\n${feature2}` : feature1;
-
-                    // 自动更新护甲值和护甲上限
-                    const armorValueStr = String(armor.护甲值);
-                    updates.armorValue = armorValueStr;
-                    updates.armorMax = parseToNumber(armorValueStr, 0);
-
-                    // 计算伤害阈值
-                    const thresholds = armor.伤害阈值.split('/');
-                    if (thresholds.length === 2) {
-                        const minor = parseInt(thresholds[0]?.trim());
-                        const major = parseInt(thresholds[1]?.trim());
-                        const levelNum = parseInt(state.sheetData.level);
-
-                        if (!isNaN(minor) && !isNaN(major) && !isNaN(levelNum) && levelNum >= 1 && levelNum <= 10) {
-                            const newMinor = minor + levelNum;
-                            const newMajor = major + levelNum;
-                            updates.minorThreshold = String(newMinor);
-                            updates.majorThreshold = String(newMajor);
-
-                            // 显示通知
-                            showFadeNotification({
-                                message: `因护甲信息更新，自动更新护甲值和伤害阈值`,
-                                type: "success"
-                            });
-                        } else {
-                            // 如果没有等级或等级无效，仍然提示护甲值已更新
-                            showFadeNotification({
-                                message: `因护甲信息更新，自动更新护甲值`,
-                                type: "success"
-                            });
-                        }
-                    } else {
-                        // 如果护甲阈值格式不正确，仅提示护甲值已更新
-                        showFadeNotification({
-                            message: `因护甲信息更新，自动更新护甲值`,
-                            type: "success"
-                        });
-                    }
+                    armorSlot = createArmorSlotFromTemplate(armor, createEquipmentContributionId);
                 } else {
-                    // 既不是JSON也不在预设列表中，作为纯文本名称处理
-                    updates.armorName = armorId;
-                    updates.armorBaseScore = "";
-                    updates.armorThreshold = "";
-                    updates.armorFeature = "";
-                    updates.armorValue = "";  // 清空护甲值
-                    updates.armorMax = 0;      // 清空护甲上限
+                    armorSlot = {
+                        ...createEmptyArmorSlot(),
+                        name: armorId,
+                    };
                 }
             }
+
         }
 
         return {
-            sheetData: {
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
-                ...updates
-            }
+                equipment: {
+                    ...state.sheetData.equipment,
+                    armorSlot,
+                },
+            }),
         };
     }),
+
+    selectWeaponSlot: (selection, weaponId) => set((state) => {
+        const slot = createSelectedWeaponSlot(selection, weaponId);
+        const weaponSlots = state.sheetData.equipment.weaponSlots;
+
+        if (selection.slotType === "inventory") {
+            const inventory = [...weaponSlots.inventory] as typeof weaponSlots.inventory;
+            inventory[selection.index] = slot;
+
+            return {
+                sheetData: applyAutoCalculationForTargets({
+                    ...state.sheetData,
+                    equipment: {
+                        ...state.sheetData.equipment,
+                        weaponSlots: {
+                            ...weaponSlots,
+                            inventory,
+                        },
+                    },
+                }),
+            };
+        }
+
+        return {
+            sheetData: applyAutoCalculationForTargets({
+                ...state.sheetData,
+                equipment: {
+                    ...state.sheetData.equipment,
+                    weaponSlots: {
+                        ...weaponSlots,
+                        [selection.slotType]: slot,
+                    },
+                },
+            }),
+        };
+    }),
+
+    updateActiveWeaponSlot: (slotType, updates) => set((state) => ({
+        sheetData: applyAutoCalculationForTargets({
+            ...state.sheetData,
+            equipment: {
+                ...state.sheetData.equipment,
+                weaponSlots: {
+                    ...state.sheetData.equipment.weaponSlots,
+                    [slotType]: {
+                        ...state.sheetData.equipment.weaponSlots[slotType],
+                        ...updates,
+                    },
+                },
+            },
+        }),
+    })),
+
+    updateInventoryWeaponSlot: (index, updates) => set((state) => {
+        const inventory = [...state.sheetData.equipment.weaponSlots.inventory] as typeof state.sheetData.equipment.weaponSlots.inventory;
+        inventory[index] = {
+            ...inventory[index],
+            ...updates,
+        };
+
+        return {
+            sheetData: applyAutoCalculationForTargets({
+                ...state.sheetData,
+                equipment: {
+                    ...state.sheetData.equipment,
+                    weaponSlots: {
+                        ...state.sheetData.equipment.weaponSlots,
+                        inventory,
+                    },
+                },
+            }),
+        };
+    }),
+
+    swapInventoryWeaponToActiveSlot: (index, targetType) => set((state) => ({
+        sheetData: applyAutoCalculationForTargets({
+            ...state.sheetData,
+            equipment: swapInventoryWeaponWithActiveSlot(state.sheetData.equipment, index, targetType),
+        }),
+    })),
 
     // Card management actions
     deleteCard: (index, isInventory) => set((state) => {
@@ -805,10 +838,10 @@ export const useSheetStore = create<SheetState>((set) => ({
             newCards[index] = emptyCard;
 
             return {
-                sheetData: {
+                sheetData: applyAutoCalculationForTargets({
                     ...state.sheetData,
                     cards: newCards
-                }
+                })
             };
         }
     }),
@@ -879,11 +912,11 @@ export const useSheetStore = create<SheetState>((set) => ({
 
             success = true;
             return {
-                sheetData: {
+                sheetData: applyAutoCalculationForTargets({
                     ...state.sheetData,
                     cards: newFocusedCards,
                     inventory_cards: newInventoryCards
-                }
+                })
             };
         });
 
@@ -1042,238 +1075,211 @@ export const useSheetStore = create<SheetState>((set) => ({
             newCards[index] = card;
 
             return {
-                sheetData: {
+                sheetData: applyAutoCalculationForTargets({
                     ...state.sheetData,
                     cards: newCards
-                }
+                })
             };
         }
     }),
 
-    // Attribute upgrade rollback system
-    attributeUpgradeHistory: {},
+    setActiveModifierBase: (target, baseId) => set((state) => {
+        const modifierState = ensureModifierState(state.sheetData);
+        const targetStates = { ...modifierState.targetStates };
+        const currentTargetState = targetStates[target] ?? {};
+        setTargetState(targetStates, target, {
+            ...currentTargetState,
+            activeBaseId: baseId,
+        });
 
-    // Experience values snapshot (not persisted)
-    experienceValuesSnapshot: undefined,
-
-    // Evasion snapshot (not persisted)
-    evasionSnapshot: undefined,
-
-    saveAttributeUpgradeRecord: (tierKey, beforeState, afterState) => {
-        set((state) => ({
-            attributeUpgradeHistory: {
-                ...state.attributeUpgradeHistory,
-                [tierKey]: {
-                    tierKey,
-                    timestamp: Date.now(),
-                    beforeState: beforeState as any,
-                    afterState: afterState as any,
+        return {
+            sheetData: applyAutoCalculationForTargets({
+                ...state.sheetData,
+                modifierState: {
+                    ...modifierState,
+                    targetStates,
                 },
-            },
-        }));
-    },
+            }),
+        };
+    }),
 
-    rollbackAttributeUpgrade: (tierKey) => {
-        const state = useSheetStore.getState();
-        const record = state.attributeUpgradeHistory[tierKey];
-
-        if (!record) {
-            return { success: false, reason: 'no-record' as const };
+    setTargetAutoCalculation: (target, enabled) => set((state) => {
+        if (enabled) {
+            return {
+                sheetData: applyAutoCalculationForTargets(enableAutoCalculationForTarget(state.sheetData, target)),
+            };
         }
 
-        const attributeKeys = ['agility', 'strength', 'finesse', 'instinct', 'presence', 'knowledge'];
-        const currentState = state.sheetData;
+        return {
+            sheetData: applyAutoCalculationForTargets(disableAutoCalculationForTarget(state.sheetData, target)),
+        };
+    }),
 
-        // Check for conflicts
-        const hasConflict = attributeKeys.some(key => {
-            const current = currentState[key as keyof SheetData] as AttributeValue;
-            const recorded = record.afterState[key as keyof typeof record.afterState];
-            return (
-                current.value !== recorded.value ||
-                current.checked !== recorded.checked ||
-                current.spellcasting !== recorded.spellcasting
-            );
-        });
+    commitModifierTargetValue: (target, value) => set((state) => {
+        const nextSheetData = applyModifierTargetValueSubmission(state.sheetData, target, value);
+        return nextSheetData ? { sheetData: nextSheetData } : state;
+    }),
 
-        if (hasConflict) {
-            // Delete record and return conflict
-            const newHistory = { ...state.attributeUpgradeHistory };
-            delete newHistory[tierKey];
-            set({ attributeUpgradeHistory: newHistory });
-            return { success: false, reason: 'conflict' as const };
-        }
+    upsertUserModifierContribution: (contribution) => set((state) => {
+        const contributions = state.sheetData.userModifierContributions ?? [];
+        const nextContributions = contributions.some(existing => existing.id === contribution.id)
+            ? contributions.map(existing => existing.id === contribution.id ? contribution : existing)
+            : [...contributions, contribution];
 
-        // Apply rollback
-        const updates: any = {};
-        attributeKeys.forEach(key => {
-            updates[key] = { ...record.beforeState[key as keyof typeof record.beforeState] };
-        });
-
-        set((state) => ({
-            sheetData: {
+        return {
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
-                ...updates,
+                userModifierContributions: nextContributions,
+            }),
+        };
+    }),
+
+    removeUserModifierContribution: (entryId) => set((state) => ({
+        sheetData: applyAutoCalculationForTargets({
+            ...state.sheetData,
+            userModifierContributions: (state.sheetData.userModifierContributions ?? []).filter(
+                contribution => contribution.id !== entryId,
+            ),
+        }),
+    })),
+
+    upsertOtherAdjustment: (adjustment) => set((state) => {
+        const nextSheetData: SheetData = {
+            ...state.sheetData,
+            otherAdjustments: upsertOtherAdjustmentInList(state.sheetData.otherAdjustments, adjustment),
+        };
+
+        return {
+            sheetData: applyAutoCalculationForTargets(nextSheetData),
+        };
+    }),
+
+    removeOtherAdjustment: (entryId) => set((state) => {
+        const adjustment = sanitizeOtherAdjustments(state.sheetData.otherAdjustments).find(
+            item => item.id === entryId,
+        );
+        if (!adjustment) return state;
+
+        const nextSheetData: SheetData = {
+            ...state.sheetData,
+            otherAdjustments: removeOtherAdjustmentFromList(state.sheetData.otherAdjustments, entryId),
+        };
+
+        return {
+            sheetData: applyAutoCalculationForTargets(nextSheetData),
+        };
+    }),
+
+    removeSpecialBaseContribution: (target, entryId) => set((state) => ({
+        sheetData: applyAutoCalculationForTargets(deleteSpecialBase(state.sheetData, target, entryId)),
+    })),
+
+    setUpgradeState: (checkKey, upgradeState) => set((state) => {
+        const nextSheetData: SheetData = {
+            ...state.sheetData,
+            upgradeStates: {
+                ...(state.sheetData.upgradeStates ?? {}),
+                [checkKey]: mergeUpgradeState(state.sheetData.upgradeStates?.[checkKey], upgradeState),
             },
-        }));
+        };
+        delete (nextSheetData as any).checkedUpgrades;
+        delete (nextSheetData as any).automationSelections;
 
-        // Delete record
-        const newHistory = { ...state.attributeUpgradeHistory };
-        delete newHistory[tierKey];
-        set({ attributeUpgradeHistory: newHistory });
+        return {
+            sheetData: applyAutoCalculationForTargets(nextSheetData),
+        };
+    }),
 
-        return { success: true, reason: 'success' as const };
-    },
+    addEquipmentModifierContribution: (slotRef) => set((state) => ({
+        sheetData: applyAutoCalculationForTargets(
+            updateEquipmentModifierSlot(state.sheetData, slotRef, contributions => [
+                ...contributions,
+                createDefaultEquipmentModifierContribution(equipmentModifierSourceId(slotRef)),
+            ]),
+        ),
+    })),
 
-    // Experience values upgrade snapshot actions
-    createExperienceValuesSnapshot: (modifiedIndices, afterValues) => {
-        const state = useSheetStore.getState();
-        const before: Record<number, string> = {};
-        const experienceValues = state.sheetData.experienceValues || [];
+    updateEquipmentModifierContribution: (slotRef, entryId, updates) => set((state) => ({
+        sheetData: applyAutoCalculationForTargets(
+            updateEquipmentModifierSlot(state.sheetData, slotRef, contributions =>
+                contributions.map(contribution => {
+                    if (contribution.id !== entryId) return contribution;
 
-        // 保存修改前的值
-        modifiedIndices.forEach(index => {
-            before[index] = experienceValues[index] || '';
-        });
+                    return {
+                        ...contribution,
+                        editable: {
+                            label: updates.editable?.label ?? contribution.editable.label,
+                            value: updates.editable?.value ?? contribution.editable.value,
+                        },
+                    };
+                }),
+            ),
+        ),
+    })),
 
-        set({
-            experienceValuesSnapshot: {
-                before,
-                after: afterValues,
-            },
-        });
-    },
+    changeEquipmentModifierContributionTarget: (slotRef, entryId, target) => set((state) => {
+        if (!isEquipmentModifierTargetId(target)) return state;
 
-    restoreExperienceValuesSnapshot: () => {
-        const state = useSheetStore.getState();
-        const snapshot = state.experienceValuesSnapshot;
+        const sourceId = equipmentModifierSourceId(slotRef);
+        let matched = false;
+        const updatedSheetData = updateEquipmentModifierSlot(state.sheetData, slotRef, contributions =>
+            contributions.map(contribution => {
+                if (contribution.id !== entryId) return contribution;
+                matched = true;
 
-        // 没有快照记录
-        if (!snapshot) {
-            return { success: false, reason: 'no-snapshot' as const };
+                return {
+                    id: createAdHocEquipmentContributionId(sourceId),
+                    definition: {
+                        target,
+                        kind: "modifier",
+                    },
+                    editable: contribution.editable,
+                };
+            }),
+        );
+
+        if (!matched) return state;
+
+        return {
+            sheetData: applyAutoCalculationForTargets(deleteModifierEntryState(updatedSheetData, entryId)),
+        };
+    }),
+
+    removeEquipmentModifierContribution: (slotRef, entryId) => set((state) => {
+        let matched = false;
+        const updatedSheetData = updateEquipmentModifierSlot(state.sheetData, slotRef, contributions =>
+            contributions.filter(contribution => {
+                if (contribution.id !== entryId) return true;
+                matched = true;
+                return false;
+            }),
+        );
+
+        if (!matched) return state;
+
+        return {
+            sheetData: applyAutoCalculationForTargets(deleteModifierEntryState(updatedSheetData, entryId)),
+        };
+    }),
+
+    handleProfessionChange: (newProfessionRef, newProfessionCard) => set((state) => {
+        const cards = [...(state.sheetData.cards || [])];
+        while (cards.length < 20) {
+            cards.push(createEmptyCard());
         }
+        cards[0] = newProfessionCard ?? createEmptyCard();
 
-        const currentValues = state.sheetData.experienceValues || [];
-
-        // 检查冲突：当前值是否与记录的 after 状态一致
-        const hasConflict = Object.entries(snapshot.after).some(([indexStr, afterValue]) => {
-            const index = parseInt(indexStr);
-            const currentValue = currentValues[index] || '';
-            return currentValue !== afterValue;
-        });
-
-        if (hasConflict) {
-            // 发现冲突，删除快照但不恢复
-            set({ experienceValuesSnapshot: undefined });
-            return { success: false, reason: 'conflict' as const };
-        }
-
-        // 无冲突，执行恢复
-        const experienceValues = [...currentValues];
-        Object.entries(snapshot.before).forEach(([indexStr, beforeValue]) => {
-            const index = parseInt(indexStr);
-            experienceValues[index] = beforeValue;
-        });
-
-        set((state) => ({
-            sheetData: {
+        return {
+            sheetData: applyAutoCalculationForTargets({
                 ...state.sheetData,
-                experienceValues,
-            },
-            experienceValuesSnapshot: undefined,
-        }));
-
-        return { success: true, reason: 'success' as const };
-    },
-
-    // Evasion upgrade snapshot actions
-    createEvasionSnapshot: (afterValue) => {
-        const state = useSheetStore.getState();
-        set({
-            evasionSnapshot: {
-                before: state.sheetData.evasion || '0',
-                after: afterValue,
-            },
-        });
-    },
-
-    restoreEvasionSnapshot: () => {
-        const state = useSheetStore.getState();
-        const snapshot = state.evasionSnapshot;
-
-        // 没有快照记录
-        if (!snapshot) {
-            return { success: false, reason: 'no-snapshot' as const };
-        }
-
-        const currentEvasion = state.sheetData.evasion || '0';
-
-        // 检查冲突：当前值是否与记录的 after 状态一致
-        if (currentEvasion !== snapshot.after) {
-            // 发现冲突，删除快照但不恢复
-            set({ evasionSnapshot: undefined });
-            return { success: false, reason: 'conflict' as const };
-        }
-
-        // 无冲突，执行恢复
-        set((state) => ({
-            sheetData: {
-                ...state.sheetData,
-                evasion: snapshot.before,
-            },
-            evasionSnapshot: undefined,
-        }));
-
-        return { success: true, reason: 'success' as const };
-    },
-
-    // Handle profession change - auto-fill evasion and max HP at level 1
-    handleProfessionChange: (newProfessionRef, newProfessionCard) => {
-        const state = useSheetStore.getState();
-        const currentLevel = state.sheetData.level;
-
-        // Only handle at level 1 (or empty level which defaults to 1)
-        if (currentLevel !== "1" && currentLevel !== "") {
-            return;
-        }
-
-        // Handle profession deletion
-        if (!newProfessionRef || !newProfessionRef.id) {
-            set((state) => ({
-                sheetData: {
-                    ...state.sheetData,
-                    evasion: "",
-                    hpMax: 6,
-                }
-            }));
-
-            showFadeNotification({
-                message: "职业已清空，闪避值和最大生命值回到初始值。",
-                type: "info"
-            });
-            return;
-        }
-
-        // Handle profession selection/change
-        if (newProfessionCard && newProfessionCard.professionSpecial) {
-            const evasion = newProfessionCard.professionSpecial["起始闪避"];
-            const hp = newProfessionCard.professionSpecial["起始生命"];
-
-            if (evasion !== undefined && hp !== undefined) {
-                set((state) => ({
-                    sheetData: {
-                        ...state.sheetData,
-                        evasion: String(evasion),
-                        hpMax: hp,
-                    }
-                }));
-
-                showFadeNotification({
-                    message: `因职业更新，已自动填写闪避值 ${evasion} 和最大生命值 ${hp}`,
-                    type: "success"
-                });
-            }
-        }
-    },
+                profession: newProfessionRef?.id ?? "",
+                professionRef: newProfessionRef ?? { id: "", name: "" },
+                subclass: "",
+                subclassRef: { id: "", name: "" },
+                cards,
+            }),
+        };
+    }),
 }));
 
 // Selector functions for better performance

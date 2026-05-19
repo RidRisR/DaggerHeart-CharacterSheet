@@ -1,5 +1,5 @@
 "use client"
-import { ArmorItem, armorItems } from "@/data/list/armor" // Changed import
+import { armorItems } from "@/data/list/armor"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area" // Ensure ScrollBar is imported
 import { useEffect, useState, useMemo } from "react"; // Added useEffect
 import { Button } from "@/components/ui/button";
@@ -7,20 +7,8 @@ import { Button } from "@/components/ui/button";
 interface ArmorModalProps {
   isOpen: boolean
   onClose: () => void
-  onSelect: (armorId: string) => void // Assuming armorId is the '名称'
+  onSelect: (armorId: string) => void
   title: string
-}
-
-// Updated Armor interface to match Chinese keys in armor.ts
-interface Armor {
-  名称: string;
-  等级: string;
-  伤害阈值: string;
-  护甲值: number;
-  特性名称: string;
-  描述: string;
-  // Add an id for React key and selection, can be same as 名称 if unique
-  id: string;
 }
 
 const LEVELS = ["T1", "T2", "T3", "T4"] as const;
@@ -31,7 +19,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
   const [customLevel, setCustomLevel] = useState<Level | "">("");
   const [customDamageThreshold1, setCustomDamageThreshold1] = useState("");
   const [customDamageThreshold2, setCustomDamageThreshold2] = useState("");
-  const [customArmorValue, setCustomArmorValue] = useState<number | "">("");
+  const [customArmorValue, setCustomArmorValue] = useState("");
   const [customFeatureName, setCustomFeatureName] = useState("");
   const [customDescription, setCustomDescription] = useState("");
   const [isCustom, setIsCustom] = useState(false);
@@ -39,28 +27,22 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
   // 新增搜索状态
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 处理数据和筛选都放在组件体内，保证 Hook 顺序
-  const processedArmorItems: Armor[] = useMemo(() => armorItems.map((armor: ArmorItem) => ({
-    ...armor,
-    id: armor.名称,
-  })), []);
-
   const filteredArmorItems = useMemo(() => {
-    return processedArmorItems.filter(a => {
-      if (levelFilter && a.等级 !== levelFilter) return false;
+    return armorItems.filter(a => {
+      if (levelFilter && a.tier !== levelFilter) return false;
       if (searchTerm) {
         const lowerCaseSearchTerm = searchTerm.toLowerCase();
         if (
-          !a.名称.toLowerCase().includes(lowerCaseSearchTerm) &&
-          !a.描述.toLowerCase().includes(lowerCaseSearchTerm) &&
-          !a.特性名称.toLowerCase().includes(lowerCaseSearchTerm)
+          !a.name.toLowerCase().includes(lowerCaseSearchTerm) &&
+          !a.description.toLowerCase().includes(lowerCaseSearchTerm) &&
+          !a.featureName.toLowerCase().includes(lowerCaseSearchTerm)
         ) {
           return false;
         }
       }
       return true;
     });
-  }, [processedArmorItems, levelFilter, searchTerm]);
+  }, [levelFilter, searchTerm]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -199,7 +181,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">伤害阈值</label>
                   <div className="flex gap-1 items-center">
                     <input
-                      type="number"
+                      type="text"
                       className="w-full border rounded px-2 py-2 text-sm min-h-[2.5rem]"
                       placeholder="重伤阈值"
                       value={customDamageThreshold1}
@@ -207,7 +189,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                     />
                     <span className="text-gray-500">/</span>
                     <input
-                      type="number"
+                      type="text"
                       className="w-full border rounded px-2 py-2 text-sm min-h-[2.5rem]"
                       placeholder="严重阈值"
                       value={customDamageThreshold2}
@@ -218,11 +200,11 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">护甲值</label>
                   <input
-                    type="number"
+                    type="text"
                     className="w-full border rounded px-2 py-2 text-sm min-h-[2.5rem]"
                     placeholder="护甲值"
                     value={customArmorValue}
-                    onChange={e => setCustomArmorValue(e.target.value ? parseInt(e.target.value) : "")}
+                    onChange={e => setCustomArmorValue(e.target.value)}
                   />
                 </div>
                 <div>
@@ -250,14 +232,15 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                   size="sm"
                   onClick={() => {
                     if (customName) {
-                      const damageThreshold = customDamageThreshold1 && customDamageThreshold2
-                        ? `${customDamageThreshold1}/${customDamageThreshold2}`
-                        : (customDamageThreshold1 || customDamageThreshold2 || "");
+                      const damageThreshold = {
+                        minor: customDamageThreshold1,
+                        major: customDamageThreshold2,
+                      };
                       const customArmorData = {
                         名称: customName,
                         等级: customLevel || "",
                         伤害阈值: damageThreshold,
-                        护甲值: customArmorValue || 0,
+                        护甲值: customArmorValue,
                         特性名称: customFeatureName,
                         描述: customDescription
                       };
@@ -318,9 +301,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                     <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{customName}</td>
                     <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{customLevel}</td>
                     <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">
-                      {customDamageThreshold1 && customDamageThreshold2
-                        ? `${customDamageThreshold1}/${customDamageThreshold2}`
-                        : (customDamageThreshold1 || customDamageThreshold2 || "")}
+                      {`${customDamageThreshold1}/${customDamageThreshold2}`}
                     </td>
                     <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{customArmorValue}</td>
                     <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{customFeatureName}</td>
@@ -343,12 +324,12 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                       onSelect(armor.id);
                     }}
                   >
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.名称}</td>
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.等级}</td>
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.伤害阈值}</td>
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.护甲值}</td>
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.特性名称}</td>
-                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.描述}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.name}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.tier}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{`${armor.baseThresholds.minor}/${armor.baseThresholds.major}`}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.baseArmorMax}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.featureName}</td>
+                    <td className="p-1 sm:p-2 whitespace-nowrap text-xs sm:text-sm">{armor.description}</td>
                   </tr>
                 ))}
               </tbody>

@@ -6,19 +6,22 @@ import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
-import { formatArmorThreshold } from "@/lib/equipment/armor-utils"
 import type { ArmorSlot } from "@/lib/equipment/types"
 
 interface ArmorSectionProps {
   onOpenArmorModal: () => void;
 }
 
+type ThresholdSide = "minor" | "major"
+
 export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
-  const { sheetData: formData, setSheetData, updateArmorBaseThresholds, updateArmorBaseMax } = useSheetStore()
+  const { sheetData: formData, setSheetData, updateArmorBaseThresholdSide, updateArmorBaseMax } = useSheetStore()
   const [isEditingName, setIsEditingName] = useState(false)
+  const [baseArmorMaxDraft, setBaseArmorMaxDraft] = useState<string | null>(null)
+  const [thresholdDrafts, setThresholdDrafts] = useState<Partial<Record<ThresholdSide, string>>>({})
   const armorSlot = formData.equipment.armorSlot
-  const baseArmorMaxValue = armorSlot.baseArmorMax === null ? "" : String(armorSlot.baseArmorMax)
-  const baseThresholdsValue = formatArmorThreshold(armorSlot.baseThresholds)
+  const currentBaseArmorMaxValue = armorSlot.baseArmorMax === null ? "" : String(armorSlot.baseArmorMax)
+  const baseArmorMaxValue = baseArmorMaxDraft ?? currentBaseArmorMaxValue
 
   const updateArmorSlot = (updates: Partial<ArmorSlot>) => {
     setSheetData((prev) => ({
@@ -34,16 +37,46 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    if (name === 'baseThresholds') {
-      // 使用新的护甲阈值更新函数，自动计算伤害阈值
-      updateArmorBaseThresholds(value)
-    } else if (name === 'baseArmorMax') {
-      // 使用新的护甲值更新函数，同步更新属性栏的护甲值
-      updateArmorBaseMax(value)
-    } else if (name === 'feature') {
+    if (name === 'feature') {
       updateArmorSlot({ feature: value })
     } else {
       setSheetData((prev) => ({ ...prev, [name]: value }))
+    }
+  }
+
+  const commitBaseArmorMax = () => {
+    updateArmorBaseMax(baseArmorMaxValue)
+    setBaseArmorMaxDraft(null)
+  }
+
+  const thresholdValue = (side: ThresholdSide) => {
+    const draft = thresholdDrafts[side]
+    if (draft !== undefined) return draft
+
+    const value = armorSlot.baseThresholds[side]
+    return value === null ? "" : String(value)
+  }
+
+  const commitThresholdSide = (side: ThresholdSide) => {
+    updateArmorBaseThresholdSide(side, thresholdValue(side))
+    setThresholdDrafts((drafts) => {
+      const next = { ...drafts }
+      delete next[side]
+      return next
+    })
+  }
+
+  const handleThresholdChange = (side: ThresholdSide, value: string) => {
+    setThresholdDrafts((drafts) => ({ ...drafts, [side]: value }))
+  }
+
+  const handleCommitKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    commit: () => void,
+  ) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      commit()
     }
   }
 
@@ -126,21 +159,38 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
             type="text"
             name="baseArmorMax"
             value={baseArmorMaxValue}
-            onChange={handleInputChange}
+            onChange={(e) => setBaseArmorMaxDraft(e.target.value)}
+            onBlur={commitBaseArmorMax}
+            onKeyDown={(e) => handleCommitKeyDown(e, commitBaseArmorMax)}
             {...getElementProps(baseArmorMaxValue, "armor-base-score")}
             className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
           />
         </div>
         <div className="col-span-3">
           <label className="text-[8px] text-gray-600">阈值</label>
-          <input
-            type="text"
-            name="baseThresholds"
-            value={baseThresholdsValue}
-            onChange={handleInputChange}
-            {...getElementProps(baseThresholdsValue, "armor-threshold")}
-            className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
-          />
+          <div className="flex h-6 min-w-0 items-center gap-0.5">
+            <input
+              type="text"
+              aria-label="重伤阈值"
+              value={thresholdValue("minor")}
+              onChange={(e) => handleThresholdChange("minor", e.target.value)}
+              onBlur={() => commitThresholdSide("minor")}
+              onKeyDown={(e) => handleCommitKeyDown(e, () => commitThresholdSide("minor"))}
+              {...getElementProps(thresholdValue("minor"), "armor-minor-threshold")}
+              className="w-0 min-w-0 flex-1 border-b border-gray-400 text-center focus:outline-none print-empty-hide"
+            />
+            <span className="flex-none text-[10px] leading-none text-gray-500">/</span>
+            <input
+              type="text"
+              aria-label="严重阈值"
+              value={thresholdValue("major")}
+              onChange={(e) => handleThresholdChange("major", e.target.value)}
+              onBlur={() => commitThresholdSide("major")}
+              onKeyDown={(e) => handleCommitKeyDown(e, () => commitThresholdSide("major"))}
+              {...getElementProps(thresholdValue("major"), "armor-major-threshold")}
+              className="w-0 min-w-0 flex-1 border-b border-gray-400 text-center focus:outline-none print-empty-hide"
+            />
+          </div>
         </div>
       </div>
       <div className="mt-1">

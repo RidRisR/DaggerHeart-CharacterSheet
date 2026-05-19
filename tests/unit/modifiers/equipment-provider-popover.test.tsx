@@ -334,6 +334,61 @@ describe("EquipmentProviderAnchor", () => {
 })
 
 describe("equipment provider section integration", () => {
+  it("edits armor thresholds through separate minor and major inputs", async () => {
+    const user = userEvent.setup()
+
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        armorSlot: {
+          ...defaultSheetData.equipment.armorSlot,
+          baseThresholds: { minor: 7, major: 15 },
+        },
+      },
+    })
+
+    render(<ArmorSection onOpenArmorModal={vi.fn()} />)
+
+    const minorInput = screen.getByRole("textbox", { name: "重伤阈值" })
+    const majorInput = screen.getByRole("textbox", { name: "严重阈值" })
+
+    await user.clear(minorInput)
+    await user.type(minorInput, "10+3")
+    await user.tab()
+
+    expect(sheet().equipment.armorSlot.baseThresholds).toEqual({ minor: 13, major: 15 })
+
+    await user.clear(majorInput)
+    await user.type(majorInput, "bad")
+    await user.tab()
+
+    expect(sheet().equipment.armorSlot.baseThresholds).toEqual({ minor: 13, major: null })
+  })
+
+  it("pastes a full armor threshold into either threshold input", async () => {
+    const user = userEvent.setup()
+
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        armorSlot: {
+          ...defaultSheetData.equipment.armorSlot,
+          baseThresholds: { minor: 7, major: 15 },
+        },
+      },
+    })
+
+    render(<ArmorSection onOpenArmorModal={vi.fn()} />)
+
+    const majorInput = screen.getByRole("textbox", { name: "严重阈值" })
+
+    await user.clear(majorInput)
+    await user.type(majorInput, "13/abc")
+    await user.tab()
+
+    expect(sheet().equipment.armorSlot.baseThresholds).toEqual({ minor: 13, major: null })
+  })
+
   it("opens weapon provider panel without opening the weapon template modal", async () => {
     resetSheetStore({
       equipment: {

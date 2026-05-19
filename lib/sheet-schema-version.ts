@@ -1,4 +1,4 @@
-export const CURRENT_SCHEMA_VERSION = 1
+export const CURRENT_SCHEMA_VERSION = 2
 
 export function detectSchemaVersion(data: unknown): number {
   if (!data || typeof data !== 'object') {

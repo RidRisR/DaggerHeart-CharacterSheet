@@ -12,7 +12,9 @@ import { SheetData } from './sheet-data'
 import { StandardCard } from '@/card/card-types'
 import { defaultSheetData } from './default-sheet-data'
 import type { AttributeValue } from './sheet-data'
-import { migrateSheetData } from './sheet-data-migration'
+import { LEGACY_EQUIPMENT_KEYS, migrateSheetData } from './sheet-data-migration'
+import { sanitizeOtherAdjustments } from '@/lib/modifiers/other-adjustments'
+import { mergeLegacyUpgradeStateFields } from '@/lib/modifiers/upgrade-states'
 
 export interface ValidationResult {
   valid: boolean
@@ -78,6 +80,19 @@ function validateCurrentSheetData(data: any): data is SheetData {
   return validateSheetData(data) && typeof data.schemaVersion === 'number'
 }
 
+function sanitizeValidatedSheetData(data: SheetData): SheetData {
+  const sanitized: SheetData = {
+    ...data,
+    otherAdjustments: sanitizeOtherAdjustments(data.otherAdjustments),
+    upgradeStates: mergeLegacyUpgradeStateFields(data),
+  }
+
+  delete (sanitized as any).checkedUpgrades
+  delete (sanitized as any).automationSelections
+
+  return sanitized
+}
+
 /**
  * 验证卡牌对象是否有效
  */
@@ -94,7 +109,7 @@ export function isValidCard(card: any): card is StandardCard {
  */
 export function cleanAndNormalizeData(data: any): SheetData {
   // 创建一个新的对象，只保留有效的字段
-  const cleaned: SheetData = {
+  const cleaned: any = {
     name: String(data.name || ''),
     level: String(data.level || '1'),
     proficiency: Array.isArray(data.proficiency) ? data.proficiency : (typeof data.proficiency === 'number' ? data.proficiency : 0),
@@ -168,47 +183,17 @@ export function cleanAndNormalizeData(data: any): SheetData {
     cards: Array.isArray(data.cards) ? data.cards.filter(isValidCard) : [],
     inventory_cards: Array.isArray(data.inventory_cards) ? data.inventory_cards.filter(isValidCard) : undefined,
 
-    // 升级选项
-    checkedUpgrades: data.checkedUpgrades || undefined,
+    modifierState: data.modifierState && typeof data.modifierState === "object" ? data.modifierState : undefined,
+    userModifierContributions: Array.isArray(data.userModifierContributions) ? data.userModifierContributions : undefined,
+    otherAdjustments: sanitizeOtherAdjustments(data.otherAdjustments),
+    upgradeStates: mergeLegacyUpgradeStateFields(data),
 
     // 战斗相关
     minorThreshold: data.minorThreshold ? String(data.minorThreshold) : undefined,
     majorThreshold: data.majorThreshold ? String(data.majorThreshold) : undefined,
-    armorValue: data.armorValue ? String(data.armorValue) : undefined,
-    armorBonus: data.armorBonus ? String(data.armorBonus) : undefined,
-    armorMax: typeof data.armorMax === 'number' ? data.armorMax : undefined,
-    hpMax: typeof data.hpMax === 'number' ? data.hpMax : undefined,
-    stressMax: typeof data.stressMax === 'number' ? data.stressMax : undefined,
-
-    // 武器信息
-    primaryWeaponName: data.primaryWeaponName ? String(data.primaryWeaponName) : undefined,
-    primaryWeaponTrait: data.primaryWeaponTrait ? String(data.primaryWeaponTrait) : undefined,
-    primaryWeaponDamage: data.primaryWeaponDamage ? String(data.primaryWeaponDamage) : undefined,
-    primaryWeaponFeature: data.primaryWeaponFeature ? String(data.primaryWeaponFeature) : undefined,
-    secondaryWeaponName: data.secondaryWeaponName ? String(data.secondaryWeaponName) : undefined,
-    secondaryWeaponTrait: data.secondaryWeaponTrait ? String(data.secondaryWeaponTrait) : undefined,
-    secondaryWeaponDamage: data.secondaryWeaponDamage ? String(data.secondaryWeaponDamage) : undefined,
-    secondaryWeaponFeature: data.secondaryWeaponFeature ? String(data.secondaryWeaponFeature) : undefined,
-
-    // 护甲信息
-    armorName: data.armorName ? String(data.armorName) : undefined,
-    armorBaseScore: data.armorBaseScore ? String(data.armorBaseScore) : undefined,
-    armorThreshold: data.armorThreshold ? String(data.armorThreshold) : undefined,
-    armorFeature: data.armorFeature ? String(data.armorFeature) : undefined,
-
-    // 库存武器
-    inventoryWeapon1Name: data.inventoryWeapon1Name ? String(data.inventoryWeapon1Name) : undefined,
-    inventoryWeapon1Trait: data.inventoryWeapon1Trait ? String(data.inventoryWeapon1Trait) : undefined,
-    inventoryWeapon1Damage: data.inventoryWeapon1Damage ? String(data.inventoryWeapon1Damage) : undefined,
-    inventoryWeapon1Feature: data.inventoryWeapon1Feature ? String(data.inventoryWeapon1Feature) : undefined,
-    inventoryWeapon1Primary: typeof data.inventoryWeapon1Primary === 'boolean' ? data.inventoryWeapon1Primary : undefined,
-    inventoryWeapon1Secondary: typeof data.inventoryWeapon1Secondary === 'boolean' ? data.inventoryWeapon1Secondary : undefined,
-    inventoryWeapon2Name: data.inventoryWeapon2Name ? String(data.inventoryWeapon2Name) : undefined,
-    inventoryWeapon2Trait: data.inventoryWeapon2Trait ? String(data.inventoryWeapon2Trait) : undefined,
-    inventoryWeapon2Damage: data.inventoryWeapon2Damage ? String(data.inventoryWeapon2Damage) : undefined,
-    inventoryWeapon2Feature: data.inventoryWeapon2Feature ? String(data.inventoryWeapon2Feature) : undefined,
-    inventoryWeapon2Primary: typeof data.inventoryWeapon2Primary === 'boolean' ? data.inventoryWeapon2Primary : undefined,
-    inventoryWeapon2Secondary: typeof data.inventoryWeapon2Secondary === 'boolean' ? data.inventoryWeapon2Secondary : undefined,
+    armorMax: typeof data.armorMax === 'number' || typeof data.armorMax === 'string' ? data.armorMax : undefined,
+    hpMax: typeof data.hpMax === 'number' || typeof data.hpMax === 'string' ? data.hpMax : undefined,
+    stressMax: typeof data.stressMax === 'number' || typeof data.stressMax === 'string' ? data.stressMax : undefined,
 
     // 伙伴相关
     companionImage: data.companionImage ? String(data.companionImage) : undefined,
@@ -251,7 +236,21 @@ export function cleanAndNormalizeData(data: any): SheetData {
     adventureNotes: data.adventureNotes || undefined
   }
 
-  return cleaned
+  if (data.equipment && typeof data.equipment === "object" && !Array.isArray(data.equipment)) {
+    cleaned.equipment = data.equipment
+  }
+
+  copyLegacyEquipmentInput(cleaned, data)
+
+  return sanitizeValidatedSheetData(cleaned as SheetData)
+}
+
+function copyLegacyEquipmentInput(cleanedData: any, data: any) {
+  LEGACY_EQUIPMENT_KEYS.forEach(key => {
+    if (key in data) {
+      cleanedData[key] = typeof data[key] === "boolean" ? data[key] : String(data[key] ?? "")
+    }
+  })
 }
 
 /**
@@ -310,10 +309,11 @@ export function validateAndProcessCharacterData(rawData: any, source: 'json' | '
 
     // 2. 应用数据迁移。这里必须直接使用原始对象，避免默认值提前遮蔽旧字段。
     const migratedData = migrateSheetData(rawData)
+    const validatedData = sanitizeValidatedSheetData(migratedData)
     console.log(`[Data Validation] Applied data migrations for ${source.toUpperCase()}`)
 
     // 3. 迁移后再验证当前版本结构。
-    if (!validateCurrentSheetData(migratedData)) {
+    if (!validateCurrentSheetData(validatedData)) {
       return {
         valid: false,
         error: '角色数据结构验证失败，缺少必需字段或字段类型不正确',
@@ -322,13 +322,13 @@ export function validateAndProcessCharacterData(rawData: any, source: 'json' | '
     }
 
     // 4. 兼容性检查
-    const compatibility = validateCompatibility(migratedData)
+    const compatibility = validateCompatibility(validatedData)
 
-    console.log(`[Data Validation] ${source.toUpperCase()}数据验证成功:`, migratedData.name)
+    console.log(`[Data Validation] ${source.toUpperCase()}数据验证成功:`, validatedData.name)
 
     return {
       valid: true,
-      data: migratedData,
+      data: validatedData,
       warnings: compatibility.warnings
     }
 

@@ -1,4 +1,5 @@
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
+import { createEmptyEquipmentData } from "@/lib/equipment/defaults";
 import type { SheetData } from "./sheet-data";
 import { CURRENT_SCHEMA_VERSION } from "./sheet-schema-version";
 
@@ -37,12 +38,10 @@ export const defaultSheetData: SheetData = {
 
     hp: Array(18).fill(false),
     stress: Array(18).fill(false),
-    hpMax: 6, // Defaulting to 6 as it's a common base
-    stressMax: 6, // Defaulting to 6 as it's a common base
+    hpMax: "",
+    stressMax: "",
 
     armorBoxes: Array(12).fill(false),
-    armorValue: "",
-    armorBonus: "",
     armorMax: 0,
 
     minorThreshold: "",
@@ -56,38 +55,14 @@ export const defaultSheetData: SheetData = {
     cards: Array(20).fill(0).map(() => createEmptyCard()),          // 聚焦卡组（20张）
     inventory_cards: Array(20).fill(0).map(() => createEmptyCard()), // 库存卡组（20张）
 
-    checkedUpgrades: {
-        tier1: {},
-        tier2: {},
-        tier3: {},
+    modifierState: {
+        targetStates: {},
+        entryStates: {},
     },
-
-    primaryWeaponName: "",
-    primaryWeaponTrait: "",
-    primaryWeaponDamage: "",
-    primaryWeaponFeature: "",
-    secondaryWeaponName: "",
-    secondaryWeaponTrait: "",
-    secondaryWeaponDamage: "",
-    secondaryWeaponFeature: "",
-
-    armorName: "",
-    armorBaseScore: "",
-    armorThreshold: "",
-    armorFeature: "",
-
-    inventoryWeapon1Name: "",
-    inventoryWeapon1Trait: "",
-    inventoryWeapon1Damage: "",
-    inventoryWeapon1Feature: "",
-    inventoryWeapon1Primary: false,
-    inventoryWeapon1Secondary: false,
-    inventoryWeapon2Name: "",
-    inventoryWeapon2Trait: "",
-    inventoryWeapon2Damage: "",
-    inventoryWeapon2Feature: "",
-    inventoryWeapon2Primary: false,
-    inventoryWeapon2Secondary: false,
+    userModifierContributions: [],
+    otherAdjustments: [],
+    upgradeStates: {},
+    equipment: createEmptyEquipmentData(),
 
     // Companion fields
     companionImage: "",

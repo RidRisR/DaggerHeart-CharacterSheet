@@ -20,7 +20,7 @@ function legacySheet(overrides: Record<string, unknown> = {}) {
   } as any
 }
 
-describe('main migration regression baseline', () => {
+describe('migration regression baseline through v2', () => {
   it('migrates old page visibility, cards, attributes, hope, notebook, and cleanup behavior', () => {
     const migrated = migrateSheetData(legacySheet({
       includePageThreeInExport: true,
@@ -29,6 +29,7 @@ describe('main migration regression baseline', () => {
       strength: { checked: false, value: '0', spellcasting: true },
     }))
 
+    expect(migrated.schemaVersion).toBe(2)
     expect(migrated.pageVisibility).toEqual({
       rangerCompanion: true,
       armorTemplate: false,
@@ -36,7 +37,7 @@ describe('main migration regression baseline', () => {
     })
     expect('includePageThreeInExport' in migrated).toBe(false)
     expect(migrated.inventory_cards).toHaveLength(20)
-    expect(migrated.agility).toEqual({ checked: true, value: '+2', spellcasting: false })
+    expect(migrated.agility).toEqual({ checked: true, value: '2', spellcasting: false })
     expect(migrated.strength).toEqual({ checked: false, value: '0', spellcasting: true })
     expect(migrated.hope).toBe(2)
     expect(migrated.hopeMax).toBe(6)
@@ -65,15 +66,16 @@ describe('main migration regression baseline', () => {
     expect('page3' in (migrated.pageVisibility as any)).toBe(false)
   })
 
-  it('preserves legacy weapon checkbox state during main migration', () => {
+  it('removes legacy weapon checkbox fields after equipment migration', () => {
     const migrated = migrateSheetData(legacySheet({
       inventoryWeapon1Primary: true,
       inventoryWeapon1Secondary: false,
       inventoryWeapon2Secondary: true,
     }))
 
-    expect(migrated.inventoryWeapon1Primary).toBe(true)
-    expect(migrated.inventoryWeapon1Secondary).toBe(false)
-    expect(migrated.inventoryWeapon2Secondary).toBe(true)
+    expect('inventoryWeapon1Primary' in (migrated as any)).toBe(false)
+    expect('inventoryWeapon1Secondary' in (migrated as any)).toBe(false)
+    expect('inventoryWeapon2Secondary' in (migrated as any)).toBe(false)
+    expect(migrated.equipment.weaponSlots.inventory).toHaveLength(2)
   })
 })

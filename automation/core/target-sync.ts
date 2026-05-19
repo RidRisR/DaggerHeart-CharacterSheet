@@ -4,6 +4,7 @@ import { applyHpStressMaxInvariant } from "./hp-stress-invariants"
 import { sanitizeOtherAdjustments } from "./other-adjustments"
 import { calculateReferenceSummary } from "./reference-calculator"
 import { collectModifierEntries } from "./registry"
+import { isUnattributedDeltaContribution } from "./special-contributions"
 import { readTargetValue, writeTargetValue } from "./target-accessors"
 import type { ModifierEntry, ModifierTargetId, ModifierState, TargetModifierState } from "./types"
 
@@ -58,6 +59,20 @@ function isBlankTargetValue(value: unknown): boolean {
 
 function writeTargetValueFromSync(sheetData: SheetData, target: ModifierTargetId, value: number | string): SheetData {
   return applyHpStressMaxInvariant(writeTargetValue(sheetData, target, value), target)
+}
+
+function withoutLegacyUnattributedDeltaContributions(sheetData: SheetData): SheetData {
+  const contributions = sheetData.userModifierContributions ?? []
+  const nextContributions = contributions.filter(
+    contribution => !isUnattributedDeltaContribution(contribution),
+  )
+
+  if (nextContributions.length === contributions.length) return sheetData
+
+  return {
+    ...sheetData,
+    userModifierContributions: nextContributions,
+  }
 }
 
 function normalizeEntryStates(sheetData: SheetData, entries: ModifierEntry[]): SheetData {
@@ -122,9 +137,11 @@ function writeNormalizedTargetState(
 }
 
 export function applyAutoCalculationForTargets(sheetData: SheetData): SheetData {
-  const entries = collectModifierEntries(sheetData)
-  let next = normalizeEntryStates(sheetData, entries)
-  let changed = next !== sheetData
+  let next = withoutLegacyUnattributedDeltaContributions(sheetData)
+  const entries = collectModifierEntries(next)
+  const withNormalizedEntries = normalizeEntryStates(next, entries)
+  let changed = next !== sheetData || withNormalizedEntries !== next
+  next = withNormalizedEntries
 
   modifierTargetUniverse(next, entries).forEach(target => {
     const currentValue = readTargetValue(next, target)

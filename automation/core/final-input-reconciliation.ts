@@ -15,7 +15,6 @@ import {
   getUnattributedDeltaId,
 } from "./special-contributions"
 import { readTargetValue, writeTargetValue } from "./target-accessors"
-import { isTargetAutoCalculationEnabled } from "./target-sync"
 import type { ModifierContribution, ModifierEntryId, ModifierTargetId, TargetModifierState } from "./types"
 
 function withoutUnattributedDelta(sheetData: SheetData, target: ModifierTargetId): SheetData {
@@ -34,15 +33,6 @@ function withoutSavedUnattributedDifference(sheetData: SheetData, target: Modifi
     otherAdjustments: removeOtherAdjustment(
       sheetData.otherAdjustments,
       getOtherAdjustmentId(target, "unattributedDifference"),
-    ),
-  }
-}
-
-function withoutSavedOtherAdjustmentsForTarget(sheetData: SheetData, target: ModifierTargetId): SheetData {
-  return {
-    ...sheetData,
-    otherAdjustments: sanitizeOtherAdjustments(sheetData.otherAdjustments).filter(
-      adjustment => adjustment.target !== target,
     ),
   }
 }
@@ -162,8 +152,7 @@ function reconcileDeltaForNumericFinal(
       ...sheetData,
       userModifierContributions: contributions,
     }
-    const withoutTargetOther = withoutSavedOtherAdjustmentsForTarget(withContributions, target)
-    const withTarget = writeTargetValue(withoutTargetOther, target, finalValue)
+    const withTarget = writeTargetValue(withContributions, target, finalValue)
     return writeTargetState(withTarget, target, {
       activeBaseId: getManualBaseId(target),
       autoCalculation: true,
@@ -257,29 +246,17 @@ export function deleteSpecialBase(
     ...sheetData,
     userModifierContributions: removeContribution(sheetData.userModifierContributions ?? [], entryId),
   }
-  const summary = getReferenceSummary(withoutUnattributedDelta(withoutDeleted, target), target)
+  const withoutDelta = withoutUnattributedDelta(withoutDeleted, target)
+  const summary = getReferenceSummary(withoutDelta, target)
   const activeBase = summary.activeBase ?? summary.bases[0]
   const autoCalculation = sheetData.modifierState?.targetStates?.[target]?.autoCalculation
-  const finalValue = tryParseNumberExpression(readTargetValue(sheetData, target))
 
   if (!activeBase) {
-    const withoutDelta = {
-      ...withoutDeleted,
-      userModifierContributions: removeContribution(
-        withoutDeleted.userModifierContributions ?? [],
-        getUnattributedDeltaId(target),
-      ),
-    }
-    const withoutTargetOther = withoutSavedOtherAdjustmentsForTarget(withoutDelta, target)
-    return writeTargetState(withoutTargetOther, target, { autoCalculation })
+    return writeTargetState(withoutDelta, target, { autoCalculation })
   }
 
-  const withState = writeTargetState(withoutDeleted, target, {
+  return writeTargetState(withoutDelta, target, {
     activeBaseId: activeBase.id,
     autoCalculation,
   })
-
-  if (finalValue === undefined || !isTargetAutoCalculationEnabled(sheetData.modifierState?.targetStates?.[target])) return withState
-
-  return reconcileDeltaForNumericFinal(withState, target, finalValue, true)
 }

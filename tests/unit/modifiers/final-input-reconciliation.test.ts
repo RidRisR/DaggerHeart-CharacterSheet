@@ -61,13 +61,16 @@ describe("final input reconciliation", () => {
     })
   })
 
-  it("clears same-target saved other adjustments when numeric final creates a manual base without an existing base", () => {
+  it("preserves saved other adjustments when numeric final creates a manual base without an existing base", () => {
     const otherTargetAdjustment = createUnknownMigrationDifference("armorMax", 2)
+    const unknownDifference = createUnknownMigrationDifference("evasion", 1)
+    const manualFinalAdjustment = createManualFinalAdjustment("evasion", 3)
+    const unattributedDifference = createUnattributedDifference("evasion", 4)
     const reconciled = reconcileFinalInput(sheet({
       otherAdjustments: [
-        createUnknownMigrationDifference("evasion", 1),
-        createManualFinalAdjustment("evasion", 3),
-        createUnattributedDifference("evasion", 4),
+        unknownDifference,
+        manualFinalAdjustment,
+        unattributedDifference,
         otherTargetAdjustment,
       ],
     }), "evasion", "12")
@@ -76,7 +79,12 @@ describe("final input reconciliation", () => {
     expect(reconciled.userModifierContributions).toEqual([
       createManualBaseContribution("evasion", 12),
     ])
-    expect(reconciled.otherAdjustments).toEqual([otherTargetAdjustment])
+    expect(reconciled.otherAdjustments).toEqual([
+      unknownDifference,
+      manualFinalAdjustment,
+      unattributedDifference,
+      otherTargetAdjustment,
+    ])
     expect(reconciled.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: getManualBaseId("evasion"),
       autoCalculation: true,
@@ -285,8 +293,9 @@ describe("final input reconciliation", () => {
     })
   })
 
-  it("falls forward after deleting an active special base and preserves final with manual final adjustment", () => {
+  it("falls forward after deleting an active special base without preserving final as a manual adjustment", () => {
     const manualBase = createManualBaseContribution("evasion", 12)
+    const unattributedDelta = createUnattributedDeltaContribution("evasion", 3)
     const otherBase = {
       ...createManualBaseContribution("evasion", 14),
       id: "user:evasion:other-base",
@@ -297,7 +306,7 @@ describe("final input reconciliation", () => {
     }
     const reconciled = deleteSpecialBase(sheet({
       evasion: "15",
-      userModifierContributions: [manualBase, otherBase],
+      userModifierContributions: [manualBase, unattributedDelta, otherBase],
       modifierState: {
         targetStates: {
           evasion: { activeBaseId: manualBase.id, autoCalculation: true },
@@ -312,7 +321,7 @@ describe("final input reconciliation", () => {
     expect(reconciled.userModifierContributions?.some(
       contribution => contribution.id === getUnattributedDeltaId("evasion"),
     )).toBe(false)
-    expect(reconciled.otherAdjustments).toContainEqual(createManualFinalAdjustment("evasion", 1))
+    expect(reconciled.otherAdjustments ?? []).not.toContainEqual(createManualFinalAdjustment("evasion", 1))
     expect(reconciled.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: otherBase.id,
       autoCalculation: true,
@@ -356,7 +365,7 @@ describe("final input reconciliation", () => {
     expect(reconciled.userModifierContributions?.some(
       contribution => contribution.id === getUnattributedDeltaId("evasion"),
     )).toBe(false)
-    expect(reconciled.otherAdjustments).toContainEqual(createManualFinalAdjustment("evasion", 1))
+    expect(reconciled.otherAdjustments ?? []).not.toContainEqual(createManualFinalAdjustment("evasion", 1))
     expect(reconciled.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: activeBase.id,
       autoCalculation: true,
@@ -386,17 +395,20 @@ describe("final input reconciliation", () => {
     })
   })
 
-  it("clears same-target saved other adjustments when deleting the last base", () => {
+  it("preserves saved other adjustments while deleting stale unattributed delta when deleting the last base", () => {
     const manualBase = createManualBaseContribution("evasion", 12)
     const unattributedDelta = createUnattributedDeltaContribution("evasion", 3)
     const otherTargetAdjustment = createUnknownMigrationDifference("armorMax", 2)
+    const unknownDifference = createUnknownMigrationDifference("evasion", 1)
+    const manualFinalAdjustment = createManualFinalAdjustment("evasion", 3)
+    const unattributedDifference = createUnattributedDifference("evasion", 4)
     const reconciled = deleteSpecialBase(sheet({
       evasion: "15",
       userModifierContributions: [manualBase, unattributedDelta],
       otherAdjustments: [
-        createUnknownMigrationDifference("evasion", 1),
-        createManualFinalAdjustment("evasion", 3),
-        createUnattributedDifference("evasion", 4),
+        unknownDifference,
+        manualFinalAdjustment,
+        unattributedDifference,
         otherTargetAdjustment,
       ],
       modifierState: {
@@ -410,7 +422,12 @@ describe("final input reconciliation", () => {
     expect(reconciled.evasion).toBe("15")
     expect(reconciled.userModifierContributions).not.toContainEqual(manualBase)
     expect(reconciled.userModifierContributions?.some(entry => entry.id === getUnattributedDeltaId("evasion"))).toBe(false)
-    expect(reconciled.otherAdjustments).toEqual([otherTargetAdjustment])
+    expect(reconciled.otherAdjustments).toEqual([
+      unknownDifference,
+      manualFinalAdjustment,
+      unattributedDifference,
+      otherTargetAdjustment,
+    ])
     expect(reconciled.modifierState?.targetStates.evasion).toEqual({
       autoCalculation: true,
     })

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 import { createEmptyCard } from "@/card/card-types"
+import { armorItems } from "@/data/list/armor"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import {
+  createUnattributedDeltaContribution,
   createManualBaseContribution,
   getManualBaseId,
   getUnattributedDeltaId,
@@ -31,6 +33,41 @@ describe("modifier store actions", () => {
     store().setActiveModifierBase("evasion", "user:evasion-base")
 
     expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBe("user:evasion-base")
+  })
+
+  it("removes stale unattributed delta when selecting a different active base", () => {
+    const baseA = {
+      id: "user:evasion-base-a",
+      definition: { target: "evasion" as const, kind: "base" as const },
+      editable: { label: "Base A", value: 12 },
+    }
+    const baseB = {
+      id: "user:evasion-base-b",
+      definition: { target: "evasion" as const, kind: "base" as const },
+      editable: { label: "Base B", value: 14 },
+    }
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [
+        baseA,
+        createUnattributedDeltaContribution("evasion", 3),
+        baseB,
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: baseA.id, autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().setActiveModifierBase("evasion", baseB.id)
+
+    expect(sheet().evasion).toBe("14")
+    expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBe(baseB.id)
+    expect(sheet().userModifierContributions?.some(
+      contribution => contribution.id === getUnattributedDeltaId("evasion"),
+    )).toBe(false)
   })
 
   it("adds user modifier contributions", () => {
@@ -493,6 +530,36 @@ describe("modifier store actions", () => {
     expect(sheet().armorMax).toBe("")
   })
 
+  it("recalculates from the system armor base after deleting a manual base", () => {
+    const armor = armorItems.find((item) => item.id === "builtin.armor.chainmail")
+    expect(armor).toBeTruthy()
+
+    resetSheetStore({
+      armorMax: "",
+      userModifierContributions: [],
+      modifierState: { targetStates: {}, entryStates: {} },
+    })
+
+    store().commitModifierTargetValue("armorMax", "2")
+    expect(sheet().armorMax).toBe(2)
+    expect(sheet().userModifierContributions).toContainEqual(
+      createManualBaseContribution("armorMax", 2),
+    )
+
+    store().selectArmor(armor!.id)
+    expect(sheet().armorMax).toBe(2)
+
+    store().removeSpecialBaseContribution("armorMax", getManualBaseId("armorMax"))
+
+    expect(sheet().armorMax).toBe(armor!.baseArmorMax)
+    expect(sheet().modifierState?.targetStates.armorMax?.activeBaseId).toBe(
+      "equipment:armor:current:armorMax",
+    )
+    expect(sheet().otherAdjustments ?? []).not.toContainEqual(
+      createManualFinalAdjustment("armorMax", 2 - armor!.baseArmorMax),
+    )
+  })
+
   it("updates one armor threshold side without changing the other side", () => {
     resetSheetStore({
       level: "1",
@@ -756,6 +823,32 @@ describe("modifier store actions", () => {
 
     expect(sheet().evasion).toBe("3")
     expect(sheet().userModifierContributions).toContainEqual(createManualBaseContribution("evasion", 5))
+  })
+
+  it("preserves saved other adjustments after numeric final creates a manual base", () => {
+    resetSheetStore({
+      evasion: "15",
+      userModifierContributions: [],
+      otherAdjustments: [
+        createManualFinalAdjustment("evasion", 3),
+        createUnknownMigrationDifference("evasion", 1),
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: { autoCalculation: true },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().commitModifierTargetValue("evasion", "12")
+
+    expect(sheet().evasion).toBe("16")
+    expect(sheet().userModifierContributions).toContainEqual(createManualBaseContribution("evasion", 12))
+    expect(sheet().otherAdjustments).toEqual([
+      createManualFinalAdjustment("evasion", 3),
+      createUnknownMigrationDifference("evasion", 1),
+    ])
   })
 
   it("clears final after removing the last special base while enabled", () => {

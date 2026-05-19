@@ -54,8 +54,19 @@ describe("equipment data migration", () => {
       trait: "物理/副手/近战",
       damage: "力量: d6",
       feature: "壁垒: +2 护甲值，-1 闪避值",
-      modifierContributions: [],
     })
+    expect(migrated.equipment.weaponSlots.secondary.modifierContributions).toEqual([
+      {
+        id: expect.stringMatching(/^equipment:armor-max:/),
+        definition: { target: "armorMax", kind: "modifier" },
+        editable: { label: "壁垒", value: 2 },
+      },
+      {
+        id: expect.stringMatching(/^equipment:evasion:/),
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "壁垒", value: -1 },
+      },
+    ])
     expect(migrated.equipment.weaponSlots.inventory[0]).toMatchObject({
       name: "短剑",
       trait: "物理/副手/近战",
@@ -75,8 +86,14 @@ describe("equipment data migration", () => {
       baseArmorMax: 4,
       baseThresholds: { minor: 7, major: 15 },
       feature: "重型: 闪避值-1",
-      modifierContributions: [],
     })
+    expect(migrated.equipment.armorSlot.modifierContributions).toEqual([
+      {
+        id: expect.stringMatching(/^equipment:evasion:/),
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "重型", value: -1 },
+      },
+    ])
 
     const runtime = migrated as any
     expect("primaryWeaponName" in runtime).toBe(false)
@@ -313,7 +330,179 @@ describe("equipment data migration", () => {
     ])
   })
 
-  it("keeps legacy flat equipment migration modifier contributions empty", () => {
+  it("backfills v1 equipment contributions from exact name and feature matches", () => {
+    const migrated = migrateSheetData(v1EquipmentInput({
+      primaryWeaponName: "巨剑",
+      primaryWeaponTrait: "物理/双手/近战",
+      primaryWeaponDamage: "力量: d10+3",
+      primaryWeaponFeature: "巨型: 闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+      secondaryWeaponName: "塔盾",
+      secondaryWeaponTrait: "物理/副手/近战",
+      secondaryWeaponDamage: "力量: d6",
+      secondaryWeaponFeature: "壁垒: +2 护甲值，-1 闪避值",
+      inventoryWeapon1Name: "短剑",
+      inventoryWeapon1Trait: "物理/副手/近战",
+      inventoryWeapon1Damage: "敏捷: d8",
+      inventoryWeapon1Feature: "双持: 近战时主武器伤害+2",
+      armorName: "链甲",
+      armorBaseScore: "4",
+      armorThreshold: "7/15",
+      armorFeature: "重型: 闪避值-1",
+    }))
+
+    expect(migrated.equipment.weaponSlots.primary.modifierContributions).toEqual([
+      {
+        id: expect.stringMatching(/^equipment:evasion:/),
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "巨型", value: -1 },
+      },
+    ])
+    expect(migrated.equipment.weaponSlots.secondary.modifierContributions).toEqual([
+      {
+        id: expect.stringMatching(/^equipment:armor-max:/),
+        definition: { target: "armorMax", kind: "modifier" },
+        editable: { label: "壁垒", value: 2 },
+      },
+      {
+        id: expect.stringMatching(/^equipment:evasion:/),
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "壁垒", value: -1 },
+      },
+    ])
+    expect(migrated.equipment.weaponSlots.inventory[0].modifierContributions).toEqual([])
+    expect(migrated.equipment.armorSlot.modifierContributions).toEqual([
+      {
+        id: expect.stringMatching(/^equipment:evasion:/),
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "重型", value: -1 },
+      },
+    ])
+  })
+
+  it("does not backfill v2 equipment contributions during current-schema normalization", () => {
+    const migrated = migrateSheetData({
+      schemaVersion: 2,
+      equipment: {
+        weaponSlots: {
+          primary: {
+            name: "巨剑",
+            trait: "物理/双手/近战",
+            damage: "力量: d10+3",
+            feature: "巨型: 闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+            modifierContributions: [],
+          },
+          secondary: { name: "", trait: "", damage: "", feature: "", modifierContributions: [] },
+          inventory: [
+            { name: "", trait: "", damage: "", feature: "", modifierContributions: [] },
+            { name: "", trait: "", damage: "", feature: "", modifierContributions: [] },
+          ],
+        },
+        armorSlot: {
+          name: "链甲",
+          baseArmorMax: 4,
+          baseThresholds: { minor: 7, major: 15 },
+          feature: "重型: 闪避值-1",
+          modifierContributions: [],
+        },
+      },
+    } as any)
+
+    expect(migrated.equipment.weaponSlots.primary.modifierContributions).toEqual([])
+    expect(migrated.equipment.armorSlot.modifierContributions).toEqual([])
+  })
+
+  it("does not backfill when the feature text does not exactly match", () => {
+    const migrated = migrateSheetData(v1EquipmentInput({
+      primaryWeaponName: "巨剑",
+      primaryWeaponFeature: "巨型: 用户改过的文本",
+      armorName: "链甲",
+      armorBaseScore: "4",
+      armorThreshold: "7/15",
+      armorFeature: "重型",
+    }))
+
+    expect(migrated.equipment.weaponSlots.primary.modifierContributions).toEqual([])
+    expect(migrated.equipment.armorSlot.modifierContributions).toEqual([])
+  })
+
+  it("keeps existing valid v1 equipment contributions instead of overwriting from templates", () => {
+    const migrated = migrateSheetData(v1EquipmentInput({
+      equipment: {
+        weaponSlots: {
+          primary: {
+            name: "巨剑",
+            trait: "物理/双手/近战",
+            damage: "力量: d10+3",
+            feature: "巨型: 闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+            modifierContributions: [
+              {
+                id: "existing-evasion",
+                definition: { target: "evasion", kind: "modifier" },
+                editable: { label: "已有", value: -2 },
+              },
+            ],
+          },
+          secondary: { name: "", trait: "", damage: "", feature: "", modifierContributions: [] },
+          inventory: [
+            { name: "", trait: "", damage: "", feature: "", modifierContributions: [] },
+            { name: "", trait: "", damage: "", feature: "", modifierContributions: [] },
+          ],
+        },
+        armorSlot: {
+          name: "",
+          baseArmorMax: null,
+          baseThresholds: { minor: null, major: null },
+          feature: "",
+          modifierContributions: [],
+        },
+      },
+    }))
+
+    expect(migrated.equipment.weaponSlots.primary.modifierContributions).toEqual([
+      {
+        id: "existing-evasion",
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "已有", value: -2 },
+      },
+    ])
+  })
+
+  it("preserves legacy final values after backfilled equipment sources are added", () => {
+    const migrated = migrateSheetData(v1EquipmentInput({
+      evasion: "12",
+      cards: [{
+        id: "profession.guardian",
+        name: "守护者",
+        type: "profession",
+        professionSpecial: {
+          "起始闪避": 10,
+          "起始生命": 7,
+        },
+      }],
+      primaryWeaponName: "巨剑",
+      primaryWeaponTrait: "物理/双手/近战",
+      primaryWeaponDamage: "力量: d10+3",
+      primaryWeaponFeature: "巨型: 闪避值-1，额外掷一个伤害骰并去掉其中最小的一个。",
+    }))
+
+    expect(migrated.evasion).toBe("12")
+    expect(migrated.equipment.weaponSlots.primary.modifierContributions).toEqual([
+      {
+        id: expect.stringMatching(/^equipment:evasion:/),
+        definition: { target: "evasion", kind: "modifier" },
+        editable: { label: "巨型", value: -1 },
+      },
+    ])
+    expect(migrated.otherAdjustments).toContainEqual(
+      expect.objectContaining({
+        target: "evasion",
+        kind: "unknownMigrationDifference",
+        value: 3,
+      }),
+    )
+  })
+
+  it("keeps unmatched legacy flat equipment migration modifier contributions empty", () => {
     const migrated = migrateSheetData(v1EquipmentInput({
       primaryWeaponName: "阔剑",
       armorName: "链甲",

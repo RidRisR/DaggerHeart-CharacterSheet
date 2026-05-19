@@ -13,14 +13,25 @@
 import type { SheetData, AttributeValue } from './sheet-data'
 import { defaultSheetData } from './default-sheet-data'
 import { createEmptyCard, type StandardCard } from '@/card/card-types'
+import { armorItems } from "@/data/list/armor"
+import { allWeapons, type AllWeapon } from "@/data/list/all-weapons"
+import { primaryWeapons, type Weapon } from "@/data/list/primary-weapon"
+import { secondaryWeapons } from "@/data/list/secondary-weapon"
 import { upgradeOptionsData } from "@/data/list/upgrade"
 import {
   CURRENT_SCHEMA_VERSION,
   assertSupportedSchemaVersion,
   detectSchemaVersion,
 } from './sheet-schema-version'
-import { sanitizeEquipmentModifierContributions } from "@/lib/equipment/contribution-utils"
+import {
+  createEquipmentContributionId,
+  sanitizeEquipmentModifierContributions,
+} from "@/lib/equipment/contribution-utils"
 import { createEmptyEquipmentData } from "@/lib/equipment/defaults"
+import {
+  createArmorSlotFromTemplate,
+  createWeaponSlotFromTemplate,
+} from "@/lib/equipment/template-to-slot"
 import { parseArmorMax, parseArmorThreshold } from "@/lib/equipment/armor-utils"
 import type { ArmorSlot, WeaponSlot } from "@/lib/equipment/types"
 import { tryParseNumber } from "@/lib/number-utils"
@@ -450,6 +461,68 @@ function migrateEquipment(data: SheetData | LegacyEquipmentInput, useExistingEqu
   }
 
   return migrated as SheetData
+}
+
+function hasValidEquipmentContributions(slot: WeaponSlot | ArmorSlot): boolean {
+  return sanitizeEquipmentModifierContributions(slot.modifierContributions).length > 0
+}
+
+function matchingWeaponSlotFromTemplates(
+  slot: WeaponSlot,
+  templates: readonly (Weapon | AllWeapon)[],
+): WeaponSlot | undefined {
+  if (hasValidEquipmentContributions(slot)) return undefined
+
+  const matches = templates
+    .map(template => createWeaponSlotFromTemplate(template, createEquipmentContributionId))
+    .filter(templateSlot => templateSlot.name === slot.name && templateSlot.feature === slot.feature)
+
+  return matches.length === 1 ? matches[0] : undefined
+}
+
+function matchingArmorSlotFromTemplates(slot: ArmorSlot): ArmorSlot | undefined {
+  if (hasValidEquipmentContributions(slot)) return undefined
+
+  const matches = armorItems
+    .map(template => createArmorSlotFromTemplate(template, createEquipmentContributionId))
+    .filter(templateSlot => templateSlot.name === slot.name && templateSlot.feature === slot.feature)
+
+  return matches.length === 1 ? matches[0] : undefined
+}
+
+function backfillV1EquipmentContributions(data: SheetData): SheetData {
+  const equipment = data.equipment
+  const primaryMatch = matchingWeaponSlotFromTemplates(equipment.weaponSlots.primary, primaryWeapons)
+  const secondaryMatch = matchingWeaponSlotFromTemplates(equipment.weaponSlots.secondary, secondaryWeapons)
+  const inventoryMatches = equipment.weaponSlots.inventory.map(slot =>
+    matchingWeaponSlotFromTemplates(slot, allWeapons),
+  ) as [WeaponSlot | undefined, WeaponSlot | undefined]
+  const armorMatch = matchingArmorSlotFromTemplates(equipment.armorSlot)
+
+  return {
+    ...data,
+    equipment: {
+      weaponSlots: {
+        primary: primaryMatch
+          ? { ...equipment.weaponSlots.primary, modifierContributions: primaryMatch.modifierContributions }
+          : equipment.weaponSlots.primary,
+        secondary: secondaryMatch
+          ? { ...equipment.weaponSlots.secondary, modifierContributions: secondaryMatch.modifierContributions }
+          : equipment.weaponSlots.secondary,
+        inventory: [
+          inventoryMatches[0]
+            ? { ...equipment.weaponSlots.inventory[0], modifierContributions: inventoryMatches[0].modifierContributions }
+            : equipment.weaponSlots.inventory[0],
+          inventoryMatches[1]
+            ? { ...equipment.weaponSlots.inventory[1], modifierContributions: inventoryMatches[1].modifierContributions }
+            : equipment.weaponSlots.inventory[1],
+        ],
+      },
+      armorSlot: armorMatch
+        ? { ...equipment.armorSlot, modifierContributions: armorMatch.modifierContributions }
+        : equipment.armorSlot,
+    },
+  }
 }
 
 /**
@@ -1211,6 +1284,7 @@ function migrateV1ToV2(raw: Partial<SheetData> | any): Partial<SheetData> {
 
   migrated = migrateEquipment(migrated, hasInputEquipment)
   migrated = migrateModifierState(migrated)
+  migrated = backfillV1EquipmentContributions(migrated)
   migrated = migrateLegacyUpgradeStates(migrated)
   migrated = preserveLegacyModifierFinals(migrated, legacyExplicitFinals)
   migrated = stripLegacyEquipmentFields(migrated)

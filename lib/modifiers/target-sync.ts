@@ -1,4 +1,4 @@
-import { tryParseNumber } from "@/lib/number-utils"
+import { tryParseNumberExpression } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import { applyHpStressMaxInvariant } from "./hp-stress-invariants"
 import { sanitizeOtherAdjustments } from "./other-adjustments"
@@ -48,7 +48,7 @@ function modifierTargetUniverse(sheetData: SheetData, entries: ModifierEntry[]):
 
 function isSameTargetValue(currentValue: unknown, desiredValue: number | string): boolean {
   if (desiredValue === "") return currentValue === ""
-  if (typeof desiredValue === "number") return tryParseNumber(currentValue) === desiredValue
+  if (typeof desiredValue === "number") return tryParseNumberExpression(currentValue) === desiredValue
   return String(currentValue ?? "") === desiredValue
 }
 
@@ -143,7 +143,7 @@ export function applyAutoCalculationForTargets(sheetData: SheetData): SheetData 
     }
 
     if (!isTargetAutoCalculationEnabled(next.modifierState?.targetStates?.[target])) return
-    if (!isBlankTargetValue(currentValue) && tryParseNumber(currentValue) === undefined) return
+    if (!isBlankTargetValue(currentValue) && tryParseNumberExpression(currentValue) === undefined) return
 
     const desiredValue = summary.calculatedFinalTotal ?? ""
     const valueMatches = isSameTargetValue(currentValue, desiredValue)

@@ -38,7 +38,7 @@ import {
 } from "@/lib/modifiers/final-input-reconciliation";
 import { applyAutoCalculationForTargets, isTargetAutoCalculationEnabled } from "@/lib/modifiers/target-sync";
 import { writeTargetValue } from "@/lib/modifiers/target-accessors";
-import { tryParseNumber } from "@/lib/number-utils";
+import { tryParseNumberExpression } from "@/lib/number-utils";
 import { applyHpStressMaxInvariant } from "@/lib/modifiers/hp-stress-invariants";
 import { mergeUpgradeState } from "@/lib/modifiers/upgrade-states";
 import {
@@ -259,17 +259,17 @@ function canStoreRawFinalText(target: ModifierTargetId): boolean {
 
 function applyModifierTargetValueSubmission(sheetData: SheetData, target: ModifierTargetId, value: unknown): SheetData | undefined {
     const autoCalculation = isTargetAutoCalculationEnabled(sheetData.modifierState?.targetStates?.[target]);
-    const finalValue = tryParseNumber(value);
+    const finalValue = tryParseNumberExpression(value);
     const storesRawText = canStoreRawFinalText(target);
 
     if (!autoCalculation) {
         let nextSheetData: SheetData;
-        if (storesRawText) {
+        if (finalValue !== undefined) {
+            nextSheetData = writeTargetValue(sheetData, target, finalValue);
+        } else if (storesRawText) {
             nextSheetData = writeTargetValue(sheetData, target, String(value));
         } else {
-            if (finalValue === undefined) return undefined;
-
-            nextSheetData = writeTargetValue(sheetData, target, finalValue);
+            return undefined;
         }
 
         return applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, target));

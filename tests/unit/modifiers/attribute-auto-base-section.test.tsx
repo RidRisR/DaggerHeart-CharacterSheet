@@ -94,7 +94,7 @@ describe("attribute auto base section behavior", () => {
     render(<AttributesSection />)
 
     await editAgility("+2")
-    expect(sheet().agility?.value).toBe("+2")
+    expect(sheet().agility?.value).toBe("2")
     expect(sheet().userModifierContributions).toEqual([])
 
     cleanup()

@@ -48,6 +48,19 @@ describe("final input reconciliation", () => {
     })
   })
 
+  it("creates a manual base from arithmetic expression final input", () => {
+    const reconciled = reconcileFinalInput(sheet(), "evasion", "6+4")
+
+    expect(reconciled.evasion).toBe("10")
+    expect(reconciled.userModifierContributions).toEqual([
+      createManualBaseContribution("evasion", 10),
+    ])
+    expect(reconciled.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: getManualBaseId("evasion"),
+      autoCalculation: true,
+    })
+  })
+
   it("clears same-target saved other adjustments when numeric final creates a manual base without an existing base", () => {
     const otherTargetAdjustment = createUnknownMigrationDifference("armorMax", 2)
     const reconciled = reconcileFinalInput(sheet({

@@ -201,6 +201,34 @@ describe("target auto calculation helper", () => {
     })
   })
 
+  it("overwrites arithmetic expression finals when auto calculation has a different value", () => {
+    const data = sheet({
+      evasion: "6+4",
+      armorMax: "",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: { activeBaseId: "user:evasion-base", autoCalculation: true },
+          proficiency: { activeBaseId: "level:base:proficiency" },
+        },
+        entryStates: {},
+      },
+    })
+
+    const result = applyAutoCalculationForTargets(data)
+
+    expect(result.evasion).toBe("12")
+    expect(result.modifierState?.targetStates.evasion).toEqual({
+      activeBaseId: "user:evasion-base",
+    })
+  })
+
   it("records active base when the auto calculated final already matches", () => {
     const data = sheet({
       evasion: "12",

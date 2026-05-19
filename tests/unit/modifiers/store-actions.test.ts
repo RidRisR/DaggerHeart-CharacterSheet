@@ -12,6 +12,7 @@ import {
   createUnknownMigrationDifference,
   getOtherAdjustmentId,
 } from "@/lib/modifiers/other-adjustments"
+import type { ModifierTargetId } from "@/lib/modifiers/types"
 import { getReferenceSummary } from "@/lib/modifiers/registry"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
@@ -656,6 +657,30 @@ describe("modifier store actions", () => {
     store().commitModifierTargetValue("evasion", "15")
 
     expect(sheet().evasion).toBe("15")
+    expect(sheet().userModifierContributions).toEqual([])
+  })
+
+  it.each<[ModifierTargetId, Partial<ReturnType<typeof sheet>>]>([
+    ["evasion", { evasion: "10" }],
+    ["armorMax", { armorMax: 10 }],
+    ["agility.value", { agility: { checked: false, value: "10", spellcasting: false } }],
+    ["minorThreshold", { minorThreshold: "10" }],
+    ["majorThreshold", { majorThreshold: "10" }],
+    ["experienceValues.0", { experienceValues: ["10", "", "", "", ""] }],
+  ])("commits arithmetic expression final target values for %s", (target, expected) => {
+    resetSheetStore({
+      userModifierContributions: [],
+      modifierState: {
+        targetStates: {
+          [target]: { autoCalculation: false },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().commitModifierTargetValue(target, "6+4")
+
+    expect(sheet()).toMatchObject(expected)
     expect(sheet().userModifierContributions).toEqual([])
   })
 

@@ -1,4 +1,4 @@
-import { tryParseNumber } from "@/lib/number-utils"
+import { tryParseNumberExpression } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import { entryKind, entryTarget, entryValue } from "./entry-utils"
 import { sanitizeOtherAdjustments } from "./other-adjustments"
@@ -72,7 +72,7 @@ export function calculateReferenceSummary(input: CalculateReferenceSummaryInput)
 
   const referenceTotal = entryValue(activeBase) + enabledModifiers.reduce((sum, entry) => sum + entryValue(entry), 0)
   const calculatedFinalTotal = referenceTotal + otherTotal
-  const finalValue = tryParseNumber(readTargetValue(input.sheetData, input.target))
+  const finalValue = tryParseNumberExpression(readTargetValue(input.sheetData, input.target))
 
   return {
     target: input.target,

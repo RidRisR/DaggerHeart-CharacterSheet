@@ -1,4 +1,4 @@
-import { tryParseNumber } from "@/lib/number-utils"
+import { tryParseNumberExpression } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
 import {
   createManualFinalAdjustment,
@@ -190,7 +190,7 @@ export function reconcileFinalInput(
   target: ModifierTargetId,
   rawValue: unknown,
 ): SheetData {
-  const finalValue = tryParseNumber(rawValue)
+  const finalValue = tryParseNumberExpression(rawValue)
   if (finalValue === undefined) return sheetData
 
   return reconcileDeltaForNumericFinal(
@@ -205,7 +205,7 @@ export function enableAutoCalculationForTarget(
   sheetData: SheetData,
   target: ModifierTargetId,
 ): SheetData {
-  const finalValue = tryParseNumber(readTargetValue(sheetData, target))
+  const finalValue = tryParseNumberExpression(readTargetValue(sheetData, target))
   if (finalValue === undefined) {
     return writeTargetState(sheetData, target, {
       ...sheetData.modifierState?.targetStates?.[target],
@@ -260,7 +260,7 @@ export function deleteSpecialBase(
   const summary = getReferenceSummary(withoutUnattributedDelta(withoutDeleted, target), target)
   const activeBase = summary.activeBase ?? summary.bases[0]
   const autoCalculation = sheetData.modifierState?.targetStates?.[target]?.autoCalculation
-  const finalValue = tryParseNumber(readTargetValue(sheetData, target))
+  const finalValue = tryParseNumberExpression(readTargetValue(sheetData, target))
 
   if (!activeBase) {
     const withoutDelta = {

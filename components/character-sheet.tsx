@@ -60,6 +60,7 @@ export default function CharacterSheet() {
   const [modalOpen, setModalOpen] = useState(false)
   const [currentModal, setCurrentModal] = useState<{ type: "profession" | "ancestry" | "community" | "subclass"; field?: string; levelFilter?: number }>({ type: "profession" })
   const [armorMaxDraft, setArmorMaxDraft] = useState<string | null>(null)
+  const [evasionDraft, setEvasionDraft] = useState<string | null>(null)
 
   const needsSyncRef = useRef(true)
   const initialRenderRef = useRef(true)
@@ -213,6 +214,11 @@ export default function CharacterSheet() {
       return
     }
 
+    if (name === "evasion") {
+      setEvasionDraft(value)
+      return
+    }
+
     setFormData((prev) => {
       return { ...prev, [name]: value };
     });
@@ -224,6 +230,9 @@ export default function CharacterSheet() {
       commitModifierTargetValue(name, value)
       if (name === "armorMax") {
         setArmorMaxDraft(null)
+      }
+      if (name === "evasion") {
+        setEvasionDraft(null)
       }
     }
   }
@@ -492,7 +501,7 @@ export default function CharacterSheet() {
                         <input
                           type="text"
                           name="evasion"
-                          value={safeFormData.evasion}
+                          value={evasionDraft ?? safeFormData.evasion}
                           onChange={handleInputChange}
                           onBlur={handleModifierTargetCommit}
                           onKeyDown={(event) => {

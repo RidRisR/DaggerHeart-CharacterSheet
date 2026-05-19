@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react"
+import "@testing-library/jest-dom/vitest"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import CharacterSheet from "@/components/character-sheet"
@@ -38,6 +39,43 @@ describe("CharacterSheet equipment fields", () => {
     await user.tab()
 
     expect(sheet().armorMax).toBe(5)
+  })
+
+  it("keeps evasion edits as local draft until final target commit", async () => {
+    const user = userEvent.setup()
+    resetSheetStore({
+      evasion: "12",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    const { container } = render(<CharacterSheet />)
+    const input = container.querySelector<HTMLInputElement>('input[name="evasion"]')
+    expect(input).toBeTruthy()
+
+    await user.clear(input!)
+    await user.type(input!, "15")
+
+    expect(input).toHaveValue("15")
+    expect(sheet().evasion).toBe("12")
+
+    await user.tab()
+
+    expect(sheet().evasion).toBe("15")
   })
 
   it("rejects non-numeric armor max input without overwriting the previous value", async () => {

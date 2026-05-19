@@ -1,12 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store";
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import type { ModifierTargetId } from "@/lib/modifiers/types"
 
 export function ExperienceSection() {
-  const { sheetData: formData, updateExperience, updateExperienceValues, commitModifierTargetValue } = useSheetStore();
+  const { sheetData: formData, updateExperience, commitModifierTargetValue } = useSheetStore();
+  const [valueDrafts, setValueDrafts] = useState<Partial<Record<number, string>>>({})
   
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
@@ -18,6 +20,11 @@ export function ExperienceSection() {
 
   const commitExperienceValue = (index: number, value: string) => {
     commitModifierTargetValue(`experienceValues.${index}` as ModifierTargetId, value)
+    setValueDrafts((drafts) => {
+      const next = { ...drafts }
+      delete next[index]
+      return next
+    })
   }
 
   return (
@@ -37,9 +44,9 @@ export function ExperienceSection() {
             />
             <input
               type="text"
-              value={experienceValues[i]}
+              value={valueDrafts[i] ?? experienceValues[i]}
               onChange={(e) => {
-                updateExperienceValues(i, e.target.value)
+                setValueDrafts((drafts) => ({ ...drafts, [i]: e.target.value }))
               }}
               onBlur={(event) => commitExperienceValue(i, event.currentTarget.value)}
               onKeyDown={(event) => {
@@ -48,7 +55,7 @@ export function ExperienceSection() {
                   event.currentTarget.blur()
                 }
               }}
-              {...getElementProps(experienceValues[i], `exp-value-${i}`, "w-8 border border-gray-400 rounded ml-1 text-center print-empty-hide")}
+              {...getElementProps(valueDrafts[i] ?? experienceValues[i], `exp-value-${i}`, "w-8 border border-gray-400 rounded ml-1 text-center print-empty-hide")}
               placeholder="#"
             />
             <ModifierFieldAnchor target={`experienceValues.${i}` as ModifierTargetId} label={`经历 ${i + 1}`} />

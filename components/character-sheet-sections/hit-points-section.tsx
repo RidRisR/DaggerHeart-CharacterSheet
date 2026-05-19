@@ -8,6 +8,7 @@ import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-ancho
 export function HitPointsSection() {
   const { sheetData: formData, setSheetData, commitModifierTargetValue } = useSheetStore()
   const [maxDrafts, setMaxDrafts] = useState<Partial<Record<"hpMax" | "stressMax", string>>>({})
+  const [thresholdDrafts, setThresholdDrafts] = useState<Partial<Record<"minorThreshold" | "majorThreshold", string>>>({})
   const baseThresholds = formData.equipment.armorSlot.baseThresholds
   const level = Number(formData.level)
   const thresholdPlaceholder = (baseThreshold: number | null) => {
@@ -23,12 +24,22 @@ export function HitPointsSection() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
+    if (name === "minorThreshold" || name === "majorThreshold") {
+      setThresholdDrafts((drafts) => ({ ...drafts, [name]: value }))
+      return
+    }
+
     setSheetData((prev) => ({ ...prev, [name]: value }))
   }
 
   const commitTextTarget = (name: string, value: string) => {
     if (name === "minorThreshold" || name === "majorThreshold") {
       commitModifierTargetValue(name, value)
+      setThresholdDrafts((drafts) => {
+        const next = { ...drafts }
+        delete next[name]
+        return next
+      })
     }
   }
 
@@ -134,7 +145,7 @@ export function HitPointsSection() {
         <input
           type="text"
           name="minorThreshold"
-          value={formData.minorThreshold || ""}
+          value={thresholdDrafts.minorThreshold ?? formData.minorThreshold ?? ""}
           onChange={handleInputChange}
           onBlur={(event) => commitTextTarget(event.currentTarget.name, event.currentTarget.value)}
           onKeyDown={(event) => {
@@ -156,7 +167,7 @@ export function HitPointsSection() {
         <input
           type="text"
           name="majorThreshold"
-          value={formData.majorThreshold || ""}
+          value={thresholdDrafts.majorThreshold ?? formData.majorThreshold ?? ""}
           onChange={handleInputChange}
           onBlur={(event) => commitTextTarget(event.currentTarget.name, event.currentTarget.value)}
           onKeyDown={(event) => {

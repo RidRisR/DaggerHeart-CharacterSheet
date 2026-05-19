@@ -5,10 +5,11 @@ import { describe, expect, it } from "vitest"
 import { ExperienceSection } from "@/components/character-sheet-sections/experience-section"
 import { HitPointsSection } from "@/components/character-sheet-sections/hit-points-section"
 import { HPMaxEditor } from "@/components/upgrade-popover/hp-max-editor"
+import { NewExperienceEditor } from "@/components/upgrade-popover/new-experience-editor"
 import { ProficiencyEditor } from "@/components/upgrade-popover/proficiency-editor"
 import { StressMaxEditor } from "@/components/upgrade-popover/stress-max-editor"
 import { createManualFinalAdjustment } from "@/lib/modifiers/other-adjustments"
-import { getUnattributedDeltaId } from "@/lib/modifiers/special-contributions"
+import { createManualBaseContribution, getUnattributedDeltaId } from "@/lib/modifiers/special-contributions"
 import { countChecked, resetSheetStore, sheet, store } from "../automation/test-helpers"
 
 describe("final target editors", () => {
@@ -39,6 +40,10 @@ describe("final target editors", () => {
     await userEvent.click(input)
     await userEvent.clear(input)
     await userEvent.type(input, "5")
+
+    expect(input).toHaveValue("5")
+    expect(sheet().experienceValues?.[0]).toBe("2")
+
     await userEvent.tab()
 
     expect(sheet().experienceValues?.[0]).toBe("5")
@@ -199,6 +204,10 @@ describe("final target editors", () => {
     const input = screen.getByDisplayValue("7")
     await userEvent.clear(input)
     await userEvent.type(input, "9")
+
+    expect(input).toHaveValue("9")
+    expect(sheet().minorThreshold).toBe("7")
+
     await userEvent.tab()
 
     expect(sheet().minorThreshold).toBe("9")
@@ -370,5 +379,30 @@ describe("final target editors", () => {
     await userEvent.tab()
 
     expect(sheet().stressMax).toBe(6)
+  })
+
+  it("adds a new experience value through final target submission", async () => {
+    resetSheetStore({
+      experience: ["", "", "", "", ""],
+      experienceValues: ["", "", "", "", ""],
+      userModifierContributions: [
+        {
+          id: "user:experience-penalty",
+          definition: { target: "experienceValues.0", kind: "modifier" },
+          editable: { label: "Penalty", value: -1 },
+        },
+      ],
+      modifierState: { targetStates: {}, entryStates: {} },
+    })
+
+    render(<NewExperienceEditor />)
+    await userEvent.type(screen.getByPlaceholderText("输入新的经历..."), "铁匠")
+    await userEvent.click(screen.getByRole("button", { name: "添加经历" }))
+
+    expect(sheet().experience?.[0]).toBe("铁匠")
+    expect(sheet().experienceValues?.[0]).toBe("1")
+    expect(sheet().userModifierContributions).toContainEqual(
+      createManualBaseContribution("experienceValues.0", 2),
+    )
   })
 })

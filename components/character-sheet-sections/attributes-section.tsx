@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store";
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
@@ -27,21 +28,22 @@ function userBaseEntriesForTarget(formData: SheetData, target: AttributeTargetId
 export function AttributesSection() {
   const {
     sheetData: formData,
-    updateAttribute,
     toggleAttributeChecked,
     setSheetData,
     setActiveModifierBase,
     removeUserModifierContribution,
     commitModifierTargetValue,
   } = useSheetStore();
+  const [valueDrafts, setValueDrafts] = useState<Partial<Record<AttributeKey, string>>>({})
+
   const handleAttributeValueChange = (attribute: AttributeKey, value: string) => {
-    updateAttribute(attribute, value)
+    setValueDrafts((drafts) => ({ ...drafts, [attribute]: value }))
   }
 
   const handleAttributeCommit = (attribute: AttributeKey) => {
     const target = attributeTarget(attribute)
     const attrValue = formData[attribute]
-    const submittedValue = isAttributeValue(attrValue) ? attrValue.value : ""
+    const submittedValue = valueDrafts[attribute] ?? (isAttributeValue(attrValue) ? attrValue.value : "")
     const existingUserBases = userBaseEntriesForTarget(formData, target)
 
     if (shouldRemoveAttributeAutoBase({
@@ -58,6 +60,11 @@ export function AttributesSection() {
     }
 
     commitModifierTargetValue(target, submittedValue)
+    setValueDrafts((drafts) => {
+      const next = { ...drafts }
+      delete next[attribute]
+      return next
+    })
   }
 
   const handleAttributeKeyDown = (event: React.KeyboardEvent<HTMLInputElement>, attribute: AttributeKey) => {
@@ -142,7 +149,7 @@ export function AttributesSection() {
                   type="text"
                   value={(() => {
                     const attrValue = formData[attr.key as keyof typeof formData];
-                    return isAttributeValue(attrValue) ? attrValue.value : "";
+                    return valueDrafts[attr.key as AttributeKey] ?? (isAttributeValue(attrValue) ? attrValue.value : "");
                   })()}
                   onChange={(e) => handleAttributeValueChange(attr.key as AttributeKey, e.target.value)}
                   onBlur={() => handleAttributeCommit(attr.key as AttributeKey)}

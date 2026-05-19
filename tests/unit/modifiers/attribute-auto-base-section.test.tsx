@@ -259,6 +259,10 @@ describe("attribute auto base section behavior", () => {
     await userEvent.click(input)
     await userEvent.clear(input)
     await userEvent.type(input, "15")
+
+    expect(input).toHaveValue("15")
+    expect(sheet().agility?.value).toBe("12")
+
     await userEvent.tab()
 
     expect(sheet().agility?.value).toBe("15")

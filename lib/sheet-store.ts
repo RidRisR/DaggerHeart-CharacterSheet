@@ -148,14 +148,13 @@ interface SheetState {
     replaceSheetData: (data: SheetData) => void;
 
     // Granular actions for better performance and cleaner code
-    updateAttribute: (attribute: keyof SheetData, value: string) => void;
     toggleAttributeChecked: (attribute: keyof SheetData) => void;
     updateGold: (index: number) => void;
     updateHope: (index: number) => void;
     updateArmorBox: (index: number) => void;
     updateProficiency: (index: number) => void;
     updateExperience: (index: number, value: string) => void;
-    updateExperienceValues: (index: number, value: string) => void;
+    addExperienceWithModifierValue: (text: string, value: string) => void;
     updateHP: (index: number, checked: boolean) => void;
     updateName: (name: string) => void;
     updateHPMax: (value: number) => void;
@@ -256,6 +255,34 @@ function canStoreRawFinalText(target: ModifierTargetId): boolean {
         target === "knowledge.value" ||
         target.startsWith("experienceValues.")
     );
+}
+
+function applyModifierTargetValueSubmission(sheetData: SheetData, target: ModifierTargetId, value: unknown): SheetData | undefined {
+    const autoCalculation = isTargetAutoCalculationEnabled(sheetData.modifierState?.targetStates?.[target]);
+    const finalValue = tryParseNumber(value);
+    const storesRawText = canStoreRawFinalText(target);
+
+    if (!autoCalculation) {
+        let nextSheetData: SheetData;
+        if (storesRawText) {
+            nextSheetData = writeTargetValue(sheetData, target, String(value));
+        } else {
+            if (finalValue === undefined) return undefined;
+
+            nextSheetData = writeTargetValue(sheetData, target, finalValue);
+        }
+
+        return applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, target));
+    }
+
+    if (finalValue === undefined) {
+        if (!storesRawText) return undefined;
+
+        return applyAutoCalculationForTargets(writeTargetValue(sheetData, target, String(value)));
+    }
+
+    const nextSheetData = reconcileFinalInput(sheetData, target, finalValue);
+    return applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, target));
 }
 
 function equipmentModifierSourceId(slotRef: EquipmentModifierSlotRef): string {
@@ -370,19 +397,6 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     // Granular actions
-    updateAttribute: (attribute, value) => set((state) => {
-        const currentAttribute = state.sheetData[attribute];
-        if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
-            return {
-                sheetData: {
-                    ...state.sheetData,
-                    [attribute]: { ...currentAttribute, value },
-                }
-            };
-        }
-        return state;
-    }),
-
     toggleAttributeChecked: (attribute) => set((state) => {
         const currentAttribute = state.sheetData[attribute];
         if (typeof currentAttribute === "object" && currentAttribute !== null && "checked" in currentAttribute) {
@@ -535,15 +549,23 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
     }),
 
-    updateExperienceValues: (index, value) => set((state) => {
-        const newExperienceValues = [...(state.sheetData.experienceValues || [])];
-        newExperienceValues[index] = value;
-        return {
-            sheetData: {
-                ...state.sheetData,
-                experienceValues: newExperienceValues
-            }
-        };
+    addExperienceWithModifierValue: (text, value) => set((state) => {
+        const experience = [...(state.sheetData.experience || ["", "", "", "", ""])];
+        const experienceValues = [...(state.sheetData.experienceValues || ["", "", "", "", ""])];
+        const trimmedText = text.trim();
+        if (!trimmedText) return state;
+
+        const emptySlotIndex = experience.findIndex((item, index) => item === "" && experienceValues[index] === "");
+        if (emptySlotIndex === -1) return state;
+
+        experience[emptySlotIndex] = trimmedText;
+        const target = `experienceValues.${emptySlotIndex}` as ModifierTargetId;
+        const nextSheetData = applyModifierTargetValueSubmission({
+            ...state.sheetData,
+            experience,
+        }, target, value);
+
+        return nextSheetData ? { sheetData: nextSheetData } : state;
     }),
 
     updateHP: (index, checked) => set((state) => {
@@ -1094,37 +1116,8 @@ export const useSheetStore = create<SheetState>((set) => ({
     }),
 
     commitModifierTargetValue: (target, value) => set((state) => {
-        const autoCalculation = isTargetAutoCalculationEnabled(state.sheetData.modifierState?.targetStates?.[target]);
-        const finalValue = tryParseNumber(value);
-        const storesRawText = canStoreRawFinalText(target);
-
-        if (!autoCalculation) {
-            let nextSheetData: SheetData;
-            if (storesRawText) {
-                nextSheetData = writeTargetValue(state.sheetData, target, String(value));
-            } else {
-                if (finalValue === undefined) return state;
-
-                nextSheetData = writeTargetValue(state.sheetData, target, finalValue);
-            }
-
-            return {
-                sheetData: applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, target)),
-            };
-        }
-
-        if (finalValue === undefined) {
-            if (!storesRawText) return state;
-
-            return {
-                sheetData: applyAutoCalculationForTargets(writeTargetValue(state.sheetData, target, String(value))),
-            };
-        }
-
-        const nextSheetData = reconcileFinalInput(state.sheetData, target, finalValue);
-        return {
-            sheetData: applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, target)),
-        };
+        const nextSheetData = applyModifierTargetValueSubmission(state.sheetData, target, value);
+        return nextSheetData ? { sheetData: nextSheetData } : state;
     }),
 
     upsertUserModifierContribution: (contribution) => set((state) => {

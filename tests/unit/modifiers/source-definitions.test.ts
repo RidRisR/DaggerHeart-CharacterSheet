@@ -311,6 +311,35 @@ describe("modifier source definitions", () => {
     expect(proficiencyTotal).toBe(3)
   })
 
+  it("derives stress max base and upgrade modifiers from current level", () => {
+    const sheetData = {
+      ...defaultSheetData,
+      level: "1",
+      upgradeStates: {
+        "tier1-2-0": { checked: true, params: { target: "stressMax" } },
+      },
+    } as SheetData
+
+    const entries = collectSystemModifierEntries(sheetData)
+
+    expect(entries).toContainEqual(expect.objectContaining({
+      id: "level:base:stressMax",
+      definition: { target: "stressMax", kind: "base" },
+      presentation: { label: "基础压力上限", value: 6 },
+      source: { type: "level", id: "level:base" },
+    }))
+    expect(entries).toContainEqual(expect.objectContaining({
+      id: "upgrade:tier1-2-0:stressMax",
+      definition: { target: "stressMax", kind: "modifier" },
+      presentation: { label: "升级：压力上限 +1", value: 1 },
+    }))
+
+    const stressTotal = entries
+      .filter(entry => entry.definition.target === "stressMax")
+      .reduce((total, entry) => total + entry.presentation.value, 0)
+    expect(stressTotal).toBe(7)
+  })
+
   it("collects upgrade entries from unified upgrade states", () => {
     const sheetData = {
       ...defaultSheetData,

@@ -12,9 +12,17 @@ function sheet(overrides: Partial<SheetData> = {}): SheetData {
 }
 
 describe("target auto calculation helper", () => {
-  it("starts hp and stress max as blank finals without hidden default bases", () => {
+  it("starts hp max blank while stress max syncs from the system base", () => {
     expect(defaultSheetData.hpMax).toBe("")
     expect(defaultSheetData.stressMax).toBe("")
+
+    const result = applyAutoCalculationForTargets(defaultSheetData)
+
+    expect(result.hpMax).toBe("")
+    expect(result.stressMax).toBe(6)
+    expect(result.modifierState?.targetStates.stressMax).toEqual({
+      activeBaseId: "level:base:stressMax",
+    })
   })
 
   it("writes auto calculation target from its reference total", () => {
@@ -241,7 +249,7 @@ describe("target auto calculation helper", () => {
     expect(result.evasion).toBe("12")
   })
 
-  it("clears auto calculation finals when a target has no base", () => {
+  it("clears auto calculation finals when a target has no base while keeping system stress base", () => {
     const data = sheet({
       evasion: "10",
       hpMax: 9,
@@ -267,7 +275,7 @@ describe("target auto calculation helper", () => {
     expect(result).not.toBe(data)
     expect(result.evasion).toBe("")
     expect(result.hpMax).toBe("")
-    expect(result.stressMax).toBe("")
+    expect(result.stressMax).toBe(6)
     expect(result.armorMax).toBe("")
     expect(result.minorThreshold).toBe("")
     expect(result.majorThreshold).toBe("")
@@ -293,11 +301,15 @@ describe("target auto calculation helper", () => {
 
     const result = applyAutoCalculationForTargets(data)
 
-    expect(result).toBe(data)
+    expect(result).not.toBe(data)
     expect(result.evasion).toBe("10")
     expect(result.hpMax).toBe(9)
     expect(result.stressMax).toBe(8)
     expect(result.armorMax).toBe(3)
+    expect(result.modifierState?.targetStates.stressMax).toEqual({
+      activeBaseId: "level:base:stressMax",
+      autoCalculation: false,
+    })
   })
 
   it("falls back to another base when the saved active base disappeared", () => {
@@ -338,9 +350,11 @@ describe("target auto calculation helper", () => {
         targetStates: {
           evasion: { activeBaseId: "user:evasion-base" },
           proficiency: { activeBaseId: "level:base:proficiency" },
+          stressMax: { activeBaseId: "level:base:stressMax" },
         },
         entryStates: {},
       },
+      stressMax: 6,
     })
 
     expect(applyAutoCalculationForTargets(data)).toBe(data)

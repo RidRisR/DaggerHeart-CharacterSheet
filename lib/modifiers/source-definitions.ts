@@ -199,16 +199,28 @@ export function collectSystemModifierEntries(sheetData: SheetData): ModifierEntr
       }),
     )
 
-    entries.push(createModifierEntry({
-      id: "level:base:proficiency",
-      sourceId: "level:base",
-      target: "proficiency",
-      kind: "base",
-      label: "基础熟练度",
-      value: 1,
-      sourceType: "level",
-      priority: 100,
-    }))
+    entries.push(
+      createModifierEntry({
+        id: "level:base:stressMax",
+        sourceId: "level:base",
+        target: "stressMax",
+        kind: "base",
+        label: "基础压力上限",
+        value: 6,
+        sourceType: "level",
+        priority: 100,
+      }),
+      createModifierEntry({
+        id: "level:base:proficiency",
+        sourceId: "level:base",
+        target: "proficiency",
+        kind: "base",
+        label: "基础熟练度",
+        value: 1,
+        sourceType: "level",
+        priority: 100,
+      }),
+    )
 
     PROFICIENCY_LEVEL_THRESHOLDS.forEach(threshold => {
       if (level < threshold) return

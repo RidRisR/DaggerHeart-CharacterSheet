@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
+import Script from "next/script"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CardSystemInitializer } from "@/components/card-system-initializer"
@@ -7,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { FadeNotificationContainer } from "@/components/ui/fade-notification"
 import { ProgressModalProvider } from "@/components/ui/unified-progress-modal"
 import { ChunkLoadErrorHandler } from "@/components/chunk-load-error-handler"
+import { getUmamiAnalyticsConfig } from "@/lib/analytics"
 import PrintHelper from "./print-helper"
 
 export const metadata: Metadata = {
@@ -67,6 +69,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const umamiAnalytics = getUmamiAnalyticsConfig(process.env)
+
   // 结构化数据 (JSON-LD) for SEO
   const structuredData = {
     "@context": "https://schema.org",
@@ -99,6 +103,13 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+        <Script
+          id="umami-analytics"
+          src={umamiAnalytics.scriptSrc}
+          data-website-id={umamiAnalytics.websiteId}
+          data-domains={umamiAnalytics.domains}
+          strategy="afterInteractive"
         />
       </head>
       <body suppressHydrationWarning>

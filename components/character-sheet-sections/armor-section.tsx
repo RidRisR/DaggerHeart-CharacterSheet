@@ -156,7 +156,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
           )}
         </div>
         <div className="col-span-3">
-          <label className="text-[8px] text-gray-600">{t("sheet.armorValue")}</label>
+          <label className="text-[8px] text-gray-600">{t("sheet.armorBaseScore")}</label>
           <input
             type="text"
             name="baseArmorMax"

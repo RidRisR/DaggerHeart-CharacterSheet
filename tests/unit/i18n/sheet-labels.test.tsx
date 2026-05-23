@@ -5,6 +5,7 @@ import { I18nProvider, LOCALE_STORAGE_KEY } from "@/lib/i18n"
 import { HeaderSection } from "@/components/character-sheet-sections/header-section"
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
+import CharacterSheet from "@/components/character-sheet"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import { resetSheetStore } from "../automation/test-helpers"
 
@@ -67,6 +68,21 @@ describe("Sheet Field Label i18n", () => {
       expect(screen.getByText("Choose subclass")).toBeInTheDocument()
     })
   })
+
+  it("uses official English armor wording after locale restore", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "en-US")
+
+    render(
+      <I18nProvider>
+        <CharacterSheet />
+      </I18nProvider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Armor").length).toBeGreaterThan(0)
+      expect(screen.queryByText("Armor Score")).not.toBeInTheDocument()
+    })
+  })
 })
 
 describe("Page two Sheet Field Label i18n", () => {
@@ -104,9 +120,13 @@ describe("Page two Sheet Field Label i18n", () => {
       expect(screen.getByText("Deck")).toBeInTheDocument()
       expect(screen.getByText(/Focused Deck \(\d+\/20\)/)).toBeInTheDocument()
       expect(screen.getByText(/Inventory Deck \(\d+\/20\)/)).toBeInTheDocument()
-      expect(screen.getByText("T2 Level 2-4")).toBeInTheDocument()
-      expect(screen.getByText("T3 Level 5-7")).toBeInTheDocument()
-      expect(screen.getByText("T4 Level 8-10")).toBeInTheDocument()
+      expect(screen.getByText("TIER 2: LEVELS 2–4")).toBeInTheDocument()
+      expect(screen.getByText("TIER 3: LEVELS 5–7")).toBeInTheDocument()
+      expect(screen.getByText("TIER 4: LEVELS 8–10")).toBeInTheDocument()
+      expect(screen.getByText("Choose two options from the list below and mark them.")).toBeInTheDocument()
+      expect(screen.getAllByText("Gain a +1 bonus to two unmarked character traits and mark them.")).toHaveLength(3)
+      expect(screen.getAllByText("Permanently gain one Hit Point slot.")).toHaveLength(3)
+      expect(screen.getAllByText("Multiclass: Choose an additional class for your character, then cross out an unused \"Take an upgraded subclass card\" and the other multiclass option on this sheet.")).toHaveLength(2)
     })
   })
 })

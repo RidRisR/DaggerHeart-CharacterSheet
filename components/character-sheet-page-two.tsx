@@ -214,11 +214,41 @@ export default function CharacterSheetPageTwo() {
       label: option.label.replace('{LEVEL_CAP}', levelCap)
     }))
 
+    const domainCardLabelByTier: Record<number, string> = {
+      1: t("sheet.upgradeDomainCardTier2"),
+      2: t("sheet.upgradeDomainCardTier3"),
+      3: t("sheet.upgradeDomainCardTier4"),
+    }
+
+    const baseUpgradeDisplayLabels = [
+      t("sheet.upgradeTraitBonus"),
+      t("sheet.upgradeHitPointSlot"),
+      t("sheet.upgradeStressSlot"),
+      t("sheet.upgradeExperienceBonus"),
+      domainCardLabelByTier[tier] ?? t("sheet.upgradeDomainCardTier4"),
+      t("sheet.upgradeEvasionBonus"),
+    ]
+
+    const processedBaseUpgradesWithDisplayLabels = processedBaseUpgrades.map((option, index) => ({
+      ...option,
+      displayLabel: baseUpgradeDisplayLabels[index] ?? option.label,
+    }))
+
     // 添加特定等级升级选项
     const tierSpecificKey = `tier${tier}` as keyof typeof upgradeOptionsData.tierSpecificUpgrades
     const tierSpecificUpgrades = upgradeOptionsData.tierSpecificUpgrades[tierSpecificKey] || []
+    const tierSpecificDisplayLabels = [
+      t("sheet.upgradeSubclassCard"),
+      t("sheet.upgradeProficiencyBonus"),
+      t("sheet.upgradeMulticlass"),
+    ]
 
-    return [...processedBaseUpgrades, ...tierSpecificUpgrades]
+    const tierSpecificUpgradesWithDisplayLabels = tierSpecificUpgrades.map((option, index) => ({
+      ...option,
+      displayLabel: tierSpecificDisplayLabels[index] ?? option.label,
+    }))
+
+    return [...processedBaseUpgradesWithDisplayLabels, ...tierSpecificUpgradesWithDisplayLabels]
   }
 
   // Handle opening the domain card modal from upgrade section

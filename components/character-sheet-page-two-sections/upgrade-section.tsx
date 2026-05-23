@@ -13,6 +13,7 @@ import { ProficiencyEditor } from "@/components/upgrade-popover/proficiency-edit
 import { SubclassCardSelector } from "@/components/upgrade-popover/subclass-card-selector"
 import { NewExperienceEditor } from "@/components/upgrade-popover/new-experience-editor"
 import type { StandardCard } from "@/card/card-types"
+import { useTranslation } from "@/lib/i18n"
 
 interface UpgradeSectionProps {
   tier: number
@@ -50,6 +51,7 @@ export function UpgradeSection({
   onOpenCardModal,
   onOpenSubclassModal,
 }: UpgradeSectionProps) {
+  const t = useTranslation()
   const tierKey = `tier${tier}`
   const updateLevel = useSheetStore(state => state.updateLevel)
   const [openPopoverIndex, setOpenPopoverIndex] = useState<string | null>(null)
@@ -319,8 +321,8 @@ export function UpgradeSection({
     return null
   }
 
-  // 检测 description 是否包含"获得一项额外+2经历"
-  const hasNewExperienceText = description.includes("获得一项额外+2经历")
+  // 检测 description 是否包含新增经历提示
+  const hasNewExperienceText = description.includes("获得一项额外+2经历") || description.includes("Experience at +2")
 
   return (
     <div className="border border-gray-300 rounded-md shadow-sm">
@@ -354,8 +356,8 @@ export function UpgradeSection({
       <div className="p-1">
         <p className="!text-xs mb-2">
           {tier === 1
-            ? <>更新你的等级，从下方的升级列表中选择并标记<strong>两个</strong>选项。</>
-            : <>更新你的等级，从下方的升级列表或更低级的列表中选择并标记<strong>两个</strong>选项。</>}
+            ? t("sheet.upgradeChooseCurrentTier")
+            : t("sheet.upgradeChoosePreviousTier")}
         </p>
 
         <div className="space-y-1">
@@ -470,7 +472,7 @@ export function UpgradeSection({
                 </span>
               )}
               <div className="flex-1 ml-2">
-                <span className="text-gray-800 dark:text-gray-200 mr-1">{option.label}</span>
+                <span className="text-gray-800 dark:text-gray-200 mr-1">{option.displayLabel ?? option.label}</span>
                 {/* 其他需要编辑按钮的选项 */}
                 {needsEditButton(option.label) && (
                   shouldDirectlyOpenModal(option.label) ? (
@@ -523,7 +525,7 @@ export function UpgradeSection({
           {tier === 1 && (
             <>
               <span className="text-gray-800 dark:text-gray-200 mr-1">
-                将伤害阈值+1，选择一张不高于你当前等级(上限4级)的领域卡加入卡组。
+                {t("sheet.upgradeThresholdDomainCard")}
               </span>
               <button
                 onClick={() => handleDirectModalOpen({ label: "领域卡加入卡组" })}
@@ -537,7 +539,7 @@ export function UpgradeSection({
           {tier === 2 && (
             <>
               <span className="text-gray-800 dark:text-gray-200 mr-1">
-                将伤害阈值+1，选择一张不高于你当前等级(上限7级)的领域卡加入卡组。
+                {t("sheet.upgradeThresholdDomainCard")}
               </span>
               <button
                 onClick={() => handleDirectModalOpen({ label: "领域卡加入卡组" })}
@@ -551,7 +553,7 @@ export function UpgradeSection({
           {tier === 3 && (
             <>
               <span className="text-gray-800 dark:text-gray-200 mr-1">
-                将伤害阈值+1，选择一张不高于你当前等级(上限10级)的领域卡加入卡组。
+                {t("sheet.upgradeThresholdDomainCard")}
               </span>
               <button
                 onClick={() => handleDirectModalOpen({ label: "领域卡加入卡组" })}

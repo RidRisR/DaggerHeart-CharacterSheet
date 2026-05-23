@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   DEFAULT_LOCALE,
   isSupportedLocale,
@@ -30,7 +30,12 @@ describe("i18n core", () => {
   })
 
   it("falls back to the key for missing messages", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+
     expect(t("missing.key", undefined, "zh-CN")).toBe("missing.key")
+    expect(warnSpy).toHaveBeenCalledWith('[i18n] Missing message key "missing.key" for locale "zh-CN"')
+
+    warnSpy.mockRestore()
   })
 
   it("keeps zh-CN and en-US message trees structurally aligned", () => {

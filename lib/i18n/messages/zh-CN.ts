@@ -175,3 +175,9 @@ export const zhCNMessages = {
     tier4Description: "当你到达 8 级时：获得一项额外+2经历，清除所有属性升级标记，熟练度标记+1。",
   },
 } as const
+
+type MessageTreeShape<T> = {
+  readonly [K in keyof T]: T[K] extends string ? string : MessageTreeShape<T[K]>
+}
+
+export type MessageDictionary = MessageTreeShape<typeof zhCNMessages>

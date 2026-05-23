@@ -1,4 +1,4 @@
-import type { zhCNMessages } from "./zh-CN"
+import type { MessageDictionary } from "./zh-CN"
 
 export const enUSMessages = {
   common: {
@@ -176,4 +176,4 @@ export const enUSMessages = {
     tier3Description: "When you reach level 5: gain one additional +2 Experience, clear all attribute upgrade marks, and mark +1 Proficiency.",
     tier4Description: "When you reach level 8: gain one additional +2 Experience, clear all attribute upgrade marks, and mark +1 Proficiency.",
   },
-} satisfies typeof zhCNMessages
+} satisfies MessageDictionary

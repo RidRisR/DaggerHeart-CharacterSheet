@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting to DaggerHeart Character Sheet</title>
+    <link rel="canonical" href="https://dhsheet.site/">
+    <meta name="robots" content="noindex, follow">
+    <meta http-equiv="refresh" content="0; url=https://dhsheet.site/">
+    <script>
+      (function () {
+        var oldPrefix = "/DaggerHeart-CharacterSheet";
+        var path = window.location.pathname || "/";
+        if (path.indexOf(oldPrefix) === 0) {
+          path = path.slice(oldPrefix.length) || "/";
+        }
+        window.location.replace("https://dhsheet.site" + path + window.location.search + window.location.hash);
+      })();
+    </script>
+  </head>
+  <body>
+    <p>This page has moved to <a href="https://dhsheet.site/">https://dhsheet.site/</a>.</p>
+  </body>
+</html>

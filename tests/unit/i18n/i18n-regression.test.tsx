@@ -1,8 +1,19 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { defaultSheetData } from "@/lib/default-sheet-data"
 import { I18nProvider, useLocale } from "@/lib/i18n"
 import { useSheetStore } from "@/lib/sheet-store"
+import { exportCharacterData } from "@/lib/storage"
+
+vi.mock("@/card", () => ({
+  CardType: {
+    Ancestry: "ancestry",
+    Community: "community",
+    Profession: "profession",
+  },
+  getStandardCardsByTypeAsync: vi.fn(async () => []),
+}))
 
 function LocaleButtons() {
   const { setLocale } = useLocale()
@@ -18,10 +29,14 @@ describe("i18n regressions", () => {
   beforeEach(() => {
     window.localStorage.clear()
     useSheetStore.getState().replaceSheetData({
-      ...useSheetStore.getState().sheetData,
+      ...defaultSheetData,
       name: "Locale Regression Character",
       level: "3",
     })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it("does not mutate SheetData when locale changes", async () => {
@@ -40,8 +55,24 @@ describe("i18n regressions", () => {
     expect(JSON.stringify(useSheetStore.getState().sheetData)).toBe(before)
   })
 
-  it("does not write locale preference into exported character data", async () => {
+  it("does not write locale preference into exported JSON character data", async () => {
     const user = userEvent.setup()
+    const linkAttributes: Record<string, string> = {}
+    const linkElement = {
+      click: vi.fn(),
+      setAttribute: vi.fn((name: string, value: string) => {
+        linkAttributes[name] = value
+      }),
+    } as unknown as HTMLAnchorElement
+    const createElement = document.createElement.bind(document)
+
+    vi.spyOn(document, "createElement").mockImplementation((tagName: string, options?: ElementCreationOptions) => {
+      if (tagName.toLowerCase() === "a") {
+        return linkElement
+      }
+
+      return createElement(tagName, options)
+    })
 
     render(
       <I18nProvider>
@@ -51,9 +82,15 @@ describe("i18n regressions", () => {
 
     await user.click(screen.getByRole("button", { name: "English" }))
 
-    const exportedData = JSON.parse(JSON.stringify(useSheetStore.getState().sheetData))
+    await exportCharacterData(useSheetStore.getState().sheetData)
+
+    const dataUriPrefix = "data:application/json;charset=utf-8,"
+    expect(linkAttributes.href.startsWith(dataUriPrefix)).toBe(true)
+    const exportedData = JSON.parse(decodeURIComponent(linkAttributes.href.slice(dataUriPrefix.length)))
+
     expect(exportedData.locale).toBeUndefined()
     expect(exportedData.language).toBeUndefined()
     expect(exportedData.name).toBe("Locale Regression Character")
+    expect(linkElement.click).toHaveBeenCalledOnce()
   })
 })

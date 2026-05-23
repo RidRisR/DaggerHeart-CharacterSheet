@@ -228,19 +228,28 @@ export default function Home() {
     handleQuickExportJSON,
   } = useExportHandlers({ formData, setIsPrintingAll })
 
+  useEffect(() => {
+    document.title = t("app.title")
+  }, [t])
+
   // 客户端挂载检测
   useEffect(() => {
     setIsClient(true)
-    document.title = t("app.title")
 
     // 显示快捷键提示（3秒后消失）
+    let hideTimer: ReturnType<typeof setTimeout> | undefined
     const timer = setTimeout(() => {
       setShowShortcutHint(true)
-      setTimeout(() => setShowShortcutHint(false), 3000)
+      hideTimer = setTimeout(() => setShowShortcutHint(false), 3000)
     }, 1000)
 
-    return () => clearTimeout(timer)
-  }, [t])
+    return () => {
+      clearTimeout(timer)
+      if (hideTimer) {
+        clearTimeout(hideTimer)
+      }
+    }
+  }, [])
 
   // 移动设备检测
   useEffect(() => {

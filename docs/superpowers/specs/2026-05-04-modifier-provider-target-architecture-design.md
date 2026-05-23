@@ -6,7 +6,7 @@
 > 三层分工仍是当前 modifier 系统的核心语言；本文的“第一阶段边界”、
 > load/migration-only reconciliation 和 `automationSelections` 口径早于 05-19
 > 自动计算边界设计。当前同步入口、Source/Derived/Stored State 术语、
-> Final Value writeback 规则和 Modifier Target Universe 以 `CONTEXT.md` 与
+> Final Value writeback 规则和 Modifier Target Universe 以 `docs/contexts/modifiers/CONTEXT.md` 与
 > `docs/superpowers/specs/2026-05-19-automatic-calculation-boundary-design.md`
 > 为准。
 

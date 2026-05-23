@@ -1,0 +1,3 @@
+# Use an i18n facade before adopting an i18n framework
+
+For the first internationalization stage, use a thin local `lib/i18n` facade instead of adopting `next-intl`, `i18next`, or another full framework immediately. The project currently needs default Chinese UI, an English toggle, static-export compatibility, and limited **Application UI Copy** migration; a framework would add routing, metadata, and loading decisions before those capabilities are needed. Components must depend on the facade rather than message files directly so the facade can later be backed by a mature i18n library if requirements expand.

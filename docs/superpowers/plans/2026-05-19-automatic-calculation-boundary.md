@@ -12,7 +12,7 @@
 
 ## Specs
 
-- `CONTEXT.md`
+- `docs/contexts/modifiers/CONTEXT.md`
 - `docs/superpowers/specs/2026-05-19-automatic-calculation-boundary-design.md`
 - `docs/superpowers/specs/2026-05-19-modifier-base-reference-invariant-design.md`
 - `docs/superpowers/specs/2026-05-18-modifier-other-adjustments-design.md`

@@ -504,7 +504,7 @@ Expected: one commit created.
 ## Task 9: Commit Documentation
 
 **Files:**
-- Modify: `CONTEXT.md`
+- Modify: `docs/contexts/modifiers/CONTEXT.md`
 - Add/modify: `docs/equipment-modifier-data-decisions.md`
 - Add/modify: `docs/superpowers/plans/*`
 - Add/modify: `docs/superpowers/specs/*`
@@ -528,7 +528,7 @@ Expected: docs additions and deletions are visible. Confirm each deleted doc is 
 Run:
 
 ```bash
-git add CONTEXT.md docs
+git add docs/contexts/modifiers/CONTEXT.md docs
 git diff --cached --stat
 ```
 

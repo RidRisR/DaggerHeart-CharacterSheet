@@ -14,7 +14,7 @@
 
 - `docs/superpowers/specs/2026-05-19-v1-equipment-contribution-backfill-design.md`
 - `docs/superpowers/specs/2026-05-07-equipment-data-migration-design.md`
-- `CONTEXT.md`
+- `docs/contexts/modifiers/CONTEXT.md`
 
 ## File Map
 

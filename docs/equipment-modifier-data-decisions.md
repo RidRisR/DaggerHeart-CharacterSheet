@@ -4,14 +4,14 @@
 
 > **状态：保留为领域背景。** 本文的装备数据结构、contribution 身份、
 > 主/副/备用武器语义仍是有效背景；“装备变更后的自动计算入口”已经由
-> `CONTEXT.md` 和
+> `docs/contexts/modifiers/CONTEXT.md` 和
 > `docs/superpowers/specs/2026-05-19-automatic-calculation-boundary-design.md`
 > 统一定义。执行实现前不要以本文早期的 “不触发 reconciliation / 不自动写
 > final target” 作为当前行为依据。
 
 本文记录当前已经达成的装备、护甲与 modifier provider 改造决策。它不是实现计划；后续实现前仍需要拆成正式 spec 和 plan。
 
-全局 modifier provider / registry / target state 架构的历史背景见 `docs/superpowers/specs/2026-05-04-modifier-provider-target-architecture-design.md`；当前自动计算入口、Source/Derived/Stored State 术语和 Final Value 回写规则以 `CONTEXT.md` 和 05-19 自动计算边界 spec 为准。本文只记录装备 provider 相关的数据和 UI 决策。
+全局 modifier provider / registry / target state 架构的历史背景见 `docs/superpowers/specs/2026-05-04-modifier-provider-target-architecture-design.md`；当前自动计算入口、Source/Derived/Stored State 术语和 Final Value 回写规则以 `docs/contexts/modifiers/CONTEXT.md` 和 05-19 自动计算边界 spec 为准。本文只记录装备 provider 相关的数据和 UI 决策。
 
 ## 范围
 

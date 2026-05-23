@@ -166,6 +166,10 @@ export function CardSelectionModal({
           placeholder={t("cardSelection.noPackageSelected")}
           allSelectedText={t("cardSelection.allPackages")}
           countSuffix={t("cardSelection.packagesSelected")}
+          selectAllText={t("cardSelection.selectAll")}
+          deselectAllText={t("cardSelection.deselectAll")}
+          invertSelectionText={t("cardSelection.invertSelection")}
+          noMatchesText={t("cardSelection.noFilterMatches")}
           showSearch
           searchPlaceholder={t("cardSelection.searchPackages")}
         />
@@ -177,6 +181,10 @@ export function CardSelectionModal({
           placeholder={t("cardSelection.noCategorySelected")}
           allSelectedText={t("cardSelection.allCategories")}
           countSuffix={t("cardSelection.categoriesSelected")}
+          selectAllText={t("cardSelection.selectAll")}
+          deselectAllText={t("cardSelection.deselectAll")}
+          invertSelectionText={t("cardSelection.invertSelection")}
+          noMatchesText={t("cardSelection.noFilterMatches")}
           disabled={classOptions.length === 0}
         />
         <MultiSelectFilter
@@ -187,6 +195,10 @@ export function CardSelectionModal({
           placeholder={t("cardSelection.noLevelSelected")}
           allSelectedText={t("cardSelection.allLevels")}
           countSuffix={t("cardSelection.levelsSelected")}
+          selectAllText={t("cardSelection.selectAll")}
+          deselectAllText={t("cardSelection.deselectAll")}
+          invertSelectionText={t("cardSelection.invertSelection")}
+          noMatchesText={t("cardSelection.noFilterMatches")}
           disabled={levelOptions.length === 0}
         />
         <div className="relative flex-1 min-w-[200px]">

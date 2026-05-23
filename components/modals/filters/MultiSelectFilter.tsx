@@ -19,6 +19,10 @@ interface MultiSelectFilterProps<T extends string = string> {
   placeholder?: string
   allSelectedText?: string
   countSuffix?: string
+  selectAllText?: string
+  deselectAllText?: string
+  invertSelectionText?: string
+  noMatchesText?: string
   showSelectAll?: boolean
   showSearch?: boolean
   searchPlaceholder?: string
@@ -29,7 +33,9 @@ interface MultiSelectFilterProps<T extends string = string> {
 export function MultiSelectFilter<T extends string = string>({
   label, options, selected, onChange,
   placeholder = "未选", allSelectedText = "全部",
-  countSuffix = "项已选", showSelectAll = true,
+  countSuffix = "项已选", selectAllText = "全选",
+  deselectAllText = "取消全选", invertSelectionText = "反选",
+  noMatchesText = "无匹配结果", showSelectAll = true,
   showSearch = false, searchPlaceholder = "搜索...",
   disabled = false, className,
 }: MultiSelectFilterProps<T>) {
@@ -99,17 +105,17 @@ export function MultiSelectFilter<T extends string = string>({
         {showSelectAll && options.length > 0 && (
           <div className="px-2 py-1.5 border-b flex gap-1">
             <Button variant="ghost" size="sm" className="flex-1 justify-start" onClick={toggleAll}>
-              {isAllSelected ? "取消全选" : "全选"}
+              {isAllSelected ? deselectAllText : selectAllText}
             </Button>
             <Button variant="ghost" size="sm" className="flex-1 justify-start" onClick={toggleInvert}>
-              反选
+              {invertSelectionText}
             </Button>
           </div>
         )}
         <ScrollArea className="h-[300px]">
           <div className="p-2 space-y-1">
             {filteredOptions.length === 0 && searchTerm && (
-              <p className="text-sm text-muted-foreground text-center py-2">无匹配结果</p>
+              <p className="text-sm text-muted-foreground text-center py-2">{noMatchesText}</p>
             )}
             {filteredOptions.map((option) => (
               <label

@@ -197,7 +197,9 @@ export function HitPointsSection() {
             <ModifierFieldAnchor target="hpMax" label={t("sheet.hitPointsMax")} size="compact" />
             {formData.cards?.[0]?.professionSpecial?.["起始生命"] && (
               <span className="text-[10px] text-gray-600 ml-1">
-                (职业初始: {formData.cards?.[0]?.professionSpecial?.["起始生命"] ?? "未知"})
+                {t("sheet.professionStartValueParenthetical", {
+                  value: formData.cards?.[0]?.professionSpecial?.["起始生命"],
+                })}
               </span>
             )}
           </span>

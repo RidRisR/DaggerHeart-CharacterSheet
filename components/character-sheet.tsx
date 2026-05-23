@@ -486,7 +486,7 @@ export default function CharacterSheet() {
                       }
                       width="6rem"
                       height="6rem"
-                      placeholder={{ title: "角色图像", subtitle: "点击上传" }}
+                      placeholder={{ title: t("sheet.characterImage"), subtitle: t("sheet.clickToUpload") }}
                       inputId="character-image-upload"
                     />
                   </div>
@@ -518,7 +518,9 @@ export default function CharacterSheet() {
                         />
                         {safeFormData.cards[0]?.professionSpecial?.["起始闪避"] !== undefined ? (
                           <div className="text-[8px] text-gray-600">
-                            职业初始：{safeFormData.cards[0].professionSpecial["起始闪避"]}
+                            {t("sheet.professionStartValue", {
+                              value: safeFormData.cards[0].professionSpecial["起始闪避"],
+                            })}
                           </div>
                         ) : (
                           <div className="text-[8px] text-transparent">占位</div>

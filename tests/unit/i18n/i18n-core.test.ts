@@ -27,6 +27,8 @@ describe("i18n core", () => {
   it("interpolates simple params", () => {
     expect(t("archive.maxCharacters", { count: 10 }, "zh-CN")).toBe("最多只能创建10个角色")
     expect(t("archive.maxCharacters", { count: 10 }, "en-US")).toBe("You can create up to 10 characters")
+    expect(t("sheet.professionStartValue", { value: 12 }, "zh-CN")).toBe("职业初始：12")
+    expect(t("sheet.professionStartValue", { value: 12 }, "en-US")).toBe("Class starting: 12")
   })
 
   it("falls back to the key for missing messages", () => {

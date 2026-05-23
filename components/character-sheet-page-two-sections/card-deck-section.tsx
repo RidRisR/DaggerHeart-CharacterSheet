@@ -14,6 +14,7 @@ import type { CSSProperties, MouseEvent } from "react"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
 import { useCardActions } from "@/lib/sheet-store"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useTranslation } from "@/lib/i18n"
 
 interface CardDeckSectionProps {
   formData: SheetData
@@ -26,24 +27,6 @@ const getBorderColor = (isSpecial = false): string => {
   if (isSpecial) return "border-yellow-400"
   return "border-gray-300"
 }
-
-// Utility function for special slot label
-const getSpecialSlotLabel = (index: number): string => {
-  switch (index) {
-    case 0:
-      return "职业";
-    case 1:
-      return "子职业";
-    case 2:
-      return "种族一";
-    case 3:
-      return "种族二";
-    case 4:
-      return "社群";
-    default:
-      return "普通";
-  }
-};
 
 interface CardProps {
   card: StandardCard;
@@ -59,6 +42,9 @@ interface CardProps {
   onCardDelete: (index: number) => void;
   isTextMode: boolean;
   isMobile: boolean;
+  pinCardTitle: string;
+  deleteCardTitle: string;
+  specialSlotLabel: string;
 }
 
 function Card({
@@ -75,6 +61,9 @@ function Card({
   onCardDelete,
   isTextMode,
   isMobile,
+  pinCardTitle,
+  deleteCardTitle,
+  specialSlotLabel,
 }: CardProps) {
   // Optimize: avoid unnecessary conversion if already StandardCard
   const standardCard = card && typeof card === 'object' && 'type' in card && 'name' in card 
@@ -130,7 +119,7 @@ function Card({
                 }
               }
             }}
-            title={!isMobile ? "点击钉住卡牌" : undefined}
+            title={!isMobile ? pinCardTitle : undefined}
           >
             {standardCard?.name || card.name}
           </span>
@@ -142,7 +131,7 @@ function Card({
                 e.stopPropagation();
                 onCardDelete(index);
               }}
-              title="删除卡牌"
+              title={deleteCardTitle}
             >
               ×
             </button>
@@ -168,7 +157,7 @@ function Card({
       {isSpecial && (
         <div className="absolute -top-4 left-0 right-0 text-center">
           <span className="text-[10px] font-medium bg-yellow-100 px-1 py-0 rounded-t-sm border border-yellow-300 border-b-0">
-            {getSpecialSlotLabel(index)}
+            {specialSlotLabel}
           </span>
         </div>
       )}
@@ -214,6 +203,7 @@ export function CardDeckSection({
   onCardChange,
   onInventoryCardChange,
 }: CardDeckSectionProps) {
+  const t = useTranslation()
   // 钉住卡牌功能
   const { pinCard } = usePinnedCardsStore();
   // 卡牌操作方法
@@ -263,6 +253,23 @@ export function CardDeckSection({
     return activeDeck === 'focused' && index < 5;
   }
 
+  const getSpecialSlotLabel = (index: number): string => {
+    switch (index) {
+      case 0:
+        return t("sheet.specialSlotProfession")
+      case 1:
+        return t("sheet.specialSlotSubclass")
+      case 2:
+        return t("sheet.specialSlotAncestryOne")
+      case 3:
+        return t("sheet.specialSlotAncestryTwo")
+      case 4:
+        return t("sheet.specialSlotCommunity")
+      default:
+        return t("sheet.specialSlotNormal")
+    }
+  }
+
   // 处理卡牌右键点击事件 - 使用 store 方法
   const handleCardRightClick = (index: number, e: React.MouseEvent) => {
     e.preventDefault(); // 阻止默认右键菜单
@@ -275,19 +282,21 @@ export function CardDeckSection({
     
     if (success) {
       showFadeNotification({
-        message: `卡牌已移动到${isFromFocused ? '库存' : '聚焦'}卡组`,
+        message: t("sheet.cardMovedToDeck", {
+          deck: isFromFocused ? t("sheet.inventoryDeck") : t("sheet.focusedDeck"),
+        }),
         type: "success"
       });
     } else {
       // 移动失败，可能是特殊卡位保护或目标卡组已满
       if (isFromFocused && index < 5) {
         showFadeNotification({
-          message: "特殊卡位不能移动到库存卡组",
+          message: t("sheet.specialSlotMoveBlocked"),
           type: "error"
         });
       } else {
         showFadeNotification({
-          message: `移动失败，目标卡组可能已满或卡牌为空`,
+          message: t("sheet.cardMoveFailed"),
           type: "error"
         });
       }
@@ -414,7 +423,7 @@ export function CardDeckSection({
     <div className="mt-2">
       <div className="flex items-center justify-between mb-1">
         <div className="h-px bg-gray-800 flex-grow"></div>
-        <h3 className="!text-sm font-bold text-center mx-2 print:mb-4">卡组</h3>
+        <h3 className="!text-sm font-bold text-center mx-2 print:mb-4">{t("sheet.deck")}</h3>
         <div className="h-px bg-gray-800 flex-grow"></div>
       </div>
 
@@ -428,7 +437,7 @@ export function CardDeckSection({
               }`}
             onClick={() => setActiveDeck('focused')}
           >
-            聚焦卡组 ({getCurrentDeckCards('focused').filter(card => !isEmptyCard(card)).length}/20)
+            {t("sheet.focusedDeck")} ({getCurrentDeckCards('focused').filter(card => !isEmptyCard(card)).length}/20)
           </button>
           <button
             className={`px-3 py-1.5 text-sm font-medium border-b-2 transition-colors ${activeDeck === 'inventory'
@@ -437,13 +446,13 @@ export function CardDeckSection({
               }`}
             onClick={() => setActiveDeck('inventory')}
           >
-            库存卡组 ({getCurrentDeckCards('inventory').filter(card => !isEmptyCard(card)).length}/20)
+            {t("sheet.inventoryDeck")} ({getCurrentDeckCards('inventory').filter(card => !isEmptyCard(card)).length}/20)
           </button>
         </div>
 
         {/* 操作提示 */}
         <div className="!text-xs text-gray-500">
-          💡 左键进入卡牌选择，右键移动卡牌到其他卡组
+          {t("sheet.deckMoveHint")}
         </div>
       </div>
 
@@ -479,6 +488,9 @@ export function CardDeckSection({
                   onCardDelete={handleCardDelete}
                   isTextMode={isTextMode}
                   isMobile={isMobile}
+                  pinCardTitle={t("sheet.pinCard")}
+                  deleteCardTitle={t("sheet.deleteCard")}
+                  specialSlotLabel={getSpecialSlotLabel(index)}
                 />
               </div>
             );

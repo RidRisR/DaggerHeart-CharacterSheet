@@ -3,6 +3,9 @@ import "@testing-library/jest-dom/vitest"
 import { beforeEach, describe, expect, it } from "vitest"
 import { I18nProvider, LOCALE_STORAGE_KEY } from "@/lib/i18n"
 import { HeaderSection } from "@/components/character-sheet-sections/header-section"
+import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
+import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
+import { defaultSheetData } from "@/lib/default-sheet-data"
 import { resetSheetStore } from "../automation/test-helpers"
 
 function header() {
@@ -62,6 +65,48 @@ describe("Sheet Field Label i18n", () => {
       expect(screen.getByText("Choose community")).toBeInTheDocument()
       expect(screen.getAllByText("Choose ancestry")).toHaveLength(2)
       expect(screen.getByText("Choose subclass")).toBeInTheDocument()
+    })
+  })
+})
+
+describe("Page two Sheet Field Label i18n", () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+    resetSheetStore()
+  })
+
+  it("shows English page-two description labels after locale restore", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "en-US")
+
+    render(
+      <I18nProvider>
+        <CharacterDescriptionSection formData={defaultSheetData} handleInputChange={() => {}} />
+      </I18nProvider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Character Summary")).toBeInTheDocument()
+      expect(screen.getByText("Character Traits")).toBeInTheDocument()
+      expect(screen.getByText("Adventure Notes")).toBeInTheDocument()
+    })
+  })
+
+  it("shows English page-two deck and tier labels after locale restore", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "en-US")
+
+    render(
+      <I18nProvider>
+        <CharacterSheetPageTwo />
+      </I18nProvider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Deck")).toBeInTheDocument()
+      expect(screen.getByText(/Focused Deck \(\d+\/20\)/)).toBeInTheDocument()
+      expect(screen.getByText(/Inventory Deck \(\d+\/20\)/)).toBeInTheDocument()
+      expect(screen.getByText("T2 Level 2-4")).toBeInTheDocument()
+      expect(screen.getByText("T3 Level 5-7")).toBeInTheDocument()
+      expect(screen.getByText("T4 Level 8-10")).toBeInTheDocument()
     })
   })
 })

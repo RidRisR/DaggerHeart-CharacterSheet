@@ -8,6 +8,7 @@ import type { AttributeValue, SheetData } from "@/lib/sheet-data"
 import { createEmptyCard, type StandardCard } from "@/card/card-types"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import { computeUpgradeAutomation } from "@/automation/actions/upgrade-actions"
+import { useTranslation } from "@/lib/i18n"
 
 // Import sections
 import { CharacterDescriptionSection } from "@/components/character-sheet-page-two-sections/character-description-section"
@@ -30,6 +31,7 @@ function isAttributeValue(value: unknown): value is AttributeValue {
 
 export default function CharacterSheetPageTwo() {
   const { setSheetData: setFormData } = useSheetStore();
+  const t = useTranslation()
   const setUpgradeState = useSheetStore(state => state.setUpgradeState)
   const safeFormData = useSafeSheetData();
 
@@ -262,8 +264,8 @@ export default function CharacterSheetPageTwo() {
             {/* Tier 1: Levels 2-4 */}
             <UpgradeSection
               tier={1}
-            title="T2 等级 2-4"
-              description="当你到达 2 级时：获得一项额外+2经历，熟练度标记+1。"
+              title={t("sheet.tier2Title")}
+              description={t("sheet.tier2Description")}
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
@@ -277,8 +279,8 @@ export default function CharacterSheetPageTwo() {
             {/* Tier 2: Levels 5-7 */}
             <UpgradeSection
               tier={2}
-            title="T3 等级 5-7"
-              description="当你到达 5 级时：获得一项额外+2经历，清除所有属性升级标记，熟练度标记+1。"
+              title={t("sheet.tier3Title")}
+              description={t("sheet.tier3Description")}
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}
@@ -292,8 +294,8 @@ export default function CharacterSheetPageTwo() {
             {/* Tier 3: Levels 8-10 */}
             <UpgradeSection
               tier={3}
-            title="T4 等级 8-10"
-              description="当你到达 8 级时：获得一项额外+2经历，清除所有属性升级标记，熟练度标记+1。"
+              title={t("sheet.tier4Title")}
+              description={t("sheet.tier4Description")}
               formData={safeFormData}
               isUpgradeChecked={isUpgradeChecked}
               handleUpgradeCheck={handleUpgradeCheck}

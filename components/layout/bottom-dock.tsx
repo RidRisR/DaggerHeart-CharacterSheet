@@ -13,6 +13,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Download, FolderOpen, Package, Sparkles, FileText, FileJson, FileType, Code, Dice5, Plus, Upload, BookOpen, Layers } from "lucide-react"
 import { navigateToPage, cn } from "@/lib/utils"
 import { DualPageToggle } from "@/components/ui/dual-page-toggle"
+import { LanguageSwitcher } from "@/components/i18n/language-switcher"
+import { useTranslation } from "@/lib/i18n"
 
 // 最大角色数量常量
 const MAX_CHARACTERS = 10
@@ -65,6 +67,7 @@ type BottomDockProps = MainModeProps | PreviewModeProps
 // 主页面模式内容
 function MainModeContent(props: MainModeProps) {
   const { isMobile } = props
+  const t = useTranslation()
 
   return (
     <>
@@ -80,7 +83,7 @@ function MainModeContent(props: MainModeProps) {
                 isMobile ? "w-12 h-12" : "w-10 h-10",
                 props.isCardDrawerOpen && "ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-900"
               )}
-              aria-label="打开卡牌抽屉"
+              aria-label={t("bottomDock.openCardDrawer")}
               aria-expanded={props.isCardDrawerOpen}
             >
               <Layers className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
@@ -93,9 +96,9 @@ function MainModeContent(props: MainModeProps) {
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <p>卡牌抽屉</p>
+            <p>{t("bottomDock.cardDrawer")}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {props.isCardDrawerOpen ? "点击关闭" : "浏览和选择卡牌"}
+              {props.isCardDrawerOpen ? t("bottomDock.closeCardDrawer") : t("bottomDock.browseCards")}
             </p>
           </TooltipContent>
         </Tooltip>
@@ -111,13 +114,13 @@ function MainModeContent(props: MainModeProps) {
               )}
             >
               <Sparkles className="h-3.5 w-3.5" />
-              建卡指引
+              {t("bottomDock.guide")}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <p>新手建卡指引</p>
+            <p>{t("bottomDock.guideTooltipTitle")}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              跟随步骤快速创建你的第一个角色
+              {t("bottomDock.guideTooltipDescription")}
             </p>
           </TooltipContent>
         </Tooltip>
@@ -133,13 +136,13 @@ function MainModeContent(props: MainModeProps) {
               )}
             >
               <BookOpen className="h-3.5 w-3.5" />
-              笔记
+              {t("bottomDock.notebook")}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <p>笔记本</p>
+            <p>{t("bottomDock.notebookTooltipTitle")}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              记录游戏中的笔记、计数器和骰子
+              {t("bottomDock.notebookTooltipDescription")}
             </p>
           </TooltipContent>
         </Tooltip>
@@ -159,38 +162,38 @@ function MainModeContent(props: MainModeProps) {
                   isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
                 )}>
                   <Download className="h-3.5 w-3.5" />
-                  导出
+                  {t("bottomDock.export")}
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <p>导出角色卡</p>
+              <p>{t("bottomDock.exportTooltipTitle")}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                导出为PDF、HTML、JSON等格式
+                {t("bottomDock.exportTooltipDescription")}
               </p>
             </TooltipContent>
           </Tooltip>
           <DropdownMenuContent align="end" side="top" className={cn("w-56", isMobile && "text-base")}>
             <DropdownMenuItem onClick={props.onPrintAll} className={cn(isMobile && "py-3 px-4")}>
               <FileText className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-              打开导出预览界面
+              {t("bottomDock.openExportPreview")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={props.onOpenSealDiceExport} className={cn(isMobile && "py-3 px-4")}>
               <Dice5 className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-              导出到骰子
+              {t("bottomDock.exportToDice")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={props.onQuickExportJSON} className={cn(isMobile && "py-3 px-4")}>
               <FileJson className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-              导出JSON
+              {t("bottomDock.exportJSON")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={props.onQuickExportPDF} className={cn(isMobile && "py-3 px-4")}>
               <FileType className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-              导出PDF
+              {t("bottomDock.exportPDF")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={props.onQuickExportHTML} className={cn(isMobile && "py-3 px-4")}>
               <Code className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-              导出HTML
+              {t("bottomDock.exportHTML")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -205,21 +208,21 @@ function MainModeContent(props: MainModeProps) {
                   isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
                 )}>
                   <FolderOpen className="h-3.5 w-3.5" />
-                  存档
+                  {t("bottomDock.archive")}
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <p>存档管理</p>
+              <p>{t("bottomDock.archiveTooltipTitle")}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                管理多个角色存档
+                {t("bottomDock.archiveTooltipDescription")}
               </p>
             </TooltipContent>
           </Tooltip>
           <DropdownMenuContent align="end" side="top" className={cn("w-56", isMobile && "text-base")}>
             <DropdownMenuItem onClick={props.onOpenCharacterManagement} className={cn(isMobile && "py-3 px-4")}>
               <FolderOpen className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-              打开存档管理器
+              {t("bottomDock.openArchiveManager")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -228,7 +231,7 @@ function MainModeContent(props: MainModeProps) {
               className={cn(isMobile && "py-3 px-4")}
             >
               <Plus className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-              新建存档
+              {t("bottomDock.newArchive")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={props.onQuickImportFromHTML}
@@ -236,7 +239,7 @@ function MainModeContent(props: MainModeProps) {
               className={cn(isMobile && "py-3 px-4")}
             >
               <Upload className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
-              从HTML导入
+              {t("bottomDock.importFromHTML")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -257,16 +260,18 @@ function MainModeContent(props: MainModeProps) {
               )}
             >
               <Package className="h-3.5 w-3.5" />
-              卡包
+              {t("bottomDock.cardPackages")}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <p>卡包管理</p>
+            <p>{t("bottomDock.cardPackagesTooltipTitle")}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              管理和导入自定义卡包
+              {t("bottomDock.cardPackagesTooltipDescription")}
             </p>
           </TooltipContent>
         </Tooltip>
+
+        <LanguageSwitcher isMobile={isMobile} />
 
         {/* 双页切换按钮 - 仅桌面端显示 */}
         {!isMobile && <DualPageToggle />}
@@ -278,6 +283,7 @@ function MainModeContent(props: MainModeProps) {
 // 预览模式内容
 function PreviewModeContent(props: PreviewModeProps) {
   const { isMobile } = props
+  const t = useTranslation()
 
   return (
     <div className="flex items-center gap-4">
@@ -288,7 +294,7 @@ function PreviewModeContent(props: PreviewModeProps) {
           isMobile ? "px-6 py-3 text-base" : "px-4 py-2 text-sm"
         )}
       >
-        导出为PDF
+        {t("bottomDock.exportPDF")}
       </Button>
       <Button
         onClick={props.onExportHTML}
@@ -297,7 +303,7 @@ function PreviewModeContent(props: PreviewModeProps) {
           isMobile ? "px-6 py-3 text-base" : "px-4 py-2 text-sm"
         )}
       >
-        导出为HTML
+        {t("bottomDock.exportHTML")}
       </Button>
       <Button
         onClick={props.onExportJSON}
@@ -306,7 +312,7 @@ function PreviewModeContent(props: PreviewModeProps) {
           isMobile ? "px-6 py-3 text-base" : "px-4 py-2 text-sm"
         )}
       >
-        导出为JSON
+        {t("bottomDock.exportJSON")}
       </Button>
       <Button
         onClick={props.onOpenSealDiceExport}
@@ -315,7 +321,7 @@ function PreviewModeContent(props: PreviewModeProps) {
           isMobile ? "px-6 py-3 text-base" : "px-4 py-2 text-sm"
         )}
       >
-        导出到骰子
+        {t("bottomDock.exportToDice")}
       </Button>
       <Button
         onClick={props.onClose}
@@ -324,7 +330,7 @@ function PreviewModeContent(props: PreviewModeProps) {
           isMobile ? "px-6 py-3 text-base" : "px-4 py-2 text-sm"
         )}
       >
-        返回
+        {t("bottomDock.back")}
       </Button>
     </div>
   )

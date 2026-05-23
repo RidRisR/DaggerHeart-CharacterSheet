@@ -25,6 +25,8 @@ export const enUSMessages = {
     cardAdded: "Card added to the {deck} deck",
     focusedDeck: "focused",
     inventoryDeck: "inventory",
+    imageMode: "Image",
+    textMode: "Text",
   },
   shortcuts: {
     title: "⌨️ Shortcuts",

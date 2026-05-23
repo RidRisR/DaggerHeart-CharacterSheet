@@ -26,6 +26,13 @@ describe("Application UI Copy", () => {
     expect(t("archive.unnamedCharacter", undefined, "en-US")).toBe("Unnamed character")
   })
 
+  it("supports English text mode toggle copy", () => {
+    expect(t("app.imageMode", undefined, "zh-CN")).toBe("图片")
+    expect(t("app.textMode", undefined, "zh-CN")).toBe("文字")
+    expect(t("app.imageMode", undefined, "en-US")).toBe("Image")
+    expect(t("app.textMode", undefined, "en-US")).toBe("Text")
+  })
+
   it("supports English filter control copy", async () => {
     const user = userEvent.setup()
     window.localStorage.setItem(LOCALE_STORAGE_KEY, "en-US")

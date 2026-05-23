@@ -23,6 +23,8 @@ export const zhCNMessages = {
     cardAdded: "卡牌已添加到{deck}卡组",
     focusedDeck: "聚焦",
     inventoryDeck: "库存",
+    imageMode: "图片",
+    textMode: "文字",
   },
   shortcuts: {
     title: "⌨️ 快捷键提示",

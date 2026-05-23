@@ -707,7 +707,7 @@ export default function Home() {
                   `}
                 >
                   <ImageIcon />
-                  <span className="font-medium">图片</span>
+                  <span className="font-medium">{t("app.imageMode")}</span>
                 </div>
                 <div
                   className={`
@@ -719,7 +719,7 @@ export default function Home() {
                   `}
                 >
                   <TextIcon />
-                  <span className="font-medium">文字</span>
+                  <span className="font-medium">{t("app.textMode")}</span>
                 </div>
               </div>
             </div>

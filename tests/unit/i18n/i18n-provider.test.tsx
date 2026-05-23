@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import "@testing-library/jest-dom/vitest"
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   I18nProvider,
   LOCALE_STORAGE_KEY,
@@ -58,6 +58,37 @@ describe("I18nProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("Loading...")
     })
     expect(document.documentElement.lang).toBe("en-US")
+  })
+
+  it("does not overwrite a supported stored locale during mount", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "en-US")
+    const originalSetItem = window.localStorage.setItem.bind(window.localStorage)
+    const setItemSpy = vi.fn(originalSetItem)
+
+    Object.defineProperty(window.localStorage, "setItem", {
+      configurable: true,
+      value: setItemSpy,
+    })
+
+    try {
+      render(
+        <I18nProvider>
+          <LocaleProbe />
+        </I18nProvider>,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByTestId("locale")).toHaveTextContent("en-US")
+      })
+
+      expect(setItemSpy).not.toHaveBeenCalledWith(LOCALE_STORAGE_KEY, "zh-CN")
+      expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("en-US")
+    } finally {
+      Object.defineProperty(window.localStorage, "setItem", {
+        configurable: true,
+        value: originalSetItem,
+      })
+    }
   })
 
   it("ignores unsupported stored locale values", async () => {

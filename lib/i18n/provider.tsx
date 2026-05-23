@@ -21,16 +21,20 @@ export const I18nContext = createContext<I18nContextValue | undefined>(undefined
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE)
+  const [hasRestoredLocale, setHasRestoredLocale] = useState(false)
 
   useEffect(() => {
     const storedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY)
     setLocaleState(isSupportedLocale(storedLocale) ? storedLocale : DEFAULT_LOCALE)
+    setHasRestoredLocale(true)
   }, [])
 
   useEffect(() => {
+    if (!hasRestoredLocale) return
+
     document.documentElement.lang = locale
     window.localStorage.setItem(LOCALE_STORAGE_KEY, locale)
-  }, [locale])
+  }, [hasRestoredLocale, locale])
 
   const setLocale = useCallback((nextLocale: Locale) => {
     setLocaleState(nextLocale)

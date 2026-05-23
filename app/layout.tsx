@@ -63,6 +63,9 @@ export const metadata: Metadata = {
       follow: true,
     },
   },
+  verification: {
+    google: "PPstI2EC1Yxp6bfZBZAVAEo9tFaqICp55SSoGdnlB28",
+  },
   generator: "v0.dev",
 }
 

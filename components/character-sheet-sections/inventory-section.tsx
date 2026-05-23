@@ -1,10 +1,14 @@
 "use client"
 
+import { useContext } from "react"
 import { useSheetStore } from "@/lib/sheet-store";
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
+import { I18nContext } from "@/lib/i18n/provider"
+import { t as translate } from "@/lib/i18n"
 
 export function InventorySection() {
   const { sheetData: formData, setSheetData } = useSheetStore();
+  const t = useContext(I18nContext)?.t ?? translate
   
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,
@@ -46,11 +50,11 @@ export function InventorySection() {
   return (
     <div className="py-1">
       <div className="flex items-center justify-center mb-2">
-        <h3 className="text-xs font-bold">库存</h3>
+        <h3 className="text-xs font-bold">{t("sheet.inventory")}</h3>
         <button
           onClick={handleToggle}
           className="ml-2 w-6 h-6 flex items-center justify-center bg-white text-black rounded hover:bg-gray-100 transition-colors print:hidden"
-          title={hasContent ? "清空库存" : "填充起始物品"}
+          title={hasContent ? t("sheet.clearInventory") : t("sheet.fillStartingItems")}
         >
           <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
             <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />

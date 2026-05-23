@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useContext, useState, useEffect, useRef } from "react"
 import {
   CardType, // Import CardType
 } from "@/card"
@@ -31,6 +31,8 @@ import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { parseNumberExpressionOr } from "@/lib/number-utils"
+import { I18nContext } from "@/lib/i18n/provider"
+import { t as translate } from "@/lib/i18n"
 
 type WeaponSlotSelection =
   | { slotType: "primary" | "secondary" }
@@ -38,6 +40,9 @@ type WeaponSlotSelection =
 
 export default function CharacterSheet() {
   const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, selectWeaponSlot, handleProfessionChange: autofillProfessionData, commitModifierTargetValue } = useSheetStore();
+  const i18n = useContext(I18nContext)
+  const t = i18n?.t ?? translate
+  const armorSlotLabel = i18n?.locale === "en-US" ? t("sheet.armor") : "护甲槽"
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
   const safeFormData = useSafeSheetData();
@@ -559,7 +564,7 @@ export default function CharacterSheet() {
                       </div>
                       <div className="flex flex-col">
                         <div className="flex items-center">
-                          <span className="test-center text-[10px] mr-1">护甲槽</span>
+                          <span className="test-center text-[10px] mr-1">{armorSlotLabel}</span>
                         </div>
                         {/* Armor Boxes - 3 per row, 4 rows */}
                         <div className="grid grid-cols-3 gap-1">
@@ -595,11 +600,11 @@ export default function CharacterSheet() {
               <div className="flex flex-col space-y-1">
                 {/* Active Weapons */}
                 <div className="py-0 ">
-                  <h3 className="text-xs font-bold text-center print:mb-1">装备</h3>
+                  <h3 className="text-xs font-bold text-center print:mb-1">{t("sheet.equipment")}</h3>
 
                   <div className="flex items-center gap-0.5 mb-1">
-                    <span className="text-[10px]">熟练度</span>
-                    <ModifierFieldAnchor target="proficiency" label="熟练度" size="compact" />
+                    <span className="text-[10px]">{t("sheet.proficiency")}</span>
+                    <ModifierFieldAnchor target="proficiency" label={t("sheet.proficiency")} size="compact" />
                     {Array(6)
                       .fill(0)
                       .map((_, i) => (
@@ -641,7 +646,7 @@ export default function CharacterSheet() {
                 <ExperienceSection />
 
                 {/* Profession Description */}
-                <h3 className="text-xs font-bold text-center">职业特性</h3>
+                <h3 className="text-xs font-bold text-center">{t("sheet.classFeature")}</h3>
                 <ProfessionDescriptionSection description={safeFormData.cards[0]?.description} />
               </div>
 
@@ -652,10 +657,10 @@ export default function CharacterSheet() {
 
                 {/* Inventory Weapons */}
                 <h3 className="flex items-center justify-center gap-1 text-xs font-bold">
-                  <span>备用武器</span>
+                  <span>{t("sheet.inventoryWeapons")}</span>
                   <EquipmentProviderAnchor
                     slotRef={{ type: "inventoryWeapon", index: 0 }}
-                    fallbackLabel="备用武器 1"
+                    fallbackLabel={`${t("sheet.inventoryWeapons")} 1`}
                     size="compact"
                   />
                 </h3>
@@ -686,7 +691,7 @@ export default function CharacterSheet() {
           handleWeaponChange(weaponId)
           setWeaponModalOpen(false)
         }}
-        title="选择武器"
+        title={t("sheet.selectWeapon")}
       />
 
       <ArmorSelectionModal
@@ -696,7 +701,7 @@ export default function CharacterSheet() {
           handleArmorChange(armorId)
           closeArmorModal()
         }}
-        title="选择护甲"
+        title={t("sheet.selectArmor")}
       />
 
       {modalOpen && (
@@ -718,12 +723,12 @@ export default function CharacterSheet() {
           }}
           title={
             currentModal.type === "profession"
-              ? "选择职业"
+              ? t("sheet.selectProfession")
               : currentModal.type === "ancestry"
-                ? "选择种族"
+                ? t("sheet.selectAncestry")
                 : currentModal.type === "community"
-                  ? "选择社群"
-                  : "选择子职业"
+                  ? t("sheet.selectCommunity")
+                  : t("sheet.selectSubclass")
           }
           cardType={getModalCardType(currentModal.type)} // Use the helper function here
           field={currentModal.field}

@@ -124,6 +124,14 @@ export const enUSMessages = {
     loading: "Loading...",
     failed: "Failed to load",
   },
+  sheetAttribute: {
+    agility: "Agility",
+    strength: "Strength",
+    finesse: "Finesse",
+    instinct: "Instinct",
+    presence: "Presence",
+    knowledge: "Knowledge",
+  },
   sheet: {
     profession: "Class",
     name: "Name",

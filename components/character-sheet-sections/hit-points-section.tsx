@@ -1,12 +1,15 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useContext, useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
+import { I18nContext } from "@/lib/i18n/provider"
+import { t as translate } from "@/lib/i18n"
 
 export function HitPointsSection() {
   const { sheetData: formData, setSheetData, commitModifierTargetValue } = useSheetStore()
+  const t = useContext(I18nContext)?.t ?? translate
   const [maxDrafts, setMaxDrafts] = useState<Partial<Record<"hpMax" | "stressMax", string>>>({})
   const [thresholdDrafts, setThresholdDrafts] = useState<Partial<Record<"minorThreshold" | "majorThreshold", string>>>({})
   const baseThresholds = formData.equipment.armorSlot.baseThresholds
@@ -135,11 +138,11 @@ export function HitPointsSection() {
   }
   return (
     <div className="py-1 mb-1 print:mt-1.5">
-      <h3 className="text-xs font-bold text-center mb-2.5">生命值与压力</h3>
+      <h3 className="text-xs font-bold text-center mb-2.5">{t("sheet.hpStress")}</h3>
 
       <div className="flex justify-between items-center gap-1">
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
-          <div>轻度伤害</div>
+          <div>{t("sheet.minorDamage")}</div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 1 HP</div>
         </div>
         <input
@@ -159,8 +162,8 @@ export function HitPointsSection() {
         />
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div className="flex items-center justify-center">
-            重度伤害
-            <ModifierFieldAnchor target="minorThreshold" label="重伤阈值" size="compact" />
+            {t("sheet.majorDamage")}
+            <ModifierFieldAnchor target="minorThreshold" label={t("sheet.minorThreshold")} size="compact" />
           </div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 2 HP</div>
         </div>
@@ -181,8 +184,8 @@ export function HitPointsSection() {
         />
         <div className="bg-gray-800 text-white text-[10px] p-1 text-center rounded-md flex-1">
           <div className="flex items-center justify-center">
-            严重伤害
-            <ModifierFieldAnchor target="majorThreshold" label="严重阈值" size="compact" />
+            {t("sheet.severeDamage")}
+            <ModifierFieldAnchor target="majorThreshold" label={t("sheet.majorThreshold")} size="compact" />
           </div>
           <div className="text-[8px] mt-0.5 text-gray-300">Mark 3 HP</div>
         </div>
@@ -220,7 +223,7 @@ export function HitPointsSection() {
               </button>
             </div>
 
-            <span className="text-[9px] mr-1 print:hidden">最大值:</span> {/* 打印时隐藏 */}
+            <span className="text-[9px] mr-1 print:hidden">{t("sheet.max")}</span> {/* 打印时隐藏 */}
             <input
               type="text"
               inputMode="numeric"
@@ -268,7 +271,7 @@ export function HitPointsSection() {
               </button>
             </div>
 
-            <span className="text-[9px] mr-1 print:hidden">最大值:</span> {/* 打印时隐藏 */}
+            <span className="text-[9px] mr-1 print:hidden">{t("sheet.max")}</span> {/* 打印时隐藏 */}
             <input
               type="text"
               inputMode="numeric"

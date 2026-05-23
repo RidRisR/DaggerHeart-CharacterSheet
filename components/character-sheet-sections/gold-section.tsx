@@ -1,10 +1,14 @@
 "use client"
 
+import { useContext } from "react"
 import { useSheetStore, useSheetGold } from "@/lib/sheet-store";
+import { I18nContext } from "@/lib/i18n/provider"
+import { t as translate } from "@/lib/i18n"
 
 export function GoldSection() {
   const gold = useSheetGold()
   const { updateGold } = useSheetStore()
+  const t = useContext(I18nContext)?.t ?? translate
 
   const handleCheckboxChange = (index: number) => {
     updateGold(index)
@@ -12,11 +16,11 @@ export function GoldSection() {
 
   return (
     <div className="py-1 mb-2">
-      <h3 className="text-xs font-bold text-center mb-3">金币</h3>
+      <h3 className="text-xs font-bold text-center mb-3">{t("sheet.gold")}</h3>
       <div className="flex flex-row gap-6 items-end justify-center">
         {/* HANDFULS */}
         <div className="flex flex-col items-center">
-          <div className="text-[9px] mb-1">把</div>
+          <div className="text-[9px] mb-1">{t("sheet.handfuls")}</div>
           <div className="flex flex-col gap-1">
             <div className="flex gap-2">
               {gold.slice(0, 5).map((checked: boolean, i: number) => (
@@ -42,7 +46,7 @@ export function GoldSection() {
         </div>
         {/* BAGS */}
         <div className="flex flex-col items-center">
-          <div className="text-[9px] mb-1">袋</div>
+          <div className="text-[9px] mb-1">{t("sheet.bags")}</div>
           <div className="flex flex-col gap-1">
             <div className="flex gap-2">
               {gold.slice(10, 15).map((checked: boolean, i: number) => (
@@ -68,7 +72,7 @@ export function GoldSection() {
         </div>
         {/* CHEST */}
         <div className="flex flex-col items-center">
-          <div className="text-[9px] mb-1">箱</div>
+          <div className="text-[9px] mb-1">{t("sheet.chests")}</div>
           <div
             className={`w-8 h-8 border-2 border-gray-800 cursor-pointer flex items-center justify-center ${gold[20] ? "bg-gray-800" : "bg-white"
               }`}

@@ -1,11 +1,13 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useContext, useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
+import { I18nContext } from "@/lib/i18n/provider"
+import { t as translate } from "@/lib/i18n"
 import type { ArmorSlot } from "@/automation/equipment/types"
 
 interface ArmorSectionProps {
@@ -16,6 +18,7 @@ type ThresholdSide = "minor" | "major"
 
 export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
   const { sheetData: formData, setSheetData, updateArmorBaseThresholdSide, updateArmorBaseMax } = useSheetStore()
+  const t = useContext(I18nContext)?.t ?? translate
   const [isEditingName, setIsEditingName] = useState(false)
   const [baseArmorMaxDraft, setBaseArmorMaxDraft] = useState<string | null>(null)
   const [thresholdDrafts, setThresholdDrafts] = useState<Partial<Record<ThresholdSide, string>>>({})
@@ -110,16 +113,16 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
   return (
     <div>
       <h4 className="flex items-center gap-1 font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">
-        <span>护甲</span>
+        <span>{t("sheet.armor")}</span>
         <EquipmentProviderAnchor
           slotRef={{ type: "armor" }}
-          fallbackLabel="护甲"
+          fallbackLabel={t("sheet.armor")}
           size="compact"
         />
       </h4>
       <div className="grid grid-cols-10 gap-1 -mt-0.5">
         <div className="col-span-4">
-          <label className="text-[8px] text-gray-600">名称</label>
+          <label className="text-[8px] text-gray-600">{t("sheet.weaponName")}</label>
           {isEditingName ? (
             <input
               type="text"
@@ -137,14 +140,14 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
                 onClick={openArmorModal}
                 className="flex-1 text-sm text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none"
               >
-                {armorSlot.name || <span className="print:hidden">选择护甲</span>}
+                {armorSlot.name || <span className="print:hidden">{t("sheet.selectArmor")}</span>}
               </button>
               <div className="w-px bg-gray-300 hidden group-hover:block"></div>
               <button
                 type="button"
                 onClick={handleEditName}
                 className="w-8 hidden group-hover:flex items-center justify-center hover:bg-gray-50 focus:outline-none print:hidden"
-                title="编辑名称"
+                title={t("common.editName")}
               >
                 <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
@@ -154,7 +157,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
           )}
         </div>
         <div className="col-span-3">
-          <label className="text-[8px] text-gray-600">护甲值</label>
+          <label className="text-[8px] text-gray-600">{t("sheet.armorValue")}</label>
           <input
             type="text"
             name="baseArmorMax"
@@ -167,11 +170,11 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
           />
         </div>
         <div className="col-span-3">
-          <label className="text-[8px] text-gray-600">阈值</label>
+          <label className="text-[8px] text-gray-600">{t("sheet.threshold")}</label>
           <div className="flex h-6 min-w-0 items-center gap-0.5">
             <input
               type="text"
-              aria-label="重伤阈值"
+              aria-label={t("sheet.minorThreshold")}
               value={thresholdValue("minor")}
               onChange={(e) => handleThresholdChange("minor", e.target.value)}
               onBlur={() => commitThresholdSide("minor")}
@@ -182,7 +185,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
             <span className="flex-none text-[10px] leading-none text-gray-500">/</span>
             <input
               type="text"
-              aria-label="严重阈值"
+              aria-label={t("sheet.majorThreshold")}
               value={thresholdValue("major")}
               onChange={(e) => handleThresholdChange("major", e.target.value)}
               onBlur={() => commitThresholdSide("major")}

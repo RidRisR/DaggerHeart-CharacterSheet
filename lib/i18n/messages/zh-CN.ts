@@ -122,6 +122,14 @@ export const zhCNMessages = {
     loading: "加载中...",
     failed: "加载失败",
   },
+  sheetAttribute: {
+    agility: "敏捷",
+    strength: "力量",
+    finesse: "灵巧",
+    instinct: "本能",
+    presence: "风度",
+    knowledge: "知识",
+  },
   sheet: {
     profession: "职业",
     name: "名称",

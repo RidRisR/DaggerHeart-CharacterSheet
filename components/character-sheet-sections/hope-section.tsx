@@ -1,11 +1,15 @@
 "use client"
 
+import { useContext } from "react"
 import { useSheetStore } from "@/lib/sheet-store";
 import { StandardCard } from "@/card/card-types";
 import ReactMarkdown from 'react-markdown';
+import { I18nContext } from "@/lib/i18n/provider"
+import { t as translate } from "@/lib/i18n"
 
 export function HopeSection() {
   const { sheetData: formData, updateHope, setSheetData } = useSheetStore();
+  const t = useContext(I18nContext)?.t ?? translate
 
   // 获取当前值和最大值
   const currentHope = typeof formData.hope === 'number' ? formData.hope : 0
@@ -53,10 +57,10 @@ export function HopeSection() {
   return (
     <div className="py-1 mb-1 group">
       <div className="flex items-center justify-center gap-2 mb-2">
-        <h3 className="text-xs font-bold">希望</h3>
+        <h3 className="text-xs font-bold">{t("sheet.hope")}</h3>
       </div>
 
-      <div className="text-[12px] text-center mb-1">花费一点希望使用经历或帮助队友</div>
+      <div className="text-[12px] text-center mb-1">{t("sheet.hopeHelp")}</div>
 
       <div className="relative flex justify-center items-center mb-2">
         {/* 希望格子容器 - 绝对居中 */}

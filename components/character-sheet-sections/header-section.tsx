@@ -1,12 +1,14 @@
 "use client"
 
 import type React from "react"
-import { useRef, useState } from "react"
+import { useContext, useRef, useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useCardPreview } from "@/hooks/use-card-preview"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { useSheetStore } from "@/lib/sheet-store"
 import { PageHeader } from "@/components/page-header"
+import { I18nContext } from "@/lib/i18n/provider"
+import { t as translate } from "@/lib/i18n"
 
 interface HeaderSectionProps {
   onOpenProfessionModal: () => void;
@@ -22,6 +24,7 @@ export function HeaderSection({
   onOpenSubclassModal
 }: HeaderSectionProps) {
   const { sheetData: formData, setSheetData, updateLevel } = useSheetStore()
+  const t = useContext(I18nContext)?.t ?? translate
   const containerRef = useRef<HTMLDivElement>(null)
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState("")
@@ -135,7 +138,7 @@ export function HeaderSection({
       className="bg-gray-800 text-white p-2 flex justify-between items-center rounded-t-md relative"
     >
       <div className="flex flex-col">
-        <label className="text-[9px] text-gray-300">职业</label>
+        <label className="text-[9px] text-gray-300">{t("sheet.profession")}</label>
         <div className="flex items-center gap-2">
           {editingField === 'professionRef' ? (
             <input
@@ -158,7 +161,7 @@ export function HeaderSection({
                   onClick={openProfessionModal}
                   className="flex-1 text-gray-800 text-xs text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none"
                 >
-                  {formData.professionRef?.name || <span className="print:hidden">选择职业</span>}
+                  {formData.professionRef?.name || <span className="print:hidden">{t("sheet.selectProfession")}</span>}
                 </button>
               {formData.professionRef?.name && (
                 <>
@@ -167,7 +170,7 @@ export function HeaderSection({
                     type="button"
                     onClick={() => startEditingName('professionRef', formData.professionRef?.name || '')}
                     className="w-8 flex items-center justify-center hover:bg-gray-50 focus:outline-none print:hidden opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="编辑名称"
+                    title={t("common.editName")}
                   >
                     <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
                       <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
@@ -183,7 +186,7 @@ export function HeaderSection({
       <div className="flex flex-col items-center gap-1">
         <div className="flex gap-2">
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">名称</label>
+            <label className="text-[9px] text-gray-300">{t("sheet.name")}</label>
             <input
               type="text"
               name="name"
@@ -194,7 +197,7 @@ export function HeaderSection({
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">社群</label>
+            <label className="text-[9px] text-gray-300">{t("sheet.community")}</label>
             {editingField === 'communityRef' ? (
               <input
                 type="text"
@@ -216,7 +219,7 @@ export function HeaderSection({
                     onClick={openCommunityModal}
                     className="flex-1 text-gray-800 text-xs text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none"
                   >
-                    {formData.communityRef?.name || <span className="print:hidden">选择社群</span>}
+                    {formData.communityRef?.name || <span className="print:hidden">{t("sheet.selectCommunity")}</span>}
                   </button>
                 {formData.communityRef?.name && (
                   <>
@@ -225,7 +228,7 @@ export function HeaderSection({
                       type="button"
                       onClick={() => startEditingName('communityRef', formData.communityRef?.name || '')}
                       className="w-8 flex items-center justify-center hover:bg-gray-50 focus:outline-none print:hidden opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="编辑名称"
+                      title={t("common.editName")}
                     >
                       <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
@@ -239,7 +242,7 @@ export function HeaderSection({
         </div>
         <div className="flex gap-2">
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">种族</label>
+            <label className="text-[9px] text-gray-300">{t("sheet.ancestry")}</label>
             <div className="flex gap-1">
               {editingField === 'ancestry1Ref' ? (
                 <input
@@ -262,14 +265,14 @@ export function HeaderSection({
                       onClick={() => openAncestryModal("ancestry1")}
                       className="flex-1 text-gray-800 text-xs text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none truncate"
                     >
-                      {formData.ancestry1Ref?.name || <span className="print:hidden">选择种族</span>}
+                      {formData.ancestry1Ref?.name || <span className="print:hidden">{t("sheet.selectAncestry")}</span>}
                     </button>
                     {formData.ancestry1Ref?.name && (
                       <button
                         type="button"
                         onClick={() => startEditingName('ancestry1Ref', formData.ancestry1Ref?.name || '')}
                         className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center bg-white hover:bg-gray-50 focus:outline-none print:hidden opacity-0 group-hover:opacity-100 transition-opacity border-l border-gray-300"
-                        title="编辑名称"
+                        title={t("common.editName")}
                       >
                         <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
                           <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
@@ -300,14 +303,14 @@ export function HeaderSection({
                       onClick={() => openAncestryModal("ancestry2")}
                       className="flex-1 text-gray-800 text-xs text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none truncate"
                     >
-                      {formData.ancestry2Ref?.name || <span className="print:hidden">选择种族</span>}
+                      {formData.ancestry2Ref?.name || <span className="print:hidden">{t("sheet.selectAncestry")}</span>}
                     </button>
                     {formData.ancestry2Ref?.name && (
                       <button
                         type="button"
                         onClick={() => startEditingName('ancestry2Ref', formData.ancestry2Ref?.name || '')}
                         className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center bg-white hover:bg-gray-50 focus:outline-none print:hidden opacity-0 group-hover:opacity-100 transition-opacity border-l border-gray-300"
-                        title="编辑名称"
+                        title={t("common.editName")}
                       >
                         <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
                           <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
@@ -319,7 +322,7 @@ export function HeaderSection({
             </div>
           </div>
           <div className="flex flex-col">
-            <label className="text-[9px] text-gray-300">子职业</label>
+            <label className="text-[9px] text-gray-300">{t("sheet.subclass")}</label>
             {editingField === 'subclassRef' ? (
               <input
                 type="text"
@@ -339,7 +342,7 @@ export function HeaderSection({
                     onMouseLeave={handleMouseLeave}
                     className="flex-1 text-gray-800 text-xs text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none"
                   >
-                    {formData.subclassRef?.name || <span className="print:hidden">选择子职业</span>}
+                    {formData.subclassRef?.name || <span className="print:hidden">{t("sheet.selectSubclass")}</span>}
                   </button>
                 {formData.subclassRef?.name && (
                   <>
@@ -348,7 +351,7 @@ export function HeaderSection({
                       type="button"
                       onClick={() => startEditingName('subclassRef', formData.subclassRef?.name || '')}
                       className="w-8 flex items-center justify-center hover:bg-gray-50 focus:outline-none print:hidden opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="编辑名称"
+                      title={t("common.editName")}
                     >
                       <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
@@ -364,7 +367,7 @@ export function HeaderSection({
       <div className="flex flex-col items-center">
         <div className="w-16 h-16 bg-white text-gray-800 rounded-md border-4 border-gray-600 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-xs font-bold">LEVEL</div>
+            <div className="text-xs font-bold">{t("sheet.level")}</div>
             <input
               type="text"
               name="level"

@@ -1,15 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useContext, useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store";
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
+import { I18nContext } from "@/lib/i18n/provider"
+import { t as translate } from "@/lib/i18n"
 import type { ModifierTargetId } from "@/automation/core/types"
 
 const EXPERIENCE_TARGET_LABELS = ["经历一", "经历二", "经历三", "经历四", "经历五"]
 
 export function ExperienceSection() {
   const { sheetData: formData, updateExperience, commitModifierTargetValue } = useSheetStore();
+  const t = useContext(I18nContext)?.t ?? translate
   const [valueDrafts, setValueDrafts] = useState<Partial<Record<number, string>>>({})
   
   const { getElementProps } = useAutoResizeFont({
@@ -31,7 +34,7 @@ export function ExperienceSection() {
 
   return (
     <div className="py-1">
-      <h3 className="text-xs font-bold text-center">经历</h3>
+      <h3 className="text-xs font-bold text-center">{t("sheet.experience")}</h3>
 
       <div className="space-y-1.5 print:space-y-1">
         {experienceTexts.map((exp: string, i: number) => (

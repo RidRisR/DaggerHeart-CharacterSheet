@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useContext, useState } from "react"
 import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store";
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
+import { I18nContext } from "@/lib/i18n/provider"
+import { t as translate } from "@/lib/i18n"
 import type { AttributeTargetId, ModifierTargetId, UserModifierContribution } from "@/automation/core/types"
 import {
   getAttributeAutoBaseId,
@@ -11,6 +13,15 @@ import {
 } from "@/automation/core/attribute-auto-base"
 
 type AttributeKey = "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge"
+
+const attributes = [
+  { nameKey: "sheetAttribute.agility", fallbackName: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },
+  { nameKey: "sheetAttribute.strength", fallbackName: "力量", key: "strength", skills: ["举起", "猛击", "擒抱"] },
+  { nameKey: "sheetAttribute.finesse", fallbackName: "灵巧", key: "finesse", skills: ["控制", "隐藏", "巧手"] },
+  { nameKey: "sheetAttribute.instinct", fallbackName: "本能", key: "instinct", skills: ["感知", "察觉", "导航"] },
+  { nameKey: "sheetAttribute.presence", fallbackName: "风度", key: "presence", skills: ["魅力", "表演", "欺骗"] },
+  { nameKey: "sheetAttribute.knowledge", fallbackName: "知识", key: "knowledge", skills: ["回忆", "分析", "理解"] },
+] as const
 
 function isAttributeValue(val: unknown): val is AttributeValue {
   return val !== undefined && typeof val === "object" && val !== null && "checked" in val && "value" in val;
@@ -26,6 +37,7 @@ function userBaseEntriesForTarget(formData: SheetData, target: AttributeTargetId
 }
 
 export function AttributesSection() {
+  const t = useContext(I18nContext)?.t ?? translate
   const {
     sheetData: formData,
     toggleAttributeChecked,
@@ -97,70 +109,67 @@ export function AttributesSection() {
   return (
     <div className="mt-2.5">
       <div className="grid grid-cols-3 gap-x-2 gap-y-1">
-        {[
-          { name: "敏捷", key: "agility", skills: ["冲刺", "跳跃", "机动"] },
-          { name: "力量", key: "strength", skills: ["举起", "猛击", "擒抱"] },
-          { name: "灵巧", key: "finesse", skills: ["控制", "隐藏", "巧手"] },
-          { name: "本能", key: "instinct", skills: ["感知", "察觉", "导航"] },
-          { name: "风度", key: "presence", skills: ["魅力", "表演", "欺骗"] },
-          { name: "知识", key: "knowledge", skills: ["回忆", "分析", "理解"] },
-        ].map((attr) => (
-          <div key={attr.name} className="flex flex-col items-center">
-            <div className="flex items-center justify-between w-full bg-gray-800 text-white px-1 rounded-t-md py-0.5">
-              <div className="flex items-center">
-                <div className="text-[12px] font-bold">{attr.name}</div>
-                <ModifierFieldAnchor target={`${attr.key}.value` as ModifierTargetId} label={attr.name} />
+        {attributes.map((attr) => {
+          const attrName = t(attr.nameKey)
+
+          return (
+            <div key={attr.key} className="flex flex-col items-center">
+              <div className="flex items-center justify-between w-full bg-gray-800 text-white px-1 rounded-t-md py-0.5">
+                <div className="flex items-center">
+                  <div className="text-[12px] font-bold">{attrName}</div>
+                  <ModifierFieldAnchor target={`${attr.key}.value` as ModifierTargetId} label={attrName} />
+                  {(() => {
+                    const attrValue = formData[attr.key as keyof typeof formData];
+                    const isSpellcasting = isAttributeValue(attrValue) && attrValue.spellcasting;
+
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => handleSpellcastingToggle(attr.key as keyof SheetData)}
+                        className={`ml-1 text-[14px] font-bold cursor-pointer transition-colors hover:scale-110 ${isSpellcasting ? "text-white" : "text-gray-600 print:hidden"
+                          }`}
+                        title="施法属性标记"
+                        aria-label="施法属性标记"
+                      >
+                        ✦
+                      </button>
+                    );
+                  })()}
+                </div>
                 {(() => {
                   const attrValue = formData[attr.key as keyof typeof formData];
-                  const isSpellcasting = isAttributeValue(attrValue) && attrValue.spellcasting;
+                  const isUpgraded = isAttributeValue(attrValue) && attrValue.checked;
 
                   return (
-                    <button
-                      type="button"
-                      onClick={() => handleSpellcastingToggle(attr.key as keyof SheetData)}
-                      className={`ml-1 text-[14px] font-bold cursor-pointer transition-colors hover:scale-110 ${isSpellcasting ? "text-white" : "text-gray-600 print:hidden"
+                    <div
+                      data-testid={`attribute-upgrade-marker-${attr.key}`}
+                      className={`w-2 h-2 rounded-full border border-white cursor-pointer ${isUpgraded ? "bg-gray-800" : "bg-white"
                         }`}
-                      title="施法属性标记"
-                      aria-label="施法属性标记"
+                      onClick={() => handleBooleanChange(attr.key as keyof SheetData)}
                     >
-                      ✦
-                    </button>
+                    </div>
                   );
                 })()}
               </div>
-              {(() => {
-                const attrValue = formData[attr.key as keyof typeof formData];
-                const isUpgraded = isAttributeValue(attrValue) && attrValue.checked;
-
-                return (
-                  <div
-                    data-testid={`attribute-upgrade-marker-${attr.key}`}
-                    className={`w-2 h-2 rounded-full border border-white cursor-pointer ${isUpgraded ? "bg-gray-800" : "bg-white"
-                      }`}
-                    onClick={() => handleBooleanChange(attr.key as keyof SheetData)}
-                  >
-                  </div>
-                );
-              })()}
-            </div>
-            <div className="w-full h-14 relative">
-              <div className="absolute inset-0 rounded-b-md bg-white border border-t-0 border-gray-800 flex flex-col items-center justify-center">
-                <input
-                  type="text"
-                  value={(() => {
-                    const attrValue = formData[attr.key as keyof typeof formData];
-                    return valueDrafts[attr.key as AttributeKey] ?? (isAttributeValue(attrValue) ? attrValue.value : "");
-                  })()}
-                  onChange={(e) => handleAttributeValueChange(attr.key as AttributeKey, e.target.value)}
-                  onBlur={() => handleAttributeCommit(attr.key as AttributeKey)}
-                  onKeyDown={(event) => handleAttributeKeyDown(event, attr.key as AttributeKey)}
-                  className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-lg font-bold text-gray-800 print-empty-hide"
-                />
-                <div className="text-[8px] text-center text-gray-600">{attr.skills.join(", ")}</div>
+              <div className="w-full h-14 relative">
+                <div className="absolute inset-0 rounded-b-md bg-white border border-t-0 border-gray-800 flex flex-col items-center justify-center">
+                  <input
+                    type="text"
+                    value={(() => {
+                      const attrValue = formData[attr.key as keyof typeof formData];
+                      return valueDrafts[attr.key as AttributeKey] ?? (isAttributeValue(attrValue) ? attrValue.value : "");
+                    })()}
+                    onChange={(e) => handleAttributeValueChange(attr.key as AttributeKey, e.target.value)}
+                    onBlur={() => handleAttributeCommit(attr.key as AttributeKey)}
+                    onKeyDown={(event) => handleAttributeKeyDown(event, attr.key as AttributeKey)}
+                    className="w-16 text-center bg-transparent border-b border-gray-400 focus:outline-none text-lg font-bold text-gray-800 print-empty-hide"
+                  />
+                  <div className="text-[8px] text-center text-gray-600">{attr.skills.join(", ")}</div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   );

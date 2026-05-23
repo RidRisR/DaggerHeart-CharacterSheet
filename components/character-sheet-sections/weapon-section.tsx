@@ -1,10 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useContext, useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
+import { I18nContext } from "@/lib/i18n/provider"
+import { t as translate } from "@/lib/i18n"
 import type { WeaponSlot } from "@/automation/equipment/types"
 
 interface WeaponSectionProps {
@@ -19,6 +21,7 @@ export function WeaponSection({
   onOpenWeaponModal,
 }: WeaponSectionProps) {
   const { sheetData: formData, updateActiveWeaponSlot } = useSheetStore()
+  const t = useContext(I18nContext)?.t ?? translate
   const [isEditingName, setIsEditingName] = useState(false)
   const slot = formData.equipment.weaponSlots[slotType]
 
@@ -66,7 +69,7 @@ export function WeaponSection({
       </h4>
       <div className="grid grid-cols-10 gap-1 -mt-0.5">
         <div className="col-span-4">
-          <label className="text-[8px] text-gray-600">名称</label>
+          <label className="text-[8px] text-gray-600">{t("sheet.weaponName")}</label>
           {isEditingName ? (
             <input
               type="text"
@@ -84,14 +87,14 @@ export function WeaponSection({
                 onClick={openWeaponModal}
                 className="flex-1 text-sm text-left px-2 py-0.5 hover:bg-gray-50 focus:outline-none"
               >
-                {slot.name || <span className="print:hidden">选择武器</span>}
+                {slot.name || <span className="print:hidden">{t("sheet.selectWeapon")}</span>}
               </button>
               <div className="w-px bg-gray-300 hidden group-hover:block"></div>
               <button
                 type="button"
                 onClick={handleEditName}
                 className="w-8 hidden group-hover:flex items-center justify-center hover:bg-gray-50 focus:outline-none print:hidden"
-                title="编辑名称"
+                title={t("common.editName")}
               >
                 <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M11.498 1.5a.5.5 0 0 1 .707 0l2.295 2.295a.5.5 0 0 1 0 .707l-9.435 9.435a.5.5 0 0 1-.354.146H1.5a.5.5 0 0 1-.5-.5v-3.211a.5.5 0 0 1 .146-.354L10.582 1.5h.916zm-1 2.207-8.646 8.646v2.36h2.36l8.647-8.647L10.498 3.707z" />
@@ -101,7 +104,7 @@ export function WeaponSection({
           )}
         </div>
         <div className="col-span-3">
-          <label className="text-[8px] text-gray-600">基本信息</label>
+          <label className="text-[8px] text-gray-600">{t("sheet.basicInfo")}</label>
           <input
             type="text"
             name="trait"
@@ -111,7 +114,7 @@ export function WeaponSection({
           />
         </div>
         <div className="col-span-3">
-          <label className="text-[8px] text-gray-600">伤害骰</label>
+          <label className="text-[8px] text-gray-600">{t("sheet.damageDice")}</label>
           <input
             type="text"
             name="damage"

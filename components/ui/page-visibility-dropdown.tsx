@@ -16,6 +16,11 @@ import { useTranslation } from "@/lib/i18n"
 export function PageVisibilityDropdown() {
   const { sheetData, setSheetData } = useSheetStore()
   const t = useTranslation()
+  const localizedLabel = (label: string, key?: string) => {
+    if (!key) return label
+    const translated = t(key)
+    return translated === key ? label : translated
+  }
   
   // 如果sheetData不存在，显示占位符按钮（不可交互）
   if (!sheetData) {
@@ -35,8 +40,8 @@ export function PageVisibilityDropdown() {
   
   const pageOptions = getOptionalPageConfigs().map(config => ({
     id: config.visibilityKey!,
-    label: config.labelKey ? t(config.labelKey) : config.label,
-    description: config.descriptionKey ? t(config.descriptionKey) : config.description,
+    label: localizedLabel(config.label, config.labelKey),
+    description: localizedLabel(config.description, config.descriptionKey),
     visible: sheetData.pageVisibility?.[config.visibilityKey!] || false
   }))
 

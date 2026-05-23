@@ -554,6 +554,9 @@ export default function Home() {
   }
 
   if (isPrintingAll) {
+    const printPreviewExitText = t("app.printPreviewExit", { key: "ESC" })
+    const [printPreviewExitBeforeKey, printPreviewExitAfterKey = ""] = printPreviewExitText.split("ESC")
+
     const handleSkipWaiting = () => {
       console.log('[App] 用户选择跳过图片加载等待，页面将立即显示')
     }
@@ -572,7 +575,9 @@ export default function Home() {
               >
                 <div className="flex items-center justify-center gap-3">
                   <span className="text-sm">
-                    {t("app.printPreviewExit", { key: "ESC" })}
+                    {printPreviewExitBeforeKey}
+                    <kbd className="px-2 py-1 bg-white bg-opacity-20 rounded text-xs">ESC</kbd>
+                    {printPreviewExitAfterKey}
                   </span>
                 </div>
               </div>

@@ -38,14 +38,11 @@ export function PageDisplay({
   onSwitchToNextPage,
 }: PageDisplayProps) {
   const t = useTranslation()
-  const pageLabel = (tab: { label: string; labelKey?: string }) => tab.labelKey ? t(tab.labelKey) : tab.label
-  
-  // 生成可见的tab配置
-  const getVisibleTabs = () => {
-    if (!formData) {
-      return []
-    }
-    return getTabPages(formData)
+  const visibleTabs = formData ? getTabPages(formData) : []
+  const localizedLabel = (label: string, key?: string) => {
+    if (!key) return label
+    const translated = t(key)
+    return translated === key ? label : translated
   }
 
   return (
@@ -62,19 +59,19 @@ export function PageDisplay({
               <div className="w-full overflow-x-auto tabs-container">
                 <TabsList className="grid w-full transition-all duration-300 ease-in-out h-10"
                   style={{
-                    gridTemplateColumns: `repeat(${getVisibleTabs().length}, 1fr) auto`
+                    gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr) auto`
                   }}>
                   {/* 左页tabs */}
-                  {getVisibleTabs().map((tab, index) => (
+                  {visibleTabs.map((tab, index) => (
                     <TabsTrigger
                       key={tab.id}
-                      value={tab.id}
+                      value={tab.tabValue || tab.id}
                       className="transition-all duration-200 ease-in-out animate-in slide-in-from-right-2 py-1.5 text-sm"
                       style={{
                         animationDelay: `${index * 50}ms`
                       }}
                     >
-                      {pageLabel(tab)}
+                      {localizedLabel(tab.label, tab.labelKey)}
                     </TabsTrigger>
                   ))}
 
@@ -86,7 +83,7 @@ export function PageDisplay({
               </div>
 
               {/* 左页Tab内容 */}
-              {getVisibleTabs().map((tab) => {
+              {visibleTabs.map((tab) => {
                 const Component = tab.component
                 return (
                   <TabsContent key={tab.id} value={tab.tabValue || tab.id}>
@@ -104,19 +101,19 @@ export function PageDisplay({
               <div className="w-full overflow-x-auto tabs-container">
                 <TabsList className="grid w-full transition-all duration-300 ease-in-out h-10"
                   style={{
-                    gridTemplateColumns: `repeat(${getVisibleTabs().length}, 1fr) auto`
+                    gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr) auto`
                   }}>
                   {/* 右页tabs */}
-                  {getVisibleTabs().map((tab, index) => (
+                  {visibleTabs.map((tab, index) => (
                     <TabsTrigger
                       key={tab.id}
-                      value={tab.id}
+                      value={tab.tabValue || tab.id}
                       className="transition-all duration-200 ease-in-out animate-in slide-in-from-right-2 py-1.5 text-sm"
                       style={{
                         animationDelay: `${index * 50}ms`
                       }}
                     >
-                      {pageLabel(tab)}
+                      {localizedLabel(tab.label, tab.labelKey)}
                     </TabsTrigger>
                   ))}
 
@@ -128,7 +125,7 @@ export function PageDisplay({
               </div>
 
               {/* 右页Tab内容 */}
-              {getVisibleTabs().map((tab) => {
+              {visibleTabs.map((tab) => {
                 const Component = tab.component
                 return (
                   <TabsContent key={tab.id} value={tab.tabValue || tab.id}>
@@ -147,19 +144,19 @@ export function PageDisplay({
           <div className="w-full overflow-x-auto tabs-container">
             <TabsList className={`grid w-full transition-all duration-300 ease-in-out ${isMobile ? 'h-12' : 'h-10'}`}
               style={{
-                gridTemplateColumns: `repeat(${getVisibleTabs().length}, 1fr) auto`
+                gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr) auto`
               }}>
               {/* 动态渲染可见的tabs - 填满可用空间 */}
-              {getVisibleTabs().map((tab, index) => (
+              {visibleTabs.map((tab, index) => (
                 <TabsTrigger
                   key={tab.id}
-                  value={tab.id}
+                  value={tab.tabValue || tab.id}
                   className={`transition-all duration-200 ease-in-out animate-in slide-in-from-right-2 ${isMobile ? 'py-2.5 text-sm' : 'py-1.5 text-sm'}`}
                   style={{
                     animationDelay: `${index * 50}ms`
                   }}
                 >
-                  {pageLabel(tab)}
+                  {localizedLabel(tab.label, tab.labelKey)}
                 </TabsTrigger>
               ))}
 
@@ -171,7 +168,7 @@ export function PageDisplay({
           </div>
 
           {/* 动态渲染Tab内容 */}
-          {getVisibleTabs().map((tab) => {
+          {visibleTabs.map((tab) => {
             const Component = tab.component
             return (
               <TabsContent key={tab.id} value={tab.tabValue || tab.id}>

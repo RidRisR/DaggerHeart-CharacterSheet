@@ -1,14 +1,12 @@
 "use client"
 
-import { useContext } from "react"
 import { useSheetStore, useSheetGold } from "@/lib/sheet-store";
-import { I18nContext } from "@/lib/i18n/provider"
-import { t as translate } from "@/lib/i18n"
+import { useTranslation } from "@/lib/i18n"
 
 export function GoldSection() {
   const gold = useSheetGold()
   const { updateGold } = useSheetStore()
-  const t = useContext(I18nContext)?.t ?? translate
+  const t = useTranslation()
 
   const handleCheckboxChange = (index: number) => {
     updateGold(index)

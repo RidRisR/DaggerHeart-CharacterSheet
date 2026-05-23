@@ -1,12 +1,11 @@
 "use client"
 
 import type React from "react"
-import { useContext, useState } from "react"
+import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
-import { I18nContext } from "@/lib/i18n/provider"
-import { t as translate } from "@/lib/i18n"
+import { useTranslation } from "@/lib/i18n"
 import type { WeaponSlot } from "@/automation/equipment/types"
 
 interface WeaponSectionProps {
@@ -21,9 +20,10 @@ export function WeaponSection({
   onOpenWeaponModal,
 }: WeaponSectionProps) {
   const { sheetData: formData, updateActiveWeaponSlot } = useSheetStore()
-  const t = useContext(I18nContext)?.t ?? translate
+  const t = useTranslation()
   const [isEditingName, setIsEditingName] = useState(false)
   const slot = formData.equipment.weaponSlots[slotType]
+  const slotLabel = isPrimary ? t("sheet.primaryWeapon") : t("sheet.secondaryWeapon")
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -60,10 +60,10 @@ export function WeaponSection({
   return (
     <div className="mb-2.5">
       <h4 className="flex items-center gap-1 font-bold text-[10px] bg-gray-800 text-white p-1 rounded-t-md">
-        <span>{isPrimary ? "主武器" : "副武器"}</span>
+        <span>{slotLabel}</span>
         <EquipmentProviderAnchor
           slotRef={{ type: "weapon", slot: slotType }}
-          fallbackLabel={isPrimary ? "主武器" : "副武器"}
+          fallbackLabel={slotLabel}
           size="compact"
         />
       </h4>

@@ -1,11 +1,10 @@
 "use client"
 
-import { useContext, useState } from "react"
+import { useState } from "react"
 import type { SheetData, AttributeValue } from "@/lib/sheet-data"
 import { useSheetStore } from "@/lib/sheet-store";
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
-import { I18nContext } from "@/lib/i18n/provider"
-import { t as translate } from "@/lib/i18n"
+import { useTranslation } from "@/lib/i18n"
 import type { AttributeTargetId, ModifierTargetId, UserModifierContribution } from "@/automation/core/types"
 import {
   getAttributeAutoBaseId,
@@ -37,7 +36,7 @@ function userBaseEntriesForTarget(formData: SheetData, target: AttributeTargetId
 }
 
 export function AttributesSection() {
-  const t = useContext(I18nContext)?.t ?? translate
+  const t = useTranslation()
   const {
     sheetData: formData,
     toggleAttributeChecked,

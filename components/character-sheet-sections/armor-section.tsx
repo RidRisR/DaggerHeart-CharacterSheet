@@ -1,13 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useContext, useState } from "react"
+import { useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useSheetStore } from "@/lib/sheet-store"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
-import { I18nContext } from "@/lib/i18n/provider"
-import { t as translate } from "@/lib/i18n"
+import { useTranslation } from "@/lib/i18n"
 import type { ArmorSlot } from "@/automation/equipment/types"
 
 interface ArmorSectionProps {
@@ -18,7 +17,7 @@ type ThresholdSide = "minor" | "major"
 
 export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
   const { sheetData: formData, setSheetData, updateArmorBaseThresholdSide, updateArmorBaseMax } = useSheetStore()
-  const t = useContext(I18nContext)?.t ?? translate
+  const t = useTranslation()
   const [isEditingName, setIsEditingName] = useState(false)
   const [baseArmorMaxDraft, setBaseArmorMaxDraft] = useState<string | null>(null)
   const [thresholdDrafts, setThresholdDrafts] = useState<Partial<Record<ThresholdSide, string>>>({})

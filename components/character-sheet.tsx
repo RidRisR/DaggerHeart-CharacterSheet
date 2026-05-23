@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useContext, useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   CardType, // Import CardType
 } from "@/card"
@@ -31,8 +31,7 @@ import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { parseNumberExpressionOr } from "@/lib/number-utils"
-import { I18nContext } from "@/lib/i18n/provider"
-import { t as translate } from "@/lib/i18n"
+import { useTranslation } from "@/lib/i18n"
 
 type WeaponSlotSelection =
   | { slotType: "primary" | "secondary" }
@@ -40,9 +39,8 @@ type WeaponSlotSelection =
 
 export default function CharacterSheet() {
   const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, selectWeaponSlot, handleProfessionChange: autofillProfessionData, commitModifierTargetValue } = useSheetStore();
-  const i18n = useContext(I18nContext)
-  const t = i18n?.t ?? translate
-  const armorSlotLabel = i18n?.locale === "en-US" ? t("sheet.armor") : "护甲槽"
+  const t = useTranslation()
+  const armorSlotLabel = t("sheet.armorSlots")
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
   const safeFormData = useSafeSheetData();
@@ -498,8 +496,8 @@ export default function CharacterSheet() {
                     <div className="w-24 h-24 flex flex-col rounded-lg overflow-hidden border border-gray-800">
                       <div className="bg-gray-800 text-white text-center py-1">
                         <div className="flex items-center justify-center text-ms font-bold">
-                          闪避值
-                          <ModifierFieldAnchor target="evasion" label="闪避" />
+                          {t("sheet.evasionValue")}
+                          <ModifierFieldAnchor target="evasion" label={t("sheet.evasion")} />
                         </div>
                       </div>
                       <div className="flex-1 bg-white flex flex-col items-center justify-end pb-2 px-1">
@@ -535,8 +533,8 @@ export default function CharacterSheet() {
                       <div className="w-24 h-24 flex flex-col rounded-lg overflow-hidden border border-gray-800">
                         <div className="bg-gray-800 text-white text-center py-1">
                           <div className="flex items-center justify-center text-ms font-bold">
-                            护甲值
-                            <ModifierFieldAnchor target="armorMax" label="护甲值" />
+                            {t("sheet.armorValue")}
+                            <ModifierFieldAnchor target="armorMax" label={t("sheet.armorValue")} />
                           </div>
                         </div>
                         <div className="flex-1 bg-white flex flex-col items-center justify-end pb-2 px-1">

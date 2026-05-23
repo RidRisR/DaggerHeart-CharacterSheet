@@ -1,15 +1,14 @@
 "use client"
 
 import type React from "react"
-import { useContext, useState } from "react"
+import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
-import { I18nContext } from "@/lib/i18n/provider"
-import { t as translate } from "@/lib/i18n"
+import { useTranslation } from "@/lib/i18n"
 
 export function HitPointsSection() {
   const { sheetData: formData, setSheetData, commitModifierTargetValue } = useSheetStore()
-  const t = useContext(I18nContext)?.t ?? translate
+  const t = useTranslation()
   const [maxDrafts, setMaxDrafts] = useState<Partial<Record<"hpMax" | "stressMax", string>>>({})
   const [thresholdDrafts, setThresholdDrafts] = useState<Partial<Record<"minorThreshold" | "majorThreshold", string>>>({})
   const baseThresholds = formData.equipment.armorSlot.baseThresholds
@@ -194,8 +193,8 @@ export function HitPointsSection() {
       <div className="mt-1 space-y-1">
         <div className="flex items-center justify-between group">
           <span className="font-bold mr-2 text-xs">
-            生命
-            <ModifierFieldAnchor target="hpMax" label="生命上限" size="compact" />
+            {t("sheet.hitPoints")}
+            <ModifierFieldAnchor target="hpMax" label={t("sheet.hitPointsMax")} size="compact" />
             {formData.cards?.[0]?.professionSpecial?.["起始生命"] && (
               <span className="text-[10px] text-gray-600 ml-1">
                 (职业初始: {formData.cards?.[0]?.professionSpecial?.["起始生命"] ?? "未知"})
@@ -247,8 +246,8 @@ export function HitPointsSection() {
 
         <div className="flex items-center justify-between group">
           <span className="font-bold mr-2 text-xs">
-            压力
-            <ModifierFieldAnchor target="stressMax" label="压力上限" size="compact" />
+            {t("sheet.stress")}
+            <ModifierFieldAnchor target="stressMax" label={t("sheet.stressMax")} size="compact" />
           </span>
           <div className="flex items-center">
             {/* 渐进式显示的上限调整按钮 */}

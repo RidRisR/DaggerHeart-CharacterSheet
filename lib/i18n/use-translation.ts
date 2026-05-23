@@ -1,7 +1,9 @@
 "use client"
 
 import { useContext } from "react"
-import { I18nContext } from "./provider"
+import { DEFAULT_LOCALE } from "./locales"
+import { I18nContext, type I18nContextValue } from "./provider"
+import { t as translate } from "./translate"
 
 export function useI18n() {
   const context = useContext(I18nContext)
@@ -12,7 +14,9 @@ export function useI18n() {
 }
 
 export function useTranslation() {
-  return useI18n().t
+  const context = useContext(I18nContext)
+  const defaultTranslate: I18nContextValue["t"] = (key, params) => translate(key, params, DEFAULT_LOCALE)
+  return context?.t ?? defaultTranslate
 }
 
 export function useLocale() {

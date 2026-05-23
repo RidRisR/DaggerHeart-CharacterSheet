@@ -1,12 +1,11 @@
 "use client"
 
 import type React from "react"
-import { useContext, useState } from "react"
+import { useState } from "react"
 import { useSheetStore } from "@/lib/sheet-store"
 import { ContentEditableField } from "@/components/ui/content-editable-field"
 import { showFadeNotification } from "@/components/ui/fade-notification"
-import { I18nContext } from "@/lib/i18n/provider"
-import { t as translate } from "@/lib/i18n"
+import { useTranslation } from "@/lib/i18n"
 import type { WeaponSlot } from "@/automation/equipment/types"
 
 interface InventoryWeaponSectionProps {
@@ -23,7 +22,7 @@ export function InventoryWeaponSection({
     updateInventoryWeaponSlot: storeUpdateInventoryWeaponSlot,
     swapInventoryWeaponToActiveSlot,
   } = useSheetStore()
-  const t = useContext(I18nContext)?.t ?? translate
+  const t = useTranslation()
   const [isEditingName, setIsEditingName] = useState(false)
   const slot = formData.equipment.weaponSlots.inventory[index]
 
@@ -62,7 +61,7 @@ export function InventoryWeaponSection({
     swapInventoryWeaponToActiveSlot(index, targetType)
 
     showFadeNotification({
-      message: targetType === 'primary' ? '已设为主手武器' : '已设为副手武器',
+      message: targetType === 'primary' ? t("sheet.setPrimaryWeaponSuccess") : t("sheet.setSecondaryWeaponSuccess"),
       type: 'success',
       duration: 2000
     })
@@ -149,7 +148,7 @@ export function InventoryWeaponSection({
             className="mr-1 h-3 w-3 cursor-pointer"
           />
           <label htmlFor={`inventory-slot-${index}-set-primary`} className="text-[8px] cursor-pointer group-hover:text-blue-600 transition-colors">
-            设为主手
+            {t("sheet.setAsPrimary")}
           </label>
         </div>
         <div className="flex items-center group">
@@ -161,7 +160,7 @@ export function InventoryWeaponSection({
             className="mr-1 h-3 w-3 cursor-pointer"
           />
           <label htmlFor={`inventory-slot-${index}-set-secondary`} className="text-[8px] cursor-pointer group-hover:text-blue-600 transition-colors">
-            设为副手
+            {t("sheet.setAsSecondary")}
           </label>
         </div>
       </div>

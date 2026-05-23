@@ -1,14 +1,12 @@
 "use client"
 
-import { useContext } from "react"
 import { useSheetStore } from "@/lib/sheet-store";
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
-import { I18nContext } from "@/lib/i18n/provider"
-import { t as translate } from "@/lib/i18n"
+import { useTranslation } from "@/lib/i18n"
 
 export function InventorySection() {
   const { sheetData: formData, setSheetData } = useSheetStore();
-  const t = useContext(I18nContext)?.t ?? translate
+  const t = useTranslation()
   
   const { getElementProps } = useAutoResizeFont({
     maxFontSize: 14,

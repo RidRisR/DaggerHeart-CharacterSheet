@@ -1,15 +1,13 @@
 "use client"
 
-import { useContext } from "react"
 import { useSheetStore } from "@/lib/sheet-store";
 import { StandardCard } from "@/card/card-types";
 import ReactMarkdown from 'react-markdown';
-import { I18nContext } from "@/lib/i18n/provider"
-import { t as translate } from "@/lib/i18n"
+import { useTranslation } from "@/lib/i18n"
 
 export function HopeSection() {
   const { sheetData: formData, updateHope, setSheetData } = useSheetStore();
-  const t = useContext(I18nContext)?.t ?? translate
+  const t = useTranslation()
 
   // 获取当前值和最大值
   const currentHope = typeof formData.hope === 'number' ? formData.hope : 0

@@ -1,14 +1,13 @@
 "use client"
 
 import type React from "react"
-import { useContext, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
 import { useCardPreview } from "@/hooks/use-card-preview"
 import { SelectableCard } from "@/components/ui/selectable-card"
 import { useSheetStore } from "@/lib/sheet-store"
 import { PageHeader } from "@/components/page-header"
-import { I18nContext } from "@/lib/i18n/provider"
-import { t as translate } from "@/lib/i18n"
+import { useTranslation } from "@/lib/i18n"
 
 interface HeaderSectionProps {
   onOpenProfessionModal: () => void;
@@ -24,7 +23,7 @@ export function HeaderSection({
   onOpenSubclassModal
 }: HeaderSectionProps) {
   const { sheetData: formData, setSheetData, updateLevel } = useSheetStore()
-  const t = useContext(I18nContext)?.t ?? translate
+  const t = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState("")

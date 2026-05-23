@@ -5,7 +5,9 @@
 export interface PageConfig {
   id: 'page1' | 'page2' | 'page3' | 'adventure-notes' | 'page4'
   label: string
+  labelKey?: string
   description: string
+  descriptionKey?: string
   alwaysVisible: boolean
   visibilityKey?: 'rangerCompanion' | 'armorTemplate' | 'adventureNotes' // 对应 pageVisibility 中的键
 }
@@ -26,21 +28,27 @@ export const pageConfigs: PageConfig[] = [
   {
     id: 'page3',
     label: '游侠伙伴',
+    labelKey: 'pages.page3.label',
     description: '游侠专用伙伴表',
+    descriptionKey: 'pages.page3.description',
     alwaysVisible: false,
     visibilityKey: 'rangerCompanion'
   },
   {
     id: 'page4',
     label: '主板扩展',
+    labelKey: 'pages.page4.label',
     description: '伊科尼斯武装表',
+    descriptionKey: 'pages.page4.description',
     alwaysVisible: false,
     visibilityKey: 'armorTemplate'
   },
   {
     id: 'adventure-notes',
     label: '冒险笔记',
+    labelKey: 'pages.adventureNotes.label',
     description: '角色背景与冒险记录',
+    descriptionKey: 'pages.adventureNotes.description',
     alwaysVisible: false,
     visibilityKey: 'adventureNotes'
   }

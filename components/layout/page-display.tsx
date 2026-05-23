@@ -3,6 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageVisibilityDropdown } from "@/components/ui/page-visibility-dropdown"
 import { getTabPages } from "@/lib/page-registry"
+import { useTranslation } from "@/lib/i18n"
 import type { SheetData } from "@/lib/sheet-data"
 
 interface PageDisplayProps {
@@ -36,6 +37,8 @@ export function PageDisplay({
   onSwitchToPrevPage,
   onSwitchToNextPage,
 }: PageDisplayProps) {
+  const t = useTranslation()
+  const pageLabel = (tab: { label: string; labelKey?: string }) => tab.labelKey ? t(tab.labelKey) : tab.label
   
   // 生成可见的tab配置
   const getVisibleTabs = () => {
@@ -71,7 +74,7 @@ export function PageDisplay({
                         animationDelay: `${index * 50}ms`
                       }}
                     >
-                      {tab.label}
+                      {pageLabel(tab)}
                     </TabsTrigger>
                   ))}
 
@@ -113,7 +116,7 @@ export function PageDisplay({
                         animationDelay: `${index * 50}ms`
                       }}
                     >
-                      {tab.label}
+                      {pageLabel(tab)}
                     </TabsTrigger>
                   ))}
 
@@ -156,7 +159,7 @@ export function PageDisplay({
                     animationDelay: `${index * 50}ms`
                   }}
                 >
-                  {tab.label}
+                  {pageLabel(tab)}
                 </TabsTrigger>
               ))}
 
@@ -185,7 +188,7 @@ export function PageDisplay({
           className="print:hidden hidden md:block absolute -left-20 w-16 flex items-center justify-center cursor-pointer group z-20"
           style={{ top: '48px', bottom: 0 }}
           onClick={onSwitchToPrevPage}
-          title="上一页 (←) - 循环切换"
+          title={t("pages.previous")}
         >
           {/* 悬停时显示的背景 */}
           <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-l-lg"></div>
@@ -204,7 +207,7 @@ export function PageDisplay({
           className="print:hidden hidden md:block absolute -right-20 w-16 flex items-center justify-center cursor-pointer group z-20"
           style={{ top: '48px', bottom: 0 }}
           onClick={onSwitchToNextPage}
-          title="下一页 (→) - 循环切换"
+          title={t("pages.next")}
         >
           {/* 悬停时显示的背景 */}
           <div className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-r-lg"></div>

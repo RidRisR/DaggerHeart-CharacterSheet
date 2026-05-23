@@ -79,6 +79,7 @@ registerPages([
   {
     id: 'page1',
     label: '第一页',
+    labelKey: 'pages.page1.label',
     component: CharacterSheet,
     printClass: 'page-one',
     visibility: { type: 'always' },
@@ -88,6 +89,7 @@ registerPages([
   {
     id: 'page2',
     label: '第二页',
+    labelKey: 'pages.page2.label',
     component: CharacterSheetPageTwo,
     printClass: 'page-two',
     visibility: { type: 'always' },
@@ -97,6 +99,7 @@ registerPages([
   {
     id: 'page3',
     label: '游侠伙伴',
+    labelKey: 'pages.page3.label',
     component: CharacterSheetPageThree,
     printClass: 'page-three',
     visibility: { type: 'config', configKey: 'rangerCompanion' },
@@ -106,6 +109,7 @@ registerPages([
   {
     id: 'page4',
     label: '主板扩展',
+    labelKey: 'pages.page4.label',
     component: ArmorTemplatePage,
     printClass: 'page-iknis',
     visibility: { type: 'config', configKey: 'armorTemplate' },
@@ -115,6 +119,7 @@ registerPages([
   {
     id: 'adventure-notes',
     label: '冒险笔记',
+    labelKey: 'pages.adventureNotes.label',
     component: CharacterSheetPageAdventureNotes,
     printClass: 'page-adventure-notes',
     visibility: { type: 'config', configKey: 'adventureNotes' },
@@ -124,6 +129,7 @@ registerPages([
   {
     id: 'focused-cards',
     label: '聚焦卡组',
+    labelKey: 'pages.focusedCards.label',
     component: CharacterSheetPageFour,
     printClass: 'page-four',
     visibility: {
@@ -140,6 +146,7 @@ registerPages([
   {
     id: 'inventory-cards',
     label: '库存卡组',
+    labelKey: 'pages.inventoryCards.label',
     component: CharacterSheetPageFive,
     printClass: 'page-five',
     visibility: {
@@ -525,8 +532,8 @@ export default function Home() {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-        <div className="text-lg">初始化中...</div>
-        <div className="text-sm text-gray-500 mt-2">正在启动客户端...</div>
+        <div className="text-lg">{t("app.initializing")}</div>
+        <div className="text-sm text-gray-500 mt-2">{t("app.startingClient")}</div>
       </div>
     )
   }
@@ -537,10 +544,10 @@ export default function Home() {
       <div className="flex flex-col justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
         <div className="text-lg">
-          加载中...
+          {t("common.loading")}
         </div>
         <div className="text-sm text-gray-500 mt-2">
-          正在加载角色数据
+          {t("app.loadingCharacterData")}
         </div>
       </div>
     )
@@ -565,7 +572,7 @@ export default function Home() {
               >
                 <div className="flex items-center justify-center gap-3">
                   <span className="text-sm">
-                    按 <kbd className="px-2 py-1 bg-gray-700 rounded text-xs mx-1">ESC</kbd> 键或点击此处退出预览
+                    {t("app.printPreviewExit", { key: "ESC" })}
                   </span>
                 </div>
               </div>
@@ -733,11 +740,11 @@ export default function Home() {
       {showShortcutHint && (
         <div className="print:hidden fixed top-4 right-4 z-40 animate-in slide-in-from-top duration-300">
           <div className="bg-black bg-opacity-80 text-white px-4 py-3 rounded-lg text-sm backdrop-blur-sm">
-            <div className="font-medium mb-2">⌨️ 快捷键提示</div>
+            <div className="font-medium mb-2">{t("shortcuts.title")}</div>
             <div className="space-y-1 text-xs">
-              <div>← → 切换页面</div>
-              <div>1 2 3 直接跳转</div>
-              <div>Ctrl+数字 切换存档</div>
+              <div>{t("shortcuts.switchPage")}</div>
+              <div>{t("shortcuts.jumpPage")}</div>
+              <div>{t("shortcuts.switchArchive")}</div>
             </div>
           </div>
         </div>

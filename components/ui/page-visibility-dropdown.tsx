@@ -11,9 +11,11 @@ import {
 import { cn } from "@/lib/utils"
 import { useSheetStore } from "@/lib/sheet-store"
 import { getOptionalPageConfigs } from "@/data/list/pages"
+import { useTranslation } from "@/lib/i18n"
 
 export function PageVisibilityDropdown() {
   const { sheetData, setSheetData } = useSheetStore()
+  const t = useTranslation()
   
   // 如果sheetData不存在，显示占位符按钮（不可交互）
   if (!sheetData) {
@@ -24,7 +26,7 @@ export function PageVisibilityDropdown() {
           "h-10 min-w-[40px] opacity-50 cursor-not-allowed"
         )}
         disabled
-        title="加载中..."
+        title={t("common.loading")}
       >
         <Plus className="h-4 w-4" />
       </button>
@@ -33,8 +35,8 @@ export function PageVisibilityDropdown() {
   
   const pageOptions = getOptionalPageConfigs().map(config => ({
     id: config.visibilityKey!,
-    label: config.label,
-    description: config.description,
+    label: config.labelKey ? t(config.labelKey) : config.label,
+    description: config.descriptionKey ? t(config.descriptionKey) : config.description,
     visible: sheetData.pageVisibility?.[config.visibilityKey!] || false
   }))
 
@@ -61,7 +63,7 @@ export function PageVisibilityDropdown() {
             "hover:bg-muted-foreground/10",
             "h-10 min-w-[40px]"
           )}
-          title="管理页面显示"
+          title={t("pages.manageVisibility")}
         >
           <Plus className="h-4 w-4" />
         </button>

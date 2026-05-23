@@ -8,6 +8,8 @@ import type { SheetData } from './sheet-data'
 export interface PageDefinition {
   id: string
   label: string
+  labelKey?: string
+  descriptionKey?: string
   component: ComponentType
   printClass: string
   tabValue?: string  // Tab值，如果与id不同

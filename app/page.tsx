@@ -229,8 +229,6 @@ export default function Home() {
   // 客户端挂载检测
   useEffect(() => {
     setIsClient(true)
-    // 设置默认页面标题
-    document.title = "Character Sheet"
 
     // 显示快捷键提示（3秒后消失）
     const timer = setTimeout(() => {

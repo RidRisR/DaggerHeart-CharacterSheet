@@ -5,4 +5,4 @@ User-agent: *
 Allow: /
 
 # 站点地图位置
-Sitemap: https://ridrisr.github.io/DaggerHeart-CharacterSheet/sitemap.xml
+Sitemap: https://dhsheet.site/sitemap.xml

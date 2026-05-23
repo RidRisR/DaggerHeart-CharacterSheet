@@ -9,11 +9,16 @@ import { FadeNotificationContainer } from "@/components/ui/fade-notification"
 import { ProgressModalProvider } from "@/components/ui/unified-progress-modal"
 import { ChunkLoadErrorHandler } from "@/components/chunk-load-error-handler"
 import { getUmamiAnalyticsConfig } from "@/lib/analytics"
+import { APP_DESCRIPTION, APP_SHORT_DESCRIPTION, APP_TITLE, SITE_URL } from "@/lib/seo"
 import PrintHelper from "./print-helper"
 
 export const metadata: Metadata = {
-  title: "DaggerHeart Character Sheet | 匕首之心角色卡生成器",
-  description: "免费开源的DaggerHeart（匕首之心/匕首心）TTRPG角色卡生成器和管理工具。支持中英双语，在线创建、编辑和打印你的DaggerHeart桌游角色。Free open-source character sheet creator for DaggerHeart TTRPG by Critical Role.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: APP_TITLE,
+    template: "%s | DaggerHeart Character Sheet",
+  },
+  description: APP_DESCRIPTION,
   keywords: [
     "DaggerHeart",
     "匕首之心",
@@ -35,16 +40,20 @@ export const metadata: Metadata = {
   publisher: "RidRisR",
   openGraph: {
     type: "website",
+    url: "/",
     locale: "zh_CN",
     alternateLocale: "en_US",
-    title: "DaggerHeart Character Sheet | 匕首之心角色卡生成器",
-    description: "免费开源的DaggerHeart（匕首之心）TTRPG角色卡生成器和管理工具",
+    title: APP_TITLE,
+    description: APP_SHORT_DESCRIPTION,
     siteName: "DaggerHeart Character Sheet",
   },
   twitter: {
-    card: "summary_large_image",
-    title: "DaggerHeart Character Sheet | 匕首之心角色卡生成器",
+    card: "summary",
+    title: APP_TITLE,
     description: "免费开源的DaggerHeart（匕首之心） TTRPG角色卡生成器",
+  },
+  alternates: {
+    canonical: "/",
   },
   robots: {
     index: true,
@@ -77,8 +86,8 @@ export default function RootLayout({
     "@type": "WebApplication",
     "name": "DaggerHeart Character Sheet",
     "alternateName": ["匕首之心角色卡生成器", "匕首心车卡器"],
-    "description": "免费开源的DaggerHeart（匕首之心）TTRPG角色卡生成器和管理工具。支持中英双语，在线创建、编辑和打印你的DaggerHeart桌游角色。",
-    "url": "https://ridrisr.github.io/DaggerHeart-CharacterSheet/",
+    "description": APP_SHORT_DESCRIPTION,
+    "url": `${SITE_URL}/`,
     "applicationCategory": "GameApplication",
     "operatingSystem": "Any",
     "offers": {

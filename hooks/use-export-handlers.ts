@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { getStandardCardById } from '@/card'
 import { exportToHTML } from '@/lib/html-exporter'
 import { exportCharacterData } from '@/lib/storage'
+import { APP_TITLE } from '@/lib/seo'
 import type { SheetData } from '@/lib/sheet-data'
 
 // 配置常量
@@ -130,13 +131,13 @@ export function useExportHandlers({
 
       setTimeout(() => {
         setIsPrintingAll(false)
-        document.title = "Character Sheet"
+        document.title = APP_TITLE
       }, 300)
     } catch (error) {
       console.error('[ExportHandlers] 快速 PDF 导出失败:', error)
       alert('PDF导出失败: ' + (error instanceof Error ? error.message : '未知错误'))
       setIsPrintingAll(false)
-      document.title = "Character Sheet"
+      document.title = APP_TITLE
     }
   }, [handlePrintAll, setIsPrintingAll])
 
@@ -148,7 +149,7 @@ export function useExportHandlers({
       await waitForAllImagesLoaded()
       await handleExportHTML()
       setIsPrintingAll(false)
-      document.title = "Character Sheet"
+      document.title = APP_TITLE
     } catch (error) {
       console.error('[ExportHandlers] 快速 HTML 导出失败:', error)
       alert('HTML导出失败: ' + (error instanceof Error ? error.message : '未知错误'))
@@ -163,7 +164,7 @@ export function useExportHandlers({
       await waitForAllImagesLoaded()
       handleExportJSON()
       setIsPrintingAll(false)
-      document.title = "Character Sheet"
+      document.title = APP_TITLE
     } catch (error) {
       console.error('[ExportHandlers] 快速 JSON 导出失败:', error)
       alert('JSON导出失败: ' + (error instanceof Error ? error.message : '未知错误'))

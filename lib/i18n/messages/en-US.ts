@@ -83,6 +83,7 @@ export const enUSMessages = {
     loading: "Loading...",
     renamePrompt: "Enter the new archive name:",
     createPrompt: "Enter a name for the new archive:",
+    unnamedCharacter: "Unnamed character",
     importedSuffix: "HTML import",
     maxCharacters: "You can create up to {count} characters",
     createFailedLimit: "Failed to create archive. The archive limit may have been reached.",

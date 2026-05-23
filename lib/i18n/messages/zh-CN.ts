@@ -81,6 +81,7 @@ export const zhCNMessages = {
     loading: "加载中...",
     renamePrompt: "请输入新的存档名称:",
     createPrompt: "请输入新存档的名称:",
+    unnamedCharacter: "未命名角色",
     importedSuffix: "HTML导入",
     maxCharacters: "最多只能创建{count}个角色",
     createFailedLimit: "创建新存档失败，可能已达到存档数量上限",

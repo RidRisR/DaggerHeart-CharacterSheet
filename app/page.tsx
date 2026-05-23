@@ -411,7 +411,7 @@ export default function Home() {
 
           if (result.success && result.data) {
             // 从导入的数据中提取角色名称作为默认存档名
-            const characterName = result.data.name || t("sheet.name")
+            const characterName = result.data.name || t("archive.unnamedCharacter")
             const defaultSaveName = `${characterName} (${t("archive.importedSuffix")})`
 
             // 提示用户输入存档名称

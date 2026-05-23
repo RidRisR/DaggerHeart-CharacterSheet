@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import "@testing-library/jest-dom/vitest"
 import { describe, expect, it } from "vitest"
-import { I18nProvider, LOCALE_STORAGE_KEY } from "@/lib/i18n"
+import { I18nProvider, LOCALE_STORAGE_KEY, t } from "@/lib/i18n"
 import { ContentStates } from "@/components/modals/display/ContentStates"
 
 describe("Application UI Copy", () => {
@@ -17,5 +17,10 @@ describe("Application UI Copy", () => {
     await waitFor(() => {
       expect(screen.getByText("Loading...")).toBeInTheDocument()
     })
+  })
+
+  it("keeps nameless import fallback separate from sheet field labels", () => {
+    expect(t("archive.unnamedCharacter", undefined, "zh-CN")).toBe("未命名角色")
+    expect(t("archive.unnamedCharacter", undefined, "en-US")).toBe("Unnamed character")
   })
 })

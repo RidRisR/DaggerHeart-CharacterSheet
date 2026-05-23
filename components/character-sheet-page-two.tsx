@@ -290,7 +290,7 @@ export default function CharacterSheetPageTwo() {
         />
 
           {/* Upgrade Section */}
-        <div className="mt-3 grid grid-cols-3 gap-3 text-m">
+        <div className="dh-upgrade-grid mt-3 grid grid-cols-3 gap-3 text-m">
             {/* Tier 1: Levels 2-4 */}
             <UpgradeSection
               tier={1}

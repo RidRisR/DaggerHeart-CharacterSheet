@@ -325,9 +325,9 @@ export function UpgradeSection({
   const hasNewExperienceText = description.includes("获得一项额外+2经历") || description.includes("Experience at +2")
 
   return (
-    <div className="border border-gray-300 rounded-md shadow-sm">
-      <div className="bg-gray-800 text-white p-1 text-center font-bold !text-sm rounded-t-md">{title}</div>
-      <div className="bg-gray-600 text-white p-1 !text-xs flex items-center justify-between">
+    <div className="dh-upgrade-tier border border-gray-300 rounded-md shadow-sm">
+      <div className="dh-upgrade-title bg-gray-800 text-white p-1 text-center font-bold !text-sm rounded-t-md">{title}</div>
+      <div className="dh-upgrade-description bg-gray-600 text-white p-1 !text-xs flex items-center justify-between">
         <span>{description}</span>
         {hasNewExperienceText && (
           <Popover
@@ -353,20 +353,20 @@ export function UpgradeSection({
           </Popover>
         )}
       </div>
-      <div className="p-1">
-        <p className="!text-xs mb-2">
+      <div className="dh-upgrade-body p-1">
+        <p className="dh-upgrade-instructions !text-xs mb-2">
           {tier === 1
             ? t("sheet.upgradeChooseCurrentTier")
             : t("sheet.upgradeChoosePreviousTier")}
         </p>
 
-        <div className="space-y-1">
+        <div className="dh-upgrade-options space-y-1">
           {getUpgradeOptions(tier).map((option, index) => {
             const isAttrUpgrade = isAttributeUpgradeOption(option.label)
             const isExpUpgrade = isExperienceUpgradeOption(option.label)
             const needsPopover = isAttrUpgrade || isExpUpgrade
             return (
-              <div key={`${tierKey}-${index}`} className="flex items-start !text-[10px] leading-[1.6]">
+              <div key={`${tierKey}-${index}`} className="dh-upgrade-option flex items-start !text-[10px] leading-[1.6]">
               {/* 属性升级 / 经历升级：包裹 Popover 以便定位 */}
               {needsPopover ? (
                 <Popover
@@ -378,14 +378,14 @@ export function UpgradeSection({
                   }}
                 >
                   <PopoverAnchor asChild>
-                    <span className={`flex flex-shrink-0 items-center justify-end mt-px ${option.doubleBox && option.boxCount === 2 ? '' : 'gap-px'}`} style={{ minWidth: '3.2em' }}>
+                    <span className={`dh-upgrade-checkboxes flex flex-shrink-0 items-center justify-end mt-px ${option.doubleBox && option.boxCount === 2 ? '' : 'gap-px'}`} style={{ minWidth: '3.2em' }}>
                       {Array(option.boxCount).fill(null).map((_, i) => {
                   const checkKey = option.doubleBox ? `${tierKey}-${index}` : `${tierKey}-${index}-${i}`
                   return (
-                    <div
-                      key={i}
-                      data-testid={`checkbox-${checkKey}`}
-                      className={`w-3 h-3 cursor-pointer ${option.doubleBox && option.boxCount === 2
+                      <div
+                        key={i}
+                        data-testid={`checkbox-${checkKey}`}
+                      className={`dh-upgrade-checkbox w-3 h-3 cursor-pointer ${option.doubleBox && option.boxCount === 2
                         ? `${i === 0
                           ? 'border-l-2 border-t-2 border-b-2 border-r border-gray-800'
                           : 'border-r-2 border-t-2 border-b-2 border-l border-gray-800'
@@ -437,14 +437,14 @@ export function UpgradeSection({
                   </PopoverContent>
                 </Popover>
               ) : (
-                <span className={`flex flex-shrink-0 items-center justify-end mt-px ${option.doubleBox && option.boxCount === 2 ? '' : 'gap-px'}`} style={{ minWidth: '3.2em' }}>
+                <span className={`dh-upgrade-checkboxes flex flex-shrink-0 items-center justify-end mt-px ${option.doubleBox && option.boxCount === 2 ? '' : 'gap-px'}`} style={{ minWidth: '3.2em' }}>
                   {Array(option.boxCount).fill(null).map((_, i) => {
                     const checkKey = option.doubleBox ? `${tierKey}-${index}` : `${tierKey}-${index}-${i}`
                     return (
                       <div
                         key={i}
                         data-testid={`checkbox-${checkKey}`}
-                        className={`w-3 h-3 cursor-pointer ${option.doubleBox && option.boxCount === 2
+                        className={`dh-upgrade-checkbox w-3 h-3 cursor-pointer ${option.doubleBox && option.boxCount === 2
                           ? `${i === 0
                             ? 'border-l-2 border-t-2 border-b-2 border-r border-gray-800'
                             : 'border-r-2 border-t-2 border-b-2 border-l border-gray-800'
@@ -471,7 +471,7 @@ export function UpgradeSection({
                   })}
                 </span>
               )}
-              <div className="flex-1 ml-2">
+              <div className="dh-upgrade-option-label flex-1 ml-2">
                 <span className="text-gray-800 dark:text-gray-200 mr-1">{option.displayLabel ?? option.label}</span>
                 {/* 其他需要编辑按钮的选项 */}
                 {needsEditButton(option.label) && (
@@ -521,7 +521,7 @@ export function UpgradeSection({
           })}
         </div>
 
-        <div className="mt-3 !text-xs">
+        <div className="dh-upgrade-footer mt-3 !text-xs">
           {tier === 1 && (
             <>
               <span className="text-gray-800 dark:text-gray-200 mr-1">

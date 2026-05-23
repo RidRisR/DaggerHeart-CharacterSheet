@@ -353,6 +353,73 @@ html {
     height: 0.5px !important;
   }
 
+  /* English official level-up copy is longer; keep the adjustment language-scoped. */
+  html[lang="en-US"] .dh-upgrade-grid {
+    gap: 2.8mm !important;
+    margin-top: 2.8mm !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-tier {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-title {
+    padding-top: 1mm !important;
+    padding-bottom: 1mm !important;
+    font-size: 10.4pt !important;
+    line-height: 1.08 !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-description {
+    padding: 1.3mm 1.5mm !important;
+    font-size: 8.2pt !important;
+    line-height: 1.22 !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-body {
+    padding: 1.4mm 1.5mm !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-instructions {
+    margin-bottom: 1.8mm !important;
+    font-size: 8.4pt !important;
+    line-height: 1.24 !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-options > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-y-reverse: 0 !important;
+    margin-top: 1.2mm !important;
+    margin-bottom: 0 !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-option {
+    font-size: 7.35pt !important;
+    line-height: 1.22 !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-checkboxes {
+    min-width: 8.8mm !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-checkbox {
+    width: 2.9mm !important;
+    height: 2.9mm !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-option-label {
+    margin-left: 0.8mm !important;
+  }
+
+  html[lang="en-US"] .dh-upgrade-footer {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-top: 2mm !important;
+    font-size: 8.35pt !important;
+    line-height: 1.22 !important;
+  }
+
   .shield-shape {
     clip-path: polygon(0% 0%, 100% 0%, 100% 75%, 50% 100%, 0% 75%);
   }

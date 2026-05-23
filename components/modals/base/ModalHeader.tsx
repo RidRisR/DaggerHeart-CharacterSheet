@@ -2,6 +2,7 @@
 
 import React from "react"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "@/lib/i18n"
 
 interface ModalHeaderProps {
   title: string
@@ -14,6 +15,8 @@ interface ModalHeaderProps {
 export function ModalHeader({
   title, subtitle, onClose, actions, className,
 }: ModalHeaderProps) {
+  const t = useTranslation()
+
   return (
     <div className={cn("p-4 flex items-center justify-between", className)}>
       <div className="flex items-center gap-4">
@@ -25,6 +28,7 @@ export function ModalHeader({
       </div>
       <button
         onClick={onClose}
+        aria-label={t("common.close")}
         className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
       >
         ✕

@@ -411,11 +411,11 @@ export default function Home() {
 
           if (result.success && result.data) {
             // 从导入的数据中提取角色名称作为默认存档名
-            const characterName = result.data.name || "未命名角色"
-            const defaultSaveName = `${characterName} (HTML导入)`
+            const characterName = result.data.name || t("sheet.name")
+            const defaultSaveName = `${characterName} (${t("archive.importedSuffix")})`
 
             // 提示用户输入存档名称
-            const saveName = prompt('请输入新存档的名称:', defaultSaveName)
+            const saveName = prompt(t("archive.createPrompt"), defaultSaveName)
             if (saveName && saveName.trim()) {
               // 先创建新存档
               const success = createNewCharacterHandler(saveName.trim())
@@ -423,20 +423,23 @@ export default function Home() {
                 // 创建成功后导入数据
                 setFormData(result.data)
                 if (result.warnings && result.warnings.length > 0) {
-                  alert(`HTML导入成功并创建新存档"${saveName}"，但有以下警告：\n${result.warnings.join('\n')}`)
+                  alert(t("archive.htmlImportSuccessWithWarnings", {
+                    name: saveName,
+                    warnings: result.warnings.join('\n'),
+                  }))
                 } else {
-                  alert(`HTML导入成功并创建新存档"${saveName}"`)
+                  alert(t("archive.htmlImportSuccess", { name: saveName }))
                 }
               } else {
-                alert('创建新存档失败，可能已达到存档数量上限')
+                alert(t("archive.createFailedLimit"))
               }
             }
           } else {
-            alert(`HTML导入失败：${result.error}`)
+            alert(t("archive.htmlImportFailed", { error: result.error ?? t("common.unknownError") }))
           }
         } catch (error) {
           console.error('HTML导入失败:', error)
-          alert('HTML导入失败: ' + (error instanceof Error ? error.message : '未知错误'))
+          alert(t("archive.htmlImportFailedWithMessage", { message: error instanceof Error ? error.message : t("common.unknownError") }))
         }
       }
     }
@@ -611,7 +614,7 @@ export default function Home() {
   const handleAddCard = (index: number, isInventory: boolean) => {
     if (index === -1) {
       showFadeNotification({
-        message: "卡组已满，无法添加更多卡牌",
+        message: t("app.deckFull"),
         type: "error"
       });
       return;
@@ -629,7 +632,9 @@ export default function Home() {
       setPendingCardIndex(null);
       setPendingCardIsInventory(false);
       showFadeNotification({
-        message: `卡牌已添加到${pendingCardIsInventory ? '库存' : '聚焦'}卡组`,
+        message: t("app.cardAdded", {
+          deck: pendingCardIsInventory ? t("app.inventoryDeck") : t("app.focusedDeck"),
+        }),
         type: "success"
       });
     }

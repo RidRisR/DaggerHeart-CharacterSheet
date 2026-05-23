@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Search, X } from "lucide-react"
 import { CustomCardCreatorModal } from "./custom-card-creator-modal"
 import { getActiveCharacterId } from "@/lib/multi-character-storage"
+import { useTranslation } from "@/lib/i18n"
 
 interface CardSelectionModalProps {
   isOpen: boolean
@@ -38,6 +39,8 @@ export function CardSelectionModal({
   selectedCardIndex,
   initialTab,
 }: CardSelectionModalProps) {
+  const t = useTranslation()
+
   // === 使用简化的筛选 Hook ===
   const {
     filteredCards,
@@ -129,7 +132,7 @@ export function CardSelectionModal({
       }
       header={
         <ModalHeader
-          title={`选择卡牌 #${selectedCardIndex + 1}`}
+          title={t("cardSelection.title", { index: selectedCardIndex + 1 })}
           onClose={onClose}
           actions={
             <>
@@ -139,7 +142,7 @@ export function CardSelectionModal({
                 onClick={() => setCustomCardModalOpen(true)}
                 className="bg-blue-500 hover:bg-blue-600 text-white"
               >
-                + 自定义卡牌
+                {t("cardSelection.customCard")}
               </Button>
               <Button
                 variant="destructive"
@@ -147,7 +150,7 @@ export function CardSelectionModal({
                 onClick={handleClearSelection}
                 className="bg-red-500 hover:bg-red-600 text-white"
               >
-                清除选择
+                {t("cardSelection.clearSelection")}
               </Button>
             </>
           }
@@ -156,34 +159,34 @@ export function CardSelectionModal({
     >
       <ModalFilterBar>
         <MultiSelectFilter
-          label="卡包"
+          label={t("cardSelection.package")}
           options={batchOptions.map(b => ({ value: b.id, label: `${b.name} (${b.cardCount})` }))}
           selected={state.selectedBatches}
           onChange={actions.setBatches}
-          placeholder="未选卡包"
-          allSelectedText="全部卡包"
-          countSuffix="包已选"
+          placeholder={t("cardSelection.noPackageSelected")}
+          allSelectedText={t("cardSelection.allPackages")}
+          countSuffix={t("cardSelection.packagesSelected")}
           showSearch
-          searchPlaceholder="搜索卡包..."
+          searchPlaceholder={t("cardSelection.searchPackages")}
         />
         <MultiSelectFilter
-          label="类别"
+          label={t("cardSelection.category")}
           options={classOptions}
           selected={state.selectedClasses}
           onChange={actions.setClasses}
-          placeholder="未选类别"
-          allSelectedText="全部类别"
-          countSuffix="类已选"
+          placeholder={t("cardSelection.noCategorySelected")}
+          allSelectedText={t("cardSelection.allCategories")}
+          countSuffix={t("cardSelection.categoriesSelected")}
           disabled={classOptions.length === 0}
         />
         <MultiSelectFilter
-          label="等级"
+          label={t("cardSelection.level")}
           options={levelOptions}
           selected={state.selectedLevels}
           onChange={actions.setLevels}
-          placeholder="未选等级"
-          allSelectedText="全部等级"
-          countSuffix="级已选"
+          placeholder={t("cardSelection.noLevelSelected")}
+          allSelectedText={t("cardSelection.allLevels")}
+          countSuffix={t("cardSelection.levelsSelected")}
           disabled={levelOptions.length === 0}
         />
         <div className="relative flex-1 min-w-[200px]">
@@ -191,7 +194,7 @@ export function CardSelectionModal({
           <Input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="搜索卡牌名称或描述..."
+            placeholder={t("cardSelection.searchCards")}
             className="pl-9 pr-9"
           />
           {searchTerm && (
@@ -208,7 +211,7 @@ export function CardSelectionModal({
           onClick={handleResetFilters}
           className="bg-gray-500 hover:bg-gray-600 text-white"
         >
-          重置筛选
+          {t("cardSelection.resetFilters")}
         </Button>
       </ModalFilterBar>
 
@@ -221,8 +224,8 @@ export function CardSelectionModal({
           loading={loading}
           error={error}
           empty={searchedCards.length === 0}
-          emptyMessage="未找到符合条件的卡牌"
-          loadingMessage="加载卡牌中..."
+          emptyMessage={t("cardSelection.empty")}
+          loadingMessage={t("cardSelection.loading")}
         >
           <InfiniteCardGrid
             cards={displayedItems}

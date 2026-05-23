@@ -29,6 +29,7 @@ import { PrintPageRenderer } from "@/components/print/print-page-renderer"
 import { SaveSwitcher } from "@/components/ui/save-switcher"
 import { MemoryAlert } from "@/components/memory-alert"
 import { memoryMonitor } from "@/lib/memory-monitor"
+import { useTranslation } from "@/lib/i18n"
 
 // EyeIcon和EyeOffIcon已移除 - 现在使用PageVisibilityDropdown
 
@@ -155,6 +156,7 @@ registerPages([
 ])
 
 export default function Home() {
+  const t = useTranslation()
   // 多角色系统状态
   const {
     sheetData: formData,
@@ -229,8 +231,7 @@ export default function Home() {
   // 客户端挂载检测
   useEffect(() => {
     setIsClient(true)
-    // 设置默认页面标题
-    document.title = "Character Sheet"
+    document.title = t("app.title")
 
     // 显示快捷键提示（3秒后消失）
     const timer = setTimeout(() => {
@@ -239,7 +240,7 @@ export default function Home() {
     }, 1000)
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [t])
 
   // 移动设备检测
   useEffect(() => {

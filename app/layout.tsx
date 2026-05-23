@@ -8,7 +8,9 @@ import { Toaster } from "@/components/ui/toaster"
 import { FadeNotificationContainer } from "@/components/ui/fade-notification"
 import { ProgressModalProvider } from "@/components/ui/unified-progress-modal"
 import { ChunkLoadErrorHandler } from "@/components/chunk-load-error-handler"
+import { AppWatermark } from "@/components/layout/app-watermark"
 import { getUmamiAnalyticsConfig } from "@/lib/analytics"
+import { I18nProvider } from "@/lib/i18n"
 import PrintHelper from "./print-helper"
 
 export const metadata: Metadata = {
@@ -114,32 +116,18 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <ChunkLoadErrorHandler />
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <ProgressModalProvider>
-            <CardSystemInitializer />
-            <PrintHelper />
-            {children}
-            <Toaster />
-            <FadeNotificationContainer />
-            {/* 水印 */}
-            <div className="fixed bottom-2 left-2 text-gray-500 text-xs opacity-75 pointer-events-none">
-              本作品完全开源且免费
-              <br />
-              作者：RidRisR
-              <br />
-              翻译及校对：PolearmMaster, 末楔, 里予, 一得, RisRisR
-              <br />
-              <a
-                href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline pointer-events-auto hover:text-gray-700 transition-colors"
-              >
-                项目地址 & 下载地址（点我访问 GitHub）
-              </a>
-            </div>
-          </ProgressModalProvider>
-        </ThemeProvider>
+        <I18nProvider>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            <ProgressModalProvider>
+              <CardSystemInitializer />
+              <PrintHelper />
+              {children}
+              <Toaster />
+              <FadeNotificationContainer />
+              <AppWatermark />
+            </ProgressModalProvider>
+          </ThemeProvider>
+        </I18nProvider>
       </body>
     </html>
   )

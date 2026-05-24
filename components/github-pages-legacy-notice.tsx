@@ -1,11 +1,20 @@
-import { AlertTriangle, ExternalLink } from "lucide-react"
+"use client"
+
+import { useState } from "react"
+import { AlertTriangle, ExternalLink, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
-const DEADLINE_LABEL = "2026年6月15日"
+const DEADLINE_LABEL = "2026年6月30日"
 const PRIMARY_SITE_URL = "https://dhsheet.site/"
 
 export function GithubPagesLegacyNotice() {
+  const [isVisible, setIsVisible] = useState(true)
+
+  if (!isVisible) {
+    return null
+  }
+
   return (
     <section className="print:hidden w-full px-3 pt-4 pb-3">
       <div className="mx-auto max-w-5xl rounded-md border border-amber-300 bg-amber-50 px-4 py-4 text-amber-950 shadow-sm">
@@ -36,12 +45,23 @@ export function GithubPagesLegacyNotice() {
               </p>
             </div>
           </div>
-          <Button asChild className="shrink-0 bg-amber-900 text-white hover:bg-amber-800">
-            <a href={PRIMARY_SITE_URL} target="_blank" rel="noopener noreferrer">
-              打开正式站点
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
-            </a>
-          </Button>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row md:flex-col">
+            <Button asChild className="bg-amber-900 text-white hover:bg-amber-800">
+              <a href={PRIMARY_SITE_URL} target="_blank" rel="noopener noreferrer">
+                打开正式站点
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-amber-300 bg-white/60 text-amber-950 hover:bg-amber-100"
+              onClick={() => setIsVisible(false)}
+            >
+              关闭提示
+              <X className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </div>
         </div>
       </div>
     </section>

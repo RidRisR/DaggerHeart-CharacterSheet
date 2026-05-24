@@ -26,12 +26,7 @@ export function GithubPagesLegacyNotice() {
             </div>
             <div className="space-y-2 text-sm leading-6">
               <p>
-                我们注意到，同时维护 GitHub Pages 旧站和新的正式站点，可能会导致浏览器本地数据不同步，并造成两个版本长期分叉。
-              </p>
-              <p>
-                为了让后续更新、修复和角色数据行为保持一致，GitHub Pages 版本将在
-                <strong className="mx-1">{DEADLINE_LABEL}</strong>
-                后不再作为独立站点维护，并将跳转到正式站点：
+                我们现在已经提供新的正式站点：
                 <a
                   href={PRIMARY_SITE_URL}
                   className="ml-1 font-medium underline underline-offset-4 hover:text-amber-800"
@@ -40,8 +35,14 @@ export function GithubPagesLegacyNotice() {
                 </a>
               </p>
               <p>
+                继续同时维护 GitHub Pages 旧站和新的正式站点，可能会导致浏览器本地数据不同步，并造成两个版本长期分叉。
+                为了让后续更新、修复和角色数据行为保持一致，GitHub Pages 版本将在
+                <strong className="mx-1">{DEADLINE_LABEL}</strong>
+                后不再作为独立站点维护，并将跳转到正式站点。
+              </p>
+              <p>
                 角色数据保存在当前浏览器本地，因此保存在 GitHub Pages 地址下的数据不会自动出现在新站。
-                请在截止日前从本页面底部「导出」菜单导出角色数据，并在正式站点导入。
+                建议你现在打开正式站点使用；如果这里还有旧数据，请在截止日前从本页面底部「导出」菜单导出角色数据，并在正式站点导入。
               </p>
             </div>
           </div>

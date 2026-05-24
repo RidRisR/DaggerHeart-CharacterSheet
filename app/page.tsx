@@ -29,6 +29,7 @@ import { PrintPageRenderer } from "@/components/print/print-page-renderer"
 import { SaveSwitcher } from "@/components/ui/save-switcher"
 import { MemoryAlert } from "@/components/memory-alert"
 import { memoryMonitor } from "@/lib/memory-monitor"
+import { GithubPagesLegacyNotice } from "@/components/github-pages-legacy-notice"
 
 // EyeIcon和EyeOffIcon已移除 - 现在使用PageVisibilityDropdown
 
@@ -614,6 +615,7 @@ export default function Home() {
   return (
     <main className={`min-w-0 w-full max-w-full mx-auto px-0 container ${isMobile ? 'pb-32' : 'pb-20'
       }`}>
+      <GithubPagesLegacyNotice />
 
       {/* 底部抽屉式卡牌展示 - 打印时隐藏 */}
       <div className="print:hidden">

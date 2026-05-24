@@ -56,10 +56,10 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   robots: {
-    index: true,
+    index: false,
     follow: true,
     googleBot: {
-      index: true,
+      index: false,
       follow: true,
     },
   },

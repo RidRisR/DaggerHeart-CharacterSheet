@@ -1,11 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { useAutoResizeFont } from "@/hooks/use-auto-resize-font"
-import { useCardPreview } from "@/hooks/use-card-preview"
-import { SelectableCard } from "@/components/ui/selectable-card"
+import { getCardPreviewSize, useCardPreview } from "@/hooks/use-card-preview"
+import { CardHoverPreview } from "@/components/ui/card-hover-preview"
 import { useSheetStore } from "@/lib/sheet-store"
+import { useTextModeStore } from "@/lib/text-mode-store"
 import { PageHeader } from "@/components/page-header"
 
 interface HeaderSectionProps {
@@ -22,7 +23,7 @@ export function HeaderSection({
   onOpenSubclassModal
 }: HeaderSectionProps) {
   const { sheetData: formData, setSheetData, updateLevel } = useSheetStore()
-  const containerRef = useRef<HTMLDivElement>(null)
+  const { isTextMode } = useTextModeStore()
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState("")
   const [levelEditingValue, setLevelEditingValue] = useState<string | null>(null)
@@ -126,12 +127,11 @@ export function HeaderSection({
     handleMouseLeave
   } = useCardPreview({
     cards: formData.cards || [],
-    containerRef
+    previewSize: getCardPreviewSize(isTextMode),
   })
 
   return (
     <div
-      ref={containerRef}
       className="bg-gray-800 text-white p-2 flex justify-between items-center rounded-t-md relative"
     >
       <div className="flex flex-col">
@@ -407,13 +407,12 @@ export function HeaderSection({
       {/* 卡牌悬停预览 */}
       {hoveredCard && (
         <div
-          className="absolute z-50 pointer-events-none"
+          className="z-50 pointer-events-none"
           style={previewPosition}
         >
-          <SelectableCard
+          <CardHoverPreview
             card={hoveredCard}
-            onClick={() => { }}
-            isSelected={false}
+            isTextMode={isTextMode}
           />
         </div>
       )}

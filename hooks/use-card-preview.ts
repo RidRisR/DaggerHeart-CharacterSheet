@@ -1,13 +1,106 @@
-import { useState, useCallback, useMemo, type CSSProperties } from 'react'
+import { useState, useCallback, type CSSProperties } from 'react'
 import type { StandardCard } from '@/card/card-types'
 import type { SheetCardReference } from '@/lib/sheet-data'
 
-export interface UseCardPreviewOptions {
-    cards: StandardCard[]
-    containerRef?: React.RefObject<HTMLElement | null>
+export interface FloatingPreviewSize {
+    width: number
+    height: number
 }
 
-export function useCardPreview({ cards, containerRef }: UseCardPreviewOptions) {
+export const CARD_PREVIEW_SIZES = {
+    image: { width: 520, height: 450 },
+    text: { width: 300, height: 400 },
+} as const satisfies Record<string, FloatingPreviewSize>
+
+export const getCardPreviewSize = (isTextMode: boolean): FloatingPreviewSize => {
+    return isTextMode ? CARD_PREVIEW_SIZES.text : CARD_PREVIEW_SIZES.image
+}
+
+interface CalculateFloatingPreviewPositionOptions {
+    triggerRect: DOMRect
+    previewSize: FloatingPreviewSize
+    viewportSize?: {
+        width: number
+        height: number
+    }
+    gap?: number
+}
+
+export function calculateFloatingPreviewPosition({
+    triggerRect,
+    previewSize,
+    viewportSize,
+    gap = 10,
+}: CalculateFloatingPreviewPositionOptions): CSSProperties {
+    const viewportWidth = viewportSize?.width ?? window.innerWidth
+    const viewportHeight = viewportSize?.height ?? window.innerHeight
+
+    const spaceLeft = triggerRect.left
+    const spaceRight = viewportWidth - triggerRect.right
+    const spaceTop = triggerRect.top
+    const spaceBottom = viewportHeight - triggerRect.bottom
+
+    const position: CSSProperties = {
+        position: 'fixed',
+        zIndex: 9999,
+        maxHeight: '80vh',
+        overflowY: 'auto',
+    }
+
+    const getVerticalPositionForHorizontal = (): number => {
+        let idealTop = triggerRect.top - (previewSize.height - triggerRect.height) / 2
+
+        if (idealTop + previewSize.height > viewportHeight - gap) {
+            idealTop = viewportHeight - previewSize.height - gap
+        }
+
+        return Math.max(gap, idealTop)
+    }
+
+    const getHorizontalPositionForVertical = (): number => {
+        const idealLeft = triggerRect.left - (previewSize.width - triggerRect.width) / 2
+        return Math.max(gap, Math.min(viewportWidth - previewSize.width - gap, idealLeft))
+    }
+
+    if (spaceRight >= previewSize.width + gap) {
+        position.left = `${triggerRect.right + gap}px`
+        position.top = `${getVerticalPositionForHorizontal()}px`
+    } else if (spaceLeft >= previewSize.width + gap) {
+        position.right = `${viewportWidth - triggerRect.left + gap}px`
+        position.top = `${getVerticalPositionForHorizontal()}px`
+    } else if (spaceTop >= previewSize.height + gap) {
+        position.bottom = `${viewportHeight - triggerRect.top + gap}px`
+        position.left = `${getHorizontalPositionForVertical()}px`
+    } else if (spaceBottom >= previewSize.height + gap) {
+        position.top = `${triggerRect.bottom + gap}px`
+        position.left = `${getHorizontalPositionForVertical()}px`
+    } else {
+        const maxSpace = Math.max(spaceLeft, spaceRight, spaceTop, spaceBottom)
+
+        if (maxSpace === spaceRight) {
+            position.left = `${triggerRect.right + gap}px`
+            position.top = `${getVerticalPositionForHorizontal()}px`
+        } else if (maxSpace === spaceLeft) {
+            position.right = `${viewportWidth - triggerRect.left + gap}px`
+            position.top = `${getVerticalPositionForHorizontal()}px`
+        } else if (maxSpace === spaceTop) {
+            position.bottom = `${viewportHeight - triggerRect.top + gap}px`
+            position.left = `${getHorizontalPositionForVertical()}px`
+        } else {
+            position.top = `${triggerRect.bottom + gap}px`
+            position.left = `${getHorizontalPositionForVertical()}px`
+        }
+    }
+
+    return position
+}
+
+export interface UseCardPreviewOptions {
+    cards: StandardCard[]
+    previewSize?: FloatingPreviewSize
+}
+
+export function useCardPreview({ cards, previewSize = CARD_PREVIEW_SIZES.image }: UseCardPreviewOptions) {
     const [hoveredCard, setHoveredCard] = useState<StandardCard | null>(null)
     const [previewPosition, setPreviewPosition] = useState<CSSProperties>({})
 
@@ -22,46 +115,11 @@ export function useCardPreview({ cards, containerRef }: UseCardPreviewOptions) {
     // 获取预览位置的函数
     const calculatePreviewPosition = useCallback((element: HTMLElement): CSSProperties => {
         const rect = element.getBoundingClientRect()
-        const containerRect = containerRef?.current?.getBoundingClientRect()
-
-        // 计算相对于容器的位置
-        const relativeLeft = containerRect ? rect.left - containerRect.left : rect.left
-        const relativeTop = containerRect ? rect.top - containerRect.top : rect.top
-
-        // 预览卡牌的固定宽度
-        const previewWidth = 300
-        const previewHeight = 400
-
-        // 获取视口或容器的尺寸
-        const viewportWidth = containerRect?.width || window.innerWidth
-        const viewportHeight = containerRect?.height || window.innerHeight
-
-        // 计算最佳位置
-        let left = relativeLeft + rect.width + 10 // 默认在右侧
-        let top = relativeTop
-
-        // 如果右侧空间不够，显示在左侧
-        if (left + previewWidth > viewportWidth) {
-            left = relativeLeft - previewWidth - 10
-        }
-
-        // 如果底部空间不够，向上调整
-        if (top + previewHeight > viewportHeight) {
-            top = viewportHeight - previewHeight - 10
-        }
-
-        // 确保不会超出顶部边界
-        if (top < 10) {
-            top = 10
-        }
-
-        return {
-            position: 'absolute' as const,
-            left: `${Math.max(10, left)}px`,
-            top: `${top}px`,
-            zIndex: 50,
-        }
-    }, [containerRef])
+        return calculateFloatingPreviewPosition({
+            triggerRect: rect,
+            previewSize,
+        })
+    }, [previewSize])
 
     // 处理鼠标进入
     const handleMouseEnter = useCallback((ref: SheetCardReference | undefined, element: HTMLElement) => {

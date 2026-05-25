@@ -180,7 +180,7 @@ export function PageDisplay({
       )}
 
       {/* 左侧切换区域 - 仅桌面端单页模式显示 */}
-      {!isDualPageMode && (
+      {!isDualPageMode && !isMobile && (
         <div
           className="print:hidden hidden md:block absolute -left-20 w-16 flex items-center justify-center cursor-pointer group z-20"
           style={{ top: '48px', bottom: 0 }}
@@ -199,7 +199,7 @@ export function PageDisplay({
       )}
 
       {/* 右侧切换区域 - 仅桌面端单页模式显示 */}
-      {!isDualPageMode && (
+      {!isDualPageMode && !isMobile && (
         <div
           className="print:hidden hidden md:block absolute -right-20 w-16 flex items-center justify-center cursor-pointer group z-20"
           style={{ top: '48px', bottom: 0 }}

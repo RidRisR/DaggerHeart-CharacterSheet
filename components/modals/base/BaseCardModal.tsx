@@ -6,10 +6,10 @@ import { useModalKeyboard } from "@/hooks/use-modal-keyboard"
 import { cn } from "@/lib/utils"
 
 const sizeClasses = {
-  md: 'max-w-4xl max-h-[85vh]',
-  lg: 'max-w-6xl max-h-[90vh]',
-  xl: 'max-w-7xl max-h-[95vh]',
-  full: 'max-w-[95vw] max-h-[95vh]',
+  md: 'max-w-4xl max-h-[calc(100svh-10rem)] [@media_(hover:hover)_and_(pointer:fine)]:max-h-[calc(100svh-4rem)]',
+  lg: 'max-w-6xl max-h-[calc(100svh-10rem)] [@media_(hover:hover)_and_(pointer:fine)]:max-h-[calc(100svh-4rem)]',
+  xl: 'max-w-7xl max-h-[calc(100svh-10rem)] [@media_(hover:hover)_and_(pointer:fine)]:max-h-[calc(100svh-4rem)]',
+  full: 'max-w-[95vw] max-h-[calc(100svh-10rem)] [@media_(hover:hover)_and_(pointer:fine)]:max-h-[calc(100svh-4rem)]',
 }
 
 const overlayVariants = {
@@ -42,7 +42,7 @@ interface BaseCardModalProps {
 
 export function BaseCardModal({
   isOpen, onClose, size = 'lg', header, sidebar,
-  sidebarWidth = 'w-48', children,
+  sidebarWidth = 'w-36 [@media_(hover:hover)_and_(pointer:fine)]:w-48', children,
   closeOnOverlayClick = true, closeOnEscape = true,
   className, overlayClassName,
 }: BaseCardModalProps) {

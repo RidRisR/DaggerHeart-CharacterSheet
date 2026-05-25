@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { FadeNotificationContainer } from "@/components/ui/fade-notification"
 import { ProgressModalProvider } from "@/components/ui/unified-progress-modal"
 import { ChunkLoadErrorHandler } from "@/components/chunk-load-error-handler"
+import { MobileViewportScaler } from "@/components/mobile-viewport-scaler"
 import { getUmamiAnalyticsConfig } from "@/lib/analytics"
 import { APP_DESCRIPTION, APP_SHORT_DESCRIPTION, APP_TITLE, SITE_URL } from "@/lib/seo"
 import PrintHelper from "./print-helper"
@@ -72,7 +73,7 @@ export const metadata: Metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  maximumScale: 5,
   userScalable: true,
 }
 
@@ -126,6 +127,7 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <ChunkLoadErrorHandler />
+        <MobileViewportScaler />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <ProgressModalProvider>
             <CardSystemInitializer />

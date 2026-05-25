@@ -28,7 +28,7 @@ export function CardGrid<T extends StandardCard | ExtendedStandardCard>({
       className={cn(
         "grid gap-4 justify-items-center",
         isTextMode
-          ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+          ? "grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),18rem))] justify-center"
           : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
         className
       )}

@@ -7,6 +7,7 @@ import { createEmptyCard, StandardCard, isEmptyCard } from "@/card/card-types"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { CardHoverPreview } from "@/components/ui/card-hover-preview"
+import { calculateFloatingPreviewPosition, getCardPreviewSize } from "@/hooks/use-card-preview"
 import { useTextModeStore } from "@/lib/text-mode-store"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { SheetData } from "@/lib/sheet-data"
@@ -332,82 +333,10 @@ export function CardDeckSection({
     const card = cardRefs.current[index]
     if (!card) return {}
 
-    const rect = card.getBoundingClientRect()
-    const previewWidth = 520 // CardHoverPreview 的宽度
-    const previewHeight = 450 // CardHoverPreview 的估计高度（提高以覆盖文字模式的 350px + 内容）
-    const gap = 10 // 间距
-
-    // 计算各个方向的可用空间
-    const spaceLeft = rect.left
-    const spaceRight = window.innerWidth - rect.right
-    const spaceTop = rect.top
-    const spaceBottom = window.innerHeight - rect.bottom
-
-    // 优先选择左右侧面，然后是上下
-    let position: React.CSSProperties = {
-      position: "fixed",
-      zIndex: 9999, // 确保最高优先级
-      maxHeight: "80vh",
-      overflowY: "auto",
-    }
-
-    // 辅助函数：计算水平定位时的垂直位置，确保不超出屏幕
-    const getVerticalPositionForHorizontal = (): number => {
-      // 理想情况：垂直居中对齐触发元素
-      let idealTop = rect.top - (previewHeight - rect.height) / 2
-
-      // 检查底部是否会超出
-      if (idealTop + previewHeight > window.innerHeight - gap) {
-        // 底部会超出，调整为贴近底部
-        idealTop = window.innerHeight - previewHeight - gap
-      }
-
-      // 确保顶部也不会超出
-      idealTop = Math.max(gap, idealTop)
-
-      return idealTop
-    }
-
-    // 1. 优先尝试右侧
-    if (spaceRight >= previewWidth + gap) {
-      position.left = `${rect.right + gap}px`
-      position.top = `${getVerticalPositionForHorizontal()}px`
-    }
-    // 2. 其次尝试左侧
-    else if (spaceLeft >= previewWidth + gap) {
-      position.right = `${window.innerWidth - rect.left + gap}px`
-      position.top = `${getVerticalPositionForHorizontal()}px`
-    }
-    // 3. 再尝试上方
-    else if (spaceTop >= previewHeight + gap) {
-      position.bottom = `${window.innerHeight - rect.top + gap}px`
-      position.left = `${Math.max(gap, Math.min(window.innerWidth - previewWidth - gap, rect.left - (previewWidth - rect.width) / 2))}px`
-    }
-    // 4. 最后尝试下方
-    else if (spaceBottom >= previewHeight + gap) {
-      position.top = `${rect.bottom + gap}px`
-      position.left = `${Math.max(gap, Math.min(window.innerWidth - previewWidth - gap, rect.left - (previewWidth - rect.width) / 2))}px`
-    }
-    // 5. 如果都不够，选择空间最大的方向
-    else {
-      const maxSpace = Math.max(spaceLeft, spaceRight, spaceTop, spaceBottom)
-
-      if (maxSpace === spaceRight) {
-        position.left = `${rect.right + gap}px`
-        position.top = `${getVerticalPositionForHorizontal()}px`
-      } else if (maxSpace === spaceLeft) {
-        position.right = `${window.innerWidth - rect.left + gap}px`
-        position.top = `${getVerticalPositionForHorizontal()}px`
-      } else if (maxSpace === spaceTop) {
-        position.bottom = `${window.innerHeight - rect.top + gap}px`
-        position.left = `${Math.max(gap, Math.min(window.innerWidth - previewWidth - gap, rect.left - (previewWidth - rect.width) / 2))}px`
-      } else {
-        position.top = `${rect.bottom + gap}px`
-        position.left = `${Math.max(gap, Math.min(window.innerWidth - previewWidth - gap, rect.left - (previewWidth - rect.width) / 2))}px`
-      }
-    }
-
-    return position
+    return calculateFloatingPreviewPosition({
+      triggerRect: card.getBoundingClientRect(),
+      previewSize: getCardPreviewSize(isTextMode),
+    })
   }
 
   return (

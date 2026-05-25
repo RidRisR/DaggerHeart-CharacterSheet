@@ -203,7 +203,7 @@ export function CardDrawer({ cards, inventoryCards, isOpen: externalIsOpen, onCl
 
           {/* 抽屉内容 */}
           <div
-            className={`card-drawer-content fixed bottom-0 left-0 right-0 bg-white w-full min-h-[35vh] rounded-t-lg shadow-xl flex flex-col transition-transform duration-300 ease-out ${isClosing ? 'translate-y-full' : 'translate-y-0'
+            className={`card-drawer-content fixed bottom-0 left-0 right-0 bg-white w-full h-[min(32svh,420px)] rounded-t-lg shadow-xl flex flex-col transition-transform duration-300 ease-out ${isClosing ? 'translate-y-full' : 'translate-y-0'
               }`}
             onClick={(e) => e.stopPropagation()}
           >

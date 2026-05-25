@@ -17,7 +17,7 @@ export function PrintPageRenderer({ sheetData }: PrintPageRendererProps) {
   const lastPageIndex = visiblePages.length - 1
   
   return (
-    <>
+    <div className="pb-40 print:pb-0">
       {visiblePages.map((page, index) => {
         const Component = page.component
         const isLastPage = index === lastPageIndex
@@ -33,6 +33,6 @@ export function PrintPageRenderer({ sheetData }: PrintPageRendererProps) {
           </div>
         )
       })}
-    </>
+    </div>
   )
 }

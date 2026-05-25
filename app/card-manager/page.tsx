@@ -23,14 +23,7 @@ import {
 } from '@/card/index'
 import { importDhcbCardPackage, type DhcbImportResult } from '@/card/utils/dhcb-importer'
 import { useUnifiedCardStore } from '@/card/stores/unified-card-store'
-import { getBasePath, navigateToPage } from '@/lib/utils'
-import { DocumentModal } from '@/components/modals/document-modal'
-import userGuideContent from '@/public/自定义卡包指南和示例/用户指南.md'
-import aiGuideContent from '@/public/自定义卡包指南和示例/AI-卡包创作指南.md'
-import exampleJsonData from '@/public/自定义卡包指南和示例/神州战役卡牌包.json'
-
-// 将 JSON 对象转换为格式化的字符串
-const exampleJsonContent = JSON.stringify(exampleJsonData, null, 2)
+import { navigateToPage } from '@/lib/utils'
 
 interface ImportStatus {
   isImporting: boolean
@@ -63,7 +56,6 @@ export default function CardImportTestPage() {
   const [viewingCards, setViewingCards] = useState<ExtendedStandardCard[]>([])
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [isClient, setIsClient] = useState(false)
-  const [documentModalOpen, setDocumentModalOpen] = useState(false)
   const [storageInfo, setStorageInfo] = useState(() => ({
     used: '0 KB',
     available: '0 KB',
@@ -333,7 +325,7 @@ export default function CardImportTestPage() {
                 <Button
                   variant="outline"
                   size="default"
-                  onClick={() => setDocumentModalOpen(true)}
+                  onClick={() => navigateToPage('/card-pack-guide')}
                   className="flex items-center gap-2"
                 >
                   <BookOpen className="h-4 w-4" />
@@ -768,14 +760,6 @@ export default function CardImportTestPage() {
         title={`卡牌详情（${viewingCards.length} 张）`}
       />
 
-      {/* 文档查看模态框 */}
-      <DocumentModal
-        isOpen={documentModalOpen}
-        onClose={() => setDocumentModalOpen(false)}
-        userGuideContent={userGuideContent}
-        aiGuideContent={aiGuideContent}
-        exampleJsonContent={exampleJsonContent}
-      />
     </div>
   )
 }

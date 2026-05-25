@@ -1,25 +1,10 @@
-"use client"
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-
-interface DiceUsageGuideModalProps {
-  isOpen: boolean
-  onClose: () => void
+interface DiceUsageGuideContentProps {
+  className?: string
 }
 
-export function DiceUsageGuideModal({ isOpen, onClose }: DiceUsageGuideModalProps) {
+export function DiceUsageGuideContent({ className = "space-y-8" }: DiceUsageGuideContentProps) {
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            📖 Daggerheart 骰子使用指南
-          </DialogTitle>
-        </DialogHeader>
-
-        <ScrollArea className="h-[calc(90vh-8rem)] pr-4">
-          <div className="space-y-8">
+          <div className={className}>
             {/* 快速入门 */}
             <section id="quick-start">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
@@ -582,8 +567,5 @@ export function DiceUsageGuideModal({ isOpen, onClose }: DiceUsageGuideModalProp
               </div>
             </section>
           </div>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
   )
 }

@@ -14,7 +14,7 @@
 
 无需安装，点击下方按钮即可立即使用我们的在线版本：
 
-[![点我即刻使用](https://img.shields.io/badge/在线建卡-点击访问-success?logo=vercel)](https://ridrisr.github.io/DaggerHeart-CharacterSheet/)
+[![点我即刻使用](https://img.shields.io/badge/在线建卡-点击访问-success?logo=vercel)](https://dhsheet.site/)
 
 *   **获取稳定版本:** 你也可以直接从 [GitHub Releases](https://github.com/RidRisR/DaggerHeart-CharacterSheet/releases) 下载最新的稳定版本文件。
 
@@ -57,4 +57,3 @@
 
 Daggerheart系统参考文档（System Reference Document, SRD）及其所有文本内容是Critical Role Productions, LLC.的专属财产。
 本工具部分内容参考了 [Daggerheart SRD v1.0](https://darringtonpress.com/daggerheart) 中的公开信息。
-

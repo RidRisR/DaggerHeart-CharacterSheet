@@ -31,12 +31,17 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
   const [isMigrationCompleted, setIsMigrationCompleted] = useState(false)
 
   const assertCurrentSchemaImportedSheet = (importedData: SheetData): void => {
-    const fail = (field: string) => {
+    const fail = (field: string): never => {
       throw new Error(`Imported sheet must be current-schema: invalid ${field}`)
     }
 
     const isRecord = (value: unknown): value is Record<string, unknown> =>
       Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+
+    const assertRecord: (value: unknown, field: string) => asserts value is Record<string, unknown> =
+      (value, field) => {
+        if (!isRecord(value)) fail(field)
+      }
 
     if (!isRecord(importedData)) fail('root')
     if ('includePageThreeInExport' in importedData) fail('includePageThreeInExport')
@@ -67,8 +72,9 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
     if (!Array.isArray(trainingOptions.bonded)) fail('trainingOptions.bonded')
     if (!Array.isArray(trainingOptions.aware)) fail('trainingOptions.aware')
 
-    const pageVisibility = importedData.pageVisibility
-    if (!isRecord(pageVisibility)) fail('pageVisibility')
+    const rawPageVisibility = importedData.pageVisibility
+    assertRecord(rawPageVisibility, 'pageVisibility')
+    const pageVisibility: Record<string, unknown> = rawPageVisibility
     if (typeof pageVisibility.rangerCompanion !== 'boolean') fail('pageVisibility.rangerCompanion')
     if (typeof pageVisibility.armorTemplate !== 'boolean') fail('pageVisibility.armorTemplate')
     if (typeof pageVisibility.adventureNotes !== 'boolean') fail('pageVisibility.adventureNotes')
@@ -78,17 +84,20 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
     if (!isRecord(equipment.weaponSlots)) fail('equipment.weaponSlots')
     if (!isRecord(equipment.armorSlot)) fail('equipment.armorSlot')
 
-    const armorTemplate = importedData.armorTemplate
-    if (!isRecord(armorTemplate)) fail('armorTemplate')
+    const rawArmorTemplate = importedData.armorTemplate
+    assertRecord(rawArmorTemplate, 'armorTemplate')
+    const armorTemplate: Record<string, unknown> = rawArmorTemplate
     if (!Array.isArray(armorTemplate.upgradeSlots)) fail('armorTemplate.upgradeSlots')
     if (!isRecord(armorTemplate.upgrades)) fail('armorTemplate.upgrades')
 
-    const adventureNotes = importedData.adventureNotes
-    if (!isRecord(adventureNotes)) fail('adventureNotes')
+    const rawAdventureNotes = importedData.adventureNotes
+    assertRecord(rawAdventureNotes, 'adventureNotes')
+    const adventureNotes: Record<string, unknown> = rawAdventureNotes
     if (!Array.isArray(adventureNotes.adventureLog)) fail('adventureNotes.adventureLog')
 
-    const notebook = importedData.notebook
-    if (!isRecord(notebook)) fail('notebook')
+    const rawNotebook = importedData.notebook
+    assertRecord(rawNotebook, 'notebook')
+    const notebook: Record<string, unknown> = rawNotebook
     if (!Array.isArray(notebook.pages)) fail('notebook.pages')
     if (typeof notebook.currentPageIndex !== 'number') fail('notebook.currentPageIndex')
     if (typeof notebook.isOpen !== 'boolean') fail('notebook.isOpen')

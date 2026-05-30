@@ -126,7 +126,7 @@ import {
 
 function currentSheet(overrides: Partial<SheetData> = {}): SheetData {
   const sheet = {
-    ...defaultSheetData,
+    ...structuredClone(defaultSheetData),
     ...overrides,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     name: overrides.name ?? 'Imported Kaka',
@@ -135,7 +135,7 @@ function currentSheet(overrides: Partial<SheetData> = {}): SheetData {
       armorTemplate: false,
       adventureNotes: false,
     },
-    inventory_cards: overrides.inventory_cards ?? defaultSheetData.inventory_cards,
+    inventory_cards: overrides.inventory_cards ?? structuredClone(defaultSheetData.inventory_cards),
   }
   delete (sheet as any).includePageThreeInExport
   return sheet
@@ -217,19 +217,26 @@ describe('imported save creation', () => {
     expect(setCurrentTabValue).not.toHaveBeenCalled()
   })
 
-  it('throws before creating metadata when imported data is not current schema', async () => {
+  it.each([
+    ['legacy schema version', (sheet: any) => { sheet.schemaVersion = 1 }],
+    ['legacy hope shape', (sheet: any) => { sheet.hope = [true, false] }],
+    ['missing inventory_cards', (sheet: any) => { delete sheet.inventory_cards }],
+    ['missing pageVisibility', (sheet: any) => { delete sheet.pageVisibility }],
+    ['empty pageVisibility', (sheet: any) => { sheet.pageVisibility = {} }],
+    ['missing equipment', (sheet: any) => { delete sheet.equipment }],
+    ['missing armorTemplate', (sheet: any) => { delete sheet.armorTemplate }],
+    ['missing adventureNotes', (sheet: any) => { delete sheet.adventureNotes }],
+    ['missing notebook', (sheet: any) => { delete sheet.notebook }],
+    ['deprecated includePageThreeInExport', (sheet: any) => { sheet.includePageThreeInExport = true }],
+  ])('throws before creating metadata when imported data has %s', async (_label, mutate) => {
     const { result } = await renderManagementHook()
     const beforeList = JSON.parse(localStorage.getItem(CHARACTER_LIST_KEY) || '{}')
-    const legacyData = {
-      ...defaultSheetData,
-      schemaVersion: 1,
-      hope: [true, false],
-      includePageThreeInExport: true,
-    } as any
+    const invalidData = currentSheet() as any
+    mutate(invalidData)
 
     expect(() => {
       act(() => {
-        result.current.createImportedCharacterHandler('Bad Import', legacyData)
+        result.current.createImportedCharacterHandler('Bad Import', invalidData)
       })
     }).toThrow(/current-schema/i)
 
@@ -263,6 +270,7 @@ describe('imported save creation', () => {
 
   it('cleans up newly-created metadata if saving imported data fails', async () => {
     const { result } = await renderManagementHook()
+    const previousCharacterId = result.current.currentCharacterId
     const originalSetItem = Storage.prototype.setItem
     const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
       this: Storage,
@@ -286,12 +294,49 @@ describe('imported save creation', () => {
     expect(success).toBe(false)
     const list = JSON.parse(localStorage.getItem(CHARACTER_LIST_KEY) || '{}')
     expect(list.characters.some((character: any) => character.saveName === 'Broken Import')).toBe(false)
+    expect(list.activeCharacterId).toBe(previousCharacterId)
+    expect(localStorage.getItem(ACTIVE_CHARACTER_ID_KEY)).toBe(previousCharacterId)
+    expect(result.current.currentCharacterId).toBe(previousCharacterId)
+    expect(result.current.characterList.some(character => character.saveName === 'Broken Import')).toBe(false)
     const storedValues: string[] = []
     for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index)
       if (key) storedValues.push(localStorage.getItem(key) || '')
     }
     expect(storedValues.some(value => value.includes('Save Failure Hero'))).toBe(false)
+    setItemSpy.mockRestore()
+  })
+
+  it('rolls back metadata and active state if activation fails after saving imported data', async () => {
+    const { result } = await renderManagementHook()
+    const previousCharacterId = result.current.currentCharacterId
+    const originalSetItem = Storage.prototype.setItem
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === ACTIVE_CHARACTER_ID_KEY) {
+        throw new Error('forced active-id failure')
+      }
+      return originalSetItem.call(this, key, value)
+    })
+
+    let success = true
+    act(() => {
+      success = result.current.createImportedCharacterHandler(
+        'Activation Failure Import',
+        currentSheet({ name: 'Activation Failure Hero' }),
+      )
+    })
+
+    expect(success).toBe(false)
+    const list = JSON.parse(localStorage.getItem(CHARACTER_LIST_KEY) || '{}')
+    expect(list.characters.some((character: any) => character.saveName === 'Activation Failure Import')).toBe(false)
+    expect(list.activeCharacterId).toBe(previousCharacterId)
+    expect(localStorage.getItem(ACTIVE_CHARACTER_ID_KEY)).toBe(previousCharacterId)
+    expect(result.current.currentCharacterId).toBe(previousCharacterId)
+    expect(result.current.characterList.some(character => character.saveName === 'Activation Failure Import')).toBe(false)
     setItemSpy.mockRestore()
   })
 })
@@ -321,13 +366,13 @@ Leave the failing test uncommitted until Task 3 implements the hook action.
 
 - [ ] **Step 1: Update imports**
 
-In `hooks/use-character-management.ts`, update imports to include the schema version and delete helper:
+In `hooks/use-character-management.ts`, update imports to include the schema version:
 
 ```ts
 import { CURRENT_SCHEMA_VERSION } from '@/lib/sheet-schema-version'
 ```
 
-Ensure the existing multi-character storage import includes `deleteCharacterById`:
+Keep the existing multi-character storage import shape; it already includes the storage helpers needed by this task:
 
 ```ts
 import {
@@ -341,7 +386,6 @@ import {
   addCharacterToMetadataList,
   removeCharacterFromMetadataList,
   updateCharacterInMetadataList,
-  deleteCharacterById,
   MAX_CHARACTERS,
   cleanupOrphanedCharacterData
 } from '@/lib/multi-character-storage'
@@ -352,6 +396,16 @@ import {
 Above `export function useCharacterManagement(...)`, add:
 
 ```ts
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function assertBooleanField(record: Record<string, unknown>, field: string, message: string): void {
+  if (typeof record[field] !== 'boolean') {
+    throw new Error(message)
+  }
+}
+
 function assertCurrentSchemaImportedSheetData(data: SheetData): void {
   if (!data || typeof data !== 'object') {
     throw new Error('Imported Save Creation requires current-schema SheetData')
@@ -369,28 +423,43 @@ function assertCurrentSchemaImportedSheetData(data: SheetData): void {
     throw new Error('Imported Save Creation requires current-schema inventory_cards')
   }
 
-  if (!data.pageVisibility || typeof data.pageVisibility !== 'object') {
+  if (!isRecord(data.pageVisibility)) {
     throw new Error('Imported Save Creation requires current-schema pageVisibility')
   }
+  assertBooleanField(data.pageVisibility, 'rangerCompanion', 'Imported Save Creation requires current-schema pageVisibility.rangerCompanion')
+  assertBooleanField(data.pageVisibility, 'armorTemplate', 'Imported Save Creation requires current-schema pageVisibility.armorTemplate')
+  assertBooleanField(data.pageVisibility, 'adventureNotes', 'Imported Save Creation requires current-schema pageVisibility.adventureNotes')
 
-  if (!data.equipment || typeof data.equipment !== 'object') {
+  if (!isRecord(data.equipment)) {
     throw new Error('Imported Save Creation requires current-schema equipment')
   }
+  if (!isRecord(data.equipment.weaponSlots) || !isRecord(data.equipment.armorSlot)) {
+    throw new Error('Imported Save Creation requires current-schema equipment slots')
+  }
 
-  if (!data.armorTemplate || typeof data.armorTemplate !== 'object') {
+  if (!isRecord(data.armorTemplate)) {
     throw new Error('Imported Save Creation requires current-schema armorTemplate')
   }
-
-  if (!data.adventureNotes || typeof data.adventureNotes !== 'object') {
-    throw new Error('Imported Save Creation requires current-schema adventureNotes')
+  if (!Array.isArray(data.armorTemplate.upgradeSlots) || !isRecord(data.armorTemplate.upgrades)) {
+    throw new Error('Imported Save Creation requires current-schema armorTemplate structure')
   }
 
-  if (!data.notebook || typeof data.notebook !== 'object') {
+  if (!isRecord(data.adventureNotes)) {
+    throw new Error('Imported Save Creation requires current-schema adventureNotes')
+  }
+  if (!Array.isArray(data.adventureNotes.adventureLog)) {
+    throw new Error('Imported Save Creation requires current-schema adventureNotes.adventureLog')
+  }
+
+  if (!isRecord(data.notebook)) {
     throw new Error('Imported Save Creation requires current-schema notebook')
+  }
+  if (!Array.isArray(data.notebook.pages) || typeof data.notebook.currentPageIndex !== 'number' || typeof data.notebook.isOpen !== 'boolean') {
+    throw new Error('Imported Save Creation requires current-schema notebook structure')
   }
 
   if ('includePageThreeInExport' in data) {
-    throw new Error('Imported Save Creation does not accept deprecated includePageThreeInExport')
+    throw new Error('Imported Save Creation requires current-schema data without deprecated includePageThreeInExport')
   }
 }
 ```
@@ -456,6 +525,7 @@ Below `createNewCharacterHandler`, add:
     assertCurrentSchemaImportedSheetData(importedData)
 
     let metadata: CharacterMetadata | null = null
+    const previousCharacterId = currentCharacterId
 
     try {
       if (characterList.length >= MAX_CHARACTERS) {
@@ -473,15 +543,19 @@ Below `createNewCharacterHandler`, add:
       }
 
       saveCharacterById(metadata.id, importedData)
-      setCharacterList(prev => [...prev, metadata as CharacterMetadata])
       activateCharacterData(metadata.id, importedData)
+      setCharacterList(prev => [...prev, metadata as CharacterMetadata])
       console.log(`[CharacterManagement] Successfully created imported save: ${metadata.id}`)
       return true
     } catch (error) {
       if (metadata) {
         try {
           removeCharacterFromMetadataList(metadata.id)
-          deleteCharacterById(metadata.id)
+          setCharacterList(prev => prev.filter(character => character.id !== metadata?.id))
+          if (getActiveCharacterId() === metadata.id) {
+            setActiveCharacterId(previousCharacterId)
+          }
+          setCurrentCharacterId(previousCharacterId)
         } catch (cleanupError) {
           console.error(`[CharacterManagement] Failed to cleanup imported save after creation error:`, cleanupError)
         }
@@ -491,10 +565,11 @@ Below `createNewCharacterHandler`, add:
       alert('创建存档失败')
       return false
     }
-  }, [activateCharacterData, characterList.length])
+  }, [activateCharacterData, characterList.length, currentCharacterId])
 ```
 
 The strict assertion is intentionally outside the `try` block so contract violations throw.
+The local `characterList` state update intentionally happens after `activateCharacterData()` succeeds. This avoids a transient UI list entry if activation fails after storage has already created metadata/data.
 
 - [ ] **Step 6: Return the new handler from the hook**
 
@@ -540,9 +615,143 @@ git commit -m "feat: add imported save creation handler"
 **Files:**
 - Modify: `components/modals/character-management-modal.tsx`
 - Modify: `app/page.tsx`
+- Create: `tests/unit/character-management-modal-import.test.tsx`
 - Test: `tests/unit/imported-save-creation.test.tsx`
 
-- [ ] **Step 1: Update modal props**
+- [ ] **Step 1: Add failing modal import routing tests**
+
+Create `tests/unit/character-management-modal-import.test.tsx` with this content:
+
+```tsx
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'react'
+import { CURRENT_SCHEMA_VERSION } from '@/lib/sheet-schema-version'
+import { defaultSheetData } from '@/lib/default-sheet-data'
+import type { SheetData } from '@/lib/sheet-data'
+import { CharacterManagementModal } from '@/components/modals/character-management-modal'
+import { importCharacterFromHTMLFile } from '@/lib/html-importer'
+import { validateJSONCharacterData } from '@/lib/character-data-validator'
+
+vi.mock('@/lib/html-importer', () => ({
+  importCharacterFromHTMLFile: vi.fn(),
+}))
+
+vi.mock('@/lib/character-data-validator', () => ({
+  validateJSONCharacterData: vi.fn(),
+}))
+
+function currentSheet(name: string): SheetData {
+  const sheet = {
+    ...structuredClone(defaultSheetData),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    name,
+  }
+  delete (sheet as any).includePageThreeInExport
+  return sheet
+}
+
+function renderModal(overrides: Partial<ComponentProps<typeof CharacterManagementModal>> = {}) {
+  const props: ComponentProps<typeof CharacterManagementModal> = {
+    isOpen: true,
+    onClose: vi.fn(),
+    characterList: [],
+    currentCharacterId: null,
+    onSwitchCharacter: vi.fn(),
+    onCreateCharacter: vi.fn(() => true),
+    onCreateImportedCharacter: vi.fn(() => true),
+    onDeleteCharacter: vi.fn(() => true),
+    onDuplicateCharacter: vi.fn(() => true),
+    onRenameCharacter: vi.fn(() => true),
+    ...overrides,
+  }
+  render(<CharacterManagementModal {...props} />)
+  return props
+}
+
+function installFileInputClick(file: File) {
+  const originalCreateElement = document.createElement.bind(document)
+  const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: any, options?: any) => {
+    const element = originalCreateElement(tagName, options)
+    if (String(tagName).toLowerCase() === 'input') {
+      Object.defineProperty(element, 'files', {
+        configurable: true,
+        value: [file],
+      })
+      vi.spyOn(element, 'click').mockImplementation(() => {
+        element.onchange?.({ target: element } as any)
+      })
+    }
+    return element
+  })
+  return createElementSpy
+}
+
+class ImmediateFileReader {
+  onload: ((event: ProgressEvent<FileReader>) => void) | null = null
+  readAsText() {
+    this.onload?.({ target: { result: '{"name":"Json Hero"}' } } as ProgressEvent<FileReader>)
+  }
+}
+
+describe('CharacterManagementModal import routing', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(window, 'alert').mockImplementation(() => {})
+    vi.spyOn(window, 'prompt').mockReturnValue('Imported Save')
+  })
+
+  it('routes HTML import through onCreateImportedCharacter', async () => {
+    const htmlSheet = currentSheet('Html Hero')
+    vi.mocked(importCharacterFromHTMLFile).mockResolvedValue({
+      success: true,
+      data: htmlSheet,
+      warnings: [],
+    })
+    const fileInputSpy = installFileInputClick(new File(['<html></html>'], 'hero.html', { type: 'text/html' }))
+    const props = renderModal()
+
+    fireEvent.click(screen.getByRole('button', { name: /从HTML创建新存档/ }))
+
+    await waitFor(() => {
+      expect(props.onCreateImportedCharacter).toHaveBeenCalledWith('Imported Save', htmlSheet)
+    })
+    expect(props.onCreateCharacter).not.toHaveBeenCalled()
+    fileInputSpy.mockRestore()
+  })
+
+  it('routes JSON import through onCreateImportedCharacter', async () => {
+    const jsonSheet = currentSheet('Json Hero')
+    vi.mocked(validateJSONCharacterData).mockReturnValue({
+      valid: true,
+      data: jsonSheet,
+      warnings: [],
+    })
+    vi.stubGlobal('FileReader', ImmediateFileReader)
+    const fileInputSpy = installFileInputClick(new File(['{}'], 'hero.json', { type: 'application/json' }))
+    const props = renderModal()
+
+    fireEvent.click(screen.getByRole('button', { name: /从JSON创建新存档/ }))
+
+    await waitFor(() => {
+      expect(props.onCreateImportedCharacter).toHaveBeenCalledWith('Imported Save', jsonSheet)
+    })
+    expect(props.onCreateCharacter).not.toHaveBeenCalled()
+    fileInputSpy.mockRestore()
+    vi.unstubAllGlobals()
+  })
+})
+```
+
+Run:
+
+```bash
+npm run test:run -- tests/unit/character-management-modal-import.test.tsx
+```
+
+Expected: FAIL because `CharacterManagementModal` does not have `onCreateImportedCharacter` yet.
+
+- [ ] **Step 2: Update modal props**
 
 In `components/modals/character-management-modal.tsx`, update imports:
 
@@ -569,7 +778,7 @@ Add it to destructuring:
     onCreateImportedCharacter,
 ```
 
-- [ ] **Step 2: Remove modal-local `onImportData`**
+- [ ] **Step 3: Remove modal-local `onImportData`**
 
 Delete this block from `CharacterManagementModal`:
 
@@ -588,7 +797,7 @@ Delete this block from `CharacterManagementModal`:
     }
 ```
 
-- [ ] **Step 3: Update modal HTML import success path**
+- [ ] **Step 4: Update modal HTML import success path**
 
 Replace:
 
@@ -616,7 +825,7 @@ Delete the `else` block that alerts:
                             }
 ```
 
-- [ ] **Step 4: Update modal JSON import success path**
+- [ ] **Step 5: Update modal JSON import success path**
 
 Replace:
 
@@ -644,7 +853,7 @@ Delete the `else` block that alerts:
                                                             }
 ```
 
-- [ ] **Step 5: Wire the new handler in `app/page.tsx`**
+- [ ] **Step 6: Wire the new handler in `app/page.tsx`**
 
 In the `useCharacterManagement` destructuring in `app/page.tsx`, add:
 
@@ -658,20 +867,30 @@ In the `CharacterManagementModal` props, add:
         onCreateImportedCharacter={createImportedCharacterHandler}
 ```
 
-- [ ] **Step 6: Run TypeScript-oriented test feedback**
+- [ ] **Step 7: Run modal and hook tests**
 
 Run:
 
 ```bash
-npm run test:run -- tests/unit/imported-save-creation.test.tsx
+npm run test:run -- tests/unit/imported-save-creation.test.tsx tests/unit/character-management-modal-import.test.tsx
 ```
 
-Expected: PASS. If TypeScript errors appear due to modal prop wiring, fix only the wiring in this task.
+Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Run TypeScript check**
+
+Run:
 
 ```bash
-git add components/modals/character-management-modal.tsx app/page.tsx tests/unit/imported-save-creation.test.tsx
+npx tsc --noEmit
+```
+
+Expected: PASS.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add components/modals/character-management-modal.tsx app/page.tsx tests/unit/character-management-modal-import.test.tsx
 git commit -m "refactor: route managed imports through imported save creation"
 ```
 
@@ -741,17 +960,39 @@ Expected:
 - no `(HTML导入)` default save-name suffix results,
 - HTML success alerts may still contain `HTML导入成功`.
 
-- [ ] **Step 4: Run focused tests**
+Run:
+
+```bash
+rg -n "createImportedCharacterHandler\\(saveName\\.trim\\(\\), result\\.data\\)" app/page.tsx
+rg -n "createNewCharacterHandler\\(saveName\\.trim\\(\\)\\)" app/page.tsx
+```
+
+Expected:
+
+- the first command finds the quick HTML import call to `createImportedCharacterHandler(saveName.trim(), result.data)`,
+- the second command returns no results.
+
+- [ ] **Step 4: Run TypeScript check for `app/page.tsx` wiring**
 
 Run:
 
 ```bash
-npm run test:run -- tests/unit/imported-save-creation.test.tsx tests/unit/import-regression-baseline.test.ts
+npx tsc --noEmit
 ```
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Run focused tests**
+
+Run:
+
+```bash
+npm run test:run -- tests/unit/imported-save-creation.test.tsx tests/unit/import-regression-baseline.test.ts tests/unit/character-management-modal-import.test.tsx
+```
+
+Expected: PASS.
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add app/page.tsx
@@ -846,12 +1087,22 @@ git commit -m "docs: update character import guidance"
 Run:
 
 ```bash
-npm run test:run -- tests/unit/imported-save-creation.test.tsx tests/unit/import-regression-baseline.test.ts tests/unit/migration-regression-baseline.test.ts tests/unit/storage-migration.test.ts
+npm run test:run -- tests/unit/imported-save-creation.test.tsx tests/unit/character-management-modal-import.test.tsx tests/unit/import-regression-baseline.test.ts tests/unit/migration-regression-baseline.test.ts tests/unit/storage-migration.test.ts
 ```
 
 Expected: PASS.
 
-- [ ] **Step 2: Run broader unit tests if focused tests pass**
+- [ ] **Step 2: Run TypeScript check**
+
+Run:
+
+```bash
+npx tsc --noEmit
+```
+
+Expected: PASS.
+
+- [ ] **Step 3: Run broader unit tests if focused tests pass**
 
 Run:
 
@@ -861,7 +1112,7 @@ npm run test:unit
 
 Expected: PASS.
 
-- [ ] **Step 3: Inspect import bypasses**
+- [ ] **Step 4: Inspect import bypasses**
 
 Run:
 
@@ -871,7 +1122,16 @@ rg -n "setFormData\\(result\\.data\\)|onImportData\\(|includePageThreeInExport: 
 
 Expected: no results.
 
-- [ ] **Step 4: Inspect final diff**
+Run:
+
+```bash
+rg -n "createImportedCharacterHandler\\(saveName\\.trim\\(\\), result\\.data\\)" app/page.tsx
+rg -n "createNewCharacterHandler\\(saveName\\.trim\\(\\)\\)" app/page.tsx
+```
+
+Expected: first command finds the quick HTML shared-handler call; second command returns no results.
+
+- [ ] **Step 5: Inspect final diff**
 
 Run:
 

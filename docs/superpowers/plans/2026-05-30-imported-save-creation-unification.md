@@ -784,7 +784,7 @@ Delete this block from `CharacterManagementModal`:
 
 ```ts
     const { sheetData: formData, replaceSheetData } = useSheetStore()
-    
+
     const onImportData = (data: any) => {
         // 数据迁移：为旧存档添加缺失字段
         const mergedData = {

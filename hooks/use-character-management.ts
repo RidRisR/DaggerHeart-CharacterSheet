@@ -13,8 +13,6 @@ import {
   updateCharacterInMetadataList,
   MAX_CHARACTERS,
   cleanupOrphanedCharacterData,
-  CHARACTER_DATA_PREFIX,
-  ACTIVE_CHARACTER_ID_KEY
 } from '@/lib/multi-character-storage'
 import type { CharacterMetadata, SheetData } from '@/lib/sheet-data'
 import { defaultSheetData } from '@/lib/default-sheet-data'
@@ -43,8 +41,31 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
     if (!isRecord(importedData)) fail('root')
     if ('includePageThreeInExport' in importedData) fail('includePageThreeInExport')
     if (importedData.schemaVersion !== CURRENT_SCHEMA_VERSION) fail('schemaVersion')
+    if (typeof importedData.name !== 'string') fail('name')
+    if (typeof importedData.level !== 'string') fail('level')
+    if (
+      typeof importedData.proficiency !== 'number' &&
+      !Array.isArray(importedData.proficiency)
+    ) fail('proficiency')
+    if (typeof importedData.profession !== 'string') fail('profession')
+    if (typeof importedData.community !== 'string') fail('community')
+    if (!Array.isArray(importedData.gold)) fail('gold')
+    if (!Array.isArray(importedData.experience)) fail('experience')
     if (typeof importedData.hope !== 'number') fail('hope')
+    if (!Array.isArray(importedData.inventory)) fail('inventory')
+    if (!Array.isArray(importedData.cards)) fail('cards')
     if (!Array.isArray(importedData.inventory_cards)) fail('inventory_cards')
+
+    const trainingOptions = importedData.trainingOptions
+    if (!isRecord(trainingOptions)) fail('trainingOptions')
+    if (!Array.isArray(trainingOptions.intelligent)) fail('trainingOptions.intelligent')
+    if (!Array.isArray(trainingOptions.radiantInDarkness)) fail('trainingOptions.radiantInDarkness')
+    if (!Array.isArray(trainingOptions.creatureComfort)) fail('trainingOptions.creatureComfort')
+    if (!Array.isArray(trainingOptions.armored)) fail('trainingOptions.armored')
+    if (!Array.isArray(trainingOptions.vicious)) fail('trainingOptions.vicious')
+    if (!Array.isArray(trainingOptions.resilient)) fail('trainingOptions.resilient')
+    if (!Array.isArray(trainingOptions.bonded)) fail('trainingOptions.bonded')
+    if (!Array.isArray(trainingOptions.aware)) fail('trainingOptions.aware')
 
     const pageVisibility = importedData.pageVisibility
     if (!isRecord(pageVisibility)) fail('pageVisibility')
@@ -78,15 +99,6 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
     setActiveCharacterId(characterId)
     replaceSheetData(characterData)
   }, [replaceSheetData])
-
-  const assertStorageWriteAvailable = (key: string, value: string): void => {
-    if (typeof window === 'undefined' || !window.Storage) return
-
-    const prototypeSetItem = window.Storage?.prototype?.setItem
-    if (typeof prototypeSetItem === 'function' && prototypeSetItem !== localStorage.setItem) {
-      prototypeSetItem.call(localStorage, key, value)
-    }
-  }
 
   // 数据迁移处理 - 只在客户端执行
   useEffect(() => {
@@ -237,9 +249,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
         return false
       }
 
-      assertStorageWriteAvailable(`${CHARACTER_DATA_PREFIX}${metadata.id}`, JSON.stringify(importedData))
       saveCharacterById(metadata.id, importedData)
-      assertStorageWriteAvailable(ACTIVE_CHARACTER_ID_KEY, metadata.id)
       activateCharacterData(metadata.id, importedData)
       setCharacterList(prev => [...prev, metadata as CharacterMetadata])
       console.log(`[CharacterManagement] Successfully created imported save: ${metadata.id}`)

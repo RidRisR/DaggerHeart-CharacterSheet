@@ -107,8 +107,15 @@ describe('imported save creation', () => {
 
   it.each([
     ['legacy schema version', (sheet: any) => { sheet.schemaVersion = 1 }],
+    ['missing name', (sheet: any) => { delete sheet.name }],
+    ['missing level', (sheet: any) => { delete sheet.level }],
+    ['missing gold', (sheet: any) => { delete sheet.gold }],
+    ['missing experience', (sheet: any) => { delete sheet.experience }],
     ['legacy hope shape', (sheet: any) => { sheet.hope = [true, false] }],
+    ['missing inventory', (sheet: any) => { delete sheet.inventory }],
+    ['missing cards', (sheet: any) => { delete sheet.cards }],
     ['missing inventory_cards', (sheet: any) => { delete sheet.inventory_cards }],
+    ['missing trainingOptions', (sheet: any) => { delete sheet.trainingOptions }],
     ['missing pageVisibility', (sheet: any) => { delete sheet.pageVisibility }],
     ['empty pageVisibility', (sheet: any) => { sheet.pageVisibility = {} }],
     ['missing equipment', (sheet: any) => { delete sheet.equipment }],
@@ -159,16 +166,15 @@ describe('imported save creation', () => {
   it('cleans up newly-created metadata if saving imported data fails', async () => {
     const { result } = await renderManagementHook()
     const previousCharacterId = result.current.currentCharacterId
-    const originalSetItem = Storage.prototype.setItem
-    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
-      this: Storage,
+    const originalSetItem = localStorage.setItem.bind(localStorage)
+    const setItemSpy = vi.spyOn(localStorage, 'setItem').mockImplementation((
       key: string,
       value: string,
-    ) {
+    ) => {
       if (key.startsWith(CHARACTER_DATA_PREFIX) && value.includes('Save Failure Hero')) {
         throw new Error('forced save failure')
       }
-      return originalSetItem.call(this, key, value)
+      return originalSetItem(key, value)
     })
 
     try {
@@ -201,16 +207,15 @@ describe('imported save creation', () => {
   it('rolls back metadata and active state if activation fails after saving imported data', async () => {
     const { result } = await renderManagementHook()
     const previousCharacterId = result.current.currentCharacterId
-    const originalSetItem = Storage.prototype.setItem
-    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
-      this: Storage,
+    const originalSetItem = localStorage.setItem.bind(localStorage)
+    const setItemSpy = vi.spyOn(localStorage, 'setItem').mockImplementation((
       key: string,
       value: string,
-    ) {
+    ) => {
       if (key === ACTIVE_CHARACTER_ID_KEY && value !== previousCharacterId) {
         throw new Error('forced active-id failure')
       }
-      return originalSetItem.call(this, key, value)
+      return originalSetItem(key, value)
     })
 
     try {

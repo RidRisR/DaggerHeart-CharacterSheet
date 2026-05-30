@@ -8,6 +8,11 @@ export default defineConfig({
     environment: 'happy-dom',
     globals: true,
     setupFiles: './tests/setup.ts',
+    exclude: [
+      '**/node_modules/**',
+      '**/.git/**',
+      '**/.worktrees/**',
+    ],
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: [

@@ -1,24 +1,19 @@
-"use client"
+import { AlertTriangle, ExternalLink } from "lucide-react"
 
-import { useState } from "react"
-import { AlertTriangle, ExternalLink, X } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
+import {
+  GithubPagesLegacyNoticeDismiss,
+  GithubPagesLegacyNoticeDismissButton,
+} from "@/components/github-pages-legacy-notice-dismiss"
 
 const DEADLINE_LABEL = "2026年6月30日"
 const PRIMARY_SITE_URL = "https://dhsheet.site/"
 
 export function GithubPagesLegacyNotice() {
-  const [isVisible, setIsVisible] = useState(true)
-
-  if (!isVisible) {
-    return null
-  }
-
   return (
-    <section className="print:hidden w-full px-3 pt-4 pb-3">
-      <div className="mx-auto max-w-5xl rounded-md border border-amber-300 bg-amber-50 px-4 py-4 text-amber-950 shadow-sm">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+    <GithubPagesLegacyNoticeDismiss>
+      <section className="print:hidden w-full px-3 pt-4 pb-3">
+        <div className="mx-auto max-w-5xl rounded-md border border-amber-300 bg-amber-50 px-4 py-4 text-amber-950 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex items-center gap-2 font-semibold">
               <AlertTriangle className="h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
@@ -47,24 +42,20 @@ export function GithubPagesLegacyNotice() {
             </div>
           </div>
           <div className="flex shrink-0 flex-col gap-2 sm:flex-row md:flex-col">
-            <Button asChild className="bg-amber-900 text-white hover:bg-amber-800">
-              <a href={PRIMARY_SITE_URL} target="_blank" rel="noopener noreferrer">
-                打开正式站点
-                <ExternalLink className="h-4 w-4" aria-hidden="true" />
-              </a>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="border-amber-300 bg-white/60 text-amber-950 hover:bg-amber-100"
-              onClick={() => setIsVisible(false)}
+            <a
+              href={PRIMARY_SITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-amber-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              关闭提示
-              <X className="h-4 w-4" aria-hidden="true" />
-            </Button>
+              打开正式站点
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            </a>
+            <GithubPagesLegacyNoticeDismissButton />
           </div>
         </div>
       </div>
-    </section>
+      </section>
+    </GithubPagesLegacyNoticeDismiss>
   )
 }

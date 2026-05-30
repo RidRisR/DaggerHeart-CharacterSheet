@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { GithubPagesLegacyNotice } from "@/components/github-pages-legacy-notice"
 import HomeClientApp from "@/components/home-client-app"
 
 export const metadata: Metadata = {
@@ -25,5 +26,10 @@ export const metadata: Metadata = {
 }
 
 export default function HomePage() {
-  return <HomeClientApp />
+  return (
+    <>
+      <GithubPagesLegacyNotice />
+      <HomeClientApp />
+    </>
+  )
 }

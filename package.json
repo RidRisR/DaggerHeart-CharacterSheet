@@ -1,7 +1,15 @@
 {
-  "name": "my-v0-project",
+  "name": "dhsheet",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://dhsheet.site/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RidRisR/DaggerHeart-CharacterSheet.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RidRisR/DaggerHeart-CharacterSheet/issues"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "npm run optimize:images && next build && node scripts/cleanup-build-artifacts.js && node scripts/extract-css.js",

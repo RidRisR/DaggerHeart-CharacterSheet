@@ -17,11 +17,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: APP_TITLE,
-    template: "%s | DaggerHeart Character Sheet",
+    template: "%s | DHSheet",
   },
   description: APP_DESCRIPTION,
   keywords: [
+    "DHSheet",
     "DaggerHeart",
+    "匕首之心车卡器",
     "匕首之心",
     "匕首心",
     "character sheet",
@@ -46,12 +48,12 @@ export const metadata: Metadata = {
     alternateLocale: "en_US",
     title: APP_TITLE,
     description: APP_SHORT_DESCRIPTION,
-    siteName: "DaggerHeart Character Sheet",
+    siteName: "DHSheet",
   },
   twitter: {
     card: "summary",
     title: APP_TITLE,
-    description: "免费开源的DaggerHeart（匕首之心） TTRPG角色卡生成器",
+    description: "DHSheet 是免费开源、非官方的 DaggerHeart（匕首之心）TTRPG 车卡器",
   },
   alternates: {
     canonical: "/",
@@ -67,7 +69,6 @@ export const metadata: Metadata = {
   verification: {
     google: "PPstI2EC1Yxp6bfZBZAVAEo9tFaqICp55SSoGdnlB28",
   },
-  generator: "v0.dev",
 }
 
 export const viewport = {
@@ -83,32 +84,68 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   const umamiAnalytics = getUmamiAnalyticsConfig(process.env)
+  const githubUrl = "https://github.com/RidRisR/DaggerHeart-CharacterSheet"
 
   // 结构化数据 (JSON-LD) for SEO
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "DaggerHeart Character Sheet",
-    "alternateName": ["匕首之心角色卡生成器", "匕首心车卡器"],
-    "description": APP_SHORT_DESCRIPTION,
-    "url": `${SITE_URL}/`,
-    "applicationCategory": "GameApplication",
-    "operatingSystem": "Any",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "DHSheet",
+      "alternateName": [
+        "匕首之心车卡器",
+        "DaggerHeart Character Sheet Tool",
+        "匕首之心角色卡生成器",
+        "匕首心车卡器",
+        "DaggerHeart Character Creator"
+      ],
+      "description": APP_SHORT_DESCRIPTION,
+      "url": `${SITE_URL}/`,
+      "sameAs": [githubUrl],
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "creator": {
+        "@type": "Person",
+        "name": "RidRisR",
+        "url": "https://github.com/RidRisR"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "RidRisR",
+        "url": "https://github.com/RidRisR"
+      },
+      "maintainer": {
+        "@type": "Person",
+        "name": "RidRisR",
+        "url": "https://github.com/RidRisR"
+      },
+      "about": "DaggerHeart / 匕首之心角色卡生成器",
+      "inLanguage": ["zh-CN", "en-US"],
+      "genre": ["Tabletop RPG", "TTRPG", "DaggerHeart"],
+      "keywords": "DHSheet, DaggerHeart, 匕首之心车卡器, 匕首之心, character sheet, 角色卡, TTRPG, Critical Role, 车卡器, 非官方",
+      "isAccessibleForFree": true,
+      "license": `${githubUrl}/blob/main/LICENSE`
     },
-    "creator": {
-      "@type": "Person",
-      "name": "RidRisR"
-    },
-    "inLanguage": ["zh-CN", "en-US"],
-    "genre": ["Tabletop RPG", "TTRPG", "DaggerHeart"],
-    "keywords": "DaggerHeart, 匕首之心, character sheet, 角色卡, TTRPG, Critical Role, 车卡器",
-    "isAccessibleForFree": true,
-    "license": "https://github.com/RidRisR/DaggerHeart-CharacterSheet/blob/main/LICENSE"
-  }
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "DHSheet",
+      "alternateName": "匕首之心车卡器",
+      "url": `${SITE_URL}/`,
+      "sameAs": [githubUrl],
+      "inLanguage": ["zh-CN", "en-US"],
+      "publisher": {
+        "@type": "Person",
+        "name": "RidRisR",
+        "url": "https://github.com/RidRisR"
+      }
+    }
+  ]
 
   return (
     <html lang="zh-CN" suppressHydrationWarning>
@@ -144,12 +181,19 @@ export default function RootLayout({
               翻译及校对：PolearmMaster, 末楔, 里予, 一得, RisRisR
               <br />
               <a
-                href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
+                href={githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline pointer-events-auto hover:text-gray-700 transition-colors"
               >
                 项目地址 & 下载地址（点我访问 GitHub）
+              </a>
+              <span className="mx-1">|</span>
+              <a
+                href="/about"
+                className="underline pointer-events-auto hover:text-gray-700 transition-colors"
+              >
+                关于本站
               </a>
             </div>
           </ProgressModalProvider>

@@ -2,11 +2,15 @@
 [![GitHub Stars](https://img.shields.io/github/stars/RidRisR/DaggerHeart-CharacterSheet?style=social)](https://github.com/RidRisR/DaggerHeart-CharacterSheet/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/RidRisR/DaggerHeart-CharacterSheet?style=social)](https://github.com/RidRisR/DaggerHeart-CharacterSheet/network/members)
 
-# DaggerHeart 角色卡生成器
+# DHSheet | 匕首之心车卡器
 
 **✨ 轻松创建和管理你的DaggerHeart角色卡！**
 
-这是一个基于Critical Role《DaggerHeart》系统参考文档（SRD）的角色卡生成工具。旨在帮助玩家和游戏主持人（GM）快速、便捷地创建、编辑和管理DaggerHeart角色，让你的桌面角色扮演体验更加流畅。
+**项目在线地址 / Project site:** [https://dhsheet.site/](https://dhsheet.site/)
+
+**DHSheet / 匕首之心车卡器** 是由 [RidRisR](https://github.com/RidRisR) 维护的免费开源、非官方 DaggerHeart 角色卡生成器。本仓库是项目源码与发布入口，推荐通过项目在线地址使用最新版本。
+
+这是一个基于 Critical Role《DaggerHeart》系统参考文档（SRD）的社区工具。旨在帮助玩家和游戏主持人（GM）快速、便捷地创建、编辑和管理 DaggerHeart 角色，让你的桌面角色扮演体验更加流畅。
 
 ## 🚀 快速开始
 
@@ -16,6 +20,7 @@
 
 [![点我即刻使用](https://img.shields.io/badge/在线建卡-点击访问-success?logo=vercel)](https://dhsheet.site/)
 
+*   **在线版本:** [https://dhsheet.site/](https://dhsheet.site/)。
 *   **获取稳定版本:** 你也可以直接从 [GitHub Releases](https://github.com/RidRisR/DaggerHeart-CharacterSheet/releases) 下载最新的稳定版本文件。
 
 ## 💻 本地部署（开发者模式）

@@ -29,6 +29,7 @@ describe('main import and normalize regression baseline', () => {
       focused_card_ids: ['card-domain-1'],
       agility: { checked: true, value: '+1' },
       inventory_cards: undefined,
+      includePageThreeInExport: true,
     })
 
     const jsonResult = validateJSONCharacterData(JSON.stringify(raw))
@@ -45,15 +46,19 @@ describe('main import and normalize regression baseline', () => {
     expect(jsonResult.data?.agility).toEqual({ checked: true, value: '1', spellcasting: false })
     expect(htmlResult.data?.agility).toEqual({ checked: true, value: '1', spellcasting: false })
     expect(jsonResult.data?.pageVisibility).toEqual({
-      rangerCompanion: false,
+      rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
     })
     expect(htmlResult.data?.pageVisibility).toEqual({
-      rangerCompanion: false,
+      rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
     })
+    expect(jsonResult.data?.inventory_cards).toHaveLength(20)
+    expect(htmlResult.data?.inventory_cards).toHaveLength(20)
+    expect('includePageThreeInExport' in (jsonResult.data as any)).toBe(false)
+    expect('includePageThreeInExport' in (htmlResult.data as any)).toBe(false)
     expect(jsonResult.data?.schemaVersion).toBe(2)
     expect(htmlResult.data?.schemaVersion).toBe(2)
   })

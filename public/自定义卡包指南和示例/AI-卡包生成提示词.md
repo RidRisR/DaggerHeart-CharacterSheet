@@ -1,4 +1,4 @@
-# **DaggerHeart 卡包AI创作指南**
+# **DaggerHeart AI 卡包生成提示词**
 
 ## **第一部分：核心任务与高级原则**
 

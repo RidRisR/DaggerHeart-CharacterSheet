@@ -22,11 +22,11 @@ export function GithubPagesLegacyNotice() {
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex items-center gap-2 font-semibold">
               <AlertTriangle className="h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
-              <span>GitHub Pages 旧站数据导出提醒</span>
+              <span>DHSheet 旧站迁移提醒</span>
             </div>
             <div className="space-y-2 text-sm leading-6">
               <p>
-                我们现在已经提供新的正式站点：
+                DHSheet 匕首之心车卡器现在已经迁移到新的项目在线地址：
                 <a
                   href={PRIMARY_SITE_URL}
                   className="ml-1 font-medium underline underline-offset-4 hover:text-amber-800"
@@ -35,7 +35,7 @@ export function GithubPagesLegacyNotice() {
                 </a>
               </p>
               <p>
-                继续同时维护 GitHub Pages 旧站和新的正式站点，可能会导致浏览器本地数据不同步，并造成两个版本长期分叉。
+                DHSheet 是免费开源、非官方的 DaggerHeart（匕首之心）车卡器。继续同时维护 GitHub Pages 旧站和新的正式站点，可能会导致浏览器本地数据不同步，并造成两个版本长期分叉。
                 为了让后续更新、修复和数据行为保持一致，GitHub Pages 版本将在
                 <strong className="mx-1">{DEADLINE_LABEL}</strong>
                 后不再作为独立站点维护，并将跳转到正式站点。

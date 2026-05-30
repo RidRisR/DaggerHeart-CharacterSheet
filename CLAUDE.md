@@ -125,51 +125,42 @@ SheetData can come from multiple sources in the application:
 3. **Character Duplication**
    - `lib/multi-character-storage.ts` - `duplicateCharacter()` copies existing character data
 
-4. **JSON Import**
-   - `lib/storage.ts` - `importCharacterDataForMultiCharacter()` imports from JSON files
-   - Adds `inventory_cards` if missing (lines 185-188)
+4. **Character JSON Import**
+   - `components/modals/character-management-modal.tsx` reads selected JSON files
+   - `lib/character-data-validator.ts` - `validateJSONCharacterData()` parses and validates JSON character data
+   - `validateAndProcessCharacterData()` applies `migrateSheetData()` before imported save creation
 
-5. **HTML Import**
-   - `lib/html-importer.ts` - `importCharacterFromHTMLFile()` extracts from HTML
-   - Uses `validateAndProcessCharacterData()` for validation
+5. **Character HTML Import**
+   - `lib/html-importer.ts` - `importCharacterFromHTMLFile()` extracts embedded `window.characterData`
+   - HTML import also uses `validateAndProcessCharacterData()` for validation and migration
+   - Quick HTML import and save-management HTML import both create saves through `useCharacterManagement.createImportedCharacterHandler()`
 
 6. **Legacy Migration**
    - `lib/multi-character-storage.ts` - `migrateToMultiCharacterStorage()` migrates from old single-character system
 
 ### Existing Migration Patterns
 
-1. **Load-time Migration** (in `loadCharacterById`):
-   ```typescript
-   // Add missing inventory_cards field
-   if (!parsed.inventory_cards) {
-     console.log(`[Migration] Adding inventory_cards to character ${id}`);
-     parsed.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
-     needsSave = true;
-   }
-   ```
+1. **Central SheetData Migration**:
+   - `lib/sheet-data-migration.ts` - `migrateSheetData()` is the single entry point for schema migration and current-schema normalization
+   - It adds current required fields such as `inventory_cards`, `pageVisibility`, `equipment`, `armorTemplate`, `adventureNotes`, and `notebook`
+   - It removes deprecated fields such as `includePageThreeInExport`
 
-2. **Import-time Migration** (in `importCharacterDataForMultiCharacter`):
-   ```typescript
-   // Backward compatibility for old saves
-   if (!data.inventory_cards) {
-     console.log('[Import] Adding inventory_cards to imported data');
-     data.inventory_cards = Array(20).fill(0).map(() => createEmptyCard());
-   }
-   ```
+2. **Load-time Migration**:
+   - `lib/multi-character-storage.ts` - `loadCharacterById()` loads stored character data, runs `migrateSheetData()`, and persists the migrated result
 
-3. **Validation and Normalization**:
-   - `lib/character-data-validator.ts` - `cleanAndNormalizeData()` ensures data consistency
-   - `validateAndProcessCharacterData()` provides comprehensive validation
+3. **Import-time Validation + Migration**:
+   - `lib/character-data-validator.ts` - JSON and HTML imports validate raw candidate data, then call `migrateSheetData()`
+   - Imported Save Creation must receive already migrated current-schema `SheetData`; it must not perform migration itself
 
 ### Adding New Fields Migration Strategy
 
 When adding new fields to SheetData:
 
 1. **Update `lib/sheet-data.ts`** - Add the new field to the SheetData interface
-2. **Update `lib/default-sheet-data.ts`** - Add default value for new field
-3. **Add migration in `loadCharacterById()`** - Check and add field when loading
-4. **Add migration in import functions** - Ensure imports handle missing field
-5. **Update `cleanAndNormalizeData()`** if field needs special handling
+2. **Update `lib/default-sheet-data.ts`** - Add the default value
+3. **Update `lib/sheet-data-migration.ts`** - Add migration/current-schema normalization in `migrateSheetData()`
+4. **Update validation tests** - Cover load-time migration and JSON/HTML import validation paths
+5. **Do not add field-specific repair logic in UI import handlers** - imports should receive current-schema data from the migration pipeline
 
 ### Migration Testing Points
 - Load existing characters without new field

@@ -40,6 +40,10 @@ _Avoid_: derived state
 A user or system behavior whose meaning can affect Source State, Derived State, or Final Value writeback and therefore must enter the automatic-calculation sync boundary.
 _Avoid_: generic sheet data change, raw diff
 
+**Imported Save Creation**:
+Creating a new save from already validated and migrated imported character data, then making that imported sheet the active Stored State.
+_Avoid_: quick import, raw import, empty save creation
+
 **Modifier Target Universe**:
 The finite set of character-sheet targets that an automatic-calculation sync boundary considers for the current sheet.
 _Avoid_: only the target touched by the current action, unlimited theoretical targets
@@ -129,6 +133,10 @@ _Avoid_: manual adjustment
 - Imported legacy data must pass through migration before store replacement. Migration is responsible for creating current-schema providers, bases, target state, and Other adjustments that preserve legacy intent.
 - Store replacement is an automatic-calculation sync boundary only for current-schema sheet data. Raw legacy data must not be directly replaced into the store and synced before migration finishes.
 - Store replacement may write back enabled **Final Value** fields, but migration must first preserve legacy final values in the current model so replacement sync does not cause unexpected final-value jumps.
+- **Imported Save Creation** must use already validated and migrated sheet data; raw JSON or raw HTML extraction output must not be written directly into a save or the user-visible store.
+- **Imported Save Creation** differs from empty save creation: the imported sheet data, not default blank sheet data, is the initial Stored State for the new save.
+- During **Imported Save Creation**, the imported sheet should be persisted as the new save's initial **Stored State** before that save becomes active.
+- **Imported Save Creation** must throw on invalid or non-current-schema input. It must not silently migrate, repair, or reinterpret raw imported data.
 - In the short term, store replacement is the high-risk sheet-data write that should be tightened first: it should commit only current-schema, post-boundary stable sheet data. Broader removal of direct sheet-data writes is a longer-term direction.
 - During an automatic-calculation sync boundary for an enabled target, an unparseable nonblank **Final Value** prevents writing a new **Final Value** for that target. The sync boundary still occurs; only the final-value writeback is blocked for that target. Disabled targets already keep their locked **Final Value**.
 - An **Unparseable Final Value** only blocks **Final Value** writeback. It does not block source changes, reference recalculation, active base fallback, or Other adjustment updates.

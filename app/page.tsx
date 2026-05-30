@@ -394,23 +394,18 @@ export default function Home() {
           if (result.success && result.data) {
             // 从导入的数据中提取角色名称作为默认存档名
             const characterName = result.data.name || "未命名角色"
-            const defaultSaveName = `${characterName} (HTML导入)`
+            const defaultSaveName = `${characterName} (导入)`
 
             // 提示用户输入存档名称
             const saveName = prompt('请输入新存档的名称:', defaultSaveName)
             if (saveName && saveName.trim()) {
-              // 先创建新存档
-              const success = createNewCharacterHandler(saveName.trim())
+              const success = createImportedCharacterHandler(saveName.trim(), result.data)
               if (success) {
-                // 创建成功后导入数据
-                setFormData(result.data)
                 if (result.warnings && result.warnings.length > 0) {
                   alert(`HTML导入成功并创建新存档"${saveName}"，但有以下警告：\n${result.warnings.join('\n')}`)
                 } else {
                   alert(`HTML导入成功并创建新存档"${saveName}"`)
                 }
-              } else {
-                alert('创建新存档失败，可能已达到存档数量上限')
               }
             }
           } else {

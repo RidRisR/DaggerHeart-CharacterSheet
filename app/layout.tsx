@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   description: APP_DESCRIPTION,
   keywords: [
     "DaggerHeart",
+    "匕首之心车卡器",
     "匕首之心",
     "匕首心",
     "character sheet",
@@ -88,8 +89,13 @@ export default function RootLayout({
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "DaggerHeart Character Sheet",
-    "alternateName": ["匕首之心角色卡生成器", "匕首心车卡器"],
+    "name": "匕首之心车卡器",
+    "alternateName": [
+      "DaggerHeart Character Sheet",
+      "匕首之心角色卡生成器",
+      "匕首心车卡器",
+      "DaggerHeart Character Creator"
+    ],
     "description": APP_SHORT_DESCRIPTION,
     "url": `${SITE_URL}/`,
     "applicationCategory": "GameApplication",
@@ -105,7 +111,7 @@ export default function RootLayout({
     },
     "inLanguage": ["zh-CN", "en-US"],
     "genre": ["Tabletop RPG", "TTRPG", "DaggerHeart"],
-    "keywords": "DaggerHeart, 匕首之心, character sheet, 角色卡, TTRPG, Critical Role, 车卡器",
+    "keywords": "DaggerHeart, 匕首之心车卡器, 匕首之心, character sheet, 角色卡, TTRPG, Critical Role, 车卡器",
     "isAccessibleForFree": true,
     "license": "https://github.com/RidRisR/DaggerHeart-CharacterSheet/blob/main/LICENSE"
   }
@@ -150,6 +156,13 @@ export default function RootLayout({
                 className="underline pointer-events-auto hover:text-gray-700 transition-colors"
               >
                 项目地址 & 下载地址（点我访问 GitHub）
+              </a>
+              <span className="mx-1">|</span>
+              <a
+                href="/about"
+                className="underline pointer-events-auto hover:text-gray-700 transition-colors"
+              >
+                关于本站
               </a>
             </div>
           </ProgressModalProvider>

@@ -2,12 +2,10 @@
 
 import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { CharacterMetadata } from "@/lib/sheet-data"
+import { CharacterMetadata, SheetData } from "@/lib/sheet-data"
 import { loadCharacterById, MAX_CHARACTERS } from "@/lib/multi-character-storage"
 import { importCharacterFromHTMLFile } from "@/lib/html-importer"
 import { validateJSONCharacterData } from "@/lib/character-data-validator"
-import { useSheetStore } from "@/lib/sheet-store"
-import { defaultSheetData } from "@/lib/default-sheet-data"
 
 interface CharacterManagementModalProps {
     isOpen: boolean
@@ -16,6 +14,7 @@ interface CharacterManagementModalProps {
     currentCharacterId: string | null
     onSwitchCharacter: (characterId: string) => void
     onCreateCharacter: (saveName: string) => boolean
+    onCreateImportedCharacter: (saveName: string, importedData: SheetData) => boolean
     onDeleteCharacter: (characterId: string) => boolean
     onDuplicateCharacter: (characterId: string, newSaveName: string) => boolean
     onRenameCharacter: (characterId: string, newSaveName: string) => boolean
@@ -28,22 +27,11 @@ export function CharacterManagementModal({
     currentCharacterId,
     onSwitchCharacter,
     onCreateCharacter,
+    onCreateImportedCharacter,
     onDeleteCharacter,
     onDuplicateCharacter,
     onRenameCharacter,
 }: CharacterManagementModalProps) {
-    const { sheetData: formData, replaceSheetData } = useSheetStore()
-    
-    const onImportData = (data: any) => {
-        // 数据迁移：为旧存档添加缺失字段
-        const mergedData = {
-            ...defaultSheetData,
-            ...data,
-            inventory_cards: data.inventory_cards || Array(20).fill({ id: '', name: '', type: 'unknown', description: '' }),
-            includePageThreeInExport: data.includePageThreeInExport ?? true // 确保第三页导出字段存在
-        }
-        replaceSheetData(mergedData)
-    }
     // 监听ESC键关闭模态框
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -81,18 +69,13 @@ export function CharacterManagementModal({
                         // 提示用户输入存档名称
                         const saveName = prompt('请输入新存档的名称:', defaultSaveName)
                         if (saveName) {
-                            // 先创建新存档
-                            const success = onCreateCharacter(saveName)
+                            const success = onCreateImportedCharacter(saveName, result.data)
                             if (success) {
-                                // 创建成功后导入数据
-                                onImportData(result.data)
                                 if (result.warnings && result.warnings.length > 0) {
                                     alert(`HTML导入成功并创建新存档"${saveName}"，但有以下警告：\n${result.warnings.join('\n')}`)
                                 } else {
                                     alert(`HTML导入成功并创建新存档"${saveName}"`)
                                 }
-                            } else {
-                                alert('创建新存档失败，可能已达到存档数量上限')
                             }
                         }
                     } else {
@@ -257,18 +240,13 @@ export function CharacterManagementModal({
                                                         // 提示用户输入存档名称
                                                         const saveName = prompt('请输入新存档的名称:', defaultSaveName)
                                                         if (saveName) {
-                                                            // 先创建新存档
-                                                            const success = onCreateCharacter(saveName)
+                                                            const success = onCreateImportedCharacter(saveName, validation.data)
                                                             if (success) {
-                                                                // 创建成功后导入数据
-                                                                onImportData(validation.data)
                                                                 if (validation.warnings && validation.warnings.length > 0) {
                                                                     alert(`JSON导入成功并创建新存档"${saveName}"，但有以下警告：\n${validation.warnings.join('\n')}`)
                                                                 } else {
                                                                     alert(`JSON导入成功并创建新存档"${saveName}"`)
                                                                 }
-                                                            } else {
-                                                                alert('创建新存档失败，可能已达到存档数量上限')
                                                             }
                                                         }
                                                     } else {

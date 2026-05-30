@@ -204,6 +204,7 @@ export default function Home() {
     isLoading,
     switchToCharacter,
     createNewCharacterHandler,
+    createImportedCharacterHandler,
     deleteCharacterHandler,
     duplicateCharacterHandler,
     renameCharacterHandler,
@@ -742,6 +743,7 @@ export default function Home() {
         currentCharacterId={currentCharacterId}
         onSwitchCharacter={switchToCharacter}
         onCreateCharacter={createNewCharacterHandler}
+        onCreateImportedCharacter={createImportedCharacterHandler}
         onDeleteCharacter={deleteCharacterHandler}
         onDuplicateCharacter={duplicateCharacterHandler}
         onRenameCharacter={renameCharacterHandler}

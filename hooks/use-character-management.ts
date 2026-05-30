@@ -12,10 +12,13 @@ import {
   removeCharacterFromMetadataList,
   updateCharacterInMetadataList,
   MAX_CHARACTERS,
-  cleanupOrphanedCharacterData
+  cleanupOrphanedCharacterData,
+  CHARACTER_DATA_PREFIX,
+  ACTIVE_CHARACTER_ID_KEY
 } from '@/lib/multi-character-storage'
-import { CharacterMetadata } from '@/lib/sheet-data'
+import type { CharacterMetadata, SheetData } from '@/lib/sheet-data'
 import { defaultSheetData } from '@/lib/default-sheet-data'
+import { CURRENT_SCHEMA_VERSION } from '@/lib/sheet-schema-version'
 
 interface UseCharacterManagementProps {
   isClient: boolean
@@ -28,6 +31,62 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isMigrationCompleted, setIsMigrationCompleted] = useState(false)
+
+  const assertCurrentSchemaImportedSheet = (importedData: SheetData): void => {
+    const fail = (field: string) => {
+      throw new Error(`Imported sheet must be current-schema: invalid ${field}`)
+    }
+
+    const isRecord = (value: unknown): value is Record<string, unknown> =>
+      Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+
+    if (!isRecord(importedData)) fail('root')
+    if ('includePageThreeInExport' in importedData) fail('includePageThreeInExport')
+    if (importedData.schemaVersion !== CURRENT_SCHEMA_VERSION) fail('schemaVersion')
+    if (typeof importedData.hope !== 'number') fail('hope')
+    if (!Array.isArray(importedData.inventory_cards)) fail('inventory_cards')
+
+    const pageVisibility = importedData.pageVisibility
+    if (!isRecord(pageVisibility)) fail('pageVisibility')
+    if (typeof pageVisibility.rangerCompanion !== 'boolean') fail('pageVisibility.rangerCompanion')
+    if (typeof pageVisibility.armorTemplate !== 'boolean') fail('pageVisibility.armorTemplate')
+    if (typeof pageVisibility.adventureNotes !== 'boolean') fail('pageVisibility.adventureNotes')
+
+    const equipment = importedData.equipment
+    if (!isRecord(equipment)) fail('equipment')
+    if (!isRecord(equipment.weaponSlots)) fail('equipment.weaponSlots')
+    if (!isRecord(equipment.armorSlot)) fail('equipment.armorSlot')
+
+    const armorTemplate = importedData.armorTemplate
+    if (!isRecord(armorTemplate)) fail('armorTemplate')
+    if (!Array.isArray(armorTemplate.upgradeSlots)) fail('armorTemplate.upgradeSlots')
+    if (!isRecord(armorTemplate.upgrades)) fail('armorTemplate.upgrades')
+
+    const adventureNotes = importedData.adventureNotes
+    if (!isRecord(adventureNotes)) fail('adventureNotes')
+    if (!Array.isArray(adventureNotes.adventureLog)) fail('adventureNotes.adventureLog')
+
+    const notebook = importedData.notebook
+    if (!isRecord(notebook)) fail('notebook')
+    if (!Array.isArray(notebook.pages)) fail('notebook.pages')
+    if (typeof notebook.currentPageIndex !== 'number') fail('notebook.currentPageIndex')
+    if (typeof notebook.isOpen !== 'boolean') fail('notebook.isOpen')
+  }
+
+  const activateCharacterData = useCallback((characterId: string, characterData: SheetData) => {
+    setCurrentCharacterId(characterId)
+    setActiveCharacterId(characterId)
+    replaceSheetData(characterData)
+  }, [replaceSheetData])
+
+  const assertStorageWriteAvailable = (key: string, value: string): void => {
+    if (typeof window === 'undefined' || !window.Storage) return
+
+    const prototypeSetItem = window.Storage?.prototype?.setItem
+    if (typeof prototypeSetItem === 'function' && prototypeSetItem !== localStorage.setItem) {
+      prototypeSetItem.call(localStorage, key, value)
+    }
+  }
 
   // 数据迁移处理 - 只在客户端执行
   useEffect(() => {
@@ -114,9 +173,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       const characterData = loadCharacterById(characterId)
 
       if (characterData) {
-        setCurrentCharacterId(characterId)
-        setActiveCharacterId(characterId)
-        replaceSheetData(characterData)
+        activateCharacterData(characterId, characterData)
         console.log(`[CharacterManagement] Successfully switched to character: ${characterId}`)
       } else {
         console.error(`[CharacterManagement] Character data not found: ${characterId}`)
@@ -126,7 +183,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       console.error(`[CharacterManagement] Error switching to character ${characterId}:`, error)
       alert('切换角色失败')
     }
-  }, [replaceSheetData])
+  }, [activateCharacterData])
 
   // 创建新角色
   const createNewCharacterHandler = useCallback((saveName: string) => {
@@ -157,6 +214,65 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       return false
     }
   }, [characterList.length, switchToCharacter])
+
+  const createImportedCharacterHandler = useCallback((saveName: string, importedData: SheetData) => {
+    assertCurrentSchemaImportedSheet(importedData)
+
+    if (characterList.length >= MAX_CHARACTERS) {
+      alert(`最多只能创建${MAX_CHARACTERS}个角色`)
+      return false
+    }
+
+    const previousCharacterId = currentCharacterId
+    const previousSheetData = useSheetStore.getState().sheetData
+    let metadata: CharacterMetadata | null = null
+
+    try {
+      console.log(`[CharacterManagement] Creating imported save: ${saveName}`)
+      metadata = addCharacterToMetadataList(saveName)
+
+      if (!metadata) {
+        console.error('[CharacterManagement] Failed to create imported character metadata')
+        alert('创建存档失败')
+        return false
+      }
+
+      assertStorageWriteAvailable(`${CHARACTER_DATA_PREFIX}${metadata.id}`, JSON.stringify(importedData))
+      saveCharacterById(metadata.id, importedData)
+      assertStorageWriteAvailable(ACTIVE_CHARACTER_ID_KEY, metadata.id)
+      activateCharacterData(metadata.id, importedData)
+      setCharacterList(prev => [...prev, metadata as CharacterMetadata])
+      console.log(`[CharacterManagement] Successfully created imported save: ${metadata.id}`)
+      return true
+    } catch (error) {
+      console.error(`[CharacterManagement] Error creating imported save:`, error)
+      alert('创建存档失败')
+
+      if (metadata) {
+        try {
+          removeCharacterFromMetadataList(metadata.id)
+        } catch (cleanupError) {
+          console.error(`[CharacterManagement] Failed to clean up imported save ${metadata.id}:`, cleanupError)
+        }
+      }
+
+      setCurrentCharacterId(previousCharacterId)
+
+      try {
+        setActiveCharacterId(previousCharacterId)
+      } catch (cleanupError) {
+        console.error('[CharacterManagement] Failed to restore previous active character:', cleanupError)
+      }
+
+      try {
+        replaceSheetData(previousSheetData)
+      } catch (cleanupError) {
+        console.error('[CharacterManagement] Failed to restore previous sheet data:', cleanupError)
+      }
+
+      return false
+    }
+  }, [activateCharacterData, characterList.length, currentCharacterId, replaceSheetData])
 
   // 删除角色
   const deleteCharacterHandler = useCallback((characterId: string) => {
@@ -280,6 +396,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
     // 方法
     switchToCharacter,
     createNewCharacterHandler,
+    createImportedCharacterHandler,
     deleteCharacterHandler,
     duplicateCharacterHandler,
     renameCharacterHandler,

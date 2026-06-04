@@ -1,5 +1,8 @@
+"use client"
+
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import type { MouseEvent } from "react"
 import {
   applyHeadingIdPrefix,
   generateHeadingId,
@@ -13,6 +16,36 @@ interface MarkdownGuideProps {
 
 const slugifyHeading = (children: React.ReactNode, idPrefix?: string): string =>
   applyHeadingIdPrefix(generateHeadingId(plainTextFromReactNode(children)), idPrefix)
+
+const resolveMarkdownHref = (href: string | undefined, idPrefix?: string): string | undefined => {
+  if (!href?.startsWith("#") || !idPrefix) return href
+
+  const anchorId = href.slice(1)
+  if (!anchorId || anchorId.startsWith(`${idPrefix}-`)) return href
+
+  return `#${applyHeadingIdPrefix(anchorId, idPrefix)}`
+}
+
+const scrollToAnchor = (event: MouseEvent<HTMLAnchorElement>, href: string | undefined) => {
+  if (!href?.startsWith("#")) return
+
+  const encodedAnchorId = href.slice(1)
+  if (!encodedAnchorId) return
+
+  let anchorId = encodedAnchorId
+  try {
+    anchorId = decodeURIComponent(encodedAnchorId)
+  } catch {
+    anchorId = encodedAnchorId
+  }
+
+  const targetElement = document.getElementById(anchorId)
+  if (!targetElement) return
+
+  event.preventDefault()
+  targetElement.scrollIntoView({ behavior: "smooth", block: "start" })
+  window.history.pushState(null, "", href)
+}
 
 export function MarkdownGuide({ content, headingIdPrefix }: MarkdownGuideProps) {
   return (
@@ -86,16 +119,22 @@ export function MarkdownGuide({ content, headingIdPrefix }: MarkdownGuideProps) 
           ),
           th: ({ children }) => <th className="border border-gray-300 px-3 py-2 bg-gray-100 font-medium text-left">{children}</th>,
           td: ({ children }) => <td className="border border-gray-300 px-3 py-2">{children}</td>,
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              target={href?.startsWith("#") ? undefined : "_blank"}
-              rel={href?.startsWith("#") ? undefined : "noopener noreferrer"}
-              className="text-blue-600 hover:text-blue-800 underline"
-            >
-              {children}
-            </a>
-          ),
+          a: ({ href, children }) => {
+            const resolvedHref = resolveMarkdownHref(href, headingIdPrefix)
+            const isSameDocumentAnchor = resolvedHref?.startsWith("#")
+
+            return (
+              <a
+                href={resolvedHref}
+                onClick={(event) => scrollToAnchor(event, resolvedHref)}
+                target={isSameDocumentAnchor ? undefined : "_blank"}
+                rel={isSameDocumentAnchor ? undefined : "noopener noreferrer"}
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                {children}
+              </a>
+            )
+          },
         }}
       >
         {content}

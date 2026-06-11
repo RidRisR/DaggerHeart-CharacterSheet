@@ -75,6 +75,21 @@ describe("GlobalImportPanel", () => {
     expect(onImportFiles).not.toHaveBeenCalled()
   })
 
+  it("clears the file input before opening the picker so the same file can be selected again", async () => {
+    const { container } = render(<GlobalImportPanel onImportFiles={vi.fn()} importing={false} results={[]} />)
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    Object.defineProperty(input, "value", {
+      configurable: true,
+      writable: true,
+      value: "C:\\fakepath\\pack.json",
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: "选择文件" }))
+
+    expect(input.value).toBe("")
+  })
+
   it("keeps diagnostics expansion isolated for files with the same name", async () => {
     render(
       <GlobalImportPanel

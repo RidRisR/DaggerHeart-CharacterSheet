@@ -1,9 +1,25 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import { createEmptyCard, type StandardCard } from "@/card/card-types"
 import { armorItems } from "@/data/list/armor"
-import { primaryWeapons } from "@/data/list/primary-weapon"
+import { allWeapons } from "@/data/list/all-weapons"
 import { createEmptyArmorSlot, createEmptyEquipmentData } from "@/automation/equipment/defaults"
+import type { RuntimeEquipmentTemplate } from "@/equipment/runtime-cache/types"
 import { resetSheetStore, sheet, store } from "./test-helpers"
+
+function runtimeArmorTemplate(armor: (typeof armorItems)[number]): RuntimeEquipmentTemplate & { kind: "armor" } {
+  return {
+    kind: "armor",
+    ...armor,
+    modifierContributions: (armor.modifierContributions ?? []).flatMap((contribution) =>
+      contribution.definition.kind === "modifier"
+        ? [{
+            ...contribution,
+            definition: { ...contribution.definition, kind: "modifier" as const },
+          }]
+        : [],
+    ),
+  }
+}
 
 function professionCard(id: string, evasion: number, hp: number): StandardCard {
   return {
@@ -24,7 +40,7 @@ describe("target sync automation unification", () => {
   beforeEach(() => resetSheetStore())
 
   it("does not sync weapon contribution into evasion while target is manual", () => {
-    const giantSword = primaryWeapons.find(item => item.id === "builtin.weapon.primary.004")
+    const giantSword = allWeapons.find(item => item.id === "builtin.weapon.primary.004")
     expect(giantSword).toBeTruthy()
 
     resetSheetStore({
@@ -42,14 +58,14 @@ describe("target sync automation unification", () => {
       },
     })
 
-    store().selectWeaponSlot({ slotType: "primary" }, giantSword!.id)
+    store().selectWeapon({ slotType: "primary" }, { type: "template", template: { kind: "weapon", ...giantSword! } })
 
     expect(sheet().equipment.weaponSlots.primary.name).toBe("巨剑")
     expect(sheet().evasion).toBe("12")
   })
 
   it("syncs weapon contribution into evasion while target uses auto calculation", () => {
-    const giantSword = primaryWeapons.find(item => item.id === "builtin.weapon.primary.004")
+    const giantSword = allWeapons.find(item => item.id === "builtin.weapon.primary.004")
     expect(giantSword).toBeTruthy()
 
     resetSheetStore({
@@ -70,7 +86,7 @@ describe("target sync automation unification", () => {
       },
     })
 
-    store().selectWeaponSlot({ slotType: "primary" }, giantSword!.id)
+    store().selectWeapon({ slotType: "primary" }, { type: "template", template: { kind: "weapon", ...giantSword! } })
 
     expect(sheet().equipment.weaponSlots.primary.name).toBe("巨剑")
     expect(sheet().evasion).toBe("11")
@@ -150,7 +166,7 @@ describe("target sync automation unification", () => {
       },
     })
 
-    store().selectArmor(armor!.id)
+    store().selectArmorSlot({ type: "template", template: runtimeArmorTemplate(armor!) })
 
     expect(sheet().equipment.armorSlot.name).toBe(armor!.name)
     expect(sheet().armorMax).toBe(1)
@@ -186,7 +202,7 @@ describe("target sync automation unification", () => {
       },
     })
 
-    store().selectArmor(armor!.id)
+    store().selectArmorSlot({ type: "template", template: runtimeArmorTemplate(armor!) })
 
     expect(sheet().armorMax).toBe(armor!.baseArmorMax)
     expect(sheet().minorThreshold).toBe(String(armor!.baseThresholds.minor + 3))

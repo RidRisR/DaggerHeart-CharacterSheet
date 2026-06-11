@@ -2,7 +2,23 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { armorItems } from "@/data/list/armor"
 import { createEmptyArmorSlot, createEmptyEquipmentData } from "@/automation/equipment/defaults"
 import type { EquipmentData } from "@/automation/equipment/types"
+import type { RuntimeEquipmentTemplate } from "@/equipment/runtime-cache/types"
 import { resetSheetStore, sheet, store } from "./test-helpers"
+
+function runtimeArmorTemplate(armor: (typeof armorItems)[number]): RuntimeEquipmentTemplate & { kind: "armor" } {
+  return {
+    kind: "armor",
+    ...armor,
+    modifierContributions: (armor.modifierContributions ?? []).flatMap((contribution) =>
+      contribution.definition.kind === "modifier"
+        ? [{
+            ...contribution,
+            definition: { ...contribution.definition, kind: "modifier" as const },
+          }]
+        : [],
+    ),
+  }
+}
 
 describe("护甲自动化基线", () => {
   beforeEach(() => resetSheetStore())
@@ -25,7 +41,10 @@ describe("护甲自动化基线", () => {
       },
     })
 
-    store().selectArmor(armor!.id)
+    store().selectArmorSlot({
+      type: "template",
+      template: runtimeArmorTemplate(armor!),
+    })
 
     const data = store().sheetData
     expect(data.equipment.armorSlot).toMatchObject({
@@ -39,7 +58,7 @@ describe("护甲自动化基线", () => {
     expect(data.equipment.armorSlot.feature).toContain(armor!.featureName)
   })
 
-  it("treats custom Chinese armor JSON payload as an unknown name fallback without syncing manual final targets", () => {
+  it("selects custom armor draft without syncing manual final targets", () => {
     resetSheetStore({
       level: "4",
       armorMax: 2,
@@ -54,25 +73,30 @@ describe("护甲自动化基线", () => {
         entryStates: {},
       },
     })
-    const customArmor = JSON.stringify({
-      名称: "自定义护甲",
-      护甲值: 4,
-      伤害阈值: "8/18",
-      特性名称: "自定义",
-      描述: "测试",
+    const customArmor = {
+      name: "自定义护甲",
+      tier: "T1" as const,
+      baseArmorMax: 4,
+      baseThresholds: { minor: 8, major: 18 },
+      featureName: "自定义",
+      description: "测试",
+      modifierContributions: [],
+    }
+
+    store().selectArmorSlot({
+      type: "custom",
+      draft: customArmor,
     })
 
-    store().selectArmor(customArmor)
-
     expect(sheet().equipment.armorSlot).toMatchObject({
-      name: customArmor,
-      baseArmorMax: null,
-      baseThresholds: { minor: null, major: null },
+      name: "自定义护甲",
+      baseArmorMax: 4,
+      baseThresholds: { minor: 8, major: 18 },
     })
     expect(sheet().armorMax).toBe(2)
     expect(sheet().minorThreshold).toBe("manual-minor")
     expect(sheet().majorThreshold).toBe("manual-major")
-    expect(sheet().equipment.armorSlot.feature).toBe("")
+    expect(sheet().equipment.armorSlot.feature).toBe("自定义: 测试")
   })
 
   it("选择 none 只清空护甲来源，不直接覆盖手动最终值", () => {
@@ -100,7 +124,7 @@ describe("护甲自动化基线", () => {
       },
     })
 
-    store().selectArmor("none")
+    store().selectArmorSlot({ type: "none" })
 
     expect(sheet().equipment.armorSlot).toEqual(createEmptyArmorSlot())
     expect(sheet().armorMax).toBe(4)
@@ -210,7 +234,10 @@ describe("护甲自动化基线", () => {
       },
     })
 
-    store().selectArmor(armor!.id)
+    store().selectArmorSlot({
+      type: "template",
+      template: runtimeArmorTemplate(armor!),
+    })
     expect(sheet().equipment.weaponSlots).toEqual(expectedWeaponSlots)
 
     store().updateArmorBaseMax("6")

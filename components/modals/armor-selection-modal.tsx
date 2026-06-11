@@ -181,7 +181,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
     onSelect({ type: "custom", draft: result.draft })
   }
 
-  const selectArmor = (armor: RuntimeEquipmentTemplateWithSource & { kind: "armor" }) => {
+  const chooseArmorTemplate = (armor: RuntimeEquipmentTemplateWithSource & { kind: "armor" }) => {
     if (customMode) {
       applyTemplateToCustomDraft(armor)
       return
@@ -221,7 +221,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
   ) => {
     if (event.key !== "Enter" && event.key !== " ") return
     event.preventDefault()
-    selectArmor(armor)
+    chooseArmorTemplate(armor)
   }
 
   if (!isOpen) return null
@@ -354,7 +354,7 @@ export function ArmorSelectionModal({ isOpen, onClose, onSelect, title }: ArmorM
                       className="cursor-pointer border-b border-gray-200 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500"
                       role="button"
                       tabIndex={0}
-                      onClick={() => selectArmor(armor)}
+                      onClick={() => chooseArmorTemplate(armor)}
                       onKeyDown={(event) => handleRowKeyDown(event, armor)}
                     >
                       <td className="whitespace-nowrap p-1 text-xs sm:p-2 sm:text-sm">{armor.name}</td>

@@ -270,7 +270,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
     onSelect({ type: "custom", draft: result.draft })
   }
 
-  const selectWeapon = (weapon: RuntimeEquipmentTemplateWithSource & { kind: "weapon" }) => {
+  const chooseWeaponTemplate = (weapon: RuntimeEquipmentTemplateWithSource & { kind: "weapon" }) => {
     if (customMode) {
       applyTemplateToCustomDraft(weapon)
       return
@@ -345,7 +345,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
   ) => {
     if (event.key !== "Enter" && event.key !== " ") return
     event.preventDefault()
-    selectWeapon(weapon)
+    chooseWeaponTemplate(weapon)
   }
 
   if (!isOpen) return null
@@ -511,7 +511,7 @@ export function WeaponSelectionModal({ isOpen, onClose, onSelect, title, weaponS
                       className="cursor-pointer border-b border-gray-200 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500"
                       role="button"
                       tabIndex={0}
-                      onClick={() => selectWeapon(weapon)}
+                      onClick={() => chooseWeaponTemplate(weapon)}
                       onKeyDown={(event) => handleRowKeyDown(event, weapon)}
                     >
                       <td className="whitespace-nowrap p-1 text-xs sm:p-2 sm:text-sm">{weapon.tier}</td>

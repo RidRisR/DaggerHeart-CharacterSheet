@@ -4,8 +4,6 @@ import { create } from "zustand";
 import { defaultSheetData } from "./default-sheet-data";
 import type { SheetData, AttributeValue, ArmorTemplateData, SheetCardReference } from "./sheet-data";
 import { createEmptyCard, type StandardCard } from "@/card/card-types";
-import { armorItems } from "@/data/list/armor";
-import { allWeapons } from "@/data/list/all-weapons";
 import { parseArmorMax, parseArmorThreshold, parseArmorThresholdSide } from "@/automation/equipment/armor-utils";
 import {
     createDefaultEquipmentModifierContribution,
@@ -18,11 +16,8 @@ import { swapInventoryWeaponWithActiveSlot } from "@/automation/equipment/weapon
 import {
     createArmorSlotFromCustomDraft,
     createArmorSlotFromRuntimeTemplate,
-    createArmorSlotFromTemplate,
     createWeaponSlotFromCustomDraft,
-    createWeaponSlotFromName,
     createWeaponSlotFromRuntimeTemplate,
-    createWeaponSlotFromTemplate,
     type CustomArmorDraft,
     type CustomWeaponDraft,
 } from "@/automation/equipment/template-to-slot";
@@ -101,21 +96,6 @@ const createWeaponContributionId = (selection: WeaponSlotSelection, templateCont
     return `equipment:${weaponSlotSelectionId(selection)}:${Date.now()}:${Math.random().toString(36).slice(2)}:${templateContributionId}`;
 }
 
-function createSelectedWeaponSlot(selection: WeaponSlotSelection, weaponId: string): WeaponSlot {
-    if (weaponId === "none") {
-        return createEmptyWeaponSlot()
-    }
-
-    const template = allWeapons.find((weapon) => weapon.id === weaponId)
-    if (template) {
-        return createWeaponSlotFromTemplate(template, (templateContributionId) =>
-            createWeaponContributionId(selection, templateContributionId),
-        )
-    }
-
-    return createWeaponSlotFromName(weaponId)
-}
-
 function createSelectedRuntimeWeaponSlot(selection: WeaponSlotSelection, input: WeaponSelectionInput): WeaponSlot {
     if (input.type === "none") {
         return createEmptyWeaponSlot()
@@ -192,9 +172,7 @@ interface SheetState {
     updateArmorBaseThresholds: (baseThresholds: string) => void;
     updateArmorBaseThresholdSide: (side: "minor" | "major", value: string) => void;
     updateArmorBaseMax: (baseArmorMax: string) => void;
-    selectArmor: (armorId: string) => void;
     selectArmorSlot: (input: ArmorSelectionInput) => void;
-    selectWeaponSlot: (selection: WeaponSlotSelection, weaponId: string) => void;
     selectWeapon: (selection: WeaponSlotSelection, input: WeaponSelectionInput) => void;
     updateActiveWeaponSlot: (slotType: "primary" | "secondary", updates: Partial<WeaponSlot>) => void;
     updateInventoryWeaponSlot: (index: 0 | 1, updates: Partial<WeaponSlot>) => void;
@@ -708,35 +686,6 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
     }),
 
-    selectArmor: (armorId: string) => set((state) => {
-        let armorSlot: ArmorSlot;
-
-        if (armorId === "none") {
-            armorSlot = createEmptyArmorSlot();
-        } else {
-            const armor = armorItems.find((armor) => armor.id === armorId);
-
-            if (armor) {
-                armorSlot = createArmorSlotFromTemplate(armor, createEquipmentContributionId);
-            } else {
-                armorSlot = {
-                    ...createEmptyArmorSlot(),
-                    name: armorId,
-                };
-            }
-        }
-
-        return {
-            sheetData: applyAutoCalculationForTargets({
-                ...state.sheetData,
-                equipment: {
-                    ...state.sheetData.equipment,
-                    armorSlot,
-                },
-            }),
-        };
-    }),
-
     selectArmorSlot: (input) => set((state) => {
         const armorSlot = input.type === "none"
             ? createEmptyArmorSlot()
@@ -750,42 +699,6 @@ export const useSheetStore = create<SheetState>((set) => ({
                 equipment: {
                     ...state.sheetData.equipment,
                     armorSlot,
-                },
-            }),
-        };
-    }),
-
-    selectWeaponSlot: (selection, weaponId) => set((state) => {
-        const slot = createSelectedWeaponSlot(selection, weaponId);
-        const weaponSlots = state.sheetData.equipment.weaponSlots;
-
-        if (selection.slotType === "inventory") {
-            const inventory = [...weaponSlots.inventory] as typeof weaponSlots.inventory;
-            inventory[selection.index] = slot;
-
-            return {
-                sheetData: applyAutoCalculationForTargets({
-                    ...state.sheetData,
-                    equipment: {
-                        ...state.sheetData.equipment,
-                        weaponSlots: {
-                            ...weaponSlots,
-                            inventory,
-                        },
-                    },
-                }),
-            };
-        }
-
-        return {
-            sheetData: applyAutoCalculationForTargets({
-                ...state.sheetData,
-                equipment: {
-                    ...state.sheetData.equipment,
-                    weaponSlots: {
-                        ...weaponSlots,
-                        [selection.slotType]: slot,
-                    },
                 },
             }),
         };

@@ -69,7 +69,16 @@ export function GlobalImportPanel({ importing, results, onImportFiles }: GlobalI
         <p className="mt-1 text-xs text-muted-foreground">
           文件会逐个导入；如果某个文件失败，其他文件仍会继续处理。
         </p>
-        <Button className="mt-4" disabled={importing} onClick={() => inputRef.current?.click()}>
+        <Button
+          className="mt-4"
+          disabled={importing}
+          onClick={() => {
+            if (inputRef.current) {
+              inputRef.current.value = ""
+              inputRef.current.click()
+            }
+          }}
+        >
           <FileText className="mr-2 h-4 w-4" />
           选择文件
         </Button>

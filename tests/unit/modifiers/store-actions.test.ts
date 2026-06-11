@@ -20,6 +20,21 @@ import type { RuntimeEquipmentTemplate } from "@/equipment/runtime-cache/types"
 import { getReferenceSummary } from "@/automation/core/registry"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
+function runtimeArmorTemplate(armor: (typeof armorItems)[number]): RuntimeEquipmentTemplate & { kind: "armor" } {
+  return {
+    kind: "armor",
+    ...armor,
+    modifierContributions: (armor.modifierContributions ?? []).flatMap((contribution) =>
+      contribution.definition.kind === "modifier"
+        ? [{
+            ...contribution,
+            definition: { ...contribution.definition, kind: "modifier" as const },
+          }]
+        : [],
+    ),
+  }
+}
+
 describe("modifier store actions", () => {
   it("sets active base for a target", () => {
     resetSheetStore({
@@ -548,7 +563,10 @@ describe("modifier store actions", () => {
       createManualBaseContribution("armorMax", 2),
     )
 
-    store().selectArmor(armor!.id)
+    store().selectArmorSlot({
+      type: "template",
+      template: runtimeArmorTemplate(armor!),
+    })
     expect(sheet().armorMax).toBe(2)
 
     store().removeSpecialBaseContribution("armorMax", getManualBaseId("armorMax"))
@@ -1613,29 +1631,4 @@ describe("structured runtime equipment selection", () => {
     expect(sheet().evasion).toBe("12")
   })
 
-  it("keeps legacy string actions from parsing JSON custom equipment payloads", () => {
-    const weaponPayload = JSON.stringify({
-      name: "JSON 武器",
-      trait: "strength",
-      damage: "d8",
-      damageType: "physical",
-      burden: "oneHanded",
-      range: "melee",
-    })
-    const armorPayload = JSON.stringify({
-      name: "JSON 护甲",
-      baseArmorMax: 4,
-      baseThresholds: { minor: 6, major: 12 },
-    })
-
-    resetSheetStore()
-
-    store().selectWeaponSlot({ slotType: "primary" }, weaponPayload)
-    store().selectArmor(armorPayload)
-
-    expect(sheet().equipment.weaponSlots.primary.name).toBe(weaponPayload)
-    expect(sheet().equipment.weaponSlots.primary.damage).toBe("")
-    expect(sheet().equipment.armorSlot.name).toBe(armorPayload)
-    expect(sheet().equipment.armorSlot.baseArmorMax).toBe(null)
-  })
 })

@@ -39,3 +39,6 @@ coverage/
 
 # git worktrees
 .worktrees/
+
+# local reference materials
+docs/refs/

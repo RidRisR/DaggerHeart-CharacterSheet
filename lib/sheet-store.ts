@@ -16,13 +16,18 @@ import {
 import { createEmptyArmorSlot, createEmptyWeaponSlot } from "@/automation/equipment/defaults";
 import { swapInventoryWeaponWithActiveSlot } from "@/automation/equipment/weapon-slot-utils";
 import {
-    createArmorSlotFromCustomPayload,
+    createArmorSlotFromCustomDraft,
+    createArmorSlotFromRuntimeTemplate,
     createArmorSlotFromTemplate,
-    createWeaponSlotFromCustomPayload,
+    createWeaponSlotFromCustomDraft,
     createWeaponSlotFromName,
+    createWeaponSlotFromRuntimeTemplate,
     createWeaponSlotFromTemplate,
+    type CustomArmorDraft,
+    type CustomWeaponDraft,
 } from "@/automation/equipment/template-to-slot";
 import type { ArmorSlot, EquipmentModifierContribution, EquipmentModifierTargetId, WeaponSlot } from "@/automation/equipment/types";
+import type { RuntimeEquipmentTemplate } from "@/equipment/runtime-cache/types";
 import type {
     ModifierEntryId,
     ModifierTargetId,
@@ -70,6 +75,16 @@ type WeaponSlotSelection =
     | { slotType: "primary" | "secondary" }
     | { slotType: "inventory"; index: 0 | 1 }
 
+export type WeaponSelectionInput =
+    | { type: "none" }
+    | { type: "custom"; draft: CustomWeaponDraft }
+    | { type: "template"; template: RuntimeEquipmentTemplate & { kind: "weapon" } }
+
+export type ArmorSelectionInput =
+    | { type: "none" }
+    | { type: "custom"; draft: CustomArmorDraft }
+    | { type: "template"; template: RuntimeEquipmentTemplate & { kind: "armor" } }
+
 type EquipmentModifierSlotRef =
     | { type: "weapon"; slot: "primary" | "secondary" }
     | { type: "inventoryWeapon"; index: 0 | 1 }
@@ -98,11 +113,23 @@ function createSelectedWeaponSlot(selection: WeaponSlotSelection, weaponId: stri
         )
     }
 
-    try {
-        return createWeaponSlotFromCustomPayload(JSON.parse(weaponId))
-    } catch {
-        return createWeaponSlotFromName(weaponId)
+    return createWeaponSlotFromName(weaponId)
+}
+
+function createSelectedRuntimeWeaponSlot(selection: WeaponSlotSelection, input: WeaponSelectionInput): WeaponSlot {
+    if (input.type === "none") {
+        return createEmptyWeaponSlot()
     }
+
+    if (input.type === "custom") {
+        return createWeaponSlotFromCustomDraft(input.draft, (templateContributionId) =>
+            createWeaponContributionId(selection, templateContributionId),
+        )
+    }
+
+    return createWeaponSlotFromRuntimeTemplate(input.template, (templateContributionId) =>
+        createWeaponContributionId(selection, templateContributionId),
+    )
 }
 
 // 同步子职业施法属性的函数
@@ -166,7 +193,9 @@ interface SheetState {
     updateArmorBaseThresholdSide: (side: "minor" | "major", value: string) => void;
     updateArmorBaseMax: (baseArmorMax: string) => void;
     selectArmor: (armorId: string) => void;
+    selectArmorSlot: (input: ArmorSelectionInput) => void;
     selectWeaponSlot: (selection: WeaponSlotSelection, weaponId: string) => void;
+    selectWeapon: (selection: WeaponSlotSelection, input: WeaponSelectionInput) => void;
     updateActiveWeaponSlot: (slotType: "primary" | "secondary", updates: Partial<WeaponSlot>) => void;
     updateInventoryWeaponSlot: (index: 0 | 1, updates: Partial<WeaponSlot>) => void;
     swapInventoryWeaponToActiveSlot: (index: 0 | 1, targetType: "primary" | "secondary") => void;
@@ -685,32 +714,35 @@ export const useSheetStore = create<SheetState>((set) => ({
         if (armorId === "none") {
             armorSlot = createEmptyArmorSlot();
         } else {
-            let isCustomArmor = false;
-            let customArmorData: unknown = null;
+            const armor = armorItems.find((armor) => armor.id === armorId);
 
-            try {
-                customArmorData = JSON.parse(armorId);
-                isCustomArmor = true;
-            } catch (e) {
-                // 不是JSON格式，继续按内置模板 id 处理
-            }
-
-            if (isCustomArmor && customArmorData) {
-                armorSlot = createArmorSlotFromCustomPayload(customArmorData);
+            if (armor) {
+                armorSlot = createArmorSlotFromTemplate(armor, createEquipmentContributionId);
             } else {
-                const armor = armorItems.find((armor) => armor.id === armorId);
-
-                if (armor) {
-                    armorSlot = createArmorSlotFromTemplate(armor, createEquipmentContributionId);
-                } else {
-                    armorSlot = {
-                        ...createEmptyArmorSlot(),
-                        name: armorId,
-                    };
-                }
+                armorSlot = {
+                    ...createEmptyArmorSlot(),
+                    name: armorId,
+                };
             }
-
         }
+
+        return {
+            sheetData: applyAutoCalculationForTargets({
+                ...state.sheetData,
+                equipment: {
+                    ...state.sheetData.equipment,
+                    armorSlot,
+                },
+            }),
+        };
+    }),
+
+    selectArmorSlot: (input) => set((state) => {
+        const armorSlot = input.type === "none"
+            ? createEmptyArmorSlot()
+            : input.type === "custom"
+                ? createArmorSlotFromCustomDraft(input.draft, createEquipmentContributionId)
+                : createArmorSlotFromRuntimeTemplate(input.template, createEquipmentContributionId);
 
         return {
             sheetData: applyAutoCalculationForTargets({
@@ -725,6 +757,42 @@ export const useSheetStore = create<SheetState>((set) => ({
 
     selectWeaponSlot: (selection, weaponId) => set((state) => {
         const slot = createSelectedWeaponSlot(selection, weaponId);
+        const weaponSlots = state.sheetData.equipment.weaponSlots;
+
+        if (selection.slotType === "inventory") {
+            const inventory = [...weaponSlots.inventory] as typeof weaponSlots.inventory;
+            inventory[selection.index] = slot;
+
+            return {
+                sheetData: applyAutoCalculationForTargets({
+                    ...state.sheetData,
+                    equipment: {
+                        ...state.sheetData.equipment,
+                        weaponSlots: {
+                            ...weaponSlots,
+                            inventory,
+                        },
+                    },
+                }),
+            };
+        }
+
+        return {
+            sheetData: applyAutoCalculationForTargets({
+                ...state.sheetData,
+                equipment: {
+                    ...state.sheetData.equipment,
+                    weaponSlots: {
+                        ...weaponSlots,
+                        [selection.slotType]: slot,
+                    },
+                },
+            }),
+        };
+    }),
+
+    selectWeapon: (selection, input) => set((state) => {
+        const slot = createSelectedRuntimeWeaponSlot(selection, input);
         const weaponSlots = state.sheetData.equipment.weaponSlots;
 
         if (selection.slotType === "inventory") {

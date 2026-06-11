@@ -104,6 +104,9 @@ importers:
       '@uiw/react-md-editor':
         specifier: ^4.0.8
         version: 4.0.8(@types/react@19.1.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      ajv:
+        specifier: 8.17.1
+        version: 8.17.1
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.21(postcss@8.5.3)

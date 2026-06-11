@@ -106,8 +106,8 @@ describe('ID Generator - 截断功能', () => {
   it('空字符串应该使用默认值并截断', () => {
     const id = generateRobustCardId('', '', 'profession')
 
-    // 默认值 "新建卡包" 和 "作者" 都少于8字符，应该保持不变
-    expect(id).toContain('新建卡包')
+    // 默认值 "新建卡牌包" 和 "作者" 都少于8字符，应该保持不变
+    expect(id).toContain('新建卡牌包')
     expect(id).toContain('作者')
   })
 })

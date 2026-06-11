@@ -32,8 +32,8 @@
 - 结构化导入诊断。
 - 独立 localStorage 存储。
 - 启动自检和存储完整性报告。
-- builtin equipment canonical adapter。
-- runtime registry/query。
+- built-in equipment canonical source migration。
+- stable runtime cache/query view。
 - explicit equipment selection payload。
 - template-to-slot/display mapper。
 - 现有自动化行为回归验证。
@@ -60,13 +60,16 @@
 - 第一版装备包是独立 JSON 文件，不嵌入 `.dhcb`。
 - 顶层使用一个带 schema 版本的 `format` 字段，不再使用 `schemaVersion` 或 `formatVersion`。
 - 第一版 `format` 固定为 `daggerheart.equipment-pack.v1`。
-- 顶层 `version` 是卡包作者维护的内容版本，必须是严格 semver。
+- 顶层 `version` 是卡包作者维护的内容版本，必须是严格 semver；允许 prerelease 和 build metadata，不允许 `v1.0.0`、`1.0` 或带前导零的版本段。
 - 顶层 `format`、`name`、`version`、`equipment` 必填。
 - 顶层 `author`、`description` 可选。
-- `equipment.weapons` 和 `equipment.armor` 可选，缺失时按空数组处理，但二者至少一个包含有效模板。
+- 顶层 `name` 和 `author` 的第一版长度上限均为 100 字符。
+- `equipment.weapons` 和 `equipment.armor` 可选，缺失时按空数组处理；空装备包由 semantic validation 产生 `EMPTY_EQUIPMENT`。
 - 字段名必须是英文。
-- 枚举字段可以接受受控中文 alias 值，normalize 后存储英文 canonical 值。
+- 核心 Public Schema 只接受英文 canonical 枚举值；受控中文 alias 值只属于 schema 前的 `zh-CN authoring adapter`，normalize 后存储英文 canonical 值。
 - 官方示例优先展示英文 canonical 值，可附中文枚举值参考表。
+- 第一版 JSON Schema 单真源是 `public/schemas/equipment-pack.v1.schema.json`。
+- 阶段 2 的 runtime structural validation 使用 AJV 消费 Public Schema；AJV 原始错误必须映射为结构化 diagnostics。
 
 ### 顶层格式
 
@@ -107,15 +110,15 @@ interface EquipmentWeaponTemplate {
 
 武器字段规则：
 
-- `id` 必填，稳定唯一字符串。
+- `id` 必填，稳定唯一字符串；第一版允许中文，禁止 `/`、`\` 和控制字符，长度不超过 160。
 - `name` 必填。
 - `tier`: `T1 | T2 | T3 | T4`。
 - `weaponType`: `primary | secondary`。
 - `trait`: `agility | strength | finesse | instinct | presence | knowledge`。
 - `damageType`: `physical | magic`。
 - `range`: `melee | veryClose | close | far | veryFar`。
-- `burden`: `oneHanded | twoHanded`。
-- `damage` 必填字符串，例如 `d8`、`d10+3`。
+- `burden`: `oneHanded | twoHanded | offHand`。
+- `damage` 必填字符串，例如 `d8`、`d10+3`；第一版只检查非空、类型和长度，不校验骰子表达式是否合法。
 - `featureName`、`description` 可选。
 
 ### 护甲模板
@@ -138,14 +141,15 @@ interface EquipmentArmorTemplate {
 
 护甲字段规则：
 
-- `id` 必填，稳定唯一字符串。
+- `id` 必填，稳定唯一字符串；第一版允许中文，禁止 `/`、`\` 和控制字符，长度不超过 160。
 - `name` 必填。
 - `tier`: `T1 | T2 | T3 | T4`。
 - `baseArmorMax` 必填，非负整数。
 - `baseThresholds.minor` 必填，非负整数。
 - `baseThresholds.major` 必填，非负整数。
+- `baseThresholds.major` 必须大于或等于 `baseThresholds.minor`，否则 semantic validation 产生 `INVALID_THRESHOLD_ORDER`。
 - `featureName`、`description` 可选。
-- `modifierContributions` 公开输入可选，normalize 后补为数组。
+- `modifierContributions` 公开输入可选，normalize 后补为数组；`null` 非法。
 - 导入包模板中的 `baseArmorMax`、`minor`、`major` 不允许为 `null`。
 
 ### Modifier Contribution 模板
@@ -192,7 +196,7 @@ interface EquipmentModifierContributionTemplate {
 
 ### 枚举 Alias 字典
 
-字段名不支持中文 alias。只有枚举值可以通过显式白名单支持中文 alias。
+字段名不支持中文 alias。只有枚举值可以通过显式白名单支持中文 alias。核心 Public Schema 不包含中文枚举值；中文 alias 必须先由 authoring adapter 转成英文 canonical 值，再进入 schema validation。
 
 ```ts
 trait: {
@@ -219,11 +223,12 @@ range: {
 
 burden: {
   "单手": "oneHanded",
-  "双手": "twoHanded"
+  "双手": "twoHanded",
+  "副手": "offHand"
 }
 ```
 
-未知枚举值是 hard error。
+未知中文枚举值和未知英文枚举值都是 hard error。
 
 ## 阶段 2：导入 Pipeline 与诊断模型
 
@@ -236,48 +241,83 @@ burden: {
 导入入口通过统一 source adapter interface 接收输入，而不是为文件、测试数据、内置数据分别暴露不一致入口。
 
 ```ts
+type EquipmentPackImportOriginKind = "file" | "object" | "builtin" | "container"
+
+type EquipmentPackRawPayload =
+  | {
+      kind: "jsonText"
+      text: string
+      sizeBytes?: number
+    }
+  | {
+      kind: "parsedObject"
+      value: unknown
+      sizeBytes?: number
+    }
+
 interface EquipmentPackImportSource {
-  sourceType: "file" | "object" | "builtin" | "container"
-  fileName?: string
-  read(): Promise<unknown>
+  origin: {
+    kind: EquipmentPackImportOriginKind
+    label?: string
+    fileName?: string
+  }
+  read(): Promise<EquipmentPackRawPayload>
 }
+
+interface EquipmentPackImportOptions {
+  mode?: "commit" | "dryRun"
+}
+
+// 具体字段在阶段 2/3 细化；阶段 2 要求 pipeline 通过依赖注入访问
+// conflict context、storage transaction、runtime cache build 和 clock。
+interface EquipmentPackImportDependencies {}
 ```
 
 统一入口：
 
 ```ts
 importEquipmentPackFromSource(
-  source: EquipmentPackImportSource
+  source: EquipmentPackImportSource,
+  options: EquipmentPackImportOptions,
+  dependencies: EquipmentPackImportDependencies,
 ): Promise<EquipmentPackImportResult>
 ```
 
 Adapter 职责：
 
-- file adapter 读取文件文本并 JSON parse，parse 失败产生 `INVALID_JSON`。
-- object/test adapter 直接提供 unknown object，方便测试同一条 pipeline。
-- builtin adapter 用于把内置装备源数据送入同一 canonical normalize/registry 逻辑，但不提交到 custom pack storage。
+- file adapter 只读取文件文本；JSON parse 是独立 pipeline stage，parse 失败产生 `INVALID_JSON`。
+- object source 和 test fixture source 直接提供 parsed object payload，跳过文本 JSON parse，方便测试同一条 pipeline。
+- 内置装备源数据不设计长期 builtin adapter；后续应直接迁移为 canonical 标准格式，并作为 runtime cache build 输入。
 - container adapter 是未来方向，用于从 `.dhcb` 或其他容器中提取 `equipment.json`。
 
 ### Pipeline
 
 ```text
-Import source
-  -> Read/parse via adapter
-  -> Identify format
-  -> Validate schema
-  -> Normalize
-  -> Conflict check
-  -> Stage pack data
-  -> Commit to storage
-  -> Rebuild registry/query index
-  -> Return structured result
+Source Read
+  -> JSON Parse
+  -> Authoring Preprocess
+  -> Structural Validation
+  -> Canonical Normalize
+  -> Semantic Validation
+  -> Conflict Check
+  -> Stage Import Data
+  -> Build Commit Plan
+  -> Storage Transaction
+  -> Runtime Cache Build
+  -> Result Mapping
 ```
 
 阶段原则：
 
-- `Validate`、`Normalize`、`Conflict check`、`Commit` 是独立阶段，每一阶段应能单独测试。
-- `Validate schema` 检查文件自身是否合法。
-- `Conflict check` 检查文件与当前系统状态是否冲突。
+- `Source Read`、`JSON Parse`、`Authoring Preprocess`、`Structural Validation`、`Canonical Normalize`、`Semantic Validation`、`Conflict Check`、`Stage Import Data`、`Build Commit Plan`、`Storage Transaction`、`Runtime Cache Build` 是独立阶段，每一阶段应能单独测试。
+- `Authoring Preprocess` 只做显式输入便利层，例如字符串首尾 trim 和受控中文 enum alias 转换；不补业务默认值、不猜测修复。
+- `Structural Validation` 使用 AJV 检查 Public Schema。
+- `Semantic Validation` 检查 schema 不负责的业务规则。
+- `Conflict Check` 检查文件与当前系统状态是否冲突。
+- `Stage Import Data` 只构造 staged import / commit draft，不生成最终 repository identity。
+- `Build Commit Plan` 由 Application Service 负责，把 staged import data 加上最终 `packId`、`importedAt` 和 lifecycle metadata。
+- 同一阶段内尽量聚合错误；一旦某阶段产生 error，不进入后续阶段。
+- warning 可以累积，但不影响 `stage` 或 `success`。
 - `Commit` 之前不得修改 store state 或 localStorage。
 
 ### 导入结果
@@ -285,35 +325,77 @@ Import source
 ```ts
 interface EquipmentPackImportResult {
   success: boolean
-  imported: {
+  stage: EquipmentPackImportPipelineStage
+  mode: EquipmentPackImportMode
+  summary: {
     packId?: string
+    name?: string
+    version?: string
+    author?: string
     weaponCount: number
     armorCount: number
+    warningCount: number
+    errorCount: number
   }
   diagnostics: EquipmentPackImportDiagnostic[]
 }
 ```
 
 ```ts
-interface EquipmentPackImportDiagnostic {
-  severity: "error" | "warning"
-  code: string
-  path: string
-  message: string
-  value?: unknown
-}
+type EquipmentPackImportPipelineStage =
+  | "sourceRead"
+  | "jsonParse"
+  | "authoringPreprocess"
+  | "structuralValidation"
+  | "canonicalNormalize"
+  | "semanticValidation"
+  | "conflictCheck"
+  | "stageImportData"
+  | "buildCommitPlan"
+  | "storageTransaction"
+  | "runtimeCacheBuild"
+```
+
+```ts
+type EquipmentPackImportDiagnostic =
+  | {
+      severity: "error"
+      code: EquipmentPackImportErrorCode
+      path: string
+      message: string
+      value?: unknown
+      relatedPaths?: string[]
+    }
+  | {
+      severity: "warning"
+      code: EquipmentPackImportWarningCode
+      path: string
+      message: string
+      value?: unknown
+      relatedPaths?: string[]
+    }
 ```
 
 规则：
 
-- `success = false` 时，不写入存储层。
-- `success = true` 时，可以带 warning。
-- `diagnostics` 同时包含 error 和 warning，由 `severity` 区分。
+- `mode` 为 `"commit"` 或 `"dryRun"`，默认 `"commit"`。
+- `stage` 表示本次 workflow 最终停在哪个业务阶段。
+- `success` 表示 `stage` 所指阶段是否成功完成。
+- `stage: "runtimeCacheBuild"` 且 `success: true` 表示普通 commit 导入完成并可用。
+- `stage: "stageImportData"` 且 `success: true` 表示 dry run 通过并生成 staged import data，未生成最终 storage identity，未写入 storage。
+- `stage: "buildCommitPlan"` 且 `success: false` 表示输入已通过导入校验，但 Application Service 未能生成最终提交计划。
+- `success = true` 时可以带 warning。
+- error 阻止导入提交；warning 不阻止导入提交。
+- warning 可以帮助作者改善包质量，但终端使用者普通导入路径可以默认隐藏、折叠或延后展示 warning。
+- 作者检查不需要单独导入 pipeline；使用同一 import pipeline 的 dry run 模式即可。
 - 核心导入层保留 `code`、`path`、`message`、`value`，不压平成字符串数组。
+- `path` 使用 JSON Pointer 风格；顶层 document 使用 `""`。
+- 重复 id、跨数组冲突等多位置问题可以使用 `relatedPaths` 记录相关位置。
 - UI 可以按 `severity`、`code` 或 `path` 分组展示。
 
-诊断 code 候选：
+第一版 error code 固定为 union，后续新增 code 必须显式设计：
 
+- `SOURCE_READ_FAILED`
 - `INVALID_JSON`
 - `INVALID_FORMAT`
 - `MISSING_FIELD`
@@ -325,6 +407,7 @@ interface EquipmentPackImportDiagnostic {
 - `ID_CONFLICT`
 - `INVALID_CONTRIBUTION_TARGET`
 - `EMPTY_EQUIPMENT`
+- `INVALID_THRESHOLD_ORDER`
 - `FILE_TOO_LARGE`
 - `PACK_LIMIT_EXCEEDED`
 - `TEMPLATE_LIMIT_EXCEEDED`
@@ -332,7 +415,16 @@ interface EquipmentPackImportDiagnostic {
 - `STORAGE_QUOTA_EXCEEDED`
 - `STORAGE_SERIALIZE_FAILED`
 - `STORAGE_WRITE_FAILED`
-- `REGISTRY_REBUILD_FAILED`
+- `RUNTIME_CACHE_BUILD_FAILED`
+
+第一版 warning code 固定为 union：
+
+- `MISSING_AUTHOR`
+- `MISSING_DESCRIPTION`
+- `MISSING_TEMPLATE_DESCRIPTION`
+- `DESCRIPTION_LONG`
+
+`severity` 与 `code` 通过 discriminated union 绑定，避免 warning 搭配 error code 或 error 搭配 warning code。
 
 ### 校验策略
 
@@ -350,19 +442,25 @@ Hard error：
 - 任意枚举字段非法。
 - 任意数值字段非法。
 - 任意字符串字段类型非法。
+- 任意护甲模板的 `baseThresholds.major < baseThresholds.minor`。
 - 任意模板 id 重复或与系统已有 id 冲突。
 - 任意 contribution 结构非法。
 - 任意 contribution target 非法。
 - 任意模板内 contribution id 重复。
-- 容量或数量超过上限。
+- 文件大小、字段长度或单模板 contribution 数量超过上限。
 
 Warning：
 
-- `author` 缺失。
-- `description` 缺失。
+- `author` 缺失时 normalize 为 `"Unknown"`，并可产生 warning。
+- `description` 缺失时 normalize 为 `""`，并可产生 warning。
 - 单个模板的 `featureName` 和 `description` 都缺失。
-- pack name 或 template name 前后有空白，会在规范化时 trim。
-- description 很长，UI 可能截断。
+- 顶层或模板 `description` trim 后长度大于 1000 且不超过 4000，产生 `DESCRIPTION_LONG` warning。
+
+已确认不产生 import warning：
+
+- 字符串首尾空白在 Authoring Preprocess 中 trim；trim 后合法则导入成功且不产生 warning，trim 后为空则按字段规则产生 hard error。
+- 顶层 `name` 或 `author` 超过 100 是 `FIELD_TOO_LONG` error。
+- `description` 超过 4000 是 `FIELD_TOO_LONG` error。
 
 ### Normalize 输出
 
@@ -387,8 +485,8 @@ Normalize 规则：
 - `equipment.weapons` 缺失时标准化为 `[]`。
 - `equipment.armor` 缺失时标准化为 `[]`。
 - `modifierContributions` 缺失时标准化为 `[]`。
-- 字符串字段进入存储层前统一 trim。
-- 受控枚举 alias 转换为英文 canonical 值。
+- 字符串字段在 Structural Validation 前统一 trim，存储层保存 trim 后的值。
+- 字符串 trim 后，受控枚举 alias 转换为英文 canonical 值。
 - 输出只保留 canonical 英文字段。
 - 存储层保存英文 canonical 值；中文展示只属于 UI 层。
 
@@ -407,70 +505,78 @@ Normalize 规则：
 
 ### 目标
 
-建立独立于 custom card store 的装备包存储系统，并保证导入、删除、启动恢复的状态一致性。
+建立独立于 custom card store 的装备包持久化系统，并保证导入、删除、启动恢复的状态一致性。核心 storage 设计不绑定 localStorage；localStorage 只是第一版 persistence adapter。
+
+运行时缓存视图另文讨论；如果后续设计发现与本阶段 storage/repository 设计冲突，再回写本阶段。
 
 ### 存储结构
 
-沿用现有卡牌包的 `index + pack data` 大结构，但不复用 card store 类型。
+沿用 `index + pack data` 大结构，但不复用 card store 类型，也不把 index 设计成内容摘要缓存。
 
-建议 key：
+第一版 localStorage adapter key：
 
 ```ts
-INDEX: "daggerheart_custom_equipment_packs_index"
-PACK_PREFIX: "daggerheart_custom_equipment_pack_"
+INDEX: "dh_equipment_index"
+PACK_PREFIX: "dh_equipment_pack:"
 ```
 
 原则：
 
-- localStorage index 只存 pack 摘要和模板 id 列表。
+- storage core 依赖 repository port，不直接依赖 localStorage 或 Zustand store。
+- localStorage key 只属于 localStorage adapter，不进入核心 storage model。
+- storage index 是 lifecycle authority，只存 pack 是否存在、导入时间、disabled 状态和 source metadata。
+- storage index 不存 pack name、author、version、description、weapon count、armor count 或 template id 列表。
 - 每个装备包的完整模板数据单独存储在 pack data key 中。
-- 持久化 index 不是查询索引，只负责定位、统计和管理 pack。
+- pack data 是 content authority，只存 normalized canonical pack 内容。
+- 持久化 index 不是查询索引，只负责定位和管理 pack 生命周期。
+- pack 摘要、模板数量和 template id 列表从 pack data 通过 helper 或 runtime read model 派生，不持久化到 index，也不物化到 storage snapshot。
 - 武器/护甲筛选所需的查询索引在运行时派生，不持久化。
-- pack data 是自定义装备模板的真源。
 - disabled pack 保留在存储层和管理 UI 中，但不进入选择用查询索引。
+- disabled pack 仍完整存在于 Storage Snapshot / management state 中；“不可见”只表示其模板不进入 selectable runtime read model。
 - 内置装备不进入 equipment pack storage，也不进入 custom `packs` map。
-- 内置装备只在运行时 registry 中以 `source: "builtin"` 出现。
+- 内置装备只在 stable runtime cache view 中以 `source: "builtin"` 出现。
 
 ### 内存模型
 
 ```ts
-interface EquipmentPackState {
-  initialized: boolean
-  loading: boolean
-  error: string | null
-
-  packs: Map<string, EquipmentPackInfo>
-  weapons: Map<string, RegisteredEquipmentWeaponTemplate>
-  armor: Map<string, RegisteredEquipmentArmorTemplate>
-
-  index: EquipmentPackIndex
-  queryIndex: EquipmentTemplateQueryIndex | null
+interface EquipmentPackStorageSnapshot {
+  packs: Map<string, EquipmentPackSnapshotEntry>
+  packCount: number
+  integrity: EquipmentPackIntegrityReport
 }
 ```
 
-`packs` 只包含自定义装备包，包括 disabled pack。`weapons` 和 `armor` 是选择用 registry，只包含内置装备和已启用自定义装备。
+Snapshot 是 repository 读取 index 和 pack data 后派生的当前状态，不是持久化格式，也不直接暴露持久化 index。它是 repository 输出，不是主页面长期 store 契约。`packs` 包含自定义装备包，包括 disabled pack。`packCount` 从 `packs.size` 派生。Snapshot 不物化 per-pack template id 列表、武器数量或护甲数量；这些内容通过 helper 或阶段 5 stable runtime cache/query index 派生。Snapshot 是否长期保留、释放或转换为更轻的 runtime read model，属于后续 cache/store policy。
+
+Repository 公开读取返回的 snapshot 必须已经完成 integrity recovery；原始 storage state 只允许作为 adapter 内部实现细节存在。
 
 ### Actions
 
 ```ts
-initializeEquipmentPacks(): Promise<{ initialized: boolean }>
+interface EquipmentPackApplicationService {
+  initialize(): Promise<EquipmentPackInitializeResult>
 
-importEquipmentPackFromSource(
-  source: EquipmentPackImportSource
-): Promise<EquipmentPackImportResult>
+  importFromSource(
+    source: EquipmentPackImportSource,
+    options?: EquipmentPackImportOptions
+  ): Promise<EquipmentPackImportResult>
 
-removeEquipmentPack(packId: string): boolean
-toggleEquipmentPackDisabled(packId: string): boolean
-getAllEquipmentPacks(): EquipmentPackInfo[]
-getEquipmentPackById(packId: string): EquipmentPackInfo | undefined
+  removePack(packId: string): Promise<EquipmentPackLifecycleResult>
+  setPackDisabled(packId: string, disabled: boolean): Promise<EquipmentPackLifecycleResult>
+  loadSnapshot(): Promise<EquipmentPackStorageSnapshot>
+  buildConflictContext(snapshot?: EquipmentPackStorageSnapshot): Promise<EquipmentPackConflictContext>
+}
 
-getAllWeaponTemplates(): RegisteredEquipmentWeaponTemplate[]
-getAllArmorTemplates(): RegisteredEquipmentArmorTemplate[]
-getWeaponTemplateById(id: string): RegisteredEquipmentWeaponTemplate | undefined
-getArmorTemplateById(id: string): RegisteredEquipmentArmorTemplate | undefined
-queryWeaponTemplates(filters: WeaponTemplateFilters): RegisteredEquipmentWeaponTemplate[]
-queryArmorTemplates(filters: ArmorTemplateFilters): RegisteredEquipmentArmorTemplate[]
+interface EquipmentPackInitializeResult {
+  success: boolean
+  stage: "runtimeCacheBuild"
+  storageCommitted: false
+  snapshot: EquipmentPackStorageSnapshot
+  diagnostics: EquipmentPackLifecycleDiagnostic[]
+}
 ```
+
+第三阶段不实现 Zustand store。Store 是后续 UI-facing client projection，不是持久化真源。
 
 ### 导入事务
 
@@ -478,12 +584,11 @@ queryArmorTemplates(filters: ArmorTemplateFilters): RegisteredEquipmentArmorTemp
 
 ```text
 1. Validate + Normalize + Conflict check
-2. Build nextPackInfo / nextPackData / nextIndex / nextState in memory
+2. Build nextPackData and nextIndex in memory
 3. Serialize nextIndex and nextPackData
 4. Write pack data key first
 5. Write index key second
-6. Update in-memory state
-7. Rebuild registry/query index
+6. Return post-transaction snapshot
 ```
 
 事务原则：
@@ -492,8 +597,8 @@ queryArmorTemplates(filters: ArmorTemplateFilters): RegisteredEquipmentArmorTemp
 - `Commit` 之前不得修改 store state 或 localStorage。
 - pack data 先写，index 后写。index 是可发现入口，不能先指向尚未写入成功的 pack data。
 - 如果 pack data 写成功但 index 写失败，应删除刚写入的 pack data key，并返回 storage failure 诊断。
-- localStorage 写入成功前，UI 不应看到新 pack。
-- registry/query index 只在 commit 成功后重建。
+- repository commit 成功前，UI store 不应看到新 pack。
+- 阶段 3 的事务成功只表示 storage transaction 完成并返回 post-transaction snapshot；runtime/cache/store 如何读取该 snapshot 留给后续阶段。
 
 ### Pack Lifecycle
 
@@ -503,7 +608,9 @@ queryArmorTemplates(filters: ArmorTemplateFilters): RegisteredEquipmentArmorTemp
 type EquipmentPackStatus = "enabled" | "disabled"
 ```
 
-存储层可使用 `disabled: boolean`。
+存储层在 index entry 中使用 `disabled: boolean`。Pack data 不保存 disabled。
+
+程序初始化或显式完整性恢复负责读取和校验 pack data。初始化完成后的 lifecycle action 不重复校验 pack data。
 
 导入：
 
@@ -511,48 +618,48 @@ type EquipmentPackStatus = "enabled" | "disabled"
 - 重复模板 id 直接拒绝。
 - 重复导入不覆盖、不 merge。
 - 用户更新 pack 时，需要先删除旧 pack，再导入新版本。
-- 导入成功后立即进入 registry/query index。
+- 导入成功后 storage 中存在该 pack；进入主页面运行时查询索引属于后续 cache/runtime 阶段。
 
 禁用：
 
 - 禁用只影响未来选择。
 - disabled pack 保留在 storage 和 pack manager。
-- disabled pack 的模板不进入 selectable registry/query。
-- disabled pack 的模板 id 仍参与冲突检查。
+- disabled pack 的模板不进入 selectable runtime cache/query。
+- disabled pack 仍完整存在于 Storage Snapshot / management state 中。
+- disabled pack 的模板 id 仍参与冲突检查，template id 占用从 pack data 派生。
 - 已经实例化到角色表里的装备不受影响。
-- 禁用后重建 registry/query index。
+- 禁用后 storage lifecycle 状态改变；运行时选择视图如何刷新属于后续 cache/runtime 阶段。
 
 启用：
 
-- 启用时重建 registry/query index。
+- 启用时 storage lifecycle 状态改变；运行时选择视图如何刷新属于后续 cache/runtime 阶段。
 - 因为 disabled pack 的 id 一直占用，启用时理论上不会出现 id 冲突。
-- 如果 pack data 在 disabled 期间损坏，启用应失败并报告 corrupted pack 诊断。
+- 如果 pack data 在 disabled 期间损坏，启动自检应报告并恢复；启用不会尝试修复 pack data。
 
 删除：
 
-- 删除 pack 移除 index 记录和 pack data key。
+- 删除 pack 移除 index 记录，并尝试删除 pack data key。
 - 删除后释放模板 id，之后可以导入同 id 的新 pack。
 - 删除不影响已经实例化到角色表里的装备。
-- 删除后重建 registry/query index。
+- 删除后 storage 中不再存在该 pack；运行时选择视图如何刷新属于后续 cache/runtime 阶段。
 - UI 层应二次确认删除，但 store action 语义不依赖 UI 确认。
 
 删除提交顺序：
 
 ```text
 1. Confirm pack exists
-2. Build nextIndex / nextPacks / nextState in memory
+2. Build nextIndex in memory
 3. Serialize nextIndex
 4. Write index without pack entry
 5. Remove pack data key
-6. Update in-memory state
-7. Rebuild registry/query index
+6. Return post-transaction snapshot
 ```
 
 删除时先删 index，再删 pack data。index 先删除成功后，即使 pack data 删除失败，也只会留下 orphan pack data，启动自检会自动清理。
 
 ### 启动自检与完整性恢复
 
-启动自检是 equipment pack system 初始化的一部分。后续卡牌包系统也可以沿用同类思路，但不纳入本阶段实现。
+启动自检是 equipment pack system 初始化的一部分。`initialize()` 必须执行恢复式读取，并返回已完成 integrity recovery 的可信 `EquipmentPackStorageSnapshot`。后续卡牌包系统也可以沿用同类思路，但不纳入本阶段实现。
 
 ```ts
 interface EquipmentPackIntegrityReport {
@@ -572,61 +679,26 @@ interface EquipmentPackIntegrityReport {
 - index entry 指向缺失 pack data：删除该 index entry，更新统计。
 - pack data key 没有 index entry：删除 orphan pack data key。
 - pack data JSON 损坏或无法解析：删除该 pack data key，删除对应 index entry。
-- index 摘要和 pack data 派生摘要不一致：不自动重建，也不自动删除。保留数据，记录 persistent warning，并在每次启动时继续报告。
+- 存储中已存在 template id 冲突：不自动删除任何 pack，记录 integrity issue，并避免 runtime read model 产生不确定覆盖。
 
-摘要不一致处理原则：
+不再设计 index 摘要和 pack data 摘要不一致的恢复规则，因为 index 不保存内容摘要。
 
-- index 和 pack data 正常情况下不应不一致。
-- 摘要不一致可能来自写入 bug、手动修改 localStorage、旧版本迁移或其他异常。
-- 只要 pack data 可通过 index id 读取且可解析，自检不应自动改写或删除它。
-- 保留 warning 用于保护现场，让用户或开发者后续判断原因并手动介入。
-- 默认建议：如果 pack data 本身可解析且 schema 合法，可以继续加载，但在管理 UI 中显示完整性 warning。
-
-## 阶段 4：内置装备 Canonical Adapter
+## 阶段 4：内置装备 Canonical Source Migration
 
 ### 目标
 
-让 registry 对外只输出英文 canonical template，即使当前内置武器源数据仍使用中文字段。
+让 runtime cache 对外只输出英文 canonical template。内置装备源数据不再长期保留中文字段结构，而是在执行阶段迁移为与装备包一致的 canonical 标准格式。
 
 ### 决策
 
 - 内置装备不进入 custom pack storage。
-- 内置装备通过 adapter 转成 canonical template 后进入 registry。
-- 内置转换任何错误都应立刻暴露并使初始化失败，不能静默跳过。
+- 内置装备源数据直接维护为 canonical template，启动时作为 runtime cache build 的 built-in 输入。
+- 内置数据格式错误都应立刻暴露并使初始化失败，不能静默跳过。
 - 默认内置数据应完全合法。
-- 单元测试必须覆盖所有内置武器和护甲都能转换。
-- 后续可以把内置数据字段改成英文；装备名称、特性名、描述等用户可见内容可以继续保留中文。
+- 单元测试必须覆盖所有内置武器和护甲都符合 canonical contract。
+- 装备名称、特性名、描述等用户可见内容可以继续保留中文；字段名和枚举契约保持 canonical。
 
-### 武器映射
-
-```ts
-toCanonicalBuiltinWeaponTemplate(source): EquipmentWeaponTemplate
-```
-
-- `id` -> `id`
-- `名称` -> `name`
-- `等级` -> `tier`
-- `属性` -> `trait`
-- `伤害类型` -> `damageType`
-- `范围` -> `range`
-- `负荷` -> `burden`
-- `伤害` -> `damage`
-- `特性名称` -> `featureName`
-- `描述` -> `description`
-- `modifierContributions ?? []` -> `modifierContributions`
-
-### 护甲映射
-
-```ts
-toCanonicalBuiltinArmorTemplate(source): EquipmentArmorTemplate
-```
-
-- 现有英文字段基本直通。
-- `modifierContributions` 缺失时补为 `[]`。
-- `baseArmorMax`、`baseThresholds.minor`、`baseThresholds.major` 必须是非负整数。
-- 输出只包含 canonical 字段。
-
-## 阶段 5：Registry / Query
+## 阶段 5：Stable Runtime Cache / Query
 
 ### 目标
 
@@ -634,8 +706,8 @@ toCanonicalBuiltinArmorTemplate(source): EquipmentArmorTemplate
 
 ### 决策
 
-- registry 输出统一英文 canonical template。
-- registry 提供正式 query interface，而不是把筛选逻辑留给 UI。
+- runtime cache 输出统一英文 canonical template。
+- runtime cache 提供正式 query interface，而不是把筛选逻辑留给 UI。
 - query 默认只查询 selectable templates，也就是 builtin + enabled custom。
 - disabled custom pack 不进入 query 结果。
 - 管理 UI 查看 disabled pack 内容时，应读取 pack detail，不走选择用 query。
@@ -719,7 +791,7 @@ type ArmorSelection =
   | { kind: "custom"; template: EquipmentArmorTemplate }
 ```
 
-registry id lookup 可以保留给程序化调用、测试或兼容路径，但不作为新 UI 主路径。
+runtime cache id lookup 可以保留给程序化调用、测试或兼容路径，但不作为新 UI 主路径。
 
 ### Display Mapper
 
@@ -737,6 +809,7 @@ labelEquipmentTrait("agility") -> "敏捷"
 labelWeaponDamageType("physical") -> "物理"
 labelWeaponRange("melee") -> "近战"
 labelWeaponBurden("oneHanded") -> "单手"
+labelWeaponBurden("offHand") -> "副手"
 ```
 
 未知 enum 说明系统不变量被破坏，应快速失败，不显示原值。
@@ -836,12 +909,9 @@ Entry state：
 ```ts
 MAX_EQUIPMENT_PACK_FILE_SIZE = 500 * 1024
 MAX_EQUIPMENT_PACKS = 50
-MAX_TEMPLATES_PER_PACK = 500
-MAX_WEAPONS_PER_PACK = 300
-MAX_ARMOR_PER_PACK = 300
 
-MAX_NAME_LENGTH = 120
-MAX_AUTHOR_LENGTH = 120
+MAX_NAME_LENGTH = 100
+MAX_AUTHOR_LENGTH = 100
 MAX_VERSION_LENGTH = 40
 MAX_DESCRIPTION_LENGTH = 4000
 
@@ -856,9 +926,10 @@ MAX_CONTRIBUTION_LABEL_LENGTH = 120
 
 规则：
 
-- 单个装备包 JSON 最大 500KB。
+- 单个装备包 JSON 最大 500 KiB。
 - 最多 50 个自定义装备包。
-- 单包最多 500 个模板。
+- 第一版不设置单包 weapon/armor 模板数量上限；由文件大小和字段长度控制规模。
+- 单个装备模板最多 20 个 modifier contributions。
 - 超过限制直接 hard error。
 - 不自动清理已有 pack。
 - 不做压缩。
@@ -879,7 +950,8 @@ Validator：
 - Chinese enum alias accepted and normalized。
 - invalid number fields。
 - field too long。
-- too many packs/templates/contributions。
+- too many packs。
+- too many modifier contributions。
 - invalid contribution target。
 - duplicate template id within pack。
 - duplicate contribution id within template。
@@ -908,18 +980,18 @@ Storage Transaction：
 - successful import updates memory after storage commit。
 - remove writes index first, then removes pack data。
 - startup removes missing/orphan/corrupted storage data。
-- summary mismatch produces persistent warning, not delete or repair。
+- startup reports stored template id conflicts without automatically deleting packs。
 
-Builtin Canonical Adapter：
+Builtin Canonical Source：
 
-- all builtin weapons convert。
-- all builtin armor convert。
+- all builtin weapons conform to canonical contract。
+- all builtin armor conform to canonical contract。
 - unknown builtin enum fails fast。
 - output contains no Chinese field names。
 - visible content text may remain Chinese。
 - contribution templates preserved。
 
-Registry / Query：
+Stable Runtime Cache / Query：
 
 - includes builtin and enabled custom。
 - excludes disabled custom。

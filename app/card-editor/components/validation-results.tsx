@@ -116,7 +116,7 @@ export function ValidationResults({ validationResult, open, onClose, onJumpToCar
               </DialogTitle>
               <DialogDescription className="mt-1">
                 {isValid 
-                  ? `您的卡包包含 ${validationResult.totalCards} 张卡牌，所有内容都符合规范，可以正常导出使用。`
+                  ? `您的卡牌包包含 ${validationResult.totalCards} 张卡牌，所有内容都符合规范，可以正常导出使用。`
                   : `检测到 ${fixSummary.criticalIssues} 个关键问题和 ${fixSummary.warningIssues} 个警告，影响 ${fixSummary.affectedCardTypes.join('、')} 卡片。`
                 }
               </DialogDescription>
@@ -236,10 +236,10 @@ export function ValidationResults({ validationResult, open, onClose, onJumpToCar
             </div>
             <h3 className="text-2xl font-semibold text-green-800 mb-3">🎉 验证完成！</h3>
             <p className="text-green-700 text-lg mb-4">
-              您的卡包包含 <span className="font-semibold">{validationResult.totalCards}</span> 张卡牌，所有内容都符合规范
+              您的卡牌包包含 <span className="font-semibold">{validationResult.totalCards}</span> 张卡牌，所有内容都符合规范
             </p>
             <div className="bg-white rounded-lg p-4 inline-block shadow-sm border border-green-200">
-              <p className="text-green-600 font-medium">✨ 卡包质量优秀，可以放心导出和使用</p>
+              <p className="text-green-600 font-medium">✨ 卡牌包质量优秀，可以放心导出和使用</p>
             </div>
           </div>
         )}
@@ -247,7 +247,7 @@ export function ValidationResults({ validationResult, open, onClose, onJumpToCar
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-6 border-t">
           <div className="text-xs md:text-sm text-gray-500 text-center md:text-left">
             {!isValid && (
-              <>修复问题后，点击工具栏的"验证卡包"按钮重新检查</>
+              <>修复问题后，点击工具栏的"验证卡牌包"按钮重新检查</>
             )}
           </div>
           <div className="flex gap-3 w-full md:w-auto">

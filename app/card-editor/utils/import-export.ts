@@ -152,16 +152,16 @@ export function ensureSubclassTriples(subclassCards: SubClassCard[], packageData
   return completeCards
 }
 
-// 导出卡包 (支持ZIP格式)
+// 导出卡牌包 (支持ZIP格式)
 export async function exportCardPackage(data: CardPackageState, exportWithImages: boolean = true): Promise<void> {
   if (exportWithImages) {
     // Export as .dhcb/.zip with images
     try {
       const { exportCardPackageWithImages, downloadZipFile } = await import('./zip-export');
-      toast.info('正在导出卡包...');
-      const zipBlob = await exportCardPackageWithImages(data, data.name || '卡包');
-      downloadZipFile(zipBlob, data.name || '卡包');
-      toast.success('卡包已导出（含图片）');
+      toast.info('正在导出卡牌包...');
+      const zipBlob = await exportCardPackageWithImages(data, data.name || '卡牌包');
+      downloadZipFile(zipBlob, data.name || '卡牌包');
+      toast.success('卡牌包已导出（含图片）');
     } catch (error) {
       console.error('[Export] Failed to export with images:', error);
       toast.error('导出失败');
@@ -179,14 +179,14 @@ export async function exportCardPackage(data: CardPackageState, exportWithImages
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${data.name || '卡包'}.json`
+    a.download = `${data.name || '卡牌包'}.json`
     a.click()
     URL.revokeObjectURL(url)
-    toast.success('卡包已导出')
+    toast.success('卡牌包已导出')
   }
 }
 
-// 导入卡包 (支持 .json 和 .dhcb/.zip)
+// 导入卡牌包 (支持 .json 和 .dhcb/.zip)
 export function importCardPackage(): Promise<CardPackageState | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input')
@@ -205,10 +205,10 @@ export function importCardPackage(): Promise<CardPackageState | null> {
         // Check if file is ZIP (.dhcb/.zip)
         if (file.name.endsWith('.dhcb') || file.name.endsWith('.zip')) {
           const { importCardPackageWithImages } = await import('./zip-import');
-          toast.info('正在导入卡包...');
+          toast.info('正在导入卡牌包...');
           const packageData = await importCardPackageWithImages(file);
           resolve(packageData);
-          toast.success('卡包已导入（含图片）');
+          toast.success('卡牌包已导入（含图片）');
           return;
         }
 
@@ -223,7 +223,7 @@ export function importCardPackage(): Promise<CardPackageState | null> {
         // 创建临时的包数据用于生成ID
         const tempPackageData: CardPackageState = {
           ...importedData,
-          name: importedData.name || '导入卡包',
+          name: importedData.name || '导入卡牌包',
           author: importedData.author || '未知作者',
           isModified: false,
           lastSaved: new Date()
@@ -248,7 +248,7 @@ export function importCardPackage(): Promise<CardPackageState | null> {
           isModified: false,
           lastSaved: new Date()
         }
-        toast.success('卡包已导入')
+        toast.success('卡牌包已导入')
         resolve(newPackage)
       } catch {
         toast.error('导入失败：文件格式不正确')

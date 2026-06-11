@@ -7,20 +7,22 @@ import {
   isIdUniqueInPackage
 } from '@/app/card-editor/utils/id-generator'
 import type { CardPackageState } from '@/app/card-editor/types'
-import type { ProfessionCard } from '@/card/profession-card/convert'
 
-function professionCard(id: string, name: string): ProfessionCard {
+function makeProfessionCard(
+  id: string,
+  name: string = '测试职业'
+): NonNullable<CardPackageState['profession']>[number] {
   return {
     id,
     名称: name,
-    简介: '',
-    领域1: '领域一',
-    领域2: '领域二',
-    起始生命: 0,
-    起始闪避: 0,
-    起始物品: '',
-    希望特性: '',
-    职业特性: '',
+    简介: '测试简介',
+    领域1: '利刃',
+    领域2: '骸骨',
+    起始生命: 6,
+    起始闪避: 10,
+    起始物品: '测试物品',
+    希望特性: '测试希望特性',
+    职业特性: '测试职业特性'
   }
 }
 
@@ -171,7 +173,7 @@ describe('ID Generator - generateRobustCardId', () => {
     const id1 = generateRobustCardId('测试包', '张三', 'profession', mockPackage)
 
     // 添加到卡包中
-    mockPackage.profession = [professionCard(id1, '测试')]
+    mockPackage.profession = [makeProfessionCard(id1)]
 
     // 第二次生成，由于时间戳和随机数的存在，极少会冲突
     // 但如果冲突，应该添加额外后缀
@@ -258,8 +260,8 @@ describe('ID Generator - isIdUniqueInPackage', () => {
       variants: []
     },
     profession: [
-      professionCard('existing-id-1', '测试1'),
-      professionCard('existing-id-2', '测试2')
+      makeProfessionCard('existing-id-1', '测试1'),
+      makeProfessionCard('existing-id-2', '测试2')
     ],
     ancestry: [],
     community: [],

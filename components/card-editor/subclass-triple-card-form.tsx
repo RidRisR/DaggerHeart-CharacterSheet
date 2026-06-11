@@ -285,7 +285,7 @@ export function SubclassTripleCardForm({
                   card={card}
                   cardType="subclass"
                   cardIndex={cardIndex}
-                  packageName={packageData.name || '新建卡包'}
+                  packageName={packageData.name || '新建卡牌包'}
                   author={packageData.author || '作者'}
                 />
               )}

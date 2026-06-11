@@ -317,7 +317,7 @@ export function AncestryDualCardForm({
                         card={card1}
                         cardType="ancestry"
                         cardIndex={cardIndex1}
-                        packageName={packageData.name || '新建卡包'}
+                        packageName={packageData.name || '新建卡牌包'}
                         author={packageData.author || '作者'}
                       />
                     )}
@@ -407,7 +407,7 @@ export function AncestryDualCardForm({
                         card={card2}
                         cardType="ancestry"
                         cardIndex={cardIndex2}
-                        packageName={packageData.name || '新建卡包'}
+                        packageName={packageData.name || '新建卡牌包'}
                         author={packageData.author || '作者'}
                       />
                     )}

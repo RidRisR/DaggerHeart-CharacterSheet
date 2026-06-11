@@ -6,7 +6,7 @@ import type {
 } from '@/card/card-types'
 import type { CommunityCard } from '@/card/community-card/convert'
 
-// 卡包编辑器的状态接口
+// 卡牌包编辑器的状态接口
 export interface CardPackageState extends ImportData {
   // 扩展字段用于编辑器状态
   isModified?: boolean
@@ -43,11 +43,11 @@ export type CardType = 'profession' | 'ancestry' | 'variant' | 'community' | 'su
 // 卡牌数据类型联合
 export type CardData = ProfessionCard | AncestryCard | CommunityCard | RawVariantCard
 
-// 默认卡包数据类型
+// 默认卡牌包数据类型
 export const defaultPackage: CardPackageState = {
-  name: '新建卡包',
+  name: '新建卡牌包',
   version: '1.0.0',
-  description: '自定义卡包描述',
+  description: '自定义卡牌包描述',
   author: '',
   customFieldDefinitions: {
     professions: [],

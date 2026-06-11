@@ -10,11 +10,13 @@ import { PreviewTab } from './preview-tab'
 interface CardTabsProps {
   selectedTab: string
   onSelectedTabChange: (tab: string) => void
+  onRequestCopyFromEquipment(): void
 }
 
 export function CardTabs({
   selectedTab,
-  onSelectedTabChange
+  onSelectedTabChange,
+  onRequestCopyFromEquipment
 }: CardTabsProps) {
 
   return (
@@ -38,7 +40,7 @@ export function CardTabs({
 
       {/* 基础信息选项卡 */}
       <TabsContent value="metadata">
-        <MetadataTab />
+        <MetadataTab onRequestCopyFromEquipment={onRequestCopyFromEquipment} />
       </TabsContent>
 
       {/* 职业卡牌选项卡 */}

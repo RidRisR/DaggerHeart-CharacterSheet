@@ -97,7 +97,7 @@ export function DefinitionsManager({
         <DialogHeader>
           <DialogTitle>预定义字段管理</DialogTitle>
           <DialogDescription>
-            定义卡包中可用的职业、种族、社群、领域和变体类型。创建卡牌时必须从这些预定义列表中选择。
+            定义卡牌包中可用的职业、种族、社群、领域和变体类型。创建卡牌时必须从这些预定义列表中选择。
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -111,7 +111,7 @@ export function DefinitionsManager({
           <div className="mt-6 p-4 bg-muted/50 rounded-lg">
             <h4 className="text-sm font-semibold mb-2">使用说明</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• 预定义字段是卡包的"词典"，定义了所有可用的职业、种族、社群、领域和变体类型</li>
+              <li>• 预定义字段是卡牌包的"词典"，定义了所有可用的职业、种族、社群、领域和变体类型</li>
               <li>• 创建卡牌时，相关字段必须使用这里预定义的值</li>
               <li>• 例如：职业卡牌的"领域1"和"领域2"必须从已定义的领域列表中选择</li>
               <li>• 变体类型用于分类变体卡牌（如武器、道具、食物等）</li>

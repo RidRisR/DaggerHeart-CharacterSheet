@@ -16,7 +16,7 @@ function generateShortId(): string {
 
 /**
  * 生成唯一的卡牌ID（新版本，不依赖卡牌名称）
- * @param packageName 卡包名称
+ * @param packageName 卡牌包名称
  * @param author 作者名称
  * @param cardType 卡牌类型
  * @param existingCards 已存在的卡牌数据，用于去重检查
@@ -38,7 +38,7 @@ export function generateRobustCardId(
     'variant': 'vari'
   } as const
 
-  const cleanPackageName = truncateIdString(sanitizeIdString(packageName) || '新建卡包', 8)
+  const cleanPackageName = truncateIdString(sanitizeIdString(packageName) || '新建卡牌包', 8)
   const cleanAuthor = truncateIdString(sanitizeIdString(author) || '作者', 8)
   const typeCode = typeAbbreviation[cardType] || cardType
 
@@ -97,7 +97,7 @@ export function generateCardId(
 }
 
 /**
- * 从卡包数据中提取所有卡牌
+ * 从卡牌包数据中提取所有卡牌
  */
 function getAllCardsFromPackage(packageData: CardPackageState): Array<{ id?: string }> {
   const allCards: Array<{ id?: string }> = []
@@ -116,7 +116,7 @@ function getAllCardsFromPackage(packageData: CardPackageState): Array<{ id?: str
 }
 
 /**
- * 检查ID是否在指定卡包中唯一
+ * 检查 ID 是否在指定卡牌包中唯一
  */
 export function isIdUniqueInPackage(id: string, packageData: CardPackageState, excludeCard?: { id?: string }): boolean {
   const allCards = getAllCardsFromPackage(packageData)
@@ -175,7 +175,7 @@ export function parseCardId(
   author: string,
   cardType: CardType
 ): { isStandard: boolean; customSuffix: string; prefix: string } {
-  const cleanPackageName = truncateIdString(sanitizeIdString(packageName) || '新建卡包', 8)
+  const cleanPackageName = truncateIdString(sanitizeIdString(packageName) || '新建卡牌包', 8)
   const cleanAuthor = truncateIdString(sanitizeIdString(author) || '作者', 8)
   const typeCode = getTypeAbbreviation(cardType)
 
@@ -207,7 +207,7 @@ export function buildCardId(
   cardType: CardType,
   customSuffix: string
 ): string {
-  const cleanPackageName = truncateIdString(sanitizeIdString(packageName) || '新建卡包', 8)
+  const cleanPackageName = truncateIdString(sanitizeIdString(packageName) || '新建卡牌包', 8)
   const cleanAuthor = truncateIdString(sanitizeIdString(author) || '作者', 8)
   const typeCode = getTypeAbbreviation(cardType)
   const cleanSuffix = sanitizeIdString(customSuffix) || 'unnamed'

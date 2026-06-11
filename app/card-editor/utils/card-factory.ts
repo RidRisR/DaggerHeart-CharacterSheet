@@ -14,7 +14,7 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
     case 'profession':
       const professionName = '新职业'
       return {
-        id: generateRobustCardId(packageData.name || '新建卡包', packageData.author || '作者', 'profession', packageData),
+        id: generateRobustCardId(packageData.name || '新建卡牌包', packageData.author || '作者', 'profession', packageData),
         名称: professionName,
         简介: '',
         领域1: '',
@@ -28,7 +28,7 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
     case 'ancestry':
       const ancestryName = '新能力'
       return {
-        id: generateRobustCardId(packageData.name || '新建卡包', packageData.author || '作者', 'ancestry', packageData),
+        id: generateRobustCardId(packageData.name || '新建卡牌包', packageData.author || '作者', 'ancestry', packageData),
         名称: ancestryName,
         种族: '',
         简介: '',
@@ -38,7 +38,7 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
     case 'variant':
       const variantName = '新物品'
       return {
-        id: generateRobustCardId(packageData.name || '新建卡包', packageData.author || '作者', 'variant', packageData),
+        id: generateRobustCardId(packageData.name || '新建卡牌包', packageData.author || '作者', 'variant', packageData),
         名称: variantName,
         类型: '',
         效果: '',
@@ -54,7 +54,7 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
     case 'community':
       const communityName = '新社群'
       return {
-        id: generateRobustCardId(packageData.name || '新建卡包', packageData.author || '作者', 'community', packageData),
+        id: generateRobustCardId(packageData.name || '新建卡牌包', packageData.author || '作者', 'community', packageData),
         名称: communityName,
         特性: '',
         简介: '',
@@ -63,7 +63,7 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
     case 'subclass':
       const subclassName = '新子职业'
       return {
-        id: generateRobustCardId(packageData.name || '新建卡包', packageData.author || '作者', 'subclass', packageData),
+        id: generateRobustCardId(packageData.name || '新建卡牌包', packageData.author || '作者', 'subclass', packageData),
         名称: subclassName,
         主职: subclassName,  // 使用子职业名称作为默认主职，而不是空字符串
         子职业: subclassName, // 使用子职业名称作为默认值，而不是空字符串
@@ -74,7 +74,7 @@ export function createDefaultCard(type: string, packageData: CardPackageState): 
     case 'domain':
       const domainName = '新领域'
       return {
-        id: generateRobustCardId(packageData.name || '新建卡包', packageData.author || '作者', 'domain', packageData),
+        id: generateRobustCardId(packageData.name || '新建卡牌包', packageData.author || '作者', 'domain', packageData),
         名称: domainName,
         领域: '',
         属性: '',
@@ -103,7 +103,7 @@ export function copyCard(originalCard: unknown, type: CardType, packageData: Car
   
   // 生成新的唯一ID
   copiedCard.id = generateRobustCardId(
-    packageData.name || '新建卡包',
+    packageData.name || '新建卡牌包',
     packageData.author || '作者',
     type,
     packageData

@@ -65,7 +65,7 @@ interface CardEditorStore {
   updateSubclassTriple: (index1: number, card1: unknown, index2: number, card2: unknown, index3: number, card3: unknown) => void
   deleteSubclassTriple: (index: number) => void
   
-  // 卡包操作
+  // 卡牌包操作
   exportPackage: () => void
   importPackage: () => Promise<void>
   newPackage: () => void
@@ -141,7 +141,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
         set(state => {
           const newPackageData = { ...state.packageData, [field]: value }
 
-          // 如果修改的是包名或作者，重新生成所有卡牌ID
+          // 如果修改的是包名或作者，重新生成所有卡牌 ID
           if (field === 'name' || field === 'author') {
             const cardTypes: CardType[] = ['profession', 'ancestry', 'community', 'subclass', 'domain', 'variant']
             const idMappings: Array<{ oldId: string; newId: string }> = []
@@ -151,7 +151,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
                 newPackageData[cardType] = (newPackageData[cardType] as any[]).map(card => {
                   const parsed = parseCardId(
                     card.id || '',
-                    state.packageData.name || '新建卡包',
+                    state.packageData.name || '新建卡牌包',
                     state.packageData.author || '未知作者',
                     cardType
                   )
@@ -162,7 +162,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
                   if (parsed.isStandard) {
                     // 标准格式：保留用户自定义后缀，更新前缀
                     newId = buildCardId(
-                      newPackageData.name || '新建卡包',
+                      newPackageData.name || '新建卡牌包',
                       newPackageData.author || '未知作者',
                       cardType,
                       parsed.customSuffix
@@ -170,7 +170,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
                   } else {
                     // 非标准格式：重新生成
                     newId = generateRobustCardId(
-                      newPackageData.name || '新建卡包',
+                      newPackageData.name || '新建卡牌包',
                       newPackageData.author || '未知作者',
                       cardType,
                       newPackageData
@@ -532,7 +532,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
           }
         }),
         
-      // 卡包操作
+      // 卡牌包操作
       exportPackage: () => {
         const { packageData } = get()
         // 清理导出数据，移除编辑器状态字段
@@ -584,14 +584,14 @@ export const useCardEditorStore = create<CardEditorStore>()(
             },
             confirmDialog: { ...state.confirmDialog, open: false }
           })
-          toast.success('已创建新卡包')
+          toast.success('已创建新卡牌包')
         }
 
         // 总是显示确认对话框，警告会删除现有内容
         setConfirmDialog({
           open: true,
-          title: '创建新卡包',
-          message: '创建新卡包将会清空当前所有卡片内容，确定要继续吗？',
+          title: '创建新卡牌包',
+          message: '创建新卡牌包将会清空当前所有卡牌内容，确定要继续吗？',
           onConfirm: createNewPackage
         })
       },
@@ -608,7 +608,7 @@ export const useCardEditorStore = create<CardEditorStore>()(
           })
           
           if (result.isValid) {
-            toast.success('卡包验证通过！')
+            toast.success('卡牌包验证通过！')
           } else {
             toast.error(`验证失败：发现 ${result.summary.totalErrors} 个错误`)
           }

@@ -24,7 +24,7 @@ export interface CardValidationService {
 class ValidationService implements CardValidationService {
   
   /**
-   * 验证整个卡包
+   * 验证整个卡牌包
    */
   async validatePackage(packageData: CardPackageState): Promise<ValidationResult> {
     try {
@@ -183,7 +183,7 @@ class ValidationService implements CardValidationService {
    * 创建验证上下文
    */
   private createValidationContext(packageData: CardPackageState): ValidationContext {
-    // 从卡包数据中提取自定义字段定义
+    // 从卡牌包数据中提取自定义字段定义
     const customFieldDefinitions = packageData.customFieldDefinitions || {}
     
     // 确保自定义字段定义是字符串数组格式

@@ -87,7 +87,7 @@ export async function importCardPackageWithImages(file: File): Promise<CardPacka
   // Process cards.json with the same logic as regular JSON import
   const tempPackageData: CardPackageState = {
     ...cardsData,
-    name: cardsData.name || '导入卡包',
+    name: cardsData.name || '导入卡牌包',
     author: cardsData.author || '未知作者',
     isModified: false,
     lastSaved: new Date()

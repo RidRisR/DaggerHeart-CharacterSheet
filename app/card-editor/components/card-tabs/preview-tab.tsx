@@ -104,9 +104,9 @@ export function PreviewTab({ onTabChange }: PreviewTabProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>卡包预览</CardTitle>
+        <CardTitle>卡牌包预览</CardTitle>
         <CardDescription>
-          预览当前卡包的所有卡牌 (共 {cardCount} 张) · 点击卡牌可跳转到编辑页面
+          预览当前卡牌包的所有卡牌 (共 {cardCount} 张) · 点击卡牌可跳转到编辑页面
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -114,7 +114,7 @@ export function PreviewTab({ onTabChange }: PreviewTabProps) {
           <div className="text-center py-12">
             <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              当前卡包中还没有任何卡牌
+              当前卡牌包中还没有任何卡牌
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               请在各个卡牌类型标签页中创建卡牌

@@ -142,7 +142,7 @@ export function ProfessionCardForm({
                   card={card}
                   cardType={cardType}
                   cardIndex={cardIndex}
-                  packageName={packageData.name || '新建卡包'}
+                  packageName={packageData.name || '新建卡牌包'}
                   author={packageData.author || '作者'}
                 />
                 <FormMessage />
@@ -460,7 +460,7 @@ export function CommunityCardForm({
                   card={card}
                   cardType={cardType}
                   cardIndex={cardIndex}
-                  packageName={packageData.name || '新建卡包'}
+                  packageName={packageData.name || '新建卡牌包'}
                   author={packageData.author || '作者'}
                 />
                 <FormMessage />
@@ -666,7 +666,7 @@ export function VariantCardForm({
                   card={card}
                   cardType={cardType}
                   cardIndex={cardIndex}
-                  packageName={packageData.name || '新建卡包'}
+                  packageName={packageData.name || '新建卡牌包'}
                   author={packageData.author || '作者'}
                 />
                 <FormMessage />
@@ -965,7 +965,7 @@ export function DomainCardForm({
                   card={card}
                   cardType={cardType}
                   cardIndex={cardIndex}
-                  packageName={packageData.name || '新建卡包'}
+                  packageName={packageData.name || '新建卡牌包'}
                   author={packageData.author || '作者'}
                 />
                 <FormMessage />

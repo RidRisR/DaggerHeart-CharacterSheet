@@ -1,0 +1,96 @@
+{
+  "format": "daggerheart.equipment-pack.v1",
+  "name": "中文武器护甲混合包",
+  "version": "1.0.0",
+  "author": "装备导入测试",
+  "description": "同时包含主武器、副武器和护甲的中文作者样例，用于验证中文枚举别名和整套导入链路。",
+  "equipment": {
+    "weapons": [
+      {
+        "id": "中文武器护甲混合包-weapon-霜纹剑",
+        "name": "霜纹剑",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "敏捷",
+        "damageType": "物理",
+        "range": "近战",
+        "burden": "单手",
+        "damage": "d8",
+        "featureName": "寒纹",
+        "description": "命中后，可以描述霜纹如何沿着武器亮起。"
+      },
+      {
+        "id": "中文武器护甲混合包-weapon-星辉长杖",
+        "name": "星辉长杖",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "知识",
+        "damageType": "魔法",
+        "range": "远距离",
+        "burden": "双手",
+        "damage": "d10+3",
+        "featureName": "星辉",
+        "description": "当你用此武器造成魔法伤害时，可以描述星辉如何标记目标。"
+      },
+      {
+        "id": "中文武器护甲混合包-weapon-守护圆盾",
+        "name": "守护圆盾",
+        "tier": "T1",
+        "weaponType": "secondary",
+        "trait": "力量",
+        "damageType": "物理",
+        "range": "近战",
+        "burden": "副手",
+        "damage": "d6",
+        "featureName": "护持",
+        "description": "+1 护甲槽。",
+        "modifierContributions": [
+          {
+            "id": "中文武器护甲混合包-weapon-守护圆盾-mod-armor",
+            "definition": { "target": "armorMax", "kind": "modifier" },
+            "editable": { "label": "护持", "value": 1 }
+          }
+        ]
+      }
+    ],
+    "armor": [
+      {
+        "id": "中文武器护甲混合包-armor-霜鳞甲",
+        "name": "霜鳞甲",
+        "tier": "T1",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 7, "major": 15 },
+        "featureName": "轻盈",
+        "description": "+1 闪避。",
+        "modifierContributions": [
+          {
+            "id": "中文武器护甲混合包-armor-霜鳞甲-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "轻盈", "value": 1 }
+          }
+        ]
+      },
+      {
+        "id": "中文武器护甲混合包-armor-星铁重甲",
+        "name": "星铁重甲",
+        "tier": "T2",
+        "baseArmorMax": 5,
+        "baseThresholds": { "minor": 9, "major": 18 },
+        "featureName": "沉稳",
+        "description": "+1 护甲槽，-1 闪避。",
+        "modifierContributions": [
+          {
+            "id": "中文武器护甲混合包-armor-星铁重甲-mod-armor",
+            "definition": { "target": "armorMax", "kind": "modifier" },
+            "editable": { "label": "沉稳", "value": 1 }
+          },
+          {
+            "id": "中文武器护甲混合包-armor-星铁重甲-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "沉稳", "value": -1 }
+          }
+        ]
+      }
+    ]
+  }
+}

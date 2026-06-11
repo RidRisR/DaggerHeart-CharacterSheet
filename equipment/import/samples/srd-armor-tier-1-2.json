@@ -1,0 +1,187 @@
+{
+  "format": "daggerheart.equipment-pack.v1",
+  "name": "SRD Armor Tier 1-2",
+  "version": "1.0.0",
+  "author": "Daggerheart SRD",
+  "description": "Equipment pack sample adapted from the Daggerheart SRD armor tables on pages 56-57.",
+  "equipment": {
+    "armor": [
+      {
+        "id": "SRD-Armor-author-armor-Gambeson-Armor-T1",
+        "name": "Gambeson Armor",
+        "tier": "T1",
+        "baseArmorMax": 3,
+        "baseThresholds": { "minor": 5, "major": 11 },
+        "featureName": "Flexible",
+        "description": "+1 to Evasion.",
+        "modifierContributions": [
+          {
+            "id": "SRD-Armor-author-armor-Gambeson-Armor-T1-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Flexible", "value": 1 }
+          }
+        ]
+      },
+      {
+        "id": "SRD-Armor-author-armor-Leather-Armor-T1",
+        "name": "Leather Armor",
+        "tier": "T1",
+        "baseArmorMax": 3,
+        "baseThresholds": { "minor": 6, "major": 13 },
+        "description": "No special feature."
+      },
+      {
+        "id": "SRD-Armor-author-armor-Chainmail-Armor-T1",
+        "name": "Chainmail Armor",
+        "tier": "T1",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 7, "major": 15 },
+        "featureName": "Heavy",
+        "description": "-1 to Evasion.",
+        "modifierContributions": [
+          {
+            "id": "SRD-Armor-author-armor-Chainmail-Armor-T1-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Heavy", "value": -1 }
+          }
+        ]
+      },
+      {
+        "id": "SRD-Armor-author-armor-Full-Plate-Armor-T1",
+        "name": "Full Plate Armor",
+        "tier": "T1",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 8, "major": 17 },
+        "featureName": "Very Heavy",
+        "description": "-2 to Evasion; -1 to Agility.",
+        "modifierContributions": [
+          {
+            "id": "SRD-Armor-author-armor-Full-Plate-Armor-T1-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Very Heavy", "value": -2 }
+          },
+          {
+            "id": "SRD-Armor-author-armor-Full-Plate-Armor-T1-mod-agility",
+            "definition": { "target": "agility.value", "kind": "modifier" },
+            "editable": { "label": "Very Heavy", "value": -1 }
+          }
+        ]
+      },
+      {
+        "id": "SRD-Armor-author-armor-Improved-Gambeson-Armor-T2",
+        "name": "Improved Gambeson Armor",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 7, "major": 16 },
+        "featureName": "Flexible",
+        "description": "+1 to Evasion.",
+        "modifierContributions": [
+          {
+            "id": "SRD-Armor-author-armor-Improved-Gambeson-Armor-T2-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Flexible", "value": 1 }
+          }
+        ]
+      },
+      {
+        "id": "SRD-Armor-author-armor-Improved-Leather-Armor-T2",
+        "name": "Improved Leather Armor",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 9, "major": 20 },
+        "description": "No special feature."
+      },
+      {
+        "id": "SRD-Armor-author-armor-Improved-Chainmail-Armor-T2",
+        "name": "Improved Chainmail Armor",
+        "tier": "T2",
+        "baseArmorMax": 5,
+        "baseThresholds": { "minor": 11, "major": 24 },
+        "featureName": "Heavy",
+        "description": "-1 to Evasion.",
+        "modifierContributions": [
+          {
+            "id": "SRD-Armor-author-armor-Improved-Chainmail-Armor-T2-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Heavy", "value": -1 }
+          }
+        ]
+      },
+      {
+        "id": "SRD-Armor-author-armor-Improved-Full-Plate-Armor-T2",
+        "name": "Improved Full Plate Armor",
+        "tier": "T2",
+        "baseArmorMax": 5,
+        "baseThresholds": { "minor": 13, "major": 28 },
+        "featureName": "Very Heavy",
+        "description": "-2 to Evasion; -1 to Agility.",
+        "modifierContributions": [
+          {
+            "id": "SRD-Armor-author-armor-Improved-Full-Plate-Armor-T2-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Very Heavy", "value": -2 }
+          },
+          {
+            "id": "SRD-Armor-author-armor-Improved-Full-Plate-Armor-T2-mod-agility",
+            "definition": { "target": "agility.value", "kind": "modifier" },
+            "editable": { "label": "Very Heavy", "value": -1 }
+          }
+        ]
+      },
+      {
+        "id": "SRD-Armor-author-armor-Elundrian-Chain-Armor-T2",
+        "name": "Elundrian Chain Armor",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 9, "major": 21 },
+        "featureName": "Warded",
+        "description": "You reduce incoming magic damage by your Armor Score before applying it to your damage thresholds."
+      },
+      {
+        "id": "SRD-Armor-author-armor-Harrowbone-Armor-T2",
+        "name": "Harrowbone Armor",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 9, "major": 21 },
+        "featureName": "Resilient",
+        "description": "Before you mark your last Armor Slot, roll a d6. On a result of 6, reduce the severity by one threshold without marking an Armor Slot."
+      },
+      {
+        "id": "SRD-Armor-author-armor-Irontree-Breastplate-Armor-T2",
+        "name": "Irontree Breastplate Armor",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 9, "major": 20 },
+        "featureName": "Reinforced",
+        "description": "When you mark your last Armor Slot, increase your damage thresholds by +2 until you clear at least 1 Armor Slot."
+      },
+      {
+        "id": "SRD-Armor-author-armor-Runetan-Floating-Armor-T2",
+        "name": "Runetan Floating Armor",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 9, "major": 20 },
+        "featureName": "Shifting",
+        "description": "When you are targeted for an attack, you can mark an Armor Slot to give the attack roll against you disadvantage."
+      },
+      {
+        "id": "SRD-Armor-author-armor-Tyris-Soft-Armor-T2",
+        "name": "Tyris Soft Armor",
+        "tier": "T2",
+        "baseArmorMax": 5,
+        "baseThresholds": { "minor": 8, "major": 18 },
+        "featureName": "Quiet",
+        "description": "You gain a +2 bonus to rolls you make to move silently."
+      },
+      {
+        "id": "SRD-Armor-author-armor-Rosewild-Armor-T2",
+        "name": "Rosewild Armor",
+        "tier": "T2",
+        "baseArmorMax": 5,
+        "baseThresholds": { "minor": 11, "major": 23 },
+        "featureName": "Hopeful",
+        "description": "When you would spend a Hope, you can mark an Armor Slot instead."
+      }
+    ]
+  }
+}

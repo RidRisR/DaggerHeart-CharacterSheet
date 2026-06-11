@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "/schemas/equipment-pack.v1.schema.json",
+  "title": "Daggerheart Equipment Pack v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "name", "version", "equipment"],
+  "properties": {
+    "format": { "const": "daggerheart.equipment-pack.v1" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-(?:0|[1-9]\\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "author": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "description": { "type": "string", "maxLength": 4000 },
+    "equipment": { "$ref": "#/$defs/equipment" }
+  },
+  "$defs": {
+    "equipment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "weapons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/weaponTemplate" }
+        },
+        "armor": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/armorTemplate" }
+        }
+      }
+    },
+    "templateId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "not": { "pattern": "[/\\\\\\u0000-\\u001F\\u007F]" }
+    },
+    "tier": { "enum": ["T1", "T2", "T3", "T4"] },
+    "weaponTemplate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "tier",
+        "weaponType",
+        "trait",
+        "damageType",
+        "range",
+        "burden",
+        "damage"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/templateId" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "tier": { "$ref": "#/$defs/tier" },
+        "weaponType": { "enum": ["primary", "secondary"] },
+        "trait": {
+          "enum": ["agility", "strength", "finesse", "instinct", "presence", "knowledge"]
+        },
+        "damageType": { "enum": ["physical", "magic"] },
+        "range": { "enum": ["melee", "veryClose", "close", "far", "veryFar"] },
+        "burden": { "enum": ["oneHanded", "twoHanded", "offHand"] },
+        "damage": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "featureName": { "type": "string", "maxLength": 120 },
+        "description": { "type": "string", "maxLength": 4000 },
+        "modifierContributions": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/modifierContribution" }
+        }
+      }
+    },
+    "armorTemplate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "tier", "baseArmorMax", "baseThresholds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/templateId" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "tier": { "$ref": "#/$defs/tier" },
+        "baseArmorMax": { "type": "integer", "minimum": 0 },
+        "baseThresholds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minor", "major"],
+          "properties": {
+            "minor": { "type": "integer", "minimum": 0 },
+            "major": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "featureName": { "type": "string", "maxLength": 120 },
+        "description": { "type": "string", "maxLength": 4000 },
+        "modifierContributions": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/modifierContribution" }
+        }
+      }
+    },
+    "modifierContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "definition", "editable"],
+      "properties": {
+        "id": { "$ref": "#/$defs/templateId" },
+        "definition": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["target", "kind"],
+          "properties": {
+            "target": {
+              "enum": [
+                "evasion",
+                "armorMax",
+                "minorThreshold",
+                "majorThreshold",
+                "hpMax",
+                "stressMax",
+                "proficiency",
+                "agility.value",
+                "strength.value",
+                "finesse.value",
+                "instinct.value",
+                "presence.value",
+                "knowledge.value"
+              ]
+            },
+            "kind": { "const": "modifier" }
+          }
+        },
+        "editable": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["label", "value"],
+          "properties": {
+            "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+            "value": { "type": "number" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "format": "daggerheart.equipment-pack.v1",
+  "name": "中文装备包",
+  "version": "1.0.0",
+  "author": "测试作者",
+  "description": "用于验证中文内容和中文枚举别名的装备包样例。",
+  "equipment": {
+    "weapons": [
+      {
+        "id": "中文装备包-测试作者-weapon-影刃",
+        "name": "影刃",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "敏捷",
+        "damageType": "物理",
+        "range": "近战",
+        "burden": "单手",
+        "damage": "d8",
+        "featureName": "迅捷",
+        "description": "攻击后可以描述一次灵巧的位移。"
+      },
+      {
+        "id": "中文装备包-测试作者-weapon-星火杖",
+        "name": "星火杖",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "知识",
+        "damageType": "魔法",
+        "range": "远距离",
+        "burden": "双手",
+        "damage": "d10+3",
+        "featureName": "星火",
+        "description": "造成魔法伤害时，描述星火如何击中目标。"
+      }
+    ],
+    "armor": [
+      {
+        "id": "中文装备包-测试作者-armor-影织甲",
+        "name": "影织甲",
+        "tier": "T1",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 7, "major": 15 },
+        "featureName": "轻盈",
+        "description": "+1 闪避。",
+        "modifierContributions": [
+          {
+            "id": "中文装备包-测试作者-armor-影织甲-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "轻盈", "value": 1 }
+          }
+        ]
+      }
+    ]
+  }
+}

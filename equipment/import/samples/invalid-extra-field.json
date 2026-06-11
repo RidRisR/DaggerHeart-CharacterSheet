@@ -1,0 +1,24 @@
+{
+  "format": "daggerheart.equipment-pack.v1",
+  "name": "未知字段样例",
+  "version": "1.0.0",
+  "author": "测试作者",
+  "description": "用于验证未知字段会停在 structuralValidation。",
+  "equipment": {
+    "weapons": [
+      {
+        "id": "未知字段样例-测试作者-weapon-影刃",
+        "name": "影刃",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "oneHanded",
+        "damage": "d8",
+        "description": "这件装备带了一个 schema 不允许的字段。",
+        "rarity": "rare"
+      }
+    ]
+  }
+}

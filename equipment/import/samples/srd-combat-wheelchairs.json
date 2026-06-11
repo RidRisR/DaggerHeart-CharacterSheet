@@ -1,0 +1,143 @@
+{
+  "format": "daggerheart.equipment-pack.v1",
+  "name": "SRD Combat Wheelchairs",
+  "version": "1.0.0",
+  "author": "Daggerheart SRD and Mark Thompson",
+  "description": "Equipment pack sample adapted from the Daggerheart SRD combat wheelchair tables on pages 54-55.",
+  "equipment": {
+    "weapons": [
+      {
+        "id": "SRD-Combat-Wheelchairs-author-weapon-Light-Frame-Wheelchair-T1",
+        "name": "Light-Frame Wheelchair",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "oneHanded",
+        "damage": "d8",
+        "featureName": "Quick",
+        "description": "When you make an attack, you can mark a Stress to target another creature within range."
+      },
+      {
+        "id": "SRD-Combat-Wheelchairs-author-weapon-Improved-Light-Frame-Wheelchair-T2",
+        "name": "Improved Light-Frame Wheelchair",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "oneHanded",
+        "damage": "d8+3",
+        "featureName": "Quick",
+        "description": "When you make an attack, you can mark a Stress to target another creature within range."
+      },
+      {
+        "id": "SRD-Combat-Wheelchairs-author-weapon-Advanced-Light-Frame-Wheelchair-T3",
+        "name": "Advanced Light-Frame Wheelchair",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "oneHanded",
+        "damage": "d8+6",
+        "featureName": "Quick",
+        "description": "When you make an attack, you can mark a Stress to target another creature within range."
+      },
+      {
+        "id": "SRD-Combat-Wheelchairs-author-weapon-Legendary-Light-Frame-Wheelchair-T4",
+        "name": "Legendary Light-Frame Wheelchair",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "oneHanded",
+        "damage": "d8+9",
+        "featureName": "Quick",
+        "description": "When you make an attack, you can mark a Stress to target another creature within range."
+      },
+      {
+        "id": "SRD-Combat-Wheelchairs-author-weapon-Heavy-Frame-Wheelchair-T1",
+        "name": "Heavy-Frame Wheelchair",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "twoHanded",
+        "damage": "d12+3",
+        "featureName": "Heavy",
+        "description": "-1 to Evasion.",
+        "modifierContributions": [
+          {
+            "id": "SRD-Combat-Wheelchairs-author-weapon-Heavy-Frame-Wheelchair-T1-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Heavy", "value": -1 }
+          }
+        ]
+      },
+      {
+        "id": "SRD-Combat-Wheelchairs-author-weapon-Improved-Heavy-Frame-Wheelchair-T2",
+        "name": "Improved Heavy-Frame Wheelchair",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "twoHanded",
+        "damage": "d12+6",
+        "featureName": "Heavy",
+        "description": "-1 to Evasion.",
+        "modifierContributions": [
+          {
+            "id": "SRD-Combat-Wheelchairs-author-weapon-Improved-Heavy-Frame-Wheelchair-T2-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Heavy", "value": -1 }
+          }
+        ]
+      },
+      {
+        "id": "SRD-Combat-Wheelchairs-author-weapon-Advanced-Heavy-Frame-Wheelchair-T3",
+        "name": "Advanced Heavy-Frame Wheelchair",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "twoHanded",
+        "damage": "d12+9",
+        "featureName": "Heavy",
+        "description": "-1 to Evasion.",
+        "modifierContributions": [
+          {
+            "id": "SRD-Combat-Wheelchairs-author-weapon-Advanced-Heavy-Frame-Wheelchair-T3-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Heavy", "value": -1 }
+          }
+        ]
+      },
+      {
+        "id": "SRD-Combat-Wheelchairs-author-weapon-Legendary-Heavy-Frame-Wheelchair-T4",
+        "name": "Legendary Heavy-Frame Wheelchair",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "twoHanded",
+        "damage": "d12+12",
+        "featureName": "Heavy",
+        "description": "-1 to Evasion.",
+        "modifierContributions": [
+          {
+            "id": "SRD-Combat-Wheelchairs-author-weapon-Legendary-Heavy-Frame-Wheelchair-T4-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Heavy", "value": -1 }
+          }
+        ]
+      }
+    ]
+  }
+}

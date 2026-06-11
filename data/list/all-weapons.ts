@@ -1,4 +1,4 @@
-import { primaryWeapons, Weapon } from "./primary-weapon";
+import { primaryWeapons, type Weapon } from "./primary-weapon";
 import { secondaryWeapons } from "./secondary-weapon";
 
 export type AllWeapon = Weapon & {

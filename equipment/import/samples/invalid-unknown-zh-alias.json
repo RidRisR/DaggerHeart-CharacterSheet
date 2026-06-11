@@ -1,0 +1,23 @@
+{
+  "format": "daggerheart.equipment-pack.v1",
+  "name": "错误中文枚举样例",
+  "version": "1.0.0",
+  "author": "测试作者",
+  "description": "用于验证未知中文枚举别名会停在 authoringPreprocess。",
+  "equipment": {
+    "weapons": [
+      {
+        "id": "错误中文枚举样例-测试作者-weapon-影刃",
+        "name": "影刃",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "敏捷力",
+        "damageType": "元素",
+        "range": "超近",
+        "burden": "双持",
+        "damage": "d8",
+        "description": "这些中文枚举值不是当前兼容层支持的别名。"
+      }
+    ]
+  }
+}

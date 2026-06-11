@@ -1,0 +1,103 @@
+{
+  "format": "daggerheart.equipment-pack.v1",
+  "name": "Mixed Weapons and Armor Starter Kit",
+  "version": "1.0.0",
+  "author": "Equipment Import QA",
+  "description": "A compact end-to-end sample pack containing primary weapons, secondary weapons, armor, and modifier contributions.",
+  "equipment": {
+    "weapons": [
+      {
+        "id": "mixed-starter-kit-weapon-ember-saber",
+        "name": "Ember Saber",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "oneHanded",
+        "damage": "d8",
+        "featureName": "Ember Edge",
+        "description": "After a successful attack, describe a brief flare of heat around the blade."
+      },
+      {
+        "id": "mixed-starter-kit-weapon-storm-pike",
+        "name": "Storm Pike",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "range": "veryClose",
+        "burden": "twoHanded",
+        "damage": "d10+4",
+        "featureName": "Brace",
+        "description": "When you hold a narrow approach, gain +1 to Evasion until you move.",
+        "modifierContributions": [
+          {
+            "id": "mixed-starter-kit-weapon-storm-pike-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Brace", "value": 1 }
+          }
+        ]
+      },
+      {
+        "id": "mixed-starter-kit-weapon-guardian-buckler",
+        "name": "Guardian Buckler",
+        "tier": "T1",
+        "weaponType": "secondary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "range": "melee",
+        "burden": "offHand",
+        "damage": "d6",
+        "featureName": "Guard",
+        "description": "+1 Armor Slot while this buckler is equipped.",
+        "modifierContributions": [
+          {
+            "id": "mixed-starter-kit-weapon-guardian-buckler-mod-armor",
+            "definition": { "target": "armorMax", "kind": "modifier" },
+            "editable": { "label": "Guard", "value": 1 }
+          }
+        ]
+      }
+    ],
+    "armor": [
+      {
+        "id": "mixed-starter-kit-armor-travelers-leathers",
+        "name": "Traveler's Leathers",
+        "tier": "T1",
+        "baseArmorMax": 3,
+        "baseThresholds": { "minor": 6, "major": 13 },
+        "featureName": "Flexible",
+        "description": "+1 Evasion while moving through difficult terrain.",
+        "modifierContributions": [
+          {
+            "id": "mixed-starter-kit-armor-travelers-leathers-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Flexible", "value": 1 }
+          }
+        ]
+      },
+      {
+        "id": "mixed-starter-kit-armor-ironwood-mail",
+        "name": "Ironwood Mail",
+        "tier": "T2",
+        "baseArmorMax": 5,
+        "baseThresholds": { "minor": 9, "major": 18 },
+        "featureName": "Reinforced",
+        "description": "+1 Armor Slot and -1 Evasion.",
+        "modifierContributions": [
+          {
+            "id": "mixed-starter-kit-armor-ironwood-mail-mod-armor",
+            "definition": { "target": "armorMax", "kind": "modifier" },
+            "editable": { "label": "Reinforced", "value": 1 }
+          },
+          {
+            "id": "mixed-starter-kit-armor-ironwood-mail-mod-evasion",
+            "definition": { "target": "evasion", "kind": "modifier" },
+            "editable": { "label": "Reinforced", "value": -1 }
+          }
+        ]
+      }
+    ]
+  }
+}

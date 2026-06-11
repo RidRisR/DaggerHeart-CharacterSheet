@@ -1,0 +1,19 @@
+{
+  "format": "daggerheart.equipment-pack.v1",
+  "name": "护甲阈值错误样例",
+  "version": "1.0.0",
+  "author": "测试作者",
+  "description": "用于验证护甲 minor threshold 必须小于 major threshold。",
+  "equipment": {
+    "armor": [
+      {
+        "id": "护甲阈值错误样例-测试作者-armor-影甲",
+        "name": "影甲",
+        "tier": "T1",
+        "baseArmorMax": 4,
+        "baseThresholds": { "minor": 15, "major": 7 },
+        "description": "这里的阈值顺序是故意反过来的。"
+      }
+    ]
+  }
+}

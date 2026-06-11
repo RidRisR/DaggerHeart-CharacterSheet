@@ -2,7 +2,7 @@
 
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import type { MouseEvent } from "react"
+import type { MouseEvent, ReactNode } from "react"
 import {
   applyHeadingIdPrefix,
   generateHeadingId,
@@ -12,18 +12,27 @@ import {
 interface MarkdownGuideProps {
   content: string
   headingIdPrefix?: string
+  skipFirstH1?: boolean
 }
 
-const slugifyHeading = (children: React.ReactNode, idPrefix?: string): string =>
+const slugifyHeading = (children: ReactNode, idPrefix?: string): string =>
   applyHeadingIdPrefix(generateHeadingId(plainTextFromReactNode(children)), idPrefix)
 
-const resolveMarkdownHref = (href: string | undefined, idPrefix?: string): string | undefined => {
-  if (!href?.startsWith("#") || !idPrefix) return href
+const normalizeMarkdownHref = (href: string | undefined, idPrefix?: string) => {
+  if (!href?.startsWith("#")) {
+    return href
+  }
 
-  const anchorId = href.slice(1)
-  if (!anchorId || anchorId.startsWith(`${idPrefix}-`)) return href
+  const targetId = href.slice(1)
+  if (!targetId) {
+    return href
+  }
 
-  return `#${applyHeadingIdPrefix(anchorId, idPrefix)}`
+  if (idPrefix && targetId.startsWith(`${idPrefix}-`)) {
+    return href
+  }
+
+  return `#${applyHeadingIdPrefix(targetId, idPrefix)}`
 }
 
 const scrollToAnchor = (event: MouseEvent<HTMLAnchorElement>, href: string | undefined) => {
@@ -47,24 +56,30 @@ const scrollToAnchor = (event: MouseEvent<HTMLAnchorElement>, href: string | und
   window.history.pushState(null, "", href)
 }
 
-export function MarkdownGuide({ content, headingIdPrefix }: MarkdownGuideProps) {
+const removeFirstMarkdownH1 = (content: string) => content.replace(/^# .+(?:\r?\n)+/, "")
+
+export function MarkdownGuide({ content, headingIdPrefix, skipFirstH1 = false }: MarkdownGuideProps) {
+  const renderedContent = skipFirstH1 ? removeFirstMarkdownH1(content) : content
+
   return (
-    <div className="prose prose-sm max-w-none">
+    <div className="max-w-none text-base leading-7 text-gray-700">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          h1: ({ children }) => (
-            <h1
-              id={slugifyHeading(children, headingIdPrefix)}
-              className="text-3xl font-bold mb-8 mt-12 text-gray-900 pb-4 border-b-2 border-gray-300 scroll-mt-6"
-            >
-              {children}
-            </h1>
-          ),
+          h1: ({ children }) => {
+            return (
+              <h1
+                id={slugifyHeading(children, headingIdPrefix)}
+                className="mb-6 mt-10 scroll-mt-24 border-b pb-4 text-3xl font-bold tracking-normal text-gray-950 first:mt-0"
+              >
+                {children}
+              </h1>
+            )
+          },
           h2: ({ children }) => (
             <h2
               id={slugifyHeading(children, headingIdPrefix)}
-              className="text-2xl font-bold mb-6 mt-10 text-gray-900 bg-blue-50 px-4 py-3 rounded-md border-l-4 border-blue-500 border-b-2 border-b-blue-200 shadow-sm scroll-mt-6"
+              className="mb-4 mt-10 scroll-mt-24 border-t pt-6 text-2xl font-semibold tracking-normal text-gray-950 first:mt-0 first:border-t-0 first:pt-0"
             >
               {children}
             </h2>
@@ -72,7 +87,7 @@ export function MarkdownGuide({ content, headingIdPrefix }: MarkdownGuideProps) 
           h3: ({ children }) => (
             <h3
               id={slugifyHeading(children, headingIdPrefix)}
-              className="text-xl font-semibold mb-4 mt-8 text-gray-800 bg-gray-50 px-3 py-2 rounded border-l-4 border-gray-400 scroll-mt-6"
+              className="mb-3 mt-8 scroll-mt-24 text-xl font-semibold tracking-normal text-gray-900"
             >
               {children}
             </h3>
@@ -80,7 +95,7 @@ export function MarkdownGuide({ content, headingIdPrefix }: MarkdownGuideProps) 
           h4: ({ children }) => (
             <h4
               id={slugifyHeading(children, headingIdPrefix)}
-              className="text-lg font-medium mb-3 mt-6 text-gray-700 bg-gray-100 px-2 py-1.5 rounded border-l-2 border-gray-400 scroll-mt-6"
+              className="mb-2 mt-6 scroll-mt-24 text-lg font-semibold tracking-normal text-gray-800"
             >
               {children}
             </h4>
@@ -88,48 +103,58 @@ export function MarkdownGuide({ content, headingIdPrefix }: MarkdownGuideProps) 
           h5: ({ children }) => (
             <h5
               id={slugifyHeading(children, headingIdPrefix)}
-              className="text-base font-medium mb-2 mt-4 text-gray-600 pl-3 border-l-2 border-gray-200 scroll-mt-6"
+              className="mb-2 mt-5 scroll-mt-24 text-base font-semibold tracking-normal text-gray-800"
             >
               {children}
             </h5>
           ),
-          p: ({ children }) => <p className="mb-3 text-gray-600 leading-relaxed">{children}</p>,
+          p: ({ children }) => <p className="mb-4 max-w-3xl leading-7 text-gray-700">{children}</p>,
+          pre: ({ children }) => (
+            <pre className="mb-5 max-w-full overflow-auto rounded-lg border bg-slate-950 p-4 text-sm leading-6 text-slate-100">
+              {children}
+            </pre>
+          ),
           code: ({ children, className }) => {
             const isBlock = className?.includes("language-")
             if (isBlock) {
-              return (
-                <pre className="bg-gray-100 p-3 rounded text-sm overflow-auto">
-                  <code className={className}>{children}</code>
-                </pre>
-              )
+              return <code className={className}>{children}</code>
             }
-            return <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">{children}</code>
+            return <code className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm text-gray-900">{children}</code>
           },
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-blue-500 bg-blue-50 p-4 my-4 italic">
+            <blockquote className="my-5 border-l-4 border-blue-400 bg-blue-50 px-4 py-3 text-gray-700">
               {children}
             </blockquote>
           ),
-          ul: ({ children }) => <ul className="list-disc list-inside mb-3 space-y-1">{children}</ul>,
-          ol: ({ children }) => <ol className="list-decimal list-inside mb-3 space-y-1">{children}</ol>,
+          ul: ({ children }) => <ul className="mb-4 list-disc space-y-1.5 pl-6 text-gray-700">{children}</ul>,
+          ol: ({ children }) => <ol className="mb-4 list-decimal space-y-1.5 pl-6 text-gray-700">{children}</ol>,
+          li: ({ children }) => <li className="pl-1 leading-7">{children}</li>,
           table: ({ children }) => (
-            <div className="overflow-x-auto mb-4">
-              <table className="min-w-full border border-gray-300">{children}</table>
+            <div className="mb-5 max-w-full overflow-x-auto rounded-lg border border-gray-200">
+              <table className="min-w-full border-collapse text-sm">{children}</table>
             </div>
           ),
-          th: ({ children }) => <th className="border border-gray-300 px-3 py-2 bg-gray-100 font-medium text-left">{children}</th>,
-          td: ({ children }) => <td className="border border-gray-300 px-3 py-2">{children}</td>,
+          th: ({ children }) => (
+            <th className="border-b border-r border-gray-200 bg-gray-50 px-3 py-2 text-left font-semibold text-gray-900 last:border-r-0">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="border-b border-r border-gray-200 px-3 py-2 align-top text-gray-700 last:border-r-0">
+              {children}
+            </td>
+          ),
           a: ({ href, children }) => {
-            const resolvedHref = resolveMarkdownHref(href, headingIdPrefix)
-            const isSameDocumentAnchor = resolvedHref?.startsWith("#")
+            const normalizedHref = normalizeMarkdownHref(href, headingIdPrefix)
+            const isInternalAnchor = normalizedHref?.startsWith("#")
 
             return (
               <a
-                href={resolvedHref}
-                onClick={(event) => scrollToAnchor(event, resolvedHref)}
-                target={isSameDocumentAnchor ? undefined : "_blank"}
-                rel={isSameDocumentAnchor ? undefined : "noopener noreferrer"}
-                className="text-blue-600 hover:text-blue-800 underline"
+                href={normalizedHref}
+                onClick={(event) => scrollToAnchor(event, normalizedHref)}
+                target={isInternalAnchor ? undefined : "_blank"}
+                rel={isInternalAnchor ? undefined : "noopener noreferrer"}
+                className="font-medium text-blue-700 underline underline-offset-2 hover:text-blue-900"
               >
                 {children}
               </a>
@@ -137,7 +162,7 @@ export function MarkdownGuide({ content, headingIdPrefix }: MarkdownGuideProps) 
           },
         }}
       >
-        {content}
+        {renderedContent}
       </ReactMarkdown>
     </div>
   )

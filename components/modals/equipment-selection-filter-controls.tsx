@@ -1,10 +1,10 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -60,14 +60,22 @@ export function MultiSelectDropdownFilter<T extends string>({
   options,
   onChange,
   className,
+  variant = "header",
 }: {
   label: string
   selected: T[]
   options: Array<EquipmentFilterOption<T>>
   onChange: (selected: T[]) => void
   className?: string
+  variant?: "header" | "field"
 }) {
   const hasSelection = selected.length > 0
+  const labelByValue = new Map(options.map((option) => [option.value, option.label]))
+  const selectedLabels = selected.map((value) => labelByValue.get(value) ?? value)
+  const triggerLabel =
+    variant === "field"
+      ? `${label}(${hasSelection ? summarizeSelectedLabels(selectedLabels) : "全部"})`
+      : label
 
   return (
     <DropdownMenu>
@@ -75,13 +83,16 @@ export function MultiSelectDropdownFilter<T extends string>({
         <button
           type="button"
           className={cn(
-            "inline-flex max-w-full items-center gap-1 rounded px-1 py-0.5 font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/60",
-            hasSelection && "bg-white/15 text-blue-100",
+            variant === "header"
+              ? "inline-flex max-w-full items-center gap-1 rounded px-1 py-0.5 font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/60"
+              : "inline-flex h-10 w-full items-center justify-between gap-2 rounded border border-gray-300 bg-white px-2 text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500",
+            variant === "header" && hasSelection && "bg-white/15 text-blue-100",
+            variant === "field" && hasSelection && "border-blue-400 text-blue-700",
             className,
           )}
           aria-label={`${label}筛选`}
         >
-          <span>{label}</span>
+          <span className="truncate">{triggerLabel}</span>
           <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80" />
         </button>
       </DropdownMenuTrigger>
@@ -98,18 +109,17 @@ export function MultiSelectDropdownFilter<T extends string>({
             {option.label}
           </DropdownMenuCheckboxItem>
         ))}
-        {options.length === 0 && <div className="px-2 py-1.5 text-sm text-muted-foreground">暂无可选来源</div>}
+        {options.length === 0 && <div className="px-2 py-1.5 text-sm text-muted-foreground">暂无可选{label}</div>}
         <DropdownMenuSeparator />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start"
+        <DropdownMenuItem
           disabled={selected.length === 0}
-          onClick={() => onChange([])}
+          onSelect={(event) => {
+            event.preventDefault()
+            onChange([])
+          }}
         >
           清除此字段筛选
-        </Button>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -22,6 +22,7 @@ import {
   CustomCardStats,
   BatchStats
 } from './store-types';
+import { isVariantCard } from '../card-types';
 import { preprocessVariantFormat } from '../variant-format-preprocessor';
 import { createImageServiceActions } from './image-service/actions';
 
@@ -271,6 +272,8 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
         name: batchDisplayName,
         fileName: batchName || 'Imported Cards',
         importTime: new Date().toISOString(),
+        version: processedData.version,
+        author: processedData.author,
         cardCount: convertResult.cards.length,
         cardTypes,
         size: JSON.stringify(convertResult.cards).length,
@@ -489,12 +492,22 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       name: batch.name,
       fileName: batch.fileName,
       importTime: batch.importTime,
+      author: batch.author,
+      version: batch.version,
       cardCount: batch.cardCount,
       cardTypes: batch.cardTypes,
       storageSize: batch.size,
       isSystemBatch: batch.isSystemBatch || false,
       disabled: batch.disabled || false
-    } as BatchStats & { id: string; name: string; fileName: string; isSystemBatch: boolean; disabled: boolean }));
+    } as BatchStats & {
+      id: string;
+      name: string;
+      fileName: string;
+      author?: string;
+      version?: string;
+      isSystemBatch: boolean;
+      disabled: boolean;
+    }));
   },
 
   // Aggregated data with smart caching
@@ -1008,7 +1021,6 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
   _rebuildSubclassIndex: () => {
     const state = get();
-    const { isVariantCard } = require('../card-types');
 
     // Initialize the index objects
     const cardIndex: Record<string, Record<string, string[]>> = {};
@@ -1357,7 +1369,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     });
 
     return {
-      totalCards: state.cards.size,
+      totalCards: customCards.length,
       totalBatches: state.batches.size,
       cardsByType,
       cardsByBatch,

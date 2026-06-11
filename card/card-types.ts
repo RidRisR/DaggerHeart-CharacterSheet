@@ -230,6 +230,8 @@ export interface BatchStats {
   cardTypes: string[];
   storageSize: number;
   importTime: string;
+  author?: string;
+  version?: string;
 }
 
 // 卡牌来源标识

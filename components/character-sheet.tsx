@@ -7,7 +7,7 @@ import {
   CardType, // Import CardType
 } from "@/card"
 import { useCardStore } from "@/card/stores/unified-card-store"
-import { useSheetStore, useSheetArmorBoxes, useSheetProficiency, useSafeSheetData } from "@/lib/sheet-store"
+import { useSheetStore, useSheetArmorBoxes, useSheetProficiency, useSafeSheetData, type ArmorSelectionInput, type WeaponSelectionInput } from "@/lib/sheet-store"
 
 // Import modals
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
@@ -37,7 +37,16 @@ type WeaponSlotSelection =
   | { slotType: "inventory"; index: 0 | 1 }
 
 export default function CharacterSheet() {
-  const { sheetData: formData, setSheetData: setFormData, updateArmorBox, updateProficiency, selectArmor, selectWeaponSlot, handleProfessionChange: autofillProfessionData, commitModifierTargetValue } = useSheetStore();
+  const {
+    sheetData: formData,
+    setSheetData: setFormData,
+    updateArmorBox,
+    updateProficiency,
+    selectArmorSlot,
+    selectWeapon,
+    handleProfessionChange: autofillProfessionData,
+    commitModifierTargetValue,
+  } = useSheetStore();
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
   const safeFormData = useSafeSheetData();
@@ -350,12 +359,14 @@ export default function CharacterSheet() {
     needsSyncRef.current = true
   }
 
-  const handleWeaponChange = (weaponId: string) => {
-    selectWeaponSlot(currentWeaponSlot, weaponId)
+  const handleWeaponSelect = (input: WeaponSelectionInput) => {
+    selectWeapon(currentWeaponSlot, input)
+    setWeaponModalOpen(false)
   }
 
-  const handleArmorChange = (value: string) => {
-    selectArmor(value);
+  const handleArmorSelect = (input: ArmorSelectionInput) => {
+    selectArmorSlot(input)
+    setArmorModalOpen(false)
   }
 
   // 使用useEffect监听特殊字段的变化，并在需要时同步卡牌
@@ -389,10 +400,6 @@ export default function CharacterSheet() {
 
   const openArmorModal = () => {
     setArmorModalOpen(true)
-  }
-
-  const closeArmorModal = () => {
-    setArmorModalOpen(false)
   }
 
   const openGenericModal = (
@@ -682,20 +689,14 @@ export default function CharacterSheet() {
         isOpen={weaponModalOpen}
         onClose={() => setWeaponModalOpen(false)}
         weaponSlotType={currentWeaponSlot.slotType}
-        onSelect={(weaponId) => {
-          handleWeaponChange(weaponId)
-          setWeaponModalOpen(false)
-        }}
+        onSelect={handleWeaponSelect}
         title="选择武器"
       />
 
       <ArmorSelectionModal
         isOpen={armorModalOpen}
-        onClose={closeArmorModal}
-        onSelect={(armorId) => {
-          handleArmorChange(armorId)
-          closeArmorModal()
-        }}
+        onClose={() => setArmorModalOpen(false)}
+        onSelect={handleArmorSelect}
         title="选择护甲"
       />
 

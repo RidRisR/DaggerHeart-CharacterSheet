@@ -48,7 +48,8 @@ export function ExperienceSection() {
               type="text"
               value={valueDrafts[i] ?? experienceValues[i]}
               onChange={(e) => {
-                setValueDrafts((drafts) => ({ ...drafts, [i]: e.target.value }))
+                const value = e.target.value
+                setValueDrafts((drafts) => ({ ...drafts, [i]: value }))
               }}
               onBlur={(event) => commitExperienceValue(i, event.currentTarget.value)}
               onKeyDown={(event) => {

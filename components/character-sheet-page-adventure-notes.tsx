@@ -87,7 +87,10 @@ export default function CharacterSheetPageAdventureNotes() {
               className="w-2/3 bg-transparent focus:outline-none text-4xl font-bold text-gray-800 print-empty-hide"
               placeholder="角色姓名"
               value={safeFormData.name || ''}
-              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => {
+                const value = e.target.value
+                setFormData((prev) => ({ ...prev, name: value }))
+              }}
               maxLength={500}
             />
             <h1 className="text-xl font-bold text-gray-600 tracking-wider">冒险笔记</h1>

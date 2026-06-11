@@ -22,6 +22,7 @@ export interface CustomCardIndex {
     fileName: string;
     importTime: string;
     version?: string;
+    author?: string;
     cardCount: number;
     cardTypes: string[];
     size: number;

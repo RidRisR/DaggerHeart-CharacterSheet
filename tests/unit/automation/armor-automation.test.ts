@@ -39,7 +39,7 @@ describe("护甲自动化基线", () => {
     expect(data.equipment.armorSlot.feature).toContain(armor!.featureName)
   })
 
-  it("keeps custom Chinese armor payload compatible without syncing manual final targets", () => {
+  it("treats custom Chinese armor JSON payload as an unknown name fallback without syncing manual final targets", () => {
     resetSheetStore({
       level: "4",
       armorMax: 2,
@@ -65,14 +65,14 @@ describe("护甲自动化基线", () => {
     store().selectArmor(customArmor)
 
     expect(sheet().equipment.armorSlot).toMatchObject({
-      name: "自定义护甲",
-      baseArmorMax: 4,
-      baseThresholds: { minor: 8, major: 18 },
+      name: customArmor,
+      baseArmorMax: null,
+      baseThresholds: { minor: null, major: null },
     })
     expect(sheet().armorMax).toBe(2)
     expect(sheet().minorThreshold).toBe("manual-minor")
     expect(sheet().majorThreshold).toBe("manual-major")
-    expect(sheet().equipment.armorSlot.feature).toContain("自定义")
+    expect(sheet().equipment.armorSlot.feature).toBe("")
   })
 
   it("选择 none 只清空护甲来源，不直接覆盖手动最终值", () => {

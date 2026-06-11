@@ -246,7 +246,7 @@ function MainModeContent(props: MainModeProps) {
 
       {/* Group C: 辅助功能 */}
       <div className="flex items-center gap-1.5">
-        {/* 卡包管理按钮 */}
+        {/* 扩展管理按钮 */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -257,13 +257,13 @@ function MainModeContent(props: MainModeProps) {
               )}
             >
               <Package className="h-3.5 w-3.5" />
-              卡包
+              扩展
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <p>卡包管理</p>
+            <p>扩展管理</p>
             <p className="text-xs text-muted-foreground mt-1">
-              管理和导入自定义卡包
+              管理和导入卡牌包、装备包
             </p>
           </TooltipContent>
         </Tooltip>

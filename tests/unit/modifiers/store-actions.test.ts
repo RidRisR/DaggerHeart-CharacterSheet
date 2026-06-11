@@ -15,6 +15,8 @@ import {
   getOtherAdjustmentId,
 } from "@/automation/core/other-adjustments"
 import type { ModifierTargetId } from "@/automation/core/types"
+import type { CustomArmorDraft, CustomWeaponDraft } from "@/automation/equipment/template-to-slot"
+import type { RuntimeEquipmentTemplate } from "@/equipment/runtime-cache/types"
 import { getReferenceSummary } from "@/automation/core/registry"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
@@ -1393,5 +1395,247 @@ describe("modifier store actions", () => {
 
     expect(sheet().equipment.weaponSlots.primary.modifierContributions[0].id).toBe(contributionId)
     expect(sheet().evasion).toBe("14")
+  })
+})
+
+describe("structured runtime equipment selection", () => {
+  it("selects one-off custom equipment drafts and applies modifier contributions", () => {
+    const customTowerShield: CustomWeaponDraft = {
+      name: "自定义塔盾",
+      tier: "T1",
+      weaponType: "secondary",
+      trait: "strength",
+      damageType: "physical",
+      range: "melee",
+      burden: "offHand",
+      damage: "d6",
+      featureName: "壁垒",
+      description: "+2 护甲值，-1 闪避值",
+      modifierContributions: [
+        {
+          id: "armor",
+          definition: { kind: "modifier", target: "armorMax" },
+          editable: { label: "护甲值", value: 2 },
+        },
+        {
+          id: "evasion",
+          definition: { kind: "modifier", target: "evasion" },
+          editable: { label: "闪避值", value: -1 },
+        },
+      ],
+    }
+    const customArmor: CustomArmorDraft = {
+      name: "自定义链甲",
+      tier: "T1",
+      baseArmorMax: 4,
+      baseThresholds: { minor: 7, major: 14 },
+      featureName: "稳固",
+      description: "闪避值+1。",
+      modifierContributions: [{
+        id: "evasion",
+        definition: { kind: "modifier", target: "evasion" },
+        editable: { label: "稳固", value: 1 },
+      }],
+    }
+
+    resetSheetStore({
+      evasion: "12",
+      armorMax: "6",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 12 },
+        },
+        {
+          id: "user:armor-max-base",
+          definition: { target: "armorMax", kind: "base" },
+          editable: { label: "Armor Base", value: 6 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+          armorMax: {
+            activeBaseId: "user:armor-max-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().selectWeapon({ slotType: "primary" }, { type: "custom", draft: customTowerShield })
+
+    expect(sheet().equipment.weaponSlots.primary).toMatchObject({
+      name: "自定义塔盾",
+      trait: "物理/副手/近战",
+      damage: "力量: d6",
+      feature: "壁垒: +2 护甲值，-1 闪避值",
+    })
+    expect(sheet().evasion).toBe("11")
+    expect(sheet().armorMax).toBe(8)
+
+    store().selectArmorSlot({ type: "custom", draft: customArmor })
+
+    expect(sheet().equipment.armorSlot).toMatchObject({
+      name: "自定义链甲",
+      baseArmorMax: 4,
+      baseThresholds: { minor: 7, major: 14 },
+      feature: "稳固: 闪避值+1。",
+    })
+    expect(sheet().evasion).toBe("12")
+  })
+
+  it("selects a runtime weapon template without string lookup and applies modifier contributions", () => {
+    const template: RuntimeEquipmentTemplate & { kind: "weapon" } = {
+      kind: "weapon",
+      id: "pack.weapon.runtime-blade",
+      name: "运行时长剑",
+      tier: "T1",
+      weaponType: "primary",
+      trait: "strength",
+      damageType: "physical",
+      range: "melee",
+      burden: "oneHanded",
+      damage: "d8",
+      featureName: "可靠",
+      description: "来自装备包。",
+      modifierContributions: [{
+        id: "bonus",
+        definition: { kind: "modifier", target: "evasion" },
+        editable: { label: "闪避", value: 1 },
+      }],
+    }
+
+    resetSheetStore({
+      evasion: "12",
+      userModifierContributions: [{
+        id: "user:evasion-base",
+        definition: { target: "evasion", kind: "base" },
+        editable: { label: "Base", value: 12 },
+      }],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().selectWeapon({ slotType: "primary" }, { type: "template", template })
+
+    const slot = sheet().equipment.weaponSlots.primary
+    expect(slot.name).toBe("运行时长剑")
+    expect(slot.trait).toBe("物理/单手/近战")
+    expect(slot.damage).toBe("力量: d8")
+    expect(slot.feature).toBe("可靠: 来自装备包。")
+    expect(slot.modifierContributions).toHaveLength(1)
+    expect(slot.modifierContributions[0]?.id).toContain("bonus")
+    expect(sheet().evasion).toBe("13")
+  })
+
+  it("clears a weapon slot with structured none selection", () => {
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        weaponSlots: {
+          ...defaultSheetData.equipment.weaponSlots,
+          primary: {
+            name: "已有武器",
+            trait: "physical/oneHanded/melee",
+            damage: "strength: d8",
+            feature: "可靠",
+            modifierContributions: [{
+              id: "equipment:weapon:primary:evasion",
+              definition: { kind: "modifier", target: "evasion" },
+              editable: { label: "闪避", value: 1 },
+            }],
+          },
+        },
+      },
+    })
+
+    store().selectWeapon({ slotType: "primary" }, { type: "none" })
+
+    expect(sheet().equipment.weaponSlots.primary).toEqual(defaultSheetData.equipment.weaponSlots.primary)
+  })
+
+  it("selects a runtime armor template and clears armor with none", () => {
+    const template: RuntimeEquipmentTemplate & { kind: "armor" } = {
+      kind: "armor",
+      id: "pack.armor.runtime-mail",
+      name: "运行时链甲",
+      tier: "T1",
+      baseThresholds: { minor: 6, major: 12 },
+      baseArmorMax: 4,
+      featureName: "坚固",
+      description: "来自装备包。",
+      modifierContributions: [{
+        id: "evasion",
+        definition: { kind: "modifier", target: "evasion" },
+        editable: { label: "坚固", value: -1 },
+      }],
+    }
+
+    resetSheetStore({
+      evasion: "12",
+      userModifierContributions: [{
+        id: "user:evasion-base",
+        definition: { target: "evasion", kind: "base" },
+        editable: { label: "Base", value: 12 },
+      }],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().selectArmorSlot({ type: "template", template })
+    expect(sheet().equipment.armorSlot.name).toBe("运行时链甲")
+    expect(sheet().equipment.armorSlot.modifierContributions).toHaveLength(1)
+    expect(sheet().evasion).toBe("11")
+
+    store().selectArmorSlot({ type: "none" })
+    expect(sheet().equipment.armorSlot.name).toBe("")
+    expect(sheet().equipment.armorSlot.modifierContributions).toEqual([])
+    expect(sheet().evasion).toBe("12")
+  })
+
+  it("keeps legacy string actions from parsing JSON custom equipment payloads", () => {
+    const weaponPayload = JSON.stringify({
+      name: "JSON 武器",
+      trait: "strength",
+      damage: "d8",
+      damageType: "physical",
+      burden: "oneHanded",
+      range: "melee",
+    })
+    const armorPayload = JSON.stringify({
+      name: "JSON 护甲",
+      baseArmorMax: 4,
+      baseThresholds: { minor: 6, major: 12 },
+    })
+
+    resetSheetStore()
+
+    store().selectWeaponSlot({ slotType: "primary" }, weaponPayload)
+    store().selectArmor(armorPayload)
+
+    expect(sheet().equipment.weaponSlots.primary.name).toBe(weaponPayload)
+    expect(sheet().equipment.weaponSlots.primary.damage).toBe("")
+    expect(sheet().equipment.armorSlot.name).toBe(armorPayload)
+    expect(sheet().equipment.armorSlot.baseArmorMax).toBe(null)
   })
 })

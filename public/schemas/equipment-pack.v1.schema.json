@@ -4,16 +4,11 @@
   "title": "Daggerheart Equipment Pack v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["format", "name", "version", "equipment"],
+  "required": ["format", "name", "version", "author", "equipment"],
   "properties": {
     "format": { "const": "daggerheart.equipment-pack.v1" },
     "name": { "type": "string", "minLength": 1, "maxLength": 100 },
-    "version": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 40,
-      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-(?:0|[1-9]\\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
-    },
+    "version": { "type": "string", "minLength": 1 },
     "author": { "type": "string", "minLength": 1, "maxLength": 100 },
     "description": { "type": "string", "maxLength": 4000 },
     "equipment": { "$ref": "#/$defs/equipment" }

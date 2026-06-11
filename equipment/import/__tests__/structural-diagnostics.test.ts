@@ -14,12 +14,12 @@ describe("equipment import diagnostic helpers", () => {
 
   it("creates error and warning diagnostics in one public shape", () => {
     const error = makeErrorDiagnostic("MISSING_FIELD", "/format", "Missing field")
-    const warning = makeWarningDiagnostic("MISSING_DESCRIPTION", "/description", "Missing description")
+    const warning = makeWarningDiagnostic("DESCRIPTION_LONG", "/description", "Description is long")
 
     expect(error).toMatchObject({ severity: "error", code: "MISSING_FIELD", path: "/format" })
     expect(warning).toMatchObject({
       severity: "warning",
-      code: "MISSING_DESCRIPTION",
+      code: "DESCRIPTION_LONG",
       path: "/description",
     })
   })
@@ -65,6 +65,7 @@ describe("equipment import structural validation", () => {
       format: "daggerheart.equipment-pack.v1",
       name: "包",
       version: "1.0.0",
+      author: "作者",
       equipment: {
         weapons: [{ extra: true }],
       },
@@ -84,6 +85,7 @@ describe("equipment import structural validation", () => {
       format: "daggerheart.equipment-pack.v1",
       name: "包",
       version: "1.0.0",
+      author: "作者",
       equipment: {
         armor: [
           {
@@ -131,11 +133,12 @@ describe("equipment import structural validation", () => {
   })
 
   it("maps missing format separately from invalid format", () => {
-    const missing = validateEquipmentPackStructure({ name: "包", version: "1.0.0", equipment: {} })
+    const missing = validateEquipmentPackStructure({ name: "包", version: "1.0.0", author: "作者", equipment: {} })
     const invalid = validateEquipmentPackStructure({
       format: "wrong",
       name: "包",
       version: "1.0.0",
+      author: "作者",
       equipment: {},
     })
 
@@ -147,7 +150,7 @@ describe("equipment import structural validation", () => {
     )
   })
 
-  it("maps semver, enum, field length, contribution count, and values", () => {
+  it("maps enum, field length, contribution count, and values", () => {
     const pack = {
       format: "daggerheart.equipment-pack.v1",
       name: "x".repeat(101),
@@ -183,7 +186,6 @@ describe("equipment import structural validation", () => {
         expect.objectContaining({ code: "FIELD_TOO_LONG", path: "/name", value: "x".repeat(101) }),
         expect.objectContaining({ code: "FIELD_TOO_LONG", path: "/author", value: "a".repeat(101) }),
         expect.objectContaining({ code: "FIELD_TOO_LONG", path: "/description", value: "d".repeat(4001) }),
-        expect.objectContaining({ code: "INVALID_SEMVER", path: "/version", value: "v1.0.0" }),
         expect.objectContaining({ code: "INVALID_ENUM", path: "/equipment/weapons/0/tier", value: "T9" }),
         expect.objectContaining({
           code: "FIELD_TOO_LONG",
@@ -198,25 +200,46 @@ describe("equipment import structural validation", () => {
     )
   })
 
-  it("keeps only the highest-priority diagnostic for repeated schema errors on one path", () => {
-    const version = "v".repeat(41)
+  it("accepts arbitrary string versions and rejects non-string versions", () => {
+    const accepted = validateEquipmentPackStructure({
+      format: "daggerheart.equipment-pack.v1",
+      name: "包",
+      version: "v".repeat(80),
+      author: "作者",
+      equipment: {},
+    })
+    const rejected = validateEquipmentPackStructure({
+      format: "daggerheart.equipment-pack.v1",
+      name: "包",
+      version: 1,
+      author: "作者",
+      equipment: {},
+    })
+
+    expect(accepted.success).toBe(true)
+    expect(rejected).toMatchObject({
+      success: false,
+      diagnostics: [expect.objectContaining({ code: "INVALID_TYPE", path: "/version", value: 1 })],
+    })
+  })
+
+  it("maps missing author as a required field", () => {
     const result = validateEquipmentPackStructure({
       format: "daggerheart.equipment-pack.v1",
       name: "包",
-      version,
+      version: "第一版",
       equipment: {},
     })
 
     expect(result.success).toBe(false)
     if (result.success) return
 
-    const versionDiagnostics = result.diagnostics.filter((diagnostic) => diagnostic.path === "/version")
+    const authorDiagnostics = result.diagnostics.filter((diagnostic) => diagnostic.path === "/author")
 
-    expect(versionDiagnostics).toHaveLength(1)
-    expect(versionDiagnostics[0]).toMatchObject({
-      code: "INVALID_SEMVER",
-      path: "/version",
-      value: version,
+    expect(authorDiagnostics).toHaveLength(1)
+    expect(authorDiagnostics[0]).toMatchObject({
+      code: "MISSING_FIELD",
+      path: "/author",
     })
   })
 
@@ -225,6 +248,7 @@ describe("equipment import structural validation", () => {
       format: "daggerheart.equipment-pack.v1",
       name: "包",
       version: "1.0.0",
+      author: "作者",
       description: "d".repeat(4000),
       equipment: {
         weapons: [
@@ -263,6 +287,7 @@ describe("equipment import structural validation", () => {
       format: "daggerheart.equipment-pack.v1",
       name: "包",
       version: "bad",
+      author: "作者",
       equipment: {
         weapons: [{ extra: true }],
       },
@@ -281,11 +306,6 @@ describe("equipment import structural validation", () => {
           path: "/equipment/weapons/0/extra",
           message: "Unknown field is not allowed.",
         }),
-        expect.objectContaining({
-          code: "INVALID_SEMVER",
-          path: "/version",
-          message: "Invalid semantic version.",
-        }),
       ]),
     )
     for (const diagnostic of result.diagnostics) {
@@ -294,7 +314,7 @@ describe("equipment import structural validation", () => {
       expect(diagnostic).not.toHaveProperty("schemaPath")
       expect(diagnostic.message).not.toBe("must have required property 'id'")
       expect(diagnostic.message).not.toBe("must NOT have additional properties")
-      expect(diagnostic.message).not.toBe('must match pattern "^\\d+\\.\\d+\\.\\d+$"')
+      expect(diagnostic.message).not.toContain("must match pattern")
     }
   })
 })

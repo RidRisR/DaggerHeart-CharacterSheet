@@ -24,7 +24,6 @@ export type EquipmentPackImportErrorCode =
   | "UNKNOWN_FIELD"
   | "INVALID_TYPE"
   | "INVALID_ENUM"
-  | "INVALID_SEMVER"
   | "DUPLICATE_ID"
   | "ID_CONFLICT"
   | "INVALID_CONTRIBUTION_TARGET"
@@ -42,8 +41,6 @@ export type EquipmentPackImportErrorCode =
   | "RUNTIME_CACHE_DUPLICATE_TEMPLATE_ID"
 
 export type EquipmentPackImportWarningCode =
-  | "MISSING_AUTHOR"
-  | "MISSING_DESCRIPTION"
   | "MISSING_TEMPLATE_DESCRIPTION"
   | "DESCRIPTION_LONG"
 

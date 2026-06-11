@@ -62,9 +62,9 @@ describe("equipment validation mapping", () => {
     const result = mapEquipmentDiagnosticsToFriendly([
       {
         severity: "error",
-        code: "INVALID_SEMVER",
+        code: "INVALID_TYPE",
         path: "/version",
-        message: "Invalid version.",
+        message: "Invalid field type or value.",
       },
       {
         severity: "error",
@@ -101,10 +101,10 @@ describe("equipment validation mapping", () => {
       },
       diagnostics: [
         {
-          severity: "warning",
-          code: "MISSING_AUTHOR",
+          severity: "error",
+          code: "INVALID_TYPE",
           path: "/author",
-          message: "Author is missing.",
+          message: "Invalid field type or value.",
         },
       ],
     });
@@ -136,13 +136,13 @@ describe("equipment validation mapping", () => {
     expect(importFromSource).toHaveBeenCalledTimes(1);
     expect(importFromSource.mock.calls[0][1]).toEqual({ mode: "dryRun" });
     expect(result.success).toBe(false);
-    expect(result.summary.errorCount).toBe(1);
+    expect(result.summary.errorCount).toBe(2);
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
         code: "DUPLICATE_ID",
         path: "/equipment/armor/0/id",
       }),
-      expect.objectContaining({ code: "MISSING_AUTHOR" }),
+      expect.objectContaining({ code: "INVALID_TYPE", path: "/author" }),
     ]);
   });
 

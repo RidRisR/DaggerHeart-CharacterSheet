@@ -296,7 +296,7 @@ describe("equipment pack dry run pipeline", () => {
     })
   })
 
-  it("keeps warning-only dry runs successful through stageImportData", async () => {
+  it("keeps missing optional descriptions successful without warnings", async () => {
     const dependencies = createDependencies()
     const pack = structuredClone(validWeaponPack) as Record<string, any>
     delete pack.description
@@ -307,14 +307,14 @@ describe("equipment pack dry run pipeline", () => {
       success: true,
       stage: "stageImportData",
       mode: "dryRun",
-      summary: { warningCount: 1, errorCount: 0 },
+      summary: { warningCount: 0, errorCount: 0 },
     })
-    expect(result.diagnostics).toEqual(
-      expect.arrayContaining([expect.objectContaining({ severity: "warning", code: "MISSING_DESCRIPTION" })]),
+    expect(result.diagnostics).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "MISSING_DESCRIPTION" })]),
     )
   })
 
-  it("keeps warnings when a later conflict fails", async () => {
+  it("keeps conflict failures focused when optional descriptions are missing", async () => {
     const dependencies = createDependencies({
       conflictContext: {
         builtinTemplateIds: new Set(["暗影装备包-测试作者-weapon-影刃"]),
@@ -331,13 +331,13 @@ describe("equipment pack dry run pipeline", () => {
     expect(result).toMatchObject({
       success: false,
       stage: "conflictCheck",
-      summary: { warningCount: 1, errorCount: 1 },
+      summary: { warningCount: 0, errorCount: 1 },
     })
     expect(result.diagnostics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ severity: "warning", code: "MISSING_DESCRIPTION" }),
-        expect.objectContaining({ severity: "error", code: "ID_CONFLICT" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ severity: "error", code: "ID_CONFLICT" })]),
+    )
+    expect(result.diagnostics).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "MISSING_DESCRIPTION" })]),
     )
   })
 })

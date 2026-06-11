@@ -12,7 +12,6 @@ const keywordPriority: Record<string, number> = {
   additionalProperties: 2,
   const: 3,
   enum: 4,
-  pattern: 5,
   maxLength: 6,
   maxItems: 7,
   type: 8,
@@ -42,7 +41,6 @@ function codeForError(error: ErrorObject, path: string): EquipmentPackImportErro
   if (error.keyword === "additionalProperties") return "UNKNOWN_FIELD"
   if (error.keyword === "const" && path === "/format") return "INVALID_FORMAT"
   if (error.keyword === "enum" || error.keyword === "const") return "INVALID_ENUM"
-  if (error.keyword === "pattern" && path === "/version") return "INVALID_SEMVER"
   if (error.keyword === "maxLength") return "FIELD_TOO_LONG"
   if (error.keyword === "maxItems") return "TEMPLATE_LIMIT_EXCEEDED"
   return "INVALID_TYPE"
@@ -57,7 +55,6 @@ function messageForCode(code: EquipmentPackImportErrorCode): string {
     UNKNOWN_FIELD: "Unknown field is not allowed.",
     INVALID_TYPE: "Invalid field type or value.",
     INVALID_ENUM: "Invalid enum value.",
-    INVALID_SEMVER: "Invalid semantic version.",
     DUPLICATE_ID: "Duplicate id.",
     ID_CONFLICT: "Id conflicts with existing template.",
     INVALID_CONTRIBUTION_TARGET: "Invalid contribution target.",

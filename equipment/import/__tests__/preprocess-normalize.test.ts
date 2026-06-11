@@ -6,6 +6,7 @@ const validWeaponPack: Record<string, any> = {
   format: "daggerheart.equipment-pack.v1",
   name: "  暗影装备包  ",
   version: "1.0.0",
+  author: " 测试作者 ",
   equipment: {
     weapons: [
       {
@@ -187,23 +188,16 @@ describe("equipment pack authoring preprocess", () => {
 })
 
 describe("equipment pack canonical normalize", () => {
-  it("applies defaults and warning diagnostics", () => {
+  it("normalizes optional description and modifier contribution defaults", () => {
     const preprocessed = preprocessAuthoringInput(validWeaponPack)
     const normalized = normalizeEquipmentPack(preprocessed.value)
 
-    expect(normalized.pack.metadata.author).toBe("Unknown")
+    expect(normalized.pack.metadata.author).toBe("测试作者")
     expect(normalized.pack.metadata.description).toBe("")
     expect(normalized.pack.armor).toEqual([])
     expect(normalized.pack.weapons[0].modifierContributions).toEqual([])
-    expect(normalized.diagnostics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ severity: "warning", code: "MISSING_AUTHOR", path: "/author" }),
-        expect.objectContaining({
-          severity: "warning",
-          code: "MISSING_DESCRIPTION",
-          path: "/description",
-        }),
-      ]),
+    expect(normalized.diagnostics).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "MISSING_DESCRIPTION" })]),
     )
   })
 

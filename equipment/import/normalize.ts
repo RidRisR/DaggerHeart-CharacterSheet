@@ -1,5 +1,4 @@
 import {
-  DEFAULT_EQUIPMENT_PACK_AUTHOR,
   DESCRIPTION_LONG_WARNING_THRESHOLD,
   EQUIPMENT_PACK_FORMAT,
 } from "./constants"
@@ -106,18 +105,7 @@ export function normalizeEquipmentPack(value: unknown): {
   const equipment = input.equipment as RawRecord
   const diagnostics: EquipmentPackImportDiagnostic[] = []
 
-  const author = input.author ?? DEFAULT_EQUIPMENT_PACK_AUTHOR
   const description = input.description ?? ""
-
-  if (!input.author) {
-    diagnostics.push(makeWarningDiagnostic("MISSING_AUTHOR", "/author", "Author is missing."))
-  }
-
-  if (!input.description) {
-    diagnostics.push(
-      makeWarningDiagnostic("MISSING_DESCRIPTION", "/description", "Description is missing."),
-    )
-  }
 
   addDescriptionWarning(diagnostics, description, "/description")
 
@@ -127,7 +115,7 @@ export function normalizeEquipmentPack(value: unknown): {
         format: EQUIPMENT_PACK_FORMAT,
         name: input.name,
         version: input.version,
-        author,
+        author: input.author,
         description,
       },
       weapons: ((equipment.weapons ?? []) as RawRecord[]).map((item, index) =>

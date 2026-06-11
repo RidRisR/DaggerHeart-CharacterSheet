@@ -69,7 +69,7 @@ export function EquipmentMetadataTab({
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="equipment-author">作者信息</Label>
+          <Label htmlFor="equipment-author">作者信息 *</Label>
           <Input
             id="equipment-author"
             placeholder="请输入作者信息"

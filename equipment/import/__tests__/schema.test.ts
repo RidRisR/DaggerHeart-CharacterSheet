@@ -50,7 +50,8 @@ describe("equipment pack public schema", () => {
       isValid({
         format: "daggerheart.equipment-pack.v1",
         name: "护甲包",
-        version: "1.0.0-beta.1",
+        version: "第一版",
+        author: "作者",
         equipment: {
           armor: [
             {
@@ -66,13 +67,12 @@ describe("equipment pack public schema", () => {
     ).toBe(true)
   })
 
-  it("rejects prerelease numeric identifiers with leading zeroes", () => {
-    for (const version of ["1.0.0-01", "1.0.0-alpha.01"]) {
+  it("accepts any non-empty string version", () => {
+    for (const version of ["1.0.0-01", "v1.0.0", "第一版", "2026版"]) {
       const pack = structuredClone(validWeaponPack)
       pack.version = version
 
-      expect(isValid(pack)).toBe(false)
-      expect(validate.errors?.some((error) => error.keyword === "pattern")).toBe(true)
+      expect(isValid(pack)).toBe(true)
     }
   })
 
@@ -102,12 +102,14 @@ describe("equipment pack public schema", () => {
     const { format: _format, ...missingFormat } = validWeaponPack
     const { name: _name, ...missingName } = validWeaponPack
     const { version: _version, ...missingVersion } = validWeaponPack
+    const { author: _author, ...missingAuthor } = validWeaponPack
     const { equipment: _equipment, ...missingEquipment } = validWeaponPack
 
     expect(isValid(missingFormat)).toBe(false)
     expect(validate.errors?.some((error) => error.keyword === "required")).toBe(true)
     expect(isValid(missingName)).toBe(false)
     expect(isValid(missingVersion)).toBe(false)
+    expect(isValid(missingAuthor)).toBe(false)
     expect(isValid(missingEquipment)).toBe(false)
   })
 
@@ -143,6 +145,7 @@ describe("equipment pack public schema", () => {
       format: "daggerheart.equipment-pack.v1",
       name: "护甲包",
       version: "1.0.0",
+      author: "作者",
       equipment: {
         armor: Array.from({ length: 21 }, (_, index) => ({
           id: `护甲包-作者-armor-影织甲-${index}`,

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import {
-  createArmorSlotFromTemplate,
-  createWeaponSlotFromTemplate,
+  createArmorSlotFromRuntimeTemplate,
+  createWeaponSlotFromRuntimeTemplate,
 } from "@/automation/equipment/template-to-slot"
 import armorTierOneTwo from "@/equipment/import/samples/srd-armor-tier-1-2.json"
 import type {
@@ -788,7 +788,7 @@ describe("equipment pack application service", () => {
     expect(template).toBeTruthy()
     expect(template?.modifierContributions).toHaveLength(1)
 
-    const instantiated = createWeaponSlotFromTemplate(template!, (id) => `instance:${id}`)
+    const instantiated = createWeaponSlotFromRuntimeTemplate(template!, (id) => `instance:${id}`)
     const contributionBeforeRemove = structuredClone(instantiated.modifierContributions[0])
 
     const removed = await app.removePack(packId)
@@ -818,10 +818,7 @@ describe("equipment pack application service", () => {
     expect(template).toBeTruthy()
     expect(template?.modifierContributions).toHaveLength(1)
 
-    const instantiated = createArmorSlotFromTemplate(
-      template! as Parameters<typeof createArmorSlotFromTemplate>[0],
-      (id) => `instance:${id}`,
-    )
+    const instantiated = createArmorSlotFromRuntimeTemplate(template!, (id) => `instance:${id}`)
     const contributionBeforeRemove = structuredClone(instantiated.modifierContributions[0])
 
     const removed = await app.removePack(packId)

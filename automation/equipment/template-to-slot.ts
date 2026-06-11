@@ -6,15 +6,12 @@ import type {
   NormalizedEquipmentWeaponTemplate,
 } from "@/equipment/import/types"
 import type { RuntimeEquipmentTemplate } from "@/equipment/runtime-cache/types"
-import { parseArmorMax, parseArmorThreshold } from "./armor-utils"
-import { createEmptyArmorSlot, createEmptyWeaponSlot } from "./defaults"
 import type { ArmorSlot, EquipmentModifierContributionTemplate, WeaponSlot } from "./types"
 
 type IdFactory = (templateId: string) => string
 export type CustomWeaponDraft = Omit<NormalizedEquipmentWeaponTemplate, "id">
 export type CustomArmorDraft = Omit<NormalizedEquipmentArmorTemplate, "id">
 
-type CustomPayload = Record<string, unknown>
 type WeaponSlotTemplate = Pick<
   Weapon | AllWeapon | NormalizedEquipmentWeaponTemplate | (RuntimeEquipmentTemplate & { kind: "weapon" }),
   "name" | "damageType" | "burden" | "range" | "trait" | "damage" | "featureName" | "description" | "modifierContributions"
@@ -110,43 +107,11 @@ function createArmorSlotFromSharedTemplate(template: ArmorSlotTemplate, idFactor
   }
 }
 
-export function createWeaponSlotFromTemplate(template: Weapon | AllWeapon, idFactory: IdFactory): WeaponSlot {
+export function createWeaponSlotFromBuiltinTemplate(template: Weapon | AllWeapon, idFactory: IdFactory): WeaponSlot {
   return createWeaponSlotFromSharedTemplate(template, idFactory)
 }
 
-export function createWeaponSlotFromCustomPayload(payload: unknown): WeaponSlot {
-  if (!payload || typeof payload !== "object") {
-    return createEmptyWeaponSlot()
-  }
-
-  const data = payload as CustomPayload
-  const trait = data.属性 ?? data.trait
-  const damage = data.伤害 ?? data.damage
-
-  return {
-    name: String(data.名称 ?? data.name ?? ""),
-    trait: joinText([
-      displayLabel(data.伤害类型 ?? data.damageType, DAMAGE_TYPE_LABELS),
-      displayLabel(data.负荷 ?? data.burden, BURDEN_LABELS),
-      displayLabel(data.范围 ?? data.range, RANGE_LABELS),
-    ], "/"),
-    damage:
-      trait && damage
-        ? joinText([displayLabel(trait, TRAIT_LABELS), damage], ": ")
-        : String(damage ?? ""),
-    feature: createFeatureText(data.特性名称 ?? data.featureName, data.描述 ?? data.description),
-    modifierContributions: [],
-  }
-}
-
-export function createWeaponSlotFromName(name: string): WeaponSlot {
-  return {
-    ...createEmptyWeaponSlot(),
-    name,
-  }
-}
-
-export function createArmorSlotFromTemplate(template: ArmorItem, idFactory: IdFactory): ArmorSlot {
+export function createArmorSlotFromBuiltinTemplate(template: ArmorItem, idFactory: IdFactory): ArmorSlot {
   return createArmorSlotFromSharedTemplate(template, idFactory)
 }
 
@@ -170,20 +135,4 @@ export function createArmorSlotFromRuntimeTemplate(
 
 export function createArmorSlotFromCustomDraft(draft: CustomArmorDraft, idFactory: IdFactory): ArmorSlot {
   return createArmorSlotFromSharedTemplate(draft, idFactory)
-}
-
-export function createArmorSlotFromCustomPayload(payload: unknown): ArmorSlot {
-  if (!payload || typeof payload !== "object") {
-    return createEmptyArmorSlot()
-  }
-
-  const data = payload as CustomPayload
-
-  return {
-    name: String(data.名称 ?? data.name ?? ""),
-    baseArmorMax: parseArmorMax(data.护甲值 ?? data.baseArmorMax),
-    baseThresholds: parseArmorThreshold(data.伤害阈值 ?? data.thresholds ?? data.baseThresholds),
-    feature: createFeatureText(data.特性名称 ?? data.featureName, data.描述 ?? data.description),
-    modifierContributions: [],
-  }
 }

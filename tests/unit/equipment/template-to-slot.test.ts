@@ -3,12 +3,11 @@ import { armorItems } from "@/data/list/armor"
 import { allWeapons } from "@/data/list/all-weapons"
 import {
   createArmorSlotFromCustomDraft,
-  createArmorSlotFromCustomPayload,
+  createArmorSlotFromBuiltinTemplate,
   createArmorSlotFromRuntimeTemplate,
-  createArmorSlotFromTemplate,
+  createWeaponSlotFromBuiltinTemplate,
   createWeaponSlotFromCustomDraft,
   createWeaponSlotFromRuntimeTemplate,
-  createWeaponSlotFromTemplate,
   type CustomArmorDraft,
   type CustomWeaponDraft,
 } from "@/automation/equipment/template-to-slot"
@@ -59,7 +58,7 @@ describe("template to slot conversion", () => {
     const template = allWeapons.find((weapon) => weapon.id === "builtin.weapon.secondary.tower-shield")
     expect(template).toBeTruthy()
 
-    const slot = createWeaponSlotFromTemplate(template!, () => "generated-id")
+    const slot = createWeaponSlotFromBuiltinTemplate(template!, () => "generated-id")
 
     expect(slot.name).toBe(template!.name)
     expect(slot.trait).toBe("物理/副手/近战")
@@ -73,7 +72,7 @@ describe("template to slot conversion", () => {
     expect(template?.modifierContributions).toHaveLength(2)
 
     const receivedTemplateIds: string[] = []
-    const slot = createWeaponSlotFromTemplate(template!, (templateId) => {
+    const slot = createWeaponSlotFromBuiltinTemplate(template!, (templateId) => {
       receivedTemplateIds.push(templateId)
       return `runtime-${templateId}-${receivedTemplateIds.length}`
     })
@@ -109,7 +108,7 @@ describe("template to slot conversion", () => {
       expect(templateArmorContribution?.editable.value).toBe(expectedArmorMax)
       expect(templateEvasionContribution?.editable.value).toBe(-1)
 
-      const slot = createWeaponSlotFromTemplate(template, (templateId) => `generated-${templateId}`)
+      const slot = createWeaponSlotFromBuiltinTemplate(template, (templateId) => `generated-${templateId}`)
       const slotArmorContribution = slot.modifierContributions.find(
         (entry) => entry.definition.target === "armorMax",
       )
@@ -170,7 +169,7 @@ describe("template to slot conversion", () => {
     const template = armorItems.find((armor) => armor.id === "builtin.armor.full-plate")
     expect(template).toBeTruthy()
 
-    const slot = createArmorSlotFromTemplate(template!, () => "armor-contribution")
+    const slot = createArmorSlotFromBuiltinTemplate(template!, () => "armor-contribution")
 
     expect(slot.name).toBe(template!.name)
     expect(slot.baseArmorMax).toBe(template!.baseArmorMax)
@@ -178,61 +177,6 @@ describe("template to slot conversion", () => {
     expect(slot.feature).toContain(template!.featureName)
   })
 
-  it("keeps custom Chinese armor payload compatible", () => {
-    const slot = createArmorSlotFromCustomPayload({
-      名称: "自定义护甲",
-      护甲值: "4",
-      伤害阈值: "9/21",
-      特性名称: "自定义",
-      描述: "测试描述",
-    })
-
-    expect(slot).toMatchObject({
-      name: "自定义护甲",
-      baseArmorMax: 4,
-      baseThresholds: { minor: 9, major: 21 },
-      feature: "自定义: 测试描述",
-      modifierContributions: [],
-    })
-  })
-
-  it.each([
-    ["9/", { minor: 9, major: null }],
-    ["/21", { minor: null, major: 21 }],
-    ["9/abc", { minor: 9, major: null }],
-    ["abc/21", { minor: null, major: 21 }],
-    ["9", { minor: 9, major: null }],
-    ["abc", { minor: null, major: null }],
-  ])("parses half-structured armor threshold payload %s", (threshold, expected) => {
-    const slot = createArmorSlotFromCustomPayload({
-      名称: "自定义护甲",
-      护甲值: "4",
-      伤害阈值: threshold,
-    })
-
-    expect(slot.baseThresholds).toEqual(expected)
-  })
-
-  it("parses structured armor threshold payload sides independently", () => {
-    const slot = createArmorSlotFromCustomPayload({
-      名称: "自定义护甲",
-      护甲值: "4",
-      伤害阈值: { minor: "10+3", major: "bad" },
-    })
-
-    expect(slot.baseThresholds).toEqual({ minor: 13, major: null })
-  })
-
-  it("keeps half-structured custom modal armor threshold objects", () => {
-    const slot = createArmorSlotFromCustomPayload({
-      名称: "自定义护甲",
-      护甲值: "5+1",
-      伤害阈值: { minor: "8", major: "" },
-    })
-
-    expect(slot.baseArmorMax).toBe(6)
-    expect(slot.baseThresholds).toEqual({ minor: 8, major: null })
-  })
 })
 
 describe("runtime equipment template slot instantiation", () => {

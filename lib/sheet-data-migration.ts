@@ -29,8 +29,8 @@ import {
 } from "@/automation/equipment/contribution-utils"
 import { createEmptyEquipmentData } from "@/automation/equipment/defaults"
 import {
-  createArmorSlotFromTemplate,
-  createWeaponSlotFromTemplate,
+  createArmorSlotFromBuiltinTemplate,
+  createWeaponSlotFromBuiltinTemplate,
 } from "@/automation/equipment/template-to-slot"
 import { parseArmorMax, parseArmorThreshold } from "@/automation/equipment/armor-utils"
 import type { ArmorSlot, WeaponSlot } from "@/automation/equipment/types"
@@ -474,7 +474,7 @@ function matchingWeaponSlotFromTemplates(
   if (hasValidEquipmentContributions(slot)) return undefined
 
   const matches = templates
-    .map(template => createWeaponSlotFromTemplate(template, createEquipmentContributionId))
+    .map(template => createWeaponSlotFromBuiltinTemplate(template, createEquipmentContributionId))
     .filter(templateSlot => templateSlot.name === slot.name && templateSlot.feature === slot.feature)
 
   return matches.length === 1 ? matches[0] : undefined
@@ -484,7 +484,7 @@ function matchingArmorSlotFromTemplates(slot: ArmorSlot): ArmorSlot | undefined 
   if (hasValidEquipmentContributions(slot)) return undefined
 
   const matches = armorItems
-    .map(template => createArmorSlotFromTemplate(template, createEquipmentContributionId))
+    .map(template => createArmorSlotFromBuiltinTemplate(template, createEquipmentContributionId))
     .filter(templateSlot => templateSlot.name === slot.name && templateSlot.feature === slot.feature)
 
   return matches.length === 1 ? matches[0] : undefined

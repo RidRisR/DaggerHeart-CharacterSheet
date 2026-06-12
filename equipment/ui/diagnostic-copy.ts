@@ -244,8 +244,8 @@ export function localizeEquipmentDiagnostic(
       };
     default:
       return {
-        description: "装备包内容未通过校验",
-        suggestion: `请检查装备包内容，然后${action}`,
+        description: "当前字段未通过装备包校验",
+        suggestion: `请检查该字段的格式和取值，然后${action}`,
       };
   }
 }

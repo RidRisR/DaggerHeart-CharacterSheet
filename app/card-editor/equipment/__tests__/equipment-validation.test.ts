@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import type { EquipmentPackApplicationService } from "@/equipment/packs/application-service";
+import type {
+  EquipmentPackApplicationDiagnostic,
+  EquipmentPackApplicationService,
+} from "@/equipment/packs/application-service";
 import { createDefaultEquipmentServices } from "@/equipment/services/default-equipment-services";
 import type { EquipmentEditorDraft } from "../equipment-draft";
 import {
@@ -346,6 +349,7 @@ describe("equipment validation mapping", () => {
     expect(friendly[2]).toMatchObject({
       title: "装备包内容有问题",
       description: "装备包至少需要包含一件武器或一件护甲",
+      specificGroup: "系统问题",
     });
     expect(friendly[3]).toMatchObject({
       severity: "warning",
@@ -368,6 +372,23 @@ describe("equipment validation mapping", () => {
     );
     expect(friendly[0].description).toBe("装备数据刷新失败");
     expect(friendly[0].suggestion).toContain("重新验证");
+  });
+
+  it("uses the standard Chinese fallback for unknown diagnostics", () => {
+    const diagnostics = [
+      {
+        severity: "error",
+        code: "FUTURE_PIPELINE_CODE",
+        path: "/futureField",
+        message: "Future pipeline diagnostic.",
+      },
+    ] as unknown as EquipmentPackApplicationDiagnostic[];
+    const friendly = mapEquipmentDiagnosticsToFriendly(diagnostics);
+
+    expect(friendly[0].description).toBe("当前字段未通过装备包校验");
+    expect(friendly[0].suggestion).toBe(
+      "请检查该字段的格式和取值，然后重新验证",
+    );
   });
 
   it("uses item labels instead of numeric path segments", () => {

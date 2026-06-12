@@ -128,7 +128,7 @@ export function mapEquipmentDiagnosticsToFriendly(
       suggestion,
       severity: diagnostic.severity,
       groupType: "系统",
-      specificGroup: isEquipmentContentDiagnostic ? "装备包内容" : "系统问题",
+      specificGroup: "系统问题",
       diagnostic,
       jumpTarget: undefined,
     };

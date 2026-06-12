@@ -90,6 +90,7 @@ describe("equipment validation results", () => {
     for (const tab of ["按优先级", "按位置", "按类型", "全部"]) {
       expect(screen.getByRole("tab", { name: tab })).toBeInTheDocument();
     }
+    expect(screen.getByRole("dialog")).toHaveClass("h-[90vh]");
 
     const overview = screen.getByRole("region", { name: "验证概览" });
     for (const label of ["关键错误", "警告", "问题类型", "装备条目"]) {

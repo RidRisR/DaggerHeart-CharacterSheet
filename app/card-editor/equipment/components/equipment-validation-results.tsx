@@ -70,7 +70,12 @@ export function EquipmentValidationResults({
         if (!nextOpen) onClose();
       }}
     >
-      <DialogContent className="flex max-h-[90vh] max-w-6xl flex-col overflow-hidden">
+      <DialogContent
+        className={cn(
+          "flex max-w-6xl flex-col overflow-hidden",
+          isValid ? "max-h-[90vh]" : "h-[90vh] max-h-[90vh]",
+        )}
+      >
         <DialogHeader>
           <div className="flex items-center gap-3">
             {isValid ? (
@@ -278,7 +283,7 @@ function QuickOverview({
 
 function DiagnosticScroll({ children }: { children: ReactNode }) {
   return (
-    <ScrollArea className="h-full min-h-0">
+    <ScrollArea className="min-h-0 flex-1">
       <div className="space-y-4 pr-4">{children}</div>
     </ScrollArea>
   );

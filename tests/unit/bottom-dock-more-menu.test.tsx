@@ -46,7 +46,9 @@ describe("BottomDock more menu", () => {
   it("shows unread affordances when announcements are unread", () => {
     render(<BottomDock {...mainProps} hasUnreadAnnouncements />)
 
-    expect(screen.getByLabelText("有新的更新公告")).toBeTruthy()
+    const unreadDot = screen.getByLabelText("有新的更新公告")
+    expect(unreadDot).toBeTruthy()
+    expect(unreadDot.className).not.toContain("ring-gray-900")
     fireEvent.pointerDown(screen.getByRole("button", { name: "更多" }))
     expect(screen.getByText("NEW")).toBeTruthy()
   })

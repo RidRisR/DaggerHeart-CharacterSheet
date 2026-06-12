@@ -307,7 +307,7 @@ function MainModeContent(props: MainModeProps) {
                   {props.hasUnreadAnnouncements && (
                     <span
                       aria-label="有新的更新公告"
-                      className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-gray-900"
+                      className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500"
                     />
                   )}
                 </Button>

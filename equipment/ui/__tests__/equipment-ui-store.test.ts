@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { createEquipmentUiStore } from "../equipment-ui-store"
+import { toDiagnosticView } from "../types"
 import type { EquipmentPackApplicationService } from "@/equipment/packs/application-service"
 import type { EquipmentPackStorageSnapshot } from "@/equipment/packs/storage-types"
 import type {
@@ -188,6 +189,32 @@ function createHarness() {
 }
 
 describe("equipment UI store", () => {
+  it("localizes runtime and storage diagnostic view messages", () => {
+    expect(
+      toDiagnosticView({
+        severity: "error",
+        code: "RUNTIME_CACHE_BUILD_FAILED",
+        path: "",
+        message: "Runtime cache build failed.",
+      }),
+    ).toMatchObject({
+      code: "RUNTIME_CACHE_BUILD_FAILED",
+      message: "装备数据刷新失败。请检查装备 ID 是否冲突，修复后重新导入",
+    })
+
+    expect(
+      toDiagnosticView({
+        severity: "error",
+        code: "STORAGE_WRITE_FAILED",
+        path: "",
+        message: "Storage write failed.",
+      }),
+    ).toMatchObject({
+      code: "STORAGE_WRITE_FAILED",
+      message: "装备包写入存储失败。请确认浏览器存储可用后重试",
+    })
+  })
+
   it("initializes lazily and does not initialize twice", async () => {
     const { store, applicationService } = createHarness()
 
@@ -271,7 +298,7 @@ describe("equipment UI store", () => {
     expect(store.getState().initializationError?.code).toBe("RUNTIME_CACHE_BUILD_FAILED")
     expect(store.getState().lastDiagnostics[0]).toMatchObject({
       code: "RUNTIME_CACHE_BUILD_FAILED",
-      message: "runtime failed",
+      message: "装备数据刷新失败。请检查装备 ID 是否冲突，修复后重新导入",
     })
     expect(store.getState().getPackSummaries()[0]?.name).toBe("损坏但可读的装备包")
     expect(store.getState().getPackDetail(customPack.packId)?.armor[0]).toEqual({
@@ -507,7 +534,7 @@ describe("equipment UI store", () => {
     expect(store.getState().lastResult).toBe(importResult)
     expect(store.getState().lastDiagnostics[0]).toMatchObject({
       code: "INVALID_JSON",
-      message: "Invalid JSON.",
+      message: "文件不是有效的 JSON。请修复 JSON 语法，然后重新导入",
     })
   })
 
@@ -537,7 +564,7 @@ describe("equipment UI store", () => {
     expect(store.getState().lastResult).toBe(disableResult)
     expect(store.getState().lastDiagnostics[0]).toMatchObject({
       code: "PACK_NOT_FOUND",
-      message: "Pack not found.",
+      message: "找不到指定的装备包。请刷新装备包列表后重试",
     })
   })
 

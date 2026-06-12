@@ -9,6 +9,10 @@ import type {
   EquipmentPackLifecycleResult,
 } from "@/equipment/packs/application-service"
 import type { EquipmentPackStorageSnapshot } from "@/equipment/packs/storage-types"
+import {
+  formatLocalizedEquipmentDiagnosticMessage,
+  localizeEquipmentDiagnostic,
+} from "./diagnostic-copy"
 
 export type EquipmentPackCategoryBadge = "主武器" | "副手" | "护甲"
 
@@ -67,11 +71,13 @@ export type EquipmentUiStoreDiagnostic =
   | EquipmentPackLifecycleDiagnostic
 
 export function toDiagnosticView(diagnostic: EquipmentUiStoreDiagnostic): EquipmentUiDiagnosticView {
+  const copy = localizeEquipmentDiagnostic(diagnostic, "contentImport")
+
   return {
     severity: diagnostic.severity,
     code: String(diagnostic.code),
     path: "path" in diagnostic ? diagnostic.path : "",
-    message: diagnostic.message,
+    message: formatLocalizedEquipmentDiagnosticMessage(copy),
     value: diagnostic.value,
   }
 }

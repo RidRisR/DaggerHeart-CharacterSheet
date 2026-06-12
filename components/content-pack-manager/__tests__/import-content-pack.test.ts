@@ -97,7 +97,7 @@ describe("importContentPackFiles", () => {
     ])
   })
 
-  it("maps failed equipment importer diagnostics", async () => {
+  it("maps failed equipment importer diagnostics with localized copy and counts", async () => {
     const result = await importContentPackFiles(
       [jsonFile("equipment.json", { format: "daggerheart.equipment-pack.v1" })],
       {
@@ -109,8 +109,14 @@ describe("importContentPackFiles", () => {
               severity: "error" as const,
               code: "INVALID_JSON" as const,
               path: "/metadata",
-              message: "bad equipment",
+              message: "Invalid JSON.",
               value: { format: "bad" },
+            },
+            {
+              severity: "warning" as const,
+              code: "DESCRIPTION_LONG" as const,
+              path: "/description",
+              message: "Description is long.",
             },
           ],
         })),
@@ -122,16 +128,73 @@ describe("importContentPackFiles", () => {
     expect(result.results[0]).toMatchObject({
       kind: "equipment",
       success: false,
-      summary: "装备包导入失败",
+      summary: "装备包导入失败：发现 1 个错误和 1 个警告",
       diagnostics: [
         {
           severity: "error",
           code: "INVALID_JSON",
           path: "/metadata",
-          message: "bad equipment",
+          message: "文件不是有效的 JSON。请修复 JSON 语法，然后重新导入",
           value: { format: "bad" },
         },
+        {
+          severity: "warning",
+          code: "DESCRIPTION_LONG",
+          path: "/description",
+          message: "描述内容较长，可能影响阅读体验。建议精简描述内容，然后重新导入",
+        },
       ],
+    })
+  })
+
+  it("keeps card import error messages unchanged", async () => {
+    const result = await importContentPackFiles(
+      [jsonFile("cards.json", { profession: [{ id: "bad" }] })],
+      {
+        importEquipmentFile: vi.fn(),
+        importCardJson: vi.fn(async () => ({
+          success: false,
+          imported: 0,
+          errors: ["card raw error"],
+          batchId: undefined,
+        })),
+        importDhcb: vi.fn(),
+      },
+    )
+
+    expect(result.results[0]).toMatchObject({
+      kind: "card",
+      success: false,
+      summary: "卡牌包导入失败",
+      diagnostics: [{ message: "card raw error" }],
+    })
+  })
+
+  it("summarizes failed equipment imports without warnings", async () => {
+    const result = await importContentPackFiles(
+      [jsonFile("equipment.json", { format: "daggerheart.equipment-pack.v1" })],
+      {
+        importEquipmentFile: vi.fn(async () => ({
+          success: false,
+          summary: { weaponCount: 0, armorCount: 0 },
+          diagnostics: [
+            {
+              severity: "error" as const,
+              code: "INVALID_JSON" as const,
+              path: "",
+              message: "Invalid JSON.",
+            },
+          ],
+        })),
+        importCardJson: vi.fn(),
+        importDhcb: vi.fn(),
+      },
+    )
+
+    expect(result.results[0]).toMatchObject({
+      kind: "equipment",
+      success: false,
+      summary: "装备包导入失败：发现 1 个错误",
     })
   })
 

@@ -87,7 +87,7 @@ async function importOneContentPackFile(
           fileName: file.name,
           kind: "equipment",
           success: result.success,
-          summary: result.success ? `导入 ${importedCount} 个装备模板` : "装备包导入失败",
+          summary: result.success ? `导入 ${importedCount} 个装备模板` : equipmentFailureSummary(result.diagnostics),
           diagnostics: result.diagnostics.map(mapDiagnostic),
         }
       }
@@ -156,6 +156,17 @@ function cardMessagesToDiagnostics(messages: string[] | undefined): ContentPackI
     path: "",
     message,
   }))
+}
+
+function equipmentFailureSummary(diagnostics: EquipmentUiStoreDiagnostic[]) {
+  const errorCount = diagnostics.filter((diagnostic) => diagnostic.severity === "error").length
+  const warningCount = diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length
+
+  if (warningCount > 0) {
+    return `装备包导入失败：发现 ${errorCount} 个错误和 ${warningCount} 个警告`
+  }
+
+  return `装备包导入失败：发现 ${errorCount} 个错误`
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

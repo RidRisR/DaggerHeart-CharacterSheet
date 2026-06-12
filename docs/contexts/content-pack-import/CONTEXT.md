@@ -254,6 +254,8 @@ _Avoid_: storage snapshot; persisted index
 - A **Pack ID** identifies the stored pack unit; a **Template ID** identifies reusable content inside a pack.
 - A **Pack User** may receive a simplified import result while **Warning Diagnostics** remain available in details or advanced views.
 - A **Pack Author** can use the same import pipeline in **Dry Run** mode to see error and warning diagnostics without committing data.
+- A failed **Dry Run** for an **Equipment Editor Draft** blocks treating the draft as a formally importable **Equipment Pack**, but does not block **Scoped Equipment JSON Export** of the current authoring draft.
+- The same equipment-pack **Import Diagnostic** should use one consistent domain explanation across authoring and formal import views. Pack Author dry-run copy should guide the author to fix the draft and rerun validation; Pack User formal-import copy should guide the user to fix the file and import again.
 - An **Import Origin** provides metadata for diagnostics and results; parsed-vs-text handling is determined by the raw payload shape, not by origin.
 - A **Content Bundle Manifest** is a file index, not a content metadata authority. It must not override card pack or equipment pack payload metadata.
 - An **Import Result Stage** records where the workflow stopped; `runtimeCacheBuild` with success means the import is complete and runtime-available.

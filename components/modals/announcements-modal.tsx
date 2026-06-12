@@ -33,7 +33,7 @@ export function AnnouncementsModal({
       <DialogContent className="flex max-h-[85vh] max-w-[calc(100vw-2rem)] flex-col overflow-hidden sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>更新公告</DialogTitle>
-          <DialogDescription>按发布时间倒序排列，最近更新在最上方。</DialogDescription>
+          <DialogDescription>有任何使用问题或者建议，欢迎提出 Github Issue 或者联系我（QQ：2839705644）</DialogDescription>
         </DialogHeader>
 
         <div data-testid="announcements-scroll-region" className="min-h-0 flex-1 overflow-y-auto px-1 pb-1">

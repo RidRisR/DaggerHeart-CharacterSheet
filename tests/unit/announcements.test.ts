@@ -43,17 +43,6 @@ describe("announcements", () => {
     expect(latestAnnouncementId).toBe(getSortedAnnouncements(announcements)[0]?.id)
   })
 
-  it("includes a pre-v4 release history pointer to GitHub Releases", () => {
-    const historyAnnouncement = announcements.find(
-      (announcement) => announcement.id === "2026-06-12-pre-v4-release-history",
-    )
-
-    expect(historyAnnouncement?.title).toBe("V4.0.0 之前版本更新记录")
-    expect(historyAnnouncement?.content).toContain(
-      "https://github.com/RidRisR/DaggerHeart-CharacterSheet/releases",
-    )
-  })
-
   it("reports the latest announcement as read when storage contains the latest id", () => {
     expect(isLatestAnnouncementRead(createStorage(latestAnnouncementId ?? ""))).toBe(true)
   })

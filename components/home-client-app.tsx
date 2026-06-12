@@ -12,6 +12,7 @@ import { CardSelectionModal } from "@/components/modals/card-selection-modal"
 import { CharacterSheetPageFour, CharacterSheetPageFive } from "@/components/character-sheet-page-card-print"
 import ArmorTemplatePage from "@/components/character-sheet-page-iknis"
 import { CharacterCreationGuide } from "@/components/guide/character-creation-guide"
+import { AnnouncementsModal } from "@/components/modals/announcements-modal"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { SealDiceExportModal } from "@/components/modals/seal-dice-export-modal"
 import { useSheetStore, useCardActions } from "@/lib/sheet-store"
@@ -29,6 +30,11 @@ import { PrintPageRenderer } from "@/components/print/print-page-renderer"
 import { SaveSwitcher } from "@/components/ui/save-switcher"
 import { MemoryAlert } from "@/components/memory-alert"
 import { memoryMonitor } from "@/lib/memory-monitor"
+import {
+  announcements,
+  isLatestAnnouncementRead,
+  markLatestAnnouncementRead,
+} from "@/lib/announcements"
 
 // EyeIcon和EyeOffIcon已移除 - 现在使用PageVisibilityDropdown
 
@@ -187,6 +193,8 @@ export default function HomeClientApp() {
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [characterManagementModalOpen, setCharacterManagementModalOpen] = useState(false)
   const [sealDiceExportModalOpen, setSealDiceExportModalOpen] = useState(false)
+  const [announcementsModalOpen, setAnnouncementsModalOpen] = useState(false)
+  const [hasUnreadAnnouncements, setHasUnreadAnnouncements] = useState(false)
   const [currentTabValue, setCurrentTabValue] = useState("page1")
   const [showShortcutHint, setShowShortcutHint] = useState(false)
   const [isCardDrawerOpen, setIsCardDrawerOpen] = useState(false)
@@ -273,8 +281,19 @@ export default function HomeClientApp() {
     }
   }, [currentCharacterId])
 
+  useEffect(() => {
+    if (!isClient) return
+    setHasUnreadAnnouncements(!isLatestAnnouncementRead())
+  }, [isClient])
+
   const closeCharacterManagementModal = () => {
     setCharacterManagementModalOpen(false)
+  }
+
+  const openAnnouncementsModal = () => {
+    markLatestAnnouncementRead()
+    setHasUnreadAnnouncements(false)
+    setAnnouncementsModalOpen(true)
   }
 
   // 移除旧的第三页导出控制函数 - 现在使用 PageVisibilityDropdown
@@ -711,6 +730,8 @@ export default function HomeClientApp() {
         onOpenCharacterManagement={() => setCharacterManagementModalOpen(true)}
         onQuickCreateArchive={handleQuickCreateArchive}
         onQuickImportFromHTML={handleQuickImportFromHTML}
+        hasUnreadAnnouncements={hasUnreadAnnouncements}
+        onOpenAnnouncements={openAnnouncementsModal}
       />
 
       {/* 快捷键提示 */}
@@ -764,6 +785,13 @@ export default function HomeClientApp() {
         isOpen={sealDiceExportModalOpen}
         onClose={() => setSealDiceExportModalOpen(false)}
         sheetData={formData}
+      />
+
+      {/* 更新公告模态框 */}
+      <AnnouncementsModal
+        isOpen={announcementsModalOpen}
+        onClose={() => setAnnouncementsModalOpen(false)}
+        announcements={announcements}
       />
 
       {/* 钉住的卡牌窗口 - 全局渲染，不受页面切换影响 */}

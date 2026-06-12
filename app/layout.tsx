@@ -179,22 +179,6 @@ export default function RootLayout({
               作者：RidRisR
               <br />
               翻译及校对：PolearmMaster, 末楔, 里予, 一得, RisRisR
-              <br />
-              <a
-                href={githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline pointer-events-auto hover:text-gray-700 transition-colors"
-              >
-                项目地址 & 下载地址（点我访问 GitHub）
-              </a>
-              <span className="mx-1">|</span>
-              <a
-                href="/about"
-                className="underline pointer-events-auto hover:text-gray-700 transition-colors"
-              >
-                关于本站
-              </a>
             </div>
           </ProgressModalProvider>
         </ThemeProvider>

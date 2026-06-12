@@ -52,6 +52,8 @@ describe("AnnouncementsModal", () => {
       expect(card.className).toContain("bg-white")
       expect(card.className).toContain("p-4")
       expect(card.className).toContain("shadow-sm")
+      expect(card.className).not.toContain("border-l-4")
+      expect(card.className).not.toContain("border-l-blue")
     })
 
     const latestDate = screen.getByText("2026-06-12")

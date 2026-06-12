@@ -44,7 +44,7 @@ export function AnnouncementsModal({
               {sortedAnnouncements.map((announcement) => (
                 <article
                   key={announcement.id}
-                  className="rounded-lg border border-slate-200 border-l-4 border-l-blue-500 bg-white p-4 shadow-sm"
+                  className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
                 >
                   <header className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <h3 className="text-lg font-semibold tracking-normal text-gray-950">

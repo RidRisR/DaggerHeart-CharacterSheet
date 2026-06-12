@@ -16,8 +16,9 @@
 1. 装备包验证弹窗的信息层级追平卡牌包验证弹窗。
 2. 保留装备包领域文案，不机械复刻卡牌包里的“卡片”“卡牌包质量”等表达。
 3. 保留现有装备诊断映射和定位能力。
-4. 把装备侧 summary/group 计算整理为可测试的纯函数，避免复杂展示逻辑堆在 JSX 中。
-5. 不改卡牌包验证弹窗，不抽共享组件。
+4. 加强装备诊断中文化：标题、描述、修复建议都应面向作者可理解，避免直接透出英文 pipeline message。
+5. 把装备侧 summary/group 计算整理为可测试的纯函数，避免复杂展示逻辑堆在 JSX 中。
+6. 不改卡牌包验证弹窗，不抽共享组件。
 
 ## 非目标
 
@@ -109,6 +110,30 @@ tab 内容采用卡牌包验证弹窗的密度和结构：
 - 蓝色修复建议块
 - 可定位时显示 `定位装备`
 
+#### 诊断中文化
+
+当前装备侧只对少数 code 写了中文解释，其他诊断会退回英文 `diagnostic.message` 或非常泛的 `请检查并修正该字段内容`。这会让作者不知道具体哪里错、为什么错、下一步该怎么改。本次追平应把中文化视为 UI 体验的一部分，不只是布局调整。
+
+实现应为已知 `EquipmentPackImportErrorCode` 和 `EquipmentPackImportWarningCode` 提供领域化中文描述和建议。至少覆盖：
+
+- 文件和来源问题：`SOURCE_READ_FAILED`、`INVALID_JSON`、`FILE_TOO_LARGE`
+- 包格式问题：`INVALID_FORMAT`
+- 结构问题：`MISSING_FIELD`、`UNKNOWN_FIELD`、`INVALID_TYPE`、`FIELD_TOO_LONG`、`TEMPLATE_LIMIT_EXCEEDED`
+- 枚举问题：`INVALID_ENUM`
+- ID 和冲突问题：`DUPLICATE_ID`、`ID_CONFLICT`
+- 装备语义问题：`EMPTY_EQUIPMENT`、`INVALID_THRESHOLD_ORDER`、`INVALID_CONTRIBUTION_TARGET`
+- 存储和运行时问题：`PACK_LIMIT_EXCEEDED`、`PACK_ID_GENERATION_FAILED`、`STORAGE_QUOTA_EXCEEDED`、`STORAGE_SERIALIZE_FAILED`、`STORAGE_WRITE_FAILED`、`RUNTIME_CACHE_BUILD_FAILED`、`RUNTIME_CACHE_DUPLICATE_TEMPLATE_ID`
+- 警告：`MISSING_TEMPLATE_DESCRIPTION`、`DESCRIPTION_LONG`
+
+中文化输出应符合这些规则：
+
+- `description` 说明当前值为什么不符合要求，例如 `该字段不能为空`、`该字段不是装备包支持的选项`、`此 ID 已被其他装备使用`。
+- `suggestion` 给出可执行下一步，例如 `请填写名称后重新验证`、`请从编辑器下拉选项中选择一个有效值`、`请修改其中一个装备 ID，确保每件装备唯一`。
+- 如果 `diagnostic.value` 可用，可以在建议中谨慎展示当前问题值，例如 `当前值为 T9`，但不要输出大段对象。
+- `relatedPaths` 可用于重复 ID 提示，说明存在另一个相关位置；第一阶段可以不做可点击跳转，但文案应提示“另一个重复项也需要检查”。
+- fallback 不应直接显示英文 message。未知 code 的 fallback 应使用中文通用描述：`当前字段未通过装备包校验`，建议为 `请检查该字段的格式和取值，然后重新验证`。
+- 系统/存储/运行时错误也应中文化，避免只显示 `Storage write failed`、`Runtime cache build failed` 这类英文。
+
 `定位装备` 行为不变：
 
 - metadata 诊断切到基础信息 tab。
@@ -138,6 +163,13 @@ tab 内容采用卡牌包验证弹窗的密度和结构：
 ### 诊断映射层
 
 继续使用 `app/card-editor/equipment/equipment-validation.ts` 中的 `mapEquipmentDiagnosticsToFriendly()`、`targetFromDiagnosticPath()` 和 `FriendlyEquipmentDiagnostic`。
+
+`descriptionAndSuggestion()` 应扩展为完整的装备诊断中文化 mapper。建议拆出小型常量或函数，按 `diagnostic.code` 生成：
+
+- `description`
+- `suggestion`
+
+字段显示继续使用 `fieldLabel()`，但字段表应补齐当前公开 schema 和编辑器里会出现的字段，包括 modifier contribution 相关字段。路径无法映射到具体字段时，仍应给出中文 title 和中文 fallback。
 
 新增或导出装备侧展示 helper：
 
@@ -194,6 +226,9 @@ export function groupEquipmentValidationDiagnostics(
 
 扩展现有装备验证测试或新增用例，覆盖：
 
+- 每个主要诊断 code 都能产生中文 `description` 和中文 `suggestion`。
+- fallback 不直接透出英文 `diagnostic.message`。
+- `UNKNOWN_FIELD`、`FIELD_TOO_LONG`、`EMPTY_EQUIPMENT`、`ID_CONFLICT`、`MISSING_TEMPLATE_DESCRIPTION`、`DESCRIPTION_LONG` 等当前缺失或模糊的 code 有明确文案。
 - `createEquipmentValidationDisplaySummary()` 正确统计错误、警告、受影响类型和检查总数。
 - 基础信息、武器、护甲、系统诊断都能进入对应 group。
 - 重复 groupType 只在 affectedTypes 中出现一次。
@@ -207,6 +242,7 @@ export function groupEquipmentValidationDiagnostics(
 - 四个 tab 仍存在。
 - 分组标题和数量 badge 可见。
 - 单条诊断显示字段 badge、severity badge、描述和蓝色修复建议。
+- 单条诊断不显示英文 pipeline 原始消息作为主要说明。
 - 可定位诊断显示 `定位装备`，系统问题不显示定位按钮。
 - 点击 `定位装备` 仍调用原有 target。
 - 成功态显示武器/护甲数量和工具化成功文案。
@@ -222,8 +258,9 @@ export function groupEquipmentValidationDiagnostics(
 
 1. 装备包验证失败时，用户能先看到错误/警告/问题类型/检查总数概览。
 2. 装备包诊断能按优先级、装备、类型和全部浏览。
-3. 装备包诊断文案为中文，并保持装备领域表达。
-4. 可定位诊断仍能跳转到对应装备编辑 tab 和条目。
-5. 成功态和失败态的底部提示与当前工具栏工作流一致。
-6. 卡牌包验证弹窗行为不变。
-7. 新增和更新的单元测试通过。
+3. 装备包诊断标题、描述和修复建议都为中文，并保持装备领域表达。
+4. 常见错误和警告不再显示模糊 fallback 或英文 pipeline message。
+5. 可定位诊断仍能跳转到对应装备编辑 tab 和条目。
+6. 成功态和失败态的底部提示与当前工具栏工作流一致。
+7. 卡牌包验证弹窗行为不变。
+8. 新增和更新的单元测试通过。

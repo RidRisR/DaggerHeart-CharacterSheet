@@ -36,21 +36,30 @@ export function AnnouncementsModal({
           <DialogDescription>按发布时间倒序排列，最近更新在最上方。</DialogDescription>
         </DialogHeader>
 
-        <div data-testid="announcements-scroll-region" className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div data-testid="announcements-scroll-region" className="min-h-0 flex-1 overflow-y-auto px-1 pb-1">
           {sortedAnnouncements.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">暂无更新公告</p>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-4">
               {sortedAnnouncements.map((announcement) => (
-                <article key={announcement.id} className="border-l-4 border-blue-500 pl-4">
-                  <h3 className="mb-1 text-xl font-semibold tracking-normal text-gray-950">
-                    {announcement.title}
-                  </h3>
-                  <p className="mb-4 text-xs font-medium text-muted-foreground">{announcement.date}</p>
-                  <MarkdownGuide
-                    content={announcement.content}
-                    headingIdPrefix={`announcement-${announcement.id}`}
-                  />
+                <article
+                  key={announcement.id}
+                  className="rounded-lg border border-slate-200 border-l-4 border-l-blue-500 bg-white p-4 shadow-sm"
+                >
+                  <header className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <h3 className="text-lg font-semibold tracking-normal text-gray-950">
+                      {announcement.title}
+                    </h3>
+                    <p className="inline-flex w-fit shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                      {announcement.date}
+                    </p>
+                  </header>
+                  <div className="border-t border-slate-100 pt-4">
+                    <MarkdownGuide
+                      content={announcement.content}
+                      headingIdPrefix={`announcement-${announcement.id}`}
+                    />
+                  </div>
                 </article>
               ))}
             </div>

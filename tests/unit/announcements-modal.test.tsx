@@ -32,6 +32,34 @@ describe("AnnouncementsModal", () => {
     expect(screen.getByText("暂无更新公告")).toBeTruthy()
   })
 
+  it("renders each announcement as a distinct card with date metadata", () => {
+    render(
+      <AnnouncementsModal
+        isOpen
+        onClose={() => {}}
+        announcements={[
+          { id: "old", date: "2026-01-01", title: "Old update", content: "Old body" },
+          { id: "new", date: "2026-06-12", title: "New update", content: "New body" },
+        ]}
+      />,
+    )
+
+    const announcementCards = screen.getAllByRole("article")
+    expect(announcementCards).toHaveLength(2)
+    announcementCards.forEach((card) => {
+      expect(card.className).toContain("rounded-lg")
+      expect(card.className).toContain("border")
+      expect(card.className).toContain("bg-white")
+      expect(card.className).toContain("p-4")
+      expect(card.className).toContain("shadow-sm")
+    })
+
+    const latestDate = screen.getByText("2026-06-12")
+    expect(latestDate.className).toContain("rounded-full")
+    expect(latestDate.className).toContain("bg-slate-100")
+    expect(latestDate.className).toContain("px-2")
+  })
+
   it("constrains long announcement content to an internal scroll region", () => {
     render(
       <AnnouncementsModal

@@ -135,6 +135,69 @@ export function mapEquipmentDiagnosticsToFriendly(
   });
 }
 
+export interface EquipmentValidationDisplaySummary {
+  criticalIssues: number;
+  warningIssues: number;
+  affectedTypes: FriendlyEquipmentDiagnostic["groupType"][];
+  equipmentItems: number;
+}
+
+export interface EquipmentValidationGroups {
+  critical: FriendlyEquipmentDiagnostic[];
+  warnings: FriendlyEquipmentDiagnostic[];
+  bySpecificGroup: Record<string, FriendlyEquipmentDiagnostic[]>;
+  byGroupType: Record<string, FriendlyEquipmentDiagnostic[]>;
+}
+
+function groupDiagnosticsBy(
+  diagnostics: FriendlyEquipmentDiagnostic[],
+  getKey: (diagnostic: FriendlyEquipmentDiagnostic) => string,
+) {
+  const groups: Record<string, FriendlyEquipmentDiagnostic[]> = {};
+  for (const diagnostic of diagnostics) {
+    const key = getKey(diagnostic);
+    groups[key] = [...(groups[key] ?? []), diagnostic];
+  }
+  return groups;
+}
+
+export function createEquipmentValidationDisplaySummary(
+  diagnostics: FriendlyEquipmentDiagnostic[],
+  summary: EquipmentPackApplicationImportResult["summary"],
+): EquipmentValidationDisplaySummary {
+  return {
+    criticalIssues: diagnostics.filter(
+      (diagnostic) => diagnostic.severity === "error",
+    ).length,
+    warningIssues: diagnostics.filter(
+      (diagnostic) => diagnostic.severity === "warning",
+    ).length,
+    affectedTypes: Array.from(
+      new Set(diagnostics.map((diagnostic) => diagnostic.groupType)),
+    ),
+    equipmentItems: summary.weaponCount + summary.armorCount,
+  };
+}
+
+export function groupEquipmentValidationDiagnostics(
+  diagnostics: FriendlyEquipmentDiagnostic[],
+): EquipmentValidationGroups {
+  return {
+    critical: diagnostics.filter((diagnostic) => diagnostic.severity === "error"),
+    warnings: diagnostics.filter(
+      (diagnostic) => diagnostic.severity === "warning",
+    ),
+    bySpecificGroup: groupDiagnosticsBy(
+      diagnostics,
+      (diagnostic) => diagnostic.specificGroup,
+    ),
+    byGroupType: groupDiagnosticsBy(
+      diagnostics,
+      (diagnostic) => diagnostic.groupType,
+    ),
+  };
+}
+
 export function createEditorLocalDiagnostics(
   draft: EquipmentEditorDraft,
 ): EquipmentPackApplicationDiagnostic[] {

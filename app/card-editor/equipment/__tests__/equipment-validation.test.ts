@@ -4,6 +4,8 @@ import { createDefaultEquipmentServices } from "@/equipment/services/default-equ
 import type { EquipmentEditorDraft } from "../equipment-draft";
 import {
   createEditorLocalDiagnostics,
+  createEquipmentValidationDisplaySummary,
+  groupEquipmentValidationDiagnostics,
   mapEquipmentDiagnosticsToFriendly,
   targetFromDiagnosticPath,
   validateEquipmentEditorDraft,
@@ -86,6 +88,93 @@ describe("equipment validation mapping", () => {
       specificGroup: "系统问题",
       jumpTarget: undefined,
     });
+  });
+
+  it("creates display summary for equipment validation results", () => {
+    const diagnostics = mapEquipmentDiagnosticsToFriendly([
+      {
+        severity: "error",
+        code: "MISSING_FIELD",
+        path: "/name",
+        message: "Required field is missing.",
+      },
+      {
+        severity: "error",
+        code: "MISSING_FIELD",
+        path: "/equipment/weapons/0/name",
+        message: "Required field is missing.",
+      },
+      {
+        severity: "warning",
+        code: "DESCRIPTION_LONG",
+        path: "/equipment/armor/0/description",
+        message: "Description is long.",
+      },
+    ]);
+
+    expect(
+      createEquipmentValidationDisplaySummary(diagnostics, {
+        packId: undefined,
+        name: "测试装备包",
+        version: "1.0.0",
+        author: "作者",
+        weaponCount: 2,
+        armorCount: 1,
+        warningCount: 1,
+        errorCount: 2,
+      }),
+    ).toEqual({
+      criticalIssues: 2,
+      warningIssues: 1,
+      affectedTypes: ["基础信息", "武器", "护甲"],
+      equipmentItems: 3,
+    });
+  });
+
+  it("groups friendly equipment diagnostics for display tabs", () => {
+    const diagnostics = mapEquipmentDiagnosticsToFriendly([
+      {
+        severity: "error",
+        code: "MISSING_FIELD",
+        path: "/name",
+        message: "Required field is missing.",
+      },
+      {
+        severity: "error",
+        code: "MISSING_FIELD",
+        path: "/equipment/weapons/0/name",
+        message: "Required field is missing.",
+      },
+      {
+        severity: "warning",
+        code: "DESCRIPTION_LONG",
+        path: "/equipment/armor/0/description",
+        message: "Description is long.",
+      },
+      {
+        severity: "error",
+        code: "SOURCE_READ_FAILED",
+        path: "",
+        message: "Unable to read.",
+      },
+    ]);
+
+    const groups = groupEquipmentValidationDiagnostics(diagnostics);
+
+    expect(groups.critical).toHaveLength(3);
+    expect(groups.warnings).toHaveLength(1);
+    expect(Object.keys(groups.bySpecificGroup)).toEqual([
+      "基础信息",
+      "第1件武器",
+      "第1件护甲",
+      "系统问题",
+    ]);
+    expect(Object.keys(groups.byGroupType)).toEqual([
+      "基础信息",
+      "武器",
+      "护甲",
+      "系统",
+    ]);
   });
 
   it("adds editor-local duplicate id diagnostics before dry-run diagnostics", async () => {

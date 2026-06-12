@@ -10,7 +10,25 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Download, FolderOpen, Package, Sparkles, FileText, FileJson, FileType, Code, Dice5, Plus, Upload, BookOpen, Layers } from "lucide-react"
+import {
+  BookOpen,
+  Code,
+  Dice5,
+  Download,
+  FileJson,
+  FileText,
+  FileType,
+  FolderOpen,
+  Github,
+  Info,
+  Layers,
+  Megaphone,
+  MoreHorizontal,
+  Package,
+  Plus,
+  Sparkles,
+  Upload,
+} from "lucide-react"
 import { navigateToPage, cn } from "@/lib/utils"
 import { DualPageToggle } from "@/components/ui/dual-page-toggle"
 
@@ -47,6 +65,10 @@ interface MainModeProps extends BottomDockBaseProps {
   onOpenCharacterManagement: () => void
   onQuickCreateArchive: () => void
   onQuickImportFromHTML: () => void
+
+  // 站点信息
+  hasUnreadAnnouncements: boolean
+  onOpenAnnouncements: () => void
 }
 
 // 预览模式 props
@@ -267,6 +289,62 @@ function MainModeContent(props: MainModeProps) {
             </p>
           </TooltipContent>
         </Tooltip>
+
+        {/* 更多菜单 */}
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className={cn(
+                    "bg-gray-800 hover:bg-gray-700 text-white gap-1.5 text-sm relative",
+                    isMobile ? "px-4 py-2.5" : "px-3 py-1.5"
+                  )}
+                  aria-label="更多"
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                  更多
+                  {props.hasUnreadAnnouncements && (
+                    <span
+                      aria-label="有新的更新公告"
+                      className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-gray-900"
+                    />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>更多</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                查看公告、关于本站和项目链接
+              </p>
+            </TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="end" side="top" className={cn("w-56", isMobile && "text-base")}>
+            <DropdownMenuItem onClick={props.onOpenAnnouncements} className={cn(isMobile && "py-3 px-4")}>
+              <Megaphone className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
+              <span>更新公告</span>
+              {props.hasUnreadAnnouncements && (
+                <span className="ml-auto text-xs font-semibold text-red-600">NEW</span>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigateToPage("/about")} className={cn(isMobile && "py-3 px-4")}>
+              <Info className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
+              关于本站
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className={cn(isMobile && "py-3 px-4")}>
+              <a
+                href="https://github.com/RidRisR/DaggerHeart-CharacterSheet"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Github className={cn("mr-2", isMobile ? "h-5 w-5" : "h-4 w-4")} />
+                GitHub 项目 / 下载
+              </a>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* 双页切换按钮 - 仅桌面端显示 */}
         {!isMobile && <DualPageToggle />}

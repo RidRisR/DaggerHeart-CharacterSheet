@@ -34,6 +34,16 @@ export const announcements: Announcement[] = [
 - 修复 modifier 最终值、来源侧栏和相关计算状态的若干不一致。
 `.trim(),
   },
+  {
+    id: "2026-06-12-pre-v4-release-history",
+    date: "2026-06-12",
+    title: "V4.0.0 之前版本更新记录",
+    content: `
+## 历史版本
+
+- V4.0.0 之前的版本更新记录请前往 [GitHub Releases](https://github.com/RidRisR/DaggerHeart-CharacterSheet/releases) 查看。
+`.trim(),
+  },
 ]
 
 export function getSortedAnnouncements(

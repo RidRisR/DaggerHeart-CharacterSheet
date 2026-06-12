@@ -30,13 +30,13 @@ export function AnnouncementsModal({
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-h-[85vh] max-w-[calc(100vw-2rem)] overflow-hidden sm:max-w-3xl">
+      <DialogContent className="flex max-h-[85vh] max-w-[calc(100vw-2rem)] flex-col overflow-hidden sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>更新公告</DialogTitle>
           <DialogDescription>按发布时间倒序排列，最近更新在最上方。</DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 overflow-y-auto pr-1">
+        <div data-testid="announcements-scroll-region" className="min-h-0 flex-1 overflow-y-auto pr-1">
           {sortedAnnouncements.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">暂无更新公告</p>
           ) : (

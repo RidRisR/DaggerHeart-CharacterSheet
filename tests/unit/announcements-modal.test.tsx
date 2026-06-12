@@ -32,6 +32,32 @@ describe("AnnouncementsModal", () => {
     expect(screen.getByText("暂无更新公告")).toBeTruthy()
   })
 
+  it("constrains long announcement content to an internal scroll region", () => {
+    render(
+      <AnnouncementsModal
+        isOpen
+        onClose={() => {}}
+        announcements={[
+          {
+            id: "long",
+            date: "2026-06-12",
+            title: "Long update",
+            content: Array.from({ length: 30 }, (_, index) => `- 更新项目 ${index + 1}`).join("\n"),
+          },
+        ]}
+      />,
+    )
+
+    const dialog = screen.getByRole("dialog")
+    expect(dialog.className).toContain("flex")
+    expect(dialog.className).toContain("flex-col")
+
+    const scrollRegion = screen.getByTestId("announcements-scroll-region")
+    expect(scrollRegion.className).toContain("min-h-0")
+    expect(scrollRegion.className).toContain("flex-1")
+    expect(scrollRegion.className).toContain("overflow-y-auto")
+  })
+
   it("does not render dialog content while closed", () => {
     render(
       <AnnouncementsModal

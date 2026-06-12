@@ -43,9 +43,10 @@ export function AnnouncementsModal({
             <div className="space-y-8">
               {sortedAnnouncements.map((announcement) => (
                 <article key={announcement.id} className="border-l-4 border-blue-500 pl-4">
-                  <h3 className="mb-3 text-base font-semibold tracking-normal text-gray-950">
-                    {announcement.date} · {announcement.title}
+                  <h3 className="mb-1 text-xl font-semibold tracking-normal text-gray-950">
+                    {announcement.title}
                   </h3>
+                  <p className="mb-4 text-xs font-medium text-muted-foreground">{announcement.date}</p>
                   <MarkdownGuide
                     content={announcement.content}
                     headingIdPrefix={`announcement-${announcement.id}`}

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import "@testing-library/jest-dom/vitest"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
@@ -9,6 +9,7 @@ import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provid
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import type { EquipmentModifierContribution } from "@/automation/equipment/types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
+import { useSheetStore } from "@/lib/sheet-store"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
 
 function contribution(
@@ -22,6 +23,12 @@ function contribution(
     definition: { target, kind: "modifier" },
     editable: { label, value },
   }
+}
+
+function RerenderingInventoryProviderAnchor() {
+  useSheetStore(state => state.sheetData)
+
+  return <EquipmentProviderAnchor slotRef={{ type: "inventoryWeapon", index: 0 }} fallbackLabel="备用武器 1" />
 }
 
 describe("EquipmentProviderAnchor", () => {
@@ -76,6 +83,36 @@ describe("EquipmentProviderAnchor", () => {
     expect(screen.getByRole("textbox", { name: "修正名称" })).toHaveValue("锋利")
     expect(screen.getByRole("textbox", { name: "修正数值" })).toHaveValue("1")
     expect(screen.getByRole("combobox", { name: "修正目标" })).toHaveDisplayValue("闪避")
+  })
+
+  it("shows contribution headers and places the target before the value", async () => {
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        weaponSlots: {
+          ...defaultSheetData.equipment.weaponSlots,
+          primary: {
+            ...defaultSheetData.equipment.weaponSlots.primary,
+            name: "长剑",
+            modifierContributions: [contribution("equipment:weapon:primary:one", "锋利", 1)],
+          },
+        },
+      },
+    })
+
+    render(<EquipmentProviderAnchor slotRef={{ type: "weapon", slot: "primary" }} fallbackLabel="主手武器" />)
+
+    await userEvent.click(screen.getByRole("button", { name: "查看长剑来源" }))
+
+    const headers = screen.getByLabelText("修正列表表头")
+    expect(headers).toHaveTextContent("标签")
+    expect(headers).toHaveTextContent("目标")
+    expect(headers).toHaveTextContent("修正值")
+
+    const dialog = screen.getByRole("dialog", { name: "长剑来源" })
+    const targetSelect = within(dialog).getByRole("combobox", { name: "修正目标" })
+    const valueInput = within(dialog).getByRole("textbox", { name: "修正数值" })
+    expect(targetSelect.compareDocumentPosition(valueInput)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   it("uses the fallback label for unnamed slots and adds a default contribution", async () => {
@@ -158,9 +195,11 @@ describe("EquipmentProviderAnchor", () => {
     expect(screen.getByRole("dialog", { name: "备用短剑来源" })).toBeInTheDocument()
     expect(screen.getByRole("tablist", { name: "备用武器槽位" })).toHaveClass("self-stretch")
     expect(screen.getByRole("tab", { name: "备用武器 1" })).toHaveAttribute("aria-selected", "true")
-    expect(screen.getByRole("tab", { name: "备用武器 1" })).toHaveClass("flex-1")
+    expect(screen.getByRole("tab", { name: "备用武器 1" })).toHaveClass("h-10")
+    expect(screen.getByRole("tab", { name: "备用武器 1" })).not.toHaveClass("flex-1")
     expect(screen.getByRole("tab", { name: "备用武器 2" })).toHaveAttribute("aria-selected", "false")
-    expect(screen.getByRole("tab", { name: "备用武器 2" })).toHaveClass("flex-1")
+    expect(screen.getByRole("tab", { name: "备用武器 2" })).toHaveClass("h-10")
+    expect(screen.getByRole("tab", { name: "备用武器 2" })).not.toHaveClass("flex-1")
     expect(screen.getByRole("textbox", { name: "修正名称" })).toHaveValue("短剑护手")
 
     await userEvent.click(screen.getByRole("tab", { name: "备用武器 2" }))
@@ -174,6 +213,40 @@ describe("EquipmentProviderAnchor", () => {
 
     expect(sheet().equipment.weaponSlots.inventory[0].modifierContributions[0].editable.label).toBe("短剑护手")
     expect(sheet().equipment.weaponSlots.inventory[1].modifierContributions[0].editable.label).toBe("长弓握把")
+  })
+
+  it("keeps the selected inventory weapon when a provider action rerenders the parent", async () => {
+    resetSheetStore({
+      equipment: {
+        ...defaultSheetData.equipment,
+        weaponSlots: {
+          ...defaultSheetData.equipment.weaponSlots,
+          inventory: [
+            {
+              ...defaultSheetData.equipment.weaponSlots.inventory[0],
+              name: "备用短剑",
+              modifierContributions: [],
+            },
+            {
+              ...defaultSheetData.equipment.weaponSlots.inventory[1],
+              name: "备用长弓",
+              modifierContributions: [],
+            },
+          ],
+        },
+      },
+    })
+
+    render(<RerenderingInventoryProviderAnchor />)
+
+    await userEvent.click(screen.getByRole("button", { name: "查看备用短剑来源" }))
+    await userEvent.click(screen.getByRole("tab", { name: "备用武器 2" }))
+    await userEvent.click(screen.getByRole("button", { name: "新增修正" }))
+
+    expect(screen.getByRole("tab", { name: "备用武器 2" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByText("备用武器二修正")).toBeInTheDocument()
+    expect(sheet().equipment.weaponSlots.inventory[0].modifierContributions).toEqual([])
+    expect(sheet().equipment.weaponSlots.inventory[1].modifierContributions).toHaveLength(1)
   })
 
   it("deletes contributions using the unnamed fallback in the accessible label", async () => {

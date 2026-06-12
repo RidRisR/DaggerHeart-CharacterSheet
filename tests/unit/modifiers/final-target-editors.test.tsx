@@ -55,6 +55,57 @@ describe("final target editors", () => {
     )
   })
 
+  it("shows one title-level experience source panel with indexed target tabs", async () => {
+    resetSheetStore({
+      experience: ["铁匠", "贵族礼仪", "", "", ""],
+      experienceValues: ["2", "3", "", "", ""],
+      userModifierContributions: [
+        {
+          id: "user:experience-one-base",
+          definition: { target: "experienceValues.0", kind: "base" },
+          editable: { label: "铁匠基础", value: 2 },
+        },
+        {
+          id: "user:experience-two-base",
+          definition: { target: "experienceValues.1", kind: "base" },
+          editable: { label: "礼仪基础", value: 3 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          "experienceValues.0": {
+            activeBaseId: "user:experience-one-base",
+            autoCalculation: true,
+          },
+          "experienceValues.1": {
+            activeBaseId: "user:experience-two-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    render(<ExperienceSection />)
+
+    expect(screen.getByRole("button", { name: "查看经历来源" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "查看经历一来源" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "查看经历二来源" })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "查看经历来源" }))
+
+    expect(screen.getByRole("dialog", { name: "经历来源" })).toBeInTheDocument()
+    expect(screen.getByRole("tablist", { name: "经历加值" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "经历 1" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("textbox", { name: "编辑铁匠基础名称" })).toHaveValue("铁匠基础")
+
+    await userEvent.click(screen.getByRole("tab", { name: "经历 2" }))
+
+    expect(screen.getByRole("tab", { name: "经历 2" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("textbox", { name: "编辑礼仪基础名称" })).toHaveValue("礼仪基础")
+    expect(screen.queryByRole("textbox", { name: "编辑铁匠基础名称" })).not.toBeInTheDocument()
+  })
+
   it("reconciles proficiency clicks through final target commit", () => {
     resetSheetStore({
       proficiency: [true, false, false, false, false, false],

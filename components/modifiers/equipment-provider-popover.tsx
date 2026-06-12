@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { CircleHelp, Plus, Trash2 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { IndexedSideTabs } from "@/components/ui/indexed-side-tabs"
 import {
   EQUIPMENT_MODIFIER_TARGETS,
   EQUIPMENT_TARGET_LABELS,
@@ -25,6 +26,8 @@ interface EquipmentProviderAnchorProps {
 }
 
 type EquipmentSlot = WeaponSlot | ArmorSlot
+
+const contributionGridClass = "grid grid-cols-[minmax(0,1fr)_7rem_4rem_2rem] items-center gap-2"
 
 function slotForRef(sheetData: ReturnType<typeof useSheetStore.getState>["sheetData"], slotRef: EquipmentSlotRef): EquipmentSlot {
   if (slotRef.type === "armor") return sheetData.equipment.armorSlot
@@ -76,7 +79,7 @@ function EditableContributionRow({
   }
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_4rem_7rem_2rem] items-center gap-2">
+    <div className={contributionGridClass}>
       <input
         type="text"
         aria-label="修正名称"
@@ -89,20 +92,6 @@ function EditableContributionRow({
           updateContribution(slotRef, contribution.id, {
             editable: { label: nextLabel },
           })
-        }}
-      />
-      <input
-        type="text"
-        aria-label="修正数值"
-        value={value}
-        className="h-8 w-full rounded border border-gray-300 bg-white px-2 text-right text-xs font-semibold"
-        onChange={event => setValue(event.target.value)}
-        onBlur={commitValue}
-        onKeyDown={event => {
-          if (event.key === "Enter") {
-            commitValue()
-            event.currentTarget.blur()
-          }
         }}
       />
       <select
@@ -119,6 +108,20 @@ function EditableContributionRow({
           </option>
         ))}
       </select>
+      <input
+        type="text"
+        aria-label="修正数值"
+        value={value}
+        className="h-8 w-full rounded border border-gray-300 bg-white px-2 text-right text-xs font-semibold"
+        onChange={event => setValue(event.target.value)}
+        onBlur={commitValue}
+        onKeyDown={event => {
+          if (event.key === "Enter") {
+            commitValue()
+            event.currentTarget.blur()
+          }
+        }}
+      />
       <button
         type="button"
         aria-label={`删除${contributionLabel(contribution)}`}
@@ -161,12 +164,13 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
   const label = slot.name || labelFallback
   const compact = size === "compact"
   const contributions = sanitizeEquipmentModifierContributions(slot.modifierContributions)
+  const inventorySlotIndex = slotRef.type === "inventoryWeapon" ? slotRef.index : undefined
 
   useEffect(() => {
-    if (open && slotRef.type === "inventoryWeapon") {
-      setSelectedInventoryIndex(slotRef.index)
+    if (open && inventorySlotIndex !== undefined) {
+      setSelectedInventoryIndex(inventorySlotIndex)
     }
-  }, [open, slotRef])
+  }, [inventorySlotIndex, open])
 
   return (
     <span className={cn("inline-flex print:hidden", compact && "align-middle")}>
@@ -214,6 +218,15 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
                   <p className="py-3 text-center text-xs text-gray-500">暂无修正</p>
                 ) : (
                   <div className="space-y-2">
+                    <div
+                      aria-label="修正列表表头"
+                      className={`${contributionGridClass} px-0.5 text-[10px] font-medium text-gray-500`}
+                    >
+                      <span>标签</span>
+                      <span>目标</span>
+                      <span className="text-right">修正值</span>
+                      <span />
+                    </div>
                     {contributions.map(contribution => (
                       <EditableContributionRow
                         key={contribution.id}
@@ -226,30 +239,15 @@ export function EquipmentProviderAnchor({ slotRef, fallbackLabel, size = "defaul
               </div>
             </div>
             {isInventoryWeapon && (
-              <div
-                role="tablist"
-                aria-label="备用武器槽位"
-                className="flex w-9 shrink-0 self-stretch flex-col gap-1 border-l border-slate-200 bg-slate-100 p-1"
-              >
-                {[0, 1].map(index => (
-                  <button
-                    key={index}
-                    type="button"
-                    role="tab"
-                    aria-label={`备用武器 ${index + 1}`}
-                    aria-selected={selectedInventoryIndex === index}
-                    className={cn(
-                      "flex min-h-0 flex-1 items-center justify-center rounded text-xs font-semibold transition-colors",
-                      selectedInventoryIndex === index
-                        ? "bg-gray-800 text-white"
-                        : "bg-white text-gray-700 hover:bg-slate-50",
-                    )}
-                    onClick={() => setSelectedInventoryIndex(index as 0 | 1)}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-              </div>
+              <IndexedSideTabs
+                ariaLabel="备用武器槽位"
+                value={selectedInventoryIndex}
+                items={[
+                  { value: 0, label: "1", ariaLabel: "备用武器 1" },
+                  { value: 1, label: "2", ariaLabel: "备用武器 2" },
+                ]}
+                onValueChange={value => setSelectedInventoryIndex(value as 0 | 1)}
+              />
             )}
           </div>
         </PopoverContent>

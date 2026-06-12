@@ -335,6 +335,8 @@ describe("card editor equipment mode", () => {
     await user.click(screen.getByRole("button", { name: "验证装备包" }));
 
     expect(validateEquipmentEditorDraft).toHaveBeenCalledOnce();
-    expect(await screen.findByText("验证通过！")).toBeInTheDocument();
+    expect(
+      await screen.findAllByRole("heading", { name: "装备包检查通过" }),
+    ).not.toHaveLength(0);
   });
 });

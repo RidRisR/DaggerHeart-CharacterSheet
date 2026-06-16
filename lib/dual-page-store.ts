@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { getDualPagePreferences, setDualPagePreferences } from "@/lib/app-preferences"
 
 interface DualPageStore {
   isDualPageMode: boolean
@@ -15,43 +15,50 @@ interface DualPageStore {
   setDualPageMode: (enabled: boolean) => void
 }
 
-export const useDualPageStore = create<DualPageStore>()(
-  persist(
-    (set) => ({
-      isDualPageMode: false,
-      leftPageId: 'page1',    // 默认左页显示第一页
-      rightPageId: 'page2',   // 默认右页显示第二页
-      leftTabValue: 'page1',  // 默认左页tab选中第一页
-      rightTabValue: 'page2', // 默认右页tab选中第二页
-      
-      toggleDualPageMode: () => set((state) => ({ 
-        isDualPageMode: !state.isDualPageMode 
-      })),
-      
-      setLeftPage: (pageId: string) => set({ 
-        leftPageId: pageId 
-      }),
-      
-      setRightPage: (pageId: string) => set({ 
-        rightPageId: pageId 
-      }),
-      
-      setLeftTab: (tabValue: string) => set({ 
-        leftTabValue: tabValue,
-        leftPageId: tabValue  // 同步更新leftPageId
-      }),
-      
-      setRightTab: (tabValue: string) => set({ 
-        rightTabValue: tabValue,
-        rightPageId: tabValue  // 同步更新rightPageId
-      }),
-      
-      setDualPageMode: (enabled: boolean) => set({ 
-        isDualPageMode: enabled 
-      }),
+const initialDualPage = getDualPagePreferences()
+
+export const useDualPageStore = create<DualPageStore>()((set) => ({
+  isDualPageMode: initialDualPage.enabled,
+  leftPageId: initialDualPage.leftPageId,
+  rightPageId: initialDualPage.rightPageId,
+  leftTabValue: initialDualPage.leftTabValue,
+  rightTabValue: initialDualPage.rightTabValue,
+
+  toggleDualPageMode: () =>
+    set((state) => {
+      const next = !state.isDualPageMode
+      setDualPagePreferences({ enabled: next })
+      return { isDualPageMode: next }
     }),
-    {
-      name: 'dual-page-storage',
-    }
-  )
-)
+
+  setLeftPage: (pageId: string) => {
+    setDualPagePreferences({ leftPageId: pageId })
+    set({ leftPageId: pageId })
+  },
+
+  setRightPage: (pageId: string) => {
+    setDualPagePreferences({ rightPageId: pageId })
+    set({ rightPageId: pageId })
+  },
+
+  setLeftTab: (tabValue: string) => {
+    setDualPagePreferences({ leftTabValue: tabValue, leftPageId: tabValue })
+    set({
+      leftTabValue: tabValue,
+      leftPageId: tabValue,
+    })
+  },
+
+  setRightTab: (tabValue: string) => {
+    setDualPagePreferences({ rightTabValue: tabValue, rightPageId: tabValue })
+    set({
+      rightTabValue: tabValue,
+      rightPageId: tabValue,
+    })
+  },
+
+  setDualPageMode: (enabled: boolean) => {
+    setDualPagePreferences({ enabled })
+    set({ isDualPageMode: enabled })
+  },
+}))

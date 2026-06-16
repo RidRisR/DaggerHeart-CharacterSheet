@@ -28,6 +28,7 @@ export type CanonicalBuiltinArmorTemplate = Omit<NormalizedEquipmentArmorTemplat
 export interface EquipmentRuntimeCacheBuildInput {
   builtinTemplates: RuntimeEquipmentTemplate[]
   storageSnapshot: EquipmentPackStorageSnapshot
+  disabledSourceIds?: readonly RuntimeEquipmentSourceId[]
 }
 
 export type EquipmentRuntimeCacheBuildErrorCode =

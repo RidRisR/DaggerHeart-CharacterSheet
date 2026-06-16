@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { getCardDisplayMode, setCardDisplayMode } from "@/lib/app-preferences"
 
 interface TextModeStore {
   isTextMode: boolean
@@ -7,21 +7,18 @@ interface TextModeStore {
   setTextMode: (enabled: boolean) => void
 }
 
-export const useTextModeStore = create<TextModeStore>()(
-  persist(
-    (set) => ({
-      isTextMode: false,
-      
-      toggleTextMode: () => set((state) => ({ 
-        isTextMode: !state.isTextMode 
-      })),
-      
-      setTextMode: (enabled: boolean) => set({ 
-        isTextMode: enabled 
-      }),
+export const useTextModeStore = create<TextModeStore>()((set) => ({
+  isTextMode: getCardDisplayMode() === "text",
+
+  toggleTextMode: () =>
+    set((state) => {
+      const next = !state.isTextMode
+      setCardDisplayMode(next ? "text" : "image")
+      return { isTextMode: next }
     }),
-    {
-      name: 'text-mode-storage',
-    }
-  )
-)
+
+  setTextMode: (enabled: boolean) => {
+    setCardDisplayMode(enabled ? "text" : "image")
+    set({ isTextMode: enabled })
+  },
+}))

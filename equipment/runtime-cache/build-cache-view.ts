@@ -26,12 +26,14 @@ export function tryBuildEquipmentRuntimeCacheView(
   input: EquipmentRuntimeCacheBuildInput,
 ): EquipmentRuntimeCacheBuildResult {
   const view = createEmptyEquipmentRuntimeCacheView()
+  const disabledSourceIds = new Set(input.disabledSourceIds ?? [])
+  const builtinDisabled = disabledSourceIds.has("builtin")
 
   for (const template of input.builtinTemplates) {
     const added = addTemplate(view, {
       template,
       sourceId: "builtin",
-      selectable: true,
+      selectable: !builtinDisabled,
       path: "/builtinTemplates",
     })
 
@@ -41,7 +43,7 @@ export function tryBuildEquipmentRuntimeCacheView(
   }
 
   if ((view.relationIndexes.packToTemplateIds.get("builtin") ?? []).length > 0) {
-    view.packsById.set("builtin", toBuiltinRuntimePackRecord(view))
+    view.packsById.set("builtin", toBuiltinRuntimePackRecord(view, builtinDisabled))
   }
 
   const sortedPacks = [...input.storageSnapshot.packs.values()].sort(compareSnapshotEntries)
@@ -198,7 +200,7 @@ function compareSnapshotEntries(a: EquipmentPackSnapshotEntry, b: EquipmentPackS
   return a.packId.localeCompare(b.packId)
 }
 
-function toBuiltinRuntimePackRecord(view: StableEquipmentRuntimeCacheView): RuntimePackRecord {
+function toBuiltinRuntimePackRecord(view: StableEquipmentRuntimeCacheView, disabled: boolean): RuntimePackRecord {
   const templateIds = view.relationIndexes.packToTemplateIds.get("builtin") ?? []
   let weaponCount = 0
   let armorCount = 0
@@ -214,7 +216,7 @@ function toBuiltinRuntimePackRecord(view: StableEquipmentRuntimeCacheView): Runt
     name: "系统内置装备",
     author: "DaggerHeart",
     importedAt: "系统内置",
-    disabled: false,
+    disabled,
     source: { originKind: "builtin", label: "系统内置" },
     weaponCount,
     armorCount,

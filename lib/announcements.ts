@@ -1,11 +1,14 @@
+import {
+  isLatestAnnouncementRead as isLatestAnnouncementReadPreference,
+  markAnnouncementRead,
+} from "@/lib/app-preferences"
+
 export interface Announcement {
   id: string
   date: string
   title: string
   content: string
 }
-
-export const ANNOUNCEMENTS_READ_STORAGE_KEY = "dhsheet:last-read-announcement-id"
 
 export const announcements: Announcement[] = [
   {
@@ -76,26 +79,10 @@ export function getSortedAnnouncements(
 export const latestAnnouncement = getSortedAnnouncements()[0] ?? null
 export const latestAnnouncementId = latestAnnouncement?.id ?? null
 
-export function isLatestAnnouncementRead(storage: Storage | undefined = globalThis.localStorage) {
-  if (!latestAnnouncementId || !storage) {
-    return true
-  }
-
-  try {
-    return storage.getItem(ANNOUNCEMENTS_READ_STORAGE_KEY) === latestAnnouncementId
-  } catch {
-    return false
-  }
+export function isLatestAnnouncementRead(storage?: Storage) {
+  return isLatestAnnouncementReadPreference(latestAnnouncementId, storage)
 }
 
-export function markLatestAnnouncementRead(storage: Storage | undefined = globalThis.localStorage) {
-  if (!latestAnnouncementId || !storage) {
-    return
-  }
-
-  try {
-    storage.setItem(ANNOUNCEMENTS_READ_STORAGE_KEY, latestAnnouncementId)
-  } catch {
-    // Reading announcements should remain usable when storage is unavailable.
-  }
+export function markLatestAnnouncementRead(storage?: Storage) {
+  markAnnouncementRead(latestAnnouncementId, storage)
 }

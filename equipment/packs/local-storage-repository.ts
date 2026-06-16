@@ -32,6 +32,7 @@ interface RecoveryState {
 
 const INDEX_FORMAT: EquipmentPackStorageIndex["format"] = "daggerheart.equipment-pack-index.v1"
 const PACK_DATA_FORMAT: EquipmentPackStoredData["format"] = "daggerheart.equipment-pack-data.v1"
+const RESERVED_PACK_IDS = new Set(["builtin"])
 const EQUIPMENT_TIERS = new Set(["T1", "T2", "T3", "T4"])
 const EQUIPMENT_TRAITS = new Set(["agility", "strength", "finesse", "instinct", "presence", "knowledge"])
 const EQUIPMENT_DAMAGE_TYPES = new Set(["physical", "magic"])
@@ -481,6 +482,22 @@ export function createLocalStorageEquipmentPackRepository(
     let indexChanged = false
 
     for (const [packId, entry] of Object.entries(index.packs)) {
+      if (RESERVED_PACK_IDS.has(packId)) {
+        state.issues.push(
+          createIssue({
+            code: "PACK_ID_RESERVED",
+            packId,
+            storageKey: LOCAL_STORAGE_KEYS.INDEX,
+            message: "Equipment pack index entry used a reserved pack id and was removed.",
+            value: packId,
+          }),
+        )
+        delete index.packs[packId]
+        state.removedIndexEntries.push(packId)
+        indexChanged = true
+        continue
+      }
+
       const packKey = getPackStorageKey(packId)
       seenPackKeys.add(packKey)
 
@@ -625,6 +642,22 @@ export function createLocalStorageEquipmentPackRepository(
         error: transactionError("INDEX_READ_FAILED", "Unable to confirm equipment pack index state.", indexReadFailure.value),
         snapshot: current,
         issues: [indexReadFailure],
+      }
+    }
+
+    if (RESERVED_PACK_IDS.has(plan.packId)) {
+      const issue = createIssue({
+        code: "PACK_ID_RESERVED",
+        packId: plan.packId,
+        storageKey: LOCAL_STORAGE_KEYS.INDEX,
+        message: "Equipment pack id is reserved.",
+        value: plan.packId,
+      })
+      return {
+        ok: false,
+        error: transactionError("PACK_ID_RESERVED", issue.message, plan.packId),
+        snapshot: current,
+        issues: [issue],
       }
     }
 

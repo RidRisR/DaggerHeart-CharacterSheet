@@ -32,6 +32,8 @@ export interface EquipmentPackListItem {
   weaponCount: number
   armorCount: number
   categoryBadges: EquipmentPackCategoryBadge[]
+  canDisable: boolean
+  canRemove: boolean
   isSystemPack?: boolean
 }
 

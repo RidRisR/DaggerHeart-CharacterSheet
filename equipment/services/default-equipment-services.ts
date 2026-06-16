@@ -14,6 +14,10 @@ import { createLocalStorageEquipmentPackRepository } from "@/equipment/packs/loc
 import { buildBuiltinRuntimeEquipmentTemplates } from "@/equipment/runtime-cache/builtin-templates"
 import { createEquipmentRuntimeCacheService } from "@/equipment/runtime-cache/runtime-cache-service"
 import type { EquipmentRuntimeCacheService } from "@/equipment/runtime-cache/types"
+import {
+  getEquipmentDisabledSourceIds,
+  setEquipmentSourceDisabled,
+} from "@/lib/app-preferences"
 
 export interface DefaultEquipmentServices {
   applicationService: EquipmentPackApplicationService
@@ -54,6 +58,10 @@ export function createDefaultEquipmentServices(
     repository,
     runtimeCacheService,
     builtinTemplates,
+    sourcePreferences: {
+      getDisabledSourceIds: getEquipmentDisabledSourceIds,
+      setSourceDisabled: setEquipmentSourceDisabled,
+    },
   })
 
   return { applicationService, runtimeCacheService }

@@ -171,6 +171,26 @@ describe("local storage equipment pack repository", () => {
     })
   })
 
+  it("loadSnapshot removes reserved builtin index entry", async () => {
+    const adapter = createInMemoryEquipmentPackStorageAdapter({
+      [LOCAL_STORAGE_KEYS.INDEX]: JSON.stringify(makeIndexWithEntry("builtin")),
+    })
+    const repository = createLocalStorageEquipmentPackRepository(adapter, { now: () => FIXED_NOW })
+
+    const snapshot = await repository.loadSnapshot()
+
+    expect(snapshot.packs.has("builtin")).toBe(false)
+    expect(snapshot.integrity.issues).toEqual([
+      expect.objectContaining({
+        code: "PACK_ID_RESERVED",
+        packId: "builtin",
+        storageKey: LOCAL_STORAGE_KEYS.INDEX,
+      }),
+    ])
+    expect(snapshot.integrity.removedIndexEntries).toEqual(["builtin"])
+    expect(JSON.parse(adapter.getItem(LOCAL_STORAGE_KEYS.INDEX) ?? "{}").packs).toEqual({})
+  })
+
   it("commitImport writes pack data before index and returns post transaction snapshot", async () => {
     const adapter = createInMemoryEquipmentPackStorageAdapter()
     const repository = createLocalStorageEquipmentPackRepository(adapter, { now: () => FIXED_NOW })
@@ -185,6 +205,17 @@ describe("local storage equipment pack repository", () => {
       getPackStorageKey(plan.packId),
       LOCAL_STORAGE_KEYS.INDEX,
     ])
+  })
+
+  it("commitImport rejects reserved builtin pack id", async () => {
+    const adapter = createInMemoryEquipmentPackStorageAdapter()
+    const repository = createLocalStorageEquipmentPackRepository(adapter, { now: () => FIXED_NOW })
+
+    const result = await repository.commitImport(makeCommitPlan({ packId: "builtin" }))
+
+    expect(result.ok).toBe(false)
+    expect(!result.ok && result.error.code).toBe("PACK_ID_RESERVED")
+    expect(adapter.getItem(getPackStorageKey("builtin"))).toBeNull()
   })
 
   it("commitImport rolls back newly written pack data when index write fails", async () => {

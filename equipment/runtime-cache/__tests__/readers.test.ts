@@ -128,10 +128,15 @@ function makeStorageSnapshot(entries: EquipmentPackSnapshotEntry[]): EquipmentPa
   }
 }
 
-function makeViewWithTemplates(templates: TemplateWithSource[], builtinTemplates: RuntimeEquipmentTemplate[] = []) {
+function makeViewWithTemplates(
+  templates: TemplateWithSource[],
+  builtinTemplates: RuntimeEquipmentTemplate[] = [],
+  disabledSourceIds: string[] = [],
+) {
   return buildEquipmentRuntimeCacheView({
     builtinTemplates,
     storageSnapshot: makeStorageSnapshot(templates.map(templateToEntry)),
+    disabledSourceIds,
   })
 }
 
@@ -297,6 +302,30 @@ describe("equipment runtime cache readers", () => {
     expect(readers.management.listPacks()[0]).toMatchObject({
       packId: "builtin",
       disabled: false,
+      isSystemPack: true,
+      weaponCount: 1,
+      armorCount: 1,
+    })
+    expect(readers.management.getPackDetail("builtin")?.templates.map((template) => template.id)).toEqual([
+      "weapon:builtin",
+      "armor:builtin",
+    ])
+  })
+
+  it("runtime reader excludes disabled builtin templates while management detail remains available", () => {
+    const readers = createReadersFromView(
+      makeViewWithTemplates(
+        [],
+        [makeRuntimeWeapon({ id: "weapon:builtin" }), makeRuntimeArmor({ id: "armor:builtin" })],
+        ["builtin"],
+      ),
+    )
+
+    expect(readers.runtime.querySelectableTemplates({ sourceIds: ["builtin"] })).toEqual([])
+    expect(readers.runtime.getSelectableTemplateById("weapon:builtin")).toBeUndefined()
+    expect(readers.management.listPacks()[0]).toMatchObject({
+      packId: "builtin",
+      disabled: true,
       isSystemPack: true,
       weaponCount: 1,
       armorCount: 1,

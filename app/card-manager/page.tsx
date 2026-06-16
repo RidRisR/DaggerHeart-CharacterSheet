@@ -325,7 +325,7 @@ export default function CardManagerPage() {
   }
 
   async function handleRemoveEquipmentPack(packId: string) {
-    if (equipmentPacks.some((pack) => pack.packId === packId && pack.isSystemPack)) {
+    if (equipmentPacks.some((pack) => pack.packId === packId && !pack.canRemove)) {
       alert("系统内置装备包不能删除")
       return
     }
@@ -341,11 +341,6 @@ export default function CardManagerPage() {
   }
 
   async function handleToggleEquipmentPack(packId: string, disabled: boolean) {
-    if (equipmentPacks.some((pack) => pack.packId === packId && pack.isSystemPack)) {
-      alert("系统内置装备包不能禁用")
-      return
-    }
-
     const result = await getEquipmentUiStore().getState().setPackDisabled(packId, disabled)
     if (!result.success) {
       alert(result.diagnostics[0]?.message ?? "装备包状态更新失败")

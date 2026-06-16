@@ -124,6 +124,31 @@ describe("equipment runtime cache view builder", () => {
     })
   })
 
+  it("keeps disabled built-in templates in entity cache but excludes them from selectable ids", () => {
+    const view = buildEquipmentRuntimeCacheView({
+      builtinTemplates: [
+        makeRuntimeWeapon({ id: "weapon:shortsword" }),
+        makeRuntimeArmor({ id: "armor:chainmail" }),
+      ],
+      storageSnapshot: makeStorageSnapshot([]),
+      disabledSourceIds: ["builtin"],
+    })
+
+    expect(view.templatesById.has("weapon:shortsword")).toBe(true)
+    expect(view.templatesById.has("armor:chainmail")).toBe(true)
+    expect(view.relationIndexes.templateToPackId.get("weapon:shortsword")).toBe("builtin")
+    expect(view.relationIndexes.packToTemplateIds.get("builtin")).toEqual(["weapon:shortsword", "armor:chainmail"])
+    expect(view.queryIndexes.selectableTemplateIds).toEqual([])
+    expect(view.queryIndexes.templateIdsBySource.get("builtin")).toBeUndefined()
+    expect(view.packsById.get("builtin")).toMatchObject({
+      packId: "builtin",
+      disabled: true,
+      isSystemPack: true,
+      weaponCount: 1,
+      armorCount: 1,
+    })
+  })
+
   it("fails when a stored pack tries to use the reserved builtin pack id", () => {
     const result = tryBuildEquipmentRuntimeCacheView({
       builtinTemplates: [makeRuntimeWeapon({ id: "weapon:builtin" })],

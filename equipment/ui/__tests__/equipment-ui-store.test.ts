@@ -265,6 +265,8 @@ describe("equipment UI store", () => {
         weaponCount: 0,
         armorCount: 1,
         categoryBadges: ["护甲"],
+        canDisable: true,
+        canRemove: true,
       },
     ])
     expect(store.getState().getPackDetail(customPack.packId)).toEqual({
@@ -279,6 +281,8 @@ describe("equipment UI store", () => {
         weaponCount: 0,
         armorCount: 1,
         categoryBadges: ["护甲"],
+        canDisable: true,
+        canRemove: true,
       },
       weapons: [],
       armor: [{ ...customArmor, sourceId: customPack.packId, sourceLabel: "测试装备包" }],
@@ -308,11 +312,15 @@ describe("equipment UI store", () => {
         weaponCount: 1,
         armorCount: 0,
         categoryBadges: ["主武器"],
+        canDisable: true,
+        canRemove: false,
         isSystemPack: true,
       },
     ])
     expect(store.getState().getPackDetail("builtin")?.pack).toMatchObject({
       packId: "builtin",
+      canDisable: true,
+      canRemove: false,
       isSystemPack: true,
     })
   })

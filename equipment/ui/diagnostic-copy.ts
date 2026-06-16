@@ -197,6 +197,11 @@ export function localizeEquipmentDiagnostic(
         description: "装备包管理 ID 已被占用",
         suggestion: `请稍后重试；如果仍然失败，请更换装备包名称，然后${action}`,
       };
+    case "PACK_ID_RESERVED":
+      return {
+        description: "装备包管理 ID 使用了系统保留值",
+        suggestion: `请重新导入该装备包，或修改其存储 ID 后${action}`,
+      };
     case "INDEX_READ_FAILED":
     case "INDEX_PARSE_FAILED":
     case "INDEX_FORMAT_INVALID":

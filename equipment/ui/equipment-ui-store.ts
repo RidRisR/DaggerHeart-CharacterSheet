@@ -73,6 +73,8 @@ function toPackListItem(summary: RuntimePackSummary, detail: RuntimePackDetail |
     weaponCount: summary.weaponCount,
     armorCount: summary.armorCount,
     categoryBadges: detail ? categoryBadgesFromTemplates(detail.templates) : [],
+    canDisable: true,
+    canRemove: !summary.isSystemPack,
   }
 
   if (summary.isSystemPack) item.isSystemPack = true
@@ -99,6 +101,8 @@ function listItemsFromSnapshot(snapshot: EquipmentPackStorageSnapshot | null): E
       weaponCount: entry.pack.weapons.length,
       armorCount: entry.pack.armor.length,
       categoryBadges: categoryBadgesFromTemplates(runtimeTemplates),
+      canDisable: true,
+      canRemove: true,
     }
   })
 }

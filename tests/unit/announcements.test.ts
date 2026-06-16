@@ -1,17 +1,34 @@
 import { describe, expect, it, vi } from "vitest"
 import {
-  ANNOUNCEMENTS_READ_STORAGE_KEY,
   announcements,
   getSortedAnnouncements,
   isLatestAnnouncementRead,
   latestAnnouncementId,
   markLatestAnnouncementRead,
 } from "@/lib/announcements"
+import { APP_PREFERENCES_STORAGE_KEY, getAppPreferences } from "@/lib/app-preferences"
 
 function createStorage(initialValue?: string): Storage {
   const data = new Map<string, string>()
   if (initialValue !== undefined) {
-    data.set(ANNOUNCEMENTS_READ_STORAGE_KEY, initialValue)
+    data.set(
+      APP_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        format: "dhsheet.app-preferences.v1",
+        ui: {
+          cardDisplayMode: "image",
+          dualPage: {
+            enabled: false,
+            leftPageId: "page1",
+            rightPageId: "page2",
+            leftTabValue: "page1",
+            rightTabValue: "page2",
+          },
+        },
+        announcements: { lastReadAnnouncementId: initialValue },
+        contentSources: { equipmentDisabledSourceIds: [] },
+      }),
+    )
   }
 
   return {
@@ -52,10 +69,7 @@ describe("announcements", () => {
 
     markLatestAnnouncementRead(storage)
 
-    expect(storage.setItem).toHaveBeenCalledWith(
-      ANNOUNCEMENTS_READ_STORAGE_KEY,
-      latestAnnouncementId,
-    )
+    expect(getAppPreferences(storage).announcements.lastReadAnnouncementId).toBe(latestAnnouncementId)
     expect(isLatestAnnouncementRead(storage)).toBe(true)
   })
 
@@ -72,5 +86,26 @@ describe("announcements", () => {
     expect(() => isLatestAnnouncementRead(failingStorage)).not.toThrow()
     expect(isLatestAnnouncementRead(failingStorage)).toBe(false)
     expect(() => markLatestAnnouncementRead(failingStorage)).not.toThrow()
+  })
+
+  it("does not throw when default localStorage access is blocked", () => {
+    const descriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage")
+
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get() {
+        throw new Error("blocked")
+      },
+    })
+
+    try {
+      expect(() => isLatestAnnouncementRead()).not.toThrow()
+      expect(isLatestAnnouncementRead()).toBe(false)
+      expect(() => markLatestAnnouncementRead()).not.toThrow()
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(globalThis, "localStorage", descriptor)
+      }
+    }
   })
 })

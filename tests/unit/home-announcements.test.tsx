@@ -1,10 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import Home from "@/app/page"
-import {
-  ANNOUNCEMENTS_READ_STORAGE_KEY,
-  latestAnnouncementId,
-} from "@/lib/announcements"
+import { latestAnnouncementId } from "@/lib/announcements"
+import { APP_PREFERENCES_STORAGE_KEY, getAppPreferences } from "@/lib/app-preferences"
 
 vi.mock("@/components/layout/bottom-dock", () => ({
   BottomDock: (props: any) => props.mode === "main" ? (
@@ -132,7 +130,7 @@ describe("home announcements", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "open announcements" }))
 
-    expect(localStorage.getItem(ANNOUNCEMENTS_READ_STORAGE_KEY)).toBe(latestAnnouncementId)
+    expect(getAppPreferences(localStorage).announcements.lastReadAnnouncementId).toBe(latestAnnouncementId)
     await waitFor(() => {
       expect(screen.getByTestId("unread").textContent).toBe("false")
     })
@@ -140,7 +138,24 @@ describe("home announcements", () => {
   })
 
   it("starts read when localStorage already contains the latest announcement id", async () => {
-    localStorage.setItem(ANNOUNCEMENTS_READ_STORAGE_KEY, latestAnnouncementId ?? "")
+    localStorage.setItem(
+      APP_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        format: "dhsheet.app-preferences.v1",
+        ui: {
+          cardDisplayMode: "image",
+          dualPage: {
+            enabled: false,
+            leftPageId: "page1",
+            rightPageId: "page2",
+            leftTabValue: "page1",
+            rightTabValue: "page2",
+          },
+        },
+        announcements: { lastReadAnnouncementId: latestAnnouncementId },
+        contentSources: { equipmentDisabledSourceIds: [] },
+      }),
+    )
 
     render(<Home />)
 

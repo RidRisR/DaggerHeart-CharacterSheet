@@ -16,7 +16,7 @@ import type {
   RuntimeEquipmentTemplate,
   StableEquipmentRuntimeCacheView,
 } from "@/equipment/runtime-cache/types"
-import { createEquipmentPackApplicationService } from "../application-service"
+import { createEquipmentPackApplicationService, type EquipmentSourcePreferences } from "../application-service"
 import {
   createInMemoryEquipmentPackStorageAdapter,
   getPackStorageKey,
@@ -323,6 +323,8 @@ function makeRepositoryFake(input: {
 function createTestService(input: {
   snapshot?: EquipmentPackStorageSnapshot
   builtinTemplates?: RuntimeEquipmentTemplate[]
+  disabledSourceIds?: string[]
+  sourcePreferenceWriteResult?: boolean | Promise<boolean>
   maxCustomPackCount?: number
   random?: () => number
   repository?: ReturnType<typeof makeRepositoryFake>
@@ -332,6 +334,18 @@ function createTestService(input: {
   toggleResult?: EquipmentPackStorageTransactionResult
   runtimeCacheBuildResult?: EquipmentRuntimeCacheBuildResult
 } = {}) {
+  const disabledSourceIds = new Set(input.disabledSourceIds ?? [])
+  const sourcePreferences: EquipmentSourcePreferences = {
+    getDisabledSourceIds: vi.fn(() => Array.from(disabledSourceIds)),
+    setSourceDisabled: vi.fn((sourceId, disabled) => {
+      if (input.sourcePreferenceWriteResult !== undefined) return input.sourcePreferenceWriteResult
+      if (disabled) {
+        disabledSourceIds.add(sourceId)
+      } else {
+        disabledSourceIds.delete(sourceId)
+      }
+    }),
+  }
   const repository =
     input.repository ??
     makeRepositoryFake({
@@ -347,12 +361,13 @@ function createTestService(input: {
     repository,
     runtimeCacheService,
     builtinTemplates,
+    sourcePreferences,
     maxCustomPackCount: input.maxCustomPackCount,
     now: () => FIXED_NOW,
     random: input.random ?? (() => 0.123456),
   })
 
-  return { service, repository, runtimeCacheService, builtinTemplates }
+  return { service, repository, runtimeCacheService, builtinTemplates, sourcePreferences }
 }
 
 function createTestEquipmentPackApplicationService(input: {
@@ -368,6 +383,10 @@ function createTestEquipmentPackApplicationService(input: {
     repository,
     runtimeCacheService,
     builtinTemplates,
+    sourcePreferences: {
+      getDisabledSourceIds: () => [],
+      setSourceDisabled: () => undefined,
+    },
     now: () => FIXED_NOW,
     random: input.random ?? (() => 0.123456),
   })
@@ -415,6 +434,7 @@ describe("equipment pack application service", () => {
     expect(runtimeCacheService.rebuild).toHaveBeenCalledWith({
       builtinTemplates,
       storageSnapshot: repository.snapshot,
+      disabledSourceIds: [],
     })
   })
 
@@ -528,6 +548,16 @@ describe("equipment pack application service", () => {
     })
   })
 
+  it("commit import preserves disabled built-in source during runtime cache rebuild", async () => {
+    const { service, runtimeCacheService } = createTestService({ disabledSourceIds: ["builtin"] })
+
+    await service.importFromSource(validSource(), { mode: "commit" })
+
+    expect(runtimeCacheService.rebuild).toHaveBeenCalledWith(
+      expect.objectContaining({ disabledSourceIds: ["builtin"] }),
+    )
+  })
+
   it("repository commit failure returns storageTransaction failure and does not rebuild cache", async () => {
     const { service, runtimeCacheService } = createTestService({
       commitResult: {
@@ -589,7 +619,18 @@ describe("equipment pack application service", () => {
     expect(runtimeCacheService.rebuild).toHaveBeenCalledWith({
       builtinTemplates,
       storageSnapshot: repository.postTransactionSnapshot,
+      disabledSourceIds: [],
     })
+  })
+
+  it("remove pack preserves disabled built-in source during runtime cache rebuild", async () => {
+    const { service, runtimeCacheService } = createTestService({ disabledSourceIds: ["builtin"] })
+
+    await service.removePack(GENERATED_PACK_ID)
+
+    expect(runtimeCacheService.rebuild).toHaveBeenCalledWith(
+      expect.objectContaining({ disabledSourceIds: ["builtin"] }),
+    )
   })
 
   it("remove pack treats successful repository issues as non-blocking and still rebuilds cache", async () => {
@@ -670,7 +711,64 @@ describe("equipment pack application service", () => {
     expect(runtimeCacheService.rebuild).toHaveBeenCalledWith({
       builtinTemplates,
       storageSnapshot: repository.postTransactionSnapshot,
+      disabledSourceIds: [],
     })
+  })
+
+  it("toggle builtin source uses source preferences instead of repository transaction", async () => {
+    const builtinTemplates = [makeRuntimeWeapon()]
+    const { service, repository, runtimeCacheService, sourcePreferences } = createTestService({ builtinTemplates })
+
+    const result = await service.setPackDisabled("builtin", true)
+
+    expect(result).toMatchObject({ success: true, stage: "runtimeCacheBuild", storageCommitted: true })
+    expect(sourcePreferences.setSourceDisabled).toHaveBeenCalledWith("builtin", true)
+    expect(repository.setPackDisabled).not.toHaveBeenCalled()
+    expect(repository.loadSnapshot).toHaveBeenCalled()
+    expect(runtimeCacheService.rebuild).toHaveBeenCalledWith({
+      builtinTemplates,
+      storageSnapshot: repository.snapshot,
+      disabledSourceIds: ["builtin"],
+    })
+  })
+
+  it("toggle builtin source write failure does not rebuild cache", async () => {
+    const { service, repository, runtimeCacheService } = createTestService({ sourcePreferenceWriteResult: false })
+
+    const result = await service.setPackDisabled("builtin", true)
+
+    expect(result).toMatchObject({
+      success: false,
+      stage: "storageTransaction",
+      storageCommitted: false,
+      diagnostics: [expect.objectContaining({ severity: "error", code: "SOURCE_PREFERENCES_WRITE_FAILED" })],
+    })
+    expect(repository.setPackDisabled).not.toHaveBeenCalled()
+    expect(repository.loadSnapshot).not.toHaveBeenCalled()
+    expect(runtimeCacheService.rebuild).not.toHaveBeenCalled()
+  })
+
+  it("toggle builtin source fails without explicit source preferences", async () => {
+    const repository = makeRepositoryFake({ snapshot: makeStorageSnapshot([]) })
+    const runtimeCacheService = makeRuntimeCacheServiceFake()
+    const service = createEquipmentPackApplicationService({
+      repository,
+      runtimeCacheService,
+      builtinTemplates: [makeRuntimeWeapon()],
+      now: () => FIXED_NOW,
+      random: () => 0.123456,
+    })
+
+    const result = await service.setPackDisabled("builtin", true)
+
+    expect(result).toMatchObject({
+      success: false,
+      stage: "storageTransaction",
+      storageCommitted: false,
+      diagnostics: [expect.objectContaining({ severity: "error", code: "SOURCE_PREFERENCES_WRITE_FAILED" })],
+    })
+    expect(repository.loadSnapshot).not.toHaveBeenCalled()
+    expect(runtimeCacheService.rebuild).not.toHaveBeenCalled()
   })
 
   it("toggle disabled storage failure does not rebuild cache", async () => {

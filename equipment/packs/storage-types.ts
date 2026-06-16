@@ -82,6 +82,7 @@ export interface EquipmentPackStorageTransactionError {
 export type EquipmentPackStorageIssueCode =
   | "PACK_NOT_FOUND"
   | "PACK_ID_CONFLICT"
+  | "PACK_ID_RESERVED"
   | "INDEX_READ_FAILED"
   | "INDEX_PARSE_FAILED"
   | "INDEX_FORMAT_INVALID"

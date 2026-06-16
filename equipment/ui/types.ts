@@ -32,6 +32,7 @@ export interface EquipmentPackListItem {
   weaponCount: number
   armorCount: number
   categoryBadges: EquipmentPackCategoryBadge[]
+  isSystemPack?: boolean
 }
 
 export interface EquipmentPackDetailView {

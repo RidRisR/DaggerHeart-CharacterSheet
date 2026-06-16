@@ -286,6 +286,27 @@ describe("equipment runtime cache readers", () => {
     ])
   })
 
+  it("management reader exposes builtin pack metadata when builtin templates exist", () => {
+    const readers = createReadersFromView(
+      makeViewWithTemplates(
+        [makeRuntimeWeapon({ id: "weapon:pack-a", sourceId: "pack_a" })],
+        [makeRuntimeWeapon({ id: "weapon:builtin" }), makeRuntimeArmor({ id: "armor:builtin" })],
+      ),
+    )
+
+    expect(readers.management.listPacks()[0]).toMatchObject({
+      packId: "builtin",
+      disabled: false,
+      isSystemPack: true,
+      weaponCount: 1,
+      armorCount: 1,
+    })
+    expect(readers.management.getPackDetail("builtin")?.templates.map((template) => template.id)).toEqual([
+      "weapon:builtin",
+      "armor:builtin",
+    ])
+  })
+
   it("management reader returns disabled pack detail with full templates", () => {
     const readers = createReadersFromView(
       makeViewWithTemplates([

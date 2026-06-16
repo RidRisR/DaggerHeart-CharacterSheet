@@ -53,7 +53,11 @@ export interface EquipmentPackInitializeResult extends EquipmentPackLifecycleRes
 
 export interface EquipmentPackLifecycleDiagnostic {
   severity: "error" | "warning"
-  code: EquipmentPackStorageIssueCode | "RUNTIME_CACHE_BUILD_FAILED" | "RUNTIME_CACHE_DUPLICATE_TEMPLATE_ID"
+  code:
+    | EquipmentPackStorageIssueCode
+    | "RUNTIME_CACHE_BUILD_FAILED"
+    | "RUNTIME_CACHE_DUPLICATE_TEMPLATE_ID"
+    | "RUNTIME_CACHE_RESERVED_PACK_ID"
   path: ""
   message: string
   value?: unknown

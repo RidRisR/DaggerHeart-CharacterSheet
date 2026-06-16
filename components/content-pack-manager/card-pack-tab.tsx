@@ -81,13 +81,16 @@ function CategorySummary({ categories }: { categories: string[] }) {
 }
 
 function CardPackActions({ batch, props }: { batch: CardPackListItem; props: CardPackTabProps }) {
+  const viewLabel = batch.disabled ? "已禁用卡牌包不能查看" : "查看卡牌包"
+
   return (
     <div className="flex justify-end gap-2">
       <Button
         size="icon"
         variant="outline"
-        aria-label="查看卡牌包"
-        title="查看卡牌包"
+        aria-label={viewLabel}
+        title={viewLabel}
+        disabled={batch.disabled}
         onClick={() => props.onViewCards(batch.id)}
         className="h-11 w-11"
       >

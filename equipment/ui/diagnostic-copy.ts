@@ -242,6 +242,11 @@ export function localizeEquipmentDiagnostic(
         description: "装备数据刷新失败",
         suggestion: `请修改重复的装备 ID，修复后${action}`,
       };
+    case "RUNTIME_CACHE_RESERVED_PACK_ID":
+      return {
+        description: "装备包 ID 使用了系统保留值",
+        suggestion: `请重新导入该装备包，或修改其存储 ID 后${action}`,
+      };
     default:
       return {
         description: "当前字段未通过装备包校验",

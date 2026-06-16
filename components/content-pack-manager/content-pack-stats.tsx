@@ -3,7 +3,7 @@ interface ContentPackStatsProps {
   enabledCardPackCount: number
   equipmentPackCount: number
   enabledEquipmentPackCount: number
-  customCardCount: number
+  cardCount: number
   weaponTemplateCount: number
   armorTemplateCount: number
 }
@@ -12,7 +12,7 @@ export function ContentPackStats(props: ContentPackStatsProps) {
   const items = [
     { label: "卡牌包", value: `${props.enabledCardPackCount}/${props.cardPackCount}` },
     { label: "装备包", value: `${props.enabledEquipmentPackCount}/${props.equipmentPackCount}` },
-    { label: "自定义卡牌", value: props.customCardCount },
+    { label: "卡牌", value: props.cardCount },
     { label: "装备模板", value: `${props.weaponTemplateCount} 武器 / ${props.armorTemplateCount} 护甲` },
   ]
 

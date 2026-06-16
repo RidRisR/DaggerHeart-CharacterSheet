@@ -71,18 +71,42 @@ describe("CardPackTab", () => {
   })
 
   it("keeps the system batch delete action visible but disabled", () => {
+    const onRemoveBatch = vi.fn()
+
     render(
       <CardPackTab
         batches={[systemBatch]}
         totalCards={321}
         onViewCards={vi.fn()}
         onToggleBatchDisabled={vi.fn()}
+        onRemoveBatch={onRemoveBatch}
+      />,
+    )
+
+    const deleteButtons = screen.getAllByRole("button", { name: "系统内置卡牌包不能删除" }) as HTMLButtonElement[]
+    expect(deleteButtons).toHaveLength(2)
+    deleteButtons.forEach((button) => expect(button.disabled).toBe(true))
+    expect(onRemoveBatch).not.toHaveBeenCalled()
+  })
+
+  it("disables per-pack view actions for disabled batches in mobile and desktop layouts", async () => {
+    const onViewCards = vi.fn()
+
+    render(
+      <CardPackTab
+        batches={[{ ...systemBatch, id: "disabled-pack", disabled: true, isSystemBatch: false }]}
+        totalCards={0}
+        onViewCards={onViewCards}
+        onToggleBatchDisabled={vi.fn()}
         onRemoveBatch={vi.fn()}
       />,
     )
 
-    expect((screen.getAllByRole("button", { name: "系统内置卡牌包不能删除" })[0] as HTMLButtonElement).disabled).toBe(
-      true,
-    )
+    const viewButtons = screen.getAllByRole("button", { name: "已禁用卡牌包不能查看" }) as HTMLButtonElement[]
+    expect(viewButtons).toHaveLength(2)
+    viewButtons.forEach((button) => expect(button.disabled).toBe(true))
+
+    await userEvent.click(viewButtons[0])
+    expect(onViewCards).not.toHaveBeenCalled()
   })
 })

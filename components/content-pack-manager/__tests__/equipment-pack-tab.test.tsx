@@ -73,6 +73,46 @@ describe("EquipmentPackTab", () => {
     expect(screen.getByTestId("equipment-pack-desktop-table")).toBeTruthy()
   })
 
+  it("keeps builtin equipment pack protected actions disabled in mobile and desktop layouts", async () => {
+    const onToggleDisabled = vi.fn()
+    const onRemove = vi.fn()
+
+    render(
+      <EquipmentPackTab
+        packs={[{
+          packId: "builtin",
+          name: "系统内置装备",
+          author: "DaggerHeart",
+          importedAt: "系统内置",
+          disabled: false,
+          sourceLabel: "系统内置",
+          weaponCount: 2,
+          armorCount: 1,
+          categoryBadges: ["主武器", "副手", "护甲"],
+          isSystemPack: true,
+        }]}
+        initializationError={null}
+        onRetryInitialize={vi.fn()}
+        onView={vi.fn()}
+        onToggleDisabled={onToggleDisabled}
+        onRemove={onRemove}
+      />,
+    )
+
+    const toggleButtons = screen.getAllByRole("button", { name: "系统内置装备包不能禁用" }) as HTMLButtonElement[]
+    const removeButtons = screen.getAllByRole("button", { name: "系统内置装备包不能删除" }) as HTMLButtonElement[]
+
+    expect(toggleButtons).toHaveLength(2)
+    expect(removeButtons).toHaveLength(2)
+    toggleButtons.forEach((button) => expect(button.disabled).toBe(true))
+    removeButtons.forEach((button) => expect(button.disabled).toBe(true))
+
+    await userEvent.click(toggleButtons[0])
+    await userEvent.click(removeButtons[0])
+    expect(onToggleDisabled).not.toHaveBeenCalled()
+    expect(onRemove).not.toHaveBeenCalled()
+  })
+
   it("filters equipment packs by name, author, and status", async () => {
     render(
       <EquipmentPackTab

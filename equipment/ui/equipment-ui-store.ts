@@ -62,7 +62,7 @@ function sourceLabel(source: { fileName?: string; label?: string; originKind?: s
 }
 
 function toPackListItem(summary: RuntimePackSummary, detail: RuntimePackDetail | undefined): EquipmentPackListItem {
-  return {
+  const item: EquipmentPackListItem = {
     packId: summary.packId,
     name: summary.name,
     author: summary.author,
@@ -74,6 +74,9 @@ function toPackListItem(summary: RuntimePackSummary, detail: RuntimePackDetail |
     armorCount: summary.armorCount,
     categoryBadges: detail ? categoryBadgesFromTemplates(detail.templates) : [],
   }
+
+  if (summary.isSystemPack) item.isSystemPack = true
+  return item
 }
 
 function listItemsFromSnapshot(snapshot: EquipmentPackStorageSnapshot | null): EquipmentPackListItem[] {

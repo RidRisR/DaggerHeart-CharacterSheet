@@ -77,6 +77,18 @@ const customPack: RuntimePackRecord = {
   source: { originKind: "file", fileName: "equipment.json", label: "equipment.json" },
 }
 
+const builtinPack: RuntimePackRecord = {
+  packId: "builtin",
+  name: "系统内置装备",
+  author: "DaggerHeart",
+  importedAt: "系统内置",
+  disabled: false,
+  weaponCount: 1,
+  armorCount: 0,
+  source: { originKind: "builtin", label: "系统内置" },
+  isSystemPack: true,
+}
+
 function minimalView(): StableEquipmentRuntimeCacheView {
   return {
     templatesById: new Map([
@@ -274,6 +286,35 @@ describe("equipment UI store", () => {
     expect(store.getState().getPackDetail(customPack.packId)).not.toBe(
       managementReader.getPackDetail(customPack.packId),
     )
+  })
+
+  it("preserves builtin system pack metadata in management read models", async () => {
+    const { store, managementReader } = createHarness()
+    vi.mocked(managementReader.listPacks).mockReturnValueOnce([builtinPack])
+    vi.mocked(managementReader.getPackDetail).mockImplementation((packId: string) =>
+      packId === "builtin" ? { pack: builtinPack, templates: [builtinWeapon] } : undefined,
+    )
+
+    await store.getState().ensureInitialized()
+
+    expect(store.getState().getPackSummaries()).toEqual([
+      {
+        packId: "builtin",
+        name: "系统内置装备",
+        author: "DaggerHeart",
+        importedAt: "系统内置",
+        disabled: false,
+        sourceLabel: "系统内置",
+        weaponCount: 1,
+        armorCount: 0,
+        categoryBadges: ["主武器"],
+        isSystemPack: true,
+      },
+    ])
+    expect(store.getState().getPackDetail("builtin")?.pack).toMatchObject({
+      packId: "builtin",
+      isSystemPack: true,
+    })
   })
 
   it("keeps management pack summaries readable when runtime cache initialization fails", async () => {

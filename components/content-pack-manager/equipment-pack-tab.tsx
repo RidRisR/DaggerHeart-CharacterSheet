@@ -72,6 +72,13 @@ function CategorySummary({ categories }: { categories: string[] }) {
 }
 
 function EquipmentPackActions({ pack, props }: { pack: EquipmentPackListItem; props: EquipmentPackTabProps }) {
+  const toggleLabel = pack.isSystemPack
+    ? "系统内置装备包不能禁用"
+    : pack.disabled
+      ? "启用装备包"
+      : "禁用装备包"
+  const removeLabel = pack.isSystemPack ? "系统内置装备包不能删除" : "删除装备包"
+
   return (
     <div className="flex justify-end gap-2">
       <Button
@@ -87,8 +94,9 @@ function EquipmentPackActions({ pack, props }: { pack: EquipmentPackListItem; pr
       <Button
         size="icon"
         variant="outline"
-        aria-label={pack.disabled ? "启用装备包" : "禁用装备包"}
-        title={pack.disabled ? "启用装备包" : "禁用装备包"}
+        aria-label={toggleLabel}
+        title={toggleLabel}
+        disabled={pack.isSystemPack}
         onClick={() => props.onToggleDisabled(pack.packId, !pack.disabled)}
         className="h-11 w-11"
       >
@@ -97,8 +105,9 @@ function EquipmentPackActions({ pack, props }: { pack: EquipmentPackListItem; pr
       <Button
         size="icon"
         variant="destructive"
-        aria-label="删除装备包"
-        title="删除装备包"
+        aria-label={removeLabel}
+        title={removeLabel}
+        disabled={pack.isSystemPack}
         onClick={() => props.onRemove(pack.packId)}
         className="h-11 w-11"
       >

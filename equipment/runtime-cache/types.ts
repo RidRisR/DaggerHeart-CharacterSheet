@@ -33,6 +33,7 @@ export interface EquipmentRuntimeCacheBuildInput {
 export type EquipmentRuntimeCacheBuildErrorCode =
   | "RUNTIME_CACHE_BUILD_FAILED"
   | "RUNTIME_CACHE_DUPLICATE_TEMPLATE_ID"
+  | "RUNTIME_CACHE_RESERVED_PACK_ID"
 
 export interface EquipmentRuntimeCacheBuildDiagnostic {
   severity: "error"
@@ -81,6 +82,7 @@ export interface RuntimePackSummary {
   disabled: boolean
   weaponCount: number
   armorCount: number
+  isSystemPack?: boolean
 }
 
 export interface RuntimePackRecord extends RuntimePackSummary {

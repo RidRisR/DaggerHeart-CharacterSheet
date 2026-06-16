@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { BookOpen, Edit3, Home } from "lucide-react"
 import { AdvancedMaintenance } from "@/components/content-pack-manager/advanced-maintenance"
 import { CardPackTab, type CardPackListItem } from "@/components/content-pack-manager/card-pack-tab"
+import { summarizeCardPacks } from "@/components/content-pack-manager/content-pack-summary"
 import { ContentPackStats } from "@/components/content-pack-manager/content-pack-stats"
 import { EquipmentPackTab } from "@/components/content-pack-manager/equipment-pack-tab"
 import { GlobalImportPanel, type ContentPackImportResultView } from "@/components/content-pack-manager/global-import-panel"
@@ -21,11 +22,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   getAllBatches,
   getCardsByBatchId,
-  getCustomCardStats,
   importCustomCards,
   removeCustomCardBatch,
   toggleBatchDisabled,
-  type CustomCardStats,
   type ExtendedStandardCard,
 } from "@/card/index"
 import { importDhcbCardPackage } from "@/card/utils/dhcb-importer"
@@ -39,14 +38,6 @@ type ContentPackTabValue = "cards" | "equipment"
 interface ImportStatus {
   isImporting: boolean
   error: string | null
-}
-
-const EMPTY_CARD_STATS: CustomCardStats = {
-  totalCards: 0,
-  totalBatches: 0,
-  cardsByType: {},
-  cardsByBatch: {},
-  storageUsed: 0,
 }
 
 function formatDisplayDate(value: string) {
@@ -191,17 +182,12 @@ export default function CardManagerPage() {
   const [activeTab, setActiveTab] = useState<ContentPackTabValue>("cards")
   const [importStatus, setImportStatus] = useState<ImportStatus>({ isImporting: false, error: null })
   const [globalImportResults, setGlobalImportResults] = useState<ContentPackImportResultView[]>([])
-  const [stats, setStats] = useState<CustomCardStats>(EMPTY_CARD_STATS)
   const [batches, setBatches] = useState<CardPackListItem[]>([])
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [viewingCards, setViewingCards] = useState<ExtendedStandardCard[]>([])
   const [viewingEquipmentPackId, setViewingEquipmentPackId] = useState<string | null>(null)
 
-  const enabledCardPackCount = useMemo(
-    () => batches.filter((batch) => !batch.disabled && !batch.isSystemBatch).length,
-    [batches],
-  )
-  const cardPackCount = useMemo(() => batches.filter((batch) => !batch.isSystemBatch).length, [batches])
+  const cardPackSummary = useMemo(() => summarizeCardPacks(batches), [batches])
   const enabledEquipmentPackCount = useMemo(
     () => equipmentPacks.filter((pack) => !pack.disabled).length,
     [equipmentPacks],
@@ -221,7 +207,6 @@ export default function CardManagerPage() {
 
   function refreshCardData() {
     if (typeof window === "undefined") return
-    setStats(getCustomCardStats())
     setBatches(
       getAllBatches().map((batch) => {
         const rawBatch = batch as typeof batch & {
@@ -340,6 +325,11 @@ export default function CardManagerPage() {
   }
 
   async function handleRemoveEquipmentPack(packId: string) {
+    if (equipmentPacks.some((pack) => pack.packId === packId && pack.isSystemPack)) {
+      alert("系统内置装备包不能删除")
+      return
+    }
+
     if (!confirm("确定要删除这个装备包吗？")) return
 
     const result = await getEquipmentUiStore().getState().removePack(packId)
@@ -351,6 +341,11 @@ export default function CardManagerPage() {
   }
 
   async function handleToggleEquipmentPack(packId: string, disabled: boolean) {
+    if (equipmentPacks.some((pack) => pack.packId === packId && pack.isSystemPack)) {
+      alert("系统内置装备包不能禁用")
+      return
+    }
+
     const result = await getEquipmentUiStore().getState().setPackDisabled(packId, disabled)
     if (!result.success) {
       alert(result.diagnostics[0]?.message ?? "装备包状态更新失败")
@@ -412,11 +407,11 @@ export default function CardManagerPage() {
       </header>
 
       <ContentPackStats
-        cardPackCount={cardPackCount}
-        enabledCardPackCount={enabledCardPackCount}
+        cardPackCount={cardPackSummary.cardPackCount}
+        enabledCardPackCount={cardPackSummary.enabledCardPackCount}
         equipmentPackCount={equipmentPacks.length}
         enabledEquipmentPackCount={enabledEquipmentPackCount}
-        customCardCount={stats.totalCards}
+        cardCount={cardPackSummary.installedCardCount}
         weaponTemplateCount={weaponTemplateCount}
         armorTemplateCount={armorTemplateCount}
       />
@@ -439,7 +434,7 @@ export default function CardManagerPage() {
         <TabsContent value="cards" className="mt-4">
           <CardPackTab
             batches={batches}
-            totalCards={stats.totalCards}
+            totalCards={cardPackSummary.enabledCardCount}
             onViewCards={handleViewCards}
             onToggleBatchDisabled={handleToggleBatchDisabled}
             onRemoveBatch={handleRemoveBatch}

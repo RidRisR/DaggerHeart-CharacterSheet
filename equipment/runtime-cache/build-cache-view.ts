@@ -40,9 +40,26 @@ export function tryBuildEquipmentRuntimeCacheView(
     }
   }
 
+  if ((view.relationIndexes.packToTemplateIds.get("builtin") ?? []).length > 0) {
+    view.packsById.set("builtin", toBuiltinRuntimePackRecord(view))
+  }
+
   const sortedPacks = [...input.storageSnapshot.packs.values()].sort(compareSnapshotEntries)
 
   for (const entry of sortedPacks) {
+    if (entry.packId === "builtin") {
+      return {
+        ok: false,
+        diagnostic: {
+          severity: "error",
+          code: "RUNTIME_CACHE_RESERVED_PACK_ID",
+          path: "/packs/builtin",
+          message: "Runtime cache reserved equipment pack id: builtin.",
+          value: entry.packId,
+        },
+      }
+    }
+
     view.packsById.set(entry.packId, toRuntimePackRecord(entry))
     view.relationIndexes.packToTemplateIds.set(entry.packId, [])
 
@@ -179,6 +196,30 @@ function compareSnapshotEntries(a: EquipmentPackSnapshotEntry, b: EquipmentPackS
   }
 
   return a.packId.localeCompare(b.packId)
+}
+
+function toBuiltinRuntimePackRecord(view: StableEquipmentRuntimeCacheView): RuntimePackRecord {
+  const templateIds = view.relationIndexes.packToTemplateIds.get("builtin") ?? []
+  let weaponCount = 0
+  let armorCount = 0
+
+  for (const templateId of templateIds) {
+    const template = view.templatesById.get(templateId)
+    if (template?.kind === "weapon") weaponCount += 1
+    if (template?.kind === "armor") armorCount += 1
+  }
+
+  return {
+    packId: "builtin",
+    name: "系统内置装备",
+    author: "DaggerHeart",
+    importedAt: "系统内置",
+    disabled: false,
+    source: { originKind: "builtin", label: "系统内置" },
+    weaponCount,
+    armorCount,
+    isSystemPack: true,
+  }
 }
 
 function toRuntimePackRecord(entry: EquipmentPackSnapshotEntry): RuntimePackRecord {

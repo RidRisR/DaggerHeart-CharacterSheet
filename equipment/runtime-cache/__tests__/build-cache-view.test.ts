@@ -114,6 +114,42 @@ describe("equipment runtime cache view builder", () => {
     expect(view.queryIndexes.selectableTemplateIds).toEqual(["weapon:shortsword", "armor:chainmail"])
     expect(view.relationIndexes.templateToPackId.get("weapon:shortsword")).toBe("builtin")
     expect(view.relationIndexes.templateToPackId.get("armor:chainmail")).toBe("builtin")
+    expect(view.packsById.get("builtin")).toMatchObject({
+      packId: "builtin",
+      name: "系统内置装备",
+      disabled: false,
+      isSystemPack: true,
+      weaponCount: 1,
+      armorCount: 1,
+    })
+  })
+
+  it("fails when a stored pack tries to use the reserved builtin pack id", () => {
+    const result = tryBuildEquipmentRuntimeCacheView({
+      builtinTemplates: [makeRuntimeWeapon({ id: "weapon:builtin" })],
+      storageSnapshot: makeStorageSnapshot([
+        makeSnapshotEntry({ packId: "builtin", weaponIds: ["weapon:stored-builtin"] }),
+      ]),
+    })
+
+    expect(result.ok).toBe(false)
+    expect(!result.ok && result.diagnostic).toMatchObject({
+      code: "RUNTIME_CACHE_RESERVED_PACK_ID",
+      path: "/packs/builtin",
+      value: "builtin",
+    })
+  })
+
+  it("fails reserved builtin pack id even when no built-in templates are present", () => {
+    const result = tryBuildEquipmentRuntimeCacheView({
+      builtinTemplates: [],
+      storageSnapshot: makeStorageSnapshot([
+        makeSnapshotEntry({ packId: "builtin", weaponIds: ["weapon:stored-builtin"] }),
+      ]),
+    })
+
+    expect(result.ok).toBe(false)
+    expect(!result.ok && result.diagnostic.code).toBe("RUNTIME_CACHE_RESERVED_PACK_ID")
   })
 
   it("keeps disabled pack templates in entity cache but excludes them from selectable ids and query indexes", () => {

@@ -312,10 +312,10 @@ export default function CardManagerPage() {
     }
   }
 
-  function handleRemoveBatch(batchId: string) {
+  async function handleRemoveBatch(batchId: string) {
     if (!confirm("确定要删除这个卡牌包吗？这将删除卡牌包中的所有卡牌。")) return
 
-    const success = removeCustomCardBatch(batchId)
+    const success = await removeCustomCardBatch(batchId)
     if (success) {
       refreshCardData()
       alert("卡牌包删除成功")

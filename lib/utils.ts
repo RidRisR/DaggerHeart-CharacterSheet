@@ -118,7 +118,7 @@ export async function getCardImageUrlAsync(
       try {
         const store = useUnifiedCardStore.getState();
         if (store.imageService.initialized) {
-          const blobUrl = await store.getImageUrl(card.id);
+          const blobUrl = await store.getImageUrl(card.id, extendedCard.batchId);
           if (blobUrl) return blobUrl;
         }
       } catch (error) {

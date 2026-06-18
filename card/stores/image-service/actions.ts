@@ -8,18 +8,18 @@ import type { UnifiedCardState } from '../store-types';
 import type { StateCreator } from 'zustand';
 
 // LRU Cache management
-function updateLRUCache(state: UnifiedCardState, cardId: string, blobUrl: string) {
+function updateLRUCache(state: UnifiedCardState, cacheKey: string, blobUrl: string) {
   const { cache, cacheOrder, maxCacheSize } = state.imageService;
 
   // Add to cache
-  cache.set(cardId, blobUrl);
+  cache.set(cacheKey, blobUrl);
 
   // Update LRU order (remove if exists, then add to end)
-  const existingIndex = cacheOrder.indexOf(cardId);
+  const existingIndex = cacheOrder.indexOf(cacheKey);
   if (existingIndex > -1) {
     cacheOrder.splice(existingIndex, 1);
   }
-  cacheOrder.push(cardId);
+  cacheOrder.push(cacheKey);
 
   // Evict oldest entries if cache is full
   // Note: We intentionally do NOT call URL.revokeObjectURL() here because
@@ -57,41 +57,43 @@ export function createImageServiceActions<T extends UnifiedCardState>(
 
     /**
      * Get image URL for a card (with LRU caching and deduplication)
-     * @param cardId - Card identifier
+     * @param templateId - Card template identifier
+     * @param packId - Optional owning pack identifier
      * @returns Promise<string | null> - Blob URL or null
      */
-    getImageUrl: async (cardId: string): Promise<string | null> => {
+    getImageUrl: async (templateId: string, packId?: string): Promise<string | null> => {
+      const cacheKey = packId ? `${packId}/${templateId}` : templateId;
       const state = get() as any;
       const { cache, loadingImages, failedImages } = state.imageService;
 
       // Check cache first
-      if (cache.has(cardId)) {
-        const url = cache.get(cardId);
+      if (cache.has(cacheKey)) {
+        const url = cache.get(cacheKey);
         // Update LRU order
         const { cacheOrder } = state.imageService;
-        const index = cacheOrder.indexOf(cardId);
+        const index = cacheOrder.indexOf(cacheKey);
         if (index > -1) {
           cacheOrder.splice(index, 1);
-          cacheOrder.push(cardId);
+          cacheOrder.push(cacheKey);
         }
         return url;
       }
 
       // Check if already failed
-      if (failedImages.has(cardId)) {
+      if (failedImages.has(cacheKey)) {
         return null;
       }
 
       // Check if already loading (deduplication)
-      if (loadingImages.has(cardId)) {
+      if (loadingImages.has(cacheKey)) {
         // Wait for existing load to complete
         return new Promise((resolve) => {
           const checkInterval = setInterval(() => {
             const currentState = get() as any;
-            if (currentState.imageService.cache.has(cardId)) {
+            if (currentState.imageService.cache.has(cacheKey)) {
               clearInterval(checkInterval);
-              resolve(currentState.imageService.cache.get(cardId));
-            } else if (currentState.imageService.failedImages.has(cardId)) {
+              resolve(currentState.imageService.cache.get(cacheKey));
+            } else if (currentState.imageService.failedImages.has(cacheKey)) {
               clearInterval(checkInterval);
               resolve(null);
             }
@@ -109,21 +111,23 @@ export function createImageServiceActions<T extends UnifiedCardState>(
       set((state: any) => ({
         imageService: {
           ...state.imageService,
-          loadingImages: new Set([...state.imageService.loadingImages, cardId])
+          loadingImages: new Set([...state.imageService.loadingImages, cacheKey])
         }
       }));
 
       try {
         // Load from IndexedDB (images table for real batches)
-        const record = await db.images.get(cardId);
+        const record = packId
+          ? (await db.images.get(cacheKey)) ?? (await db.images.get(templateId))
+          : await db.images.get(templateId);
 
         if (!record) {
           // Mark as failed
           set((state: any) => ({
             imageService: {
               ...state.imageService,
-              loadingImages: new Set([...state.imageService.loadingImages].filter(id => id !== cardId)),
-              failedImages: new Set([...state.imageService.failedImages, cardId])
+              loadingImages: new Set([...state.imageService.loadingImages].filter(id => id !== cacheKey)),
+              failedImages: new Set([...state.imageService.failedImages, cacheKey])
             }
           }));
           return null;
@@ -135,26 +139,26 @@ export function createImageServiceActions<T extends UnifiedCardState>(
         // Update cache with LRU
         set((state: any) => {
           const newState = { ...state };
-          updateLRUCache(newState, cardId, blobUrl);
+          updateLRUCache(newState, cacheKey, blobUrl);
 
           return {
             imageService: {
               ...newState.imageService,
-              loadingImages: new Set([...newState.imageService.loadingImages].filter(id => id !== cardId))
+              loadingImages: new Set([...newState.imageService.loadingImages].filter(id => id !== cacheKey))
             }
           };
         });
 
         return blobUrl;
       } catch (error) {
-        console.error(`[ImageService] Failed to load image for ${cardId}:`, error);
+        console.error(`[ImageService] Failed to load image for ${cacheKey}:`, error);
 
         // Mark as failed
         set((state: any) => ({
           imageService: {
             ...state.imageService,
-            loadingImages: new Set([...state.imageService.loadingImages].filter(id => id !== cardId)),
-            failedImages: new Set([...state.imageService.failedImages, cardId])
+            loadingImages: new Set([...state.imageService.loadingImages].filter(id => id !== cacheKey)),
+            failedImages: new Set([...state.imageService.failedImages, cacheKey])
           }
         }));
 

@@ -23,7 +23,6 @@ import {
   BatchStats
 } from './store-types';
 import { isVariantCard } from '../card-types';
-import { preprocessVariantFormat } from '../variant-format-preprocessor';
 import { createImageServiceActions } from './image-service/actions';
 
 // Type for Zustand's set and get functions
@@ -196,169 +195,16 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     set({ stats: newStats });
   },
 
-  // Custom card management
-  importCards: async (importData: ImportData, batchName?: string) => {
-    console.log('[UnifiedCardStore] Starting card import...');
-
-    try {
-      const state = get();
-
-      // Ensure system is initialized
-      if (!state.initialized) {
-        const result = await get().initializeSystem();
-        if (!result.initialized) {
-          throw new Error('Failed to initialize card system');
-        }
-      }
-
-      // 🎯 预处理新格式：将新的 variants 数组转换为旧的 variantTypes 对象
-      const processedData = preprocessVariantFormat(importData);
-
-      // Validate import data
-      const validation = get()._validateImportData(processedData);
-      if (!validation.isValid) {
-        return {
-          success: false,
-          imported: 0,
-          errors: validation.errors,
-          batchId: ''
-        };
-      }
-
-      // Check for ID conflicts with existing cards
-      const existingCards = Array.from(state.cards.values());
-      const allImportedCards: any[] = [];
-
-      // Collect all cards from import data
-      Object.entries(processedData).forEach(([, cards]) => {
-        if (Array.isArray(cards)) {
-          allImportedCards.push(...cards);
-        }
-      });
-
-      // Check for duplicate IDs
-      const duplicateIds = allImportedCards
-        .filter(card => existingCards.some(existing => existing.id === card.id))
-        .map(card => card.id);
-
-      if (duplicateIds.length > 0) {
-        return {
-          success: false,
-          imported: 0,
-          errors: [`Duplicate card IDs found: ${duplicateIds.join(', ')}`],
-          batchId: ''
-        };
-      }
-
-      // Convert import data to standard cards
-      const convertResult = await get()._convertImportData(processedData);
-      if (!convertResult.success) {
-        return {
-          success: false,
-          imported: 0,
-          errors: convertResult.errors || ['Conversion failed'],
-          batchId: ''
-        };
-      }
-
-      // Generate batch ID and create batch info
-      const batchId = get().generateBatchId();
-      const cardTypes = [...new Set(convertResult.cards.map(card => card.type))];
-      const batchDisplayName = processedData.name || batchName || `Import ${new Date().toLocaleDateString()}`;
-
-      // Create batch info
-      const batchInfo: BatchInfo = {
-        id: batchId,
-        name: batchDisplayName,
-        fileName: batchName || 'Imported Cards',
-        importTime: new Date().toISOString(),
-        version: processedData.version,
-        author: processedData.author,
-        cardCount: convertResult.cards.length,
-        cardTypes,
-        size: JSON.stringify(convertResult.cards).length,
-        isSystemBatch: false,
-        disabled: false,
-        cardIds: convertResult.cards.map(card => card.id),
-        customFieldDefinitions: processedData.customFieldDefinitions ?
-          Object.fromEntries(
-            Object.entries(processedData.customFieldDefinitions)
-              .filter(([key, value]) => key !== 'variantTypes' && Array.isArray(value))
-          ) as CustomFieldsForBatch : undefined,
-        variantTypes: processedData.customFieldDefinitions?.variantTypes,
-        imageCount: undefined,
-        totalImageSize: undefined
-      };
-
-      // Update store state
-      const newBatches = new Map(state.batches);
-      newBatches.set(batchId, batchInfo);
-
-      const newCards = new Map(state.cards);
-      // 直接将卡牌数据存储到全局状态中
-      convertResult.cards.forEach(card => {
-        const cardWithBatchId = { ...card, batchId, source: CardSource.CUSTOM };
-        newCards.set(card.id, cardWithBatchId);
-      });
-
-      // Update index
-      const newIndex = { ...state.index };
-      newIndex.batches[batchId] = {
-        id: batchId,
-        name: batchDisplayName,
-        fileName: batchInfo.fileName,
-        importTime: batchInfo.importTime,
-        cardCount: batchInfo.cardCount,
-        cardTypes: batchInfo.cardTypes,
-        size: batchInfo.size,
-        isSystemBatch: false,
-        disabled: false
-      };
-      newIndex.totalCards = newCards.size;
-      newIndex.totalBatches = newBatches.size;
-      newIndex.lastUpdate = new Date().toISOString();
-
-      set({
-        batches: newBatches,
-        cards: newCards,
-        index: newIndex,
-        cacheValid: false
-      });
-
-      // Sync to localStorage
-      get()._syncToLocalStorage();
-
-      // Recompute aggregations
-      get()._recomputeAggregations();
-
-      // Rebuild cardsByType map
-      get()._rebuildCardsByType();
-
-      // Rebuild subclass count index
-      get()._rebuildSubclassIndex();
-
-      // NOTE: 不在这里调用 _preprocessCardImages()，在初始化完成后统一处理
-
-      console.log(`[UnifiedCardStore] Successfully imported ${convertResult.cards.length} cards`);
-
-      return {
-        success: true,
-        imported: convertResult.cards.length,
-        errors: [],
-        batchId
-      };
-
-    } catch (error) {
-      console.error('[UnifiedCardStore] Import failed:', error);
-      return {
-        success: false,
-        imported: 0,
-        errors: [error instanceof Error ? error.message : 'Import failed'],
-        batchId: ''
-      };
-    }
+  reloadCustomRuntimeFromStorage: async () => {
+    get()._clearCustomRuntimeState();
+    get()._loadCustomCardsFromStorage();
+    get()._recomputeAggregations();
+    get()._rebuildCardsByType();
+    get()._rebuildSubclassIndex();
+    set({ stats: get()._computeStats() });
   },
 
+  // Custom card management
   removeBatch: (batchId: string) => {
     const state = get();
     const batch = state.batches.get(batchId);
@@ -1180,6 +1026,60 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     }
   },
 
+  _clearCustomRuntimeState: () => {
+    const state = get();
+    const cards = new Map<string, ExtendedStandardCard>();
+    const batches = new Map<string, BatchInfo>();
+    const indexBatches: CustomCardIndex["batches"] = {};
+
+    for (const [cardId, card] of state.cards) {
+      if (card.batchId === BUILTIN_BATCH_ID || (!card.batchId && card.source !== CardSource.CUSTOM)) {
+        cards.set(cardId, card);
+      }
+    }
+
+    for (const [batchId, batch] of state.batches) {
+      if (batchId === BUILTIN_BATCH_ID || batch.isSystemBatch) {
+        batches.set(batchId, batch);
+      }
+    }
+
+    if (state.index.batches[BUILTIN_BATCH_ID]) {
+      indexBatches[BUILTIN_BATCH_ID] = state.index.batches[BUILTIN_BATCH_ID];
+    }
+
+    for (const url of state.imageService.cache.values()) {
+      URL.revokeObjectURL(url);
+    }
+
+    set({
+      cards,
+      batches,
+      cardsByType: new Map(),
+      index: {
+        batches: indexBatches,
+        totalCards: Object.values(indexBatches).reduce((sum, batch) => sum + batch.cardCount, 0),
+        totalBatches: Object.keys(indexBatches).length,
+        lastUpdate: state.index.lastUpdate
+      },
+      aggregatedCustomFields: null,
+      aggregatedVariantTypes: null,
+      subclassCardIndex: null,
+      levelCardIndex: null,
+      batchKeywordIndex: null,
+      batchLevelIndex: null,
+      cacheValid: false,
+      stats: null,
+      imageService: {
+        ...state.imageService,
+        cache: new Map(),
+        cacheOrder: [],
+        loadingImages: new Set(),
+        failedImages: new Set()
+      }
+    });
+  },
+
   _loadAllCards: async () => {
     console.log('[UnifiedCardStore] Starting unified card loading...');
     
@@ -1242,6 +1142,15 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       for (const batchId of Object.keys(index.batches)) {
         // Skip builtin batch - it's already loaded by _seedBuiltinCards
         if (batchId === BUILTIN_BATCH_ID) {
+          const existingBuiltinBatch = batches.get(BUILTIN_BATCH_ID);
+          if (existingBuiltinBatch) {
+            const disabled = Boolean(index.batches[BUILTIN_BATCH_ID]?.disabled);
+            batches.set(BUILTIN_BATCH_ID, {
+              ...existingBuiltinBatch,
+              disabled
+            });
+            console.log(`[UnifiedCardStore] Synced builtin batch disabled status from storage: ${disabled}`);
+          }
           console.log('[UnifiedCardStore] Skipping builtin batch - already loaded first');
           continue;
         }

@@ -5,6 +5,7 @@
 
 import { useUnifiedCardStore } from './stores/unified-card-store';
 import { type CustomFieldsForBatch, type VariantTypesForBatch, type CustomFieldNamesStore } from './stores/unified-card-store';
+import { CardType } from './card-types';
 
 // Helper function to merge custom fields
 function mergeCustomFields(tempBatchId?: string, tempDefinitions?: CustomFieldsForBatch): CustomFieldNamesStore {
@@ -48,7 +49,6 @@ export function getProfessionCardNames(tempBatchId?: string, tempDefinitions?: C
   const allNames = [...new Set([...customNames])];
 
   // Filter out subclasses with 0 cards
-  const { CardType } = require('./card-types');
   const store = useUnifiedCardStore.getState();
   const cardIndex = store.subclassCardIndex?.[CardType.Profession];
 
@@ -61,7 +61,6 @@ export function getAncestryCardNames(tempBatchId?: string, tempDefinitions?: Cus
   const allNames = [...new Set([...customNames])];
 
   // Filter out subclasses with 0 cards
-  const { CardType } = require('./card-types');
   const store = useUnifiedCardStore.getState();
   const cardIndex = store.subclassCardIndex?.[CardType.Ancestry];
 
@@ -74,7 +73,6 @@ export function getCommunityCardNames(tempBatchId?: string, tempDefinitions?: Cu
   const allNames = [...new Set([...customNames])];
 
   // Filter out subclasses with 0 cards
-  const { CardType } = require('./card-types');
   const store = useUnifiedCardStore.getState();
   const cardIndex = store.subclassCardIndex?.[CardType.Community];
 
@@ -88,7 +86,6 @@ export function getSubClassCardNames(tempBatchId?: string, tempDefinitions?: Cus
   const allNames = [...new Set([...customNames])];
 
   // Filter out subclasses with 0 cards
-  const { CardType } = require('./card-types');
   const store = useUnifiedCardStore.getState();
   const cardIndex = store.subclassCardIndex?.[CardType.Subclass];
 
@@ -101,7 +98,6 @@ export function getDomainCardNames(tempBatchId?: string, tempDefinitions?: Custo
   const allNames = [...new Set([...customNames])];
 
   // Filter out subclasses with 0 cards
-  const { CardType } = require('./card-types');
   const store = useUnifiedCardStore.getState();
   const cardIndex = store.subclassCardIndex?.[CardType.Domain];
 

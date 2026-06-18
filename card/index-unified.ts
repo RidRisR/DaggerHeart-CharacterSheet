@@ -4,6 +4,8 @@
  */
 
 import { useUnifiedCardStore } from './stores/unified-card-store';
+import { createCardObjectSource } from './import/source';
+import { getDefaultCardPackApplicationService } from './packs/default-card-pack-services';
 import { 
   ExtendedStandardCard, 
   CardType, 
@@ -213,17 +215,27 @@ export function getCardsByBatchId(batchId: string): ExtendedStandardCard[] {
  * Import custom cards
  */
 export async function importCustomCards(importData: ImportData, batchName?: string): Promise<ImportResult> {
-  const store = useUnifiedCardStore.getState();
-  
-  // Ensure system is initialized
-  if (!store.initialized) {
-    const result = await store.initializeSystem();
-    if (!result.initialized) {
-      throw new Error('Failed to initialize card system');
-    }
+  const service = await getDefaultCardPackApplicationService();
+  const result = await service.importFromSource(
+    createCardObjectSource(importData, batchName ?? 'Imported Cards'),
+    { mode: 'commit' },
+  );
+
+  if (!result.success) {
+    return {
+      success: false,
+      imported: 0,
+      errors: result.diagnostics.map((diagnostic) => diagnostic.message),
+      batchId: '',
+    };
   }
-  
-  return store.importCards(importData, batchName);
+
+  return {
+    success: true,
+    imported: result.summary.cardCount,
+    errors: [],
+    batchId: result.summary.packId ?? '',
+  };
 }
 
 /**
@@ -237,9 +249,15 @@ export function getCustomCardBatches(): any[] {
 /**
  * Remove a custom card batch
  */
-export function removeCustomCardBatch(batchId: string): boolean {
-  const store = useUnifiedCardStore.getState();
-  return store.removeBatch(batchId);
+export async function removeCustomCardBatch(batchId: string): Promise<boolean> {
+  try {
+    const service = await getDefaultCardPackApplicationService();
+    const result = await service.removePack(batchId);
+    return result.success;
+  } catch (error) {
+    console.error('[Unified Card System] Failed to remove custom card batch:', error);
+    return false;
+  }
 }
 
 /**
@@ -280,8 +298,18 @@ export const getBatchName = (batchId: string): string | null => {
  * Toggle batch disabled status
  */
 export const toggleBatchDisabled = async (batchId: string): Promise<boolean> => {
-  const store = useUnifiedCardStore.getState();
-  return store.toggleBatchDisabled(batchId);
+  try {
+    const service = await getDefaultCardPackApplicationService();
+    const snapshot = await service.loadSnapshot();
+    const entry = snapshot.packs.get(batchId);
+    if (!entry) return false;
+
+    const result = await service.setPackDisabled(batchId, !entry.disabled);
+    return result.success;
+  } catch (error) {
+    console.error('[Unified Card System] Failed to toggle custom card batch disabled state:', error);
+    return false;
+  }
 };
 
 /**

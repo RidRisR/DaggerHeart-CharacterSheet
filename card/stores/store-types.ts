@@ -205,9 +205,9 @@ export interface UnifiedCardActions {
   loadCardsByType: (type: CardType) => ExtendedStandardCard[];
   getCardById: (cardId: string) => ExtendedStandardCard | null;
   reloadCustomCards: () => void;
+  reloadCustomRuntimeFromStorage: () => Promise<void>;
   
   // Custom card management
-  importCards: (data: ImportData, batchName?: string) => Promise<ImportResult>;
   removeBatch: (batchId: string) => boolean;
   clearAllCustomCards: () => Promise<void>;
   getAllBatches: () => BatchStats[];
@@ -246,7 +246,7 @@ export interface UnifiedCardActions {
 
   // Image service actions
   initializeImageService: () => Promise<void>;
-  getImageUrl: (cardId: string) => Promise<string | null>;
+  getImageUrl: (cardId: string, packId?: string) => Promise<string | null>;
   importBatchImages: (batchId: string, images: Map<string, Blob>) => Promise<void>;
   deleteBatchImages: (imageCardIds: string[]) => Promise<void>;
   clearAllBatchImages: () => Promise<void>;
@@ -260,6 +260,7 @@ export interface UnifiedCardActions {
   _recomputeAggregations: () => void;
   _rebuildSubclassIndex: () => void;
   _syncToLocalStorage: () => void;
+  _clearCustomRuntimeState: () => void;
   _loadAllCards: () => Promise<void>;
   _loadCustomCardsFromStorage: () => void;
   _seedBuiltinCards: () => Promise<void>;

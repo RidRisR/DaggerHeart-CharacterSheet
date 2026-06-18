@@ -10,6 +10,8 @@ import Dexie, { Table } from 'dexie';
  */
 export interface ImageRecord {
   key: string;        // cardId (primary key)
+  packId?: string;   // Optional owning pack for pack-scoped images
+  templateId?: string;// Optional template id for pack-scoped images
   blob: Blob;         // Image binary data
   mimeType: string;   // Image MIME type (e.g., 'image/webp', 'image/png')
   size: number;       // File size in bytes

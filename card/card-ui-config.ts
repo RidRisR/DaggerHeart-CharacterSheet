@@ -5,6 +5,14 @@
 
 import { ALL_CARD_TYPES, CardType, isVariantType } from "./card-types";
 import { CARD_LEVEL_OPTIONS } from "./card-types"; // Assuming CARD_LEVEL_OPTIONS from card-types is still valid
+import {
+  getAncestryCardNames,
+  getCommunityCardNames,
+  getDomainCardNames,
+  getProfessionCardNames,
+  getSubClassCardNames,
+  getVariantTypes,
+} from "./card-predefined-field";
 import { useUnifiedCardStore } from "./stores/unified-card-store";
 
 /**
@@ -26,15 +34,6 @@ export function getCardClassOptionsForType(cardType: string): { value: string; l
 // 按类型分组的卡牌类别选项 - 动态生成以避免循环依赖
 // ⚠️ 性能警告：此函数会计算所有 5 种卡牌类型，建议使用 getCardClassOptionsForType 按需计算
 export function getCardClassOptionsByType(tempBatchId?: string, tempDefinitions?: any) {
-  // Import functions dynamically to avoid circular dependencies
-  const {
-    getProfessionCardNames,
-    getAncestryCardNames,
-    getCommunityCardNames,
-    getSubClassCardNames,
-    getDomainCardNames
-  } = require("./card-predefined-field");
-  
   return {
     [CardType.Profession]: getProfessionCardNames(tempBatchId, tempDefinitions).map((value: string) => ({ value, label: value })),
     [CardType.Ancestry]: getAncestryCardNames(tempBatchId, tempDefinitions).map((value: string) => ({ value, label: value })),
@@ -46,9 +45,6 @@ export function getCardClassOptionsByType(tempBatchId?: string, tempDefinitions?
 
 // 获取变体类型的子类别选项（作为class选项）
 export function getVariantSubclassOptions(variantType: string, tempBatchId?: string, tempDefinitions?: any): { value: string; label: string }[] {
-  const { getVariantTypes } = require("./card-predefined-field");
-  const { useUnifiedCardStore } = require("./stores/unified-card-store");
-
   const variantTypes = getVariantTypes(tempBatchId, tempDefinitions);
   const typeDef = variantTypes[variantType];
 
@@ -69,7 +65,6 @@ export function getVariantSubclassOptions(variantType: string, tempBatchId?: str
 
 // 获取所有可用的变体类型列表（用作UI中的卡牌类型选项）
 export function getAvailableVariantTypes(tempBatchId?: string, tempDefinitions?: any): { value: string; label: string }[] {
-  const { getVariantTypes } = require("./card-predefined-field");
   const variantTypes = getVariantTypes(tempBatchId, tempDefinitions);
   return Object.entries(variantTypes).map(([typeId, typeDef]) => ({
     value: typeId,
@@ -79,7 +74,6 @@ export function getAvailableVariantTypes(tempBatchId?: string, tempDefinitions?:
 
 // 动态生成变体卡牌等级选项
 export function getVariantLevelOptions(variantType: string, tempBatchId?: string, tempDefinitions?: any): { value: string; label: string }[] {
-  const { getVariantTypes } = require("./card-predefined-field");
   const variantTypes = getVariantTypes(tempBatchId, tempDefinitions);
   const typeDef = variantTypes[variantType];
 

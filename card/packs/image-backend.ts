@@ -30,6 +30,7 @@ export interface InMemoryCardPackImageBackend extends CardPackImageBackend {
 
 interface InMemoryCardPackImageBackendOptions {
   failWritesForTemplateIds?: Set<string>
+  failDeletesForPackIds?: Set<string>
 }
 
 interface DexieCardPackImageBackendInput {
@@ -181,6 +182,20 @@ export function createInMemoryCardPackImageBackend(
     },
 
     async deletePackImages(packId) {
+      if (options.failDeletesForPackIds?.has(packId)) {
+        return {
+          ok: false,
+          deletedKeys: [],
+          issues: [
+            {
+              code: "IMAGE_DELETE_FAILED",
+              packId,
+              message: `Failed to delete images for pack ${packId}`,
+            },
+          ],
+        }
+      }
+
       const deletedKeys: string[] = []
 
       for (const key of records.keys()) {

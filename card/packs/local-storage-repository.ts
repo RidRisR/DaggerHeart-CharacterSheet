@@ -890,10 +890,11 @@ export function createLocalStorageCardPackRepository(input: LocalStorageCardPack
 
     const imageDelete = await images.deletePackImages(packId)
     if (!imageDelete.ok) {
+      const currentSnapshot = await loadSnapshot()
       return {
         ok: false,
         error: transactionError("IMAGE_DELETE_FAILED", "Card pack was removed from index but images remain.", imageDelete.issues),
-        snapshot,
+        snapshot: currentSnapshot,
         issues: imageDelete.issues,
       }
     }
@@ -908,10 +909,11 @@ export function createLocalStorageCardPackRepository(input: LocalStorageCardPack
         message: "Card pack was removed from index but content cleanup failed.",
         value: contentDelete.error,
       })
+      const currentSnapshot = await loadSnapshot()
       return {
         ok: false,
         error: transactionError("STORAGE_WRITE_FAILED", issue.message, contentDelete.error),
-        snapshot,
+        snapshot: currentSnapshot,
         issues: [issue],
       }
     }

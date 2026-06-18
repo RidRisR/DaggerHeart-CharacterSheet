@@ -196,6 +196,13 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
   },
 
   reloadCustomRuntimeFromStorage: async () => {
+    // This refresh path is intentionally narrow for the card-pack import phase:
+    // it preserves builtin runtime data, clears custom runtime data, then reloads
+    // from storage. It is not a fully atomic runtime swap yet; if storage parsing
+    // throws after the clear step, callers receive a refresh failure and the next
+    // successful refresh/page initialization will reconcile runtime state.
+    // A future storage/runtime boundary refactor should build the next runtime
+    // snapshot off to the side and publish it only after the full load succeeds.
     get()._clearCustomRuntimeState();
     get()._loadCustomCardsFromStorage();
     get()._recomputeAggregations();

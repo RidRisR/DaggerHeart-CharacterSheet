@@ -668,6 +668,11 @@ export function compareRuntimeBusinessSnapshots(
 }
 
 function runtimeComparableVariantOptions(snapshot: RuntimeBusinessSnapshot) {
+  // variant level options are runtime-derived from the actually imported cards.
+  // Legacy baselines may preserve broader declared levelRange metadata, while the
+  // new import path may narrow it to levels that are present in the pack. Compare
+  // type/subclass visibility here, and let verifyActualVariantDerivedConsistency()
+  // assert that actual runtime-visible variant card levels are not lost.
   return {
     typeNames: snapshot.variantOptions.typeNames,
     availableTypes: snapshot.variantOptions.availableTypes,

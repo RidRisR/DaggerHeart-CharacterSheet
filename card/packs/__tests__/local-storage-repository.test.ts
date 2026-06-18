@@ -269,6 +269,20 @@ describe("local storage card pack repository", () => {
     expect(storage.getItem(getCardPackStorageKey("batch_1"))).toBeNull()
   })
 
+  it("returns a post-index snapshot when removePack cleanup fails", async () => {
+    const storage = createInMemoryCardPackStorageAdapter()
+    const images = createInMemoryCardPackImageBackend({ failDeletesForPackIds: new Set(["batch_1"]) })
+    const repository = createLocalStorageCardPackRepository({ storage, images, now: () => FIXED_NOW })
+    await repository.commitImport(makeFinalPlan({ packId: "batch_1" }))
+
+    const result = await repository.removePack("batch_1")
+
+    expect(result.ok).toBe(false)
+    expect(!result.ok && result.error.code).toBe("IMAGE_DELETE_FAILED")
+    expect(result.snapshot.packs.has("batch_1")).toBe(false)
+    expect(storage.getItem(CARD_PACK_STORAGE_KEYS.INDEX)).not.toContain("batch_1")
+  })
+
   it("ensureIntegrity removes content and images for broken index entries", async () => {
     const storage = createInMemoryCardPackStorageAdapter({
       [CARD_PACK_STORAGE_KEYS.INDEX]: JSON.stringify(makeIndexWithEntry("batch_missing")),

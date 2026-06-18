@@ -21,7 +21,6 @@ export interface RawVariantCard {
     item2?: string;
     item3?: string;
   };
-  [key: string]: any;    // 允许扩展字段
 }
 
 /**

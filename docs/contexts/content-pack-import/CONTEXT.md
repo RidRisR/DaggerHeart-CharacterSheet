@@ -12,6 +12,10 @@ _Avoid_: card when referring to equipment packs; save file
 A content pack whose templates are cards.
 _Avoid_: equipment pack
 
+**Class**:
+A player character class card category in a card pack.
+_Avoid_: profession
+
 **Equipment Pack**:
 A content pack whose templates are equipment templates, such as weapon templates and armor templates.
 _Avoid_: card pack; automation provider
@@ -35,6 +39,30 @@ _Avoid_: card editor when discussing equipment authoring; content pack manager
 **Content Pack Draft**:
 An in-progress authoring state for one pack payload, such as a card pack draft or an equipment pack draft.
 _Avoid_: content bundle draft; stored pack; imported pack; runtime pack
+
+**Editor Draft Import Recovery**:
+The lenient editor-only import step that turns a parseable content-pack-shaped file into a **Content Pack Draft** for continued editing, possibly filling editor-safe structure, without claiming the file is valid for formal import.
+_Avoid_: formal import; schema validation; installed pack import
+
+**Editor Draft Repair**:
+An editor-only recovery behavior that may preserve existing authoring ergonomics, such as completing ancestry pairs or subclass triples when opening a draft for continued editing.
+_Avoid_: formal import normalization; editor draft validation; export serialization
+
+**Editor Draft Export**:
+The editor action that writes the current **Content Pack Draft** for round-trip authoring. It may be more permissive than formal import because the exported file may be imported back into the editor rather than installed for play.
+_Avoid_: formal import validation; install action; public release guarantee
+
+**Editor Draft Export Serialization**:
+The non-mutating export step that produces the actual payload or bundle view written by **Editor Draft Export**, including removing editor-only state and excluding packaged assets that do not belong to current draft content.
+_Avoid_: editor draft validation; editor draft import recovery; draft repair; storage cleanup
+
+**Editor Draft Validation**:
+The read-only editor action that checks whether the current **Content Pack Draft**, after serialization to the same payload shape the editor would actually export, would pass the same formal dry-run import workflow used by install surfaces, then may merge editor-local authoring diagnostics for draft regularity rules that are stricter than formal import compatibility.
+_Avoid_: export; editor import recovery; second validator; draft repair
+
+**Editor-Local Authoring Diagnostic**:
+A diagnostic produced only by an editor validation action for authoring regularity, such as requiring ancestry cards to appear in pairs or subclass cards to appear in triples. It helps pack authors make a clean draft but does not become a formal import blocking rule unless the formal import workflow also reports it.
+_Avoid_: formal import diagnostic; storage conflict; schema validation error
 
 **Equipment Editor Draft**:
 The current in-editor equipment pack JSON being edited by a pack author. It keeps the `daggerheart.equipment-pack.v1` shape, may be incomplete or invalid, and is not a separate exported draft format.
@@ -72,6 +100,14 @@ _Avoid_: content pack; pack id; storage identity
 A payload-owned asset locator for an asset packaged inside a content bundle. For card images, the current branch only allows a file name stored on the card payload as `imagePath`; it is resolved inside the entry's `assetsPath`, which may be a nested safe relative directory, or inside the legacy bundle-root `images/` directory when `assetsPath` is omitted.
 _Avoid_: remote image URL; card id filename convention; arbitrary nested asset path
 
+**Pack-Scoped Card Image**:
+An imported card image stored under a pack-owned image namespace, keyed by both Pack ID and card ID rather than by global card ID alone.
+_Avoid_: editor image; global image; public image path
+
+**Legacy Global Card Image**:
+The older imported-card image record keyed only by card ID in IndexedDB. It remains readable during migration and compatibility fallback, but new DHCB imports should write **Pack-Scoped Card Images**.
+_Avoid_: pack-scoped image; editor image
+
 **Public Schema**:
 The JSON Schema that defines the external structure a content pack file must satisfy before it can enter normalization.
 _Avoid_: TypeScript type when referring to the third-party file contract
@@ -87,6 +123,14 @@ _Avoid_: requiring adapters to infer structured rules from markdown descriptions
 **Legacy Published Format**:
 An older content pack file format that has already been documented or emitted by released tooling and must remain importable and exportable for compatibility with older app versions.
 _Avoid_: internal legacy garbage; unsupported old shape
+
+**Legacy Card Format**:
+The released card-pack payload shape that uses grouped arrays and legacy Chinese card field names, such as `profession`, `ancestry`, `community`, `subclass`, `domain`, and `variant`.
+_Avoid_: future card schema; storage model; unsupported old shape
+
+**Legacy Card Adapter**:
+The compatibility adapter that converts a **Legacy Card Format** payload into the **Card Pack Internal Validation Schema** shape before structural validation.
+_Avoid_: storage migration; best-effort repair; runtime normalizer
 
 **Legacy Card DHCB**:
 The released card package ZIP container shape. It may contain a root `cards.json`, optional root `manifest.json` with the old `DaggerHeart Card Batch` marker, an unparseable manifest that must not block legacy fallback, and optional bundle-root `images/*` files whose names are matched to card IDs.
@@ -108,9 +152,65 @@ _Avoid_: current branch dependency; immediate reader requirement
 A JSON Schema that documents and validates a **Legacy Published Format** without creating a new content pack format or changing old-version compatibility expectations.
 _Avoid_: new public v1; migration target
 
+**Card Pack Public Schema**:
+An intentionally published JSON Schema for pack authors and third-party tools. A schema becomes public only when it is released through public docs, public schema files, examples, and compatibility guidance.
+_Avoid_: internal validation schema; storage model; runtime read model
+
+**Card Pack Internal Validation Schema**:
+The English, shape-preserving JSON Schema used inside the card import workflow after external payloads have been adapted. The first version uses the format identifier `daggerheart.card-pack.v1`, is accepted from external imports, and is the mandatory structural shape for downstream validation, but it is not the editor's default export format while legacy export compatibility remains required.
+_Avoid_: legacy card format; storage model; default editor export
+
+**External Format Adapter**:
+A workflow boundary that converts one accepted external payload shape, such as **Legacy Card Format** or a future public card-pack schema, into the **Card Pack Internal Validation Schema** shape.
+_Avoid_: semantic validator; storage migration; editor draft repair
+
+**External Import File**:
+The actual file or container supplied to the import workflow, such as a card-pack JSON file or a legacy card DHCB.
+_Avoid_: public schema; import model; storage model
+
 **Card Pack Import Model**:
 A conservative staging shape used only inside the card pack import workflow after legacy input has been schema-validated and adapted. It supports validation, normalization, diagnostics, conflict checks, and commit planning, but is not a public schema, editor authoring model, storage authority, or future v1 implementation.
 _Avoid_: v1-like model; storage model; public schema
+
+**Runtime Card Projection**:
+The workflow step that converts accepted card-pack import data into the current runtime card read model, such as `StandardCard` / `ExtendedStandardCard`, for existing selection and display code.
+_Avoid_: public schema; storage authority; validation model
+
+**Runtime Refresh Adapter**:
+The application boundary that refreshes the current runtime card store after storage commit. In this phase it wraps existing store rebuild helpers instead of introducing a new runtime registry architecture.
+_Avoid_: storage backend adapter; storage format adapter; full runtime registry rewrite
+
+**Storage Format Adapter**:
+The workflow boundary that converts a **Card Import Commit Plan** into the concrete storage payload shape for the selected card-pack storage format, such as the current legacy card batch storage shape or a future card pack storage version.
+_Avoid_: storage backend adapter; semantic validator; public schema adapter; UI mapper
+
+**Storage Backend Adapter**:
+The persistence boundary that writes a storage-format payload to a concrete backend, such as localStorage plus IndexedDB, IndexedDB-only storage, or a backend API. It owns backend keys, write order, compensation cleanup, and integrity recovery mechanics.
+_Avoid_: storage format adapter; public schema adapter; semantic validator
+
+**Legacy Card Batch Storage Format**:
+The current custom-card localStorage payload shape for installed card packs. It stores batch metadata plus `cards: ExtendedStandardCard[]`, custom field definitions, and variant types. It is a compatibility storage target, not the card-pack import contract or long-term storage authority.
+_Avoid_: public schema; normalized pack data; editor draft
+
+**Commit Plan**:
+The validated, pre-commit description of persistent writes an import would perform, including pack metadata, templates, lifecycle state, and packaged assets.
+_Avoid_: storage transaction; public schema; runtime read model
+
+**Card Import Commit Plan**:
+A card-pack-specific **Commit Plan** built after successful dry-run validation and conflict checks. It is the boundary between import validation/staging and storage-format projection, and describes what pack should be installed before any concrete storage format or backend writes are chosen.
+_Avoid_: dry-run result; editor draft; direct localStorage payload
+
+**Compatibility Facade**:
+A stable legacy-facing API surface that preserves older call shapes while delegating to the current import workflow instead of maintaining a separate implementation.
+_Avoid_: legacy import flow; duplicate pipeline; deprecated store path
+
+**Card Import Storage Snapshot**:
+A comparable view of installed card-pack storage that includes only card import index entries, legacy batch content, and pack-scoped image metadata needed to verify import results.
+_Avoid_: full localStorage dump; runtime card registry; browser profile backup
+
+**Local Card Pack Fixture Set**:
+A local, ignored collection of real card pack files used to verify import compatibility and storage projection without becoming a published fixture set or public compatibility promise.
+_Avoid_: public sample pack; CI fixture; authoring guide example
 
 **Compatibility Export**:
 An export mode that writes a **Legacy Published Format** so pack authors can distribute content to users on older app versions.
@@ -192,6 +292,10 @@ _Avoid_: committed flag
 The commit step that updates persistent storage and in-memory state only if all required writes succeed.
 _Avoid_: best-effort save
 
+**Compensation Cleanup**:
+The rollback-style cleanup performed after a multi-store commit fails, removing artifacts written by the failed import according to its write set. It is not a true cross-storage transaction and must be backed by later integrity recovery.
+_Avoid_: database transaction; best-effort ignore
+
 **Application Service**:
 The use-case orchestration layer that coordinates import validation, conflict context construction, pack ID generation, repository transactions, and lifecycle result mapping for content pack workflows.
 _Avoid_: UI store; repository adapter; validator
@@ -209,8 +313,8 @@ A concrete implementation of a repository port for a specific storage backend, s
 _Avoid_: storage model; domain repository contract
 
 **Storage Snapshot**:
-A repository read result that combines stored pack lifecycle state, full pack data, pack count, and integrity report without exposing the persisted index or materializing query summaries.
-_Avoid_: persisted index; runtime query index
+A repository read result exposed to an application service. It combines pack lifecycle state, conflict-check identifiers, pack count, and integrity report without exposing persisted indexes, backend keys, legacy storage payloads, or full runtime template arrays. Repository implementations may use richer internal recovered storage views, but those are not application-facing snapshots.
+_Avoid_: persisted index; runtime query index; legacy BatchData; full runtime card arrays
 
 **Registry**:
 The runtime read model used to look up or query currently selectable templates.
@@ -269,9 +373,23 @@ _Avoid_: storage snapshot; persisted index
 - Import workflows may convert a **Legacy Published Format** into the current **Canonical Model** through adapters, while export workflows may convert current content back to a **Legacy Published Format** through **Compatibility Export**.
 - New editor versions should not make old-version-incompatible files the default output without an explicit compatibility decision.
 - A **Forward Format Export** can expose new schema or container capabilities, but should be labeled as requiring a compatible app version.
-- For card packs, the legacy JSON / legacy DHCB / current editor export shape is the near-term public contract. A **Legacy Published Format Schema** may be published to standardize that existing contract. `daggerheart.card-pack.v1` is a **Deferred Public Schema Exploration**, not the default card-only export format or a near-term implementation target.
-- Card pack import refactoring should modernize the workflow around the **Legacy Published Format** rather than force pack authors onto a new card-only schema. Internally, the workflow may adapt legacy input into a **Card Pack Import Model** for validation, normalization, diagnostics, conflict checks, and commit planning.
+- For card packs, the legacy JSON / legacy DHCB / current editor export shape remains a required compatibility contract and default editor export target. The English shape-preserving `daggerheart.card-pack.v1` schema is accepted for external import and required internally as the **Card Pack Internal Validation Schema**, but it is not the default editor export format.
+- An **External Import File** is not itself the public contract; the public contract is the payload shape it contains, such as the **Legacy Published Format** inside a JSON file or legacy card DHCB.
+- Card pack import refactoring should keep **Legacy Card Format** files importable through a **Legacy Card Adapter** rather than force existing pack authors to rewrite old packs. Internally, the workflow may adapt legacy input into the **Card Pack Internal Validation Schema** and then into a **Card Pack Import Model** for validation, normalization, diagnostics, conflict checks, and commit planning.
 - The **Card Pack Import Model** should stay conservative and close to legacy input. It must not introduce extra reshaping solely for i18n, future v1, or storage migration.
+- A **Card Pack Public Schema** documents an intentionally published author-facing payload contract, a **Card Pack Internal Validation Schema** stabilizes workflow validation, an **External Format Adapter** converts accepted external shapes into that internal schema, a **Card Pack Import Model** is an internal workflow shape, and a **Commit Plan** describes possible durable writes.
+- Absence of a **Format Identifier** in a card-pack payload means the importer should treat it as **Legacy Card Format**. Presence of `daggerheart.card-pack.v1` means the importer should validate it directly as **Card Pack Internal Validation Schema**. Presence of any other unrecognized card-pack **Format Identifier** must produce an unsupported-format diagnostic and must not fall back to legacy parsing.
+- The first-wave **Card Pack Internal Validation Schema** should preserve the legacy top-level grouped arrays, using normalized group names such as `classes`, `ancestries`, `communities`, `subclasses`, `domains`, and `variants`.
+- The **Card Pack Internal Validation Schema** should use English official-facing field names for individual card properties. Legacy Chinese card property names belong at the **Legacy Card Adapter** input boundary only.
+- The **Card Pack Internal Validation Schema** should be strict about unknown fields. Legacy card payloads may be leniently adapted for compatibility, but unknown legacy fields should produce **Warning Diagnostics** and be discarded before structural validation.
+- Storage structures and runtime read models must not define what a pack author is required to write in either **Legacy Card Format**, any future **Card Pack Public Schema**, or the **Card Pack Internal Validation Schema**.
+- Card pack formal import should not commit directly from a dry-run result into localStorage. It should first build a **Card Import Commit Plan**, then execute that plan through a storage/application boundary.
+- A **Card Import Commit Plan** should be built only after **Conflict Check** succeeds. ID conflicts are a plan precondition, not a storage backend responsibility, though backends may still reject stale or duplicate pack writes defensively.
+- Like equipment-pack final commit plans, a **Card Import Commit Plan** should include final pack identity, imported timestamp, source summary, staged pack data, and lifecycle defaults such as `disabled: false`.
+- This phase keeps **Legacy Card Batch Storage Format** as the selected card import storage format, but it must be reached through a **Storage Format Adapter** so future storage format changes do not rewrite validation and staging.
+- This phase uses a localStorage/IndexedDB **Storage Backend Adapter** for card packs, but backend keys and persistence mechanics must not leak into **Card Import Commit Plan** or validation stages.
+- The legacy card storage **Storage Format Adapter** should produce a complete legacy storage projection, including stored pack data and index entry. The **Storage Backend Adapter** should not rederive business fields from the import model; it should handle backend keys, serialization, write order, compensation cleanup, and recovery.
+- **Runtime Card Projection** is separate from **Storage Transaction**. Converting imported card content into `StandardCard` / `ExtendedStandardCard` does not by itself install the pack, write localStorage, import images, or rebuild runtime indexes.
 - Current equipment editor work should use **Scoped Equipment JSON Export** rather than mixed DHCB export. Mixed bundles can return later only with explicit export scope, bundle-level preflight, and atomic success/failure semantics.
 - Content bundle export must not hide card-only incompatibility behind equipment support. If a future bundle contains cards, the card payload should remain legacy-compatible by default unless the author explicitly opts into a future-only card capability with clear diagnostics.
 - A **Downgrade Diagnostic** belongs to export compatibility. It must distinguish lossless compatibility export, lossy compatibility export with warnings, and blocked compatibility export.
@@ -284,12 +402,35 @@ _Avoid_: storage snapshot; persisted index
 - **Equipment Draft Replacement** is the current equipment editor import behavior. Importing into the editor opens one equipment JSON as the current draft and does not merge weapons or armor into an existing draft.
 - An **Editor Null Placeholder** may appear in editor-exported half-finished equipment JSON. Formal import validation must still treat it as invalid when the field is required by the public schema.
 - A **Standard Equipment Editor Template ID** is generated when a pack author creates a new weapon or armor template in the editor. If equipment pack `name` or `author` changes, only ids matching the previous standard prefix are rewritten. Non-standard ids remain unchanged.
+- **Editor Draft Import Recovery** and **Editor Draft Export** may be lenient to preserve authoring round trips. **Editor Draft Validation** must use the same formal dry-run import workflow as install surfaces for installability, then may merge **Editor-Local Authoring Diagnostics** for stricter draft regularity rules.
 - A successful import may include **Warning Diagnostics**; warnings must not block storage commit or runtime cache build.
 - An **Application Service** is the only layer that orchestrates full import commit, remove, enable, and disable workflows.
 - UI stores, repository adapters, and import validators should not duplicate **Application Service** workflow decisions.
 - A **Service Composition Root** chooses concrete persistence implementations. UI stores should depend on application services or repository ports through this composition boundary, not directly decide whether localStorage or a future backend is used.
 - A **Repository Port** keeps storage behavior independent from localStorage, IndexedDB, backend APIs, or UI stores.
 - A **Persistence Adapter** implements a **Repository Port** for one storage backend.
+- The card import refactor should initially extract only the formal import commit path behind an **Application Service** and repository ports. It should not require rewriting every card-store runtime hook, stats query, editor action, or management action in the same phase.
+- The formal card import **Application Service** should depend on one card import repository port for recovery, conflict context, and commit. That repository implementation may internally coordinate separate content, index, and image backend adapters, but business logic should not understand those storage mechanics.
+- The card-pack repository port should stay structurally aligned with the equipment-pack repository port: load snapshot, ensure integrity, commit import, remove pack, and set disabled state. Card-specific image coordination belongs inside the repository implementation, not the application service.
+- Card-pack storage transaction results and integrity issue models should stay structurally aligned with equipment-pack storage. Repository-level card id conflicts should use the shared template language, such as `TEMPLATE_ID_CONFLICT`, while card-specific wording belongs in application diagnostics or UI copy.
+- Card import conflict context should be constructed by the **Application Service** from imported-pack repository snapshots plus a separate built-in card ID dependency. Import pipelines should not read Zustand stores, localStorage, or built-in card assets directly for conflict checks.
+- Card-pack storage snapshots exposed to the **Application Service** should contain management and conflict-check summaries, such as pack lifecycle data and template IDs, rather than legacy `BatchData`, localStorage keys, or full runtime card arrays.
+- Card import Pack IDs should be generated by the **Application Service** before repository commit, following the equipment-pack application-service pattern. This phase should keep the legacy `batch_${timestamp}_${random}` style where practical and avoid deriving pack identity from pack names.
+- Built-in base card initialization may be revisited later so built-in cards no longer need to be written as localStorage or batch-like state, but that is outside the current card import commit-path phase.
+- Old formal card import entrypoint names may remain temporarily as facades for UI compatibility, but old validation/commit/image-write implementations must not remain as a second real import path alongside the new **Application Service**.
+- Formal JSON card import and legacy DHCB card import should differ only in source intake. After cards JSON and optional image assets are read, both should use the same card import **Application Service** path, aligned with the equipment-pack `importFromSource` pattern.
+- Card import application services should receive `CardImportSource` objects rather than raw `File` objects, matching the equipment-pack source contract. The card import pipeline should produce a commit draft at stage-import-data; the application service should turn that draft into a final commit plan by adding pack identity, imported timestamp, and lifecycle defaults.
+- Card import modes should match equipment import modes: `"dryRun"` validates and stages without storage writes, while pipeline `"commit"` mode also stops at stage-import-data and returns a commit draft. Only the **Application Service** performs final repository commit.
+- Card import application result shapes should stay aligned with equipment import application results, including stage, mode, storage committed flag, optional snapshot, diagnostics, and summary counts. Card-specific summaries may add card and image counts.
+- A legacy localStorage card-pack repository should write **Pack Data** before updating the **Storage Index**. If content exists without an index entry, recovery treats it as orphan content and removes it; if the index references missing or corrupted content, recovery removes the broken index entry.
+- For legacy card DHCB import, card content and packaged images are one strong-consistency install unit. The **Storage Index** must be updated only after both card content and all required packaged image writes succeed; if image or index commit fails, the import must compensate by removing content and images written for that failed import.
+- Card import rollback across localStorage and IndexedDB should use **Compensation Cleanup** based on the failed import's write set, then rely on integrity recovery to clean any artifacts left behind if compensation itself fails.
+- Card import application result stages should stay aligned with equipment import stages. Card content writes, pack-scoped image writes, and index updates are all part of `storageTransaction`; image write failures should surface as storage transaction diagnostics rather than a separate public `assetCommit` stage.
+- For compatibility, a card payload that sets `hasLocalImage: true` without providing a matching image asset should not be rejected. Actual committed local-image ownership is determined by imported image assets; orphan image assets without matching staged card IDs remain blocking errors.
+- Imported card images should move from **Legacy Global Card Image** records to **Pack-Scoped Card Images** so rollback, removal, and integrity recovery can operate by Pack ID. Runtime image lookup may fall back to legacy global card-id images during migration.
+- Legacy global image migration should derive ownership from valid indexed card batches. A legacy image referenced by a valid batch should be copied to that batch's pack-scoped namespace and then removed from the legacy global table; an unreferenced legacy image should be treated as orphan data.
+- Legacy global image migration should run during application/card-system initialization as an idempotent recovery step. Migration failure should be reported but should not make the whole card system unavailable because runtime image lookup can still fall back to legacy global images.
+- Legacy global image migration should use copy-then-clean and no migration marker. If legacy global images still exist, migration is considered incomplete and should run again; if legacy global images and pack-scoped images both exist, legacy global images remain the migration source of truth until the legacy table is cleared.
 - A **Storage Snapshot** is derived by reading the **Storage Index** and **Pack Data** together.
 - A **Storage Snapshot** is a repository output, not a long-lived UI store contract or a selectable template index.
 - Public repository reads return **Storage Snapshots** after integrity recovery; raw storage state is adapter-internal.
@@ -298,6 +439,7 @@ _Avoid_: storage snapshot; persisted index
 - A successful **Storage Transaction** returns the post-transaction **Storage Snapshot** for storage result mapping and for future cache/runtime layers to consume.
 - A **Storage Snapshot** alone does not define end-user runtime availability; runtime availability is defined by the later cache/runtime read model.
 - A committed import is complete only after a **Stable Runtime Cache View** has been established from the recovered **Storage Snapshot**.
+- This phase should establish the stable runtime view through a **Runtime Refresh Adapter** that reuses existing card-store reload and rebuild helpers. It should not introduce a new runtime registry or rewrite runtime selection hooks.
 - Runtime lifecycle actions operate on a valid **Storage Snapshot** established by recovery-capable initialization or explicit integrity recovery; they do not revalidate stored pack content on every toggle or removal.
 - Disabled packs remain in the **Storage Snapshot** and management state with complete pack data, but their templates are excluded from the **Selectable Runtime Read Model**.
 - A **Registry** and **Query Index** are runtime read models.
@@ -338,7 +480,7 @@ Pipeline stages:
 - **Semantic Validation** checks business rules that are not structural schema rules.
 - **Conflict Check** checks the canonical pack against current system state.
 - **Stage Import Data** builds a staged import / commit draft from canonical data without mutating state or assigning final storage identity.
-- **Build Commit Plan** assigns final storage identity and lifecycle metadata to staged import data before repository commit.
+- **Build Commit Plan** creates a **Commit Plan** by assigning final storage identity and lifecycle metadata to staged import data before repository commit.
 - **Storage Transaction** commits persistent writes and in-memory state only if the transaction succeeds.
 - **Runtime Cache Build** rebuilds runtime template lookup and query models after successful storage commit.
 - **Result Mapping** returns the unified import result and diagnostics.
@@ -350,3 +492,4 @@ Pipeline stages:
 - "版本" can mean content version or format identifier. Use **Content Version** for author-maintained releases and **Format Identifier** for schema/format selection.
 - "Registry" can refer to template selection or automation calculation. Use **Registry** in this context only for content pack template lookup; say **automation registry** when discussing modifier calculation.
 - "warning" can mean user-facing UI noise or useful author guidance. Use **Warning Diagnostic** for non-blocking pipeline output, and describe UI visibility separately as presentation policy.
+- "profession" was an early card-pack field name for character class cards. Keep `profession` only when referring to the **Legacy Card Format** field; use **Class** and `classes` for the forward card-pack schema and internal import model terminology.

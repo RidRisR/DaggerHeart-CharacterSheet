@@ -25,6 +25,10 @@
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
+    "test:card-import": "npx vitest run card/import card/packs card/__tests__/legacy-import-facade.test.ts card/stores/__tests__/batch-read-model.test.ts tests/local-fixtures/__tests__/card-import-local-fixture-names.test.ts tests/local-fixtures/__tests__/card-import-equivalence.test.ts tests/local-fixtures/__tests__/card-import-runtime-equivalence.test.ts components/content-pack-manager app/card-manager/__tests__/card-manager-card-lifecycle.test.tsx",
+    "test:card-import:fixtures": "npx vitest run card/import/__tests__/compatibility-fixtures.test.ts",
+    "test:card-import:local-fixtures": "RUN_LOCAL_CARD_PACK_FIXTURES=1 npx vitest run tests/local-fixtures/card-import-local-fixtures.test.ts",
+    "generate:card-import:legacy-baseline": "node scripts/generate-card-import-legacy-baseline.js",
     "optimize:images": "node scripts/optimize-images.js"
   },
   "dependencies": {

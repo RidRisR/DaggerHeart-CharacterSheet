@@ -42,3 +42,6 @@ coverage/
 
 # local reference materials
 docs/refs/
+
+# local card-pack regression fixtures
+.local-fixtures/

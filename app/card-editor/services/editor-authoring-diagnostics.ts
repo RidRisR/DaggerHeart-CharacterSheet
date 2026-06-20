@@ -3,6 +3,14 @@ import type { CardPackageState } from "../types"
 export type CardEditorLocalAuthoringDiagnostic =
   | {
       severity: "error"
+      code: "EDITOR_PACKAGE_NAME_REQUIRED"
+      path: string
+      message: string
+      value?: unknown
+      relatedPaths?: string[]
+    }
+  | {
+      severity: "error"
       code: "EDITOR_ANCESTRY_PAIR_INCOMPLETE"
       path: string
       message: string
@@ -21,23 +29,62 @@ export type CardEditorLocalAuthoringDiagnostic =
 const expectedAncestryCategories = [1, 2] as const
 const expectedSubclassLevels = ["基石", "专精", "大师"] as const
 
+type AncestryAuthoringGroup = {
+  paths: string[]
+  categories: Set<number>
+  ancestry: string
+  intro: string
+}
+
 export function createEditorLocalCardAuthoringDiagnostics(
   draft: CardPackageState,
 ): CardEditorLocalAuthoringDiagnostic[] {
   return [
+    ...createRequiredMetadataDiagnostics(draft),
     ...createIncompleteAncestryPairDiagnostics(draft),
     ...createIncompleteSubclassTripleDiagnostics(draft),
+  ]
+}
+
+function createRequiredMetadataDiagnostics(
+  draft: CardPackageState,
+): CardEditorLocalAuthoringDiagnostic[] {
+  if (typeof draft.name === "string" && draft.name.trim().length > 0) {
+    return []
+  }
+
+  return [
+    {
+      severity: "error",
+      code: "EDITOR_PACKAGE_NAME_REQUIRED",
+      path: "/name",
+      message: "Editor draft package name is required.",
+      value: draft.name,
+    },
   ]
 }
 
 function createIncompleteAncestryPairDiagnostics(
   draft: CardPackageState,
 ): CardEditorLocalAuthoringDiagnostic[] {
-  const groups = new Map<string, { paths: string[]; categories: Set<number> }>()
+  const groups = new Map<string, AncestryAuthoringGroup>()
+  const raceCounts = new Map<string, number>()
+
+  for (const card of draft.ancestry ?? []) {
+    const race = String(card.种族 ?? "")
+    raceCounts.set(race, (raceCounts.get(race) ?? 0) + 1)
+  }
 
   ;(draft.ancestry ?? []).forEach((card, index) => {
-    const key = String(card.种族 ?? "")
-    const group = groups.get(key) ?? { paths: [], categories: new Set<number>() }
+    const race = String(card.种族 ?? "")
+    const intro = String(card.简介 ?? "")
+    const key = JSON.stringify([race, intro])
+    const group = groups.get(key) ?? {
+      paths: [],
+      categories: new Set<number>(),
+      ancestry: race,
+      intro,
+    }
 
     group.paths.push(`/ancestry/${index}`)
     if (typeof card.类别 === "number") {
@@ -47,7 +94,9 @@ function createIncompleteAncestryPairDiagnostics(
   })
 
   const diagnostics: CardEditorLocalAuthoringDiagnostic[] = []
-  for (const [ancestry, group] of groups.entries()) {
+  for (const group of groups.values()) {
+    const groupName =
+      raceCounts.get(group.ancestry) === 1 ? group.ancestry : `${group.ancestry} / ${group.intro}`
     const hasExpectedCategories = expectedAncestryCategories.every((category) =>
       group.categories.has(category),
     )
@@ -58,7 +107,7 @@ function createIncompleteAncestryPairDiagnostics(
         code: "EDITOR_ANCESTRY_PAIR_INCOMPLETE",
         path: group.paths[0] ?? "/ancestry",
         message: "Editor draft ancestry cards should include category 1 and category 2.",
-        value: ancestry,
+        value: groupName,
         relatedPaths: group.paths.slice(1),
       })
     }

@@ -7,11 +7,7 @@ import type {
 import type { CommunityCard } from '@/card/community-card/convert'
 
 // 卡牌包编辑器的状态接口
-export interface CardPackageState extends ImportData {
-  // 扩展字段用于编辑器状态
-  isModified?: boolean
-  lastSaved?: Date
-}
+export type CardPackageState = ImportData
 
 // 当前编辑的卡牌索引
 export interface CurrentCardIndex {

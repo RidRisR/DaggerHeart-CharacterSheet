@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { importEquipmentPackFromSource } from "@/equipment/import/import-pipeline"
 import type { EquipmentPackImportDependencies, EquipmentPackImportSource } from "@/equipment/import/types"
 
@@ -180,6 +180,33 @@ describe("equipment pack dry run pipeline", () => {
     })
   })
 
+  it("requires conflict context in commit mode", async () => {
+    const read = vi.fn(async () => ({ kind: "parsedObject" as const, value: validWeaponPack }))
+    const source: EquipmentPackImportSource = {
+      origin: { kind: "object", label: "test object" },
+      read,
+    }
+
+    await expect(
+      importEquipmentPackFromSource(source, { mode: "commit" }, {}),
+    ).rejects.toThrow("Equipment commit import requires conflict context.")
+    expect(read).not.toHaveBeenCalled()
+  })
+
+  it("allows missing conflict context in dryRun mode", async () => {
+    const result = await importEquipmentPackFromSource(
+      createObjectSource(validWeaponPack),
+      { mode: "dryRun" },
+      {},
+    )
+
+    expect(result).toMatchObject({
+      success: true,
+      stage: "stageImportData",
+      mode: "dryRun",
+    })
+  })
+
   it("stops at sourceRead for source failures and large files", async () => {
     const dependencies = createDependencies()
     const source: EquipmentPackImportSource = {
@@ -314,12 +341,12 @@ describe("equipment pack dry run pipeline", () => {
     )
   })
 
-  it("keeps conflict failures focused when optional descriptions are missing", async () => {
+  it("does not return storage-aware conflict diagnostics in dryRun mode", async () => {
     const dependencies = createDependencies({
       conflictContext: {
         builtinTemplateIds: new Set(["暗影装备包-测试作者-weapon-影刃"]),
-        importedTemplateIds: new Set(),
-        customPackCount: 0,
+        importedTemplateIds: new Set(["暗影装备包-测试作者-weapon-影刃"]),
+        customPackCount: 50,
         maxCustomPackCount: 50,
       },
     })
@@ -329,12 +356,17 @@ describe("equipment pack dry run pipeline", () => {
     const result = await importEquipmentPackFromSource(createObjectSource(pack), { mode: "dryRun" }, dependencies)
 
     expect(result).toMatchObject({
-      success: false,
-      stage: "conflictCheck",
-      summary: { warningCount: 0, errorCount: 1 },
+      success: true,
+      stage: "stageImportData",
+      mode: "dryRun",
+      summary: { warningCount: 0, errorCount: 0 },
     })
-    expect(result.diagnostics).toEqual(
-      expect.arrayContaining([expect.objectContaining({ severity: "error", code: "ID_CONFLICT" })]),
+    expect(result.diagnostics).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: expect.stringMatching(/^(ID_CONFLICT|PACK_LIMIT_EXCEEDED|TEMPLATE_LIMIT_EXCEEDED)$/),
+        }),
+      ]),
     )
     expect(result.diagnostics).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ code: "MISSING_DESCRIPTION" })]),

@@ -7,6 +7,12 @@ import {
   equipmentFieldLabelFromPath,
   localizeEquipmentDiagnostic,
 } from "@/equipment/ui/diagnostic-copy";
+import { createIdentityDiagnosticSourceMap } from "../services/diagnostic-source-map";
+import {
+  createEditorValidationViewModel,
+  type EditorValidationDiagnosticView,
+  type EditorValidationViewModel,
+} from "../services/editor-validation-view-model";
 import type { EquipmentEditorDraft } from "./equipment-draft";
 import { toEquipmentExportJson } from "./equipment-import-export";
 
@@ -27,6 +33,10 @@ export type FriendlyEquipmentDiagnostic = {
   specificGroup: string;
   diagnostic: EquipmentPackApplicationDiagnostic;
   jumpTarget?: EquipmentValidationJumpTarget;
+};
+
+export type EquipmentEditorValidationResult = EquipmentPackApplicationImportResult & {
+  editorLocalDiagnostics?: EquipmentPackApplicationDiagnostic[];
 };
 
 function fieldLabel(field: string | undefined) {
@@ -133,6 +143,128 @@ export function mapEquipmentDiagnosticsToFriendly(
       jumpTarget: undefined,
     };
   });
+}
+
+function countFriendlyDiagnostics(
+  diagnostics: FriendlyEquipmentDiagnostic[],
+  severity: "error" | "warning",
+) {
+  return diagnostics.filter((diagnostic) => diagnostic.severity === severity)
+    .length;
+}
+
+function createEquipmentValidationViewModelCopy(input: {
+  result: EquipmentPackApplicationImportResult;
+  errorCount: number;
+  warningCount: number;
+}) {
+  const checkedItemCount =
+    input.result.summary.weaponCount + input.result.summary.armorCount;
+
+  return {
+    passed: {
+      title: "装备包检查通过",
+      description: `装备包包含 ${input.result.summary.weaponCount} 件武器和 ${input.result.summary.armorCount} 件护甲，当前检查通过，可以导出发布文件。`,
+    },
+    passedWithWarnings: {
+      title: "装备包检查通过，但有建议处理的问题",
+      description: `装备包包含 ${checkedItemCount} 个装备条目，可以导出发布文件；建议处理 ${input.warningCount} 个警告。`,
+    },
+    failed: {
+      title: "需要修复一些装备问题",
+      description: `检测到 ${input.errorCount} 个关键问题和 ${input.warningCount} 个警告。导出发布前应修复这些草稿问题。`,
+    },
+  };
+}
+
+export function createEquipmentEditorValidationViewModel(
+  result: EquipmentEditorValidationResult,
+): EditorValidationViewModel<EquipmentValidationJumpTarget> {
+  const editorLocalDiagnosticKeys = new Set(
+    (result.editorLocalDiagnostics ?? []).map(diagnosticKey),
+  );
+  const friendlyDiagnostics = mapEquipmentDiagnosticsToFriendly(
+    result.diagnostics,
+  );
+  const sourceMap =
+    createIdentityDiagnosticSourceMap<EquipmentValidationJumpTarget>(
+      (path) => {
+        const jumpTarget = targetFromDiagnosticPath(path);
+        return {
+          fieldLabel: fieldLabel(jumpTarget?.field),
+          locationLabel: undefined,
+          jumpTarget,
+        };
+      },
+    );
+  const diagnostics: EditorValidationDiagnosticView<EquipmentValidationJumpTarget>[] =
+    friendlyDiagnostics.map((friendly) => {
+      const source = sourceMap.lookup(friendly.diagnostic.path);
+
+      return {
+        severity: friendly.severity,
+        source: editorLocalDiagnosticKeys.has(diagnosticKey(friendly.diagnostic))
+          ? "authoring"
+          : "import",
+        title: friendly.title,
+        description: friendly.description,
+        suggestion: friendly.suggestion,
+        fieldLabel: friendly.field ?? source?.fieldLabel,
+        authorPath: source?.authorPath ?? friendly.diagnostic.path,
+        locationLabel: source?.locationLabel,
+        groupType: friendly.groupType,
+        specificGroup: friendly.specificGroup,
+        jumpTarget: friendly.jumpTarget ?? source?.jumpTarget,
+        technical: {
+          code: friendly.diagnostic.code,
+          internalPath: friendly.diagnostic.path,
+          value: friendly.diagnostic.value,
+        },
+      };
+    });
+  const errorCount = countFriendlyDiagnostics(friendlyDiagnostics, "error");
+  const warningCount = countFriendlyDiagnostics(friendlyDiagnostics, "warning");
+  const summaryErrorCount = Math.max(errorCount, result.summary.errorCount);
+  const summaryWarningCount = Math.max(
+    warningCount,
+    result.summary.warningCount,
+  );
+  const copy = createEquipmentValidationViewModelCopy({
+    result,
+    errorCount: summaryErrorCount,
+    warningCount: summaryWarningCount,
+  });
+  const viewModel = createEditorValidationViewModel({
+    checkedItemCount: result.summary.weaponCount + result.summary.armorCount,
+    diagnostics,
+    copy,
+  });
+  const status =
+    summaryErrorCount > 0
+      ? "failed"
+      : summaryWarningCount > 0
+        ? "passedWithWarnings"
+        : viewModel.status;
+
+  if (
+    status === viewModel.status &&
+    summaryErrorCount === viewModel.summary.errorCount &&
+    summaryWarningCount === viewModel.summary.warningCount
+  ) {
+    return viewModel;
+  }
+
+  return {
+    ...viewModel,
+    status,
+    title: copy[status].title,
+    description: copy[status].description,
+    summary: {
+      ...viewModel.summary,
+      errorCount: summaryErrorCount,
+      warningCount: summaryWarningCount,
+    },
+  };
 }
 
 export interface EquipmentValidationDisplaySummary {
@@ -250,7 +382,7 @@ function diagnosticKey(diagnostic: EquipmentPackApplicationDiagnostic) {
 export async function validateEquipmentEditorDraft(
   draft: EquipmentEditorDraft,
   applicationService: EquipmentPackApplicationService,
-): Promise<EquipmentPackApplicationImportResult> {
+): Promise<EquipmentEditorValidationResult> {
   const localDiagnostics = createEditorLocalDiagnostics(draft);
   const result = await applicationService.importFromSource(
     {
@@ -273,6 +405,7 @@ export async function validateEquipmentEditorDraft(
     ...result,
     success: result.success && localDiagnostics.length === 0,
     diagnostics,
+    editorLocalDiagnostics: localDiagnostics,
     summary: {
       ...result.summary,
       warningCount: countBySeverity(diagnostics, "warning"),

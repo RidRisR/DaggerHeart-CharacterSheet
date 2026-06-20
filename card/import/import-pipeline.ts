@@ -266,6 +266,7 @@ export async function importCardPackFromSource(
 
     if (payload.kind === "parsedObject") {
       value = payload.value
+      imageAssets = payload.imageAssets ?? []
     } else if (payload.kind === "jsonText") {
       const parsed = parseJsonText(payload.text)
       if (!parsed.success) return invalidJsonResult(mode)

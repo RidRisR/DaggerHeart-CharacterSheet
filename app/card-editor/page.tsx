@@ -22,6 +22,7 @@ import { EquipmentValidationResults } from './equipment/components/equipment-val
 import { useEquipmentEditorStore } from './equipment/equipment-editor-store'
 import { importEquipmentDraftFromFile, downloadEquipmentDraftJson } from './equipment/equipment-import-export'
 import { validateEquipmentEditorDraft, type EquipmentValidationJumpTarget } from './equipment/equipment-validation'
+import { useCardEditorFileActions } from './hooks/use-card-editor-file-actions'
 import type { CardType } from './types'
 
 export default function CardEditorPage() {
@@ -48,10 +49,11 @@ export default function CardEditorPage() {
     addCard,
     copyCard,
     deleteCard,
-    exportPackage,
-    importPackage,
     newPackage,
-    validatePackage,
+    replacePackageData,
+    resetCurrentCardIndex,
+    setValidationResult,
+    setIsValidating,
     clearValidationResult,
     setPreviewDialog,
     setCardListDialog,
@@ -61,6 +63,14 @@ export default function CardEditorPage() {
     addDefinition,
     removeDefinition
   } = useCardEditorStore()
+
+  const cardFileActions = useCardEditorFileActions({
+    draft: packageData,
+    replaceDraft: replacePackageData,
+    resetCurrentCardIndex,
+    setValidationResult,
+    setIsValidating,
+  })
 
   // 客户端初始化
   useEffect(() => {
@@ -97,6 +107,11 @@ export default function CardEditorPage() {
     clearValidationResult()
   }
 
+  const handleJumpToCardMetadata = () => {
+    setSelectedTab('metadata')
+    clearValidationResult()
+  }
+
   const chooseEquipmentFile = () =>
     new Promise<File | null>((resolve) => {
       const input = document.createElement('input')
@@ -105,6 +120,22 @@ export default function CardEditorPage() {
       input.onchange = () => resolve(input.files?.[0] ?? null)
       input.click()
     })
+
+  const chooseCardFile = () =>
+    new Promise<File | null>((resolve) => {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = '.json,.dhcb,.zip'
+      input.onchange = () => resolve(input.files?.[0] ?? null)
+      input.click()
+    })
+
+  const handleImportCardPackage = async () => {
+    const file = await chooseCardFile()
+    if (!file) return
+
+    await cardFileActions.importDraftFromFile(file)
+  }
 
   const handleNewEquipmentPackage = () => {
     const createNewEquipmentPackage = () => {
@@ -244,9 +275,9 @@ export default function CardEditorPage() {
   const toolbarActions = editorMode === 'cards'
     ? {
         onNew: newPackage,
-        onImport: importPackage,
-        onExport: exportPackage,
-        onValidate: validatePackage,
+        onImport: handleImportCardPackage,
+        onExport: cardFileActions.exportDraftAsDhcb,
+        onValidate: cardFileActions.validateDraft,
         isValidating
       }
     : {
@@ -370,6 +401,7 @@ export default function CardEditorPage() {
         open={editorMode === 'cards' && !!validationResult}
         onClose={clearValidationResult}
         onJumpToCard={handleJumpToCard}
+        onJumpToMetadata={handleJumpToCardMetadata}
       />
 
       {/* 装备验证结果对话框 */}

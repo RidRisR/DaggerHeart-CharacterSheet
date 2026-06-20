@@ -10,10 +10,16 @@ import type {
 } from '../types'
 import { defaultPackage } from '../types'
 import { createDefaultCard, copyCard } from '../utils/card-factory'
-import { exportCardPackage, importCardPackage } from '../utils/import-export'
-import { validationService, type ValidationResult, type ValidationError } from '../services/validation-service'
 import { generateSmartCardId, parseCardId, buildCardId, generateRobustCardId } from '../utils/id-generator'
 import { clearAllEditorImages } from '../utils/image-db-helpers'
+import { createBrowserCardEditorImageService } from '../services/card-editor-image-service'
+import { recoverPersistedCardEditorWorkspace } from '../services/card-editor-workspace-recovery'
+import {
+  type CardValidationJumpTarget,
+} from '../services/card-editor-validation'
+import {
+  type EditorValidationViewModel,
+} from '../services/editor-validation-view-model'
 
 // Image upload status
 interface ImageUploadStatus {
@@ -38,7 +44,7 @@ interface CardEditorStore {
   }
 
   // 验证相关状态
-  validationResult: ValidationResult | null
+  validationResult: EditorValidationViewModel<CardValidationJumpTarget> | null
   isValidating: boolean
 
   // Image manager state
@@ -66,14 +72,14 @@ interface CardEditorStore {
   deleteSubclassTriple: (index: number) => void
   
   // 卡牌包操作
-  exportPackage: () => void
-  importPackage: () => Promise<void>
   newPackage: () => void
   
   // 验证操作
-  validatePackage: () => Promise<void>
+  replacePackageData: (draft: CardPackageState) => void
+  resetCurrentCardIndex: () => void
+  setValidationResult: (result: EditorValidationViewModel<CardValidationJumpTarget> | null) => void
+  setIsValidating: (isValidating: boolean) => void
   clearValidationResult: () => void
-  validateField: (type: CardType, index: number, fieldName: string) => Promise<ValidationError | null>
   
   // UI状态
   setPreviewDialog: (state: PreviewDialogState | ((prev: PreviewDialogState) => PreviewDialogState)) => void
@@ -533,32 +539,6 @@ export const useCardEditorStore = create<CardEditorStore>()(
         }),
         
       // 卡牌包操作
-      exportPackage: () => {
-        const { packageData } = get()
-        // 清理导出数据，移除编辑器状态字段
-        const exportData = { ...packageData }
-        delete exportData.isModified
-        delete exportData.lastSaved
-        exportCardPackage(exportData)
-      },
-      
-      importPackage: async () => {
-        const importedPackage = await importCardPackage()
-        if (importedPackage) {
-          set({
-            packageData: importedPackage,
-            currentCardIndex: {
-              profession: 0,
-              ancestry: 0,
-              variant: 0,
-              community: 0,
-              subclass: 0,
-              domain: 0
-            }
-          })
-        }
-      },
-      
       newPackage: () => {
         const state = get()
         const { setConfirmDialog } = get()
@@ -597,59 +577,36 @@ export const useCardEditorStore = create<CardEditorStore>()(
       },
       
       // 验证操作
-      validatePackage: async () => {
-        set({ isValidating: true })
-        try {
-          const { packageData } = get()
-          const result = await validationService.validatePackage(packageData)
-          set({ 
-            validationResult: result,
-            isValidating: false 
-          })
-          
-          if (result.isValid) {
-            toast.success('卡牌包验证通过！')
-          } else {
-            toast.error(`验证失败：发现 ${result.summary.totalErrors} 个错误`)
-          }
-        } catch (error) {
-          console.error('验证过程中发生错误:', error)
-          set({
-            validationResult: {
-              isValid: false,
-              errors: [{ path: 'system', message: '验证系统错误' }],
-              totalCards: 0,
-              errorsByType: {} as Record<CardType, ValidationError[]>,
-              summary: { totalErrors: 1, errorsByType: {} as Record<CardType, number> }
-            },
-            isValidating: false
-          })
-          toast.error('验证过程中发生错误')
-        }
+      replacePackageData: (draft) => {
+        set({
+          packageData: draft,
+          validationResult: null,
+        })
       },
-      
+
+      resetCurrentCardIndex: () => {
+        set({
+          currentCardIndex: {
+            profession: 0,
+            ancestry: 0,
+            variant: 0,
+            community: 0,
+            subclass: 0,
+            domain: 0
+          }
+        })
+      },
+
+      setValidationResult: (result) => {
+        set({ validationResult: result })
+      },
+
+      setIsValidating: (isValidating) => {
+        set({ isValidating })
+      },
+
       clearValidationResult: () => {
         set({ validationResult: null })
-      },
-      
-      validateField: async (type: CardType, index: number, fieldName: string) => {
-        const { packageData } = get()
-        const cards = packageData[type] as any[]
-        
-        if (!cards || !cards[index]) {
-          return null
-        }
-        
-        try {
-          const fieldError = await validationService.validateCardField(type, cards[index], fieldName, packageData)
-          return fieldError
-        } catch (error) {
-          console.error('字段验证错误:', error)
-          return {
-            path: `${type}[${index}].${fieldName}`,
-            message: '验证过程中发生错误'
-          }
-        }
       },
       
       // UI状态
@@ -885,7 +842,51 @@ export const useCardEditorStore = create<CardEditorStore>()(
       name: 'card-editor-storage',
       partialize: (state) => ({
         packageData: state.packageData // 只持久化包数据
-      })
+      }),
+      onRehydrateStorage: () => {
+        const hadPersistedWorkspace =
+          typeof localStorage !== 'undefined' && localStorage.getItem('card-editor-storage') !== null
+
+        return (state, error) => {
+          if (error) {
+            console.warn('[EditorStore] Failed to hydrate persisted card editor workspace:', error)
+            return
+          }
+
+          if (!hadPersistedWorkspace) return
+          if (!state?.packageData) return
+
+          schedulePersistedWorkspaceRecovery(state.packageData)
+        }
+      }
     }
   )
 )
+
+function schedulePersistedWorkspaceRecovery(packageData: CardPackageState) {
+  const runRecovery = () => {
+    void recoverHydratedCardEditorWorkspace(packageData)
+  }
+
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(runRecovery)
+    return
+  }
+
+  setTimeout(runRecovery, 0)
+}
+
+async function recoverHydratedCardEditorWorkspace(packageData: CardPackageState) {
+  try {
+    const imageService = await createBrowserCardEditorImageService()
+    const result = await recoverPersistedCardEditorWorkspace(packageData, imageService)
+
+    if (useCardEditorStore.getState().packageData !== packageData) {
+      return
+    }
+
+    useCardEditorStore.setState({ packageData: result.draft })
+  } catch (error) {
+    console.warn('[EditorStore] Failed to recover persisted card editor workspace:', error)
+  }
+}

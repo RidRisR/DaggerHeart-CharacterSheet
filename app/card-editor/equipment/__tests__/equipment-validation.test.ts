@@ -7,6 +7,7 @@ import { createDefaultEquipmentServices } from "@/equipment/services/default-equ
 import type { EquipmentEditorDraft } from "../equipment-draft";
 import {
   createEditorLocalDiagnostics,
+  createEquipmentEditorValidationViewModel,
   createEquipmentValidationDisplaySummary,
   groupEquipmentValidationDiagnostics,
   mapEquipmentDiagnosticsToFriendly,
@@ -60,6 +61,92 @@ describe("equipment validation mapping", () => {
       title: "第2件护甲的轻微阈值有问题",
       groupType: "护甲",
       specificGroup: "第2件护甲",
+    });
+  });
+
+  it("projects equipment validation results to the shared editor validation view model", () => {
+    const viewModel = createEquipmentEditorValidationViewModel({
+      success: false,
+      stage: "structuralValidation",
+      mode: "dryRun",
+      storageCommitted: false,
+      diagnostics: [
+        {
+          severity: "error",
+          code: "MISSING_FIELD",
+          path: "/equipment/weapons/0/name",
+          message: "Weapon name is required.",
+        },
+      ],
+      summary: {
+        packId: undefined,
+        name: "测试装备包",
+        version: "1.0.0",
+        author: "作者",
+        weaponCount: 1,
+        armorCount: 0,
+        warningCount: 0,
+        errorCount: 1,
+      },
+    });
+
+    expect(viewModel.status).toBe("failed");
+    expect(viewModel.summary).toEqual({
+      errorCount: 1,
+      warningCount: 0,
+      checkedItemCount: 1,
+    });
+    expect(viewModel.diagnostics[0]).toMatchObject({
+      title: "第1件武器的名称有问题",
+      fieldLabel: "名称",
+      authorPath: "/equipment/weapons/0/name",
+      groupType: "武器",
+      specificGroup: "第1件武器",
+      jumpTarget: { tab: "weapons", index: 0, field: "name" },
+      technical: {
+        code: "MISSING_FIELD",
+        internalPath: "/equipment/weapons/0/name",
+      },
+    });
+  });
+
+  it("projects warning-only equipment validation results as passed with warnings", () => {
+    const viewModel = createEquipmentEditorValidationViewModel({
+      success: true,
+      stage: "stageImportData",
+      mode: "dryRun",
+      storageCommitted: false,
+      diagnostics: [
+        {
+          severity: "warning",
+          code: "DESCRIPTION_LONG",
+          path: "/description",
+          message: "Description is long.",
+        },
+      ],
+      summary: {
+        packId: undefined,
+        name: "测试装备包",
+        version: "1.0.0",
+        author: "作者",
+        weaponCount: 0,
+        armorCount: 1,
+        warningCount: 1,
+        errorCount: 0,
+      },
+    });
+
+    expect(viewModel.status).toBe("passedWithWarnings");
+    expect(viewModel.summary).toEqual({
+      errorCount: 0,
+      warningCount: 1,
+      checkedItemCount: 1,
+    });
+    expect(viewModel.groups.critical).toEqual([]);
+    expect(viewModel.groups.warnings[0]).toMatchObject({
+      severity: "warning",
+      fieldLabel: "描述",
+      jumpTarget: { tab: "metadata", field: "description" },
     });
   });
 
@@ -238,6 +325,119 @@ describe("equipment validation mapping", () => {
     ]);
   });
 
+  it("marks editor-local equipment diagnostics as authoring diagnostics in the validation view model", async () => {
+    const result = await validateEquipmentEditorDraft(
+      {
+        format: "daggerheart.equipment-pack.v1",
+        name: "装备",
+        version: "1.0.0",
+        author: "作者",
+        description: "",
+        equipment: {
+          weapons: [{ id: "dup" } as never],
+          armor: [{ id: "dup" } as never],
+        },
+      },
+      {
+        importFromSource: vi.fn().mockResolvedValue({
+          success: true,
+          stage: "stageImportData",
+          mode: "dryRun",
+          storageCommitted: false,
+          diagnostics: [],
+          summary: {
+            packId: undefined,
+            name: "装备",
+            version: "1.0.0",
+            author: "作者",
+            weaponCount: 1,
+            armorCount: 1,
+            warningCount: 0,
+            errorCount: 0,
+          },
+        }),
+      } as unknown as EquipmentPackApplicationService,
+    );
+
+    const viewModel = createEquipmentEditorValidationViewModel(result);
+
+    expect(viewModel.status).toBe("failed");
+    expect(viewModel.diagnostics).toContainEqual(
+      expect.objectContaining({
+        source: "authoring",
+        technical: expect.objectContaining({
+          code: "DUPLICATE_ID",
+          internalPath: "/equipment/armor/0/id",
+        }),
+      }),
+    );
+  });
+
+  it("records current equipment editor validation sending export JSON to application-service dry-run", async () => {
+    const importFromSource = vi.fn().mockResolvedValue({
+      success: true,
+      stage: "stageImportData",
+      mode: "dryRun",
+      storageCommitted: false,
+      diagnostics: [],
+      summary: {
+        packId: undefined,
+        name: "装备",
+        version: "1.0.0",
+        author: "作者",
+        weaponCount: 1,
+        armorCount: 0,
+        warningCount: 0,
+        errorCount: 0,
+      },
+    });
+    const applicationService = {
+      importFromSource,
+    } as unknown as EquipmentPackApplicationService;
+    const draft: EquipmentEditorDraft = {
+      format: "daggerheart.equipment-pack.v1",
+      name: "装备",
+      version: "1.0.0",
+      author: "作者",
+      description: "描述",
+      equipment: {
+        weapons: [
+          {
+            id: "weapon",
+            name: "短剑",
+            tier: "T1",
+            weaponType: "primary",
+            trait: "agility",
+            damageType: "physical",
+            range: "melee",
+            burden: "oneHanded",
+            damage: "d8",
+            featureName: "",
+            description: "",
+            modifierContributions: [],
+          },
+        ],
+        armor: [],
+      },
+    };
+
+    await validateEquipmentEditorDraft(draft, applicationService);
+
+    expect(importFromSource).toHaveBeenCalledTimes(1);
+    expect(importFromSource.mock.calls[0][1]).toEqual({ mode: "dryRun" });
+    await expect(importFromSource.mock.calls[0][0].read()).resolves.toEqual({
+      kind: "parsedObject",
+      value: {
+        format: "daggerheart.equipment-pack.v1",
+        name: "装备",
+        version: "1.0.0",
+        author: "作者",
+        description: "描述",
+        equipment: draft.equipment,
+      },
+    });
+  });
+
   it("deduplicates local duplicate id diagnostics from the real dry-run pipeline", async () => {
     const { applicationService } = createDefaultEquipmentServices({
       storage: "memory",
@@ -292,6 +492,53 @@ describe("equipment validation mapping", () => {
     expect(result.summary.errorCount).toBe(1);
   });
 
+  it("does not surface installed-pack conflicts during editor dry-run validation", async () => {
+    const { applicationService } = createDefaultEquipmentServices({
+      storage: "memory",
+    });
+    const draft: EquipmentEditorDraft = {
+      format: "daggerheart.equipment-pack.v1",
+      name: "已安装装备包",
+      version: "1.0.0",
+      author: "作者",
+      description: "",
+      equipment: {
+        weapons: [
+          {
+            id: "weapon:editor-dry-run-conflict",
+            name: "短剑",
+            tier: "T1",
+            weaponType: "primary",
+            trait: "agility",
+            damageType: "physical",
+            range: "melee",
+            burden: "oneHanded",
+            damage: "d8",
+            featureName: "",
+            description: "",
+            modifierContributions: [],
+          },
+        ],
+        armor: [],
+      },
+    };
+    const source = {
+      origin: { kind: "object" as const, label: "installed equipment pack" },
+      async read() {
+        return { kind: "parsedObject" as const, value: draft };
+      },
+    };
+
+    const installed = await applicationService.importFromSource(source, { mode: "commit" });
+    const result = await validateEquipmentEditorDraft(draft, applicationService);
+
+    expect(installed.success).toBe(true);
+    expect(result.success).toBe(true);
+    expect(result.diagnostics).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "ID_CONFLICT" })]),
+    );
+  });
+
   it("maps editor-local duplicate id diagnostics to item fields", () => {
     const friendly = mapEquipmentDiagnosticsToFriendly([
       {
@@ -342,10 +589,10 @@ describe("equipment validation mapping", () => {
 
     expect(friendly[0]).toMatchObject({
       description: "该字段不是装备包格式支持的字段",
-      suggestion: "请删除这个字段，然后重新验证",
+      suggestion: "请删除这个字段",
     });
     expect(friendly[1].description).toBe("该字段内容过长");
-    expect(friendly[1].suggestion).toContain("重新验证");
+    expect(friendly[1].suggestion).toBe("请缩短该字段内容");
     expect(friendly[2]).toMatchObject({
       title: "装备包内容有问题",
       description: "装备包至少需要包含一件武器或一件护甲",
@@ -371,7 +618,7 @@ describe("equipment validation mapping", () => {
       "Runtime cache build failed",
     );
     expect(friendly[0].description).toBe("装备数据刷新失败");
-    expect(friendly[0].suggestion).toContain("重新验证");
+    expect(friendly[0].suggestion).toBe("请检查装备 ID 是否冲突");
   });
 
   it("uses the standard Chinese fallback for unknown diagnostics", () => {
@@ -386,9 +633,7 @@ describe("equipment validation mapping", () => {
     const friendly = mapEquipmentDiagnosticsToFriendly(diagnostics);
 
     expect(friendly[0].description).toBe("当前字段未通过装备包校验");
-    expect(friendly[0].suggestion).toBe(
-      "请检查该字段的格式和取值，然后重新验证",
-    );
+    expect(friendly[0].suggestion).toBe("请检查该字段的格式和取值");
   });
 
   it("uses item labels instead of numeric path segments", () => {

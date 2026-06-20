@@ -30,6 +30,23 @@ const draft: CardPackageState = {
 }
 
 describe("editor-local card authoring diagnostics", () => {
+  it("reports blank package names as editor-local authoring errors", () => {
+    const diagnostics = createEditorLocalCardAuthoringDiagnostics({
+      ...draft,
+      name: "   ",
+      ancestry: [],
+      subclass: [],
+    })
+
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        severity: "error",
+        code: "EDITOR_PACKAGE_NAME_REQUIRED",
+        path: "/name",
+      }),
+    ])
+  })
+
   it("reports incomplete ancestry pair and subclass triple", () => {
     const diagnostics = createEditorLocalCardAuthoringDiagnostics(draft)
 
@@ -64,6 +81,21 @@ describe("editor-local card authoring diagnostics", () => {
     }
 
     expect(createEditorLocalCardAuthoringDiagnostics(complete)).toEqual([])
+  })
+
+  it("groups ancestry authoring checks by ancestry and intro", () => {
+    const repeatedAncestryName: CardPackageState = {
+      ...draft,
+      ancestry: [
+        { id: "human-a-1", 名称: "人类甲一", 种族: "人类", 简介: "甲", 效果: "", 类别: 1 },
+        { id: "human-a-2", 名称: "人类甲二", 种族: "人类", 简介: "甲", 效果: "", 类别: 2 },
+        { id: "human-b-1", 名称: "人类乙一", 种族: "人类", 简介: "乙", 效果: "", 类别: 1 },
+        { id: "human-b-2", 名称: "人类乙二", 种族: "人类", 简介: "乙", 效果: "", 类别: 2 },
+      ],
+      subclass: [],
+    }
+
+    expect(createEditorLocalCardAuthoringDiagnostics(repeatedAncestryName)).toEqual([])
   })
 
   it("reports groups with duplicate categories or duplicate subclass levels", () => {

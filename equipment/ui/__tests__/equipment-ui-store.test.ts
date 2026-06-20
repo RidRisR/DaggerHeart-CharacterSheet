@@ -211,7 +211,7 @@ describe("equipment UI store", () => {
       }),
     ).toMatchObject({
       code: "RUNTIME_CACHE_BUILD_FAILED",
-      message: "装备数据刷新失败。请检查装备 ID 是否冲突，修复后重新导入",
+      message: "装备数据刷新失败。请检查装备 ID 是否冲突",
     })
 
     expect(
@@ -347,7 +347,7 @@ describe("equipment UI store", () => {
     expect(store.getState().initializationError?.code).toBe("RUNTIME_CACHE_BUILD_FAILED")
     expect(store.getState().lastDiagnostics[0]).toMatchObject({
       code: "RUNTIME_CACHE_BUILD_FAILED",
-      message: "装备数据刷新失败。请检查装备 ID 是否冲突，修复后重新导入",
+      message: "装备数据刷新失败。请检查装备 ID 是否冲突",
     })
     expect(store.getState().getPackSummaries()[0]?.name).toBe("损坏但可读的装备包")
     expect(store.getState().getPackDetail(customPack.packId)?.armor[0]).toEqual({
@@ -583,7 +583,7 @@ describe("equipment UI store", () => {
     expect(store.getState().lastResult).toBe(importResult)
     expect(store.getState().lastDiagnostics[0]).toMatchObject({
       code: "INVALID_JSON",
-      message: "文件不是有效的 JSON。请修复 JSON 语法，然后重新导入",
+      message: "文件不是有效的 JSON。请修复 JSON 语法",
     })
   })
 

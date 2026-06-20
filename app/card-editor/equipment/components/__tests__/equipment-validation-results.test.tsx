@@ -90,18 +90,17 @@ describe("equipment validation results", () => {
     for (const tab of ["按优先级", "按位置", "按类型", "全部"]) {
       expect(screen.getByRole("tab", { name: tab })).toBeInTheDocument();
     }
-    expect(screen.getByRole("dialog")).toHaveClass("h-[90vh]");
 
     const overview = screen.getByRole("region", { name: "验证概览" });
-    for (const label of ["关键错误", "警告", "问题类型", "装备条目"]) {
+    for (const label of ["关键错误", "警告", "问题类型", "检查总数"]) {
       expect(within(overview).getByText(label)).toBeInTheDocument();
     }
     expect(
       within(overview).getByText("基础信息、武器、护甲、系统"),
     ).toBeInTheDocument();
-    expect(within(overview).getByText("武器 + 护甲")).toBeInTheDocument();
+    expect(within(overview).getByText("已验证")).toBeInTheDocument();
     const requiredGroup = screen.getByRole("button", {
-      name: /必须修复（正式导入前）/,
+      name: /^基础信息/,
     });
     expect(requiredGroup).toHaveAttribute("aria-expanded", "true");
     await user.click(requiredGroup);
@@ -117,50 +116,37 @@ describe("equipment validation results", () => {
     const armorProblem = screen
       .getByText("第1件护甲的描述有问题")
       .closest("div");
-    const systemProblem = screen.getByText("系统问题").closest("div");
 
     expect(metadataProblem).not.toBeNull();
     expect(weaponProblem).not.toBeNull();
     expect(armorProblem).not.toBeNull();
-    expect(systemProblem).not.toBeNull();
+    expect(screen.getAllByText("系统问题")).not.toHaveLength(0);
 
-    await user.click(
-      within(metadataProblem as HTMLElement).getByRole("button", {
-        name: "定位基础信息",
-      }),
-    );
+    const jumpButtons = screen.getAllByRole("button", {
+      name: /^定位问题：/,
+    });
+
+    await user.click(jumpButtons[1]);
     expect(onJumpToTarget).toHaveBeenCalledWith({
       tab: "metadata",
       field: "version",
     });
 
-    await user.click(
-      within(weaponProblem as HTMLElement).getByRole("button", {
-        name: "定位装备",
-      }),
-    );
+    await user.click(jumpButtons[2]);
     expect(onJumpToTarget).toHaveBeenCalledWith({
       tab: "weapons",
       index: 0,
       field: "name",
     });
 
-    await user.click(
-      within(armorProblem as HTMLElement).getByRole("button", {
-        name: "定位装备",
-      }),
-    );
+    await user.click(jumpButtons[3]);
     expect(onJumpToTarget).toHaveBeenCalledWith({
       tab: "armor",
       index: 0,
       field: "description",
     });
 
-    expect(
-      within(systemProblem as HTMLElement).queryByRole("button", {
-        name: "定位装备",
-      }),
-    ).not.toBeInTheDocument();
+    expect(jumpButtons).toHaveLength(4);
 
     await user.click(screen.getByRole("tab", { name: "按位置" }));
     expect(screen.getByRole("button", { name: /^基础信息/ })).toBeInTheDocument();
@@ -170,7 +156,10 @@ describe("equipment validation results", () => {
     expect(screen.getByRole("button", { name: /^基础信息问题/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^武器问题/ })).toBeInTheDocument();
 
-    expect(screen.getByText(/你仍可导出草稿/)).toBeInTheDocument();
+    expect(
+      screen.getByText("导出发布前应修复这些草稿问题。"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "开始导出" })).not.toBeInTheDocument();
   });
 
   it("renders a success result and closes from the primary footer action", async () => {
@@ -203,16 +192,17 @@ describe("equipment validation results", () => {
       screen.getAllByRole("heading", { name: "装备包检查通过" }),
     ).not.toHaveLength(0);
     expect(
-      screen.getByText("装备包可以导出并用于内容包管理导入。"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(/装备包包含 2 件武器和 1 件护甲/),
-    ).toHaveLength(2);
+      screen.getAllByText("草稿完全符合当前检查要求，可以导出发布文件。"),
+    ).not.toHaveLength(0);
+    expect(screen.getByText(/草稿包含/)).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText(/个检查对象，当前检查通过/)).toBeInTheDocument();
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "关闭" }));
     expect(onClose).toHaveBeenCalledOnce();
 
-    await user.click(screen.getByRole("button", { name: "返回编辑器" }));
+    await user.click(screen.getByRole("button", { name: "开始导出" }));
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 });

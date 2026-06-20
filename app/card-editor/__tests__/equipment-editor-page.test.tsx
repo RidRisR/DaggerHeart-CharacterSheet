@@ -1,13 +1,8 @@
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EquipmentPackApplicationImportResult } from "@/equipment/packs/application-service";
-import { defaultPackage } from "../types";
-import { useCardEditorStore } from "../store/card-editor-store";
-import { createDefaultEquipmentDraft } from "../equipment/equipment-draft";
-import { useEquipmentEditorStore } from "../equipment/equipment-editor-store";
-import CardEditorPage from "../page";
 
 const toast = vi.hoisted(() => ({
   success: vi.fn(),
@@ -15,14 +10,56 @@ const toast = vi.hoisted(() => ({
   info: vi.fn(),
 }));
 
-const cardImportExport = vi.hoisted(() => ({
-  exportCardPackage: vi.fn(),
-  importCardPackage: vi.fn(async () => null),
+const cardFileActions = vi.hoisted(() => ({
+  importDraftFromFile: vi.fn(async () => undefined),
+  exportDraftAsJson: vi.fn(async () => undefined),
+  exportDraftAsDhcb: vi.fn(async () => undefined),
+  validateDraft: vi.fn(async () => undefined),
+}));
+
+const useCardEditorFileActions = vi.hoisted(() =>
+  vi.fn(() => cardFileActions),
+);
+
+const imageDbHelpers = vi.hoisted(() => ({
+  saveImageToDB: vi.fn(async () => undefined),
+  getImageUrlFromDB: vi.fn(async () => null),
+  getImageBlobFromDB: vi.fn(async () => null),
+  deleteImageFromDB: vi.fn(async () => undefined),
+  hasImageInDB: vi.fn(async () => false),
+  getAllEditorImageKeys: vi.fn(async () => []),
+  clearAllEditorImages: vi.fn(async () => undefined),
+  getTotalEditorImageSize: vi.fn(async () => 0),
+  renameImageKey: vi.fn(async () => true),
+}));
+
+const imageServiceDatabase = vi.hoisted(() => ({
+  db: {
+    editorImages: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => undefined),
+      delete: vi.fn(async () => undefined),
+    },
+    transaction: vi.fn(
+      async (
+        _mode: string,
+        _table: unknown,
+        callback: () => Promise<void> | void,
+      ) => callback(),
+    ),
+  },
+  isIndexedDBAvailable: vi.fn(() => true),
 }));
 
 vi.mock("sonner", () => ({ toast }));
 
-vi.mock("../utils/import-export", () => cardImportExport);
+vi.mock("../hooks/use-card-editor-file-actions", () => ({
+  useCardEditorFileActions,
+}));
+
+vi.mock("../utils/image-db-helpers", () => imageDbHelpers);
+
+vi.mock("@/card/stores/image-service/database", () => imageServiceDatabase);
 
 vi.mock("../equipment/equipment-import-export", async (importOriginal) => {
   const actual =
@@ -43,6 +80,18 @@ vi.mock("../equipment/equipment-validation", async (importOriginal) => {
     validateEquipmentEditorDraft: vi.fn(async () => makeSuccessfulValidation()),
   };
 });
+
+const { defaultPackage } = await import("../types");
+const { useCardEditorStore } = await import("../store/card-editor-store");
+const { createDefaultEquipmentDraft } = await import(
+  "../equipment/equipment-draft"
+);
+const { useEquipmentEditorStore } = await import(
+  "../equipment/equipment-editor-store"
+);
+const { buildStandardEquipmentId } = await import("../equipment/equipment-id");
+const { buildCardId } = await import("../utils/id-generator");
+const { default: CardEditorPage } = await import("../page");
 
 function makeSuccessfulValidation(): EquipmentPackApplicationImportResult {
   return {
@@ -65,6 +114,8 @@ function makeSuccessfulValidation(): EquipmentPackApplicationImportResult {
 }
 
 function resetStores() {
+  localStorage.removeItem("card-editor-storage");
+
   useCardEditorStore.setState({
     packageData: { ...defaultPackage },
     currentCardIndex: {
@@ -126,13 +177,17 @@ function mockNextFileSelection(file: File) {
 }
 
 describe("card editor equipment mode", () => {
+  let restoreFileSelectionMock: (() => void) | null = null;
+
   beforeEach(() => {
     vi.clearAllMocks();
     resetStores();
+    restoreFileSelectionMock = null;
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    restoreFileSelectionMock?.();
+    localStorage.removeItem("card-editor-storage");
   });
 
   it("switches toolbar labels to equipment mode and hides card-only keyword action", async () => {
@@ -157,7 +212,7 @@ describe("card editor equipment mode", () => {
     expect(screen.queryByRole("tab", { name: /预览/ })).not.toBeInTheDocument();
   });
 
-  it("keeps card mode toolbar actions on the existing card export path", async () => {
+  it("keeps card mode toolbar actions on the card file action path", async () => {
     const user = userEvent.setup();
     const { downloadEquipmentDraftJson } = await import(
       "../equipment/equipment-import-export"
@@ -167,7 +222,7 @@ describe("card editor equipment mode", () => {
 
     await user.click(await screen.findByRole("button", { name: "导出卡牌包" }));
 
-    expect(cardImportExport.exportCardPackage).toHaveBeenCalledOnce();
+    expect(cardFileActions.exportDraftAsDhcb).toHaveBeenCalledOnce();
     expect(downloadEquipmentDraftJson).not.toHaveBeenCalled();
   });
 
@@ -226,6 +281,212 @@ describe("card editor equipment mode", () => {
     );
   });
 
+  it("copies card package metadata into the equipment draft after confirmation", async () => {
+    const user = userEvent.setup();
+    const oldEquipmentId = buildStandardEquipmentId(
+      "旧装备包",
+      "旧装备作者",
+      "weapon",
+      "stable-suffix",
+    );
+    const expectedEquipmentId = buildStandardEquipmentId(
+      "卡牌包名",
+      "卡牌作者",
+      "weapon",
+      "stable-suffix",
+    );
+    useCardEditorStore.setState({
+      packageData: {
+        ...defaultPackage,
+        name: "卡牌包名",
+        version: "2.0.0",
+        author: "卡牌作者",
+        description: "卡牌描述",
+      },
+    });
+    useEquipmentEditorStore.setState({
+      draft: {
+        ...createDefaultEquipmentDraft(),
+        name: "旧装备包",
+        author: "旧装备作者",
+        equipment: {
+          weapons: [
+            {
+              id: oldEquipmentId,
+              name: "旧武器",
+              tier: "",
+              weaponType: "primary",
+              trait: "",
+              damageType: "",
+              range: "",
+              burden: "",
+              damage: "",
+              featureName: "",
+              description: "",
+              modifierContributions: [],
+            },
+          ],
+          armor: [],
+        },
+      },
+    });
+
+    render(<CardEditorPage />);
+
+    await user.click(await screen.findByRole("button", { name: "装备" }));
+    await user.click(
+      screen.getByRole("button", { name: "从卡牌包基础信息复制" }),
+    );
+    expect(
+      await screen.findByText(
+        "这会覆盖装备包的名称、版本、作者和描述，并同步更新标准装备 ID 前缀，确定要继续吗？",
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "确定" }));
+
+    await waitFor(() => {
+      expect(useEquipmentEditorStore.getState().draft).toMatchObject({
+        name: "卡牌包名",
+        version: "2.0.0",
+        author: "卡牌作者",
+        description: "卡牌描述",
+        equipment: {
+          weapons: [expect.objectContaining({ id: expectedEquipmentId })],
+        },
+      });
+      expect(toast.success).toHaveBeenCalledWith("已复制卡牌包基础信息");
+    });
+  });
+
+  it("copies equipment draft metadata into the card package after confirmation", async () => {
+    const user = userEvent.setup();
+    const oldCardId = buildCardId(
+      "旧卡牌包",
+      "旧卡牌作者",
+      "profession",
+      "stable-suffix",
+    );
+    const expectedCardId = buildCardId(
+      "装备包名",
+      "装备作者",
+      "profession",
+      "stable-suffix",
+    );
+    useEquipmentEditorStore.setState({
+      draft: {
+        ...createDefaultEquipmentDraft(),
+        name: "装备包名",
+        version: "3.0.0",
+        author: "装备作者",
+        description: "装备描述",
+      },
+    });
+    useCardEditorStore.setState({
+      packageData: {
+        ...defaultPackage,
+        name: "旧卡牌包",
+        author: "旧卡牌作者",
+        profession: [{ id: oldCardId, 名称: "旧职业" } as never],
+      },
+    });
+
+    render(<CardEditorPage />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "从装备包基础信息复制",
+      }),
+    );
+    expect(
+      await screen.findByText(
+        "这会覆盖卡牌包的名称、版本、作者和描述，并同步更新标准卡牌 ID 前缀，确定要继续吗？",
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "确定" }));
+
+    await waitFor(() => {
+      expect(useCardEditorStore.getState().packageData).toMatchObject({
+        name: "装备包名",
+        version: "3.0.0",
+        author: "装备作者",
+        description: "装备描述",
+        profession: [expect.objectContaining({ id: expectedCardId })],
+      });
+      expect(toast.success).toHaveBeenCalledWith("已复制装备包基础信息");
+    });
+  });
+
+  it("exports equipment even when the current validation result has errors", async () => {
+    const user = userEvent.setup();
+    const { downloadEquipmentDraftJson } = await import(
+      "../equipment/equipment-import-export"
+    );
+    useEquipmentEditorStore.setState({
+      draft: {
+        ...createDefaultEquipmentDraft(),
+        equipment: {
+          weapons: [
+            {
+              id: "weapon",
+              name: "武器",
+              tier: "",
+              weaponType: "primary",
+              trait: "",
+              damageType: "",
+              range: "",
+              burden: "",
+              damage: "",
+              featureName: "",
+              description: "",
+              modifierContributions: [],
+            },
+          ],
+          armor: [],
+        },
+      },
+      validationResult: {
+        success: false,
+        stage: "structuralValidation",
+        mode: "dryRun",
+        storageCommitted: false,
+        diagnostics: [],
+        summary: {
+          packId: undefined,
+          name: "装备包",
+          version: "1.0.0",
+          author: "",
+          weaponCount: 1,
+          armorCount: 0,
+          warningCount: 0,
+          errorCount: 1,
+        },
+      },
+    });
+
+    render(<CardEditorPage />);
+
+    await user.click(await screen.findByRole("button", { name: "装备" }));
+    expect(
+      await screen.findByRole("heading", { name: "需要修复一些装备问题" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "关闭" }));
+
+    await user.click(screen.getByRole("button", { name: "导出装备包" }));
+
+    await waitFor(() => {
+      expect(downloadEquipmentDraftJson).toHaveBeenCalledWith(
+        expect.objectContaining({
+          equipment: {
+            weapons: [expect.objectContaining({ id: "weapon" })],
+            armor: [],
+          },
+        }),
+      );
+    });
+  });
+
   it("imports equipment JSON by replacing only the equipment draft after confirmation", async () => {
     const user = userEvent.setup();
     const file = new File(
@@ -258,7 +519,8 @@ describe("card editor equipment mode", () => {
       { type: "application/json" },
     );
 
-    mockNextFileSelection(file);
+    const fileSelectionMock = mockNextFileSelection(file);
+    restoreFileSelectionMock = () => fileSelectionMock.mockRestore();
     useCardEditorStore.setState({
       packageData: { ...defaultPackage, name: "原卡牌包" },
     });
@@ -305,7 +567,8 @@ describe("card editor equipment mode", () => {
       { type: "application/json" },
     );
 
-    mockNextFileSelection(file);
+    const fileSelectionMock = mockNextFileSelection(file);
+    restoreFileSelectionMock = () => fileSelectionMock.mockRestore();
 
     render(<CardEditorPage />);
 

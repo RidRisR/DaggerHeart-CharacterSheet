@@ -324,14 +324,14 @@ export function createEquipmentPackApplicationService(
     source: EquipmentPackImportSource,
     options: EquipmentPackImportOptions,
   ): Promise<EquipmentPackApplicationImportResult> {
+    if ((options.mode ?? "commit") === "dryRun") {
+      return importEquipmentPackFromSource(source, options, {})
+    }
+
     const storageSnapshot = await input.repository.loadSnapshot()
     const pipelineResult = await importEquipmentPackFromSource(source, options, {
       conflictContext: buildConflictContext(storageSnapshot),
     })
-
-    if (pipelineResult.mode === "dryRun") {
-      return pipelineResult
-    }
 
     if (!pipelineResult.success || pipelineResult.stage !== "stageImportData" || !pipelineResult.draft) {
       return pipelineResult

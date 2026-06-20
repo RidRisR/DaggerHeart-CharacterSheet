@@ -502,6 +502,15 @@ describe("equipment pack application service", () => {
     expect(runtimeCacheService.rebuild).not.toHaveBeenCalled()
   })
 
+  it("does not load repository snapshot in dryRun mode", async () => {
+    const { service, repository } = createTestService()
+    const loadSnapshot = vi.spyOn(repository, "loadSnapshot")
+
+    await service.importFromSource(validSource(), { mode: "dryRun" })
+
+    expect(loadSnapshot).not.toHaveBeenCalled()
+  })
+
   it("commit import builds conflict context from repository snapshot", async () => {
     const { service, repository } = createTestService({
       snapshot: makeStorageSnapshot([
@@ -518,9 +527,12 @@ describe("equipment pack application service", () => {
 
   it("commit import succeeds only after storage transaction and runtime cache build", async () => {
     const { service, repository, runtimeCacheService } = createTestService()
+    const source = validSource()
+    const read = vi.fn(source.read)
 
-    const result = await service.importFromSource(validSource(), { mode: "commit" })
+    const result = await service.importFromSource({ ...source, read }, { mode: "commit" })
 
+    expect(read).toHaveBeenCalledTimes(1)
     expect(repository.commitImport).toHaveBeenCalledTimes(1)
     expect(repository.commitImport).toHaveBeenCalledWith(
       expect.objectContaining({

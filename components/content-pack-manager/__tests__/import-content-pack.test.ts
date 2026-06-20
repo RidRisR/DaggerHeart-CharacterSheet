@@ -134,14 +134,14 @@ describe("importContentPackFiles", () => {
           severity: "error",
           code: "INVALID_JSON",
           path: "/metadata",
-          message: "文件不是有效的 JSON。请修复 JSON 语法，然后重新导入",
+          message: "文件不是有效的 JSON。请修复 JSON 语法",
           value: { format: "bad" },
         },
         {
           severity: "warning",
           code: "DESCRIPTION_LONG",
           path: "/description",
-          message: "描述内容较长，可能影响阅读体验。建议精简描述内容，然后重新导入",
+          message: "描述内容较长，可能影响阅读体验。建议精简描述内容",
         },
       ],
     })

@@ -4,9 +4,9 @@
  */
 
 import JSZip from 'jszip';
-import { getAllEditorImageKeys, getImageBlobFromDB } from './image-db-helpers';
 import type { CardPackageState } from '../types';
-import type { StandardCard } from '@/card/card-types';
+import { createLegacyDhcbView } from '../services/card-draft-serialization';
+import { createBrowserCardEditorImageService } from '../services/card-editor-image-service';
 
 /**
  * Export card package as .dhcb/.zip file with images
@@ -29,72 +29,17 @@ export async function exportCardPackageWithImages(
   };
   zip.file('manifest.json', JSON.stringify(manifest, null, 2));
 
-  // Collect all card IDs from current package
-  const currentCardIds = new Set<string>();
-  const cardTypes = ['profession', 'ancestry', 'community', 'subclass', 'domain', 'variant'] as const;
-  cardTypes.forEach(type => {
-    const cards = packageData[type] as any[];
-    if (cards && Array.isArray(cards)) {
-      cards.forEach(card => {
-        if (card.id) currentCardIds.add(card.id);
-      });
-    }
-  });
-
-  // Get all available images from IndexedDB and filter to only include current package's cards
-  const allImageKeys = await getAllEditorImageKeys();
-  const validImageKeys = allImageKeys.filter(key => currentCardIds.has(key));
-  const imageKeysSet = new Set(validImageKeys);
-
-  // Helper function to mark cards with local images
-  const markCardsWithLocalImages = (cards: any[] | undefined) => {
-    if (!cards || !Array.isArray(cards)) return [];
-    return cards.map(card => {
-      const hasImage = imageKeysSet.has(card.id);
-      return {
-        ...card,
-        hasLocalImage: hasImage ? true : undefined,
-        // Remove imageUrl if hasLocalImage is true to save space
-        imageUrl: hasImage ? undefined : card.imageUrl
-      };
-    });
-  };
-
-  // Create cards.json with native format (same as JSON export)
-  const exportData = {
-    name: packageData.name,
-    version: packageData.version,
-    description: packageData.description,
-    author: packageData.author,
-    customFieldDefinitions: packageData.customFieldDefinitions,
-    profession: markCardsWithLocalImages(packageData.profession),
-    ancestry: markCardsWithLocalImages(packageData.ancestry),
-    community: markCardsWithLocalImages(packageData.community),
-    subclass: markCardsWithLocalImages(packageData.subclass),
-    domain: markCardsWithLocalImages(packageData.domain),
-    variant: markCardsWithLocalImages(packageData.variant)
-  };
-
-  zip.file('cards.json', JSON.stringify(exportData, null, 2));
+  const imageService = await createBrowserCardEditorImageService();
+  const view = await createLegacyDhcbView(packageData, imageService);
+  zip.file('cards.json', JSON.stringify(view.cardsJson, null, 2));
 
   // Add images to ZIP (only valid images belonging to current package)
   const imagesFolder = zip.folder('images');
   if (imagesFolder) {
-    let imageCount = 0;
-    for (const cardId of validImageKeys) {
-      try {
-        const blob = await getImageBlobFromDB(cardId);
-        if (blob) {
-          // Infer file extension from MIME type
-          const ext = getExtensionFromMimeType(blob.type);
-          imagesFolder.file(`${cardId}${ext}`, blob);
-          imageCount++;
-        }
-      } catch (error) {
-        console.warn(`[ZipExport] Failed to get image for ${cardId}:`, error);
-      }
+    for (const image of view.images) {
+      imagesFolder.file(`${image.cardId}${getExtensionFromMimeType(image.blob.type)}`, image.blob);
     }
-    console.log(`[ZipExport] Added ${imageCount} images to ZIP`);
+    console.log(`[ZipExport] Added ${view.images.length} images to ZIP`);
   }
 
   // Generate ZIP blob

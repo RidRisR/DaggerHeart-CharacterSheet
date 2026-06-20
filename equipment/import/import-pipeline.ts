@@ -103,6 +103,12 @@ export async function importEquipmentPackFromSource(
   dependencies: EquipmentPackImportDependencies,
 ): Promise<EquipmentPackImportResult> {
   const mode = options.mode ?? "commit"
+  const conflictContext = dependencies.conflictContext
+
+  if (mode !== "dryRun" && !conflictContext) {
+    throw new Error("Equipment commit import requires conflict context.")
+  }
+
   let payload: EquipmentPackRawPayload
 
   try {
@@ -179,7 +185,24 @@ export async function importEquipmentPackFromSource(
     })
   }
 
-  const conflictDiagnostics = checkEquipmentPackConflicts(normalized.pack, dependencies.conflictContext)
+  const draft = buildCommitDraft(normalized.pack, source, payload)
+
+  if (mode === "dryRun") {
+    return resultFromDiagnostics({
+      stage: "stageImportData",
+      success: true,
+      mode,
+      pack: normalized.pack,
+      draft,
+      diagnostics: diagnosticsAfterSemantic,
+    })
+  }
+
+  if (!conflictContext) {
+    throw new Error("Equipment commit import requires conflict context.")
+  }
+
+  const conflictDiagnostics = checkEquipmentPackConflicts(normalized.pack, conflictContext)
   const diagnostics = [...diagnosticsAfterSemantic, ...conflictDiagnostics]
   if (hasErrors(conflictDiagnostics)) {
     return resultFromDiagnostics({
@@ -190,8 +213,6 @@ export async function importEquipmentPackFromSource(
       diagnostics,
     })
   }
-
-  const draft = buildCommitDraft(normalized.pack, source, payload)
 
   return resultFromDiagnostics({
     stage: "stageImportData",

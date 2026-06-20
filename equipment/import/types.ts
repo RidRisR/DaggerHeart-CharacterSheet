@@ -155,7 +155,7 @@ export interface EquipmentPackCommitDraft {
 }
 
 export interface EquipmentPackImportDependencies {
-  conflictContext: EquipmentPackConflictContext
+  conflictContext?: EquipmentPackConflictContext
 }
 
 export interface EquipmentPackImportResult {

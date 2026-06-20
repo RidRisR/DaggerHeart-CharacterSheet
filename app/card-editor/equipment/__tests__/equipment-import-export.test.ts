@@ -98,6 +98,61 @@ describe("equipment editor import/export", () => {
     );
   });
 
+  it("records current equipment export as one full equipment-pack v1 JSON payload", () => {
+    const result = recoverEquipmentEditorDraft({
+      format: "daggerheart.equipment-pack.v1",
+      name: "装备包",
+      version: "1.0.0",
+      author: "作者",
+      description: "描述",
+      equipment: {
+        weapons: [{ id: "weapon", name: "短剑" }],
+        armor: [{ id: "armor", name: "皮甲", baseThresholds: {} }],
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(toEquipmentExportJson(result.draft)).toEqual({
+      format: "daggerheart.equipment-pack.v1",
+      name: "装备包",
+      version: "1.0.0",
+      author: "作者",
+      description: "描述",
+      equipment: {
+        weapons: [
+          {
+            id: "weapon",
+            name: "短剑",
+            tier: "",
+            weaponType: "primary",
+            trait: "",
+            damageType: "",
+            range: "",
+            burden: "",
+            damage: "",
+            featureName: "",
+            description: "",
+            modifierContributions: [],
+          },
+        ],
+        armor: [
+          {
+            id: "armor",
+            name: "皮甲",
+            tier: "",
+            baseArmorMax: null,
+            baseThresholds: { minor: null, major: null },
+            featureName: "",
+            description: "",
+            modifierContributions: [],
+          },
+        ],
+      },
+    });
+  });
+
   it("filters unsafe modifier contributions during recovery", () => {
     const result = recoverEquipmentEditorDraft({
       format: "daggerheart.equipment-pack.v1",

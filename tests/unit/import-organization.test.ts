@@ -20,9 +20,7 @@ const mockPackageData: CardPackageState = {
   subclass: [],
   domain: [],
   variant: [],
-  customFieldDefinitions: {},
-  isModified: false,
-  lastSaved: new Date()
+  customFieldDefinitions: {}
 }
 
 // 创建测试用的种族卡

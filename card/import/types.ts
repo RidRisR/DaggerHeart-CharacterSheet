@@ -65,7 +65,7 @@ export type CardImportWarningDiagnostic = Extract<CardImportDiagnostic, { severi
 
 export type CardPackRawPayload =
   | { kind: "jsonText"; text: string; sizeBytes?: number }
-  | { kind: "parsedObject"; value: unknown; sizeBytes?: number }
+  | { kind: "parsedObject"; value: unknown; sizeBytes?: number; imageAssets?: CardImportImageAsset[] }
   | { kind: "dhcbBytes"; bytes: ArrayBuffer; sizeBytes?: number }
 
 export interface PackSourceDescriptor {

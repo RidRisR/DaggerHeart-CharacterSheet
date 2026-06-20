@@ -1,6 +1,6 @@
 # Content Pack Import Context
 
-This context defines the domain language for content pack formats, import validation, normalization, diagnostics, conflict checks, and storage transactions.
+This context defines the domain language for content pack formats, import validation, normalization, diagnostics, commit planning, and storage transactions.
 
 ## Language
 
@@ -38,9 +38,9 @@ _Avoid_: card editor when discussing equipment authoring; content pack manager
 
 **Content Pack Draft**:
 An in-progress authoring state for one pack payload, such as a card pack draft or an equipment pack draft.
-_Avoid_: content bundle draft; stored pack; imported pack; runtime pack
+_Avoid_: content bundle draft; stored pack; imported pack; runtime pack; editor workspace metadata
 
-**Editor Draft Import Recovery**:
+**Editor Draft Recovery**:
 The lenient editor-only import step that turns a parseable content-pack-shaped file into a **Content Pack Draft** for continued editing, possibly filling editor-safe structure, without claiming the file is valid for formal import.
 _Avoid_: formal import; schema validation; installed pack import
 
@@ -54,11 +54,15 @@ _Avoid_: formal import validation; install action; public release guarantee
 
 **Editor Draft Export Serialization**:
 The non-mutating export step that produces the actual payload or bundle view written by **Editor Draft Export**, including removing editor-only state and excluding packaged assets that do not belong to current draft content.
-_Avoid_: editor draft validation; editor draft import recovery; draft repair; storage cleanup
+_Avoid_: editor draft validation; editor draft recovery; draft repair; storage cleanup
 
 **Editor Draft Validation**:
-The read-only editor action that checks whether the current **Content Pack Draft**, after serialization to the same payload shape the editor would actually export, would pass the same formal dry-run import workflow used by install surfaces, then may merge editor-local authoring diagnostics for draft regularity rules that are stricter than formal import compatibility.
-_Avoid_: export; editor import recovery; second validator; draft repair
+The read-only editor action that serializes the current **Content Pack Draft** to the same payload shape the editor would actually export, runs **Dry Run** against that payload, then explicitly runs **Editor-Owned Authoring Checks** in the editor layer and combines both results into an editor validation view model.
+_Avoid_: export; editor draft recovery; second validator; draft repair; import workflow stage
+
+**Editor-Owned Authoring Checks**:
+Editor-layer checks that run only inside **Editor Draft Validation** orchestration, such as requiring ancestry cards to appear in pairs or subclass cards to appear in triples. They are not an import workflow stage, do not belong to **Dry Run**, do not run during formal import, and should live in the editor application service or editor adapter layer rather than `card/import` or `equipment/import`.
+_Avoid_: dry-run stage; import validation stage; commit-plan preflight; formal import diagnostic source
 
 **Editor-Local Authoring Diagnostic**:
 A diagnostic produced only by an editor validation action for authoring regularity, such as requiring ancestry cards to appear in pairs or subclass cards to appear in triples. It helps pack authors make a clean draft but does not become a formal import blocking rule unless the formal import workflow also reports it.
@@ -107,6 +111,10 @@ _Avoid_: editor image; global image; public image path
 **Legacy Global Card Image**:
 The older imported-card image record keyed only by card ID in IndexedDB. It remains readable during migration and compatibility fallback, but new DHCB imports should write **Pack-Scoped Card Images**.
 _Avoid_: pack-scoped image; editor image
+
+**Editor Image Workspace**:
+The best-effort image storage used by the content pack editor while a pack author is editing a draft. It may allow partial image import failures, asynchronous cleanup, and workspace replacement behavior because it is not committed content. Formal import asset storage must not reuse these relaxed semantics.
+_Avoid_: pack-scoped image storage; formal import asset storage; committed content image namespace
 
 **Public Schema**:
 The JSON Schema that defines the external structure a content pack file must satisfy before it can enter normalization.
@@ -164,12 +172,16 @@ _Avoid_: legacy card format; storage model; default editor export
 A workflow boundary that converts one accepted external payload shape, such as **Legacy Card Format** or a future public card-pack schema, into the **Card Pack Internal Validation Schema** shape.
 _Avoid_: semantic validator; storage migration; editor draft repair
 
+**Source Adaptation**:
+The Dry Run boundary that applies an **External Format Adapter** or equivalent source-view conversion before structural validation while preserving author-facing diagnostic locations.
+_Avoid_: authoring preprocess; editor draft repair; editor-owned authoring checks; semantic validation
+
 **External Import File**:
 The actual file or container supplied to the import workflow, such as a card-pack JSON file or a legacy card DHCB.
 _Avoid_: public schema; import model; storage model
 
 **Card Pack Import Model**:
-A conservative staging shape used only inside the card pack import workflow after legacy input has been schema-validated and adapted. It supports validation, normalization, diagnostics, conflict checks, and commit planning, but is not a public schema, editor authoring model, storage authority, or future v1 implementation.
+A conservative staging shape used only inside the card pack import workflow after legacy input has been schema-validated and adapted. It supports dry-run validation, normalization, and diagnostics, and may be consumed by **Commit Plan** building, but it is not a public schema, editor authoring model, storage authority, or future v1 implementation.
 _Avoid_: v1-like model; storage model; public schema
 
 **Runtime Card Projection**:
@@ -193,11 +205,11 @@ The current custom-card localStorage payload shape for installed card packs. It 
 _Avoid_: public schema; normalized pack data; editor draft
 
 **Commit Plan**:
-The validated, pre-commit description of persistent writes an import would perform, including pack metadata, templates, lifecycle state, and packaged assets.
+The storage-aware, pre-commit description of persistent writes an import would perform, including pack metadata, templates, lifecycle state, and packaged assets. Building a commit plan is the boundary that checks whether a dry-run-valid pack can be imported into the current local installation.
 _Avoid_: storage transaction; public schema; runtime read model
 
 **Card Import Commit Plan**:
-A card-pack-specific **Commit Plan** built after successful dry-run validation and conflict checks. It is the boundary between import validation/staging and storage-format projection, and describes what pack should be installed before any concrete storage format or backend writes are chosen.
+A card-pack-specific **Commit Plan** built from a successful **Dry Run** result by performing storage-aware importability checks and producing the planned writes. It is the boundary between import validation/staging and storage-format projection, and describes what pack should be installed before any concrete storage format or backend writes are chosen.
 _Avoid_: dry-run result; editor draft; direct localStorage payload
 
 **Compatibility Facade**:
@@ -261,7 +273,7 @@ The validation step that checks business rules not fully represented by the publ
 _Avoid_: structural validation; conflict check
 
 **Conflict Check**:
-The validation step that checks a structurally and semantically valid pack against current system state, such as built-in template IDs and already imported template IDs.
+The storage-aware check, performed while building a **Commit Plan**, that compares a dry-run-valid pack against current system state, such as built-in template IDs and already imported template IDs.
 _Avoid_: duplicate check when current system state matters
 
 **Import Diagnostic**:
@@ -272,6 +284,10 @@ _Avoid_: raw error string
 A JSON Pointer string that identifies the primary location of an import diagnostic in the input document.
 _Avoid_: localized field label
 
+**Diagnostic Source Map**:
+A mapping produced by an external format adapter, editor export serializer, or normalization boundary that relates workflow diagnostic paths to the author-facing payload paths and editor jump targets that produced them.
+_Avoid_: UI-only field label table; hardcoded legacy path mapper
+
 **Import Origin**:
 Metadata describing where an import input came from, such as a file, object, builtin source, or future container.
 _Avoid_: pipeline branch condition
@@ -281,8 +297,8 @@ A non-blocking import diagnostic that may help authors improve content but does 
 _Avoid_: separate authoring pipeline
 
 **Dry Run**:
-An import execution mode that validates and stages data without committing storage or rebuilding runtime registries.
-_Avoid_: separate validation pipeline
+An import execution mode that validates the content pack itself without committing storage, rebuilding runtime registries, or using current local storage state. It includes source reading, source adaptation, structural validation, normalization, semantic validation, diagnostics, and staging needed to describe the pack, but it does not build a **Commit Plan** or perform installed-content **Conflict Check**.
+_Avoid_: install preflight; storage-aware validation; separate validation pipeline
 
 **Import Result Stage**:
 The final pipeline stage reached by an import workflow result.
@@ -297,7 +313,7 @@ The rollback-style cleanup performed after a multi-store commit fails, removing 
 _Avoid_: database transaction; best-effort ignore
 
 **Application Service**:
-The use-case orchestration layer that coordinates import validation, conflict context construction, pack ID generation, repository transactions, and lifecycle result mapping for content pack workflows.
+The use-case orchestration layer that coordinates import validation, commit plan building, pack ID generation, repository transactions, and lifecycle result mapping for content pack workflows.
 _Avoid_: UI store; repository adapter; validator
 
 **Repository Port**:
@@ -357,14 +373,18 @@ _Avoid_: storage snapshot; persisted index
 - A **Content Pack** may be a **Card Pack** or an **Equipment Pack**.
 - A **Pack ID** identifies the stored pack unit; a **Template ID** identifies reusable content inside a pack.
 - A **Pack User** may receive a simplified import result while **Warning Diagnostics** remain available in details or advanced views.
-- A **Pack Author** can use the same import pipeline in **Dry Run** mode to see error and warning diagnostics without committing data.
-- A failed **Dry Run** for an **Equipment Editor Draft** blocks treating the draft as a formally importable **Equipment Pack**, but does not block **Scoped Equipment JSON Export** of the current authoring draft.
+- A **Pack Author** can use the same import pipeline in **Dry Run** mode to see source, structural, normalization, and semantic diagnostics without committing data or depending on current local storage state.
+- A failed **Dry Run** for an **Equipment Editor Draft** blocks treating the draft as a valid equipment pack payload, but does not block **Scoped Equipment JSON Export** of the current authoring draft.
 - The same equipment-pack **Import Diagnostic** should use one consistent domain explanation across authoring and formal import views. Pack Author dry-run copy should guide the author to fix the draft and rerun validation; Pack User formal-import copy should guide the user to fix the file and import again.
 - An **Import Origin** provides metadata for diagnostics and results; parsed-vs-text handling is determined by the raw payload shape, not by origin.
 - A **Content Bundle Manifest** is a file index, not a content metadata authority. It must not override card pack or equipment pack payload metadata.
 - An **Import Result Stage** records where the workflow stopped; `runtimeCacheBuild` with success means the import is complete and runtime-available.
-- A successful **Dry Run** stops at `stageImportData`, not `runtimeCacheBuild`.
+- A successful **Dry Run** stops before storage-aware **Commit Plan** building, **Storage Transaction**, or `runtimeCacheBuild`.
+- Import workflows have three responsibility boundaries: **Dry Run** validates the pack itself without storage state; **Commit Plan** building uses current storage and built-in state to decide whether that valid pack can be imported and what would be written; **Storage Transaction** executes that plan.
 - An **Import Diagnostic** has one primary **Diagnostic Path** and may reference related paths for multi-location issues.
+- A **Diagnostic Source Map** should be produced by the boundary that changes payload shape. UI projection should use the source map to show author-facing paths and editor jump targets instead of hardcoding one legacy mapping table.
+- User-facing diagnostic views should prioritize readable author-facing explanations and locations. Internal diagnostic paths, raw codes, and raw values should be available only as necessary technical details, not as the primary message.
+- **Editor Draft Validation** diagnostic copy is addressed to a **Pack Author** and should guide them to fix the draft and validate again. Formal import diagnostic summary is addressed to a **Pack User**; detail copy may remain actionable for authors, but should use import-oriented actions such as fixing the file and importing again.
 - A **Public Schema** defines the accepted external JSON shape.
 - A **Public Schema** should use **Official-Facing Terminology** for author-facing fields when the rulebook provides stable card anatomy terms.
 - **Official-Facing Terminology** must be balanced with **Low-Loss Legacy Mapping**. Public schemas should not require legacy adapters to split a markdown rule paragraph into multiple semantic feature objects unless the legacy data already has that structure.
@@ -375,7 +395,7 @@ _Avoid_: storage snapshot; persisted index
 - A **Forward Format Export** can expose new schema or container capabilities, but should be labeled as requiring a compatible app version.
 - For card packs, the legacy JSON / legacy DHCB / current editor export shape remains a required compatibility contract and default editor export target. The English shape-preserving `daggerheart.card-pack.v1` schema is accepted for external import and required internally as the **Card Pack Internal Validation Schema**, but it is not the default editor export format.
 - An **External Import File** is not itself the public contract; the public contract is the payload shape it contains, such as the **Legacy Published Format** inside a JSON file or legacy card DHCB.
-- Card pack import refactoring should keep **Legacy Card Format** files importable through a **Legacy Card Adapter** rather than force existing pack authors to rewrite old packs. Internally, the workflow may adapt legacy input into the **Card Pack Internal Validation Schema** and then into a **Card Pack Import Model** for validation, normalization, diagnostics, conflict checks, and commit planning.
+- Card pack import refactoring should keep **Legacy Card Format** files importable through a **Legacy Card Adapter** rather than force existing pack authors to rewrite old packs. Internally, the workflow may adapt legacy input into the **Card Pack Internal Validation Schema** and then into a **Card Pack Import Model** for dry-run validation, normalization, and diagnostics before commit planning consumes the staged result.
 - The **Card Pack Import Model** should stay conservative and close to legacy input. It must not introduce extra reshaping solely for i18n, future v1, or storage migration.
 - A **Card Pack Public Schema** documents an intentionally published author-facing payload contract, a **Card Pack Internal Validation Schema** stabilizes workflow validation, an **External Format Adapter** converts accepted external shapes into that internal schema, a **Card Pack Import Model** is an internal workflow shape, and a **Commit Plan** describes possible durable writes.
 - Absence of a **Format Identifier** in a card-pack payload means the importer should treat it as **Legacy Card Format**. Presence of `daggerheart.card-pack.v1` means the importer should validate it directly as **Card Pack Internal Validation Schema**. Presence of any other unrecognized card-pack **Format Identifier** must produce an unsupported-format diagnostic and must not fall back to legacy parsing.
@@ -383,8 +403,8 @@ _Avoid_: storage snapshot; persisted index
 - The **Card Pack Internal Validation Schema** should use English official-facing field names for individual card properties. Legacy Chinese card property names belong at the **Legacy Card Adapter** input boundary only.
 - The **Card Pack Internal Validation Schema** should be strict about unknown fields. Legacy card payloads may be leniently adapted for compatibility, but unknown legacy fields should produce **Warning Diagnostics** and be discarded before structural validation.
 - Storage structures and runtime read models must not define what a pack author is required to write in either **Legacy Card Format**, any future **Card Pack Public Schema**, or the **Card Pack Internal Validation Schema**.
-- Card pack formal import should not commit directly from a dry-run result into localStorage. It should first build a **Card Import Commit Plan**, then execute that plan through a storage/application boundary.
-- A **Card Import Commit Plan** should be built only after **Conflict Check** succeeds. ID conflicts are a plan precondition, not a storage backend responsibility, though backends may still reject stale or duplicate pack writes defensively.
+- Card pack formal import should not commit directly from a dry-run result into localStorage. It should first build a **Card Import Commit Plan**, including storage-aware **Conflict Check**, then execute that plan through a storage/application boundary.
+- A **Card Import Commit Plan** should be built only after storage-aware importability checks, such as template ID conflicts and pack limits, succeed. Those checks belong to commit planning, not to **Dry Run** or the storage backend, though backends may still reject stale or duplicate pack writes defensively.
 - Like equipment-pack final commit plans, a **Card Import Commit Plan** should include final pack identity, imported timestamp, source summary, staged pack data, and lifecycle defaults such as `disabled: false`.
 - This phase keeps **Legacy Card Batch Storage Format** as the selected card import storage format, but it must be reached through a **Storage Format Adapter** so future storage format changes do not rewrite validation and staging.
 - This phase uses a localStorage/IndexedDB **Storage Backend Adapter** for card packs, but backend keys and persistence mechanics must not leak into **Card Import Commit Plan** or validation stages.
@@ -396,13 +416,18 @@ _Avoid_: storage snapshot; persisted index
 - A **Canonical Model** is produced only after parsing, structural validation, and normalization.
 - A **Template ID** is stable content identity, not a runtime sheet identity.
 - A **Content Version** is maintained by the pack author; a **Format Identifier** is maintained by the application.
-- **Structural Validation**, **Normalization**, **Semantic Validation**, **Conflict Check**, and **Storage Transaction** are separate import pipeline stages.
+- **Source Adaptation**, **Structural Validation**, **Normalization**, and **Semantic Validation** belong to **Dry Run**. Storage-aware checks such as template ID conflicts and pack limits belong to **Commit Plan** building. Durable writes belong to **Storage Transaction**.
 - A failed import before **Storage Transaction** must return **Import Diagnostics** and must not mutate storage or runtime registries.
 - **Equipment Editor Import Recovery** may accept incomplete equipment JSON for continued authoring, but it must reject inputs that cannot be safely rendered as an **Equipment Editor Draft**. It does not replace **Structural Validation**, **Semantic Validation**, or formal equipment pack import.
 - **Equipment Draft Replacement** is the current equipment editor import behavior. Importing into the editor opens one equipment JSON as the current draft and does not merge weapons or armor into an existing draft.
 - An **Editor Null Placeholder** may appear in editor-exported half-finished equipment JSON. Formal import validation must still treat it as invalid when the field is required by the public schema.
 - A **Standard Equipment Editor Template ID** is generated when a pack author creates a new weapon or armor template in the editor. If equipment pack `name` or `author` changes, only ids matching the previous standard prefix are rewritten. Non-standard ids remain unchanged.
-- **Editor Draft Import Recovery** and **Editor Draft Export** may be lenient to preserve authoring round trips. **Editor Draft Validation** must use the same formal dry-run import workflow as install surfaces for installability, then may merge **Editor-Local Authoring Diagnostics** for stricter draft regularity rules.
+- **Editor Draft Repair** is an explicit editor-only phase inside **Editor Draft Recovery**. For card drafts, automatic ancestry-pair and subclass-triple completion belongs to repair, not to parsing, formal validation, export serialization, or dry-run validation.
+- **Content Pack Draft** content should not include editor workspace metadata such as dirty flags or last-saved timestamps. Legacy persisted drafts may still contain old editor-only fields, but export and validation serialization should construct payloads from an explicit whitelist and naturally ignore those residues.
+- **Editor Draft Recovery** and **Editor Draft Export** may be lenient to preserve authoring round trips. **Editor Draft Validation** validates the serialized draft payload with **Dry Run**, separately runs **Editor-Owned Authoring Checks**, and combines both results in the editor layer. **Dry Run** results must not contain **Editor-Local Authoring Diagnostics**.
+- **Editor-Owned Authoring Checks** are editor concerns, not import workflow stages. Formal import and content manager flows do not run them.
+- **Editor Image Workspace** behavior may be best-effort, such as continuing draft recovery when one editor image fails to persist or deleting editor images asynchronously after draft mutation. Formal card import asset writes remain part of **Storage Transaction** and must preserve import atomicity.
+- **Persisted Editor Workspace Recovery** runs when the editor opens an existing local `card-editor-storage` draft. It is a silent editor maintenance step, not file import, dry run, or validation. It may remove legacy editor-only fields, reconcile stale `hasLocalImage` flags against the actual **Editor Image Workspace**, and run best-effort orphan image cleanup so the editor UI reflects real local image availability.
 - A successful import may include **Warning Diagnostics**; warnings must not block storage commit or runtime cache build.
 - An **Application Service** is the only layer that orchestrates full import commit, remove, enable, and disable workflows.
 - UI stores, repository adapters, and import validators should not duplicate **Application Service** workflow decisions.
@@ -420,7 +445,7 @@ _Avoid_: storage snapshot; persisted index
 - Old formal card import entrypoint names may remain temporarily as facades for UI compatibility, but old validation/commit/image-write implementations must not remain as a second real import path alongside the new **Application Service**.
 - Formal JSON card import and legacy DHCB card import should differ only in source intake. After cards JSON and optional image assets are read, both should use the same card import **Application Service** path, aligned with the equipment-pack `importFromSource` pattern.
 - Card import application services should receive `CardImportSource` objects rather than raw `File` objects, matching the equipment-pack source contract. The card import pipeline should produce a commit draft at stage-import-data; the application service should turn that draft into a final commit plan by adding pack identity, imported timestamp, and lifecycle defaults.
-- Card import modes should match equipment import modes: `"dryRun"` validates and stages without storage writes, while pipeline `"commit"` mode also stops at stage-import-data and returns a commit draft. Only the **Application Service** performs final repository commit.
+- Card import modes should match the long-term equipment import mode vocabulary: `"dryRun"` validates the pack itself without storage writes or storage-aware conflict context, while formal import uses the **Application Service** to build a **Commit Plan** and perform **Conflict Check** before final repository commit.
 - Card import application result shapes should stay aligned with equipment import application results, including stage, mode, storage committed flag, optional snapshot, diagnostics, and summary counts. Card-specific summaries may add card and image counts.
 - A legacy localStorage card-pack repository should write **Pack Data** before updating the **Storage Index**. If content exists without an index entry, recovery treats it as orphan content and removes it; if the index references missing or corrupted content, recovery removes the broken index entry.
 - For legacy card DHCB import, card content and packaged images are one strong-consistency install unit. The **Storage Index** must be updated only after both card content and all required packaged image writes succeed; if image or index commit fails, the import must compensate by removing content and images written for that failed import.
@@ -458,11 +483,10 @@ _Avoid_: storage snapshot; persisted index
 ```text
 Source Read
   -> JSON Parse
-  -> Authoring Preprocess
+  -> Source Adaptation
   -> Structural Validation
   -> Canonical Normalize
   -> Semantic Validation
-  -> Conflict Check
   -> Stage Import Data
   -> Build Commit Plan
   -> Storage Transaction
@@ -474,13 +498,12 @@ Pipeline stages:
 
 - **Source Read** reads raw input from a file, object, builtin source, or future container source.
 - **JSON Parse** converts textual JSON into an unknown object and reports invalid JSON before schema validation.
-- **Authoring Preprocess** applies explicit authoring conveniences, such as locale alias conversion and string edge trimming, without guessing or repairing business meaning.
-- **Structural Validation** validates the preprocessed object against the public schema.
+- **Source Adaptation** applies accepted external-format adapters or equivalent source-view conversion before schema validation, without guessing, repairing business meaning, or running **Editor-Owned Authoring Checks**.
+- **Structural Validation** validates the source-adapted object against the public schema.
 - **Canonical Normalize** creates the internal canonical model and applies explicit defaults.
 - **Semantic Validation** checks business rules that are not structural schema rules.
-- **Conflict Check** checks the canonical pack against current system state.
 - **Stage Import Data** builds a staged import / commit draft from canonical data without mutating state or assigning final storage identity.
-- **Build Commit Plan** creates a **Commit Plan** by assigning final storage identity and lifecycle metadata to staged import data before repository commit.
+- **Build Commit Plan** creates a **Commit Plan** by assigning final storage identity and lifecycle metadata to staged import data, checking storage-aware importability such as conflicts and pack limits, and describing planned repository writes before repository commit.
 - **Storage Transaction** commits persistent writes and in-memory state only if the transaction succeeds.
 - **Runtime Cache Build** rebuilds runtime template lookup and query models after successful storage commit.
 - **Result Mapping** returns the unified import result and diagnostics.

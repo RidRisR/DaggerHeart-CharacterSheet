@@ -109,7 +109,6 @@ export function AttributesSection() {
             <div className="flex items-center justify-between w-full bg-gray-800 text-white px-1 rounded-t-md py-0.5">
               <div className="flex items-center">
                 <div className="text-[12px] font-bold">{attr.name}</div>
-                <ModifierFieldAnchor target={`${attr.key}.value` as ModifierTargetId} label={attr.name} />
                 {(() => {
                   const attrValue = formData[attr.key as keyof typeof formData];
                   const isSpellcasting = isAttributeValue(attrValue) && attrValue.spellcasting;
@@ -127,6 +126,9 @@ export function AttributesSection() {
                     </button>
                   );
                 })()}
+                <span className="ml-0.5 text-gray-300">
+                  <ModifierFieldAnchor target={`${attr.key}.value` as ModifierTargetId} label={attr.name} />
+                </span>
               </div>
               {(() => {
                 const attrValue = formData[attr.key as keyof typeof formData];

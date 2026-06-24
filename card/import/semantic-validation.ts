@@ -1,8 +1,17 @@
+import { compileCardAutomationDefinition } from "@/card/automation/compile-definition"
 import { makeCardImportError } from "./diagnostics"
 import { getImageAssetTemplateId } from "./types"
-import type { CardImportDiagnostic, CardPackDryRunValidationModel, CardPackV1DefinitionKey } from "./types"
+import type {
+  CardImportDiagnostic,
+  CardImportErrorCode,
+  CardPackDryRunCard,
+  CardPackDryRunValidationModel,
+  CardPackV1,
+  CardPackV1DefinitionKey,
+} from "./types"
 
 const groupOrder = ["classes", "ancestries", "communities", "subclasses", "domains", "variants"] as const
+type CardGroup = (typeof groupOrder)[number]
 
 function validateDuplicateIds(model: CardPackDryRunValidationModel): CardImportDiagnostic[] {
   const diagnostics: CardImportDiagnostic[] = []
@@ -136,6 +145,60 @@ function validateImageAssets(model: CardPackDryRunValidationModel): CardImportDi
         },
       )
     })
+}
+
+function sourceCardsForGroup(pack: CardPackV1, group: CardGroup) {
+  return pack[group] ?? []
+}
+
+function cardPath(group: CardGroup, index: number): string {
+  return `/${group}/${index}`
+}
+
+function automationDiagnosticPath(basePath: string, childPath: string | undefined): string {
+  if (!childPath) return basePath
+  const sourcePath = childPath.startsWith("/abilities") ? `/body${childPath}` : childPath
+  return sourcePath.startsWith("/") ? `${basePath}${sourcePath}` : `${basePath}/${sourcePath}`
+}
+
+export function compileCardPackAutomation(
+  pack: CardPackV1,
+  model: CardPackDryRunValidationModel,
+): { model: CardPackDryRunValidationModel; diagnostics: CardImportDiagnostic[] } {
+  const diagnostics: CardImportDiagnostic[] = []
+  const countsByGroup: Partial<Record<CardGroup, number>> = {}
+  const cards = model.cards.map((card) => {
+    const group = card.group
+    const index = countsByGroup[group] ?? 0
+    countsByGroup[group] = index + 1
+    const sourceAutomation = sourceCardsForGroup(pack, group)[index]?.automation
+
+    if (sourceAutomation === undefined) {
+      return card
+    }
+
+    const result = compileCardAutomationDefinition(sourceAutomation)
+    if (!result.ok) {
+      for (const diagnostic of result.diagnostics) {
+        diagnostics.push(
+          makeCardImportError(
+            diagnostic.code as CardImportErrorCode,
+            automationDiagnosticPath(`${cardPath(group, index)}/automation`, diagnostic.path),
+            diagnostic.message,
+            { value: diagnostic.value },
+          ),
+        )
+      }
+      return card
+    }
+
+    return { ...card, automation: result.ir } as CardPackDryRunCard
+  })
+
+  return {
+    model: { ...model, cards },
+    diagnostics,
+  }
 }
 
 export function validateCardPackSemantics(model: CardPackDryRunValidationModel): CardImportDiagnostic[] {

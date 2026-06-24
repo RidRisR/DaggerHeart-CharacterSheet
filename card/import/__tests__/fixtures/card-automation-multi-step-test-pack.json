@@ -1,0 +1,126 @@
+{
+  "format": "daggerheart.card-pack.v1",
+  "name": "Card Automation Multi-Step Test Pack",
+  "version": "1.0.0",
+  "domains": [
+    {
+      "id": "automation-multi-step-test-card",
+      "name": "自动化多步骤测试卡",
+      "domain": "测试",
+      "description": "测试多步骤卡牌自动化导入和设置投影。",
+      "level": 1,
+      "trait": "knowledge",
+      "recallCost": 0,
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "test-branching-bonus",
+              "label": "分支加值测试",
+              "choices": [
+                {
+                  "id": "bonus-mode",
+                  "label": "加值模式",
+                  "kind": "selectOne",
+                  "cardinality": {
+                    "min": 1,
+                    "max": 1,
+                    "unique": true
+                  },
+                  "domain": {
+                    "kind": "staticOptions",
+                    "options": [
+                      {
+                        "id": "attribute",
+                        "label": "属性"
+                      },
+                      {
+                        "id": "experience",
+                        "label": "经历"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "attribute-target",
+                  "label": "属性目标",
+                  "kind": "targetSelectMany",
+                  "requiredWhen": {
+                    "kind": "choiceEquals",
+                    "choiceId": "bonus-mode",
+                    "valueId": "attribute"
+                  },
+                  "cardinality": {
+                    "min": 1,
+                    "max": 1,
+                    "unique": true
+                  },
+                  "domain": {
+                    "kind": "modifierTargetGroup",
+                    "group": "attributes"
+                  }
+                },
+                {
+                  "id": "experience-target",
+                  "label": "经历目标",
+                  "kind": "targetSelectMany",
+                  "requiredWhen": {
+                    "kind": "choiceEquals",
+                    "choiceId": "bonus-mode",
+                    "valueId": "experience"
+                  },
+                  "cardinality": {
+                    "min": 1,
+                    "max": 1,
+                    "unique": true
+                  },
+                  "domain": {
+                    "kind": "modifierTargetGroup",
+                    "group": "experiences"
+                  }
+                }
+              ],
+              "effects": []
+            },
+            {
+              "id": "test-training-focus",
+              "label": "训练专注测试",
+              "choices": [
+                {
+                  "id": "training-focus",
+                  "label": "训练专注",
+                  "kind": "selectMany",
+                  "cardinality": {
+                    "min": 1,
+                    "max": 2,
+                    "unique": true
+                  },
+                  "domain": {
+                    "kind": "staticOptions",
+                    "options": [
+                      {
+                        "id": "careful",
+                        "label": "谨慎"
+                      },
+                      {
+                        "id": "bold",
+                        "label": "果断"
+                      },
+                      {
+                        "id": "patient",
+                        "label": "耐心"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "effects": []
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

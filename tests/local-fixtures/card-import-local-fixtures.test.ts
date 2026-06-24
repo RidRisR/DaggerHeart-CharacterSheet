@@ -122,7 +122,7 @@ async function verifyActualRuntimeRefreshSmoke(
     }
 
     const store = useUnifiedCardStore.getState()
-    const batch = store.getAllBatches().find((entry) => entry.id === packId)
+    const batch = store.batches.get(packId)
     const cards = store.loadAllCards().filter((card) => card.batchId === packId)
     const failures: string[] = []
 

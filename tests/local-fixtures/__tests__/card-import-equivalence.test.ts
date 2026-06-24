@@ -259,14 +259,16 @@ describe("card import business equivalence", () => {
 
   it("fails when card batchName differs from the owning batch name", () => {
     const expected = snapshot()
+    const basePack = expected.batches.pack_a
+    if (!basePack) throw new Error("Expected default pack_a fixture")
     const actual = snapshot({
       batches: {
         pack_a: {
-          ...snapshot().batches.pack_a,
+          ...basePack,
           cards: [
-            snapshot().batches.pack_a.cards[0],
+            basePack.cards[0],
             {
-              ...(snapshot().batches.pack_a.cards[1] as Record<string, unknown>),
+              ...(basePack.cards[1] as Record<string, unknown>),
               batchName: "Other Pack",
             },
           ],
@@ -280,10 +282,12 @@ describe("card import business equivalence", () => {
   })
 
   it("fails when image metadata is missing while the image backend has images", () => {
+    const basePack = snapshot().batches.pack_a
+    if (!basePack) throw new Error("Expected default pack_a fixture")
     const invalidSnapshot = snapshot({
       batches: {
         pack_a: {
-          ...snapshot().batches.pack_a,
+          ...basePack,
           metadata: {
             id: "pack_a",
             name: "Pack A",
@@ -300,12 +304,15 @@ describe("card import business equivalence", () => {
   })
 
   it("allows image card order drift when image content is unchanged", () => {
+    const basePack = snapshot().batches.pack_a
+    if (!basePack) throw new Error("Expected default pack_a fixture")
+    if (!basePack.metadata) throw new Error("Expected default pack_a metadata fixture")
     const expected = snapshot({
       batches: {
         pack_a: {
-          ...snapshot().batches.pack_a,
+          ...basePack,
           metadata: {
-            ...snapshot().batches.pack_a.metadata,
+            ...basePack.metadata,
             imageCardIds: ["domain-card", "variant-card"],
             imageCount: 2,
           },
@@ -334,9 +341,9 @@ describe("card import business equivalence", () => {
     const actual = snapshot({
       batches: {
         pack_a: {
-          ...snapshot().batches.pack_a,
+          ...basePack,
           metadata: {
-            ...snapshot().batches.pack_a.metadata,
+            ...basePack.metadata,
             imageCardIds: ["variant-card", "domain-card"],
             imageCount: 2,
           },

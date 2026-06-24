@@ -1,4 +1,5 @@
 import type { SheetData } from "@/lib/sheet-data"
+import { collectCardModifierEntries } from "@/automation/card/provider"
 import { sanitizeEquipmentModifierContributions } from "@/automation/equipment/contribution-utils"
 import { contributionToEntry, entryTarget } from "./entry-utils"
 import { calculateReferenceSummary } from "./reference-calculator"
@@ -28,13 +29,19 @@ function collectEquipmentModifierEntries(sheetData: SheetData): ModifierEntry[] 
 export function collectModifierEntries(sheetData: SheetData, target?: ModifierTargetId): ModifierEntry[] {
   const systemEntries = collectSystemModifierEntries(sheetData)
   const equipmentModifierEntries = collectEquipmentModifierEntries(sheetData)
+  const cardModifierEntries = collectCardModifierEntries(sheetData)
   const userModifierEntries = (sheetData.userModifierContributions ?? [])
     .map(contribution => contributionToEntry(contribution, {
       sourceType: "user",
       sourceId: "user",
       priority: 10,
     }))
-  const entries = [...systemEntries, ...equipmentModifierEntries, ...userModifierEntries]
+  const entries = [
+    ...systemEntries,
+    ...equipmentModifierEntries,
+    ...cardModifierEntries,
+    ...userModifierEntries,
+  ]
 
   return target ? entries.filter(entry => entryTarget(entry) === target) : entries
 }

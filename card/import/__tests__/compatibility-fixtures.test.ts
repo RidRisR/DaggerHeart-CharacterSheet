@@ -1,6 +1,11 @@
 import builtinBase from "@/data/cards/builtin-base.json"
+import continuousChoiceSample from "@/public/自定义卡包指南和示例/card-automation-continuous-choice-test-pack.json"
 import publicSample from "@/public/自定义卡包指南和示例/神州战役卡牌包.json"
+import automationMultiStepSample from "./fixtures/card-automation-multi-step-test-pack.json"
 import { describe, expect, it } from "vitest"
+import { projectCardAutomationSetupRequirements } from "@/card/automation/setup-projection"
+import { makeSheet } from "@/card/automation/__tests__/helpers"
+import type { StandardCard } from "@/card/card-types"
 import { importCardPackFromSource } from "@/card/import/import-pipeline"
 import { createCardObjectSource } from "@/card/import/source"
 
@@ -23,6 +28,82 @@ describe("card import compatibility fixtures", () => {
     expect(result.stage).toBe("stageImportData")
     expect(result.summary.cardCount).toBeGreaterThan(0)
     expect(result.draft?.templateIds.length).toBe(result.summary.cardCount)
+  })
+
+  it("accepts public automation multi-step test pack through v1 adapter", async () => {
+    const result = await importCardPackFromSource(
+      createCardObjectSource(automationMultiStepSample, "automation multi-step sample"),
+      { mode: "dryRun" },
+    )
+
+    expect(result.success).toBe(true)
+    expect(result.stage).toBe("stageImportData")
+    expect(result.summary.cardCount).toBe(1)
+    expect(result.model?.cards[0].automation?.abilities).toHaveLength(2)
+    expect(result.model?.cards[0].automation?.abilities[0].choices).toHaveLength(3)
+
+    const card = result.model?.cards[0]
+    expect(card?.automation).toBeDefined()
+    const sheet = makeSheet({
+      cards: [
+        {
+          standarized: true,
+          id: card?.id ?? "automation-multi-step-test-card",
+          instanceId: "cardinst_automation_multi_step_test",
+          name: card?.name ?? "自动化多步骤测试卡",
+          type: "domain",
+          class: "测试",
+          cardSelectDisplay: {},
+          automation: card?.automation,
+          automationState: { version: 1, abilities: {} },
+        } satisfies StandardCard,
+      ],
+    })
+    const requirements = projectCardAutomationSetupRequirements(sheet, {
+      cardInstanceId: "cardinst_automation_multi_step_test",
+    })
+    expect(requirements.map((requirement) => requirement.abilityId)).toEqual([
+      "test-branching-bonus",
+      "test-training-focus",
+    ])
+  })
+
+  it("accepts public automation continuous choice test pack through v1 adapter", async () => {
+    const result = await importCardPackFromSource(
+      createCardObjectSource(continuousChoiceSample, "automation continuous choice sample"),
+      { mode: "dryRun" },
+    )
+
+    expect(result.success).toBe(true)
+    expect(result.stage).toBe("stageImportData")
+    expect(result.summary.cardCount).toBe(1)
+    expect(result.model?.cards[0].automation?.abilities).toHaveLength(3)
+
+    const card = result.model?.cards[0]
+    expect(card?.automation).toBeDefined()
+    const sheet = makeSheet({
+      cards: [
+        {
+          standarized: true,
+          id: card?.id ?? "automation-continuous-choice-test-card",
+          instanceId: "cardinst_automation_continuous_choice_test",
+          name: card?.name ?? "自动化连续选择测试卡",
+          type: "domain",
+          class: "测试",
+          cardSelectDisplay: {},
+          automation: card?.automation,
+          automationState: { version: 1, abilities: {} },
+        } satisfies StandardCard,
+      ],
+    })
+    const requirements = projectCardAutomationSetupRequirements(sheet, {
+      cardInstanceId: "cardinst_automation_continuous_choice_test",
+    })
+    expect(requirements.map((requirement) => requirement.abilityId)).toEqual([
+      "continuous-single-mode",
+      "continuous-static-many",
+      "continuous-branch-targets",
+    ])
   })
 
   it("accepts missing customFieldDefinitions when definitions can be derived from cards", async () => {

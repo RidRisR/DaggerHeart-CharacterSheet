@@ -85,6 +85,41 @@ describe("card pack v1 internal schema", () => {
     })
   })
 
+  it("accepts per-card automation definitions on direct v1 ancestry cards", () => {
+    const pack = {
+      format: "daggerheart.card-pack.v1",
+      ancestries: [
+        {
+          id: "simiah-nimble",
+          name: "灵活",
+          ancestry: "猿族",
+          summary: "",
+          effect: "闪避永久 +1",
+          category: 1,
+          automation: {
+            format: "daggerheart.card-automation.definition.v1",
+            mode: "lowLevel",
+            body: {
+              abilities: [
+                {
+                  id: "simiah-nimble",
+                  label: "灵活",
+                  effects: [{ kind: "emitModifier", target: "evasion", value: 1 }],
+                },
+              ],
+            },
+          },
+        },
+      ],
+    }
+
+    expect(validateCardPackV1Structure(pack)).toEqual({
+      success: true,
+      value: pack,
+      diagnostics: [],
+    })
+  })
+
   it("rejects required field type errors with stable paths", () => {
     const pack = {
       ...validPack,

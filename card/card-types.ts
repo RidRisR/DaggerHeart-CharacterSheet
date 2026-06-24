@@ -1,4 +1,9 @@
 // Functions will be imported dynamically to avoid circular dependencies
+import type {
+  CardAutomationIR,
+  CardAutomationSourceSnapshot,
+  CardInstanceAutomationState,
+} from "@/card/automation/ir-types"
 
 // 属性类别常量列表
 export const ATTRIBUTE_CLASS_NAMES: string[] = [
@@ -25,6 +30,10 @@ export interface StandardCard {
   hint?: string
   imageUrl?: string
   hasLocalImage?: boolean // 是否有本地IndexedDB存储的图片
+  instanceId?: string
+  automation?: CardAutomationIR
+  automationSource?: CardAutomationSourceSnapshot
+  automationState?: CardInstanceAutomationState
   headerDisplay?: string
   cardSelectDisplay: {
     item1?: string

@@ -1,12 +1,16 @@
-import type { AncestryCard } from '@/card/ancestry-card/convert'
-import type { SubClassCard } from '@/card/subclass-card/convert'
-import type { CardPackageState } from '../types'
+import type { CardEditorAncestryCard, CardEditorSubclassCard, CardPackageState } from '../types'
 import { repairCardEditorDraft } from '../services/card-draft-repair'
 
-export function ensureAncestryPairs(ancestryCards: AncestryCard[], packageData: CardPackageState): AncestryCard[] {
+export function ensureAncestryPairs(
+  ancestryCards: CardEditorAncestryCard[],
+  packageData: CardPackageState,
+): CardEditorAncestryCard[] {
   return repairCardEditorDraft({ ...packageData, ancestry: ancestryCards }).draft.ancestry ?? []
 }
 
-export function ensureSubclassTriples(subclassCards: SubClassCard[], packageData: CardPackageState): SubClassCard[] {
+export function ensureSubclassTriples(
+  subclassCards: CardEditorSubclassCard[],
+  packageData: CardPackageState,
+): CardEditorSubclassCard[] {
   return repairCardEditorDraft({ ...packageData, subclass: subclassCards }).draft.subclass ?? []
 }

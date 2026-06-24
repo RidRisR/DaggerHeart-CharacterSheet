@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { CardPackImportResult } from "@/card/import/types";
 import { importCardPackFromSource } from "@/card/import/import-pipeline";
 import type { CardPackageState } from "../../types";
-import type { CardEditorImageReader } from "../card-draft-serialization";
+import type { CardEditorImageService } from "../card-editor-image-service";
 import {
   createCardEditorDhcbViewSource,
   validateCardEditorDraft,
@@ -31,10 +31,15 @@ function baseDraft(partial: Partial<CardPackageState> = {}): CardPackageState {
   };
 }
 
-function imageService(overrides: Partial<CardEditorImageReader> = {}): CardEditorImageReader {
+function imageService(overrides: Partial<CardEditorImageService> = {}): CardEditorImageService {
   return {
     listImageKeys: vi.fn().mockResolvedValue([]),
     getImageBlob: vi.fn().mockResolvedValue(null),
+    saveImageBlob: vi.fn().mockResolvedValue(undefined),
+    clearAllImages: vi.fn().mockResolvedValue(undefined),
+    deleteImage: vi.fn().mockResolvedValue(undefined),
+    renameImageKey: vi.fn().mockResolvedValue(false),
+    cleanupOrphanImages: vi.fn().mockResolvedValue({ deleted: [], failed: [] }),
     ...overrides,
   };
 }
@@ -311,5 +316,58 @@ describe("card editor validation orchestration", () => {
     expect(viewModel.status).toBe("failed");
     expect(viewModel.summary.errorCount).toBeGreaterThan(0);
     expect(viewModel.diagnostics.every((diagnostic) => diagnostic.source === "authoring")).toBe(true);
+  });
+
+  it("validates serialized raw automation definitions without mutating the draft into compiled IR", async () => {
+    const rawAutomationDefinition = {
+      format: "daggerheart.card-automation.definition.v1",
+      mode: "lowLevel",
+      body: {
+        abilities: [
+          {
+            id: "warrior-invalid",
+            label: "Warrior Invalid",
+            effects: [{ kind: "emitModifier", target: "unknown-target", value: 1 }],
+          },
+        ],
+      },
+    };
+    const draft = baseDraft({
+      profession: [
+        {
+          id: "warrior",
+          名称: "Warrior",
+          简介: "",
+          领域1: "Blade",
+          领域2: "Bone",
+          起始生命: 6,
+          起始闪避: 10,
+          起始物品: "",
+          希望特性: "",
+          职业特性: "",
+          automation: rawAutomationDefinition,
+        } as never,
+      ],
+    });
+
+    const viewModel = await validateCardEditorDraft(draft, {
+      imageService: imageService(),
+      importFromSource: importCardPackFromSource,
+    });
+
+    expect(viewModel.status).toBe("failed");
+    expect(viewModel.diagnostics).toContainEqual(
+      expect.objectContaining({
+        source: "import",
+        severity: "error",
+        authorPath: expect.stringMatching(/^\/profession\/0\/automation/),
+        technical: expect.objectContaining({
+          code: expect.stringMatching(/^INVALID_AUTOMATION_(DEFINITION|IR)$/),
+          internalPath: expect.stringMatching(/^\/classes\/0\/automation/),
+        }),
+      }),
+    );
+    expect((draft.profession?.[0] as { automation?: unknown }).automation).toEqual(rawAutomationDefinition);
+    expect((draft.profession?.[0] as { automation?: { revision?: unknown } }).automation?.revision).toBeUndefined();
   });
 });

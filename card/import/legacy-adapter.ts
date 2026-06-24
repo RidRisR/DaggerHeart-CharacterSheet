@@ -25,6 +25,7 @@ const knownCardFields: Record<string, Set<string>> = {
     "简介",
     "imageUrl",
     "hasLocalImage",
+    "automation",
     "领域1",
     "领域2",
     "起始生命",
@@ -33,11 +34,11 @@ const knownCardFields: Record<string, Set<string>> = {
     "希望特性",
     "职业特性",
   ]),
-  ancestry: new Set(["id", "名称", "种族", "简介", "效果", "类别", "imageUrl", "hasLocalImage"]),
-  community: new Set(["id", "名称", "特性", "简介", "描述", "imageUrl", "hasLocalImage"]),
-  subclass: new Set(["id", "名称", "描述", "imageUrl", "hasLocalImage", "主职", "子职业", "等级", "施法"]),
-  domain: new Set(["id", "名称", "领域", "描述", "imageUrl", "hasLocalImage", "等级", "属性", "回想"]),
-  variant: new Set(["id", "名称", "类型", "子类别", "等级", "效果", "imageUrl", "hasLocalImage", "简略信息"]),
+  ancestry: new Set(["id", "名称", "种族", "简介", "效果", "类别", "imageUrl", "hasLocalImage", "automation"]),
+  community: new Set(["id", "名称", "特性", "简介", "描述", "imageUrl", "hasLocalImage", "automation"]),
+  subclass: new Set(["id", "名称", "描述", "imageUrl", "hasLocalImage", "automation", "主职", "子职业", "等级", "施法"]),
+  domain: new Set(["id", "名称", "领域", "描述", "imageUrl", "hasLocalImage", "automation", "等级", "属性", "回想"]),
+  variant: new Set(["id", "名称", "类型", "子类别", "等级", "效果", "imageUrl", "hasLocalImage", "automation", "简略信息"]),
 }
 
 function asRecord(value: unknown): RawRecord {
@@ -58,6 +59,10 @@ function asStringArray(value: unknown): string[] {
 
 function uniqueStrings(values: unknown[]): string[] {
   return Array.from(new Set(values.filter((value): value is string => typeof value === "string" && value.length > 0)))
+}
+
+function automationField(card: RawRecord): { automation?: unknown } {
+  return card.automation === undefined ? {} : { automation: card.automation }
 }
 
 function warnUnknownFields(group: string, value: unknown, diagnostics: CardImportDiagnostic[]) {
@@ -177,6 +182,7 @@ export function adaptLegacyCardPack(input: unknown): { value: CardPackV1; diagno
         summary: card.简介,
         imageUrl: card.imageUrl,
         hasLocalImage: card.hasLocalImage,
+        ...automationField(card),
         domain1: card.领域1,
         domain2: card.领域2,
         startingHitPoints: card.起始生命,
@@ -194,6 +200,7 @@ export function adaptLegacyCardPack(input: unknown): { value: CardPackV1; diagno
         category: card.类别,
         imageUrl: card.imageUrl,
         hasLocalImage: card.hasLocalImage,
+        ...automationField(card),
       })),
       communities: asRecordArray(source.community).map((card) => ({
         id: card.id,
@@ -203,6 +210,7 @@ export function adaptLegacyCardPack(input: unknown): { value: CardPackV1; diagno
         description: card.描述,
         imageUrl: card.imageUrl,
         hasLocalImage: card.hasLocalImage,
+        ...automationField(card),
       })),
       subclasses: asRecordArray(source.subclass).map((card) => ({
         id: card.id,
@@ -210,6 +218,7 @@ export function adaptLegacyCardPack(input: unknown): { value: CardPackV1; diagno
         description: card.描述,
         imageUrl: card.imageUrl,
         hasLocalImage: card.hasLocalImage,
+        ...automationField(card),
         class: card.主职,
         subclass: card.子职业,
         level: card.等级,
@@ -222,6 +231,7 @@ export function adaptLegacyCardPack(input: unknown): { value: CardPackV1; diagno
         description: card.描述,
         imageUrl: card.imageUrl,
         hasLocalImage: card.hasLocalImage,
+        ...automationField(card),
         level: card.等级,
         trait: card.属性,
         recallCost: card.回想,
@@ -235,6 +245,7 @@ export function adaptLegacyCardPack(input: unknown): { value: CardPackV1; diagno
         effect: card.效果,
         imageUrl: card.imageUrl,
         hasLocalImage: card.hasLocalImage,
+        ...automationField(card),
         summaryItems: card.简略信息,
       })),
     } as CardPackV1,

@@ -1,10 +1,6 @@
 import JSZip from "jszip"
+import { prepareCardPackContentForRuntime } from "@/card/runtime/prepare-card-pack-content"
 import { countCardImportDiagnostics, makeCardImportError } from "./diagnostics"
-import { buildCardPackDryRunValidationModel } from "./dry-run-model"
-import { validateLegacyExternalContract } from "./external-contract-guard"
-import { adaptLegacyCardPack } from "./legacy-adapter"
-import { validateCardPackV1Structure } from "./schema-validator"
-import { validateCardPackSemantics } from "./semantic-validation"
 import type {
   CardImportDiagnostic,
   CardImportImageAsset,
@@ -213,42 +209,14 @@ function parseJsonText(text: string): { success: true; value: unknown } | { succ
   }
 }
 
-function routeExternalFormat(
-  value: unknown,
-):
-  | { success: true; value: CardPackV1; diagnostics: CardImportDiagnostic[] }
-  | { success: false; stage: CardImportPipelineStage; diagnostics: CardImportDiagnostic[] } {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return {
-      success: false,
-      stage: "externalContractGuard",
-      diagnostics: [makeCardImportError("INVALID_TYPE", "", "Card pack payload must be an object.", { value })],
-    }
+function importStageForPreparedFailure(
+  prepared: Extract<ReturnType<typeof prepareCardPackContentForRuntime>, { success: false }>,
+): CardImportPipelineStage {
+  if (prepared.stage === "formatRouting") {
+    return prepared.importStage ?? "externalFormatAdapter"
   }
 
-  const record = value as Record<string, unknown>
-
-  if (record.format === undefined) {
-    const guarded = validateLegacyExternalContract(record)
-    if (!guarded.success) {
-      return { success: false, stage: "externalContractGuard", diagnostics: guarded.diagnostics }
-    }
-
-    const adapted = adaptLegacyCardPack(guarded.value)
-    return { success: true, value: adapted.value, diagnostics: adapted.diagnostics }
-  }
-
-  if (record.format === "daggerheart.card-pack.v1") {
-    return { success: true, value: record as unknown as CardPackV1, diagnostics: [] }
-  }
-
-  return {
-    success: false,
-    stage: "externalFormatAdapter",
-    diagnostics: [
-      makeCardImportError("UNSUPPORTED_FORMAT", "/format", "Unsupported card pack format.", { value: record.format }),
-    ],
-  }
+  return prepared.stage
 }
 
 export async function importCardPackFromSource(
@@ -291,42 +259,21 @@ export async function importCardPackFromSource(
     })
   }
 
-  const routed = routeExternalFormat(value)
-  if (!routed.success) {
+  const prepared = prepareCardPackContentForRuntime({ payload: value, source, imageAssets })
+  if (!prepared.success) {
     return resultFromDiagnostics({
-      stage: routed.stage,
+      stage: importStageForPreparedFailure(prepared),
       success: false,
       mode,
-      diagnostics: routed.diagnostics,
+      diagnostics: prepared.diagnostics,
+      pack: prepared.pack,
+      model: prepared.model,
     })
   }
 
-  const structural = validateCardPackV1Structure(routed.value)
-  if (!structural.success) {
-    return resultFromDiagnostics({
-      stage: "structuralValidation",
-      success: false,
-      mode,
-      diagnostics: [...routed.diagnostics, ...structural.diagnostics],
-      pack: routed.value,
-    })
-  }
-
-  const model = buildCardPackDryRunValidationModel(structural.value, imageAssets)
-  const semanticDiagnostics = validateCardPackSemantics(model)
-  const diagnostics = [...routed.diagnostics, ...semanticDiagnostics]
-
-  if (hasErrors(semanticDiagnostics)) {
-    return resultFromDiagnostics({
-      stage: "semanticValidation",
-      success: false,
-      mode,
-      diagnostics,
-      pack: structural.value,
-      model,
-    })
-  }
-
+  const model = prepared.model
+  const diagnostics = prepared.diagnostics
+  const pack = prepared.pack
   const conflictDiagnostics = checkCardPackConflicts(model, dependencies)
   const diagnosticsAfterConflicts = [...diagnostics, ...conflictDiagnostics]
   if (hasErrors(conflictDiagnostics)) {
@@ -335,7 +282,7 @@ export async function importCardPackFromSource(
       success: false,
       mode,
       diagnostics: diagnosticsAfterConflicts,
-      pack: structural.value,
+      pack,
       model,
     })
   }
@@ -347,7 +294,7 @@ export async function importCardPackFromSource(
     success: true,
     mode,
     diagnostics: diagnosticsAfterConflicts,
-    pack: structural.value,
+    pack,
     model,
     draft,
   })

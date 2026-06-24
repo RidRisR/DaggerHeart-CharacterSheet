@@ -27,6 +27,7 @@ import {
 import type { CardPackImageBackend } from "@/card/packs/image-backend"
 import { STORAGE_KEYS } from "@/card/stores/store-types"
 import { useUnifiedCardStore } from "@/card/stores/unified-card-store"
+import { setCardSourceDisabled, SYSTEM_BUILTIN_CARDS_SOURCE_ID } from "@/lib/app-preferences"
 import type { CardImportStorageSnapshot } from "../helpers/card-import-storage-snapshot"
 
 type JsonRecord = Record<string, unknown>
@@ -547,7 +548,7 @@ function collectPublicApiSnapshot(
     customByType,
     cardsByBatch: Object.fromEntries(packIds.map((packId) => [packId, getCardsByBatchId(packId).map((card) => card.id)])),
     customBatches: normalizeBatchSummaries(getCustomCardBatches()),
-    allBatches: normalizeBatchSummaries(getAllBatches()),
+    allBatches: normalizeBatchSummaries(getAllBatches()).filter((batch) => packIds.includes(batch.id)),
     cardBatchNames,
   }
 }
@@ -606,6 +607,9 @@ export async function projectRuntimeBusinessSnapshotFromStorage(
   snapshot: CardImportStorageSnapshot,
 ): Promise<RuntimeBusinessSnapshot> {
   installStorageSnapshotIntoLocalStorage(snapshot)
+  // Fixture equivalence checks isolate imported custom-pack runtime facts.
+  // The production runtime also assembles the built-in source.
+  setCardSourceDisabled(SYSTEM_BUILTIN_CARDS_SOURCE_ID, true)
   resetStoreForRuntimeProjection()
 
   const store = useUnifiedCardStore.getState()

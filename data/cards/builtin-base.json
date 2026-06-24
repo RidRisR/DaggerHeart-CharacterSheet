@@ -195,7 +195,37 @@
       "简介": "械灵是具有感知能力的机械生命体，其由包括金属、木头、石头和陶土在内的多种材料构建而成，外观可以与类人生物、动物，甚至是无生命的物体相似",
       "效果": "决定你是由谁创造以及为何目的而创造的。在创建角色时，选择一个最符合此目的的经历，永久获得 +1 加值。",
       "类别": 1,
-      "imageUrl": "/builtin-cards/ancestry/clank.webp"
+      "imageUrl": "/builtin-cards/ancestry/clank.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "purposeful-design",
+              "label": "定制设计",
+              "lifetime": { "kind": "permanentOnceClaimed" },
+              "choices": [
+                {
+                  "id": "boostedExperience",
+                  "kind": "targetSelectMany",
+                  "label": "选择一项经历获得+1",
+                  "cardinality": { "min": 1, "max": 1, "unique": true },
+                  "domain": { "kind": "modifierTargetGroup", "group": "experiences" }
+                }
+              ],
+              "effects": [
+                {
+                  "kind": "emitEachSelectedTarget",
+                  "id": "purposeful-design-experience",
+                  "choiceId": "boostedExperience",
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "Clank-Efficient",
@@ -339,7 +369,23 @@
       "简介": "龟人有着类似拟人化乌龟的外观，拥有一副巨大而圆润的甲壳，头部和四肢可以缩回其中",
       "效果": "你的伤害阈值获得等同于你熟练度的加值。",
       "类别": 1,
-      "imageUrl": "/builtin-cards/ancestry/galapa.webp"
+      "imageUrl": "/builtin-cards/ancestry/galapa.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "shell",
+              "label": "龟甲",
+              "effects": [
+                { "kind": "emitModifier", "id": "shell-minor", "target": "minorThreshold", "value": { "kind": "proficiency" } },
+                { "kind": "emitModifier", "id": "shell-major", "target": "majorThreshold", "value": { "kind": "proficiency" } }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "Galapa-Retract",
@@ -357,7 +403,22 @@
       "简介": "巨人是高大的类人生物，肩膀宽阔，手臂修长，拥有一到三只眼睛",
       "效果": "在创建角色时，获得一个额外的生命槽。",
       "类别": 1,
-      "imageUrl": "/builtin-cards/ancestry/giant.webp"
+      "imageUrl": "/builtin-cards/ancestry/giant.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "endurance",
+              "label": "坚韧",
+              "effects": [
+                { "kind": "emitModifier", "id": "endurance-hp", "target": "hpMax", "value": 1 }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "Giant-Reach",
@@ -411,7 +472,22 @@
       "简介": "人类最容易辨识的特征是灵巧的双手、圆圆的耳朵以及超强的耐力",
       "效果": "角色创建时获得一个额外的压力槽。",
       "类别": 1,
-      "imageUrl": "/builtin-cards/ancestry/human.webp"
+      "imageUrl": "/builtin-cards/ancestry/human.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "high-stamina",
+              "label": "精力充沛",
+              "effects": [
+                { "kind": "emitModifier", "id": "high-stamina-stress", "target": "stressMax", "value": 1 }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "Human-Adaptability",
@@ -510,7 +586,22 @@
       "简介": "猿族形似长着长肢和能抓握的脚的拟人化猴子和猿类",
       "效果": "在创建角色时，闪避值获得永久 +1 加值。",
       "类别": 2,
-      "imageUrl": "/builtin-cards/ancestry/simiah.webp"
+      "imageUrl": "/builtin-cards/ancestry/simiah.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "nimble",
+              "label": "灵活",
+              "effects": [
+                { "kind": "emitModifier", "id": "nimble-evasion", "target": "evasion", "value": 1 }
+              ]
+            }
+          ]
+        }
+      }
     }
   ],
   "community": [
@@ -716,7 +807,23 @@
       "子职业": "坚毅铁卫",
       "等级": "基石",
       "施法": "不可施法",
-      "imageUrl": "/builtin-cards/subclass/stalwart.webp"
+      "imageUrl": "/builtin-cards/subclass/stalwart.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "stalwart-foundation",
+              "label": "坚毅铁卫基石",
+              "effects": [
+                { "kind": "emitModifier", "id": "stalwart-foundation-minor", "target": "minorThreshold", "value": 1 },
+                { "kind": "emitModifier", "id": "stalwart-foundation-major", "target": "majorThreshold", "value": 1 }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "Stalwart-Specialization",
@@ -726,7 +833,23 @@
       "子职业": "坚毅铁卫",
       "等级": "专精",
       "施法": "不可施法",
-      "imageUrl": "/builtin-cards/subclass/stalwart.webp"
+      "imageUrl": "/builtin-cards/subclass/stalwart.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "stalwart-specialization",
+              "label": "坚毅铁卫专精",
+              "effects": [
+                { "kind": "emitModifier", "id": "stalwart-specialization-minor", "target": "minorThreshold", "value": 2 },
+                { "kind": "emitModifier", "id": "stalwart-specialization-major", "target": "majorThreshold", "value": 2 }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "Stalwart-Mastery",
@@ -736,7 +859,23 @@
       "子职业": "坚毅铁卫",
       "等级": "大师",
       "施法": "不可施法",
-      "imageUrl": "/builtin-cards/subclass/stalwart.webp"
+      "imageUrl": "/builtin-cards/subclass/stalwart.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "stalwart-mastery",
+              "label": "坚毅铁卫大师",
+              "effects": [
+                { "kind": "emitModifier", "id": "stalwart-mastery-minor", "target": "minorThreshold", "value": 3 },
+                { "kind": "emitModifier", "id": "stalwart-mastery-major", "target": "majorThreshold", "value": 3 }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "Vengeance-Foundation",
@@ -746,7 +885,22 @@
       "子职业": "复仇战卫",
       "等级": "基石",
       "施法": "不可施法",
-      "imageUrl": "/builtin-cards/subclass/vengeance.webp"
+      "imageUrl": "/builtin-cards/subclass/vengeance.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "vengeance-foundation",
+              "label": "复仇战卫基石",
+              "effects": [
+                { "kind": "emitModifier", "id": "vengeance-foundation-stress", "target": "stressMax", "value": 1 }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "Vengeance-Specialization",
@@ -856,7 +1010,22 @@
       "子职业": "黑夜行者",
       "等级": "大师",
       "施法": "灵巧",
-      "imageUrl": "/builtin-cards/subclass/nightwalker.webp"
+      "imageUrl": "/builtin-cards/subclass/nightwalker.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "nightwalker-mastery",
+              "label": "黑夜行者大师",
+              "effects": [
+                { "kind": "emitModifier", "id": "nightwalker-mastery-evasion", "target": "evasion", "value": 1 }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "Syndicate-Foundation",
@@ -946,7 +1115,22 @@
       "子职业": "翔翼哨兵",
       "等级": "大师",
       "施法": "力量",
-      "imageUrl": "/builtin-cards/subclass/winged-sentinel.webp"
+      "imageUrl": "/builtin-cards/subclass/winged-sentinel.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "winged-sentinel-mastery",
+              "label": "翔翼哨兵大师",
+              "effects": [
+                { "kind": "emitModifier", "id": "winged-sentinel-mastery-major", "target": "majorThreshold", "value": 4 }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "Elemental-Origin-Foundation",
@@ -1106,7 +1290,22 @@
       "子职业": "战争学派",
       "等级": "基石",
       "施法": "知识",
-      "imageUrl": "/builtin-cards/subclass/school-of-war.webp"
+      "imageUrl": "/builtin-cards/subclass/school-of-war.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "school-of-war-foundation",
+              "label": "战争学派基石",
+              "effects": [
+                { "kind": "emitModifier", "id": "school-of-war-foundation-hp", "target": "hpMax", "value": 1 }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "School-of-War-Specialization",
@@ -1428,7 +1627,30 @@
       "属性": "能力",
       "回想": 0,
       "描述": "当你穿着护甲时，你的所有伤害阈值获得+2加值。",
-      "imageUrl": "/builtin-cards/domain/fortified-armor.webp"
+      "imageUrl": "/builtin-cards/domain/fortified-armor.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "fortified-armor",
+              "label": "强化护甲",
+              "effects": [
+                {
+                  "kind": "emitWhen",
+                  "id": "fortified-armor-equipped",
+                  "when": { "kind": "equipmentSlotFilled", "slot": "armor" },
+                  "effects": [
+                    { "kind": "emitModifier", "id": "fortified-armor-minor", "target": "minorThreshold", "value": 2 },
+                    { "kind": "emitModifier", "id": "fortified-armor-major", "target": "majorThreshold", "value": 2 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "champions-edge",
@@ -1448,7 +1670,58 @@
       "属性": "能力",
       "回想": 0,
       "描述": "当你选择此牌时，选择永久获得下列选项中的两项：\n- 一个压力槽\n- 一个生命槽\n- 你的所有伤害阈值获得+2加值\n\n然后将此牌永久放入你的宝库。",
-      "imageUrl": "/builtin-cards/domain/vitality.webp"
+      "imageUrl": "/builtin-cards/domain/vitality.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "vitality",
+              "label": "蓬勃生命",
+              "lifetime": { "kind": "permanentOnceClaimed" },
+              "choices": [
+                {
+                  "id": "benefits",
+                  "label": "选择两项奖励",
+                  "kind": "selectMany",
+                  "cardinality": { "min": 2, "max": 2, "unique": true },
+                  "domain": {
+                    "kind": "staticOptions",
+                    "options": [
+                      {
+                        "id": "stress-slot",
+                        "label": "压力槽+1",
+                        "effects": [
+                          { "kind": "emitModifier", "id": "vitality-stress", "target": "stressMax", "value": 1 }
+                        ]
+                      },
+                      {
+                        "id": "hp-slot",
+                        "label": "生命槽+1",
+                        "effects": [
+                          { "kind": "emitModifier", "id": "vitality-hp", "target": "hpMax", "value": 1 }
+                        ]
+                      },
+                      {
+                        "id": "thresholds",
+                        "label": "伤害阈值+2",
+                        "effects": [
+                          { "kind": "emitModifier", "id": "vitality-minor", "target": "minorThreshold", "value": 2 },
+                          { "kind": "emitModifier", "id": "vitality-major", "target": "majorThreshold", "value": 2 }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "effects": [
+                { "kind": "emitEachSelectedOptionEffect", "id": "vitality-benefits", "choiceId": "benefits" }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "battle-hardened",
@@ -1478,7 +1751,29 @@
       "属性": "能力",
       "回想": 1,
       "描述": "当你的配置中有4张或更多领域卡来自利刃领域时，获得下列增益：\n- 你的攻击掷骰获得+2加值\n- 你的严重伤害阈值获得+4加值",
-      "imageUrl": "/builtin-cards/domain/blade-touched.webp"
+      "imageUrl": "/builtin-cards/domain/blade-touched.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "blade-touched",
+              "label": "利刃恩泽",
+              "effects": [
+                {
+                  "kind": "emitWhen",
+                  "id": "blade-touched-domain-count",
+                  "when": { "kind": "cardCount", "zone": "loadout", "match": { "type": "domain", "classification": "利刃" }, "atLeast": 4 },
+                  "effects": [
+                    { "kind": "emitModifier", "id": "blade-touched-major", "target": "majorThreshold", "value": 4 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "glancing-blow",
@@ -1578,7 +1873,34 @@
       "属性": "能力",
       "回想": 1,
       "描述": "你的闪避值获得等同于你敏捷值一半的加值。",
-      "imageUrl": "/builtin-cards/domain/untouchable.webp"
+      "imageUrl": "/builtin-cards/domain/untouchable.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "untouchable",
+              "label": "不可侵犯",
+              "effects": [
+                {
+                  "kind": "emitModifier",
+                  "id": "untouchable-evasion",
+                  "target": "evasion",
+                  "value": {
+                    "kind": "ceil",
+                    "value": {
+                      "kind": "divide",
+                      "left": { "kind": "attribute", "attribute": "agility" },
+                      "right": 2
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "ferocity",
@@ -1688,7 +2010,29 @@
       "属性": "能力",
       "回想": 2,
       "描述": "当你的配置中有4张或更多领域卡来自骸骨领域时，获得下列增益：\n- 敏捷+1\n- 每次休息一次，你可以**花费 3 希望点**，使一次针对你的成功攻击转为失败。",
-      "imageUrl": "/builtin-cards/domain/bone-touched.webp"
+      "imageUrl": "/builtin-cards/domain/bone-touched.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "bone-touched",
+              "label": "骸骨恩泽",
+              "effects": [
+                {
+                  "kind": "emitWhen",
+                  "id": "bone-touched-domain-count",
+                  "when": { "kind": "cardCount", "zone": "loadout", "match": { "type": "domain", "classification": "骸骨" }, "atLeast": 4 },
+                  "effects": [
+                    { "kind": "emitModifier", "id": "bone-touched-agility", "target": "agility.value", "value": 1 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "cruel-precision",
@@ -2158,7 +2502,69 @@
       "属性": "能力",
       "回想": 0,
       "描述": "使你的两项经历永久获得+2加值，或使你的一项经历永久获得+3加值。然后将此卡牌永久放入你的宝库。",
-      "imageUrl": "/builtin-cards/domain/master-of-the-craft.webp"
+      "imageUrl": "/builtin-cards/domain/master-of-the-craft.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "master-of-the-craft",
+              "label": "技艺大师",
+              "lifetime": { "kind": "permanentOnceClaimed" },
+              "choices": [
+                {
+                  "id": "mode",
+                  "label": "选择一种模式",
+                  "kind": "selectOne",
+                  "cardinality": { "min": 1, "max": 1, "unique": true },
+                  "domain": {
+                    "kind": "staticOptions",
+                    "options": [
+                      { "id": "two-experiences", "label": "两项经历 +2" },
+                      { "id": "one-experience", "label": "一项经历 +3" }
+                    ]
+                  }
+                },
+                {
+                  "id": "twoExperiences",
+                  "label": "两项经历+2",
+                  "kind": "targetSelectMany",
+                  "requiredWhen": { "kind": "choiceEquals", "choiceId": "mode", "valueId": "two-experiences" },
+                  "cardinality": { "min": 2, "max": 2, "unique": true },
+                  "domain": { "kind": "modifierTargetGroup", "group": "experiences" }
+                },
+                {
+                  "id": "oneExperience",
+                  "label": "一项经历+3",
+                  "kind": "targetSelectMany",
+                  "requiredWhen": { "kind": "choiceEquals", "choiceId": "mode", "valueId": "one-experience" },
+                  "cardinality": { "min": 1, "max": 1, "unique": true },
+                  "domain": { "kind": "modifierTargetGroup", "group": "experiences" }
+                }
+              ],
+              "effects": [
+                {
+                  "kind": "emitWhen",
+                  "id": "master-of-the-craft-two-selected",
+                  "when": { "kind": "choiceEquals", "choiceId": "mode", "valueId": "two-experiences" },
+                  "effects": [
+                    { "kind": "emitEachSelectedTarget", "id": "master-of-the-craft-two", "choiceId": "twoExperiences", "value": 2 }
+                  ]
+                },
+                {
+                  "kind": "emitWhen",
+                  "id": "master-of-the-craft-one-selected",
+                  "when": { "kind": "choiceEquals", "choiceId": "mode", "valueId": "one-experience" },
+                  "effects": [
+                    { "kind": "emitEachSelectedTarget", "id": "master-of-the-craft-one", "choiceId": "oneExperience", "value": 3 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "encore",
@@ -2748,7 +3154,29 @@
       "属性": "能力",
       "回想": 2,
       "描述": "当你配置中有至少 4 张辉耀领域卡时，获得下列增益：\n- 你的严重伤害阈值获得+3加值\n- 每长休一次，当受到的伤害需要你标记一定数量的生命点时，你可以选择**标记等量的压力点**或**花费等量的希望点**来代替。",
-      "imageUrl": "/builtin-cards/domain/splendor-touched.webp"
+      "imageUrl": "/builtin-cards/domain/splendor-touched.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "splendor-touched",
+              "label": "辉耀恩泽",
+              "effects": [
+                {
+                  "kind": "emitWhen",
+                  "id": "splendor-touched-domain-count",
+                  "when": { "kind": "cardCount", "zone": "loadout", "match": { "type": "domain", "classification": "辉耀" }, "atLeast": 4 },
+                  "effects": [
+                    { "kind": "emitModifier", "id": "splendor-touched-major", "target": "majorThreshold", "value": 3 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "shield-aura",
@@ -2818,7 +3246,46 @@
       "属性": "能力",
       "回想": 0,
       "描述": "当你选择不装备护甲时，你的基础护甲值为 3 + 力量属性值，并使用下列数值作为你的基础伤害阈值：\n- *位阶 1*: 9/19\n- *位阶 2*: 11/24\n- *位阶 3*: 13/31\n- *位阶 4*: 15/38",
-      "imageUrl": "/builtin-cards/domain/bare-bones.webp"
+      "imageUrl": "/builtin-cards/domain/bare-bones.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "bare-bones",
+              "label": "铁骨铮铮",
+              "effects": [
+                {
+                  "kind": "emitWhen",
+                  "id": "bare-bones-no-armor",
+                  "when": { "kind": "equipmentSlotEmpty", "slot": "armor" },
+                  "effects": [
+                    {
+                      "kind": "emitBase",
+                      "id": "bare-bones-armor",
+                      "target": "armorMax",
+                      "value": { "kind": "add", "values": [3, { "kind": "attribute", "attribute": "strength" }] }
+                    },
+                    {
+                      "kind": "emitBase",
+                      "id": "bare-bones-minor",
+                      "target": "minorThreshold",
+                      "value": { "kind": "valueByTier", "values": { "1": 9, "2": 11, "3": 13, "4": 15 } }
+                    },
+                    {
+                      "kind": "emitBase",
+                      "id": "bare-bones-major",
+                      "target": "majorThreshold",
+                      "value": { "kind": "valueByTier", "values": { "1": 19, "2": 24, "3": 31, "4": 38 } }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "forceful-push",
@@ -2908,7 +3375,29 @@
       "属性": "能力",
       "回想": 1,
       "描述": "当你穿着护甲时，你的护甲值获得 +1 加值。\n休息期间，当你选择修理护甲作为休整行动时，你的盟友也可以**清除 1 护甲槽**。",
-      "imageUrl": "/builtin-cards/domain/armorer.webp"
+      "imageUrl": "/builtin-cards/domain/armorer.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "armorer",
+              "label": "护甲大师",
+              "effects": [
+                {
+                  "kind": "emitWhen",
+                  "id": "armorer-equipped",
+                  "when": { "kind": "equipmentSlotFilled", "slot": "armor" },
+                  "effects": [
+                    { "kind": "emitModifier", "id": "armorer-armor", "target": "armorMax", "value": 1 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "rousing-strike",
@@ -2938,7 +3427,22 @@
       "属性": "能力",
       "回想": 2,
       "描述": "你的严重伤害阈值获得等同于你的熟练度的加值。\n当你因一次攻击**标记 1 或更多生命点**时，**清除 1 压力点**。",
-      "imageUrl": "/builtin-cards/domain/rise-up.webp"
+      "imageUrl": "/builtin-cards/domain/rise-up.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "rise-up",
+              "label": "奋起直追",
+              "effects": [
+                { "kind": "emitModifier", "id": "rise-up-major", "target": "majorThreshold", "value": { "kind": "proficiency" } }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "shrug-it-off",
@@ -2958,7 +3462,29 @@
       "属性": "能力",
       "回想": 1,
       "描述": "当你配置中的领域卡有 4 张或更多来自勇气领域时，获得下列增益：\n- 你的护甲值获得 +1 加值。\n- 当你**标记 1 点或更多生命点**而未**标记护甲槽**时，**恢复 1 护甲槽**。",
-      "imageUrl": "/builtin-cards/domain/valor-touched.webp"
+      "imageUrl": "/builtin-cards/domain/valor-touched.webp",
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "valor-touched",
+              "label": "勇气恩泽",
+              "effects": [
+                {
+                  "kind": "emitWhen",
+                  "id": "valor-touched-domain-count",
+                  "when": { "kind": "cardCount", "zone": "loadout", "match": { "type": "domain", "classification": "勇气" }, "atLeast": 4 },
+                  "effects": [
+                    { "kind": "emitModifier", "id": "valor-touched-armor", "target": "armorMax", "value": 1 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "id": "full-surge",

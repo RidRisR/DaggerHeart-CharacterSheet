@@ -4,6 +4,11 @@ import { makeCardImportError } from "./diagnostics"
 import { appendJsonPointer, getJsonPointerValue } from "./json-pointer"
 import type { CardImportDiagnostic, CardImportErrorCode, CardPackV1 } from "./types"
 
+type StructuralSchemaErrorCode = Extract<
+  CardImportErrorCode,
+  "INVALID_FORMAT" | "MISSING_FIELD" | "UNKNOWN_FIELD" | "INVALID_TYPE" | "INVALID_VALUE"
+>
+
 const ajv = new Ajv2020({ allErrors: true, strict: false })
 const validate = ajv.compile(cardPackV1Schema)
 
@@ -32,7 +37,7 @@ function pathForError(error: ErrorObject): string {
   return error.instancePath || ""
 }
 
-function codeForError(error: ErrorObject, path: string): CardImportErrorCode {
+function codeForError(error: ErrorObject, path: string): StructuralSchemaErrorCode {
   if (error.keyword === "required") return "MISSING_FIELD"
   if (error.keyword === "additionalProperties") return "UNKNOWN_FIELD"
   if (error.keyword === "const" && path === "/format") return "INVALID_FORMAT"
@@ -40,21 +45,13 @@ function codeForError(error: ErrorObject, path: string): CardImportErrorCode {
   return "INVALID_TYPE"
 }
 
-function messageForCode(code: CardImportErrorCode): string {
+function messageForCode(code: StructuralSchemaErrorCode): string {
   return {
-    SOURCE_READ_FAILED: "Unable to read card pack source.",
-    INVALID_JSON: "Invalid JSON.",
-    INVALID_DHCB: "Invalid card bundle.",
-    MISSING_CARDS_JSON: "cards.json is missing.",
-    UNSUPPORTED_FORMAT: "Unsupported card pack format.",
     INVALID_FORMAT: "Invalid card pack format.",
     MISSING_FIELD: "Required field is missing.",
     UNKNOWN_FIELD: "Unknown field is not allowed.",
     INVALID_TYPE: "Invalid field type.",
     INVALID_VALUE: "Invalid field value.",
-    DUPLICATE_ID: "Duplicate card id.",
-    UNKNOWN_REFERENCE: "Unknown card reference.",
-    ORPHAN_IMAGE: "Image does not reference a card in this pack.",
   }[code]
 }
 

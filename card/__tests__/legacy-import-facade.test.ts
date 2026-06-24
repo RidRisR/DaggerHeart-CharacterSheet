@@ -2,6 +2,8 @@ import JSZip from "jszip"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { ImportData } from "@/card/card-types"
 import { importCustomCards } from "@/card/index-unified"
+import { BUILTIN_BATCH_ID } from "@/card/stores/store-types"
+import { getCardDisabledSourceIds } from "@/lib/app-preferences"
 import type {
   CardPackApplicationImportResult,
   CardPackApplicationService,
@@ -87,6 +89,7 @@ async function makeDhcbFile(input: {
 describe("legacy card import facades", () => {
   afterEach(() => {
     vi.restoreAllMocks()
+    localStorage.clear()
     resetDefaultCardPackApplicationServiceFactoryForTests()
   })
 
@@ -150,7 +153,7 @@ describe("legacy card import facades", () => {
     await expect(removeCustomCardBatch("batch_test")).resolves.toBe(false)
   })
 
-  it("delegates toggleBatchDisabled to setPackDisabled with the next disabled state", async () => {
+  it("currently delegates custom batch toggles through custom pack storage", async () => {
     const loadSnapshot = vi.fn(async () => ({
       packs: new Map([[
         "batch_test",
@@ -187,6 +190,14 @@ describe("legacy card import facades", () => {
     const { toggleBatchDisabled } = await import("@/card/index-unified")
     await expect(toggleBatchDisabled("batch_test")).resolves.toBe(true)
     expect(setPackDisabled).toHaveBeenCalledWith("batch_test", true)
+  })
+
+  it("routes built-in batch toggles through card source preferences", async () => {
+    const { toggleBatchDisabled } = await import("@/card/index-unified")
+
+    await expect(toggleBatchDisabled(BUILTIN_BATCH_ID)).resolves.toBe(true)
+
+    expect(getCardDisabledSourceIds()).toEqual([BUILTIN_BATCH_ID])
   })
 
   it("returns false when toggleBatchDisabled cannot find the pack", async () => {

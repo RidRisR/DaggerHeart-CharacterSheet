@@ -75,11 +75,11 @@ function expectCompleteEquipment(data: NonNullable<ReturnType<typeof validateJSO
 }
 
 describe('character data import validation', () => {
-  it('migrates JSON imports to v2 and preserves unknown fields through migration', () => {
+  it('migrates JSON imports to v3 and preserves unknown fields through migration', () => {
     const result = validateJSONCharacterData(JSON.stringify(rawImport()))
 
     expect(result.valid).toBe(true)
-    expect(result.data?.schemaVersion).toBe(2)
+    expect(result.data?.schemaVersion).toBe(3)
     expect(result.data?.hope).toBe(3)
     expect((result.data as any).unknownFutureField).toEqual({ keep: true })
   })
@@ -91,8 +91,8 @@ describe('character data import validation', () => {
 
     expect(json.valid).toBe(true)
     expect(html.valid).toBe(true)
-    expect(json.data?.schemaVersion).toBe(2)
-    expect(html.data?.schemaVersion).toBe(2)
+    expect(json.data?.schemaVersion).toBe(3)
+    expect(html.data?.schemaVersion).toBe(3)
     expect(json.data?.hope).toBe(html.data?.hope)
     expect(json.data?.cards).toEqual(html.data?.cards)
     expect((json.data as any).focused_card_ids).toEqual(['card-domain-1'])
@@ -110,7 +110,34 @@ describe('character data import validation', () => {
     const result = validateJSONCharacterData(JSON.stringify(rawImport()))
 
     expect(result.valid).toBe(true)
-    expect(result.data?.cards).toEqual([validCard])
+    expect(result.data?.cards).toEqual([{
+      ...validCard,
+      instanceId: 'cardinst_loadout_0_card-domain-1',
+    }])
+  })
+
+  it('preserves optional card automation instance fields during import validation', () => {
+    const automationState = { version: 1, abilities: {} }
+    const automationSource = { templateId: 'card-domain-1', templateAutomationRevision: 'rev-1' }
+    const automation = { format: 'daggerheart.card-automation.ir.v1', revision: 'rev-1', abilities: [] }
+
+    const result = validateJSONCharacterData(JSON.stringify(rawImport({
+      cards: [{
+        ...validCard,
+        instanceId: 'cardinst_existing',
+        automation,
+        automationSource,
+        automationState,
+      }],
+    })))
+
+    expect(result.valid).toBe(true)
+    expect(result.data?.cards[0]).toMatchObject({
+      instanceId: 'cardinst_existing',
+      automation,
+      automationSource,
+      automationState,
+    })
   })
 
   it('preserves persisted modifier fields and drops legacy disabled entry states through JSON import validation', () => {

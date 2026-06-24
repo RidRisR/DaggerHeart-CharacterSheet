@@ -63,7 +63,14 @@ export type UpgradeAutomationMetadata =
 export type ModifierEntryId = string
 
 export type ModifierEntryKind = "base" | "modifier"
-export type ModifierSourceType = "profession" | "armor" | "level" | "upgrade" | "user" | "equipment"
+export type ModifierSourceType =
+  | "profession"
+  | "armor"
+  | "level"
+  | "upgrade"
+  | "user"
+  | "equipment"
+  | "card"
 
 export interface ModifierContributionDefinition {
   target: ModifierTargetId

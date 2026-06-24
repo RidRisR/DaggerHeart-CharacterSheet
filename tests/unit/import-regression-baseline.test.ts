@@ -59,8 +59,8 @@ describe('main import and normalize regression baseline', () => {
     expect(htmlResult.data?.inventory_cards).toHaveLength(20)
     expect('includePageThreeInExport' in (jsonResult.data as any)).toBe(false)
     expect('includePageThreeInExport' in (htmlResult.data as any)).toBe(false)
-    expect(jsonResult.data?.schemaVersion).toBe(2)
-    expect(htmlResult.data?.schemaVersion).toBe(2)
+    expect(jsonResult.data?.schemaVersion).toBe(3)
+    expect(htmlResult.data?.schemaVersion).toBe(3)
   })
 
   it('captures current import invalid card filtering behavior', () => {
@@ -72,7 +72,10 @@ describe('main import and normalize regression baseline', () => {
     })))
 
     expect(result.valid).toBe(true)
-    expect(result.data?.cards).toEqual([validCard])
-    expect(result.data?.schemaVersion).toBe(2)
+    expect(result.data?.cards).toEqual([{
+      ...validCard,
+      instanceId: 'cardinst_loadout_0_card-domain-1',
+    }])
+    expect(result.data?.schemaVersion).toBe(3)
   })
 })

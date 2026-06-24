@@ -1,3 +1,5 @@
+import { cardAutomationDefinitionSchema } from "@/card/automation/definition-schema"
+
 const stringField = { type: "string", minLength: 1 }
 const optionalStringField = { type: "string" }
 const imageFields = {
@@ -13,6 +15,7 @@ const baseCard = {
     id: stringField,
     name: stringField,
     ...imageFields,
+    automation: cardAutomationDefinitionSchema,
   },
 }
 
@@ -21,6 +24,7 @@ export const cardPackV1Schema = {
   type: "object",
   additionalProperties: false,
   required: ["format"],
+  $defs: cardAutomationDefinitionSchema.$defs,
   properties: {
     format: { const: "daggerheart.card-pack.v1" },
     name: optionalStringField,

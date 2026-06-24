@@ -42,6 +42,36 @@ const v1Pack = {
   ],
 }
 
+const validAutomation = {
+  format: "daggerheart.card-automation.definition.v1",
+  mode: "lowLevel",
+  body: {
+    abilities: [
+      {
+        id: "simiah-nimble",
+        label: "灵活",
+        effects: [{ kind: "emitModifier", target: "evasion", value: 1 }],
+      },
+    ],
+  },
+}
+
+const v1AutomationPack = {
+  format: "daggerheart.card-pack.v1",
+  name: "automation 卡包",
+  ancestries: [
+    {
+      id: "simiah-nimble",
+      name: "灵活",
+      ancestry: "猿族",
+      summary: "",
+      effect: "闪避永久 +1",
+      category: 1,
+      automation: validAutomation,
+    },
+  ],
+}
+
 async function createDhcbBytes(cardsJson: unknown, imageName?: string) {
   const zip = new JSZip()
   zip.file("cards.json", JSON.stringify(cardsJson))
@@ -76,6 +106,59 @@ describe("card import dry-run pipeline", () => {
     })
     expect(result.draft?.templateIds).toEqual(["warrior"])
     expect(result.diagnostics).toEqual([])
+  })
+
+  it("compiles valid card automation definitions into dry-run model IR", async () => {
+    const result = await importCardPackFromSource(createCardObjectSource(v1AutomationPack), { mode: "dryRun" })
+
+    expect(result).toMatchObject({
+      success: true,
+      stage: "stageImportData",
+      summary: { name: "automation 卡包", cardCount: 1, errorCount: 0 },
+    })
+    expect(result.model?.cards[0].automation).toMatchObject({
+      format: "daggerheart.card-automation.ir.v1",
+      abilities: [expect.objectContaining({ id: "simiah-nimble" })],
+    })
+    expect(result.model?.cards[0].automation?.revision).toMatch(/^stable32:/)
+    expect(result.model?.cards[0].automation).not.toMatchObject({ mode: "lowLevel" })
+  })
+
+  it("reports invalid automation compiler diagnostics without compiled dry-run IR", async () => {
+    const result = await importCardPackFromSource(
+      createCardObjectSource({
+        ...v1AutomationPack,
+        ancestries: [
+          {
+            ...v1AutomationPack.ancestries[0],
+            automation: {
+              ...validAutomation,
+              body: {
+                abilities: [
+                  {
+                    id: "simiah-nimble",
+                    label: "灵活",
+                    effects: [{ kind: "emitModifier", target: "unknown-target", value: 1 }],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+      { mode: "dryRun" },
+    )
+
+    expect(result.success).toBe(false)
+    expect(result.stage).toBe("semanticValidation")
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        severity: "error",
+        code: expect.stringMatching(/^INVALID_AUTOMATION_(DEFINITION|IR)$/),
+        path: "/ancestries/0/automation/body/abilities/0/effects/0/target",
+      }),
+    )
+    expect(result.model?.cards[0]).not.toHaveProperty("automation")
   })
 
   it("stages commit-mode imports without writing storage", async () => {

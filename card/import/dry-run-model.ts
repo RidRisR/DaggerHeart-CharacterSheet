@@ -4,6 +4,7 @@ import type {
   CardCommunityV1,
   CardDomainV1,
   CardImportImageAsset,
+  CardPackDryRunCard,
   CardPackDryRunValidationModel,
   CardPackV1,
   CardPackV1DefinitionKey,
@@ -33,8 +34,11 @@ interface CardImportImageAssetInput {
 function withGroup<G extends keyof CardGroupItems>(
   items: CardGroupItems[G][] | undefined,
   group: G,
-): Array<CardGroupItems[G] & { group: G }> {
-  return (items ?? []).map((item) => ({ ...item, group }))
+): Array<Extract<CardPackDryRunCard, { group: G }>> {
+  return (items ?? []).map((item) => {
+    const { automation: _automation, ...cardWithoutAutomation } = item
+    return { ...cardWithoutAutomation, group } as unknown as Extract<CardPackDryRunCard, { group: G }>
+  })
 }
 
 const definitionKeys: CardPackV1DefinitionKey[] = [

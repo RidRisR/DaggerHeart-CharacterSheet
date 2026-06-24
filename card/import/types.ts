@@ -1,3 +1,6 @@
+import type { CardAutomationDefinition } from "@/card/automation/definition-types"
+import type { CardAutomationIR } from "@/card/automation/ir-types"
+
 export type CardImportOriginKind = "file" | "object" | "builtin" | "container"
 export type CardImportMode = "dryRun" | "commit"
 export type PackSourceKind = "localStorage" | "file" | "json" | "editor"
@@ -30,6 +33,10 @@ export type CardImportErrorCode =
   | "DUPLICATE_ID"
   | "UNKNOWN_REFERENCE"
   | "ORPHAN_IMAGE"
+  | "UNSUPPORTED_AUTOMATION_FORMAT"
+  | "INVALID_AUTOMATION_DEFINITION"
+  | "INVALID_AUTOMATION_IR"
+  | "AUTOMATION_LIMIT_EXCEEDED"
 
 export type CardImportCommitErrorCode =
   | "TEMPLATE_ID_CONFLICT"
@@ -157,6 +164,7 @@ export interface CardBaseV1 {
   name: string
   imageUrl?: string
   hasLocalImage?: boolean
+  automation?: CardAutomationDefinition
 }
 
 export interface CardClassV1 extends CardBaseV1 {
@@ -212,13 +220,17 @@ export interface CardVariantV1 extends CardBaseV1 {
   }
 }
 
+export type CardPackCompiledAutomation = {
+  automation?: CardAutomationIR
+}
+
 export type CardPackDryRunCard =
-  | (CardClassV1 & { group: "classes" })
-  | (CardAncestryV1 & { group: "ancestries" })
-  | (CardCommunityV1 & { group: "communities" })
-  | (CardSubclassV1 & { group: "subclasses" })
-  | (CardDomainV1 & { group: "domains" })
-  | (CardVariantV1 & { group: "variants" })
+  | (Omit<CardClassV1, "automation"> & { group: "classes" } & CardPackCompiledAutomation)
+  | (Omit<CardAncestryV1, "automation"> & { group: "ancestries" } & CardPackCompiledAutomation)
+  | (Omit<CardCommunityV1, "automation"> & { group: "communities" } & CardPackCompiledAutomation)
+  | (Omit<CardSubclassV1, "automation"> & { group: "subclasses" } & CardPackCompiledAutomation)
+  | (Omit<CardDomainV1, "automation"> & { group: "domains" } & CardPackCompiledAutomation)
+  | (Omit<CardVariantV1, "automation"> & { group: "variants" } & CardPackCompiledAutomation)
 
 export interface CardImportImageAsset {
   templateId: string

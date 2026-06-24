@@ -1,9 +1,22 @@
 import { describe, expect, it } from "vitest"
+import type { CardAutomationIR } from "@/card/automation/ir-types"
 import type { CardPackDryRunCard, CardPackDryRunValidationModel } from "@/card/import/types"
 import type { CardImportFinalCommitPlan } from "../storage-types"
 import { projectCardImportToLegacyBatchStorage } from "../legacy-storage-format-adapter"
 
 const importedAt = "2026-06-16T10:20:30.000Z"
+const compiledAutomation: CardAutomationIR = {
+  format: "daggerheart.card-automation.ir.v1",
+  revision: "stable32:test-revision",
+  abilities: [
+    {
+      id: "warrior-evasion",
+      label: "Warrior Evasion",
+      lifetime: { kind: "whileInLoadout" },
+      effects: [{ kind: "emitModifier", id: "effect-1", target: "evasion", value: 1 }],
+    },
+  ],
+}
 
 function makeClassCard(overrides: Partial<Extract<CardPackDryRunCard, { group: "classes" }>> = {}) {
   return {
@@ -196,5 +209,17 @@ describe("legacy storage format adapter", () => {
     expect(projection.storedData.cards.find((card) => card.id === "warrior")?.hasLocalImage).toBe(true)
     expect(projection.storedData.metadata.imageCardIds ?? []).toEqual([])
     expect(projection.imageTemplateIds).toEqual([])
+  })
+
+  it("preserves compiled template automation on projected legacy cards", () => {
+    const projection = projectCardImportToLegacyBatchStorage(
+      makePlan({
+        packData: makeModel({
+          cards: [makeClassCard({ automation: compiledAutomation })],
+        }),
+      }),
+    )
+
+    expect(projection.storedData.cards.find((card) => card.id === "warrior")?.automation).toEqual(compiledAutomation)
   })
 })

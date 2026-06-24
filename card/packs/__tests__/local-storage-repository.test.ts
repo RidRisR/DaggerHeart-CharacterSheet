@@ -279,6 +279,7 @@ describe("local storage card pack repository", () => {
 
     expect(result.ok).toBe(false)
     expect(!result.ok && result.error.code).toBe("IMAGE_DELETE_FAILED")
+    if (result.ok || !result.snapshot) throw new Error("Expected failed removePack result with a snapshot")
     expect(result.snapshot.packs.has("batch_1")).toBe(false)
     expect(storage.getItem(CARD_PACK_STORAGE_KEYS.INDEX)).not.toContain("batch_1")
   })

@@ -131,6 +131,7 @@ function isEquipmentPackJson(value: unknown): value is { format: "daggerheart.eq
 
 export function isCardPackJson(value: unknown): value is ImportData {
   if (!isRecord(value)) return false
+  if (value.format === "daggerheart.card-pack.v1") return true
 
   const cardArrayFields = ["profession", "ancestry", "community", "subclass", "domain", "variant"]
   return cardArrayFields.some((field) => {

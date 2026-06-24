@@ -3,6 +3,7 @@ import type { ExtendedStandardCard } from "@/card/card-types"
 import { createImageServiceActions } from "@/card/stores/image-service/actions"
 import { BUILTIN_BATCH_ID, CardSource, CardType, type BatchInfo, type UnifiedCardState } from "@/card/stores/store-types"
 import { createStoreActions } from "@/card/stores/store-actions"
+import { setCardSourceDisabled, SYSTEM_BUILTIN_CARDS_SOURCE_ID } from "@/lib/app-preferences"
 import type { CardPackStorageSnapshot } from "../storage-types"
 import { createZustandCardRuntimeRefreshAdapter } from "../runtime-refresh-adapter"
 
@@ -259,11 +260,15 @@ function createStoreWithBuiltinAndBrowserStorage(input: { builtinDisabledInMemor
 
   return {
     reloadCustomRuntimeFromStorage: () => get().reloadCustomRuntimeFromStorage(),
+    _syncToLocalStorage: () => get()._syncToLocalStorage(),
     loadAllCards: () => get().loadAllCards(),
     getCardById: (id: string) => get().getCardById(id),
     rebuildSubclassIndex: () => get()._rebuildSubclassIndex(),
     get batch() {
       return state.batches.get(BUILTIN_BATCH_ID)
+    },
+    get batches() {
+      return state.batches
     },
     get indexBatch() {
       return state.index.batches[BUILTIN_BATCH_ID]
@@ -329,6 +334,29 @@ describe("card runtime refresh adapter", () => {
 
   it("clears stale custom runtime state before reloading from storage", async () => {
     const store = createStoreWithStaleCustomCard("removed-card")
+    localStorage.setItem(
+      "daggerheart_custom_cards_index",
+      JSON.stringify({
+        batches: {
+          batch_1: makeBatch("batch_1", { cardIds: ["warrior"] }),
+        },
+        totalCards: 1,
+        totalBatches: 1,
+        lastUpdate: "2026-06-16T00:00:00.000Z",
+      }),
+    )
+    localStorage.setItem(
+      "daggerheart_custom_cards_batch_batch_1",
+      JSON.stringify({
+        metadata: {
+          id: "batch_1",
+          name: "batch_1",
+          fileName: "batch_1.json",
+          importTime: "2026-06-16T00:00:00.000Z",
+        },
+        cards: [makeCard("warrior", "batch_1")],
+      }),
+    )
 
     await store.reloadCustomRuntimeFromStorage()
 
@@ -343,30 +371,29 @@ describe("card runtime refresh adapter", () => {
     expect(store.stats).toEqual(expect.any(Object))
   })
 
-  it("syncs builtin disabled state from storage during runtime refresh", async () => {
-    localStorage.clear()
-    localStorage.setItem(
-      "daggerheart_custom_cards_index",
-      JSON.stringify({
-        batches: {
-          [BUILTIN_BATCH_ID]: {
-            id: BUILTIN_BATCH_ID,
-            name: "System Builtin Cards",
-            fileName: "builtin-base.json",
-            importTime: "2026-06-19T00:00:00.000Z",
-            version: "1.0.0",
-            cardCount: 1,
-            cardTypes: [CardType.Profession],
-            size: 100,
-            isSystemBatch: true,
-            disabled: true,
-          },
-        },
-        totalCards: 1,
-        totalBatches: 1,
-        lastUpdate: "2026-06-19T00:00:00.000Z",
-      }),
-    )
+  it("keeps previous runtime when full runtime refresh fails", async () => {
+    const store = createStoreWithStaleCustomCard("stale-card")
+    const before = store.cards.map((card) => card.id)
+    localStorage.setItem("daggerheart_custom_cards_index", "{")
+
+    await expect(store.reloadCustomRuntimeFromStorage()).rejects.toThrow()
+
+    expect(store.cards.map((card) => card.id)).toEqual(before)
+    expect(store.cards.map((card) => card.id)).toContain("builtin-card")
+    expect(store.cards.map((card) => card.id)).toContain("stale-card")
+  })
+
+  it("keeps an enabled in-memory built-in batch when custom storage is empty", async () => {
+    const store = createStoreWithBuiltinAndBrowserStorage({ builtinDisabledInMemory: false })
+
+    await store.reloadCustomRuntimeFromStorage()
+
+    expect(store.batches.get(BUILTIN_BATCH_ID)?.disabled).toBe(false)
+    expect(Array.from(store.batches.keys())).toContain(BUILTIN_BATCH_ID)
+  })
+
+  it("syncs builtin disabled state from app preferences during runtime refresh", async () => {
+    setCardSourceDisabled(SYSTEM_BUILTIN_CARDS_SOURCE_ID, true)
 
     const store = createStoreWithBuiltinAndBrowserStorage({ builtinDisabledInMemory: false })
 
@@ -374,36 +401,14 @@ describe("card runtime refresh adapter", () => {
     store.rebuildSubclassIndex()
 
     expect(store.batch?.disabled).toBe(true)
-    expect(store.indexBatch?.disabled).toBe(true)
+    expect(store.indexBatch).toBeUndefined()
     expect(store.loadAllCards()).toEqual([])
-    expect(store.getCardById("builtin-card")).toBeNull()
+    expect(store.getCardById("Bard")).toBeNull()
     expect(store.subclassCardIndex).toEqual({})
   })
 
-  it("syncs builtin enabled state from storage during runtime refresh", async () => {
-    localStorage.clear()
-    localStorage.setItem(
-      "daggerheart_custom_cards_index",
-      JSON.stringify({
-        batches: {
-          [BUILTIN_BATCH_ID]: {
-            id: BUILTIN_BATCH_ID,
-            name: "System Builtin Cards",
-            fileName: "builtin-base.json",
-            importTime: "2026-06-19T00:00:00.000Z",
-            version: "1.0.0",
-            cardCount: 1,
-            cardTypes: [CardType.Profession],
-            size: 100,
-            isSystemBatch: true,
-            disabled: false,
-          },
-        },
-        totalCards: 1,
-        totalBatches: 1,
-        lastUpdate: "2026-06-19T00:00:00.000Z",
-      }),
-    )
+  it("syncs builtin enabled state from app preferences during runtime refresh", async () => {
+    setCardSourceDisabled(SYSTEM_BUILTIN_CARDS_SOURCE_ID, false)
 
     const store = createStoreWithBuiltinAndBrowserStorage({ builtinDisabledInMemory: true })
 
@@ -411,9 +416,19 @@ describe("card runtime refresh adapter", () => {
     store.rebuildSubclassIndex()
 
     expect(store.batch?.disabled).toBe(false)
-    expect(store.indexBatch?.disabled).toBe(false)
-    expect(store.loadAllCards().map((card) => card.id)).toEqual(["builtin-card"])
-    expect(store.getCardById("builtin-card")?.id).toBe("builtin-card")
+    expect(store.indexBatch).toBeUndefined()
+    expect(store.loadAllCards().map((card) => card.id)).toContain("Bard")
+    expect(store.getCardById("Bard")?.id).toBe("Bard")
+  })
+
+  it("syncs only custom card storage and never writes the built-in batch payload", () => {
+    const store = createStoreWithBuiltinAndBrowserStorage({ builtinDisabledInMemory: false })
+
+    ;(store as any)._syncToLocalStorage()
+
+    expect(localStorage.getItem(`daggerheart_custom_cards_batch_${BUILTIN_BATCH_ID}`)).toBeNull()
+    const index = JSON.parse(localStorage.getItem("daggerheart_custom_cards_index") ?? "{}")
+    expect(index.batches).not.toHaveProperty(BUILTIN_BATCH_ID)
   })
 
   it("loads pack scoped image before legacy global fallback", async () => {

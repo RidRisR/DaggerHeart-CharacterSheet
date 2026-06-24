@@ -70,6 +70,29 @@ describe("importContentPackFiles", () => {
     expect(result.nextTab).toBe("cards")
   })
 
+  it("routes v1 card pack JSON to the card importer by top-level format", async () => {
+    const cardImporter = vi.fn(async () => ({
+      success: true,
+      imported: 1,
+      errors: [],
+      batchId: "batch-1",
+    }))
+    const pack = {
+      format: "daggerheart.card-pack.v1",
+      domains: [{ id: "card-1", name: "测试", domain: "测试", description: "", level: 1, trait: "测试", recallCost: 0 }],
+    }
+
+    const result = await importContentPackFiles([jsonFile("cards-v1.json", pack)], {
+      importEquipmentFile: vi.fn(),
+      importCardJson: cardImporter,
+      importDhcb: vi.fn(),
+    })
+
+    expect(cardImporter).toHaveBeenCalledWith(pack, "cards-v1.json")
+    expect(result.results[0]).toMatchObject({ kind: "card", success: true, summary: "导入 1 张卡牌" })
+    expect(result.nextTab).toBe("cards")
+  })
+
   it("routes DHCB and ZIP files to the DHCB importer", async () => {
     const dhcbImporter = vi.fn(async () => ({
       batchId: "batch-1",

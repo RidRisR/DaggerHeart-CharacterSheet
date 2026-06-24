@@ -2,9 +2,11 @@ export const APP_PREFERENCES_STORAGE_KEY = "dhsheet:app-preferences:v1"
 export const LEGACY_TEXT_MODE_STORAGE_KEY = "text-mode-storage"
 export const LEGACY_DUAL_PAGE_STORAGE_KEY = "dual-page-storage"
 export const LEGACY_ANNOUNCEMENT_READ_STORAGE_KEY = "dhsheet:last-read-announcement-id"
+export const SYSTEM_BUILTIN_CARDS_SOURCE_ID = "SYSTEM_BUILTIN_CARDS"
 
 const APP_PREFERENCES_FORMAT = "dhsheet.app-preferences.v1"
 const KNOWN_EQUIPMENT_SOURCE_IDS = new Set(["builtin"])
+const KNOWN_CARD_SOURCE_IDS = new Set([SYSTEM_BUILTIN_CARDS_SOURCE_ID])
 
 export type CardDisplayMode = "image" | "text"
 
@@ -27,6 +29,14 @@ export interface AppPreferencesDocument {
   }
   contentSources: {
     equipmentDisabledSourceIds: string[]
+    cardDisabledSourceIds: string[]
+  }
+}
+
+type PersistedAppPreferencesDocument = Omit<AppPreferencesDocument, "contentSources"> & {
+  contentSources: {
+    equipmentDisabledSourceIds: string[]
+    cardDisabledSourceIds?: string[]
   }
 }
 
@@ -49,6 +59,7 @@ const DEFAULT_APP_PREFERENCES: AppPreferencesDocument = {
   announcements: {},
   contentSources: {
     equipmentDisabledSourceIds: [],
+    cardDisabledSourceIds: [],
   },
 }
 
@@ -70,6 +81,7 @@ function cloneDefaults(): AppPreferencesDocument {
     announcements: {},
     contentSources: {
       equipmentDisabledSourceIds: [],
+      cardDisabledSourceIds: [],
     },
   }
 }
@@ -150,6 +162,18 @@ function normalizeEquipmentDisabledSourceIds(value: unknown): string[] {
   return Array.from(normalized)
 }
 
+function normalizeCardDisabledSourceIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+
+  const normalized = new Set<string>()
+  for (const sourceId of value) {
+    if (typeof sourceId === "string" && KNOWN_CARD_SOURCE_IDS.has(sourceId)) {
+      normalized.add(sourceId)
+    }
+  }
+  return Array.from(normalized)
+}
+
 function normalizePreferences(value: unknown): AppPreferencesDocument | null {
   if (!isRecord(value) || value.format !== APP_PREFERENCES_FORMAT) {
     return null
@@ -170,8 +194,21 @@ function normalizePreferences(value: unknown): AppPreferencesDocument | null {
   normalized.contentSources.equipmentDisabledSourceIds = normalizeEquipmentDisabledSourceIds(
     contentSources.equipmentDisabledSourceIds,
   )
+  normalized.contentSources.cardDisabledSourceIds = normalizeCardDisabledSourceIds(contentSources.cardDisabledSourceIds)
 
   return normalized
+}
+
+function hasOwnProperty(value: Record<string, unknown>, property: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, property)
+}
+
+function rawHasCardDisabledSourceIds(value: unknown): boolean {
+  if (!isRecord(value) || value.format !== APP_PREFERENCES_FORMAT || !isRecord(value.contentSources)) {
+    return false
+  }
+
+  return hasOwnProperty(value.contentSources, "cardDisabledSourceIds")
 }
 
 function legacyTextMode(storage: AppPreferencesStorage | undefined): CardDisplayMode | undefined {
@@ -207,8 +244,38 @@ function hydrateFromLegacy(storage: AppPreferencesStorage | undefined): AppPrefe
   return preferences
 }
 
-function writePreferences(storage: AppPreferencesStorage | undefined, preferences: AppPreferencesDocument): boolean {
-  return safeSetItem(storage, APP_PREFERENCES_STORAGE_KEY, JSON.stringify(preferences))
+function serializePreferences(
+  preferences: AppPreferencesDocument,
+  options: { includeCardDisabledSourceIds: boolean },
+): PersistedAppPreferencesDocument {
+  const contentSources: PersistedAppPreferencesDocument["contentSources"] = {
+    equipmentDisabledSourceIds: preferences.contentSources.equipmentDisabledSourceIds,
+  }
+
+  if (options.includeCardDisabledSourceIds) {
+    contentSources.cardDisabledSourceIds = preferences.contentSources.cardDisabledSourceIds
+  }
+
+  return {
+    ...preferences,
+    contentSources,
+  }
+}
+
+function writePreferences(
+  storage: AppPreferencesStorage | undefined,
+  preferences: AppPreferencesDocument,
+  options: { includeCardDisabledSourceIds?: boolean } = {},
+): boolean {
+  return safeSetItem(
+    storage,
+    APP_PREFERENCES_STORAGE_KEY,
+    JSON.stringify(
+      serializePreferences(preferences, {
+        includeCardDisabledSourceIds: options.includeCardDisabledSourceIds === true,
+      }),
+    ),
+  )
 }
 
 function cleanupLegacyKeys(storage: AppPreferencesStorage | undefined): void {
@@ -218,11 +285,12 @@ function cleanupLegacyKeys(storage: AppPreferencesStorage | undefined): void {
 }
 
 export function getAppPreferences(storage: AppPreferencesStorage | undefined = getDefaultStorage()): AppPreferencesDocument {
-  const existing = normalizePreferences(parseJson(safeGetItem(storage, APP_PREFERENCES_STORAGE_KEY)))
+  const raw = parseJson(safeGetItem(storage, APP_PREFERENCES_STORAGE_KEY))
+  const existing = normalizePreferences(raw)
   if (existing) return existing
 
   const migrated = hydrateFromLegacy(storage)
-  if (writePreferences(storage, migrated)) {
+  if (writePreferences(storage, migrated, { includeCardDisabledSourceIds: rawHasCardDisabledSourceIds(raw) })) {
     cleanupLegacyKeys(storage)
   }
   return migrated
@@ -231,9 +299,13 @@ export function getAppPreferences(storage: AppPreferencesStorage | undefined = g
 function updatePreferences(
   updater: (preferences: AppPreferencesDocument) => AppPreferencesDocument,
   storage: AppPreferencesStorage | undefined = getDefaultStorage(),
+  options: { includeCardDisabledSourceIds?: boolean } = {},
 ): boolean {
+  const raw = parseJson(safeGetItem(storage, APP_PREFERENCES_STORAGE_KEY))
   const next = updater(getAppPreferences(storage))
-  return writePreferences(storage, next)
+  return writePreferences(storage, next, {
+    includeCardDisabledSourceIds: options.includeCardDisabledSourceIds === true || rawHasCardDisabledSourceIds(raw),
+  })
 }
 
 export function getCardDisplayMode(storage?: AppPreferencesStorage): CardDisplayMode {
@@ -287,6 +359,10 @@ export function getEquipmentDisabledSourceIds(storage?: AppPreferencesStorage): 
   return getAppPreferences(storage).contentSources.equipmentDisabledSourceIds
 }
 
+export function getCardDisabledSourceIds(storage?: AppPreferencesStorage): string[] {
+  return getAppPreferences(storage).contentSources.cardDisabledSourceIds
+}
+
 export function setEquipmentSourceDisabled(
   sourceId: string,
   disabled: boolean,
@@ -312,5 +388,34 @@ export function setEquipmentSourceDisabled(
       }
     },
     storage,
+  )
+}
+
+export function setCardSourceDisabled(
+  sourceId: string,
+  disabled: boolean,
+  storage?: AppPreferencesStorage,
+): boolean {
+  if (!KNOWN_CARD_SOURCE_IDS.has(sourceId)) return false
+
+  return updatePreferences(
+    (preferences) => {
+      const next = new Set(preferences.contentSources.cardDisabledSourceIds)
+      if (disabled) {
+        next.add(sourceId)
+      } else {
+        next.delete(sourceId)
+      }
+
+      return {
+        ...preferences,
+        contentSources: {
+          ...preferences.contentSources,
+          cardDisabledSourceIds: Array.from(next),
+        },
+      }
+    },
+    storage,
+    { includeCardDisabledSourceIds: true },
   )
 }

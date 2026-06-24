@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { BookOpen, Edit3, Home } from "lucide-react"
 import { AdvancedMaintenance } from "@/components/content-pack-manager/advanced-maintenance"
-import { CardPackTab, type CardPackListItem } from "@/components/content-pack-manager/card-pack-tab"
+import { CardPackTab } from "@/components/content-pack-manager/card-pack-tab"
 import { summarizeCardPacks } from "@/components/content-pack-manager/content-pack-summary"
 import { ContentPackStats } from "@/components/content-pack-manager/content-pack-stats"
 import { EquipmentPackTab } from "@/components/content-pack-manager/equipment-pack-tab"
@@ -20,13 +20,12 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  getAllBatches,
-  getCardsByBatchId,
   importCustomCards,
   removeCustomCardBatch,
   toggleBatchDisabled,
-  type ExtendedStandardCard,
 } from "@/card/index"
+import type { ExtendedStandardCard } from "@/card/card-types"
+import { toCardRuntimeSourceListItem } from "@/card/runtime/card-pack-view-model"
 import { importDhcbCardPackage } from "@/card/utils/dhcb-importer"
 import { useUnifiedCardStore } from "@/card/stores/unified-card-store"
 import { getEquipmentUiStore } from "@/equipment/ui/equipment-ui-store"
@@ -170,6 +169,10 @@ function EquipmentPackDetailModal({
 
 export default function CardManagerPage() {
   const equipmentStore = getEquipmentUiStore()
+  const cardRuntimeInitialized = useUnifiedCardStore((state) => state.initialized)
+  const runtimeBatches = useUnifiedCardStore((state) => state.batches)
+  const runtimeCards = useUnifiedCardStore((state) => state.cards)
+  const initializeCardSystem = useUnifiedCardStore((state) => state.initializeSystem)
   const equipmentInitialized = equipmentStore((state) => state.initialized)
   const equipmentStorageSnapshot = equipmentStore((state) => state.storageSnapshot)
   const equipmentLastResult = equipmentStore((state) => state.lastResult)
@@ -182,12 +185,32 @@ export default function CardManagerPage() {
   const [activeTab, setActiveTab] = useState<ContentPackTabValue>("cards")
   const [importStatus, setImportStatus] = useState<ImportStatus>({ isImporting: false, error: null })
   const [globalImportResults, setGlobalImportResults] = useState<ContentPackImportResultView[]>([])
-  const [batches, setBatches] = useState<CardPackListItem[]>([])
   const [viewModalOpen, setViewModalOpen] = useState(false)
-  const [viewingCards, setViewingCards] = useState<ExtendedStandardCard[]>([])
+  const [viewingCardSourceId, setViewingCardSourceId] = useState<string | undefined>(undefined)
   const [viewingEquipmentPackId, setViewingEquipmentPackId] = useState<string | null>(null)
 
+  const batches = useMemo(
+    () => Array.from(runtimeBatches.values()).map(toCardRuntimeSourceListItem),
+    [runtimeBatches],
+  )
   const cardPackSummary = useMemo(() => summarizeCardPacks(batches), [batches])
+  const viewingCards = useMemo(() => {
+    if (!viewModalOpen) return []
+
+    if (viewingCardSourceId) {
+      const batch = runtimeBatches.get(viewingCardSourceId)
+      if (!batch || batch.disabled) return []
+
+      return batch.cardIds
+        .map((cardId) => runtimeCards.get(cardId))
+        .filter((card): card is ExtendedStandardCard => Boolean(card))
+    }
+
+    return Array.from(runtimeCards.values()).filter((card) => {
+      if (!card.batchId) return true
+      return runtimeBatches.get(card.batchId)?.disabled !== true
+    })
+  }, [runtimeBatches, runtimeCards, viewModalOpen, viewingCardSourceId])
   const enabledEquipmentPackCount = useMemo(
     () => equipmentPacks.filter((pack) => !pack.disabled).length,
     [equipmentPacks],
@@ -205,48 +228,16 @@ export default function CardManagerPage() {
     ? equipmentStore.getState().getPackDetail(viewingEquipmentPackId)
     : undefined
 
-  function refreshCardData() {
-    if (typeof window === "undefined") return
-    setBatches(
-      getAllBatches().map((batch) => {
-        const rawBatch = batch as typeof batch & {
-          id?: string
-          name?: string
-          author?: string
-          version?: string
-          fileName?: string
-          disabled?: boolean
-          isSystemBatch?: boolean
-        }
-
-        return {
-          id: rawBatch.id ?? "",
-          name: rawBatch.name ?? "未命名卡牌包",
-          author: rawBatch.author ?? "未知作者",
-          version: rawBatch.version ?? "-",
-          fileName: rawBatch.fileName ?? "",
-          importTime: batch.importTime,
-          cardCount: batch.cardCount,
-          cardTypes: batch.cardTypes,
-          disabled: rawBatch.disabled ?? false,
-          isSystemBatch: rawBatch.isSystemBatch ?? false,
-        }
-      }),
-    )
-  }
-
   useEffect(() => {
     async function initializeData() {
-      const cardStore = useUnifiedCardStore.getState()
-      if (!cardStore.initialized) {
-        await cardStore.initializeSystem()
+      if (!cardRuntimeInitialized) {
+        await initializeCardSystem()
       }
       await getEquipmentUiStore().getState().ensureInitialized()
-      refreshCardData()
     }
 
     void initializeData()
-  }, [])
+  }, [cardRuntimeInitialized, initializeCardSystem])
 
   async function handleMultiFileImport(files: File[]) {
     if (files.length === 0) return
@@ -275,7 +266,6 @@ export default function CardManagerPage() {
 
       if (result.results.some((item) => item.success)) {
         try {
-          refreshCardData()
           await store.getState().refreshFromStorage()
         } catch (refreshError) {
           const message = refreshError instanceof Error ? refreshError.message : "刷新数据失败"
@@ -292,32 +282,32 @@ export default function CardManagerPage() {
     }
   }
 
-  function handleViewCards(batchId?: string) {
-    const cardsToView = batchId ? getCardsByBatchId(batchId) : useUnifiedCardStore.getState().loadAllCards()
-    setViewingCards(cardsToView)
+  function handleViewCards(sourceId?: string) {
+    setViewingCardSourceId(sourceId)
     setViewModalOpen(true)
   }
 
-  async function handleToggleBatchDisabled(batchId: string) {
+  async function handleToggleBatchDisabled(sourceId: string) {
     try {
-      const success = await toggleBatchDisabled(batchId)
+      const success = await toggleBatchDisabled(sourceId)
       if (!success) {
         alert("切换卡牌包状态失败")
-        return
       }
-      refreshCardData()
     } catch (error) {
       console.error("切换卡牌包状态时出错:", error)
       alert("切换卡牌包状态时出错")
     }
   }
 
-  async function handleRemoveBatch(batchId: string) {
+  async function handleRemoveBatch(sourceId: string) {
     if (!confirm("确定要删除这个卡牌包吗？这将删除卡牌包中的所有卡牌。")) return
 
-    const success = await removeCustomCardBatch(batchId)
+    const success = await removeCustomCardBatch(sourceId)
     if (success) {
-      refreshCardData()
+      if (viewingCardSourceId === sourceId) {
+        setViewModalOpen(false)
+        setViewingCardSourceId(undefined)
+      }
       alert("卡牌包删除成功")
     } else {
       alert("卡牌包删除失败")
@@ -337,7 +327,6 @@ export default function CardManagerPage() {
       alert(result.diagnostics[0]?.message ?? "装备包删除失败")
     }
     if (viewingEquipmentPackId === packId) setViewingEquipmentPackId(null)
-    refreshCardData()
   }
 
   async function handleToggleEquipmentPack(packId: string, disabled: boolean) {
@@ -345,7 +334,6 @@ export default function CardManagerPage() {
     if (!result.success) {
       alert(result.diagnostics[0]?.message ?? "装备包状态更新失败")
     }
-    refreshCardData()
   }
 
   async function handleRetryEquipmentInitialize() {
@@ -367,7 +355,6 @@ export default function CardManagerPage() {
       localStorage.clear()
       await cardStore.initializeSystem()
       await getEquipmentUiStore().getState().refreshFromStorage()
-      refreshCardData()
       alert("所有本地数据已清空。页面将自动刷新。")
       window.setTimeout(() => window.location.reload(), 1000)
     } catch (error) {

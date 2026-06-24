@@ -57,9 +57,9 @@ function v1Sheet(overrides: Record<string, unknown> = {}) {
 }
 
 describe('sheet schema version', () => {
-  it('uses schema version 2 on the modifier branch', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(2)
-    expect(defaultSheetData.schemaVersion).toBe(2)
+  it('uses schema version 3 for card automation instance identity', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBe(3)
+    expect(defaultSheetData.schemaVersion).toBe(3)
   })
 
   it('treats missing, invalid, or non-integer schema versions as v0', () => {
@@ -73,25 +73,26 @@ describe('sheet schema version', () => {
     expect(detectSchemaVersion({ schemaVersion: 0 })).toBe(0)
     expect(detectSchemaVersion({ schemaVersion: 1 })).toBe(1)
     expect(detectSchemaVersion({ schemaVersion: 2 })).toBe(2)
+    expect(detectSchemaVersion({ schemaVersion: 3 })).toBe(3)
   })
 
   it('rejects saves from newer schema versions', () => {
-    expect(() => assertSupportedSchemaVersion(3)).toThrow(/newer schema version/i)
+    expect(() => assertSupportedSchemaVersion(4)).toThrow(/newer schema version/i)
   })
 })
 
 describe('sheet data version migration', () => {
-  it('migrates v0 data to v2 through the full version chain', () => {
+  it('migrates v0 data to v3 through the full version chain', () => {
     const migrated = migrateSheetData(v0Sheet())
 
-    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.schemaVersion).toBe(3)
     expect(migrated.hope).toBe(3)
     expect(migrated.hopeMax).toBe(4)
     expect(migrated.inventory_cards).toHaveLength(20)
     expect(migrated.notebook?.pages).toHaveLength(1)
   })
 
-  it('migrates v1 data to v2 and moves legacy equipment fields', () => {
+  it('migrates v1 data to v3 and moves legacy equipment fields', () => {
     const migrated = migrateSheetData(v1Sheet({
       primaryWeaponName: '阔剑',
       primaryWeaponTrait: '物理/单手/近战',
@@ -103,7 +104,7 @@ describe('sheet data version migration', () => {
       armorFeature: '重型',
     }))
 
-    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.schemaVersion).toBe(3)
     expect(migrated.equipment.weaponSlots.primary).toMatchObject({
       name: '阔剑',
       trait: '物理/单手/近战',
@@ -139,7 +140,7 @@ describe('sheet data version migration', () => {
       },
     }))
 
-    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.schemaVersion).toBe(3)
     expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe('user:evasion-base')
     expect(migrated.userModifierContributions).toEqual([{
       id: 'user:evasion-base',
@@ -158,7 +159,7 @@ describe('sheet data version migration', () => {
       }],
     }))
 
-    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.schemaVersion).toBe(3)
     expect(migrated.evasion).toBe('15')
     expect(migrated.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: getEstimatedBaseId('evasion'),
@@ -173,7 +174,7 @@ describe('sheet data version migration', () => {
     ]))
   })
 
-  it('keeps v2 unknown migration differences idempotent', () => {
+  it('keeps v3 unknown migration differences idempotent', () => {
     const once = migrateSheetData(v1Sheet({
       evasion: '15',
       cards: [{
@@ -191,15 +192,15 @@ describe('sheet data version migration', () => {
     )
   })
 
-  it('keeps v2 data stable and idempotent', () => {
+  it('keeps v3 data stable and idempotent', () => {
     const once = migrateSheetData(v0Sheet())
     const twice = migrateSheetData(once)
 
-    expect(once.schemaVersion).toBe(2)
+    expect(once.schemaVersion).toBe(3)
     expect(twice).toEqual(once)
   })
 
-  it('normalizes v2 legacy checked upgrades with fixed target params', () => {
+  it('normalizes v2 legacy checked upgrades with fixed target params during v3 migration', () => {
     const migrated = migrateSheetData(v1Sheet({
       schemaVersion: 2,
       checkedUpgrades: {
@@ -207,7 +208,7 @@ describe('sheet data version migration', () => {
       },
     }))
 
-    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.schemaVersion).toBe(3)
     expect(migrated.upgradeStates).toEqual({
       'tier1-1-0': { checked: true, params: { target: 'hpMax' } },
     })
@@ -228,6 +229,6 @@ describe('sheet data version migration', () => {
   })
 
   it('throws for newer schema versions', () => {
-    expect(() => migrateSheetData(v0Sheet({ schemaVersion: 3 }))).toThrow(/newer schema version/i)
+    expect(() => migrateSheetData(v0Sheet({ schemaVersion: 4 }))).toThrow(/newer schema version/i)
   })
 })

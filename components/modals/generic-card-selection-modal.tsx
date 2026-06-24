@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { CardType } from "@/card"
 import { useState, useEffect, useMemo } from "react"
 import type { StandardCard } from "@/card/card-types"
-import { getStandardCardsByTypeAsync } from "@/card"
 import { useSheetStore } from "@/lib/sheet-store"
 import { useUnifiedCardStore } from "@/card/stores/unified-card-store"
 import { BaseCardModal, ModalHeader, ModalFilterBar } from "./base"
@@ -31,68 +30,52 @@ export function GenericCardSelectionModal({
   levelFilter,
 }: GenericCardSelectionModalProps) {
   const { sheetData: formData } = useSheetStore()
-  const cardStore = useUnifiedCardStore()
+  const runtimeInitialized = useUnifiedCardStore((state) => state.initialized)
+  const runtimeBatches = useUnifiedCardStore((state) => state.batches)
+  const runtimeCards = useUnifiedCardStore((state) => state.cards)
+  const initializeCardSystem = useUnifiedCardStore((state) => state.initializeSystem)
   const [selectedClasses, setSelectedClasses] = useState<string[]>([])
   const [selectedBatches, setSelectedBatches] = useState<string[]>([])
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
-  const [baseCards, setBaseCards] = useState<StandardCard[]>([])
-  const [professionCards, setProfessionCards] = useState<StandardCard[]>([])
-  const [cardsLoading, setCardsLoading] = useState(true)
-  const [cardsError, setCardsError] = useState<string | null>(null)
+  const cardsLoading = isOpen && !runtimeInitialized
+  const cardsError = null
 
   // 获取卡包选项
   const batchOptions = useMemo(() => {
-    const batches = cardStore.getAllBatches() as unknown as Array<{
-      id: string
-      name: string
-      cardCount: number
-    }>
-    return batches.map(b => ({
-      id: b.id,
-      name: b.name,
-      cardCount: b.cardCount,
+    return Array.from(runtimeBatches.values()).map(batch => ({
+      id: batch.id,
+      name: batch.name,
+      cardCount: batch.disabled ? 0 : batch.cardCount,
     }))
-  }, [cardStore.initialized])
+  }, [runtimeBatches])
 
-  // Load cards asynchronously when modal opens or card type changes
   useEffect(() => {
-    if (!isOpen || !cardType) return
+    if (!isOpen || runtimeInitialized) return
+    void initializeCardSystem()
+  }, [initializeCardSystem, isOpen, runtimeInitialized])
 
-    let isMounted = true
+  useEffect(() => {
+    setSelectedBatches((current) => current.filter((batchId) => runtimeBatches.has(batchId)))
+  }, [runtimeBatches])
 
-    const loadCards = async () => {
-      setCardsLoading(true)
-      setCardsError(null)
+  const baseCards = useMemo(() => {
+    if (!isOpen || !runtimeInitialized) return []
 
-      try {
-        const cards = await getStandardCardsByTypeAsync(cardType as CardType)
-        if (isMounted) {
-          setBaseCards(cards)
-        }
+    return Array.from(runtimeCards.values()).filter((card) => {
+      if (card.type !== cardType) return false
+      if (!card.batchId) return true
+      return runtimeBatches.get(card.batchId)?.disabled !== true
+    }) as StandardCard[]
+  }, [cardType, isOpen, runtimeBatches, runtimeCards, runtimeInitialized])
 
-        if (cardType === "subclass") {
-          const profCards = await getStandardCardsByTypeAsync(CardType.Profession)
-          if (isMounted) {
-            setProfessionCards(profCards)
-          }
-        }
-      } catch (error) {
-        if (isMounted) {
-          setCardsError(error instanceof Error ? error.message : "Failed to load cards")
-        }
-      } finally {
-        if (isMounted) {
-          setCardsLoading(false)
-        }
-      }
-    }
+  const professionCards = useMemo(() => {
+    if (!isOpen || !runtimeInitialized || cardType !== "subclass") return []
 
-    loadCards()
-
-    return () => {
-      isMounted = false
-    }
-  }, [isOpen, cardType])
+    return Array.from(runtimeCards.values()).filter((card) => {
+      if (card.type !== CardType.Profession) return false
+      if (!card.batchId) return true
+      return runtimeBatches.get(card.batchId)?.disabled !== true
+    }) as StandardCard[]
+  }, [cardType, isOpen, runtimeBatches, runtimeCards, runtimeInitialized])
 
   // Calculate filtered cards based on card type, level filter, and batch filter
   const filteredInitialCards = useMemo(() => {
@@ -140,11 +123,6 @@ export function GenericCardSelectionModal({
       (card) => card.class && selectedClasses.some(cls => card.class?.includes(cls))
     )
   }, [filteredInitialCards, selectedClasses])
-
-  // Trigger refresh animation when filter changes
-  useEffect(() => {
-    setRefreshTrigger(prev => prev + 1)
-  }, [finalFilteredCards])
 
   const handleCardClick = (card: StandardCard) => {
     onSelect(card.id, field)
@@ -222,7 +200,6 @@ export function GenericCardSelectionModal({
           <CardGrid
             cards={finalFilteredCards}
             onCardClick={handleCardClick}
-            refreshTrigger={refreshTrigger}
             className="gap-6"
           />
         </ContentStates>

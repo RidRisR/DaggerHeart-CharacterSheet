@@ -12,7 +12,7 @@
 
 import type { SheetData, AttributeValue } from './sheet-data'
 import { defaultSheetData } from './default-sheet-data'
-import { createEmptyCard, type StandardCard } from '@/card/card-types'
+import { createEmptyCard, isEmptyCard, type StandardCard } from '@/card/card-types'
 import { armorItems } from "@/data/list/armor"
 import { allWeapons, type AllWeapon } from "@/data/list/all-weapons"
 import { primaryWeapons, type Weapon } from "@/data/list/primary-weapon"
@@ -20,6 +20,7 @@ import { secondaryWeapons } from "@/data/list/secondary-weapon"
 import { upgradeOptionsData } from "@/data/list/upgrade"
 import {
   CURRENT_SCHEMA_VERSION,
+  V3_SCHEMA_VERSION,
   assertSupportedSchemaVersion,
   detectSchemaVersion,
 } from './sheet-schema-version'
@@ -1296,6 +1297,34 @@ function migrateV1ToV2(raw: Partial<SheetData> | any): Partial<SheetData> {
   }
 }
 
+function createCardInstanceId(cardId: string, zone: "loadout" | "vault", index: number): string {
+  const safeCardId = cardId.replace(/[^a-zA-Z0-9_-]/g, "_")
+  return `cardinst_${zone}_${index}_${safeCardId}`
+}
+
+function migrateCardInstanceIds(raw: Partial<SheetData> | any): Partial<SheetData> {
+  const migrateCards = (cards: unknown, zone: "loadout" | "vault") => {
+    if (!Array.isArray(cards)) return cards
+
+    return cards.map((card, index) => {
+      if (!isValidStandardCard(card) || isEmptyCard(card)) return card
+      if (typeof card.instanceId === "string" && card.instanceId.length > 0) return card
+
+      return {
+        ...card,
+        instanceId: createCardInstanceId(card.id, zone, index),
+      }
+    })
+  }
+
+  return {
+    ...raw,
+    cards: migrateCards(raw.cards, "loadout"),
+    inventory_cards: migrateCards(raw.inventory_cards, "vault"),
+    schemaVersion: V3_SCHEMA_VERSION,
+  }
+}
+
 /**
  * 主迁移函数 - 统一入口点
  * 
@@ -1320,6 +1349,11 @@ export function migrateSheetData(
   if (migratedVersion === V1_SCHEMA_VERSION) {
     migrated = migrateV1ToV2(migrated)
     migratedVersion = V2_SCHEMA_VERSION
+  }
+
+  if (migratedVersion === V2_SCHEMA_VERSION) {
+    migrated = migrateCardInstanceIds(migrated)
+    migratedVersion = V3_SCHEMA_VERSION
   }
 
   return normalizeCurrentSheetData(migrated)

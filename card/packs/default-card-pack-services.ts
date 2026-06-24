@@ -3,7 +3,6 @@ import { createDexieCardPackImageBackend, type CardImageTablePort } from "./imag
 import { createBrowserCardPackStorageAdapter } from "./local-storage-adapter"
 import { createLocalStorageCardPackRepository } from "./local-storage-repository"
 import { createZustandCardRuntimeRefreshAdapter } from "./runtime-refresh-adapter"
-import { CardSource } from "@/card/card-types"
 import { db as cardImageDB } from "@/card/stores/image-service/database"
 import { useUnifiedCardStore } from "@/card/stores/unified-card-store"
 
@@ -38,9 +37,7 @@ async function getBuiltinCardIds() {
   return new Set(
     useUnifiedCardStore
       .getState()
-      .loadAllCards()
-      .filter((card) => card.source === CardSource.BUILTIN)
-      .map((card) => card.id),
+      .getAllBuiltinCardTemplateIds(),
   )
 }
 

@@ -115,14 +115,14 @@ function createRuntimeHarness() {
       failedImages: new Set(),
       maxCacheSize: 100,
     },
-  } as UnifiedCardState & ReturnType<typeof createStoreActions>
+  } as unknown as UnifiedCardState & ReturnType<typeof createStoreActions>
 
   Object.assign(state, createStoreActions(set, get))
 
   return {
     store: state,
     visibleIds: () => state.loadAllCards().map((card) => card.id),
-    batch: (packId: string) => state.getAllBatches().find((batch) => batch.id === packId),
+    batch: (packId: string) => state.batches.get(packId),
     classOptions: () => {
       state._recomputeAggregations()
       return state.aggregatedCustomFields?.professions ?? []
@@ -134,6 +134,34 @@ describe("card pack service runtime lifecycle integration", () => {
   beforeEach(() => {
     localStorage.clear()
     vi.restoreAllMocks()
+  })
+
+  it("reserves disabled built-in template ids for custom import conflict checks", async () => {
+    const runtime = createRuntimeHarness()
+    await runtime.store.reloadCustomRuntimeFromStorage()
+    const builtinBatch = runtime.store.batches.get(BUILTIN_BATCH_ID)
+    runtime.store.batches.set(BUILTIN_BATCH_ID, { ...builtinBatch!, disabled: true })
+    const storage = createBrowserCardPackStorageAdapter(localStorage)
+    const repository = createLocalStorageCardPackRepository({
+      storage,
+      images: createInMemoryCardPackImageBackend(),
+      now: () => fixedNow,
+    })
+    const service = createCardPackApplicationService({
+      repository,
+      runtimeRefresh: createZustandCardRuntimeRefreshAdapter(runtime.store),
+      builtinTemplateIds: new Set(runtime.store.getAllBuiltinCardTemplateIds()),
+      createPackId: () => "pack_conflict",
+      now: () => fixedNow,
+      random: () => 0.123,
+    })
+
+    const result = await service.importFromSource(createCardObjectSource(validPack("Bard"), "runtime.json"), {
+      mode: "commit",
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.diagnostics).toContainEqual(expect.objectContaining({ code: "TEMPLATE_ID_CONFLICT" }))
   })
 
   it("updates custom pack runtime read models across import disable enable and remove", async () => {
@@ -157,29 +185,37 @@ describe("card pack service runtime lifecycle integration", () => {
       mode: "commit",
     })
     expect(imported.success).toBe(true)
-    expect(runtime.visibleIds()).toEqual(["builtin-card", "warrior"])
-    expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false, cardCount: 1 })
+    expect(runtime.visibleIds()).toContain("Bard")
+    expect(runtime.visibleIds()).toContain("warrior")
+    expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false })
+    expect(runtime.batch(BUILTIN_BATCH_ID)?.cardCount).toBeGreaterThan(0)
     expect(runtime.batch("pack_runtime")).toMatchObject({ disabled: false, cardCount: 1 })
     expect(runtime.classOptions()).toEqual(["Warrior"])
 
     const disabled = await service.setPackDisabled("pack_runtime", true)
     expect(disabled.success).toBe(true)
-    expect(runtime.visibleIds()).toEqual(["builtin-card"])
-    expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false, cardCount: 1 })
+    expect(runtime.visibleIds()).toContain("Bard")
+    expect(runtime.visibleIds()).not.toContain("warrior")
+    expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false })
+    expect(runtime.batch(BUILTIN_BATCH_ID)?.cardCount).toBeGreaterThan(0)
     expect(runtime.batch("pack_runtime")).toMatchObject({ disabled: true })
     expect(runtime.classOptions()).toEqual([])
 
     const enabled = await service.setPackDisabled("pack_runtime", false)
     expect(enabled.success).toBe(true)
-    expect(runtime.visibleIds()).toEqual(["builtin-card", "warrior"])
-    expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false, cardCount: 1 })
+    expect(runtime.visibleIds()).toContain("Bard")
+    expect(runtime.visibleIds()).toContain("warrior")
+    expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false })
+    expect(runtime.batch(BUILTIN_BATCH_ID)?.cardCount).toBeGreaterThan(0)
     expect(runtime.batch("pack_runtime")).toMatchObject({ disabled: false })
     expect(runtime.classOptions()).toEqual(["Warrior"])
 
     const removed = await service.removePack("pack_runtime")
     expect(removed.success).toBe(true)
-    expect(runtime.visibleIds()).toEqual(["builtin-card"])
-    expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false, cardCount: 1 })
+    expect(runtime.visibleIds()).toContain("Bard")
+    expect(runtime.visibleIds()).not.toContain("warrior")
+    expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false })
+    expect(runtime.batch(BUILTIN_BATCH_ID)?.cardCount).toBeGreaterThan(0)
     expect(runtime.batch("pack_runtime")).toBeUndefined()
     expect(runtime.classOptions()).toEqual([])
   })

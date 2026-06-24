@@ -1,29 +1,61 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest"
+import type { ExtendedStandardCard } from "@/card/card-types"
+import type { BatchInfo, UnifiedCardState } from "@/card/stores/store-types"
 import CardManagerPage from "../page"
 
-type MockBatch = {
-  id: string
-  name: string
-  author: string
-  version: string
-  fileName: string
-  importTime: string
-  cardCount: number
-  cardTypes: string[]
-  disabled: boolean
-  isSystemBatch: boolean
+type RuntimeSlice = Pick<UnifiedCardState, "initialized" | "batches" | "cards"> & {
+  initializeSystem: Mock<() => Promise<{ initialized: boolean }>>
+  loadAllCards: Mock<() => ExtendedStandardCard[]>
+  getCardById: Mock<(cardId: string) => ExtendedStandardCard | null>
 }
 
+const runtimeListeners = vi.hoisted(() => new Set<() => void>())
+
 const mocks = vi.hoisted(() => ({
-  batches: [] as MockBatch[],
-  removeCustomCardBatch: vi.fn(),
-  toggleBatchDisabled: vi.fn(),
+  runtime: {
+    initialized: true,
+    batches: new Map([
+      [
+        "pack_a",
+        {
+          id: "pack_a",
+          name: "Pack A",
+          author: "Tester",
+          version: "1.0.0",
+          fileName: "pack-a.json",
+          importTime: "2026-06-19T00:00:00.000Z",
+          cardCount: 1,
+          cardTypes: ["profession"],
+          size: 100,
+          disabled: false,
+          cardIds: ["card_a"],
+        },
+      ],
+    ]),
+    cards: new Map([
+      [
+        "card_a",
+        {
+          id: "card_a",
+          name: "Card A",
+          type: "profession",
+          class: "Profession",
+          standarized: true,
+          cardSelectDisplay: {},
+          batchId: "pack_a",
+        } as ExtendedStandardCard,
+      ],
+    ]),
+    initializeSystem: vi.fn(async () => ({ initialized: true })),
+    loadAllCards: vi.fn((): ExtendedStandardCard[] => []),
+    getCardById: vi.fn((_cardId: string): ExtendedStandardCard | null => null),
+  } as RuntimeSlice,
+  removeCustomCardBatch: vi.fn(async (_batchId: string) => false),
+  toggleBatchDisabled: vi.fn(async (_batchId: string, _disabled?: boolean) => false),
   importCustomCards: vi.fn(),
-  getCardsByBatchId: vi.fn(() => []),
-  initializeSystem: vi.fn(async () => ({ initialized: true })),
-  loadAllCards: vi.fn(() => []),
+  getCardsByBatchId: vi.fn((_batchId: string): ExtendedStandardCard[] => []),
   equipmentState: {
     initialized: true,
     storageSnapshot: null,
@@ -39,30 +71,83 @@ const mocks = vi.hoisted(() => ({
   },
 }))
 
+function emitRuntime(next: Partial<RuntimeSlice>) {
+  Object.assign(mocks.runtime, next)
+  act(() => {
+    runtimeListeners.forEach((listener) => listener())
+  })
+}
+
+function makeRuntimeBatch(overrides: Partial<BatchInfo> = {}): BatchInfo {
+  return {
+    id: "pack_a",
+    name: "Pack A",
+    author: "Tester",
+    version: "1.0.0",
+    fileName: "pack-a.json",
+    importTime: "2026-06-19T00:00:00.000Z",
+    cardCount: 1,
+    cardTypes: ["profession"],
+    size: 100,
+    disabled: false,
+    cardIds: ["card_a"],
+    ...overrides,
+  }
+}
+
+function makeRuntimeCard(overrides: Partial<ExtendedStandardCard> = {}): ExtendedStandardCard {
+  return {
+    id: "card_a",
+    name: "Card A",
+    type: "profession",
+    class: "Profession",
+    standarized: true,
+    cardSelectDisplay: {},
+    batchId: "pack_a",
+    ...overrides,
+  } as ExtendedStandardCard
+}
+
 vi.mock("@/card/index", () => ({
-  getAllBatches: () => mocks.batches,
-  getCardsByBatchId: (...args: unknown[]) => mocks.getCardsByBatchId(...args),
+  getAllBatches: () => Array.from(mocks.runtime.batches.values()),
+  getCardsByBatchId: (batchId: string) => mocks.getCardsByBatchId(batchId),
+  getStandardCardById: (cardId: string) => mocks.runtime.cards.get(cardId) ?? null,
   getCustomCardStats: () => ({
-    totalCards: mocks.batches.reduce((total, batch) => total + batch.cardCount, 0),
-    totalBatches: mocks.batches.filter((batch) => !batch.isSystemBatch).length,
+    totalCards: Array.from(mocks.runtime.batches.values()).reduce((total, batch) => total + batch.cardCount, 0),
+    totalBatches: Array.from(mocks.runtime.batches.values()).filter((batch) => !batch.isSystemBatch).length,
     cardsByType: {},
     cardsByBatch: {},
     storageUsed: 0,
   }),
   importCustomCards: (...args: unknown[]) => mocks.importCustomCards(...args),
-  removeCustomCardBatch: (...args: unknown[]) => mocks.removeCustomCardBatch(...args),
-  toggleBatchDisabled: (...args: unknown[]) => mocks.toggleBatchDisabled(...args),
+  removeCustomCardBatch: (batchId: string) => mocks.removeCustomCardBatch(batchId),
+  toggleBatchDisabled: (batchId: string) => mocks.toggleBatchDisabled(batchId),
 }))
 
-vi.mock("@/card/stores/unified-card-store", () => ({
-  useUnifiedCardStore: {
-    getState: () => ({
-      initialized: true,
-      initializeSystem: mocks.initializeSystem,
-      loadAllCards: mocks.loadAllCards,
-    }),
-  },
-}))
+vi.mock("@/card/stores/unified-card-store", async () => {
+  const React = await vi.importActual<typeof import("react")>("react")
+
+  const useUnifiedCardStore = Object.assign(
+    (selector?: (state: RuntimeSlice) => unknown) => {
+      const [, setVersion] = React.useState(0)
+
+      React.useEffect(() => {
+        const listener = () => setVersion((version) => version + 1)
+        runtimeListeners.add(listener)
+        return () => {
+          runtimeListeners.delete(listener)
+        }
+      }, [])
+
+      return selector ? selector(mocks.runtime) : mocks.runtime
+    },
+    {
+      getState: () => mocks.runtime,
+    },
+  )
+
+  return { useUnifiedCardStore }
+})
 
 vi.mock("@/card/utils/dhcb-importer", () => ({
   importDhcbCardPackage: vi.fn(),
@@ -70,6 +155,25 @@ vi.mock("@/card/utils/dhcb-importer", () => ({
 
 vi.mock("@/components/content-pack-manager/import-content-pack", () => ({
   importContentPackFiles: vi.fn(),
+}))
+
+vi.mock("@/components/modals/view-cards-modal", () => ({
+  ViewCardsModal: ({
+    cards,
+    isOpen,
+    title,
+  }: {
+    cards: ExtendedStandardCard[]
+    isOpen: boolean
+    title: string
+  }) =>
+    isOpen ? (
+      <div role="dialog" aria-label={title}>
+        {cards.map((card) => (
+          <div key={card.id}>{card.name}</div>
+        ))}
+      </div>
+    ) : null,
 }))
 
 vi.mock("@/equipment/ui/equipment-ui-store", () => ({
@@ -83,22 +187,6 @@ vi.mock("@/equipment/ui/equipment-ui-store", () => ({
     ),
 }))
 
-function packA(overrides: Partial<MockBatch> = {}): MockBatch {
-  return {
-    id: "pack_a",
-    name: "Pack A",
-    author: "Tester",
-    version: "1.0.0",
-    fileName: "pack-a.json",
-    importTime: "2026-06-19T00:00:00.000Z",
-    cardCount: 1,
-    cardTypes: ["profession"],
-    disabled: false,
-    isSystemBatch: false,
-    ...overrides,
-  }
-}
-
 function expectStatValue(label: string, value: string) {
   const matchingLabel = screen
     .getAllByText(label)
@@ -109,15 +197,26 @@ function expectStatValue(label: string, value: string) {
 
 describe("CardManagerPage card lifecycle", () => {
   beforeEach(() => {
-    mocks.batches = [packA()]
+    runtimeListeners.clear()
+    mocks.runtime.initialized = true
+    mocks.runtime.batches = new Map([["pack_a", makeRuntimeBatch()]])
+    mocks.runtime.cards = new Map([["card_a", makeRuntimeCard()]])
+    mocks.runtime.initializeSystem.mockClear()
+    mocks.runtime.loadAllCards.mockReset()
+    mocks.runtime.loadAllCards.mockImplementation(() => Array.from(mocks.runtime.cards.values()))
+    mocks.runtime.getCardById.mockReset()
+    mocks.runtime.getCardById.mockImplementation((cardId: string) => mocks.runtime.cards.get(cardId) ?? null)
     mocks.removeCustomCardBatch.mockReset()
     mocks.toggleBatchDisabled.mockReset()
     mocks.importCustomCards.mockReset()
     mocks.getCardsByBatchId.mockReset()
-    mocks.getCardsByBatchId.mockReturnValue([])
-    mocks.initializeSystem.mockClear()
-    mocks.loadAllCards.mockReset()
-    mocks.loadAllCards.mockReturnValue([])
+    mocks.getCardsByBatchId.mockImplementation((batchId: string) => {
+      const batch = mocks.runtime.batches.get(batchId)
+      if (!batch || batch.disabled) return []
+      return batch.cardIds
+        .map((cardId) => mocks.runtime.cards.get(cardId))
+        .filter((card): card is ExtendedStandardCard => Boolean(card))
+    })
     mocks.equipmentState.ensureInitialized.mockClear()
     mocks.equipmentState.getPackSummaries.mockReset()
     mocks.equipmentState.getPackSummaries.mockReturnValue([])
@@ -137,7 +236,10 @@ describe("CardManagerPage card lifecycle", () => {
 
   it("successful delete calls removeCustomCardBatch, refreshes list so Pack A disappears, and updates visible stats", async () => {
     mocks.removeCustomCardBatch.mockImplementation(async () => {
-      mocks.batches = []
+      emitRuntime({
+        batches: new Map(),
+        cards: new Map(),
+      })
       return true
     })
 
@@ -172,7 +274,9 @@ describe("CardManagerPage card lifecycle", () => {
 
   it("successful toggle calls toggleBatchDisabled, refreshes visible disabled status, and updates visible stats", async () => {
     mocks.toggleBatchDisabled.mockImplementation(async () => {
-      mocks.batches = mocks.batches.map((batch) => (batch.id === "pack_a" ? { ...batch, disabled: true } : batch))
+      emitRuntime({
+        batches: new Map([["pack_a", makeRuntimeBatch({ disabled: true })]]),
+      })
       return true
     })
 
@@ -187,5 +291,21 @@ describe("CardManagerPage card lifecycle", () => {
     expectStatValue("卡牌包", "0/1")
     expectStatValue("卡牌", "1")
     expect(screen.getByRole("button", { name: /查看所有卡牌\s+0/ })).toBeTruthy()
+  })
+
+  it("updates an open card view when runtime cards for the source change", async () => {
+    render(<CardManagerPage />)
+
+    await screen.findAllByText("Pack A")
+    await userEvent.click(screen.getAllByRole("button", { name: "查看卡牌包" })[0])
+    expect(await screen.findByText("Card A")).toBeTruthy()
+
+    emitRuntime({
+      batches: new Map([["pack_a", makeRuntimeBatch({ cardIds: ["card_b"] })]]),
+      cards: new Map([["card_b", makeRuntimeCard({ id: "card_b", name: "Card B" })]]),
+    })
+
+    await waitFor(() => expect(screen.getByText("Card B")).toBeTruthy())
+    expect(screen.queryByText("Card A")).toBeNull()
   })
 })

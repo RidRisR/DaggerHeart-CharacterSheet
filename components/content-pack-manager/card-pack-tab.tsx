@@ -5,37 +5,21 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Eye, Power, PowerOff, XCircle } from "lucide-react"
+import type { CardRuntimeSourceListItem } from "@/card/runtime/card-pack-view-model"
 
-export interface CardPackListItem {
-  id: string
-  name: string
-  author: string
-  version: string
-  fileName: string
-  importTime: string
-  cardCount: number
-  cardTypes: string[]
-  disabled: boolean
-  isSystemBatch?: boolean
-}
+export type CardPackListItem = CardRuntimeSourceListItem
 
 interface CardPackTabProps {
   batches: CardPackListItem[]
   totalCards: number
-  onViewCards(batchId?: string): void
-  onToggleBatchDisabled(batchId: string): void
-  onRemoveBatch(batchId: string): void
+  onViewCards(sourceId?: string): void
+  onToggleBatchDisabled(sourceId: string, nextDisabled: boolean): void
+  onRemoveBatch(sourceId: string): void
 }
 
 function formatImportedAt(value: string) {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
-}
-
-function formatSourceLabel(batch: CardPackListItem) {
-  if (batch.isSystemBatch) return "系统内置"
-  if (batch.fileName.trim().length === 0) return "本地导入"
-  return `导入文件：${batch.fileName}`
 }
 
 function CardPackStatus({ disabled }: { disabled: boolean }) {
@@ -81,7 +65,8 @@ function CategorySummary({ categories }: { categories: string[] }) {
 }
 
 function CardPackActions({ batch, props }: { batch: CardPackListItem; props: CardPackTabProps }) {
-  const viewLabel = batch.disabled ? "已禁用卡牌包不能查看" : "查看卡牌包"
+  const viewLabel = batch.canViewCards ? "查看卡牌包" : "已禁用卡牌包不能查看"
+  const deleteLabel = batch.canRemove ? "删除卡牌包" : "此卡牌来源不能删除"
 
   return (
     <div className="flex justify-end gap-2">
@@ -90,8 +75,8 @@ function CardPackActions({ batch, props }: { batch: CardPackListItem; props: Car
         variant="outline"
         aria-label={viewLabel}
         title={viewLabel}
-        disabled={batch.disabled}
-        onClick={() => props.onViewCards(batch.id)}
+        disabled={!batch.canViewCards}
+        onClick={() => props.onViewCards(batch.sourceId)}
         className="h-11 w-11"
       >
         <Eye className="h-4 w-4" />
@@ -101,7 +86,8 @@ function CardPackActions({ batch, props }: { batch: CardPackListItem; props: Car
         variant="outline"
         aria-label={batch.disabled ? "启用卡牌包" : "禁用卡牌包"}
         title={batch.disabled ? "启用卡牌包" : "禁用卡牌包"}
-        onClick={() => props.onToggleBatchDisabled(batch.id)}
+        disabled={!batch.canDisable}
+        onClick={() => props.onToggleBatchDisabled(batch.sourceId, !batch.disabled)}
         className="h-11 w-11"
       >
         {batch.disabled ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
@@ -109,10 +95,10 @@ function CardPackActions({ batch, props }: { batch: CardPackListItem; props: Car
       <Button
         size="icon"
         variant="destructive"
-        aria-label={batch.isSystemBatch ? "系统内置卡牌包不能删除" : "删除卡牌包"}
-        title={batch.isSystemBatch ? "系统内置卡牌包不能删除" : "删除卡牌包"}
-        disabled={batch.isSystemBatch}
-        onClick={() => props.onRemoveBatch(batch.id)}
+        aria-label={deleteLabel}
+        title={deleteLabel}
+        disabled={!batch.canRemove}
+        onClick={() => props.onRemoveBatch(batch.sourceId)}
         className="h-11 w-11"
       >
         <XCircle className="h-4 w-4" />
@@ -139,7 +125,7 @@ function CardPackMobileCard({ batch, props }: { batch: CardPackListItem; props: 
         <CardPackStatus disabled={batch.disabled} />
       </div>
       <div className="mt-2 break-words text-xs text-muted-foreground">
-        {formatSourceLabel(batch)} · {formatImportedAt(batch.importTime)}
+        {batch.sourceLabel} · {formatImportedAt(batch.importTime)}
       </div>
       <div className="mt-3 text-sm">
         <CardPackContentSummary batch={batch} />
@@ -159,7 +145,7 @@ export function CardPackTab(props: CardPackTabProps) {
     const normalizedSearch = searchText.trim().toLowerCase()
 
     return props.batches.filter((batch) => {
-      const sourceLabel = formatSourceLabel(batch).toLowerCase()
+      const sourceLabel = batch.sourceLabel.toLowerCase()
       const matchesSearch =
         normalizedSearch.length === 0 ||
         batch.name.toLowerCase().includes(normalizedSearch) ||
@@ -224,7 +210,7 @@ export function CardPackTab(props: CardPackTabProps) {
         <>
           <div data-testid="card-pack-mobile-list" className="space-y-3 lg:hidden">
             {filteredBatches.map((batch) => (
-              <CardPackMobileCard key={batch.id} batch={batch} props={props} />
+              <CardPackMobileCard key={batch.sourceId} batch={batch} props={props} />
             ))}
           </div>
 
@@ -242,7 +228,7 @@ export function CardPackTab(props: CardPackTabProps) {
               </thead>
               <tbody>
                 {filteredBatches.map((batch) => (
-                  <tr key={batch.id} className="border-t align-middle">
+                  <tr key={batch.sourceId} className="border-t align-middle">
                     <td className="break-words p-3 font-medium">{batch.name}</td>
                     <td className="p-3">
                       <CardPackContentSummary batch={batch} />
@@ -250,7 +236,7 @@ export function CardPackTab(props: CardPackTabProps) {
                     <td className="p-3">
                       <CardPackStatus disabled={batch.disabled} />
                     </td>
-                    <td className="break-words p-3 text-muted-foreground">{formatSourceLabel(batch)}</td>
+                    <td className="break-words p-3 text-muted-foreground">{batch.sourceLabel}</td>
                     <td className="break-words p-3 text-muted-foreground">{formatImportedAt(batch.importTime)}</td>
                     <td className="p-3">
                       <CardPackActions batch={batch} props={props} />

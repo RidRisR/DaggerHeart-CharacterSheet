@@ -32,15 +32,15 @@ describe('storage migration entrypoints', () => {
     localStorage.clear()
   })
 
-  it('loads and persists v2 data from stored v0 character data', () => {
+  it('loads and persists v3 data from stored v0 character data', () => {
     localStorage.setItem('dh_character_test-id', JSON.stringify(v0Sheet()))
 
     const loaded = loadCharacterById('test-id')
     const stored = JSON.parse(localStorage.getItem('dh_character_test-id') || '{}')
 
-    expect(loaded?.schemaVersion).toBe(2)
+    expect(loaded?.schemaVersion).toBe(3)
     expect(loaded?.hope).toBe(3)
-    expect(stored.schemaVersion).toBe(2)
+    expect(stored.schemaVersion).toBe(3)
     expect(stored.hope).toBe(3)
   })
 
@@ -49,7 +49,7 @@ describe('storage migration entrypoints', () => {
 
     const duplicate = duplicateCharacter('source-id', 'Copy')
 
-    expect(duplicate?.schemaVersion).toBe(2)
+    expect(duplicate?.schemaVersion).toBe(3)
     expect(duplicate?.name).toBe('Copy')
     expect(duplicate?.hope).toBe(3)
   })
@@ -66,7 +66,7 @@ describe('storage migration entrypoints', () => {
     expect(activeId).toBeTruthy()
 
     const stored = JSON.parse(localStorage.getItem(`${CHARACTER_DATA_PREFIX}${activeId}`) || '{}')
-    expect(stored.schemaVersion).toBe(2)
+    expect(stored.schemaVersion).toBe(3)
     expect(stored.hope).toBe(3)
     expect(stored.focused_card_ids).toEqual(['card-domain-1'])
     expect(stored.pageVisibility).toEqual({

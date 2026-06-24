@@ -4,7 +4,7 @@ import type { CardPackListItem } from "../card-pack-tab"
 
 function makeBatch(overrides: Partial<CardPackListItem>): CardPackListItem {
   return {
-    id: "batch",
+    sourceId: "batch",
     name: "测试卡牌包",
     author: "Tester",
     version: "1.0.0",
@@ -13,6 +13,10 @@ function makeBatch(overrides: Partial<CardPackListItem>): CardPackListItem {
     cardCount: 0,
     cardTypes: [],
     disabled: false,
+    sourceLabel: "本地导入",
+    canDisable: true,
+    canRemove: true,
+    canViewCards: true,
     ...overrides,
   }
 }
@@ -22,13 +26,12 @@ describe("content pack summary", () => {
     expect(
       summarizeCardPacks([
         makeBatch({
-          id: "SYSTEM_BUILTIN_CARDS",
+          sourceId: "SYSTEM_BUILTIN_CARDS",
           name: "系统内置卡牌包",
           cardCount: 321,
-          isSystemBatch: true,
         }),
-        makeBatch({ id: "custom-1", cardCount: 7 }),
-        makeBatch({ id: "custom-2", cardCount: 5, disabled: true }),
+        makeBatch({ sourceId: "custom-1", cardCount: 7 }),
+        makeBatch({ sourceId: "custom-2", cardCount: 5, disabled: true }),
       ]),
     ).toEqual({
       cardPackCount: 3,

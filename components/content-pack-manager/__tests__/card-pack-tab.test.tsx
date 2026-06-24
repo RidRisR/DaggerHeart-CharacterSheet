@@ -4,34 +4,40 @@ import { describe, expect, it, vi } from "vitest"
 import { CardPackTab } from "../card-pack-tab"
 
 const systemBatch = {
-  id: "SYSTEM_BUILTIN_CARDS",
+  sourceId: "SYSTEM_BUILTIN_CARDS",
   name: "系统内置卡牌包",
-  author: "System Author",
-  version: "1.0.0",
+  author: "",
+  version: "",
   fileName: "builtin-base.json",
-  importTime: "2026-06-06T00:09:58.000Z",
+  importTime: "builtin",
   cardCount: 321,
   cardTypes: ["profession", "ancestry", "community", "subclass", "domain", "variant"],
   disabled: false,
-  isSystemBatch: true,
+  sourceLabel: "系统内置",
+  canDisable: true,
+  canRemove: false,
+  canViewCards: true,
 }
 
 const customEnabledBatch = {
   ...systemBatch,
-  id: "pack_enabled",
+  sourceId: "pack_enabled",
   name: "启用测试包",
   fileName: "enabled.json",
   disabled: false,
-  isSystemBatch: false,
+  sourceLabel: "导入文件：enabled.json",
+  canRemove: true,
 }
 
 const customDisabledBatch = {
   ...systemBatch,
-  id: "pack_disabled",
+  sourceId: "pack_disabled",
   name: "禁用测试包",
   fileName: "disabled.json",
   disabled: true,
-  isSystemBatch: false,
+  sourceLabel: "导入文件：disabled.json",
+  canRemove: true,
+  canViewCards: false,
 }
 
 describe("CardPackTab", () => {
@@ -59,7 +65,6 @@ describe("CardPackTab", () => {
     )
 
     expect(table.textContent).not.toContain("SYSTEM_BUILTIN_CARDS")
-    expect(table.textContent).not.toContain("System Author")
     expect(table.textContent).not.toContain("1.0.0")
   })
 
@@ -70,7 +75,7 @@ describe("CardPackTab", () => {
 
     render(
       <CardPackTab
-        batches={[{ ...systemBatch, id: "custom-pack", isSystemBatch: false }]}
+        batches={[{ ...systemBatch, sourceId: "custom-pack", canRemove: true, sourceLabel: "本地导入" }]}
         totalCards={321}
         onViewCards={onViewCards}
         onToggleBatchDisabled={onToggleBatchDisabled}
@@ -82,7 +87,7 @@ describe("CardPackTab", () => {
     expect(onViewCards).toHaveBeenCalledWith("custom-pack")
 
     await userEvent.click(screen.getAllByRole("button", { name: "禁用卡牌包" })[0])
-    expect(onToggleBatchDisabled).toHaveBeenCalledWith("custom-pack")
+    expect(onToggleBatchDisabled).toHaveBeenCalledWith("custom-pack", true)
 
     await userEvent.click(screen.getAllByRole("button", { name: "删除卡牌包" })[0])
     expect(onRemoveBatch).toHaveBeenCalledWith("custom-pack")
@@ -101,7 +106,7 @@ describe("CardPackTab", () => {
       />,
     )
 
-    const deleteButtons = screen.getAllByRole("button", { name: "系统内置卡牌包不能删除" }) as HTMLButtonElement[]
+    const deleteButtons = screen.getAllByRole("button", { name: "此卡牌来源不能删除" }) as HTMLButtonElement[]
     expect(deleteButtons).toHaveLength(2)
     deleteButtons.forEach((button) => expect(button.disabled).toBe(true))
     expect(onRemoveBatch).not.toHaveBeenCalled()
@@ -112,7 +117,16 @@ describe("CardPackTab", () => {
 
     render(
       <CardPackTab
-        batches={[{ ...systemBatch, id: "disabled-pack", disabled: true, isSystemBatch: false }]}
+        batches={[
+          {
+            ...systemBatch,
+            sourceId: "disabled-pack",
+            disabled: true,
+            canRemove: true,
+            canViewCards: false,
+            sourceLabel: "本地导入",
+          },
+        ]}
         totalCards={0}
         onViewCards={onViewCards}
         onToggleBatchDisabled={vi.fn()}

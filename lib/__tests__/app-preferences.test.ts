@@ -3,6 +3,7 @@ import {
   APP_PREFERENCES_STORAGE_KEY,
   getAppPreferences,
   getCardDisplayMode,
+  getCardDisabledSourceIds,
   getDualPagePreferences,
   getEquipmentDisabledSourceIds,
   isLatestAnnouncementRead,
@@ -11,8 +12,10 @@ import {
   LEGACY_TEXT_MODE_STORAGE_KEY,
   markAnnouncementRead,
   setCardDisplayMode,
+  setCardSourceDisabled,
   setDualPagePreferences,
   setEquipmentSourceDisabled,
+  SYSTEM_BUILTIN_CARDS_SOURCE_ID,
   type AppPreferencesStorage,
 } from "../app-preferences"
 
@@ -43,6 +46,10 @@ function createMemoryStorage(
   }
 }
 
+function readStoredPreferences(storage: AppPreferencesStorage): Record<string, unknown> {
+  return JSON.parse(storage.getItem(APP_PREFERENCES_STORAGE_KEY) ?? "{}") as Record<string, unknown>
+}
+
 describe("app preferences", () => {
   it("returns defaults when storage is empty", () => {
     const storage = createMemoryStorage()
@@ -60,7 +67,7 @@ describe("app preferences", () => {
         },
       },
       announcements: {},
-      contentSources: { equipmentDisabledSourceIds: [] },
+      contentSources: { equipmentDisabledSourceIds: [], cardDisabledSourceIds: [] },
     })
   })
 
@@ -87,7 +94,7 @@ describe("app preferences", () => {
         },
       },
       announcements: { lastReadAnnouncementId: "latest" },
-      contentSources: { equipmentDisabledSourceIds: ["builtin"] },
+      contentSources: { equipmentDisabledSourceIds: ["builtin"], cardDisabledSourceIds: [] },
     })
   })
 
@@ -134,6 +141,17 @@ describe("app preferences", () => {
 
     expect(getAppPreferences(storage).ui.cardDisplayMode).toBe("text")
     expect(storage.getItem(LEGACY_TEXT_MODE_STORAGE_KEY)).not.toBeNull()
+  })
+
+  it("does not materialize missing card source state when hydrating legacy preferences", () => {
+    const storage = createMemoryStorage({
+      [LEGACY_TEXT_MODE_STORAGE_KEY]: JSON.stringify({ state: { isTextMode: true }, version: 0 }),
+    })
+
+    expect(getAppPreferences(storage).ui.cardDisplayMode).toBe("text")
+
+    const stored = readStoredPreferences(storage)
+    expect(stored.contentSources).not.toHaveProperty("cardDisabledSourceIds")
   })
 
   it("ignores legacy keys when a valid new preferences key exists", () => {
@@ -186,5 +204,80 @@ describe("app preferences", () => {
 
     expect(setEquipmentSourceDisabled("builtin", true, storage)).toBe(false)
     expect(getEquipmentDisabledSourceIds(storage)).toEqual([])
+  })
+
+  it("does not materialize missing card source state when updating display mode", () => {
+    const storage = createMemoryStorage({
+      [APP_PREFERENCES_STORAGE_KEY]: JSON.stringify({
+        format: "dhsheet.app-preferences.v1",
+        ui: { cardDisplayMode: "image", dualPage: { enabled: false } },
+        announcements: {},
+        contentSources: { equipmentDisabledSourceIds: [] },
+      }),
+    })
+
+    setCardDisplayMode("text", storage)
+
+    const stored = readStoredPreferences(storage)
+    expect(stored.contentSources).not.toHaveProperty("cardDisabledSourceIds")
+  })
+
+  it("does not materialize missing card source state when updating equipment sources", () => {
+    const storage = createMemoryStorage({
+      [APP_PREFERENCES_STORAGE_KEY]: JSON.stringify({
+        format: "dhsheet.app-preferences.v1",
+        ui: { cardDisplayMode: "image", dualPage: { enabled: false } },
+        announcements: {},
+        contentSources: { equipmentDisabledSourceIds: [] },
+      }),
+    })
+
+    expect(setEquipmentSourceDisabled("builtin", true, storage)).toBe(true)
+
+    const stored = readStoredPreferences(storage)
+    expect(stored.contentSources).toMatchObject({ equipmentDisabledSourceIds: ["builtin"] })
+    expect(stored.contentSources).not.toHaveProperty("cardDisabledSourceIds")
+  })
+
+  it("normalizes card disabled source ids independently from equipment", () => {
+    const storage = createMemoryStorage({
+      [APP_PREFERENCES_STORAGE_KEY]: JSON.stringify({
+        format: "dhsheet.app-preferences.v1",
+        ui: { cardDisplayMode: "image", dualPage: { enabled: false } },
+        announcements: {},
+        contentSources: {
+          equipmentDisabledSourceIds: ["builtin"],
+          cardDisabledSourceIds: [SYSTEM_BUILTIN_CARDS_SOURCE_ID, "unknown", SYSTEM_BUILTIN_CARDS_SOURCE_ID],
+        },
+      }),
+    })
+
+    expect(getCardDisabledSourceIds(storage)).toEqual([SYSTEM_BUILTIN_CARDS_SOURCE_ID])
+    expect(getEquipmentDisabledSourceIds(storage)).toEqual(["builtin"])
+  })
+
+  it("reports card source preference write failures", () => {
+    const storage = createMemoryStorage({}, { failWritesFor: [APP_PREFERENCES_STORAGE_KEY] })
+
+    expect(setCardSourceDisabled(SYSTEM_BUILTIN_CARDS_SOURCE_ID, true, storage)).toBe(false)
+    expect(getCardDisabledSourceIds(storage)).toEqual([])
+  })
+
+  it("materializes card source state when updating card sources", () => {
+    const storage = createMemoryStorage({
+      [APP_PREFERENCES_STORAGE_KEY]: JSON.stringify({
+        format: "dhsheet.app-preferences.v1",
+        ui: { cardDisplayMode: "image", dualPage: { enabled: false } },
+        announcements: {},
+        contentSources: { equipmentDisabledSourceIds: [] },
+      }),
+    })
+
+    expect(setCardSourceDisabled(SYSTEM_BUILTIN_CARDS_SOURCE_ID, true, storage)).toBe(true)
+
+    const stored = readStoredPreferences(storage)
+    expect(stored.contentSources).toMatchObject({
+      cardDisabledSourceIds: [SYSTEM_BUILTIN_CARDS_SOURCE_ID],
+    })
   })
 })

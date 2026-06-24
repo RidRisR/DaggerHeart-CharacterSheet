@@ -1,8 +1,13 @@
+import type { CardAutomationIR } from "@/card/automation/ir-types"
 import type {
   CardImportImageAsset,
   CardImportOriginKind,
   CardPackDryRunValidationModel,
 } from "@/card/import/types"
+
+export interface CardPackInstalledTemplateAutomation {
+  automation?: CardAutomationIR
+}
 
 export interface CardImportStoredSource {
   originKind: CardImportOriginKind

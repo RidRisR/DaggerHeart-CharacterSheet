@@ -16,6 +16,7 @@ import { AnnouncementsModal } from "@/components/modals/announcements-modal"
 import { CharacterManagementModal } from "@/components/modals/character-management-modal"
 import { SealDiceExportModal } from "@/components/modals/seal-dice-export-modal"
 import { useSheetStore, useCardActions } from "@/lib/sheet-store"
+import { useCardAutomationSetupPrompt } from "@/components/card-automation-setup"
 import { PrintReadyChecker } from "@/components/print/print-ready-checker"
 import { PrintProvider } from "@/contexts/print-context"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
@@ -170,7 +171,9 @@ export default function HomeClientApp() {
   // 钉住卡牌状态
   const { pinnedCards } = usePinnedCardsStore();
   // 卡牌操作方法
-  const { deleteCard, moveCard, updateCard } = useCardActions();
+  const { deleteCard, moveCard } = useCardActions();
+  const selectCardForSlot = useSheetStore(state => state.selectCardForSlot)
+  const setCardAbilityChoiceValuesForInstance = useSheetStore(state => state.setCardAbilityChoiceValuesForInstance)
   // 文字模式状态
   const { isTextMode, toggleTextMode } = useTextModeStore();
   // 双页模式状态
@@ -204,6 +207,10 @@ export default function HomeClientApp() {
   const [pendingCardIsInventory, setPendingCardIsInventory] = useState<boolean>(false)
   const [cardSelectionModalOpen, setCardSelectionModalOpen] = useState(false)
   const previousCharacterIdRef = useRef<string | null>(null)
+  const setupPrompt = useCardAutomationSetupPrompt({
+    sheetData: formData,
+    onSaveAbility: setCardAbilityChoiceValuesForInstance,
+  })
 
   // 使用角色管理Hook
   const {
@@ -221,9 +228,6 @@ export default function HomeClientApp() {
   
   // 打印容器引用
   const printContainerRef = useRef<HTMLDivElement>(null)
-
-  // 额外需要的MAX_CHARACTERS常量
-  const MAX_CHARACTERS = 10
 
   // 使用导出功能Hook
   const {
@@ -615,14 +619,21 @@ export default function HomeClientApp() {
   // 处理卡牌选择
   const handleCardSelect = (card: StandardCard) => {
     if (pendingCardIndex !== null) {
-      updateCard(pendingCardIndex, card, pendingCardIsInventory);
+      const result = selectCardForSlot({
+        zone: pendingCardIsInventory ? "vault" : "loadout",
+        index: pendingCardIndex,
+        template: card,
+      });
+      setupPrompt.handleSelectionResult(result);
       setCardSelectionModalOpen(false);
       setPendingCardIndex(null);
       setPendingCardIsInventory(false);
-      showFadeNotification({
-        message: `卡牌已添加到${pendingCardIsInventory ? '库存' : '聚焦'}卡组`,
-        type: "success"
-      });
+      if (result.kind === "success") {
+        showFadeNotification({
+          message: `卡牌已添加到${pendingCardIsInventory ? '库存' : '聚焦'}卡组`,
+          type: "success"
+        });
+      }
     }
   }
 
@@ -807,6 +818,7 @@ export default function HomeClientApp() {
 
       {/* 内存诊断监控 */}
       <MemoryAlert />
+      {setupPrompt.dialog}
     </main>
   )
 }

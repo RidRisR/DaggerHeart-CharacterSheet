@@ -20,7 +20,7 @@ function legacySheet(overrides: Record<string, unknown> = {}) {
   } as any
 }
 
-describe('migration regression baseline through v2', () => {
+describe('migration regression baseline through v3', () => {
   it('migrates old page visibility, cards, attributes, hope, notebook, and cleanup behavior', () => {
     const migrated = migrateSheetData(legacySheet({
       includePageThreeInExport: true,
@@ -29,7 +29,8 @@ describe('migration regression baseline through v2', () => {
       strength: { checked: false, value: '0', spellcasting: true },
     }))
 
-    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.schemaVersion).toBe(3)
+    expect(migrated.cards[0].instanceId).toBe('cardinst_loadout_0_card-domain-1')
     expect(migrated.pageVisibility).toEqual({
       rangerCompanion: true,
       armorTemplate: false,

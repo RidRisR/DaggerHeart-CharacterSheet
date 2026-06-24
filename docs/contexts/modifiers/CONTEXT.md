@@ -8,6 +8,50 @@ This context defines the domain language for explaining character-sheet values, 
 A character value source whose origin is explicitly represented by a provider, user contribution, or target base.
 _Avoid_: provider when referring to the user-facing concept
 
+**Card Instance**:
+A card that exists on a character sheet, distinct from the reusable card template it came from.
+_Avoid_: template, card definition
+
+**Card Automation IR**:
+The normalized, replayable automation definition carried by a Card Instance to derive card-sourced modifier contributions.
+_Avoid_: card rule text, template lookup, script
+
+**Card Ability State**:
+The persisted per-ability state on a Card Instance, such as activation status and saved choice values.
+_Avoid_: global card automation state, UI form state
+
+**Card Automation Requirement**:
+A derived request for missing or actionable card automation input before a card ability can contribute reliably.
+_Avoid_: UI prompt, validation error
+
+**Card Automation Setup**:
+The player-facing flow for responding to a Card Automation Requirement by providing input that may write Card Ability State.
+_Avoid_: automation repair, stored setup state, diagnostic
+
+**Card Automation Diagnostic**:
+A derived report that explains why card automation can or cannot contribute for the current character sheet.
+_Avoid_: stored error state, import diagnostic
+
+**Card-Sourced Contribution**:
+A known base or modifier contribution produced from a Card Instance's automation.
+_Avoid_: user modifier, equipment modifier
+
+**Loadout Card**:
+A Card Instance in the character's active card configuration.
+_Avoid_: selected template
+
+**Vault Card**:
+A Card Instance stored outside the active loadout but still owned by the character.
+_Avoid_: selectable card, installed card
+
+**Character Choice Card**:
+A Loadout Card that represents a character creation choice such as class, subclass, ancestry, or community.
+_Avoid_: special card, selected template
+
+**Protected Loadout Slot**:
+A fixed loadout position reserved for a Character Choice Card and not freely movable through normal card deck actions.
+_Avoid_: special slot, card reference
+
 **Reference Total**:
 The value calculated from known bases and known modifiers before total-layer adjustments are applied.
 _Avoid_: final value, displayed value
@@ -79,6 +123,16 @@ _Avoid_: manual adjustment
 ## Relationships
 
 - A **Reference Total** is calculated from **Known Sources**.
+- A **Card Instance** may produce **Card-Sourced Contributions** only through its own **Card Automation IR** and **Card Ability State**.
+- A **Card-Sourced Contribution** is a **Known Source**.
+- A **Card Automation Requirement** is derived from current **Source State** and does not write **Stored State**.
+- **Card Automation Setup** responds to **Card Automation Requirements** and may write **Card Ability State** only through a **Modifier-Aware Behavior**.
+- Each committed **Card Automation Setup** write responds to one ability-level **Card Automation Requirement**. A player-facing setup session may process multiple ability-level requirements sequentially.
+- A **Card Automation Diagnostic** is derived from current **Source State** and does not write **Stored State**.
+- A **Loadout Card** and a **Vault Card** are both **Card Instances**.
+- A **Character Choice Card** is a **Loadout Card**.
+- A **Protected Loadout Slot** contains at most one **Character Choice Card**.
+- A character choice reference identifies a selected template, while the **Character Choice Card** in the matching **Protected Loadout Slot** is the runtime card instance authority.
 - A **Calculated Final Value** is calculated from the **Reference Total** plus **Other** adjustments.
 - A **Final Value** is the concrete sheet value that users see and edit.
 - **Source State** is the input layer for automatic calculation.
@@ -137,6 +191,9 @@ _Avoid_: manual adjustment
 - Automatic-calculation sync boundaries should be implemented through one shared boundary function. Store actions must not each invent partial synchronization behavior.
 - Automatic-calculation sync boundaries are broad automation transactions: they may interpret a **Modifier-Aware Behavior**, normalize **Source State**, derive **Derived State**, and write back **Stored State**.
 - Direct sheet-data writes are low-level escape hatches. They may be useful for unrelated fields, migration, repair, or tests, but they must not become the normal path for changing modifier-aware state.
+- Card automation runs inside the automatic-calculation sync boundary. It reads the pre-card boundary snapshot and must not depend on contributions produced in the same boundary run.
+- A card template becoming a **Card Instance**, moving a **Card Instance** between loadout and vault, activating a card ability, or changing card choice values is a **Modifier-Aware Behavior** when it can affect card automation.
+- A **Card Instance** is the runtime authority for card automation. Current card templates may explain drift or refresh options, but they do not replace the instance's automation unless a modifier-aware refresh behavior explicitly does so.
 
 ## Example Dialogue
 
@@ -149,7 +206,13 @@ _Avoid_: manual adjustment
 > **Dev:** "Automatic calculation is on, evasion has a -2 modifier and no base. If the user types final value 5, do we keep final as 5?"
 > **Domain expert:** "No. The 5 becomes a **Manual Base**, then the **Final Value** is recalculated to 3."
 
+> **Dev:** "A character was imported on a device without the original card pack. Should an existing card stop contributing?"
+> **Domain expert:** "No. The **Card Instance** carries its own **Card Automation IR**. Missing templates can create a **Card Automation Diagnostic**, but they do not remove valid instance-owned contributions."
+
 ## Flagged Ambiguities
 
 - "未归因差额" was used as a catch-all; resolved: it now means only the automatic-calculation-off dynamic gap. Migration and manual final edits are separate **Other** adjustments.
 - "总计栏" was used for adjustments outside source lists; resolved: total belongs to the title/summary display, while those rows belong to an **Other** section.
+- "卡牌自动化" can mean authoring data on a card template, instance-owned automation on a character sheet, or derived modifier contributions. Use **Card Automation IR** for executable instance logic, **Card Ability State** for persisted instance state, and **Card-Sourced Contribution** for calculation output.
+- "库存卡组" in existing UI/code maps to **Vault Card** in modifier automation language.
+- "特殊卡牌" was used for class, subclass, ancestry, and community loadout slots; resolved: use **Character Choice Card** for the card instance and **Protected Loadout Slot** for the fixed slot.

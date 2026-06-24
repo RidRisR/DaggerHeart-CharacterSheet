@@ -184,9 +184,33 @@ _Avoid_: public schema; import model; storage model
 A conservative staging shape used only inside the card pack import workflow after legacy input has been schema-validated and adapted. It supports dry-run validation, normalization, and diagnostics, and may be consumed by **Commit Plan** building, but it is not a public schema, editor authoring model, storage authority, or future v1 implementation.
 _Avoid_: v1-like model; storage model; public schema
 
+**Prepared Card Pack Runtime Content**:
+The result of shared card-pack content preparation after source adaptation, structure validation, automation compilation, and semantic validation, before either runtime projection or import-specific commit planning.
+_Avoid_: commit plan; storage payload; installed pack; runtime source snapshot
+
 **Runtime Card Projection**:
 The workflow step that converts accepted card-pack import data into the current runtime card read model, such as `StandardCard` / `ExtendedStandardCard`, for existing selection and display code.
 _Avoid_: public schema; storage authority; validation model
+
+**Card Runtime Source**:
+A card content source that has already become queryable and selectable by the application, whether it came from bundled built-in content or an installed custom card pack.
+_Avoid_: card pack when discussing import/storage lifecycle; batch; storage record
+
+**Built-in Card Runtime Source Loading**:
+The workflow that turns bundled built-in card data into a Card Runtime Source without installing it as a custom card pack.
+_Avoid_: built-in import; commit plan; storage transaction
+
+**Card Automation Definition**:
+A structured external automation wrapper supplied by a pack author, editor, or Editor Draft Export workflow and compiled during import before installation.
+_Avoid_: normalized runtime IR, rule text, prose inference, runtime script
+
+**Normalized Card Automation IR**:
+The compiled automation form stored on installed card templates and copied to character sheet card instances.
+_Avoid_: external automation definition, authoring syntax, editor draft text
+
+**Card Automation Revision**:
+A stable identity for a Normalized Card Automation IR, used to detect differences between an installed template and an existing character sheet instance.
+_Avoid_: content version, format identifier
 
 **Runtime Refresh Adapter**:
 The application boundary that refreshes the current runtime card store after storage commit. In this phase it wraps existing store rebuild helpers instead of introducing a new runtime registry architecture.
@@ -357,7 +381,7 @@ A query criterion group with no selected values. It means the field is not restr
 _Avoid_: no matching values; empty result filter
 
 **Selectable Runtime Read Model**:
-The runtime view used by selection flows; it includes built-in templates and enabled custom templates, and excludes disabled custom pack templates.
+The runtime view used by selection flows; it includes templates from enabled runtime sources and excludes templates from disabled runtime sources.
 _Avoid_: storage snapshot; management state
 
 **Runtime Source**:
@@ -372,6 +396,8 @@ _Avoid_: storage snapshot; persisted index
 
 - A **Content Pack** may be a **Card Pack** or an **Equipment Pack**.
 - A **Pack ID** identifies the stored pack unit; a **Template ID** identifies reusable content inside a pack.
+- **Built-in Card Runtime Source Loading** and the external card **Import Workflow** do not share one end-to-end lifecycle, but they should share **Prepared Card Pack Runtime Content** and **Runtime Card Projection** below their separate lifecycle orchestration.
+- Disabling a **Card Runtime Source** removes that source's templates from the **Selectable Runtime Read Model**; it does not change existing character-sheet Card Instances or their instance-owned automation.
 - A **Pack User** may receive a simplified import result while **Warning Diagnostics** remain available in details or advanced views.
 - A **Pack Author** can use the same import pipeline in **Dry Run** mode to see source, structural, normalization, and semantic diagnostics without committing data or depending on current local storage state.
 - A failed **Dry Run** for an **Equipment Editor Draft** blocks treating the draft as a valid equipment pack payload, but does not block **Scoped Equipment JSON Export** of the current authoring draft.
@@ -410,6 +436,9 @@ _Avoid_: storage snapshot; persisted index
 - This phase uses a localStorage/IndexedDB **Storage Backend Adapter** for card packs, but backend keys and persistence mechanics must not leak into **Card Import Commit Plan** or validation stages.
 - The legacy card storage **Storage Format Adapter** should produce a complete legacy storage projection, including stored pack data and index entry. The **Storage Backend Adapter** should not rederive business fields from the import model; it should handle backend keys, serialization, write order, compensation cleanup, and recovery.
 - **Runtime Card Projection** is separate from **Storage Transaction**. Converting imported card content into `StandardCard` / `ExtendedStandardCard` does not by itself install the pack, write localStorage, import images, or rebuild runtime indexes.
+- A **Card Automation Definition** belongs to external card-pack authoring, import, and export. It must be compiled, normalized, and validated by **Dry Run** before commit.
+- **Normalized Card Automation IR** stored on an installed card template is a source for future character sheet card instances, not the runtime authority for existing instances.
+- A **Card Automation Revision** identifies automation logic, not pack release metadata. It is separate from **Content Version** and **Format Identifier**.
 - Current equipment editor work should use **Scoped Equipment JSON Export** rather than mixed DHCB export. Mixed bundles can return later only with explicit export scope, bundle-level preflight, and atomic success/failure semantics.
 - Content bundle export must not hide card-only incompatibility behind equipment support. If a future bundle contains cards, the card payload should remain legacy-compatible by default unless the author explicitly opts into a future-only card capability with clear diagnostics.
 - A **Downgrade Diagnostic** belongs to export compatibility. It must distinguish lossless compatibility export, lossy compatibility export with warnings, and blocked compatibility export.
@@ -516,3 +545,4 @@ Pipeline stages:
 - "Registry" can refer to template selection or automation calculation. Use **Registry** in this context only for content pack template lookup; say **automation registry** when discussing modifier calculation.
 - "warning" can mean user-facing UI noise or useful author guidance. Use **Warning Diagnostic** for non-blocking pipeline output, and describe UI visibility separately as presentation policy.
 - "profession" was an early card-pack field name for character class cards. Keep `profession` only when referring to the **Legacy Card Format** field; use **Class** and `classes` for the forward card-pack schema and internal import model terminology.
+- "automation" can refer to an external payload wrapper, normalized template data, or character-sheet runtime calculation. In this context, use **Card Automation Definition** for the external wrapper and **Normalized Card Automation IR** for the compiled installed form; runtime contributions belong to the modifier context.

@@ -17,6 +17,12 @@ import { CharacterManagementModal } from "@/components/modals/character-manageme
 import { SealDiceExportModal } from "@/components/modals/seal-dice-export-modal"
 import { useSheetStore, useCardActions } from "@/lib/sheet-store"
 import { useCardAutomationSetupPrompt } from "@/components/card-automation-setup"
+import { CardInstanceAuditDialog } from "@/components/card-instance-audit-dialog"
+import {
+  isCardUpdateAuditItem,
+  type CardInstanceAuditItem,
+} from "@/automation/actions/card-instance-audit"
+import { useCardStore } from "@/card/stores/unified-card-store"
 import { PrintReadyChecker } from "@/components/print/print-ready-checker"
 import { PrintProvider } from "@/contexts/print-context"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
@@ -79,6 +85,8 @@ const ImageIcon = () => (
 import { useCharacterManagement } from "@/hooks/use-character-management"
 import { useExportHandlers } from "@/hooks/use-export-handlers"
 import PrintHelper from "@/app/print-helper"
+
+const sessionPromptedCardAuditCharacterIds = new Set<string>()
 
 // 注册所有页面
 registerPages([
@@ -174,6 +182,11 @@ export default function HomeClientApp() {
   const { deleteCard, moveCard } = useCardActions();
   const selectCardForSlot = useSheetStore(state => state.selectCardForSlot)
   const setCardAbilityChoiceValuesForInstance = useSheetStore(state => state.setCardAbilityChoiceValuesForInstance)
+  const auditCardInstancesOnLoad = useSheetStore(state => state.auditCardInstancesOnLoad)
+  const overwriteCardInstancesFromAudit = useSheetStore(state => state.overwriteCardInstancesFromAudit)
+  const runtimeInitialized = useCardStore(state => state.initialized)
+  const runtimeLoading = useCardStore(state => state.loading)
+  const getRuntimeCardById = useCardStore(state => state.getCardById)
   // 文字模式状态
   const { isTextMode, toggleTextMode } = useTextModeStore();
   // 双页模式状态
@@ -201,6 +214,9 @@ export default function HomeClientApp() {
   const [currentTabValue, setCurrentTabValue] = useState("page1")
   const [showShortcutHint, setShowShortcutHint] = useState(false)
   const [isCardDrawerOpen, setIsCardDrawerOpen] = useState(false)
+  const [sessionAuditItems, setSessionAuditItems] = useState<CardInstanceAuditItem[]>([])
+  const [sessionAuditCharacterId, setSessionAuditCharacterId] = useState<string | null>(null)
+  const [sessionAuditDialogOpen, setSessionAuditDialogOpen] = useState(false)
 
   // 添加卡牌相关状态
   const [pendingCardIndex, setPendingCardIndex] = useState<number | null>(null)
@@ -284,6 +300,39 @@ export default function HomeClientApp() {
       previousCharacterIdRef.current = currentCharacterId
     }
   }, [currentCharacterId])
+
+  useEffect(() => {
+    if (
+      !currentCharacterId ||
+      isLoading ||
+      !runtimeInitialized ||
+      runtimeLoading ||
+      isPrintingAll ||
+      typeof auditCardInstancesOnLoad !== "function" ||
+      typeof getRuntimeCardById !== "function" ||
+      sessionPromptedCardAuditCharacterIds.has(currentCharacterId)
+    ) {
+      return
+    }
+
+    sessionPromptedCardAuditCharacterIds.add(currentCharacterId)
+    const report = auditCardInstancesOnLoad((templateId) => getRuntimeCardById(templateId) ?? undefined)
+    const updateItems = report.items.filter(isCardUpdateAuditItem)
+
+    if (updateItems.length > 0) {
+      setSessionAuditItems(updateItems)
+      setSessionAuditCharacterId(currentCharacterId)
+      setSessionAuditDialogOpen(true)
+    }
+  }, [
+    auditCardInstancesOnLoad,
+    currentCharacterId,
+    getRuntimeCardById,
+    isLoading,
+    isPrintingAll,
+    runtimeInitialized,
+    runtimeLoading,
+  ])
 
   useEffect(() => {
     if (!isClient) return
@@ -803,6 +852,33 @@ export default function HomeClientApp() {
         isOpen={announcementsModalOpen}
         onClose={() => setAnnouncementsModalOpen(false)}
         announcements={announcements}
+      />
+
+      <CardInstanceAuditDialog
+        open={sessionAuditDialogOpen && sessionAuditCharacterId === currentCharacterId}
+        items={sessionAuditItems}
+        onConfirm={(selectedItems) => {
+          if (typeof overwriteCardInstancesFromAudit !== "function") return
+
+          const result = overwriteCardInstancesFromAudit(selectedItems)
+          if (result.kind === "failure") {
+            showFadeNotification({
+              message: result.message,
+              type: "error",
+            })
+            return
+          }
+
+          setSessionAuditItems([])
+          setSessionAuditCharacterId(null)
+          setSessionAuditDialogOpen(false)
+        }}
+        onOpenChange={(open) => {
+          setSessionAuditDialogOpen(open)
+          if (!open) {
+            setSessionAuditCharacterId(null)
+          }
+        }}
       />
 
       {/* 钉住的卡牌窗口 - 全局渲染，不受页面切换影响 */}

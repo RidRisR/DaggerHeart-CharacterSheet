@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { defaultSheetData } from "./default-sheet-data";
 import type { SheetData, AttributeValue, ArmorTemplateData, SheetCardReference } from "./sheet-data";
-import { createEmptyCard, type StandardCard } from "@/card/card-types";
+import { createEmptyCard, isEmptyCard, type StandardCard } from "@/card/card-types";
 import { parseArmorMax, parseArmorThreshold, parseArmorThresholdSide } from "@/automation/equipment/armor-utils";
 import {
     createDefaultEquipmentModifierContribution,
@@ -47,6 +47,25 @@ import {
     upsertOtherAdjustment as upsertOtherAdjustmentInList,
 } from "@/automation/core/other-adjustments";
 import { applyLevelEntryAutomationsWithNotifications } from "@/automation/actions/level-entry-actions";
+import {
+    type CardAutomationActionEffect,
+    deleteCardInstance,
+    moveCardInstance,
+    replaceCardInstance,
+    selectCardIntoSlot,
+    setCardAbilityChoiceValues,
+    setProtectedLoadoutCardInstance,
+    type CardAutomationActionResult,
+    type CardZone,
+} from "@/automation/actions/card-actions";
+import type { CardChoiceValues } from "@/card/automation/ir-types";
+import {
+    auditCardInstancesOnLoad as auditCardInstancesOnLoadAction,
+    overwriteCardInstancesFromAudit as overwriteCardInstancesFromAuditAction,
+    type CardInstanceAuditItem,
+    type CardInstanceAuditReport,
+    type CharacterChoiceCardKind,
+} from "@/automation/actions/card-instance-audit";
 import { showFadeNotification } from "@/components/ui/fade-notification";
 
 // 施法属性映射关系
@@ -87,6 +106,44 @@ type EquipmentModifierSlotRef =
 
 type EquipmentContributionUpdates = {
     editable?: Partial<EquipmentModifierContribution["editable"]>
+}
+
+type CharacterChoiceCardConfig = {
+    slot: number
+    expectedTemplateType: string
+    valueField: keyof Pick<SheetData, "profession" | "subclass" | "ancestry1" | "ancestry2" | "community">
+    refField: keyof Pick<
+        SheetData,
+        "professionRef" | "subclassRef" | "ancestry1Ref" | "ancestry2Ref" | "communityRef"
+    >
+}
+
+export type CardSelectionActionResult =
+    | { kind: "success"; cardInstanceId?: string; effects: CardAutomationActionEffect[] }
+    | { kind: "failure"; message: string }
+
+export interface SelectCardForSlotInput {
+    zone: CardZone
+    index: number
+    template: StandardCard
+}
+
+export interface SetCardAbilityChoiceValuesInput {
+    cardInstanceId: string
+    abilityId: string
+    choiceValues: CardChoiceValues
+}
+
+export type StoreActionResult =
+    | { kind: "success" }
+    | { kind: "failure"; message: string }
+
+const CHARACTER_CHOICE_CARD_CONFIG: Record<CharacterChoiceCardKind, CharacterChoiceCardConfig> = {
+    profession: { slot: 0, expectedTemplateType: "profession", valueField: "profession", refField: "professionRef" },
+    subclass: { slot: 1, expectedTemplateType: "subclass", valueField: "subclass", refField: "subclassRef" },
+    ancestry1: { slot: 2, expectedTemplateType: "ancestry", valueField: "ancestry1", refField: "ancestry1Ref" },
+    ancestry2: { slot: 3, expectedTemplateType: "ancestry", valueField: "ancestry2", refField: "ancestry2Ref" },
+    community: { slot: 4, expectedTemplateType: "community", valueField: "community", refField: "communityRef" },
 }
 
 const weaponSlotSelectionId = (selection: WeaponSlotSelection) =>
@@ -151,6 +208,7 @@ const syncSubclassSpellcasting = (newData: SheetData, oldData: SheetData): Sheet
 
 interface SheetState {
     sheetData: SheetData;
+    sheetLoadRevision: number;
     setSheetData: (data: Partial<SheetData> | ((prevState: SheetData) => Partial<SheetData>)) => void;
     replaceSheetData: (data: SheetData) => void;
 
@@ -182,6 +240,18 @@ interface SheetState {
     deleteCard: (index: number, isInventory: boolean) => void;
     moveCard: (fromIndex: number, fromInventory: boolean, toInventory: boolean) => boolean;
     updateCard: (index: number, card: StandardCard, isInventory: boolean) => void;
+    selectCardForSlot: (input: SelectCardForSlotInput) => CardSelectionActionResult;
+    selectCharacterChoiceCard: (
+        kind: CharacterChoiceCardKind,
+        ref: SheetCardReference,
+        template: StandardCard,
+    ) => CardSelectionActionResult;
+    setCardAbilityChoiceValuesForInstance: (input: SetCardAbilityChoiceValuesInput) => StoreActionResult;
+    clearCharacterChoiceCard: (kind: CharacterChoiceCardKind) => void;
+    auditCardInstancesOnLoad: (
+        lookupTemplate: (templateId: string) => StandardCard | undefined,
+    ) => CardInstanceAuditReport;
+    overwriteCardInstancesFromAudit: (auditItems: CardInstanceAuditItem[]) => StoreActionResult;
 
     // Armor template actions
     updateArmorTemplateField: (field: keyof ArmorTemplateData, value: any) => void;
@@ -213,7 +283,10 @@ interface SheetState {
     removeEquipmentModifierContribution: (slotRef: EquipmentModifierSlotRef, entryId: ModifierEntryId) => void;
 
     // Profession change handler
-    handleProfessionChange: (newProfessionRef: SheetCardReference | undefined, newProfessionCard: StandardCard | undefined) => void;
+    handleProfessionChange: (
+        newProfessionRef: SheetCardReference | undefined,
+        newProfessionCard: StandardCard | undefined,
+    ) => CardSelectionActionResult;
 }
 
 const ensureModifierState = (sheetData: SheetData) => ({
@@ -290,6 +363,69 @@ function applyModifierTargetValueSubmission(sheetData: SheetData, target: Modifi
 
     const nextSheetData = reconcileFinalInput(sheetData, target, finalValue);
     return applyAutoCalculationForTargets(applyHpStressMaxInvariant(nextSheetData, target));
+}
+
+function selectCharacterChoiceCardInSheetData(
+    sheetData: SheetData,
+    kind: CharacterChoiceCardKind,
+    ref: SheetCardReference,
+    template: StandardCard,
+): CardAutomationActionResult {
+    const config = CHARACTER_CHOICE_CARD_CONFIG[kind];
+    if (template.type !== config.expectedTemplateType) {
+        return {
+            kind: "failure",
+            sheetData,
+            message: `Character choice ${kind} requires a ${config.expectedTemplateType} card template.`,
+        };
+    }
+    if (ref.id !== template.id) {
+        return {
+            kind: "failure",
+            sheetData,
+            message: `Character choice ${kind} ref must match the selected card template.`,
+        };
+    }
+
+    return setProtectedLoadoutCardInstance(
+        {
+            ...sheetData,
+            [config.valueField]: ref.id,
+            [config.refField]: ref,
+        },
+        config.slot,
+        template,
+    );
+}
+
+function toCardSelectionActionResult(result: CardAutomationActionResult): CardSelectionActionResult {
+    if (result.kind === "failure") {
+        return { kind: "failure", message: result.message };
+    }
+
+    return result.cardInstanceId
+        ? {
+            kind: "success",
+            cardInstanceId: result.cardInstanceId,
+            effects: result.effects,
+        }
+        : {
+            kind: "success",
+            effects: result.effects,
+        };
+}
+
+function clearCharacterChoiceCardInSheetData(sheetData: SheetData, kind: CharacterChoiceCardKind): CardAutomationActionResult {
+    const config = CHARACTER_CHOICE_CARD_CONFIG[kind];
+    return setProtectedLoadoutCardInstance(
+        {
+            ...sheetData,
+            [config.valueField]: "",
+            [config.refField]: { id: "", name: "" },
+        },
+        config.slot,
+        undefined,
+    );
 }
 
 function equipmentModifierSourceId(slotRef: EquipmentModifierSlotRef): string {
@@ -372,8 +508,9 @@ function deleteModifierEntryState(sheetData: SheetData, entryId: ModifierEntryId
     };
 }
 
-export const useSheetStore = create<SheetState>((set) => ({
+export const useSheetStore = create<SheetState>((set, get) => ({
     sheetData: defaultSheetData,
+    sheetLoadRevision: 0,
     setSheetData: (updater) => {
         set((state) => {
             const oldData = state.sheetData;
@@ -400,6 +537,7 @@ export const useSheetStore = create<SheetState>((set) => ({
 
         return {
             sheetData: applyAutoCalculationForTargets(finalData),
+            sheetLoadRevision: state.sheetLoadRevision + 1,
         };
     }),
 
@@ -786,119 +924,33 @@ export const useSheetStore = create<SheetState>((set) => ({
 
     // Card management actions
     deleteCard: (index, isInventory) => set((state) => {
-        // 检查特殊卡位保护：聚焦卡组的前5个位置不能删除
-        if (!isInventory && index < 5) {
-            console.log('[Store] 特殊卡位不能删除');
+        const result = deleteCardInstance(state.sheetData, isInventory ? "vault" : "loadout", index);
+        if (result.kind === "failure") {
+            console.log("[Store]", result.message);
             return state;
         }
 
-        const emptyCard = createEmptyCard();
-
-        if (isInventory) {
-            // 删除库存卡牌
-            const newInventoryCards = [...(state.sheetData.inventory_cards || [])];
-            // 确保数组长度为20
-            while (newInventoryCards.length < 20) {
-                newInventoryCards.push(createEmptyCard());
-            }
-            newInventoryCards[index] = emptyCard;
-
-            return {
-                sheetData: {
-                    ...state.sheetData,
-                    inventory_cards: newInventoryCards
-                }
-            };
-        } else {
-            // 删除主卡组卡牌
-            const newCards = [...(state.sheetData.cards || [])];
-            // 确保数组长度为20
-            while (newCards.length < 20) {
-                newCards.push(createEmptyCard());
-            }
-            newCards[index] = emptyCard;
-
-            return {
-                sheetData: applyAutoCalculationForTargets({
-                    ...state.sheetData,
-                    cards: newCards
-                })
-            };
-        }
+        return { sheetData: result.sheetData };
     }),
 
     moveCard: (fromIndex, fromInventory, toInventory) => {
         let success = false;
 
         set((state) => {
-            if (fromInventory === toInventory) {
-                success = false;
-                return state; // 不需要移动
-            }
+            const result = moveCardInstance(
+                state.sheetData,
+                fromInventory ? "vault" : "loadout",
+                fromIndex,
+                toInventory ? "vault" : "loadout",
+            );
+            success = result.kind === "success";
 
-            // 确保两个卡组都存在且长度为20
-            const newFocusedCards = [...(state.sheetData.cards || [])];
-            const newInventoryCards = [...(state.sheetData.inventory_cards || [])];
-
-            while (newFocusedCards.length < 20) {
-                newFocusedCards.push(createEmptyCard());
-            }
-            while (newInventoryCards.length < 20) {
-                newInventoryCards.push(createEmptyCard());
-            }
-
-            // 获取要移动的卡牌
-            const sourceCards = fromInventory ? newInventoryCards : newFocusedCards;
-            const targetCards = toInventory ? newInventoryCards : newFocusedCards;
-            const cardToMove = sourceCards[fromIndex];
-
-            if (!cardToMove || cardToMove.name === '') {
-                success = false;
-                return state; // 空卡不能移动
-            }
-
-            // 检查特殊卡位保护：不能从聚焦卡组的特殊卡位(前5位)移动出去
-            if (!fromInventory && fromIndex < 5) {
-                console.log('[Store] 特殊卡位不能移动到库存卡组');
-                success = false;
+            if (result.kind === "failure") {
+                console.log("[Store]", result.message);
                 return state;
             }
 
-            // 检查特殊卡位保护：不能移动到聚焦卡组的特殊卡位(前5位)
-            // 从库存移动到聚焦卡组时，不能放入特殊卡位
-            if (!toInventory && fromInventory) {
-                console.log('[Store] 从库存移动到聚焦卡组，不能占用特殊卡位');
-                // 这种情况下会在后面的逻辑中自动跳过特殊卡位，从第6位开始查找
-            }
-
-            // 找到目标卡组中第一个空位（跳过特殊卡位）
-            let targetIndex = -1;
-            const startIndex = toInventory ? 0 : 5; // 移动到聚焦卡组时从第6位开始查找
-
-            for (let i = startIndex; i < targetCards.length; i++) {
-                if (!targetCards[i] || targetCards[i].name === '') {
-                    targetIndex = i;
-                    break;
-                }
-            }
-
-            if (targetIndex === -1) {
-                success = false;
-                return state; // 目标卡组已满
-            }
-
-            // 执行移动：源位置用空卡替换，目标位置放入卡牌
-            sourceCards[fromIndex] = createEmptyCard();
-            targetCards[targetIndex] = cardToMove;
-
-            success = true;
-            return {
-                sheetData: applyAutoCalculationForTargets({
-                    ...state.sheetData,
-                    cards: newFocusedCards,
-                    inventory_cards: newInventoryCards
-                })
-            };
+            return { sheetData: result.sheetData };
         });
 
         return success;
@@ -1030,39 +1082,130 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
     }),
 
-    updateCard: (index, card, isInventory) => set((state) => {
-        if (isInventory) {
-            // 更新库存卡牌
-            const newInventoryCards = [...(state.sheetData.inventory_cards || [])];
-            // 确保数组长度为20
-            while (newInventoryCards.length < 20) {
-                newInventoryCards.push(createEmptyCard());
-            }
-            newInventoryCards[index] = card;
+    selectCardForSlot: (input) => {
+        let output: CardSelectionActionResult = {
+            kind: "failure",
+            message: "Card selection did not run.",
+        };
 
-            return {
-                sheetData: {
-                    ...state.sheetData,
-                    inventory_cards: newInventoryCards
-                }
-            };
-        } else {
-            // 更新主卡组卡牌
-            const newCards = [...(state.sheetData.cards || [])];
-            // 确保数组长度为20
-            while (newCards.length < 20) {
-                newCards.push(createEmptyCard());
-            }
-            newCards[index] = card;
+        set((state) => {
+            const currentCards = input.zone === "loadout"
+                ? state.sheetData.cards ?? []
+                : state.sheetData.inventory_cards ?? [];
+            const currentCard = currentCards[input.index];
+            const result = isEmptyCard(input.template)
+                ? deleteCardInstance(state.sheetData, input.zone, input.index)
+                : !currentCard || isEmptyCard(currentCard)
+                    ? selectCardIntoSlot(state.sheetData, input.zone, input.index, input.template)
+                    : replaceCardInstance(state.sheetData, input.zone, input.index, input.template);
 
-            return {
-                sheetData: applyAutoCalculationForTargets({
-                    ...state.sheetData,
-                    cards: newCards
-                })
-            };
+            if (result.kind === "failure") {
+                output = { kind: "failure", message: result.message };
+                console.log("[Store]", result.message);
+                return state;
+            }
+
+            output = toCardSelectionActionResult(result);
+            return { sheetData: result.sheetData };
+        });
+
+        return output;
+    },
+
+    updateCard: (index, card, isInventory) => {
+        const zone: CardZone = isInventory ? "vault" : "loadout";
+        if (zone !== "loadout" || index >= 5) {
+            get().selectCardForSlot({ zone, index, template: card });
+            return;
         }
+
+        set((state) => {
+            const result = setProtectedLoadoutCardInstance(state.sheetData, index, card);
+
+            if (result.kind === "failure") {
+                console.log("[Store]", result.message);
+                return state;
+            }
+
+            return { sheetData: result.sheetData };
+        });
+    },
+
+    selectCharacterChoiceCard: (kind, ref, template) => {
+        let output: CardSelectionActionResult = {
+            kind: "failure",
+            message: "Character choice card selection did not run.",
+        };
+
+        set((state) => {
+            const result = selectCharacterChoiceCardInSheetData(state.sheetData, kind, ref, template);
+
+            if (result.kind === "failure") {
+                output = { kind: "failure", message: result.message };
+                console.log("[Store]", result.message);
+                return state;
+            }
+
+            output = toCardSelectionActionResult(result);
+            return { sheetData: result.sheetData };
+        });
+
+        return output;
+    },
+
+    setCardAbilityChoiceValuesForInstance: (input) => {
+        let output: StoreActionResult = {
+            kind: "failure",
+            message: "Card ability choice update did not run.",
+        };
+
+        set((state) => {
+            const result = setCardAbilityChoiceValues(
+                state.sheetData,
+                input.cardInstanceId,
+                input.abilityId,
+                input.choiceValues,
+            );
+
+            if (result.kind === "failure") {
+                output = { kind: "failure", message: result.message };
+                console.log("[Store]", result.message);
+                return state;
+            }
+
+            output = { kind: "success" };
+            return { sheetData: result.sheetData };
+        });
+
+        return output;
+    },
+
+    clearCharacterChoiceCard: (kind) => set((state) => {
+        const result = clearCharacterChoiceCardInSheetData(state.sheetData, kind);
+
+        if (result.kind === "failure") {
+            console.log("[Store]", result.message);
+            return state;
+        }
+
+        return { sheetData: result.sheetData };
     }),
+
+    auditCardInstancesOnLoad: (lookupTemplate) => {
+        return auditCardInstancesOnLoadAction(get().sheetData, lookupTemplate);
+    },
+
+    overwriteCardInstancesFromAudit: (auditItems) => {
+        const result = overwriteCardInstancesFromAuditAction(get().sheetData, auditItems);
+
+        if (result.kind === "failure") {
+            console.log("[Store]", result.message);
+            return { kind: "failure", message: result.message };
+        }
+
+        set({ sheetData: result.sheetData });
+        return { kind: "success" };
+    },
 
     setActiveModifierBase: (target, baseId) => set((state) => {
         const modifierState = ensureModifierState(state.sheetData);
@@ -1243,24 +1386,40 @@ export const useSheetStore = create<SheetState>((set) => ({
         };
     }),
 
-    handleProfessionChange: (newProfessionRef, newProfessionCard) => set((state) => {
-        const cards = [...(state.sheetData.cards || [])];
-        while (cards.length < 20) {
-            cards.push(createEmptyCard());
-        }
-        cards[0] = newProfessionCard ?? createEmptyCard();
-
-        return {
-            sheetData: applyAutoCalculationForTargets({
-                ...state.sheetData,
-                profession: newProfessionRef?.id ?? "",
-                professionRef: newProfessionRef ?? { id: "", name: "" },
-                subclass: "",
-                subclassRef: { id: "", name: "" },
-                cards,
-            }),
+    handleProfessionChange: (newProfessionRef, newProfessionCard) => {
+        let output: CardSelectionActionResult = {
+            kind: "failure",
+            message: "Profession change did not run.",
         };
-    }),
+
+        set((state) => {
+            const professionResult = newProfessionRef && newProfessionCard
+                ? selectCharacterChoiceCardInSheetData(state.sheetData, "profession", newProfessionRef, newProfessionCard)
+                : clearCharacterChoiceCardInSheetData(state.sheetData, "profession");
+
+            if (professionResult.kind === "failure") {
+                output = { kind: "failure", message: professionResult.message };
+                console.log("[Store]", professionResult.message);
+                return state;
+            }
+
+            const subclassResult = clearCharacterChoiceCardInSheetData(professionResult.sheetData, "subclass");
+
+            if (subclassResult.kind === "failure") {
+                output = { kind: "failure", message: subclassResult.message };
+                console.log("[Store]", subclassResult.message);
+                return state;
+            }
+
+            output = toCardSelectionActionResult({
+                ...professionResult,
+                sheetData: subclassResult.sheetData,
+            });
+            return { sheetData: subclassResult.sheetData };
+        });
+
+        return output;
+    },
 }));
 
 // Selector functions for better performance

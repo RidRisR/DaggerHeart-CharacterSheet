@@ -3,6 +3,13 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EquipmentPackApplicationImportResult } from "@/equipment/packs/application-service";
+import { createDefaultEquipmentDraft } from "../equipment/equipment-draft";
+import { buildStandardEquipmentId } from "../equipment/equipment-id";
+import { useEquipmentEditorStore } from "../equipment/equipment-editor-store";
+import CardEditorPage from "../page";
+import { useCardEditorStore } from "../store/card-editor-store";
+import { defaultPackage } from "../types";
+import { buildCardId } from "../utils/id-generator";
 
 const toast = vi.hoisted(() => ({
   success: vi.fn(),
@@ -80,18 +87,6 @@ vi.mock("../equipment/equipment-validation", async (importOriginal) => {
     validateEquipmentEditorDraft: vi.fn(async () => makeSuccessfulValidation()),
   };
 });
-
-const { defaultPackage } = await import("../types");
-const { useCardEditorStore } = await import("../store/card-editor-store");
-const { createDefaultEquipmentDraft } = await import(
-  "../equipment/equipment-draft"
-);
-const { useEquipmentEditorStore } = await import(
-  "../equipment/equipment-editor-store"
-);
-const { buildStandardEquipmentId } = await import("../equipment/equipment-id");
-const { buildCardId } = await import("../utils/id-generator");
-const { default: CardEditorPage } = await import("../page");
 
 function makeSuccessfulValidation(): EquipmentPackApplicationImportResult {
   return {

@@ -1,0 +1,251 @@
+{
+  "format": "daggerheart.card-pack.v1",
+  "name": "Card Automation Continuous Choice Test Pack",
+  "version": "1.0.0",
+  "author": "DaggerHeart Character Sheet",
+  "description": "只有一张卡牌的自动化测试卡包，用于验证连续单选、多选、分支目标选择和多个能力的配置流程。",
+  "definitions": {
+    "domains": ["测试"]
+  },
+  "domains": [
+    {
+      "id": "automation-continuous-choice-test-card",
+      "name": "自动化连续选择测试卡",
+      "domain": "测试",
+      "description": "用于手动验证卡牌自动化设置流程：先单选，再静态多选，再按分支选择属性或经历目标。",
+      "level": 1,
+      "trait": "knowledge",
+      "recallCost": 0,
+      "automation": {
+        "format": "daggerheart.card-automation.definition.v1",
+        "mode": "lowLevel",
+        "body": {
+          "abilities": [
+            {
+              "id": "continuous-single-mode",
+              "label": "连续测试 1：单选模式",
+              "choices": [
+                {
+                  "id": "single-mode",
+                  "label": "单选模式",
+                  "kind": "selectOne",
+                  "cardinality": {
+                    "min": 1,
+                    "max": 1,
+                    "unique": true
+                  },
+                  "domain": {
+                    "kind": "staticOptions",
+                    "options": [
+                      {
+                        "id": "focus",
+                        "label": "专注：闪避 +1",
+                        "effects": [
+                          {
+                            "id": "single-focus-evasion",
+                            "kind": "emitModifier",
+                            "target": "evasion",
+                            "value": 1,
+                            "label": "连续测试：专注"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "guard",
+                        "label": "防守：护甲槽 +1",
+                        "effects": [
+                          {
+                            "id": "single-guard-armor",
+                            "kind": "emitModifier",
+                            "target": "armorMax",
+                            "value": 1,
+                            "label": "连续测试：防守"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "effects": [
+                {
+                  "kind": "emitEachSelectedOptionEffect",
+                  "choiceId": "single-mode"
+                }
+              ]
+            },
+            {
+              "id": "continuous-static-many",
+              "label": "连续测试 2：静态多选",
+              "choices": [
+                {
+                  "id": "training-tags",
+                  "label": "训练标签",
+                  "kind": "selectMany",
+                  "cardinality": {
+                    "min": 1,
+                    "max": 2,
+                    "unique": true
+                  },
+                  "domain": {
+                    "kind": "staticOptions",
+                    "options": [
+                      {
+                        "id": "quick",
+                        "label": "迅捷：闪避 +1",
+                        "effects": [
+                          {
+                            "id": "many-quick-evasion",
+                            "kind": "emitModifier",
+                            "target": "evasion",
+                            "value": 1,
+                            "label": "连续测试：迅捷"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "steady",
+                        "label": "沉着：压力上限 +1",
+                        "effects": [
+                          {
+                            "id": "many-steady-stress",
+                            "kind": "emitModifier",
+                            "target": "stressMax",
+                            "value": 1,
+                            "label": "连续测试：沉着"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "tough",
+                        "label": "坚韧：生命上限 +1",
+                        "effects": [
+                          {
+                            "id": "many-tough-hp",
+                            "kind": "emitModifier",
+                            "target": "hpMax",
+                            "value": 1,
+                            "label": "连续测试：坚韧"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "effects": [
+                {
+                  "kind": "emitEachSelectedOptionEffect",
+                  "choiceId": "training-tags"
+                }
+              ]
+            },
+            {
+              "id": "continuous-branch-targets",
+              "label": "连续测试 3：分支目标选择",
+              "choices": [
+                {
+                  "id": "target-mode",
+                  "label": "目标类型",
+                  "kind": "selectOne",
+                  "cardinality": {
+                    "min": 1,
+                    "max": 1,
+                    "unique": true
+                  },
+                  "domain": {
+                    "kind": "staticOptions",
+                    "options": [
+                      {
+                        "id": "attributes",
+                        "label": "选择属性目标"
+                      },
+                      {
+                        "id": "experiences",
+                        "label": "选择经历目标"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "attribute-targets",
+                  "label": "属性目标",
+                  "kind": "targetSelectMany",
+                  "requiredWhen": {
+                    "kind": "choiceEquals",
+                    "choiceId": "target-mode",
+                    "valueId": "attributes"
+                  },
+                  "cardinality": {
+                    "min": 1,
+                    "max": 2,
+                    "unique": true
+                  },
+                  "domain": {
+                    "kind": "modifierTargetGroup",
+                    "group": "attributes"
+                  }
+                },
+                {
+                  "id": "experience-targets",
+                  "label": "经历目标",
+                  "kind": "targetSelectMany",
+                  "requiredWhen": {
+                    "kind": "choiceEquals",
+                    "choiceId": "target-mode",
+                    "valueId": "experiences"
+                  },
+                  "cardinality": {
+                    "min": 1,
+                    "max": 2,
+                    "unique": true
+                  },
+                  "domain": {
+                    "kind": "modifierTargetGroup",
+                    "group": "experiences"
+                  }
+                }
+              ],
+              "effects": [
+                {
+                  "kind": "emitWhen",
+                  "when": {
+                    "kind": "choiceEquals",
+                    "choiceId": "target-mode",
+                    "valueId": "attributes"
+                  },
+                  "effects": [
+                    {
+                      "id": "branch-attribute-target-bonus",
+                      "kind": "emitEachSelectedTarget",
+                      "choiceId": "attribute-targets",
+                      "value": 1,
+                      "label": "连续测试：属性目标"
+                    }
+                  ]
+                },
+                {
+                  "kind": "emitWhen",
+                  "when": {
+                    "kind": "choiceEquals",
+                    "choiceId": "target-mode",
+                    "valueId": "experiences"
+                  },
+                  "effects": [
+                    {
+                      "id": "branch-experience-target-bonus",
+                      "kind": "emitEachSelectedTarget",
+                      "choiceId": "experience-targets",
+                      "value": 2,
+                      "label": "连续测试：经历目标"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import { useSheetStore, useSheetArmorBoxes, useSheetProficiency, useSafeSheetDat
 import { WeaponSelectionModal } from "@/components/modals/weapon-selection-modal"
 import { ArmorSelectionModal } from "@/components/modals/armor-selection-modal"
 import { GenericCardSelectionModal } from "@/components/modals/generic-card-selection-modal"
+import { useCardAutomationSetupPrompt } from "@/components/card-automation-setup"
 
 // Import sections
 import { HeaderSection } from "@/components/character-sheet-sections/header-section"
@@ -26,7 +27,6 @@ import { ArmorSection } from "@/components/character-sheet-sections/armor-sectio
 import { InventorySection } from "@/components/character-sheet-sections/inventory-section"
 import { InventoryWeaponSection } from "@/components/character-sheet-sections/inventory-weapon-section"
 import ProfessionDescriptionSection from "@/components/character-sheet-sections/profession-description-section"
-import { createEmptyCard, type StandardCard } from "@/card/card-types";
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
@@ -38,14 +38,18 @@ type WeaponSlotSelection =
 
 export default function CharacterSheet() {
   const {
-    sheetData: formData,
     setSheetData: setFormData,
+    selectCharacterChoiceCard,
+    clearCharacterChoiceCard,
+    handleProfessionChange: changeProfessionCard,
+    setCardAbilityChoiceValuesForInstance,
+    auditCardInstancesOnLoad,
     updateArmorBox,
     updateProficiency,
     selectArmorSlot,
     selectWeapon,
-    handleProfessionChange: autofillProfessionData,
     commitModifierTargetValue,
+    sheetLoadRevision,
   } = useSheetStore();
   const armorBoxes = useSheetArmorBoxes();
   const proficiency = useSheetProficiency();
@@ -53,7 +57,10 @@ export default function CharacterSheet() {
 
   // 使用全局卡牌Store
   const store = useCardStore();
+  const cardsInitialized = store.initialized;
   const cardsLoading = store.loading;
+  const getRuntimeCardById = store.getCardById;
+  const lastAuditedSheetLoadRevisionRef = useRef<number | null>(null)
 
   // 在组件加载时确保系统已初始化
   useEffect(() => {
@@ -61,6 +68,19 @@ export default function CharacterSheet() {
       store.initializeSystem();
     }
   }, [store.initialized, store.initializeSystem]);
+
+  useEffect(() => {
+    if (
+      !cardsInitialized ||
+      cardsLoading ||
+      lastAuditedSheetLoadRevisionRef.current === sheetLoadRevision
+    ) {
+      return
+    }
+
+    lastAuditedSheetLoadRevisionRef.current = sheetLoadRevision
+    auditCardInstancesOnLoad((templateId) => getRuntimeCardById(templateId) ?? undefined)
+  }, [auditCardInstancesOnLoad, cardsInitialized, cardsLoading, getRuntimeCardById, sheetLoadRevision])
 
   // 模态框状态
   const [weaponModalOpen, setWeaponModalOpen] = useState(false)
@@ -70,150 +90,10 @@ export default function CharacterSheet() {
   const [currentModal, setCurrentModal] = useState<{ type: "profession" | "ancestry" | "community" | "subclass"; field?: string; levelFilter?: number }>({ type: "profession" })
   const [armorMaxDraft, setArmorMaxDraft] = useState<string | null>(null)
   const [evasionDraft, setEvasionDraft] = useState<string | null>(null)
-
-  const needsSyncRef = useRef(true)
-  const initialRenderRef = useRef(true)
-
-
-  // 同步特殊卡牌与角色选择 - 不直接修改状态，而是返回新的卡牌数组
-  const getUpdatedSpecialCards = () => {
-    console.log(`getUpdatedSpecialCards: Called. Profession ID: ${safeFormData.professionRef?.id}`);
-    const newCards = [...safeFormData.cards];
-
-    while (newCards.length < 5) {
-      newCards.push(createEmptyCard("unknown"));
-    }
-
-    // 同步职业卡（位置0）
-    if (safeFormData.professionRef?.id) {
-      // 仅在ID不匹配时才更新
-      if (newCards[0]?.id !== safeFormData.professionRef.id) {
-        const professionCard = getProfessionById(safeFormData.professionRef.id);
-        newCards[0] = professionCard;
-      }
-    } else {
-      newCards[0] = createEmptyCard();
-    }
-
-    // 同步子职业卡（位置1）
-    if (safeFormData.subclassRef?.id) {
-      // 仅在ID不匹配时才更新
-      if (newCards[1]?.id !== safeFormData.subclassRef.id) {
-        const subclassCard = getSubclassById(safeFormData.subclassRef.id);
-        newCards[1] = subclassCard;
-      }
-    } else {
-      newCards[1] = createEmptyCard();
-    }
-
-    // 同步种族卡1（位置2）
-    if (safeFormData.ancestry1Ref?.id) {
-      // 仅在ID不匹配时才更新
-      if (newCards[2]?.id !== safeFormData.ancestry1Ref.id) {
-        const ancestry1Card = getAncestryById(safeFormData.ancestry1Ref.id);
-        newCards[2] = ancestry1Card;
-      }
-    } else {
-      newCards[2] = createEmptyCard();
-    }
-
-    // 同步种族卡2（位置3）
-    if (safeFormData.ancestry2Ref?.id) {
-      // 仅在ID不匹配时才更新
-      if (newCards[3]?.id !== safeFormData.ancestry2Ref.id) {
-        const ancestry2Card = getAncestryById(safeFormData.ancestry2Ref.id);
-        newCards[3] = ancestry2Card;
-      }
-    } else {
-      newCards[3] = createEmptyCard();
-    }
-
-    // 同步社群卡（位置4）
-    if (safeFormData.communityRef?.id) {
-      // 仅在ID不匹配时才更新
-      if (newCards[4]?.id !== safeFormData.communityRef.id) {
-        const communityCard = getCommunityById(safeFormData.communityRef.id);
-        newCards[4] = communityCard;
-      }
-    } else {
-      newCards[4] = createEmptyCard();
-    }
-    console.log(`getUpdatedSpecialCards: Returning newCards IDs: ${newCards.slice(0, 5).map(c => c.id)}`);
-    return newCards;
-  }
-
-  // 同步特殊卡牌 - 仅在需要时更新状态
-  const syncSpecialCardsWithCharacterChoices = () => {
-    try {
-      console.log(`syncSpecialCardsWithCharacterChoices: Called. Profession ID: ${safeFormData.professionRef?.id}`);
-      // 获取更新后的卡牌
-      const updatedCards = getUpdatedSpecialCards()
-
-      // 检查是否需要更新
-      let needsUpdate = false
-
-      // 只检查前5张特殊卡牌
-      for (let i = 0; i < 5; i++) {
-        if (
-          !safeFormData.cards[i] ||
-          !updatedCards[i] ||
-          safeFormData.cards[i].name !== updatedCards[i].name ||
-          safeFormData.cards[i].type !== updatedCards[i].type
-        ) {
-          needsUpdate = true
-          break
-        }
-      }
-
-      // 只有在需要更新时才调用setFormData
-      if (needsUpdate) {
-        setFormData((prev) => ({
-          ...prev,
-          cards: updatedCards,
-        }))
-      } else {
-        // console.log("No card updates needed") // Kept commented out as per previous logic
-      }
-    } catch (error) {
-      console.error("Error syncing special cards:", error)
-    }
-  }
-
-  // 根据ID获取职业名称
-  const getProfessionById = (id: string): StandardCard => {
-    if (cardsLoading) {
-      return createEmptyCard();
-    }
-    const card = store.getCardById(id);
-    return (card && card.type === CardType.Profession) ? card : createEmptyCard();
-  }
-
-  // 根据ID获取种族名称
-  const getAncestryById = (id: string): StandardCard => {
-    if (cardsLoading) {
-      return createEmptyCard();
-    }
-    const card = store.getCardById(id);
-    return (card && card.type === CardType.Ancestry) ? card : createEmptyCard();
-  }
-
-  // 根据ID获取社群名称
-  const getCommunityById = (id: string): StandardCard => {
-    if (cardsLoading) {
-      return createEmptyCard();
-    }
-    const card = store.getCardById(id);
-    return (card && card.type === CardType.Community) ? card : createEmptyCard();
-  }
-
-  // 根据ID获取子职业名称
-  const getSubclassById = (id: string): StandardCard => {
-    if (cardsLoading) {
-      return createEmptyCard();
-    }
-    const card = store.getCardById(id);
-    return (card && card.type === CardType.Subclass) ? card : createEmptyCard();
-  }
+  const setupPrompt = useCardAutomationSetupPrompt({
+    sheetData: safeFormData,
+    onSaveAbility: setCardAbilityChoiceValuesForInstance,
+  })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -266,8 +146,9 @@ export default function CharacterSheet() {
   const handleProfessionChange = (value: string) => {
     console.log(`handleProfessionChange called with ID: ${value}`);
 
-    if (value === "none") {
-      autofillProfessionData(undefined, undefined);
+    if (value === "none" || !value) {
+      const result = changeProfessionCard(undefined, undefined)
+      setupPrompt.handleSelectionResult(result)
     } else {
       if (cardsLoading) {
         console.warn('handleProfessionChange: Cards not loaded yet');
@@ -283,80 +164,56 @@ export default function CharacterSheet() {
 
         const newRef = { id: professionCard.id, name: fullName };
 
-        autofillProfessionData(newRef, professionCard);
+        const result = changeProfessionCard(newRef, professionCard);
+        setupPrompt.handleSelectionResult(result);
       } else {
         console.warn(`handleProfessionChange: Profession card not found for ID: ${value}`);
       }
     }
-    needsSyncRef.current = true;
   }
 
   const handleAncestryChange = (field: string, value: string) => {
     console.log(`handleAncestryChange called for field: ${field}, ID: ${value}`);
-    const refField = field === "ancestry1" ? "ancestry1Ref" : "ancestry2Ref";
+    const kind = field === "ancestry1" ? "ancestry1" : "ancestry2";
 
     if (value === "none" || !value) {
-      setFormData((prev) => {
-        const updatedFormData = {
-          ...prev,
-          [field]: "",
-          [refField]: { id: "", name: "" },
-        };
-        return updatedFormData;
-      })
-    } else {
-      if (cardsLoading) {
-        console.warn('handleAncestryChange: Cards not loaded yet');
-        return;
-      }
-      const ancestryCard = store.getCardById(value);
-      if (ancestryCard && ancestryCard.type === CardType.Ancestry) {
-        setFormData((prev) => {
-          const updatedFormData = {
-            ...prev,
-            [field]: ancestryCard.id,
-            [refField]: { id: ancestryCard.id, name: ancestryCard.name },
-          };
-          return updatedFormData;
-        })
-      } else {
-        console.warn(`handleAncestryChange: Ancestry card not found for ID: ${value} in field: ${field}`);
-      }
+      clearCharacterChoiceCard(kind)
+      return
     }
-    needsSyncRef.current = true
+
+    if (cardsLoading) {
+      console.warn('handleAncestryChange: Cards not loaded yet');
+      return;
+    }
+
+    const ancestryCard = store.getCardById(value);
+    if (ancestryCard && ancestryCard.type === CardType.Ancestry) {
+      const result = selectCharacterChoiceCard(kind, { id: ancestryCard.id, name: ancestryCard.name }, ancestryCard)
+      setupPrompt.handleSelectionResult(result)
+    } else {
+      console.warn(`handleAncestryChange: Ancestry card not found for ID: ${value} in field: ${field}`);
+    }
   }
 
   const handleCommunityChange = (value: string) => {
     console.log(`handleCommunityChange called with ID: ${value}`);
     if (value === "none" || !value) {
-      setFormData((prev) => {
-        const updatedFormData = {
-          ...prev,
-          community: "",
-          communityRef: { id: "", name: "" },
-        };
-        return updatedFormData;
-      })
-    } else {
-      if (cardsLoading) {
-        console.warn('handleCommunityChange: Cards not loaded yet');
-        return;
-      }
-      const communityCard = store.getCardById(value);
-      if (communityCard && communityCard.type === CardType.Community) {
-        setFormData((prev) => {
-          const updatedFormData = {
-            ...prev,
-            community: communityCard.id,
-            communityRef: { id: communityCard.id, name: communityCard.name },
-          };
-          return updatedFormData;
-        })
-      } else {
-        console.warn(`handleCommunityChange: Community card not found for ID: ${value}`);
-      }
+      clearCharacterChoiceCard("community")
+      return
     }
-    needsSyncRef.current = true
+
+    if (cardsLoading) {
+      console.warn('handleCommunityChange: Cards not loaded yet');
+      return;
+    }
+
+    const communityCard = store.getCardById(value);
+    if (communityCard && communityCard.type === CardType.Community) {
+      const result = selectCharacterChoiceCard("community", { id: communityCard.id, name: communityCard.name }, communityCard)
+      setupPrompt.handleSelectionResult(result)
+    } else {
+      console.warn(`handleCommunityChange: Community card not found for ID: ${value}`);
+    }
   }
 
   const handleWeaponSelect = (input: WeaponSelectionInput) => {
@@ -368,28 +225,6 @@ export default function CharacterSheet() {
     selectArmorSlot(input)
     setArmorModalOpen(false)
   }
-
-  // 使用useEffect监听特殊字段的变化，并在需要时同步卡牌
-  useEffect(() => {
-    // 关键修复：如果卡牌数据仍在加载，则直接返回，不执行任何同步操作。
-    // 这可以防止在卡牌数据加载完成之前尝试查找卡牌，从而避免了将卡牌替换为空白卡的问题。
-    if (cardsLoading) {
-      return;
-    }
-
-    // 只有在首次渲染完成且卡牌加载完毕后，或者在角色选择（如职业）发生变化需要同步时，才执行同步。
-    if (initialRenderRef.current || needsSyncRef.current) {
-      syncSpecialCardsWithCharacterChoices();
-
-      // 同步后重置标记，避免不必要的重复执行。
-      if (initialRenderRef.current) {
-        initialRenderRef.current = false;
-      }
-      if (needsSyncRef.current) {
-        needsSyncRef.current = false;
-      }
-    }
-  }, [formData, cardsLoading]); // 添加 cardsLoading 作为依赖项
 
   // 模态框控制函数
   const openWeaponModal = (selection: WeaponSlotSelection) => {
@@ -424,34 +259,22 @@ export default function CharacterSheet() {
   const handleSubclassChange = (value: string) => {
     console.log(`handleSubclassChange called with ID: ${value}`);
     if (value === "none" || !value) {
-      setFormData((prev) => {
-        const updatedFormData = {
-          ...prev,
-          subclass: "",
-          subclassRef: { id: "", name: "" },
-        };
-        return updatedFormData;
-      })
-    } else {
-      if (cardsLoading) {
-        console.warn('handleSubclassChange: Cards not loaded yet');
-        return;
-      }
-      const subclassCard = store.getCardById(value);
-      if (subclassCard && (subclassCard.type === CardType.Subclass || subclassCard.type === CardType.Profession)) {
-        setFormData((prev) => {
-          const updatedFormData = {
-            ...prev,
-            subclass: subclassCard.id,
-            subclassRef: { id: subclassCard.id, name: subclassCard.name },
-          };
-          return updatedFormData;
-        })
-      } else {
-        console.warn(`handleSubclassChange: Subclass card not found for ID: ${value}`);
-      }
+      clearCharacterChoiceCard("subclass")
+      return
     }
-    needsSyncRef.current = true;
+
+    if (cardsLoading) {
+      console.warn('handleSubclassChange: Cards not loaded yet');
+      return;
+    }
+
+    const subclassCard = store.getCardById(value);
+    if (subclassCard && subclassCard.type === CardType.Subclass) {
+      const result = selectCharacterChoiceCard("subclass", { id: subclassCard.id, name: subclassCard.name }, subclassCard)
+      setupPrompt.handleSelectionResult(result)
+    } else {
+      console.warn(`handleSubclassChange: Subclass card not found for ID: ${value}`);
+    }
   }
 
 
@@ -731,6 +554,7 @@ export default function CharacterSheet() {
           levelFilter={currentModal.levelFilter}
         />
       )}
+      {setupPrompt.dialog}
     </>
   )
 }

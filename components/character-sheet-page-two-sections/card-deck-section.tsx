@@ -1,11 +1,22 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, memo, useCallback } from "react"
+import { useState, useRef, memo, useCallback, useEffect } from "react"
+import { CircleAlert, CircleHelp } from "lucide-react"
+import {
+  isCardUpdateAuditItem,
+  type CardInstanceAuditItem,
+} from "@/automation/actions/card-instance-audit"
 import { getCardTypeName, convertToStandardCard } from "@/card"
 import { createEmptyCard, StandardCard, isEmptyCard } from "@/card/card-types"
 import { isVariantCard, getVariantRealType } from "@/card/card-types"
+import { useCardStore } from "@/card/stores/unified-card-store"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
+import { CardInstanceAuditDialog } from "@/components/card-instance-audit-dialog"
+import {
+  CardAutomationSetupMarker,
+  useCardAutomationSetupPrompt,
+} from "@/components/card-automation-setup"
 import { CardHoverPreview } from "@/components/ui/card-hover-preview"
 import { calculateFloatingPreviewPosition, getCardPreviewSize } from "@/hooks/use-card-preview"
 import { useTextModeStore } from "@/lib/text-mode-store"
@@ -13,13 +24,13 @@ import { showFadeNotification } from "@/components/ui/fade-notification"
 import type { SheetData } from "@/lib/sheet-data"
 import type { CSSProperties, MouseEvent } from "react"
 import { usePinnedCardsStore } from "@/lib/pinned-cards-store"
-import { useCardActions } from "@/lib/sheet-store"
+import { useCardActions, useSheetStore } from "@/lib/sheet-store"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { cn } from "@/lib/utils"
+import { projectCardAutomationSetupRequirements } from "@/card/automation/setup-projection"
 
 interface CardDeckSectionProps {
   formData: SheetData
-  onCardChange: (index: number, card: StandardCard) => void
-  onInventoryCardChange: (index: number, card: StandardCard) => void
 }
 
 // Utility function for border color
@@ -58,6 +69,8 @@ interface CardProps {
   hoveredCard: number | null;
   onPinCard: (card: StandardCard) => void;
   onCardDelete: (index: number) => void;
+  hasSetupRequirements: boolean;
+  onSetupClick: (instanceId: string) => void;
   isTextMode: boolean;
   isMobile: boolean;
 }
@@ -74,6 +87,8 @@ function Card({
   hoveredCard,
   onPinCard,
   onCardDelete,
+  hasSetupRequirements,
+  onSetupClick,
   isTextMode,
   isMobile,
 }: CardProps) {
@@ -136,6 +151,12 @@ function Card({
             {standardCard?.name || card.name}
           </span>
           <div className="flex-1"></div>
+          {hasSetupRequirements && standardCard?.instanceId && (
+            <CardAutomationSetupMarker
+              cardName={standardCard.name}
+              onClick={() => onSetupClick(standardCard.instanceId!)}
+            />
+          )}
           {!isSpecial && (
             <button
               className="ml-2 text-gray-400 hover:text-red-500 transition-all duration-200 !text-sm opacity-0 group-hover:opacity-100"
@@ -212,13 +233,19 @@ const MemoizedCard = memo(Card)
 
 export function CardDeckSection({
   formData,
-  onCardChange,
-  onInventoryCardChange,
 }: CardDeckSectionProps) {
   // 钉住卡牌功能
   const { pinCard } = usePinnedCardsStore();
   // 卡牌操作方法
   const { deleteCard, moveCard } = useCardActions();
+  const selectCardForSlot = useSheetStore(state => state.selectCardForSlot)
+  const setCardAbilityChoiceValuesForInstance = useSheetStore(state => state.setCardAbilityChoiceValuesForInstance)
+  const auditCardInstancesOnLoad = useSheetStore(state => state.auditCardInstancesOnLoad)
+  const overwriteCardInstancesFromAudit = useSheetStore(state => state.overwriteCardInstancesFromAudit)
+  const sheetLoadRevision = useSheetStore(state => state.sheetLoadRevision)
+  const runtimeInitialized = useCardStore(state => state.initialized)
+  const runtimeLoading = useCardStore(state => state.loading)
+  const getRuntimeCardById = useCardStore(state => state.getCardById)
   // 文字模式状态
   const { isTextMode } = useTextModeStore();
   // 移动端检测
@@ -227,6 +254,38 @@ export function CardDeckSection({
   const [activeDeck, setActiveDeck] = useState<'focused' | 'inventory'>('focused');
 
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
+  const [auditItems, setAuditItems] = useState<CardInstanceAuditItem[]>([])
+  const [auditDialogOpen, setAuditDialogOpen] = useState(false)
+  const lastAuditedSheetLoadRevisionRef = useRef<number | null>(null)
+  const setupPrompt = useCardAutomationSetupPrompt({
+    sheetData: formData,
+    onSaveAbility: setCardAbilityChoiceValuesForInstance,
+  })
+
+  const refreshCardAudit = useCallback(() => {
+    if (!runtimeInitialized || runtimeLoading) {
+      setAuditItems([])
+      return []
+    }
+
+    const report = auditCardInstancesOnLoad((templateId) => getRuntimeCardById(templateId) ?? undefined)
+    const updateItems = report.items.filter(isCardUpdateAuditItem)
+    setAuditItems(updateItems)
+    return updateItems
+  }, [auditCardInstancesOnLoad, getRuntimeCardById, runtimeInitialized, runtimeLoading])
+
+  useEffect(() => {
+    if (
+      !runtimeInitialized ||
+      runtimeLoading ||
+      lastAuditedSheetLoadRevisionRef.current === sheetLoadRevision
+    ) {
+      return
+    }
+
+    lastAuditedSheetLoadRevisionRef.current = sheetLoadRevision
+    refreshCardAudit()
+  }, [refreshCardAudit, runtimeInitialized, runtimeLoading, sheetLoadRevision])
 
   // 优化的hover处理函数，确保立即响应
   const handleCardHover = useCallback((cardIndex: number | null) => {
@@ -308,11 +367,12 @@ export function CardDeckSection({
   // 处理卡牌选择
   const handleCardSelect = (card: StandardCard) => {
     if (selectedCardIndex !== null) {
-      if (activeDeck === 'focused') {
-        onCardChange(selectedCardIndex, card);
-      } else {
-        onInventoryCardChange(selectedCardIndex, card);
-      }
+      const result = selectCardForSlot({
+        zone: activeDeck === 'inventory' ? "vault" : "loadout",
+        index: selectedCardIndex,
+        template: card,
+      });
+      setupPrompt.handleSelectionResult(result);
       setCardSelectionModalOpen(false);
       setSelectedCardIndex(null);
     }
@@ -343,7 +403,28 @@ export function CardDeckSection({
     <div className="mt-2">
       <div className="flex items-center justify-between mb-1">
         <div className="h-px bg-gray-800 flex-grow"></div>
-        <h3 className="!text-sm font-bold text-center mx-2 print:mb-4">卡组</h3>
+        <h3 className="!text-sm font-bold text-center mx-2 print:mb-4 flex items-center justify-center gap-1">
+          <span>卡组</span>
+          <button
+            type="button"
+            aria-label={auditItems.length > 0 ? "更新卡牌，有可更新项目" : "检查卡牌更新"}
+            title={auditItems.length > 0 ? "有卡牌可以用卡包数据更新" : "检查卡牌更新"}
+            onClick={() => {
+              refreshCardAudit()
+              setAuditDialogOpen(true)
+            }}
+            className={cn(
+              "print:hidden inline-flex h-5 w-5 items-center justify-center rounded text-current opacity-70 transition-opacity hover:opacity-100",
+              auditItems.length > 0 && "text-red-600 opacity-100 hover:text-red-700",
+            )}
+          >
+            {auditItems.length > 0 ? (
+              <CircleAlert className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : (
+              <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+          </button>
+        </h3>
         <div className="h-px bg-gray-800 flex-grow"></div>
       </div>
 
@@ -386,6 +467,12 @@ export function CardDeckSection({
 
             const isSpecial = isSpecialSlot(index);
             const isSelected = false; // 移除选中状态，双卡组系统不需要此功能
+            const hasSetupRequirements = Boolean(
+              card.instanceId &&
+              projectCardAutomationSetupRequirements(formData, {
+                cardInstanceId: card.instanceId,
+              }).length > 0
+            );
 
             return (
               <div
@@ -406,6 +493,8 @@ export function CardDeckSection({
                   hoveredCard={hoveredCard}
                   onPinCard={pinCard}
                   onCardDelete={handleCardDelete}
+                  hasSetupRequirements={hasSetupRequirements}
+                  onSetupClick={setupPrompt.openForCard}
                   isTextMode={isTextMode}
                   isMobile={isMobile}
                 />
@@ -424,6 +513,27 @@ export function CardDeckSection({
           initialTab="domain"
         />
       )}
+
+      <CardInstanceAuditDialog
+        open={auditDialogOpen}
+        items={auditItems}
+        onConfirm={(selectedItems) => {
+          const result = overwriteCardInstancesFromAudit(selectedItems)
+          if (result.kind === "failure") {
+            showFadeNotification({
+              message: result.message,
+              type: "error",
+            })
+            return
+          }
+
+          refreshCardAudit()
+          setAuditDialogOpen(false)
+        }}
+        onOpenChange={setAuditDialogOpen}
+      />
+
+      {setupPrompt.dialog}
 
       {/* 添加自定义边框宽度样式 */}
       <style>{`

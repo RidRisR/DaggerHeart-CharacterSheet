@@ -209,6 +209,8 @@ function sourceBadgeLabel(entry: ModifierEntry, isSpecialEntry: boolean): string
       return "等级"
     case "upgrade":
       return "升级"
+    case "card":
+      return "卡牌"
     case "user":
       return "用户"
     default:

@@ -2,12 +2,13 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import type { CardValidationJumpTarget } from "../../services/card-editor-validation";
 import { createEditorValidationViewModel } from "../../services/editor-validation-view-model";
 import { ValidationResults } from "../validation-results";
 
 describe("card validation results", () => {
   it("renders warning-only validation as exportable with visible warnings", () => {
-    const viewModel = createEditorValidationViewModel({
+    const viewModel = createEditorValidationViewModel<CardValidationJumpTarget>({
       checkedItemCount: 1,
       diagnostics: [
         {
@@ -56,7 +57,7 @@ describe("card validation results", () => {
   it("keeps metadata jump targets for card package metadata diagnostics", async () => {
     const user = userEvent.setup();
     const onJumpToMetadata = vi.fn();
-    const viewModel = createEditorValidationViewModel({
+    const viewModel = createEditorValidationViewModel<CardValidationJumpTarget>({
       checkedItemCount: 0,
       diagnostics: [
         {

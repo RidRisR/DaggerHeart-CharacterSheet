@@ -117,7 +117,7 @@ describe("card editor store characterization", () => {
 
     useCardEditorStore.getState().updateMetadata("name", "新包");
 
-    expect(useCardEditorStore.getState().packageData.profession[0]).toMatchObject({
+    expect(useCardEditorStore.getState().packageData.profession?.[0]).toMatchObject({
       id: expectedNewId,
     });
     await waitFor(() => {
@@ -241,11 +241,11 @@ describe("card editor store characterization", () => {
 
     await waitFor(() => {
       expect(getImageBlobFromDB).toHaveBeenCalledWith("persisted-stale-image");
-      expect(useCardEditorStore.getState().packageData.profession[0]).toMatchObject({
+      expect(useCardEditorStore.getState().packageData.profession?.[0]).toMatchObject({
         id: "persisted-stale-image",
         imageUrl: "https://example.test/fallback.png",
       });
-      expect(useCardEditorStore.getState().packageData.profession[0]).not.toHaveProperty("hasLocalImage");
+      expect(useCardEditorStore.getState().packageData.profession?.[0]).not.toHaveProperty("hasLocalImage");
     });
     expect(toast.success).not.toHaveBeenCalled();
     expect(toast.error).not.toHaveBeenCalled();

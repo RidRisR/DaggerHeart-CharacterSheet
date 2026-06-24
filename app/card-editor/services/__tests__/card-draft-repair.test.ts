@@ -50,8 +50,8 @@ describe("repairCardEditorDraft", () => {
     )
 
     expect(result.draft.ancestry).toHaveLength(4)
-    expect(result.draft.ancestry.filter((card) => card.简介 === "Forest")).toHaveLength(2)
-    expect(result.draft.ancestry.filter((card) => card.简介 === "Moon")).toHaveLength(2)
+    expect(result.draft.ancestry?.filter((card) => card.简介 === "Forest")).toHaveLength(2)
+    expect(result.draft.ancestry?.filter((card) => card.简介 === "Moon")).toHaveLength(2)
     expect(result.report.repairs).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

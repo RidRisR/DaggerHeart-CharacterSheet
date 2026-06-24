@@ -7,6 +7,7 @@ import CharacterSheet from "@/components/character-sheet"
 import { AttributesSection } from "@/components/character-sheet-sections/attributes-section"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import { defaultSheetData } from "@/lib/default-sheet-data"
+import { makeSheet } from "@/card/automation/__tests__/helpers"
 import {
   getUnattributedDeltaId,
   UNATTRIBUTED_DELTA_LABEL,
@@ -668,6 +669,46 @@ describe("ModifierFieldAnchor", () => {
     expect(screen.getByText("护甲")).toBeInTheDocument()
     expect(screen.getByText("短剑：闪避")).toBeInTheDocument()
     expect(screen.getByText("皮甲：闪避")).toBeInTheDocument()
+  })
+
+  it("labels card-sourced modifiers as card sources", async () => {
+    resetSheetStore(makeSheet({
+      cards: [
+        {
+          standarized: true,
+          id: "simiah",
+          instanceId: "cardinst_1",
+          name: "灵活",
+          type: "ancestry",
+          class: "猿族",
+          cardSelectDisplay: {},
+          automation: {
+            format: "daggerheart.card-automation.ir.v1",
+            revision: "stable32:test",
+            abilities: [
+              {
+                id: "nimble",
+                label: "灵活",
+                lifetime: { kind: "whileInLoadout" },
+                effects: [{ id: "effect-1", kind: "emitModifier", target: "evasion", value: 1 }],
+              },
+            ],
+          },
+        },
+      ],
+      evasion: "10",
+      modifierState: {
+        targetStates: { evasion: { autoCalculation: false } },
+        entryStates: {},
+      },
+    }))
+
+    render(<ModifierFieldAnchor target="evasion" label="闪避" />)
+    await userEvent.click(screen.getByRole("button", { name: "查看闪避来源" }))
+
+    expect(screen.getByText("卡牌")).toBeInTheDocument()
+    expect(screen.getByText("灵活")).toBeInTheDocument()
+    expect(screen.queryByText("系统")).not.toBeInTheDocument()
   })
 
   it("keeps saved sync other adjustment outside normal modifiers", async () => {

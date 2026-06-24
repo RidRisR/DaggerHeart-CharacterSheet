@@ -92,7 +92,7 @@ describe("persisted card editor workspace recovery", () => {
         hasLocalImage: true,
       }),
     ]);
-    expect(result.draft.profession[0]).not.toHaveProperty("hasLocalImage");
+    expect(result.draft.profession?.[0]).not.toHaveProperty("hasLocalImage");
     expect(result.report).toMatchObject({
       staleLocalImageFlagsRemoved: ["stale-local-image"],
       localImageFlagsConfirmed: ["card-with-blob"],
@@ -122,7 +122,7 @@ describe("persisted card editor workspace recovery", () => {
       expect.objectContaining({ id: "domain-with-blob", hasLocalImage: true }),
       expect.objectContaining({ id: "domain-without-blob" }),
     ]);
-    expect(result.draft.domain[1]).not.toHaveProperty("hasLocalImage");
+    expect(result.draft.domain?.[1]).not.toHaveProperty("hasLocalImage");
     expect(result.report.localImageFlagsConfirmed).toEqual(["domain-with-blob"]);
     expect(result.report.staleLocalImageFlagsRemoved).toEqual(["domain-without-blob"]);
   });
@@ -171,11 +171,11 @@ describe("persisted card editor workspace recovery", () => {
       service,
     );
 
-    expect(result.draft.profession[0]).toMatchObject({
+    expect(result.draft.profession?.[0]).toMatchObject({
       id: "lookup-fails",
       imageUrl: "https://example.test/fallback.png",
     });
-    expect(result.draft.profession[0]).not.toHaveProperty("hasLocalImage");
+    expect(result.draft.profession?.[0]).not.toHaveProperty("hasLocalImage");
     expect(result.report.imageLookupFailed).toEqual(["lookup-fails"]);
     expect(result.report.orphanImageCleanupFailed).toEqual(["*"]);
     expect(result.report).not.toHaveProperty("diagnostics");

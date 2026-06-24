@@ -363,7 +363,7 @@ describe("modifier state migration", () => {
       } as StandardCard],
     }))
 
-    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.schemaVersion).toBe(3)
     expect(migrated.evasion).toBe("15")
     expect(migrated.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "profession:current:evasion",

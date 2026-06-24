@@ -10,6 +10,7 @@ import {
   CustomCardStats,
   BatchStats
 } from '../card-types';
+import type { CardRuntimeSourceSnapshot } from '../runtime/source-types';
 
 // Import CardType and CardSource to be re-exported
 import { CardType, CardSource } from '../card-types';
@@ -237,6 +238,7 @@ export interface UnifiedCardActions {
   updateBatchVariantTypes: (batchId: string, types: VariantTypesForBatch) => void;
   toggleBatchDisabled: (batchId: string) => Promise<boolean>;
   getBatchDisabledStatus: (batchId: string) => boolean;
+  getAllBuiltinCardTemplateIds: () => string[];
   
   
   // Utilities
@@ -262,12 +264,10 @@ export interface UnifiedCardActions {
   _syncToLocalStorage: () => void;
   _clearCustomRuntimeState: () => void;
   _loadAllCards: () => Promise<void>;
+  _loadCustomRuntimeSourceSnapshots: () => CardRuntimeSourceSnapshot[];
   _loadCustomCardsFromStorage: () => void;
-  _seedBuiltinCards: () => Promise<void>;
   _migrateLegacyData: () => Promise<any>;
   _computeStats: () => CustomCardStats;
-  _importBuiltinCards: (jsonCardPack: any, previousDisabledStatus?: boolean) => Promise<void>;
-  _convertImportData: (importData: ImportData) => Promise<{ success: boolean; cards: ExtendedStandardCard[]; errors?: string[] }>;
   _validateImportData: (importData: ImportData) => { isValid: boolean; errors: string[] };
   _preprocessCardImages: () => void;
   _inferCardImageUrl: (card: ExtendedStandardCard) => string | null;

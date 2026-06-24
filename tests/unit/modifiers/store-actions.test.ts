@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest"
-import { createEmptyCard } from "@/card/card-types"
+import { describe, expect, it, vi } from "vitest"
+import type { StandardCard } from "@/card/card-types"
+import { createEmptyCard, isEmptyCard } from "@/card/card-types"
+import type { CardAutomationIR } from "@/card/automation/ir-types"
+import type { CardInstanceAuditItem } from "@/automation/actions/card-instance-audit"
 import { armorItems } from "@/data/list/armor"
 import { defaultSheetData } from "@/lib/default-sheet-data"
 import {
@@ -19,6 +22,7 @@ import type { CustomArmorDraft, CustomWeaponDraft } from "@/automation/equipment
 import type { RuntimeEquipmentTemplate } from "@/equipment/runtime-cache/types"
 import { getReferenceSummary } from "@/automation/core/registry"
 import { resetSheetStore, sheet, store } from "../automation/test-helpers"
+import { useSheetStore } from "@/lib/sheet-store"
 
 function runtimeArmorTemplate(armor: (typeof armorItems)[number]): RuntimeEquipmentTemplate & { kind: "armor" } {
   return {
@@ -32,6 +36,110 @@ function runtimeArmorTemplate(armor: (typeof armorItems)[number]): RuntimeEquipm
           }]
         : [],
     ),
+  }
+}
+
+const testCardAutomation: CardAutomationIR = {
+  format: "daggerheart.card-automation.ir.v1",
+  revision: "stable32:store-test",
+  abilities: [
+    {
+      id: "store-test",
+      label: "Store Test",
+      lifetime: { kind: "whileInLoadout" },
+      effects: [],
+    },
+  ],
+}
+
+const nimbleAncestryAutomation: CardAutomationIR = {
+  format: "daggerheart.card-automation.ir.v1",
+  revision: "stable32:nimble",
+  abilities: [
+    {
+      id: "nimble",
+      label: "Nimble",
+      lifetime: { kind: "whileInLoadout" },
+      effects: [{ id: "nimble-evasion", kind: "emitModifier", target: "evasion", value: 1 }],
+    },
+  ],
+}
+
+const olderNimbleAncestryAutomation: CardAutomationIR = {
+  ...nimbleAncestryAutomation,
+  revision: "stable32:nimble-old",
+}
+
+const subclassEvasionAutomation: CardAutomationIR = {
+  format: "daggerheart.card-automation.ir.v1",
+  revision: "stable32:subclass-evasion",
+  abilities: [
+    {
+      id: "subclass-evasion",
+      label: "Subclass Evasion",
+      lifetime: { kind: "whileInLoadout" },
+      effects: [{ id: "subclass-evasion-mod", kind: "emitModifier", target: "evasion", value: 2 }],
+    },
+  ],
+}
+
+const setupChoiceAutomation: CardAutomationIR = {
+  format: "daggerheart.card-automation.ir.v1",
+  revision: "stable32:setup-choice",
+  abilities: [
+    {
+      id: "choose-mode",
+      label: "Choose Mode",
+      lifetime: { kind: "whileInLoadout" },
+      choices: [
+        {
+          id: "mode",
+          kind: "selectOne",
+          cardinality: { min: 1, max: 1, unique: true },
+          domain: {
+            kind: "staticOptions",
+            options: [{ id: "a", label: "A" }],
+          },
+        },
+      ],
+      effects: [],
+    },
+  ],
+}
+
+function ancestryCard(overrides: Partial<StandardCard> = {}): StandardCard {
+  return {
+    ...createEmptyCard("ancestry"),
+    id: "ancestry:nimble",
+    name: "Nimble",
+    type: "ancestry",
+    class: "Simiah",
+    automation: nimbleAncestryAutomation,
+    ...overrides,
+  }
+}
+
+function subclassCard(overrides: Partial<StandardCard> = {}): StandardCard {
+  return {
+    ...createEmptyCard("subclass"),
+    id: "subclass:evasion",
+    name: "Evasion Subclass",
+    type: "subclass",
+    class: "Automated Profession",
+    automation: subclassEvasionAutomation,
+    ...overrides,
+  }
+}
+
+function setupChoiceCard(overrides: Partial<StandardCard> = {}): StandardCard {
+  return {
+    ...createEmptyCard("domain"),
+    id: "domain:setup-choice",
+    name: "Setup Choice",
+    type: "domain",
+    class: "Blade",
+    automation: setupChoiceAutomation,
+    ...overrides,
   }
 }
 
@@ -727,6 +835,546 @@ describe("modifier store actions", () => {
     expect(sheet().evasion).toBe("12")
     expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBe("profession:current:evasion")
     expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBeUndefined()
+  })
+
+  it("instantiates automation when updateCard replaces a protected profession slot", () => {
+    resetSheetStore({
+      cards: defaultSheetData.cards,
+    })
+
+    store().updateCard(0, {
+      ...createEmptyCard("profession"),
+      id: "profession:automated",
+      name: "Automated Profession",
+      type: "profession",
+      automation: testCardAutomation,
+    }, false)
+
+    expect(sheet().cards[0]).toEqual(expect.objectContaining({
+      id: "profession:automated",
+      name: "Automated Profession",
+      instanceId: expect.stringMatching(/^cardinst_/),
+      automation: testCardAutomation,
+      automationState: { version: 1, abilities: {} },
+      automationSource: expect.objectContaining({
+        templateId: "profession:automated",
+        templateAutomationRevision: "stable32:store-test",
+      }),
+    }))
+  })
+
+  it("instantiates automation when handleProfessionChange writes the protected profession slot", () => {
+    resetSheetStore({
+      cards: defaultSheetData.cards,
+    })
+
+    store().handleProfessionChange(
+      { id: "profession:automated", name: "Automated Profession" },
+      {
+        ...createEmptyCard("profession"),
+        id: "profession:automated",
+        name: "Automated Profession",
+        type: "profession",
+        automation: testCardAutomation,
+      },
+    )
+
+    expect(sheet().profession).toBe("profession:automated")
+    expect(sheet().cards[0]).toEqual(expect.objectContaining({
+      id: "profession:automated",
+      instanceId: expect.stringMatching(/^cardinst_/),
+      automationState: { version: 1, abilities: {} },
+    }))
+  })
+
+  it("selectCardForSlot returns the created card instance id and setup effects", () => {
+    resetSheetStore()
+
+    const result = store().selectCardForSlot({
+      zone: "loadout",
+      index: 5,
+      template: setupChoiceCard(),
+    })
+
+    expect(result.kind).toBe("success")
+    if (result.kind === "success") {
+      expect(result.cardInstanceId).toMatch(/^cardinst_/)
+      expect(result.effects).toEqual([
+        {
+          kind: "cardAutomationSetupAvailable",
+          cardInstanceId: result.cardInstanceId,
+        },
+      ])
+      expect(sheet().cards[5].instanceId).toBe(result.cardInstanceId)
+    }
+  })
+
+  it("selectCardForSlot returns success without setup effects when clearing an ordinary slot", () => {
+    resetSheetStore({
+      cards: [
+        ...defaultSheetData.cards.slice(0, 5),
+        setupChoiceCard({ instanceId: "cardinst_existing" }),
+        ...defaultSheetData.cards.slice(6),
+      ],
+    })
+
+    const result = store().selectCardForSlot({
+      zone: "loadout",
+      index: 5,
+      template: createEmptyCard(),
+    })
+
+    expect(result).toEqual({
+      kind: "success",
+      effects: [],
+    })
+    expect(isEmptyCard(sheet().cards[5])).toBe(true)
+  })
+
+  it("setCardAbilityChoiceValuesForInstance returns failure and keeps state unchanged for invalid choices", () => {
+    resetSheetStore()
+    const selection = store().selectCardForSlot({
+      zone: "loadout",
+      index: 5,
+      template: setupChoiceCard(),
+    })
+    if (selection.kind !== "success") throw new Error("selection failed")
+    if (!selection.cardInstanceId) throw new Error("expected selected card instance id")
+    const before = store().sheetData
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {})
+
+    const result = store().setCardAbilityChoiceValuesForInstance({
+      cardInstanceId: selection.cardInstanceId,
+      abilityId: "choose-mode",
+      choiceValues: { mode: ["missing"] },
+    })
+
+    expect(result).toEqual({
+      kind: "failure",
+      message: "Card ability choice values are invalid.",
+    })
+    expect(store().sheetData).toBe(before)
+    expect(logSpy).toHaveBeenCalledWith("[Store]", "Card ability choice values are invalid.")
+    logSpy.mockRestore()
+  })
+
+  it("handleProfessionChange clears subclass fields and protected subclass slot through semantic action", () => {
+    resetSheetStore({
+      evasion: "10",
+      profession: "profession:old",
+      professionRef: { id: "profession:old", name: "Old Profession" },
+      subclass: "subclass:evasion",
+      subclassRef: { id: "subclass:evasion", name: "Evasion Subclass" },
+      cards: [
+        {
+          ...createEmptyCard("profession"),
+          id: "profession:old",
+          name: "Old Profession",
+          type: "profession",
+          instanceId: "cardinst_old_profession",
+        },
+        subclassCard({ instanceId: "cardinst_subclass" }),
+        ...defaultSheetData.cards.slice(2),
+      ],
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 10 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+    const visibleUpdates: ReturnType<typeof sheet>[] = []
+    const unsubscribe = useSheetStore.subscribe(state => {
+      visibleUpdates.push(state.sheetData)
+    })
+
+    store().handleProfessionChange(
+      { id: "profession:automated", name: "Automated Profession" },
+      {
+        ...createEmptyCard("profession"),
+        id: "profession:automated",
+        name: "Automated Profession",
+        type: "profession",
+      },
+    )
+    unsubscribe()
+
+    expect(sheet().profession).toBe("profession:automated")
+    expect(sheet().professionRef).toEqual({ id: "profession:automated", name: "Automated Profession" })
+    expect(sheet().subclass).toBe("")
+    expect(sheet().subclassRef).toEqual({ id: "", name: "" })
+    expect(isEmptyCard(sheet().cards[1])).toBe(true)
+    expect(sheet().evasion).toBe("10")
+    expect(visibleUpdates).toHaveLength(1)
+    expect(visibleUpdates).not.toContainEqual(expect.objectContaining({
+      profession: "profession:automated",
+      cards: expect.arrayContaining([
+        expect.anything(),
+        expect.objectContaining({ id: "subclass:evasion" }),
+      ]),
+    }))
+  })
+
+  it("handleProfessionChange returns setup prompt effects from the atomic profession selection", () => {
+    resetSheetStore({
+      subclass: "subclass:evasion",
+      subclassRef: { id: "subclass:evasion", name: "Evasion Subclass" },
+      cards: [
+        createEmptyCard("profession"),
+        subclassCard({ instanceId: "cardinst_subclass" }),
+        ...defaultSheetData.cards.slice(2),
+      ],
+    })
+    const visibleUpdates: ReturnType<typeof sheet>[] = []
+    const unsubscribe = useSheetStore.subscribe(state => {
+      visibleUpdates.push(state.sheetData)
+    })
+
+    const result = store().handleProfessionChange(
+      { id: "profession:setup", name: "Setup Profession" },
+      {
+        ...createEmptyCard("profession"),
+        id: "profession:setup",
+        name: "Setup Profession",
+        type: "profession",
+        automation: setupChoiceAutomation,
+      },
+    )
+    unsubscribe()
+
+    expect(result.kind).toBe("success")
+    if (result.kind !== "success") throw new Error("expected success")
+    expect(result.cardInstanceId).toMatch(/^cardinst_/)
+    expect(result.effects).toEqual([
+      {
+        kind: "cardAutomationSetupAvailable",
+        cardInstanceId: result.cardInstanceId,
+      },
+    ])
+    expect(sheet().subclass).toBe("")
+    expect(isEmptyCard(sheet().cards[1])).toBe(true)
+    expect(visibleUpdates).toHaveLength(1)
+  })
+
+  it("Character Choice Card selection instantiates ancestry1 automation into protected slot and updates refs", () => {
+    resetSheetStore({
+      evasion: "10",
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 10 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+
+    store().selectCharacterChoiceCard(
+      "ancestry1",
+      { id: "ancestry:nimble", name: "Nimble" },
+      ancestryCard(),
+    )
+
+    expect(sheet().ancestry1).toBe("ancestry:nimble")
+    expect(sheet().ancestry1Ref).toEqual({ id: "ancestry:nimble", name: "Nimble" })
+    expect(sheet().cards[2]).toEqual(expect.objectContaining({
+      id: "ancestry:nimble",
+      instanceId: expect.stringMatching(/^cardinst_/),
+      automation: nimbleAncestryAutomation,
+      automationState: { version: 1, abilities: {} },
+      automationSource: expect.objectContaining({
+        templateId: "ancestry:nimble",
+        templateAutomationRevision: "stable32:nimble",
+      }),
+    }))
+    expect(sheet().evasion).toBe("11")
+  })
+
+  it("selectCharacterChoiceCard returns the protected slot card instance id and setup effects", () => {
+    resetSheetStore()
+
+    const result = store().selectCharacterChoiceCard(
+      "ancestry1",
+      { id: "ancestry:nimble", name: "Nimble" },
+      ancestryCard({ automation: setupChoiceAutomation }),
+    )
+
+    expect(result.kind).toBe("success")
+    if (result.kind === "success") {
+      expect(result.cardInstanceId).toMatch(/^cardinst_/)
+      expect(result.cardInstanceId).toBe(sheet().cards[2].instanceId)
+      expect(result.effects).toEqual([
+        {
+          kind: "cardAutomationSetupAvailable",
+          cardInstanceId: result.cardInstanceId,
+        },
+      ])
+    }
+  })
+
+  it("Character Choice Card selection replaces same ancestry id with a fresh instance and clears old choices", () => {
+    resetSheetStore({
+      cards: [
+        ...defaultSheetData.cards.slice(0, 2),
+        ancestryCard({
+          instanceId: "cardinst_old",
+          automationState: {
+            version: 1,
+            abilities: { nimble: { choiceValues: { stale: ["value"] } } },
+          },
+        }),
+        ...defaultSheetData.cards.slice(3),
+      ],
+      ancestry1: "ancestry:nimble",
+      ancestry1Ref: { id: "ancestry:nimble", name: "Nimble" },
+    })
+
+    store().selectCharacterChoiceCard(
+      "ancestry1",
+      { id: "ancestry:nimble", name: "Nimble" },
+      ancestryCard(),
+    )
+
+    expect(sheet().cards[2].instanceId).toEqual(expect.stringMatching(/^cardinst_/))
+    expect(sheet().cards[2].instanceId).not.toBe("cardinst_old")
+    expect(sheet().cards[2].automationState).toEqual({ version: 1, abilities: {} })
+  })
+
+  it("Character Choice Card selection ignores templates whose type does not match the requested kind", () => {
+    resetSheetStore({
+      community: "community:old",
+      communityRef: { id: "community:old", name: "Old Community" },
+      cards: [
+        ...defaultSheetData.cards.slice(0, 4),
+        {
+          ...createEmptyCard("community"),
+          id: "community:old",
+          name: "Old Community",
+          type: "community",
+          instanceId: "cardinst_community_old",
+        },
+        ...defaultSheetData.cards.slice(5),
+      ],
+    })
+    const before = sheet()
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {})
+
+    store().selectCharacterChoiceCard(
+      "community",
+      { id: "ancestry:nimble", name: "Nimble" },
+      ancestryCard(),
+    )
+
+    expect(sheet()).toBe(before)
+    expect(sheet().community).toBe("community:old")
+    expect(sheet().communityRef).toEqual({ id: "community:old", name: "Old Community" })
+    expect(sheet().cards[4].id).toBe("community:old")
+    expect(sheet().cards[4].instanceId).toBe("cardinst_community_old")
+    expect(logSpy).toHaveBeenCalledWith(
+      "[Store]",
+      "Character choice community requires a community card template.",
+    )
+    logSpy.mockRestore()
+  })
+
+  it("Character Choice Card selection ignores refs that do not match the template id", () => {
+    resetSheetStore({
+      ancestry1: "ancestry:old",
+      ancestry1Ref: { id: "ancestry:old", name: "Old Ancestry" },
+      cards: [
+        ...defaultSheetData.cards.slice(0, 2),
+        ancestryCard({
+          id: "ancestry:old",
+          name: "Old Ancestry",
+          instanceId: "cardinst_ancestry_old",
+        }),
+        ...defaultSheetData.cards.slice(3),
+      ],
+    })
+    const before = sheet()
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {})
+
+    store().selectCharacterChoiceCard(
+      "ancestry1",
+      { id: "ancestry:other", name: "Other Ancestry" },
+      ancestryCard({ id: "ancestry:nimble", name: "Nimble" }),
+    )
+
+    expect(sheet()).toBe(before)
+    expect(sheet().ancestry1).toBe("ancestry:old")
+    expect(sheet().ancestry1Ref).toEqual({ id: "ancestry:old", name: "Old Ancestry" })
+    expect(sheet().cards[2].id).toBe("ancestry:old")
+    expect(sheet().cards[2].instanceId).toBe("cardinst_ancestry_old")
+    expect(logSpy).toHaveBeenCalledWith(
+      "[Store]",
+      "Character choice ancestry1 ref must match the selected card template.",
+    )
+    logSpy.mockRestore()
+  })
+
+  it("Character Choice Card clearing ancestry1 clears refs and the protected slot", () => {
+    resetSheetStore({
+      cards: [
+        ...defaultSheetData.cards.slice(0, 2),
+        ancestryCard({ instanceId: "cardinst_existing" }),
+        ...defaultSheetData.cards.slice(3),
+      ],
+      ancestry1: "ancestry:nimble",
+      ancestry1Ref: { id: "ancestry:nimble", name: "Nimble" },
+    })
+
+    store().clearCharacterChoiceCard("ancestry1")
+
+    expect(sheet().ancestry1).toBe("")
+    expect(sheet().ancestry1Ref).toEqual({ id: "", name: "" })
+    expect(isEmptyCard(sheet().cards[2])).toBe(true)
+  })
+
+  it("audit store action reads current card instances without mutating sheet data", () => {
+    const staleCard = ancestryCard({ automation: undefined })
+    const template = ancestryCard()
+    resetSheetStore({
+      cards: [
+        ...defaultSheetData.cards.slice(0, 2),
+        staleCard,
+        ...defaultSheetData.cards.slice(3),
+      ],
+      ancestry1: "ancestry:nimble",
+      ancestry1Ref: { id: "ancestry:nimble", name: "Nimble" },
+    })
+
+    const before = sheet()
+    const report = store().auditCardInstancesOnLoad(templateId =>
+      templateId === template.id ? template : undefined,
+    )
+
+    expect(report.items).toEqual([
+      expect.objectContaining({
+        zone: "loadout",
+        index: 2,
+        templateId: "ancestry:nimble",
+        reasons: expect.arrayContaining(["MISSING_INSTANCE_ID", "MISSING_INSTANCE_AUTOMATION"]),
+        characterChoiceKind: "ancestry1",
+      }),
+    ])
+    expect(sheet()).toBe(before)
+    expect(sheet().cards[2]).toBe(staleCard)
+  })
+
+  it("audit overwrite store action updates selected audit item and recalculates evasion", () => {
+    resetSheetStore({
+      evasion: "10",
+      cards: [
+        ...defaultSheetData.cards.slice(0, 2),
+        ancestryCard({
+          instanceId: "cardinst_stale",
+          automation: olderNimbleAncestryAutomation,
+          automationState: {
+            version: 1,
+            abilities: { nimble: { choiceValues: { stale: ["value"] } } },
+          },
+        }),
+        ...defaultSheetData.cards.slice(3),
+      ],
+      userModifierContributions: [
+        {
+          id: "user:evasion-base",
+          definition: { target: "evasion", kind: "base" },
+          editable: { label: "Base", value: 10 },
+        },
+      ],
+      modifierState: {
+        targetStates: {
+          evasion: {
+            activeBaseId: "user:evasion-base",
+            autoCalculation: true,
+          },
+        },
+        entryStates: {},
+      },
+    })
+    const auditItems: CardInstanceAuditItem[] = [
+      {
+        id: "loadout:2:ancestry:nimble",
+        zone: "loadout",
+        index: 2,
+        sourceCardId: "ancestry:nimble",
+        sourceInstanceId: "cardinst_stale",
+        templateId: "ancestry:nimble",
+        cardName: "Nimble",
+        reasons: ["AUTOMATION_REVISION_DRIFT"],
+        updatable: true,
+        template: ancestryCard(),
+        characterChoiceKind: "ancestry1",
+      },
+    ]
+
+    store().overwriteCardInstancesFromAudit(auditItems)
+
+    expect(sheet().cards[2]).toEqual(expect.objectContaining({
+      id: "ancestry:nimble",
+      instanceId: expect.stringMatching(/^cardinst_/),
+      automation: nimbleAncestryAutomation,
+      automationState: { version: 1, abilities: {} },
+    }))
+    expect(sheet().cards[2].instanceId).not.toBe("cardinst_stale")
+    expect(sheet().evasion).toBe("11")
+  })
+
+  it("audit overwrite store action returns failure when selected audit item is stale", () => {
+    const currentCard = ancestryCard({
+      instanceId: "cardinst_current",
+      automation: olderNimbleAncestryAutomation,
+      automationState: { version: 1, abilities: {} },
+    })
+    resetSheetStore({
+      cards: [
+        ...defaultSheetData.cards.slice(0, 2),
+        currentCard,
+        ...defaultSheetData.cards.slice(3),
+      ],
+    })
+    const auditItems: CardInstanceAuditItem[] = [
+      {
+        id: "loadout:2:ancestry:nimble",
+        zone: "loadout",
+        index: 2,
+        sourceCardId: "ancestry:nimble",
+        sourceInstanceId: "cardinst_stale",
+        templateId: "ancestry:nimble",
+        cardName: "Nimble",
+        reasons: ["AUTOMATION_REVISION_DRIFT"],
+        updatable: true,
+        template: ancestryCard(),
+        characterChoiceKind: "ancestry1",
+      },
+    ]
+
+    const result = store().overwriteCardInstancesFromAudit(auditItems)
+
+    expect(result).toEqual({
+      kind: "failure",
+      message: "Selected card audit item no longer matches the current slot.",
+    })
+    expect(sheet().cards[2]).toBe(currentCard)
   })
 
   it("commits final target values directly when auto calculation is off", () => {

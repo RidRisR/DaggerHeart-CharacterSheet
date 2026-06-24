@@ -1,11 +1,11 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { upgradeOptionsData } from "@/data/list/upgrade"
 import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store";
 import type { AttributeValue, SheetData } from "@/lib/sheet-data"
-import { createEmptyCard, type StandardCard } from "@/card/card-types"
+import type { StandardCard } from "@/card/card-types"
 import { showFadeNotification } from "@/components/ui/fade-notification"
 import { computeUpgradeAutomation } from "@/automation/actions/upgrade-actions"
 
@@ -15,6 +15,7 @@ import { CardDeckSection } from "@/components/character-sheet-page-two-sections/
 import { UpgradeSection } from "@/components/character-sheet-page-two-sections/upgrade-section"
 import { PageHeader } from "@/components/page-header"
 import { CardSelectionModal } from "@/components/modals/card-selection-modal"
+import { useCardAutomationSetupPrompt } from "@/components/card-automation-setup"
 
 type AttributeKey = "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge"
 
@@ -30,8 +31,14 @@ function isAttributeValue(value: unknown): value is AttributeValue {
 
 export default function CharacterSheetPageTwo() {
   const { setSheetData: setFormData } = useSheetStore();
+  const selectCardForSlot = useSheetStore(state => state.selectCardForSlot)
+  const setCardAbilityChoiceValuesForInstance = useSheetStore(state => state.setCardAbilityChoiceValuesForInstance)
   const setUpgradeState = useSheetStore(state => state.setUpgradeState)
   const safeFormData = useSafeSheetData();
+  const setupPrompt = useCardAutomationSetupPrompt({
+    sheetData: safeFormData,
+    onSaveAbility: setCardAbilityChoiceValuesForInstance,
+  })
 
   // State for upgrade domain card modal
   const [upgradeDomainModalOpen, setUpgradeDomainModalOpen] = useState(false);
@@ -42,13 +49,8 @@ export default function CharacterSheetPageTwo() {
   const [upgradeSubclassCardIndex, setUpgradeSubclassCardIndex] = useState<number>(-1);
   const [, setUpgradeSubclassProfession] = useState<string | undefined>(undefined);
 
-  // 使用ref来避免无限循环
-  const isUpdatingRef = useRef(false)
-
   // Handle card changes
   const handleCardChange = (index: number, card: StandardCard) => {
-    if (isUpdatingRef.current) return
-
     // 检查是否是空卡牌，如果是则不记录日志
     const isEmptyCard = !card || (!card.name && (!card.type || card.type === "unknown"))
 
@@ -56,43 +58,8 @@ export default function CharacterSheetPageTwo() {
       console.log(`[handleCardChange] 更新聚焦卡牌 #${index}:`, card)
     }
 
-    isUpdatingRef.current = true
-
-    setFormData((prev) => {
-      const newCards = [...(prev.cards || [])]
-      newCards[index] = card
-      return { ...prev, cards: newCards }
-    })
-
-    // 重置标志
-    setTimeout(() => {
-      isUpdatingRef.current = false
-    }, 0)
-  }
-
-  // Handle inventory card changes
-  const handleInventoryCardChange = (index: number, card: StandardCard) => {
-    if (isUpdatingRef.current) return
-
-    // 检查是否是空卡牌，如果是则不记录日志
-    const isEmptyCard = !card || (!card.name && (!card.type || card.type === "unknown"))
-
-    if (!isEmptyCard) {
-      console.log(`[handleInventoryCardChange] 更新库存卡牌 #${index}:`, card)
-    }
-
-    isUpdatingRef.current = true
-
-    setFormData((prev) => {
-      const newInventoryCards = [...(prev.inventory_cards || Array(20).fill(0).map(() => createEmptyCard()))]
-      newInventoryCards[index] = card
-      return { ...prev, inventory_cards: newInventoryCards }
-    })
-
-    // 重置标志
-    setTimeout(() => {
-      isUpdatingRef.current = false
-    }, 0)
+    const result = selectCardForSlot({ zone: "loadout", index, template: card })
+    setupPrompt.handleSelectionResult(result)
   }
 
   // 已移除聚焦卡牌变更处理函数 - 功能由双卡组系统取代
@@ -104,7 +71,8 @@ export default function CharacterSheetPageTwo() {
   }
 
   // 纯粹的状态切换函数：只负责设置复选框状态，无业务逻辑
-  const toggleUpgradeCheckbox = (checkKey: string, _index: number, checked: boolean) => {
+  const toggleUpgradeCheckbox = (checkKey: string, index: number, checked: boolean) => {
+    void index
     setUpgradeState(checkKey, { checked })
   }
 
@@ -193,7 +161,8 @@ export default function CharacterSheetPageTwo() {
   }
 
   // Check if an upgrade is checked
-  const isUpgradeChecked = (tier: string, _index: number): boolean => {
+  const isUpgradeChecked = (tier: string, index: number): boolean => {
+    void index
     return !!safeFormData.upgradeStates?.[tier]?.checked
   }
 
@@ -251,11 +220,7 @@ export default function CharacterSheetPageTwo() {
           <CharacterDescriptionSection formData={safeFormData} handleInputChange={handleInputChange} />
 
           {/* Card Deck Section */}
-        <CardDeckSection
-          formData={safeFormData}
-          onCardChange={handleCardChange}
-          onInventoryCardChange={handleInventoryCardChange}
-        />
+        <CardDeckSection formData={safeFormData} />
 
           {/* Upgrade Section */}
         <div className="mt-3 grid grid-cols-3 gap-3 text-m">
@@ -333,6 +298,8 @@ export default function CharacterSheetPageTwo() {
         selectedCardIndex={upgradeSubclassCardIndex}
         initialTab="domain"
       />
+
+      {setupPrompt.dialog}
     </>
   )
 }

@@ -320,7 +320,7 @@ plain sheet action 不进入 boundary。`setSheetData` 保留为低层 escape ha
 - 导入或替换角色卡后职业来源变化。
 - 主卡组中职业卡变化。
 
-当前职业 base 从 `sheetData.cards` 中 `type === "profession"` 的卡派生，因此影响主卡组职业卡的 `updateCard`、`deleteCard`、`moveCard` 也属于这个行为 context。
+当前职业 base 从 `sheetData.cards` 中 `type === "profession"` 的卡派生，因此影响主卡组职业卡的 `selectCardForSlot`、`selectCharacterChoiceCard`、`clearCharacterChoiceCard`、`deleteCard`、`moveCard` 也属于这个行为 context。
 
 ### 更新等级
 

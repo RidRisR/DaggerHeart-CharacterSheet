@@ -206,6 +206,20 @@ const syncSubclassSpellcasting = (newData: SheetData, oldData: SheetData): Sheet
     return result;
 };
 
+const syncSubclassSpellcastingResult = (
+    result: CardAutomationActionResult,
+    oldData: SheetData,
+): CardAutomationActionResult => {
+    if (result.kind === "failure") {
+        return result;
+    }
+
+    return {
+        ...result,
+        sheetData: syncSubclassSpellcasting(result.sheetData, oldData),
+    };
+};
+
 interface SheetState {
     sheetData: SheetData;
     sheetLoadRevision: number;
@@ -239,7 +253,6 @@ interface SheetState {
     // Card management actions
     deleteCard: (index: number, isInventory: boolean) => void;
     moveCard: (fromIndex: number, fromInventory: boolean, toInventory: boolean) => boolean;
-    updateCard: (index: number, card: StandardCard, isInventory: boolean) => void;
     selectCardForSlot: (input: SelectCardForSlotInput) => CardSelectionActionResult;
     selectCharacterChoiceCard: (
         kind: CharacterChoiceCardKind,
@@ -387,7 +400,7 @@ function selectCharacterChoiceCardInSheetData(
         };
     }
 
-    return setProtectedLoadoutCardInstance(
+    const result = setProtectedLoadoutCardInstance(
         {
             ...sheetData,
             [config.valueField]: ref.id,
@@ -396,6 +409,8 @@ function selectCharacterChoiceCardInSheetData(
         config.slot,
         template,
     );
+
+    return syncSubclassSpellcastingResult(result, sheetData);
 }
 
 function toCardSelectionActionResult(result: CardAutomationActionResult): CardSelectionActionResult {
@@ -417,7 +432,7 @@ function toCardSelectionActionResult(result: CardAutomationActionResult): CardSe
 
 function clearCharacterChoiceCardInSheetData(sheetData: SheetData, kind: CharacterChoiceCardKind): CardAutomationActionResult {
     const config = CHARACTER_CHOICE_CARD_CONFIG[kind];
-    return setProtectedLoadoutCardInstance(
+    const result = setProtectedLoadoutCardInstance(
         {
             ...sheetData,
             [config.valueField]: "",
@@ -426,6 +441,8 @@ function clearCharacterChoiceCardInSheetData(sheetData: SheetData, kind: Charact
         config.slot,
         undefined,
     );
+
+    return syncSubclassSpellcastingResult(result, sheetData);
 }
 
 function equipmentModifierSourceId(slotRef: EquipmentModifierSlotRef): string {
@@ -1112,25 +1129,6 @@ export const useSheetStore = create<SheetState>((set, get) => ({
         return output;
     },
 
-    updateCard: (index, card, isInventory) => {
-        const zone: CardZone = isInventory ? "vault" : "loadout";
-        if (zone !== "loadout" || index >= 5) {
-            get().selectCardForSlot({ zone, index, template: card });
-            return;
-        }
-
-        set((state) => {
-            const result = setProtectedLoadoutCardInstance(state.sheetData, index, card);
-
-            if (result.kind === "failure") {
-                console.log("[Store]", result.message);
-                return state;
-            }
-
-            return { sheetData: result.sheetData };
-        });
-    },
-
     selectCharacterChoiceCard: (kind, ref, template) => {
         let output: CardSelectionActionResult = {
             kind: "failure",
@@ -1476,7 +1474,6 @@ export const useSheetInventoryCards = () => useSheetStore(state => state.sheetDa
 let cachedCardActions: {
     deleteCard: (index: number, isInventory: boolean) => void;
     moveCard: (fromIndex: number, fromInventory: boolean, toInventory: boolean) => boolean;
-    updateCard: (index: number, card: StandardCard, isInventory: boolean) => void;
 } | null = null;
 
 export const useCardActions = () => {
@@ -1485,7 +1482,6 @@ export const useCardActions = () => {
             cachedCardActions = {
                 deleteCard: state.deleteCard,
                 moveCard: state.moveCard,
-                updateCard: state.updateCard,
             };
         }
         return cachedCardActions;

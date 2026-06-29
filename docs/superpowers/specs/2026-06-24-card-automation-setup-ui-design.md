@@ -164,7 +164,7 @@ selectCharacterChoiceCard(input: {
 }): CardSelectionActionResult
 ```
 
-旧的 `updateCard(index, card, isInventory)` 可以作为兼容 facade 保留。它当前已经通过 card action 进入 modifier-aware boundary，但不会把新实例身份返回给 UI。新的 setup-aware UI 应使用会返回结果的 `selectCardForSlot` / `selectCharacterChoiceCard` action，这样才能针对实际创建的实例打开设置弹窗。
+选卡 UI 应直接使用会返回结果的 `selectCardForSlot` / `selectCharacterChoiceCard` action，这样才能针对实际创建的实例打开设置弹窗。旧的 sheet-store `updateCard(index, card, isInventory)` 兼容 facade 已在相关 UI 迁移后移除。
 
 `effects` 是 post-boundary、post-action 的 application effect descriptor，不是 automation resolver callback，也不是 React UI callback。它只能描述“这次成功选卡后有一个可处理的卡牌自动化设置候选”，不能直接表达“打开某个弹窗”。执行计划可以根据代码形状决定第一版 API 是只返回 `cardInstanceId` 让 UI 自行派生 requirement，还是在 action 内部基于 post-boundary sheet data 条件返回 `cardAutomationSetupAvailable` effect。无论采用哪种 API，setup 判断都必须发生在卡牌实例写入并通过 automatic-calculation sync boundary 之后，且必须复用 requirement projector，不能用模板预判。
 

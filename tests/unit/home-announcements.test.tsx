@@ -45,7 +45,6 @@ vi.mock("@/lib/sheet-store", () => ({
   useCardActions: () => ({
     deleteCard: vi.fn(),
     moveCard: vi.fn(),
-    updateCard: vi.fn(),
   }),
 }))
 

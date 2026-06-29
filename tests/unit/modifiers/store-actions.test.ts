@@ -819,7 +819,7 @@ describe("modifier store actions", () => {
       },
     })
 
-    store().updateCard(0, {
+    store().selectCharacterChoiceCard("profession", { id: "profession:current", name: "New" }, {
       ...createEmptyCard("profession"),
       id: "profession:current",
       name: "New",
@@ -830,37 +830,11 @@ describe("modifier store actions", () => {
         "起始物品": "",
         "希望特性": "",
       },
-    }, false)
+    })
 
     expect(sheet().evasion).toBe("12")
     expect(sheet().modifierState?.targetStates.evasion?.activeBaseId).toBe("profession:current:evasion")
     expect(sheet().modifierState?.targetStates.evasion?.autoCalculation).toBeUndefined()
-  })
-
-  it("instantiates automation when updateCard replaces a protected profession slot", () => {
-    resetSheetStore({
-      cards: defaultSheetData.cards,
-    })
-
-    store().updateCard(0, {
-      ...createEmptyCard("profession"),
-      id: "profession:automated",
-      name: "Automated Profession",
-      type: "profession",
-      automation: testCardAutomation,
-    }, false)
-
-    expect(sheet().cards[0]).toEqual(expect.objectContaining({
-      id: "profession:automated",
-      name: "Automated Profession",
-      instanceId: expect.stringMatching(/^cardinst_/),
-      automation: testCardAutomation,
-      automationState: { version: 1, abilities: {} },
-      automationSource: expect.objectContaining({
-        templateId: "profession:automated",
-        templateAutomationRevision: "stable32:store-test",
-      }),
-    }))
   })
 
   it("instantiates automation when handleProfessionChange writes the protected profession slot", () => {
@@ -1156,6 +1130,45 @@ describe("modifier store actions", () => {
     expect(sheet().cards[2].instanceId).toEqual(expect.stringMatching(/^cardinst_/))
     expect(sheet().cards[2].instanceId).not.toBe("cardinst_old")
     expect(sheet().cards[2].automationState).toEqual({ version: 1, abilities: {} })
+  })
+
+  it("Character Choice Card selection syncs subclass spellcasting attribute", () => {
+    resetSheetStore({
+      strength: { checked: true, value: "1", spellcasting: true },
+      presence: { checked: true, value: "2", spellcasting: false },
+      cards: [
+        createEmptyCard("profession"),
+        subclassCard({
+          id: "subclass:might",
+          name: "Might Subclass",
+          cardSelectDisplay: {
+            item1: "Automated Profession",
+            item2: "基石",
+            item3: "力量",
+          },
+        }),
+        ...defaultSheetData.cards.slice(2),
+      ],
+      subclass: "subclass:might",
+      subclassRef: { id: "subclass:might", name: "Might Subclass" },
+    })
+
+    store().selectCharacterChoiceCard(
+      "subclass",
+      { id: "subclass:presence", name: "Presence Subclass" },
+      subclassCard({
+        id: "subclass:presence",
+        name: "Presence Subclass",
+        cardSelectDisplay: {
+          item1: "Automated Profession",
+          item2: "基石",
+          item3: "风度",
+        },
+      }),
+    )
+
+    expect(sheet().strength).toMatchObject({ spellcasting: false })
+    expect(sheet().presence).toMatchObject({ spellcasting: true })
   })
 
   it("Character Choice Card selection ignores templates whose type does not match the requested kind", () => {

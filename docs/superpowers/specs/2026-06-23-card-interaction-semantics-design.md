@@ -202,7 +202,7 @@ Allowed UI responsibilities:
 
 - read selected card id from a modal or picker;
 - look up the selected runtime template for display and action input;
-- call `selectCharacterChoiceCard`, `clearCharacterChoiceCard`, `updateCard`, `moveCard`, or card ability actions;
+- call `selectCardForSlot`, `selectCharacterChoiceCard`, `clearCharacterChoiceCard`, `moveCard`, or card ability actions;
 - show the card instance audit dialog and capture the player's update decision;
 - show errors or disabled states returned by store/application actions.
 
@@ -226,7 +226,7 @@ Existing automation card actions already encode much of the needed behavior:
 
 The next implementation should prefer reusing these actions and adding semantic store actions around them, rather than duplicating card instantiation in components.
 
-The existing public `updateCard(index, card, isInventory)` may remain as a compatibility facade for current UI surfaces, but Character Choice Card UI should move toward explicit `selectCharacterChoiceCard` and `clearCharacterChoiceCard` calls.
+Card selection UI should use setup-aware semantic actions directly. Ordinary and vault slots should call `selectCardForSlot`; Character Choice Card UI should call `selectCharacterChoiceCard` and `clearCharacterChoiceCard`. The old sheet-store `updateCard(index, card, isInventory)` compatibility facade was removed after those UI surfaces migrated.
 
 ## Error Handling
 

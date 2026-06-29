@@ -12,6 +12,26 @@ export interface Announcement {
 
 export const announcements: Announcement[] = [
   {
+    id: "2026-06-29-card-automation-sync-fixes",
+    date: "2026-06-29",
+    title: "V4.2.1 Preview",
+    content: `
+## 主要内容
+
+这次更新是 V4.2.0 Preview 的稳定性修复，重点处理卡牌自动化在角色选项变更后没有完整同步的问题。
+
+## 卡牌自动化修复
+
+- 修复选择子职业后，角色卡上的施法属性标记没有自动更新的问题。
+- 选择、清除或替换职业、子职业、血脉、社群等角色选项卡时，现在会重新进入自动化同步边界。
+- 修正卡牌来源变化后自动计算结果可能没有及时刷新的情况，降低手动重算或重新选择卡牌的需求。
+
+## 注意
+
+卡牌自动化仍处于预览阶段。如果你发现某张卡在选择、更新或配置后没有正确影响角色卡数值，可以通过 QQ 联系我：2839705644。
+`.trim(),
+  },
+  {
     id: "2026-06-24-card-automation-preview",
     date: "2026-06-24",
     title: "V4.2.0 Preview",

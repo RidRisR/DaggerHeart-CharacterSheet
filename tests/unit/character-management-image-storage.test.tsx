@@ -195,6 +195,38 @@ describe('character management image storage', () => {
     expect(await listCharacterImages(duplicate.id)).toHaveLength(1)
   })
 
+  it('warns when duplicating a save whose image asset is missing', async () => {
+    const source = addCharacterToMetadataList('Missing Image Source')
+    const active = addCharacterToMetadataList('Active Save')
+    expect(source).not.toBeNull()
+    expect(active).not.toBeNull()
+    saveCharacterById(source!.id, currentSheet({
+      name: 'Missing Image Source Hero',
+      imageAssets: {
+        characterImage: { key: 'missing-image-key', mimeType: 'image/png' },
+      },
+    }))
+    saveCharacterById(active!.id, createNewCharacter('Active Hero'))
+    setActiveCharacterId(active!.id)
+    const { result } = await renderManagementHook()
+    vi.mocked(window.alert).mockClear()
+
+    let success = false
+    await act(async () => {
+      success = await result.current.duplicateCharacterHandler(source!.id, 'Duplicate Without Image')
+    })
+
+    expect(success).toBe(true)
+    expect(window.alert).toHaveBeenCalledWith('部分角色图片不可用，已跳过 1 张缺失图片。角色其他数据未受影响。')
+    const duplicated = storedCharacterList().characters.find(
+      (character: any) => character.saveName === 'Duplicate Without Image',
+    )
+    expect(duplicated).toBeDefined()
+    const duplicatedStored = JSON.parse(localStorage.getItem(`${CHARACTER_DATA_PREFIX}${duplicated.id}`) ?? '{}')
+    expect(duplicatedStored.characterImage).toBe('')
+    expect(duplicatedStored.imageAssets?.characterImage).toBeUndefined()
+  })
+
   it('rolls back duplicate data and images when duplicate activation fails', async () => {
     const source = addCharacterToMetadataList('Source Save')
     expect(source).not.toBeNull()
@@ -272,16 +304,16 @@ describe('character management image storage', () => {
     expect(await listCharacterImages(source!.id)).toHaveLength(0)
   })
 
-  it('deleting the active save skips a failed remaining candidate and activates another save', async () => {
+  it('deleting the active save activates a remaining save even when its image asset is missing', async () => {
     const deleted = addCharacterToMetadataList('Deleted Save')
-    const broken = addCharacterToMetadataList('Broken Save')
+    const missingImage = addCharacterToMetadataList('Missing Image Save')
     const fallback = addCharacterToMetadataList('Fallback Save')
     expect(deleted).not.toBeNull()
-    expect(broken).not.toBeNull()
+    expect(missingImage).not.toBeNull()
     expect(fallback).not.toBeNull()
     saveCharacterById(deleted!.id, createNewCharacter('Deleted Hero'))
-    saveCharacterById(broken!.id, currentSheet({
-      name: 'Broken Hero',
+    saveCharacterById(missingImage!.id, currentSheet({
+      name: 'Missing Image Hero',
       imageAssets: {
         characterImage: { key: 'missing-image-key', mimeType: 'image/png' },
       },
@@ -297,19 +329,22 @@ describe('character management image storage', () => {
     })
 
     expect(success).toBe(true)
-    expect(result.current.currentCharacterId).toBe(fallback!.id)
-    expect(localStorage.getItem(ACTIVE_CHARACTER_ID_KEY)).toBe(fallback!.id)
-    expect(useSheetStore.getState().sheetData.name).toBe('Fallback Hero')
+    expect(result.current.currentCharacterId).toBe(missingImage!.id)
+    expect(localStorage.getItem(ACTIVE_CHARACTER_ID_KEY)).toBe(missingImage!.id)
+    expect(useSheetStore.getState().sheetData.name).toBe('Missing Image Hero')
+    expect(useSheetStore.getState().sheetData.characterImage).toBe('')
+    expect(useSheetStore.getState().sheetData.imageAssets?.characterImage).toBeUndefined()
+    expect(window.alert).toHaveBeenCalledWith('部分角色图片不可用，已跳过 1 张缺失图片。角色其他数据未受影响。')
   })
 
-  it('does not leave the deleted save active when no remaining save can be activated', async () => {
+  it('activates the only remaining save even when its image asset is missing', async () => {
     const deleted = addCharacterToMetadataList('Deleted Save')
-    const broken = addCharacterToMetadataList('Broken Save')
+    const missingImage = addCharacterToMetadataList('Missing Image Save')
     expect(deleted).not.toBeNull()
-    expect(broken).not.toBeNull()
+    expect(missingImage).not.toBeNull()
     saveCharacterById(deleted!.id, createNewCharacter('Deleted Hero'))
-    saveCharacterById(broken!.id, currentSheet({
-      name: 'Broken Hero',
+    saveCharacterById(missingImage!.id, currentSheet({
+      name: 'Missing Image Hero',
       imageAssets: {
         characterImage: { key: 'missing-image-key', mimeType: 'image/png' },
       },
@@ -324,9 +359,12 @@ describe('character management image storage', () => {
     })
 
     expect(success).toBe(true)
-    expect(result.current.currentCharacterId).toBeNull()
-    expect(localStorage.getItem(ACTIVE_CHARACTER_ID_KEY)).toBeNull()
-    expect(useSheetStore.getState().sheetData.name).toBe(defaultSheetData.name)
+    expect(result.current.currentCharacterId).toBe(missingImage!.id)
+    expect(localStorage.getItem(ACTIVE_CHARACTER_ID_KEY)).toBe(missingImage!.id)
+    expect(useSheetStore.getState().sheetData.name).toBe('Missing Image Hero')
+    expect(useSheetStore.getState().sheetData.characterImage).toBe('')
+    expect(useSheetStore.getState().sheetData.imageAssets?.characterImage).toBeUndefined()
+    expect(window.alert).toHaveBeenCalledWith('部分角色图片不可用，已跳过 1 张缺失图片。角色其他数据未受影响。')
   })
 
   it('cleans up orphaned character images on startup', async () => {
@@ -346,24 +384,27 @@ describe('character management image storage', () => {
     expect(await listCharacterImages('orphaned-character')).toHaveLength(0)
   })
 
-  it('falls back to another loadable character when startup active load fails', async () => {
-    const broken = addCharacterToMetadataList('Broken Active')
+  it('loads the startup active character when only its image asset is missing', async () => {
+    const missingImage = addCharacterToMetadataList('Missing Image Active')
     const fallback = addCharacterToMetadataList('Fallback Save')
-    expect(broken).not.toBeNull()
+    expect(missingImage).not.toBeNull()
     expect(fallback).not.toBeNull()
-    saveCharacterById(broken!.id, currentSheet({
-      name: 'Broken Active Hero',
+    saveCharacterById(missingImage!.id, currentSheet({
+      name: 'Missing Image Active Hero',
       imageAssets: {
         characterImage: { key: 'missing-image-key', mimeType: 'image/png' },
       },
     }))
     saveCharacterById(fallback!.id, createNewCharacter('Fallback Hero'))
-    setActiveCharacterId(broken!.id)
+    setActiveCharacterId(missingImage!.id)
 
     const { result } = await renderManagementHook()
 
-    expect(result.current.currentCharacterId).toBe(fallback!.id)
-    expect(localStorage.getItem(ACTIVE_CHARACTER_ID_KEY)).toBe(fallback!.id)
-    expect(useSheetStore.getState().sheetData.name).toBe('Fallback Hero')
+    expect(result.current.currentCharacterId).toBe(missingImage!.id)
+    expect(localStorage.getItem(ACTIVE_CHARACTER_ID_KEY)).toBe(missingImage!.id)
+    expect(useSheetStore.getState().sheetData.name).toBe('Missing Image Active Hero')
+    expect(useSheetStore.getState().sheetData.characterImage).toBe('')
+    expect(useSheetStore.getState().sheetData.imageAssets?.characterImage).toBeUndefined()
+    expect(window.alert).toHaveBeenCalledWith('部分角色图片不可用，已跳过 1 张缺失图片。角色其他数据未受影响。')
   })
 })

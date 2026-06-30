@@ -3,7 +3,12 @@ import { Blob as NodeBlob } from 'node:buffer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defaultSheetData } from '@/lib/default-sheet-data'
 import type { SheetData } from '@/lib/sheet-data'
-import { characterImageKey, clearAllCharacterImages, getCharacterImage } from '@/character/storage/character-image-repository'
+import {
+  characterImageKey,
+  clearAllCharacterImages,
+  deleteCharacterImage,
+  getCharacterImage,
+} from '@/character/storage/character-image-repository'
 import {
   prepareDuplicatedSheetForStorage,
   prepareImportedSheetForStorage,
@@ -120,6 +125,17 @@ describe('sheet image projection', () => {
     const exported = await prepareSheetForExport(projected.storedSheet)
 
     expect(exported.characterImage).toMatch(/^data:image\/png;base64,/)
+    expect((exported as any).imageAssets).toBeUndefined()
+  })
+
+  it('prepares export without blocking when a referenced image asset is missing', async () => {
+    const projected = await projectSheetForStorage('character-a', sheet({ characterImage: png }))
+    await deleteCharacterImage(characterImageKey('character-a', 'portrait'))
+
+    const exported = await prepareSheetForExport(projected.storedSheet)
+
+    expect(exported.name).toBe('Projection Hero')
+    expect(exported.characterImage).toBe('')
     expect((exported as any).imageAssets).toBeUndefined()
   })
 

@@ -121,6 +121,10 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
     replaceSheetData(characterData)
   }, [replaceSheetData])
 
+  const handleMissingImageAssets = useCallback((missingImages: unknown[]) => {
+    alert(`部分角色图片不可用，已跳过 ${missingImages.length} 张缺失图片。角色其他数据未受影响。`)
+  }, [])
+
   // 数据迁移处理 - 只在客户端执行
   useEffect(() => {
     if (!isClient) return
@@ -225,7 +229,9 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
   const switchToCharacter = useCallback(async (characterId: string): Promise<boolean> => {
     try {
       console.log(`[CharacterManagement] Switching to character: ${characterId}`)
-      const characterData = await loadCharacterSheet(characterId)
+      const characterData = await loadCharacterSheet(characterId, {
+        onMissingImageAssets: handleMissingImageAssets,
+      })
 
       if (characterData) {
         activateCharacterData(characterId, characterData)
@@ -241,7 +247,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       alert('切换角色失败')
       return false
     }
-  }, [activateCharacterData])
+  }, [activateCharacterData, handleMissingImageAssets])
 
   const clearActiveCharacterToDefault = useCallback(() => {
     setCurrentCharacterId(null)
@@ -424,7 +430,9 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       }
 
       console.log(`[CharacterManagement] Duplicating character: ${characterId}`)
-      const sourceData = await loadCharacterSheet(characterId)
+      const sourceData = await loadCharacterSheet(characterId, {
+        onMissingImageAssets: handleMissingImageAssets,
+      })
       
       if (!sourceData) {
         console.error(`[CharacterManagement] Source character not found: ${characterId}`)
@@ -486,7 +494,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
 
       return false
     }
-  }, [characterList.length, currentCharacterId, replaceSheetData, switchToCharacter])
+  }, [characterList.length, currentCharacterId, handleMissingImageAssets, replaceSheetData, switchToCharacter])
 
   // 重命名角色
   const renameCharacterHandler = useCallback((characterId: string, newSaveName: string) => {

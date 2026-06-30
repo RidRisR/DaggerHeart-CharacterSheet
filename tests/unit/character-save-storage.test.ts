@@ -18,6 +18,7 @@ import {
 import {
   characterImageKey,
   clearAllCharacterImages,
+  deleteCharacterImage,
   getCharacterImage,
 } from '@/character/storage/character-image-repository'
 
@@ -70,6 +71,29 @@ describe('character save storage boundary', () => {
     const loaded = await loadCharacterSheet(characterId)
 
     expect(loaded?.characterImage).toMatch(/^data:image\/png;base64,/)
+  })
+
+  it('loads the character and clears stale refs when a referenced image asset is missing', async () => {
+    addCharacterToMetadataList('Missing Image Save')
+    const characterId = loadCharacterList().characters[0].id
+    await saveCharacterSheet(characterId, sheet({ characterImage: png }))
+    await deleteCharacterImage(characterImageKey(characterId, 'portrait'))
+    const onMissingImageAssets = vi.fn()
+
+    const loaded = await loadCharacterSheet(characterId, { onMissingImageAssets })
+
+    expect(loaded).toEqual(expect.objectContaining({
+      name: 'Storage Hero',
+      characterImage: '',
+    }))
+    expect(loaded?.imageAssets?.characterImage).toBeUndefined()
+    expect(onMissingImageAssets).toHaveBeenCalledWith([{
+      field: 'characterImage',
+      key: characterImageKey(characterId, 'portrait'),
+      mimeType: 'image/png',
+    }])
+    const stored = JSON.parse(localStorage.getItem(`${CHARACTER_DATA_PREFIX}${characterId}`) ?? '{}')
+    expect(stored.imageAssets?.characterImage).toBeUndefined()
   })
 
   it('does not lazily migrate embedded image payloads during load', async () => {

@@ -18,6 +18,18 @@ export interface SheetStorageProjectionResult {
   writtenImageKeys: string[]
 }
 
+export interface MissingCharacterImageAsset {
+  field: CharacterSheetImageField
+  key: string
+  mimeType: string
+}
+
+export interface SheetRuntimeHydrationResult {
+  storedSheet: SheetData
+  runtimeSheet: SheetData
+  missingImages: MissingCharacterImageAsset[]
+}
+
 export interface ProjectSheetForStorageOptions {
   clearEmptyImageFields?: CharacterSheetImageField[]
 }
@@ -73,8 +85,14 @@ export async function projectSheetForStorage(
   return { storedSheet, runtimeSheet, writtenImageKeys }
 }
 
-export async function hydrateSheetForRuntime(storedSheet: SheetData): Promise<SheetData> {
+export async function hydrateSheetForRuntimeWithDiagnostics(
+  storedSheet: SheetData,
+): Promise<SheetRuntimeHydrationResult> {
+  const cleanedStoredSheet: SheetData = structuredClone(storedSheet)
   const runtimeSheet: SheetData = structuredClone(storedSheet)
+  const storedImageAssets: CharacterImageAssetMap = { ...(cleanedStoredSheet.imageAssets ?? {}) }
+  const runtimeImageAssets: CharacterImageAssetMap = { ...(runtimeSheet.imageAssets ?? {}) }
+  const missingImages: MissingCharacterImageAsset[] = []
 
   for (const { field } of IMAGE_FIELDS) {
     const ref = storedSheet.imageAssets?.[field]
@@ -82,13 +100,35 @@ export async function hydrateSheetForRuntime(storedSheet: SheetData): Promise<Sh
 
     const record = await getCharacterImage(ref.key)
     if (!record) {
-      throw new Error(`Missing character image asset: ${ref.key}`)
+      missingImages.push({
+        field,
+        key: ref.key,
+        mimeType: ref.mimeType,
+      })
+      cleanedStoredSheet[field] = ''
+      runtimeSheet[field] = ''
+      delete storedImageAssets[field]
+      delete runtimeImageAssets[field]
+      continue
     }
 
     runtimeSheet[field] = await blobToDataUrl(await normalizeBlobForRuntime(record.blob, record.mimeType))
   }
 
-  return runtimeSheet
+  if (missingImages.length > 0) {
+    cleanedStoredSheet.imageAssets = storedImageAssets
+    runtimeSheet.imageAssets = runtimeImageAssets
+  }
+
+  return {
+    storedSheet: cleanedStoredSheet,
+    runtimeSheet,
+    missingImages,
+  }
+}
+
+export async function hydrateSheetForRuntime(storedSheet: SheetData): Promise<SheetData> {
+  return (await hydrateSheetForRuntimeWithDiagnostics(storedSheet)).runtimeSheet
 }
 
 export async function prepareImportedSheetForStorage(
@@ -108,7 +148,7 @@ export async function prepareDuplicatedSheetForStorage(
 }
 
 export async function prepareSheetForExport(sheetData: SheetData): Promise<SheetData> {
-  const exported = await hydrateSheetForRuntime(sheetData)
+  const exported = (await hydrateSheetForRuntimeWithDiagnostics(sheetData)).runtimeSheet
   delete exported.imageAssets
   return exported
 }

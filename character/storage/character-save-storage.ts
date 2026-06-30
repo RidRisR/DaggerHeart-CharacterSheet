@@ -7,9 +7,10 @@ import {
 } from '@/lib/multi-character-storage'
 import { migrateSheetData } from '@/lib/sheet-data-migration'
 import {
-  hydrateSheetForRuntime,
+  hydrateSheetForRuntimeWithDiagnostics,
   projectSheetForStorage,
   rollbackWrittenCharacterImages,
+  type MissingCharacterImageAsset,
   type SheetStorageProjectionResult,
 } from './sheet-image-projection'
 import {
@@ -27,6 +28,10 @@ const IMAGE_FIELDS: Array<{ field: CharacterSheetImageField; role: CharacterImag
   { field: 'characterImage', role: 'portrait' },
   { field: 'companionImage', role: 'companion' },
 ]
+
+export interface LoadCharacterSheetOptions {
+  onMissingImageAssets?: (missingImages: MissingCharacterImageAsset[]) => void
+}
 
 function assertNoEmbeddedCharacterImages(characterId: string, sheetData: SheetData): void {
   const embeddedField = IMAGE_FIELDS.find(({ field }) => isImageDataUrl(sheetData[field]))?.field
@@ -117,14 +122,33 @@ export async function saveCharacterSheet(characterId: string, sheetData: SheetDa
   return projection.runtimeSheet
 }
 
-export async function loadCharacterSheet(characterId: string): Promise<SheetData | null> {
+export async function loadCharacterSheet(
+  characterId: string,
+  options: LoadCharacterSheetOptions = {},
+): Promise<SheetData | null> {
   const raw = localStorage.getItem(`${CHARACTER_DATA_PREFIX}${characterId}`)
   if (!raw) return null
 
   const parsed = JSON.parse(raw)
   const migrated = migrateSheetData(parsed)
   assertNoEmbeddedCharacterImages(characterId, migrated)
-  return await hydrateSheetForRuntime(migrated)
+  const hydration = await hydrateSheetForRuntimeWithDiagnostics(migrated)
+
+  if (hydration.missingImages.length > 0) {
+    console.warn(`[CharacterImage] Missing image assets for ${characterId}; continuing without those images`, {
+      characterId,
+      missingImages: hydration.missingImages,
+    })
+    options.onMissingImageAssets?.(hydration.missingImages)
+
+    try {
+      saveCharacterById(characterId, hydration.storedSheet)
+    } catch (error) {
+      console.error(`[CharacterImage] Failed to persist cleaned image refs for ${characterId}:`, error)
+    }
+  }
+
+  return hydration.runtimeSheet
 }
 
 export async function deleteCharacterSave(characterId: string): Promise<boolean> {

@@ -249,6 +249,7 @@ export default function CharacterSheet({ currentCharacterId }: CharacterSheetPro
         imageDataUrl: imageBase64,
         sheetData: currentSheet,
         getCurrentCharacterId: getActiveCharacterId,
+        getCurrentSheetData: () => useSheetStore.getState().sheetData,
         replaceSheetData,
       })
     } catch (error) {

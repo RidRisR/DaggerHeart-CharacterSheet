@@ -69,6 +69,7 @@ export async function projectSheetForStorage(
   }
 
   storedSheet.imageAssets = imageAssets
+  runtimeSheet.imageAssets = imageAssets
   return { storedSheet, runtimeSheet, writtenImageKeys }
 }
 

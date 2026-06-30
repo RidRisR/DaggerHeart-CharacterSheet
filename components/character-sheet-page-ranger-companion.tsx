@@ -35,6 +35,7 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({ curre
                 imageDataUrl: imageBase64,
                 sheetData: currentSheet,
                 getCurrentCharacterId: getActiveCharacterId,
+                getCurrentSheetData: () => useSheetStore.getState().sheetData,
                 replaceSheetData,
             });
         } catch (error) {

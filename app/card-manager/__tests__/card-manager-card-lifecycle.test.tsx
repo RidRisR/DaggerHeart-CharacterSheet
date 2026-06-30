@@ -321,23 +321,21 @@ describe("CardManagerPage card lifecycle", () => {
     expect(screen.queryByText("Card A")).toBeNull()
   })
 
-  it("continues full reset when character image cleanup fails", async () => {
-    mocks.clearAllCharacterImages.mockRejectedValue(new Error("idb cleanup failed"))
+  it("blocks full reset when character image cleanup fails", async () => {
+    const cleanupError = new Error("idb cleanup failed")
+    mocks.clearAllCharacterImages.mockRejectedValue(cleanupError)
     localStorage.setItem("dh_character_bad", "{}")
 
     render(<CardManagerPage />)
 
     await userEvent.click(screen.getByRole("button", { name: "强制初始化所有数据" }))
 
-    await waitFor(() => expect(mocks.runtime.resetSystem).toHaveBeenCalledTimes(1))
-    expect(mocks.clearAllCharacterImages).toHaveBeenCalledTimes(1)
-    expect(localStorage.getItem("dh_character_bad")).toBeNull()
-    expect(mocks.runtime.initializeSystem).toHaveBeenCalled()
-    expect(mocks.equipmentState.refreshFromStorage).toHaveBeenCalled()
-    expect(window.alert).toHaveBeenCalledWith("所有本地数据已清空。页面将自动刷新。")
-    expect(console.error).toHaveBeenCalledWith(
-      "清空角色图片缓存失败，将继续清空其他本地数据:",
-      expect.any(Error),
-    )
+    await waitFor(() => expect(mocks.clearAllCharacterImages).toHaveBeenCalledTimes(1))
+    expect(mocks.runtime.resetSystem).not.toHaveBeenCalled()
+    expect(localStorage.getItem("dh_character_bad")).toBe("{}")
+    expect(mocks.runtime.initializeSystem).not.toHaveBeenCalled()
+    expect(mocks.equipmentState.refreshFromStorage).not.toHaveBeenCalled()
+    expect(window.alert).toHaveBeenCalledWith("清空数据失败: idb cleanup failed")
+    expect(console.error).toHaveBeenCalledWith("清空本地数据失败:", cleanupError)
   })
 })

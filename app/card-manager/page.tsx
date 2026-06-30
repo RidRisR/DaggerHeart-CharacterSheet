@@ -352,12 +352,8 @@ export default function CardManagerPage() {
 
     try {
       const cardStore = useUnifiedCardStore.getState()
+      await clearAllCharacterImages()
       await cardStore.resetSystem()
-      try {
-        await clearAllCharacterImages()
-      } catch (imageCleanupError) {
-        console.error("清空角色图片缓存失败，将继续清空其他本地数据:", imageCleanupError)
-      }
       localStorage.clear()
       await cardStore.initializeSystem()
       await getEquipmentUiStore().getState().refreshFromStorage()

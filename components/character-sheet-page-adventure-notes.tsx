@@ -89,6 +89,7 @@ export default function CharacterSheetPageAdventureNotes({ currentCharacterId }:
         imageDataUrl: imageBase64,
         sheetData: currentSheet,
         getCurrentCharacterId: getActiveCharacterId,
+        getCurrentSheetData: () => useSheetStore.getState().sheetData,
         replaceSheetData,
       })
     } catch (error) {

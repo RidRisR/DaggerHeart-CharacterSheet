@@ -10,6 +10,7 @@ import { defaultSheetData } from '@/lib/default-sheet-data'
 import type { SheetData } from '@/lib/sheet-data'
 import {
   applyCharacterImageAssetAction,
+  setCharacterImageAsset,
 } from '@/character/storage/character-image-actions'
 import {
   loadCharacterSheet,
@@ -133,6 +134,61 @@ describe('character image actions', () => {
     }))
     const storedImage = await getCharacterImage(characterImageKey('character-a', 'portrait'))
     await expect(storedImage?.blob.text()).resolves.toBe('second')
+  })
+
+  it('restores the previous image blob when the stored sheet update fails', async () => {
+    const runtimeSheet = await saveCharacterSheet('character-a', sheet({
+      name: 'Rollback Source',
+      characterImage: firstPng,
+    }))
+    const originalImage = await getCharacterImage(characterImageKey('character-a', 'portrait'))
+    await expect(originalImage?.blob.text()).resolves.toBe('first')
+    const originalSetItem = localStorage.setItem.bind(localStorage)
+    const setItemSpy = vi.spyOn(localStorage, 'setItem').mockImplementation((storageKey: string, value: string) => {
+      if (storageKey === `${CHARACTER_DATA_PREFIX}character-a`) {
+        throw new Error('localStorage is full')
+      }
+      originalSetItem(storageKey, value)
+    })
+
+    await expect(setCharacterImageAsset(
+      'character-a',
+      'portrait',
+      secondPng,
+      runtimeSheet,
+    )).rejects.toThrow('localStorage is full')
+
+    expect(setItemSpy).toHaveBeenCalled()
+    const restoredImage = await getCharacterImage(characterImageKey('character-a', 'portrait'))
+    await expect(restoredImage?.blob.text()).resolves.toBe('first')
+  })
+
+  it('merges completed image actions into the latest runtime sheet before replacing state', async () => {
+    const replaceSheetData = vi.fn()
+    localStorage.setItem(ACTIVE_CHARACTER_ID_KEY, 'character-a')
+    const initialSheet = sheet({ name: 'Before Edit' })
+    const latestSheet = sheet({ name: 'Edited While Uploading' })
+
+    await expect(applyCharacterImageAssetAction({
+      characterId: 'character-a',
+      role: 'portrait',
+      imageDataUrl: firstPng,
+      sheetData: initialSheet,
+      getCurrentCharacterId: () => localStorage.getItem(ACTIVE_CHARACTER_ID_KEY),
+      getCurrentSheetData: () => latestSheet,
+      replaceSheetData,
+    })).resolves.toBe(true)
+
+    expect(replaceSheetData).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Edited While Uploading',
+      characterImage: firstPng,
+      imageAssets: expect.objectContaining({
+        characterImage: {
+          key: characterImageKey('character-a', 'portrait'),
+          mimeType: 'image/png',
+        },
+      }),
+    }))
   })
 
   it('persists a stale-active delete before deleting the referenced image blob', async () => {

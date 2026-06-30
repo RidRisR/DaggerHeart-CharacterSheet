@@ -1,7 +1,12 @@
 import type { SheetData } from '@/lib/sheet-data'
 import { CHARACTER_DATA_PREFIX, saveCharacterById } from '@/lib/multi-character-storage'
-import type { CharacterImageRole, CharacterSheetImageField } from './character-image-types'
-import { characterImageKey, deleteCharacterImage, saveCharacterImage } from './character-image-repository'
+import type { CharacterImageRecord, CharacterImageRole, CharacterSheetImageField } from './character-image-types'
+import {
+  characterImageKey,
+  deleteCharacterImage,
+  getCharacterImage,
+  saveCharacterImage,
+} from './character-image-repository'
 import { dataUrlToBlob, isImageDataUrl } from './data-url'
 
 const ROLE_TO_FIELD: Record<CharacterImageRole, CharacterSheetImageField> = {
@@ -20,6 +25,7 @@ interface ApplyCharacterImageAssetActionInput {
   imageDataUrl: string
   sheetData: SheetData
   getCurrentCharacterId: () => string | null
+  getCurrentSheetData?: () => SheetData
   replaceSheetData: (sheetData: SheetData) => void
 }
 
@@ -78,6 +84,44 @@ function persistSheetWithImageRef(characterId: string, field: CharacterSheetImag
   })
 }
 
+async function restoreCharacterImageRecord(
+  key: string,
+  previousRecord: CharacterImageRecord | null,
+): Promise<void> {
+  if (!previousRecord) {
+    await deleteCharacterImage(key)
+    return
+  }
+
+  await saveCharacterImage({
+    characterId: previousRecord.characterId,
+    role: previousRecord.role,
+    blob: previousRecord.blob,
+    mimeType: previousRecord.mimeType,
+  })
+}
+
+function mergeImageActionResult(
+  currentSheet: SheetData,
+  field: CharacterSheetImageField,
+  imageResultSheet: SheetData,
+): SheetData {
+  const imageAssets = { ...(currentSheet.imageAssets ?? {}) }
+  const nextRef = imageResultSheet.imageAssets?.[field]
+
+  if (nextRef) {
+    imageAssets[field] = nextRef
+  } else {
+    delete imageAssets[field]
+  }
+
+  return {
+    ...currentSheet,
+    [field]: imageResultSheet[field],
+    imageAssets,
+  }
+}
+
 export async function setCharacterImageAsset(
   characterId: string,
   role: CharacterImageRole,
@@ -89,6 +133,8 @@ export async function setCharacterImageAsset(
   }
 
   const blob = await dataUrlToBlob(imageDataUrl)
+  const key = characterImageKey(characterId, role)
+  const previousRecord = await getCharacterImage(key)
   const record = await saveCharacterImage({
     characterId,
     role,
@@ -109,7 +155,17 @@ export async function setCharacterImageAsset(
     },
   }
 
-  persistSheetWithImageRef(characterId, field, nextSheet)
+  try {
+    persistSheetWithImageRef(characterId, field, nextSheet)
+  } catch (error) {
+    try {
+      await restoreCharacterImageRecord(key, previousRecord)
+    } catch (rollbackError) {
+      console.error(`[CharacterImage] Failed to rollback image action for ${characterId}:`, rollbackError)
+    }
+    throw error
+  }
+
   return nextSheet
 }
 
@@ -147,6 +203,7 @@ export async function applyCharacterImageAssetAction({
   imageDataUrl,
   sheetData,
   getCurrentCharacterId,
+  getCurrentSheetData,
   replaceSheetData,
 }: ApplyCharacterImageAssetActionInput): Promise<boolean> {
   const token = beginCharacterImageAction(characterId, role)
@@ -165,7 +222,8 @@ export async function applyCharacterImageAssetAction({
       if (!isLatestCharacterImageAction(token)) return
       if (getCurrentCharacterId() !== characterId) return
 
-      replaceSheetData(nextSheet)
+      const field = ROLE_TO_FIELD[role]
+      replaceSheetData(mergeImageActionResult(getCurrentSheetData?.() ?? sheetData, field, nextSheet))
       applied = true
     })
 

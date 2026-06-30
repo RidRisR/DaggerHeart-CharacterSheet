@@ -57,6 +57,16 @@ describe('sheet image projection', () => {
       key: characterImageKey('character-a', 'companion'),
       mimeType: 'image/jpeg',
     })
+    expect(result.runtimeSheet.characterImage).toBe(png)
+    expect(result.runtimeSheet.companionImage).toBe(jpeg)
+    expect(result.runtimeSheet.imageAssets?.characterImage).toEqual({
+      key: characterImageKey('character-a', 'portrait'),
+      mimeType: 'image/png',
+    })
+    expect(result.runtimeSheet.imageAssets?.companionImage).toEqual({
+      key: characterImageKey('character-a', 'companion'),
+      mimeType: 'image/jpeg',
+    })
     expect(await getCharacterImage(characterImageKey('character-a', 'portrait'))).not.toBeNull()
     expect(await getCharacterImage(characterImageKey('character-a', 'companion'))).not.toBeNull()
   })
@@ -126,6 +136,7 @@ describe('sheet image projection', () => {
     expect(result.storedSheet.imageAssets?.characterImage?.key).toBe(characterImageKey('character-b', 'portrait'))
     expect(result.storedSheet.imageAssets?.characterImage?.key).not.toBe('foreign-key')
     expect(result.runtimeSheet.characterImage).toBe(png)
+    expect(result.runtimeSheet.imageAssets?.characterImage?.key).toBe(characterImageKey('character-b', 'portrait'))
   })
 
   it('duplicates image assets to the target character id', async () => {
@@ -133,6 +144,7 @@ describe('sheet image projection', () => {
     const duplicated = await prepareDuplicatedSheetForStorage('source-id', 'target-id', source.storedSheet)
 
     expect(duplicated.storedSheet.imageAssets?.characterImage?.key).toBe(characterImageKey('target-id', 'portrait'))
+    expect(duplicated.runtimeSheet.imageAssets?.characterImage?.key).toBe(characterImageKey('target-id', 'portrait'))
     expect(await getCharacterImage(characterImageKey('source-id', 'portrait'))).not.toBeNull()
     expect(await getCharacterImage(characterImageKey('target-id', 'portrait'))).not.toBeNull()
   })

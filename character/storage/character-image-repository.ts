@@ -41,16 +41,22 @@ export async function listCharacterImages(characterId?: string): Promise<Charact
 }
 
 export async function deleteCharacterImage(key: string): Promise<void> {
-  if (!isCharacterImageIndexedDBAvailable()) return
+  if (!isCharacterImageIndexedDBAvailable()) {
+    throw new Error('IndexedDB is not available for character images')
+  }
   await characterImageDb.characterImages.delete(key)
 }
 
 export async function deleteCharacterImagesByCharacterId(characterId: string): Promise<void> {
-  if (!isCharacterImageIndexedDBAvailable()) return
+  if (!isCharacterImageIndexedDBAvailable()) {
+    throw new Error('IndexedDB is not available for character images')
+  }
   await characterImageDb.characterImages.where('characterId').equals(characterId).delete()
 }
 
 export async function clearAllCharacterImages(): Promise<void> {
-  if (!isCharacterImageIndexedDBAvailable()) return
+  if (!isCharacterImageIndexedDBAvailable()) {
+    throw new Error('IndexedDB is not available for character images')
+  }
   await characterImageDb.characterImages.clear()
 }

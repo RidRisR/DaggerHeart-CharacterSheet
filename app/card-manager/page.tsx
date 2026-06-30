@@ -8,6 +8,7 @@ import { summarizeCardPacks } from "@/components/content-pack-manager/content-pa
 import { ContentPackStats } from "@/components/content-pack-manager/content-pack-stats"
 import { EquipmentPackTab } from "@/components/content-pack-manager/equipment-pack-tab"
 import { GlobalImportPanel, type ContentPackImportResultView } from "@/components/content-pack-manager/global-import-panel"
+import { clearAllCharacterImages } from "@/character/storage/character-image-repository"
 import { importContentPackFiles } from "@/components/content-pack-manager/import-content-pack"
 import { ViewCardsModal } from "@/components/modals/view-cards-modal"
 import { Button } from "@/components/ui/button"
@@ -352,6 +353,11 @@ export default function CardManagerPage() {
     try {
       const cardStore = useUnifiedCardStore.getState()
       await cardStore.resetSystem()
+      try {
+        await clearAllCharacterImages()
+      } catch (imageCleanupError) {
+        console.error("清空角色图片缓存失败，将继续清空其他本地数据:", imageCleanupError)
+      }
       localStorage.clear()
       await cardStore.initializeSystem()
       await getEquipmentUiStore().getState().refreshFromStorage()

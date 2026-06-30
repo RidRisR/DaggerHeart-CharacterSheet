@@ -13,7 +13,7 @@ const LEGACY_FOCUSED_CARDS_KEY = "focused_card_ids";
 const LEGACY_PERSISTENT_FORM_DATA_KEY = "persistentFormData";
 
 // ===== 常量 =====
-export const MAX_CHARACTERS = 20;
+export const MAX_CHARACTERS = 15;
 
 // ===== UUID生成器 =====
 export function generateCharacterId(): string {

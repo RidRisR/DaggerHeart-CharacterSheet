@@ -7,6 +7,7 @@ import CardManagerPage from "../page"
 
 type RuntimeSlice = Pick<UnifiedCardState, "initialized" | "batches" | "cards"> & {
   initializeSystem: Mock<() => Promise<{ initialized: boolean }>>
+  resetSystem: Mock<() => Promise<void>>
   loadAllCards: Mock<() => ExtendedStandardCard[]>
   getCardById: Mock<(cardId: string) => ExtendedStandardCard | null>
 }
@@ -49,9 +50,11 @@ const mocks = vi.hoisted(() => ({
       ],
     ]),
     initializeSystem: vi.fn(async () => ({ initialized: true })),
+    resetSystem: vi.fn(async () => undefined),
     loadAllCards: vi.fn((): ExtendedStandardCard[] => []),
     getCardById: vi.fn((_cardId: string): ExtendedStandardCard | null => null),
   } as RuntimeSlice,
+  clearAllCharacterImages: vi.fn(async () => undefined),
   removeCustomCardBatch: vi.fn(async (_batchId: string) => false),
   toggleBatchDisabled: vi.fn(async (_batchId: string, _disabled?: boolean) => false),
   importCustomCards: vi.fn(),
@@ -122,6 +125,10 @@ vi.mock("@/card/index", () => ({
   importCustomCards: (...args: unknown[]) => mocks.importCustomCards(...args),
   removeCustomCardBatch: (batchId: string) => mocks.removeCustomCardBatch(batchId),
   toggleBatchDisabled: (batchId: string) => mocks.toggleBatchDisabled(batchId),
+}))
+
+vi.mock("@/character/storage/character-image-repository", () => ({
+  clearAllCharacterImages: () => mocks.clearAllCharacterImages(),
 }))
 
 vi.mock("@/card/stores/unified-card-store", async () => {
@@ -202,6 +209,7 @@ describe("CardManagerPage card lifecycle", () => {
     mocks.runtime.batches = new Map([["pack_a", makeRuntimeBatch()]])
     mocks.runtime.cards = new Map([["card_a", makeRuntimeCard()]])
     mocks.runtime.initializeSystem.mockClear()
+    mocks.runtime.resetSystem.mockClear()
     mocks.runtime.loadAllCards.mockReset()
     mocks.runtime.loadAllCards.mockImplementation(() => Array.from(mocks.runtime.cards.values()))
     mocks.runtime.getCardById.mockReset()
@@ -209,6 +217,8 @@ describe("CardManagerPage card lifecycle", () => {
     mocks.removeCustomCardBatch.mockReset()
     mocks.toggleBatchDisabled.mockReset()
     mocks.importCustomCards.mockReset()
+    mocks.clearAllCharacterImages.mockReset()
+    mocks.clearAllCharacterImages.mockResolvedValue(undefined)
     mocks.getCardsByBatchId.mockReset()
     mocks.getCardsByBatchId.mockImplementation((batchId: string) => {
       const batch = mocks.runtime.batches.get(batchId)
@@ -228,6 +238,8 @@ describe("CardManagerPage card lifecycle", () => {
     mocks.equipmentState.importPackFromFile.mockReset()
     vi.spyOn(window, "confirm").mockReturnValue(true)
     vi.spyOn(window, "alert").mockImplementation(() => undefined)
+    vi.spyOn(console, "error").mockImplementation(() => undefined)
+    localStorage.clear()
   })
 
   afterEach(() => {
@@ -307,5 +319,25 @@ describe("CardManagerPage card lifecycle", () => {
 
     await waitFor(() => expect(screen.getByText("Card B")).toBeTruthy())
     expect(screen.queryByText("Card A")).toBeNull()
+  })
+
+  it("continues full reset when character image cleanup fails", async () => {
+    mocks.clearAllCharacterImages.mockRejectedValue(new Error("idb cleanup failed"))
+    localStorage.setItem("dh_character_bad", "{}")
+
+    render(<CardManagerPage />)
+
+    await userEvent.click(screen.getByRole("button", { name: "强制初始化所有数据" }))
+
+    await waitFor(() => expect(mocks.runtime.resetSystem).toHaveBeenCalledTimes(1))
+    expect(mocks.clearAllCharacterImages).toHaveBeenCalledTimes(1)
+    expect(localStorage.getItem("dh_character_bad")).toBeNull()
+    expect(mocks.runtime.initializeSystem).toHaveBeenCalled()
+    expect(mocks.equipmentState.refreshFromStorage).toHaveBeenCalled()
+    expect(window.alert).toHaveBeenCalledWith("所有本地数据已清空。页面将自动刷新。")
+    expect(console.error).toHaveBeenCalledWith(
+      "清空角色图片缓存失败，将继续清空其他本地数据:",
+      expect.any(Error),
+    )
   })
 })

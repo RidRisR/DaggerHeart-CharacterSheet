@@ -146,7 +146,7 @@ export function ArchiveManagerDropdown({
         
         {/* 提示信息 */}
         <div className="p-2 text-xs text-gray-500 bg-gray-50">
-          💡 使用 Ctrl+数字键 快速切换存档
+          💡 Ctrl+1-9/0 切换前 10 个存档
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

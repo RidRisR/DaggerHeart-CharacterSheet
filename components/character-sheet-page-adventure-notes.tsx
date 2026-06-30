@@ -5,9 +5,9 @@ import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store"
 import { PageHeader } from "@/components/page-header"
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 import {
-  deleteCharacterImageAsset,
-  setCharacterImageAsset,
+  applyCharacterImageAssetAction,
 } from "@/character/storage/character-image-actions"
+import { getActiveCharacterId } from "@/lib/multi-character-storage"
 
 const LabeledInput = ({
   label,
@@ -83,10 +83,14 @@ export default function CharacterSheetPageAdventureNotes({ currentCharacterId }:
 
     try {
       const currentSheet = useSheetStore.getState().sheetData
-      const nextSheet = imageBase64
-        ? await setCharacterImageAsset(currentCharacterId, 'portrait', imageBase64, currentSheet)
-        : await deleteCharacterImageAsset(currentCharacterId, 'portrait', currentSheet)
-      replaceSheetData(nextSheet)
+      await applyCharacterImageAssetAction({
+        characterId: currentCharacterId,
+        role: 'portrait',
+        imageDataUrl: imageBase64,
+        sheetData: currentSheet,
+        getCurrentCharacterId: getActiveCharacterId,
+        replaceSheetData,
+      })
     } catch (error) {
       console.error(`[CharacterImage] Failed to update portrait for ${currentCharacterId}:`, error)
       alert('角色图像保存失败')

@@ -22,6 +22,7 @@ import {
   loadCharacterSheet,
   saveCharacterSheet,
 } from '@/character/storage/character-save-storage'
+import { migrateCharacterSaveImagesToAssets } from '@/character/storage/character-image-migration'
 import {
   prepareDuplicatedSheetForStorage,
   prepareImportedSheetForStorage,
@@ -39,6 +40,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
   const [characterList, setCharacterList] = useState<CharacterMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isMigrationCompleted, setIsMigrationCompleted] = useState(false)
+  const [migrationError, setMigrationError] = useState<Error | null>(null)
 
   const assertCurrentSchemaImportedSheet = (importedData: SheetData): void => {
     const fail = (field: string): never => {
@@ -127,15 +129,22 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       try {
         console.log('[CharacterManagement] Starting data migration check...')
         migrateToMultiCharacterStorage()
+        const imageMigrationResult = await migrateCharacterSaveImagesToAssets()
+        if (imageMigrationResult.migratedCount > 0) {
+          console.log(`[CharacterManagement] Migrated ${imageMigrationResult.migratedCount} character image saves`)
+        }
+        setMigrationError(null)
         setIsMigrationCompleted(true)
         console.log('[CharacterManagement] Migration completed successfully')
       } catch (error) {
         console.error('[CharacterManagement] Migration failed:', error)
-        setIsMigrationCompleted(true)
+        setMigrationError(error instanceof Error ? error : new Error(String(error)))
+        setIsMigrationCompleted(false)
+        setIsLoading(false)
       }
     }
 
-    performMigration()
+    void performMigration()
   }, [isClient])
 
   // 加载角色列表和当前角色
@@ -523,6 +532,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
     currentCharacterId,
     characterList,
     isLoading,
+    migrationError,
     
     // 方法
     switchToCharacter,

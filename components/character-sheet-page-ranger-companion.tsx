@@ -6,9 +6,9 @@ import { useSheetStore, useSafeSheetData } from '@/lib/sheet-store';
 import { defaultSheetData } from '@/lib/default-sheet-data';
 import { PageHeader } from '@/components/page-header';
 import {
-    deleteCharacterImageAsset,
-    setCharacterImageAsset,
+    applyCharacterImageAssetAction,
 } from '@/character/storage/character-image-actions';
+import { getActiveCharacterId } from '@/lib/multi-character-storage';
 
 const MAX_STRESS = (formData: any) => Number(formData.companionStressMax) || 3;
 const TOTAL_STRESS = 6;
@@ -29,10 +29,14 @@ const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({ curre
 
         try {
             const currentSheet = useSheetStore.getState().sheetData;
-            const nextSheet = imageBase64
-                ? await setCharacterImageAsset(currentCharacterId, 'companion', imageBase64, currentSheet)
-                : await deleteCharacterImageAsset(currentCharacterId, 'companion', currentSheet);
-            replaceSheetData(nextSheet);
+            await applyCharacterImageAssetAction({
+                characterId: currentCharacterId,
+                role: 'companion',
+                imageDataUrl: imageBase64,
+                sheetData: currentSheet,
+                getCurrentCharacterId: getActiveCharacterId,
+                replaceSheetData,
+            });
         } catch (error) {
             console.error(`[CharacterImage] Failed to update companion image for ${currentCharacterId}:`, error);
             alert('伙伴图像保存失败');

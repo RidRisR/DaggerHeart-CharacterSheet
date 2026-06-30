@@ -31,9 +31,7 @@ import {
 } from "lucide-react"
 import { navigateToPage, cn } from "@/lib/utils"
 import { DualPageToggle } from "@/components/ui/dual-page-toggle"
-
-// 最大角色数量常量
-const MAX_CHARACTERS = 10
+import { MAX_CHARACTERS } from "@/lib/multi-character-storage"
 
 // 模式类型
 type BottomDockMode = 'main' | 'preview'

@@ -72,6 +72,21 @@ describe('character save storage boundary', () => {
     expect(loaded?.characterImage).toMatch(/^data:image\/png;base64,/)
   })
 
+  it('does not lazily migrate embedded image payloads during load', async () => {
+    addCharacterToMetadataList('Legacy Embedded Image Save')
+    const characterId = loadCharacterList().characters[0].id
+    const storageKey = `${CHARACTER_DATA_PREFIX}${characterId}`
+    const previousRaw = JSON.stringify(sheet({ characterImage: png }))
+    localStorage.setItem(storageKey, previousRaw)
+
+    await expect(loadCharacterSheet(characterId)).rejects.toThrow(
+      `Embedded character images must be migrated at startup before loading character ${characterId}`,
+    )
+
+    expect(localStorage.getItem(storageKey)).toBe(previousRaw)
+    expect(await getCharacterImage(characterImageKey(characterId, 'portrait'))).toBeNull()
+  })
+
   it('removes newly-written image records when localStorage save fails', async () => {
     addCharacterToMetadataList('Failed New Image Save')
     const characterId = loadCharacterList().characters[0].id

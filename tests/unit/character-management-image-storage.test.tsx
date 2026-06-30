@@ -22,6 +22,10 @@ import {
   saveCharacterImage,
 } from '@/character/storage/character-image-repository'
 import { saveCharacterSheet } from '@/character/storage/character-save-storage'
+import {
+  CHARACTER_IMAGE_ASSET_MIGRATION_KEY,
+  CHARACTER_IMAGE_ASSET_MIGRATION_VERSION,
+} from '@/character/storage/character-image-migration'
 
 const png = 'data:image/png;base64,aGVsbG8='
 
@@ -98,6 +102,76 @@ describe('character management image storage', () => {
     expect(raw).not.toContain('foreign')
     expect(await listCharacterImages(imported.id)).toHaveLength(1)
     expect(useSheetStore.getState().sheetData.characterImage).toMatch(/^data:image\/png;base64,/)
+  })
+
+  it('runs startup image migration before loading the active character', async () => {
+    localStorage.clear()
+    await clearAllCharacterImages()
+
+    const metadata = addCharacterToMetadataList('Legacy Image Save')
+    expect(metadata).not.toBeNull()
+    localStorage.setItem(`${CHARACTER_DATA_PREFIX}${metadata!.id}`, JSON.stringify({
+      ...structuredClone(defaultSheetData),
+      name: 'Legacy Image Hero',
+      characterImage: png,
+    }))
+    setActiveCharacterId(metadata!.id)
+
+    const rendered = renderHook(() => useCharacterManagement({
+      isClient: true,
+      setCurrentTabValue: vi.fn(),
+    }))
+
+    await waitFor(() => expect(rendered.result.current.isLoading).toBe(false))
+
+    const raw = localStorage.getItem(`${CHARACTER_DATA_PREFIX}${metadata!.id}`) || ''
+    expect(raw).not.toContain('data:image/')
+    expect(localStorage.getItem(CHARACTER_IMAGE_ASSET_MIGRATION_KEY)).toBe(CHARACTER_IMAGE_ASSET_MIGRATION_VERSION)
+    expect(useSheetStore.getState().sheetData.characterImage).toMatch(/^data:image\/png;base64,/)
+  })
+
+  it('keeps character management blocked when startup image migration fails', async () => {
+    localStorage.clear()
+    await clearAllCharacterImages()
+
+    const metadata = addCharacterToMetadataList('Broken Legacy Image Save')
+    expect(metadata).not.toBeNull()
+    const storageKey = `${CHARACTER_DATA_PREFIX}${metadata!.id}`
+    const previousRaw = JSON.stringify({
+      ...structuredClone(defaultSheetData),
+      name: 'Broken Legacy Image Hero',
+      characterImage: png,
+    })
+    localStorage.setItem(storageKey, previousRaw)
+
+    const storage = localStorage
+    vi.stubGlobal('localStorage', {
+      get length() {
+        return storage.length
+      },
+      clear: () => storage.clear(),
+      getItem: (key: string) => storage.getItem(key),
+      key: (index: number) => storage.key(index),
+      removeItem: (key: string) => storage.removeItem(key),
+      setItem: (key: string, value: string) => {
+        if (key === storageKey && value !== previousRaw) {
+          throw new Error('forced startup migration failure')
+        }
+        storage.setItem(key, value)
+      },
+    })
+
+    const rendered = renderHook(() => useCharacterManagement({
+      isClient: true,
+      setCurrentTabValue: vi.fn(),
+    }))
+
+    await waitFor(() => expect(rendered.result.current.migrationError?.message).toContain('forced startup migration failure'))
+
+    expect(rendered.result.current.isLoading).toBe(false)
+    expect(rendered.result.current.characterList).toEqual([])
+    expect(localStorage.getItem(CHARACTER_IMAGE_ASSET_MIGRATION_KEY)).toBeNull()
+    expect(localStorage.getItem(storageKey)).toBe(previousRaw)
   })
 
   it('duplicates images as independent target character assets', async () => {

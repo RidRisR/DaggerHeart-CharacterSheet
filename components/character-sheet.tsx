@@ -32,9 +32,9 @@ import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-ancho
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { parseNumberExpressionOr } from "@/lib/number-utils"
 import {
-  deleteCharacterImageAsset,
-  setCharacterImageAsset,
+  applyCharacterImageAssetAction,
 } from "@/character/storage/character-image-actions"
+import { getActiveCharacterId } from "@/lib/multi-character-storage"
 
 type WeaponSlotSelection =
   | { slotType: "primary" | "secondary" }
@@ -243,10 +243,14 @@ export default function CharacterSheet({ currentCharacterId }: CharacterSheetPro
 
     try {
       const currentSheet = useSheetStore.getState().sheetData
-      const nextSheet = imageBase64
-        ? await setCharacterImageAsset(currentCharacterId, 'portrait', imageBase64, currentSheet)
-        : await deleteCharacterImageAsset(currentCharacterId, 'portrait', currentSheet)
-      replaceSheetData(nextSheet)
+      await applyCharacterImageAssetAction({
+        characterId: currentCharacterId,
+        role: 'portrait',
+        imageDataUrl: imageBase64,
+        sheetData: currentSheet,
+        getCurrentCharacterId: getActiveCharacterId,
+        replaceSheetData,
+      })
     } catch (error) {
       console.error(`[CharacterImage] Failed to update portrait for ${currentCharacterId}:`, error)
       alert('角色图像保存失败')

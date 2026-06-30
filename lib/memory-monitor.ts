@@ -23,6 +23,20 @@ interface MemoryAlertEvent {
   level: 'warning' | 'critical'
 }
 
+interface CharacterStorageDiagnostic {
+  totalKB: number
+  saves: Array<{
+    key: string
+    totalKB: number
+    imageKB: number
+    largestFields: Array<{ field: string; kb: number }>
+  }>
+  violations: Array<{
+    key: string
+    containsEmbeddedImage: boolean
+  }>
+}
+
 export interface DiagnosticReport {
   version: '1.0'
   exportedAt: string
@@ -44,6 +58,7 @@ export interface DiagnosticReport {
     totalActions: number
     growthPattern: 'stable' | 'gradual_increase' | 'spike'
   }
+  characterStorage?: CharacterStorageDiagnostic
 }
 
 // ============= RingBuffer =============
@@ -85,6 +100,97 @@ const CRITICAL_THRESHOLD_MB = 1024
 const SAMPLE_INTERVAL_MS = 30_000
 const GROWTH_CHECK_COUNT = 5
 const GROWTH_THRESHOLD_MB = 50
+const CHARACTER_STORAGE_KEY_PREFIX = 'dh_character_'
+const CHARACTER_LIST_STORAGE_KEY = 'dh_character_list'
+const EMBEDDED_IMAGE_PATTERN = /data:image\/[^;]+;base64,/
+
+function bytesToKB(bytes: number): number {
+  return Math.round((bytes / 1024) * 100) / 100
+}
+
+function serializedSizeKB(value: string): number {
+  return bytesToKB(value.length * 2)
+}
+
+function createCharacterStorageDiagnostic(): CharacterStorageDiagnostic | undefined {
+  const saves: CharacterStorageDiagnostic['saves'] = []
+  const violations: CharacterStorageDiagnostic['violations'] = []
+  let totalBytes = 0
+
+  try {
+    const storage = globalThis.localStorage
+    if (!storage) return undefined
+
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i)
+      if (!key || !key.startsWith(CHARACTER_STORAGE_KEY_PREFIX) || key === CHARACTER_LIST_STORAGE_KEY) {
+        continue
+      }
+
+      const serialized = storage.getItem(key) ?? ''
+      totalBytes += serialized.length * 2
+
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(serialized)
+      } catch {
+        parsed = null
+      }
+
+      const largestFields: Array<{ field: string; kb: number }> = []
+      let imageBytes = 0
+      let containsEmbeddedImage = false
+
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        for (const [field, value] of Object.entries(parsed)) {
+          let fieldSerialized = ''
+          try {
+            fieldSerialized = JSON.stringify(value) ?? ''
+          } catch {
+            fieldSerialized = ''
+          }
+
+          const fieldBytes = fieldSerialized.length * 2
+          const fieldHasEmbeddedImage = EMBEDDED_IMAGE_PATTERN.test(fieldSerialized)
+
+          if (fieldHasEmbeddedImage) {
+            containsEmbeddedImage = true
+            imageBytes += fieldBytes
+          }
+
+          largestFields.push({ field, kb: bytesToKB(fieldBytes) })
+        }
+      } else if (EMBEDDED_IMAGE_PATTERN.test(serialized)) {
+        containsEmbeddedImage = true
+        imageBytes = serialized.length * 2
+      }
+
+      saves.push({
+        key,
+        totalKB: serializedSizeKB(serialized),
+        imageKB: bytesToKB(imageBytes),
+        largestFields: largestFields
+          .sort((a, b) => b.kb - a.kb)
+          .slice(0, 5),
+      })
+
+      if (containsEmbeddedImage) {
+        violations.push({
+          key,
+          containsEmbeddedImage: true,
+        })
+      }
+    }
+  } catch {
+    return undefined
+  }
+
+  return {
+    totalKB: bytesToKB(totalBytes),
+    saves,
+    violations,
+  }
+}
 
 class MemoryMonitor {
   private samples = new RingBuffer<MemorySample>(100)
@@ -202,6 +308,10 @@ class MemoryMonitor {
     return () => { this.alertCallbacks.delete(callback) }
   }
 
+  getReport(): DiagnosticReport {
+    return this.exportReport()
+  }
+
   exportReport(): DiagnosticReport {
     const allSamples = this.samples.getAll()
     const peakHeapMB = allSamples.length > 0
@@ -256,6 +366,7 @@ class MemoryMonitor {
         totalActions: this.totalActionCount,
         growthPattern,
       },
+      characterStorage: createCharacterStorageDiagnostic(),
     }
   }
 }

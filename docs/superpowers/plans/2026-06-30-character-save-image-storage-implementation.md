@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move character portrait and companion image payloads out of character localStorage records into IndexedDB, raise the save limit to 20, and keep import/export contracts portable.
+**Goal:** Move character portrait and companion image payloads out of character localStorage records into IndexedDB, raise the save limit to 15, and keep import/export contracts portable.
 
 **Architecture:** Add a narrow **Character Save Storage Boundary** under `character/storage/` that owns image IndexedDB access, storage projection, hydration, import preparation, duplicate preparation, export preparation, migration, and cleanup. Existing UI and save-management code should call this boundary instead of directly writing `dh_character_*`; do not rewrite unrelated storage domains.
 
@@ -23,13 +23,13 @@
 - Modify `lib/default-sheet-data.ts`: default `imageAssets` to `{}`.
 - Modify `lib/sheet-data-migration.ts`: add synchronous shape migration for `imageAssets` only; no IndexedDB writes.
 - Modify `lib/character-data-validator.ts`: strip inbound external `imageAssets`; keep portable image strings.
-- Modify `lib/multi-character-storage.ts`: raise `MAX_CHARACTERS` to 20; keep legacy sync helpers for existing low-risk paths, but delegate image-aware save/load/delete/migration cleanup through new async commands where normal workflows need images.
+- Modify `lib/multi-character-storage.ts`: raise `MAX_CHARACTERS` to 15; keep legacy sync helpers for existing low-risk paths, but delegate image-aware save/load/delete/migration cleanup through new async commands where normal workflows need images.
 - Modify `hooks/use-character-management.ts`: make switch/create/import/delete/duplicate paths use async character save commands.
 - Modify `components/home-client-app.tsx`: route autosave through the character save storage boundary and remove direct `localStorage.setItem("dh_character_*")`.
 - Modify `components/character-sheet.tsx`, `components/character-sheet-page-adventure-notes.tsx`, `components/character-sheet-page-ranger-companion.tsx`: route image upload/delete through explicit character image actions.
 - Modify `components/modals/character-management-modal.tsx`: stop calling `loadCharacterById()` during JSX render.
 - Modify `lib/storage.ts`, `hooks/use-export-handlers.ts`, `lib/html-exporter.ts`: run export preparation before JSON/HTML payload generation.
-- Modify `components/layout/mobile-action-bar.tsx`, `components/layout/desktop-bottom-dock.tsx`, `components/ui/archive-manager-dropdown.tsx`: use shared limit and clarify shortcut copy.
+- Modify `components/layout/bottom-dock.tsx`, `components/ui/archive-manager-dropdown.tsx`: use shared limit and clarify shortcut copy.
 - Modify `app/card-manager/page.tsx`: clear character image IndexedDB records during full local data reset.
 - Modify `lib/memory-monitor.ts`: add character save image-size/invariant diagnostics.
 - Add/update tests under `tests/unit/` for projection, repository, storage commands, import, export, shortcuts, reset, and invariant coverage.
@@ -429,7 +429,7 @@ Add to `SheetData`:
 Update `CharacterList` comment:
 
 ```ts
-  characters: CharacterMetadata[]  // 最多20个
+  characters: CharacterMetadata[]  // 最多15个
 ```
 
 - [ ] **Step 4: Add default imageAssets**
@@ -784,7 +784,7 @@ export async function rollbackCharacterImageKeys(keys: string[]): Promise<void> 
 Modify `lib/multi-character-storage.ts`:
 
 ```ts
-export const MAX_CHARACTERS = 20;
+export const MAX_CHARACTERS = 15;
 ```
 
 Keep `deleteCharacterById()` sync. Do not import async repository helpers into it. Higher-level delete flows will call `deleteCharacterSave()` from the new boundary.
@@ -1415,8 +1415,7 @@ git commit -m "feat: export portable character images"
 ## Task 7: Limits, Render Safety, Reset, And Diagnostics
 
 **Files:**
-- Modify: `components/layout/mobile-action-bar.tsx`
-- Modify: `components/layout/desktop-bottom-dock.tsx`
+- Modify: `components/layout/bottom-dock.tsx`
 - Modify: `components/ui/archive-manager-dropdown.tsx`
 - Modify: `components/home-client-app.tsx`
 - Modify: `components/modals/character-management-modal.tsx`
@@ -1459,8 +1458,8 @@ import { describe, expect, it } from 'vitest'
 import { MAX_CHARACTERS } from '@/lib/multi-character-storage'
 
 describe('character save limit and shortcuts', () => {
-  it('raises the save limit to 20', () => {
-    expect(MAX_CHARACTERS).toBe(20)
+  it('sets the save limit to 15', () => {
+    expect(MAX_CHARACTERS).toBe(15)
   })
 })
 ```
@@ -1477,7 +1476,7 @@ Expected: FAIL until diagnostics shape and limit changes are complete.
 
 - [ ] **Step 3: Remove hard-coded dock limits**
 
-Modify `components/layout/mobile-action-bar.tsx` and `components/layout/desktop-bottom-dock.tsx`:
+Modify `components/layout/bottom-dock.tsx`:
 
 ```ts
 import { MAX_CHARACTERS } from '@/lib/multi-character-storage'
@@ -1568,7 +1567,7 @@ Expected: PASS.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add components/layout/mobile-action-bar.tsx components/layout/desktop-bottom-dock.tsx components/ui/archive-manager-dropdown.tsx components/home-client-app.tsx components/modals/character-management-modal.tsx app/card-manager/page.tsx lib/memory-monitor.ts tests/unit/memory-monitor.test.ts tests/unit/character-save-limit-shortcuts.test.tsx
+git add components/layout/bottom-dock.tsx components/ui/archive-manager-dropdown.tsx components/home-client-app.tsx components/modals/character-management-modal.tsx app/card-manager/page.tsx lib/memory-monitor.ts tests/unit/memory-monitor.test.ts tests/unit/character-save-limit-shortcuts.test.tsx
 git commit -m "feat: align character save limit and cleanup"
 ```
 
@@ -1690,7 +1689,7 @@ git commit -m "test: cover character save storage invariant"
 - [ ] Imported `imageAssets` is ignored.
 - [ ] Duplicate image records use the target character id.
 - [ ] Delete and full reset attempt character image cleanup.
-- [ ] `MAX_CHARACTERS` is 20 everywhere.
+- [ ] `MAX_CHARACTERS` is 15 everywhere.
 - [ ] `Ctrl+1..9/0` still targets only the first 10 saves.
 - [ ] No component calls a write-capable storage load from JSX render.
 - [ ] No dev server was started.

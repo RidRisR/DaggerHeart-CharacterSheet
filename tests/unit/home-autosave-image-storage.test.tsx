@@ -33,14 +33,6 @@ vi.mock('@/components/layout/bottom-dock', () => ({
   BottomDock: () => null,
 }))
 
-vi.mock('@/components/layout/mobile-sheet-header', () => ({
-  MobileSheetHeader: () => null,
-}))
-
-vi.mock('@/components/layout/mobile-view-config-sheet', () => ({
-  MobileViewConfigSheet: () => null,
-}))
-
 vi.mock('@/hooks/use-character-management', () => ({
   useCharacterManagement: () => ({
     currentCharacterId: 'current-character',
@@ -116,14 +108,6 @@ vi.mock('@/hooks/use-export-handlers', () => ({
     handleQuickExportPDF: vi.fn(),
     handleQuickExportHTML: vi.fn(),
     handleQuickExportJSON: vi.fn(),
-  }),
-}))
-
-vi.mock('@/hooks/use-mobile', () => ({
-  useResponsiveEnvironment: () => ({
-    isCompactLayout: false,
-    hasTouchCapability: false,
-    compactSheetScale: 1,
   }),
 }))
 

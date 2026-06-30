@@ -110,9 +110,9 @@ export function useExportHandlers({
   }, [formData])
 
   // JSON 导出
-  const handleExportJSON = useCallback(() => {
+  const handleExportJSON = useCallback(async () => {
     try {
-      exportCharacterData(formData)
+      await exportCharacterData(formData)
       console.log('[ExportHandlers] JSON 导出完成')
     } catch (error) {
       console.error('[ExportHandlers] JSON 导出失败:', error)
@@ -162,7 +162,7 @@ export function useExportHandlers({
       console.log('[ExportHandlers] 快速 JSON 导出')
       await handlePrintAll()
       await waitForAllImagesLoaded()
-      handleExportJSON()
+      await handleExportJSON()
       setIsPrintingAll(false)
       document.title = APP_TITLE
     } catch (error) {

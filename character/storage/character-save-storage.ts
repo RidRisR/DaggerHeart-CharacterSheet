@@ -28,6 +28,15 @@ const IMAGE_FIELDS: Array<{ field: CharacterSheetImageField; role: CharacterImag
   { field: 'companionImage', role: 'companion' },
 ]
 
+function assertNoEmbeddedCharacterImages(characterId: string, sheetData: SheetData): void {
+  const embeddedField = IMAGE_FIELDS.find(({ field }) => isImageDataUrl(sheetData[field]))?.field
+  if (!embeddedField) return
+
+  throw new Error(
+    `Embedded character images must be migrated at startup before loading character ${characterId}: ${embeddedField}`,
+  )
+}
+
 async function snapshotWritableImageRecords(
   characterId: string,
   sheetData: SheetData,
@@ -114,9 +123,8 @@ export async function loadCharacterSheet(characterId: string): Promise<SheetData
 
   const parsed = JSON.parse(raw)
   const migrated = migrateSheetData(parsed)
-  const projection = await projectSheetForStorage(characterId, migrated)
-  saveCharacterById(characterId, projection.storedSheet)
-  return await hydrateSheetForRuntime(projection.storedSheet)
+  assertNoEmbeddedCharacterImages(characterId, migrated)
+  return await hydrateSheetForRuntime(migrated)
 }
 
 export async function deleteCharacterSave(characterId: string): Promise<boolean> {

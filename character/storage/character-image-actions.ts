@@ -1,4 +1,5 @@
 import type { SheetData } from '@/lib/sheet-data'
+import { CHARACTER_DATA_PREFIX, saveCharacterById } from '@/lib/multi-character-storage'
 import type { CharacterImageRole, CharacterSheetImageField } from './character-image-types'
 import { characterImageKey, deleteCharacterImage, saveCharacterImage } from './character-image-repository'
 import { dataUrlToBlob, isImageDataUrl } from './data-url'
@@ -6,6 +7,75 @@ import { dataUrlToBlob, isImageDataUrl } from './data-url'
 const ROLE_TO_FIELD: Record<CharacterImageRole, CharacterSheetImageField> = {
   portrait: 'characterImage',
   companion: 'companionImage',
+}
+
+type CharacterImageActionToken = {
+  key: string
+  sequence: number
+}
+
+interface ApplyCharacterImageAssetActionInput {
+  characterId: string
+  role: CharacterImageRole
+  imageDataUrl: string
+  sheetData: SheetData
+  getCurrentCharacterId: () => string | null
+  replaceSheetData: (sheetData: SheetData) => void
+}
+
+let actionSequence = 0
+const latestActionByKey = new Map<string, number>()
+const actionQueueByKey = new Map<string, Promise<void>>()
+
+function beginCharacterImageAction(characterId: string, role: CharacterImageRole): CharacterImageActionToken {
+  actionSequence += 1
+  const key = characterImageKey(characterId, role)
+  latestActionByKey.set(key, actionSequence)
+  return { key, sequence: actionSequence }
+}
+
+function isLatestCharacterImageAction(token: CharacterImageActionToken): boolean {
+  return latestActionByKey.get(token.key) === token.sequence
+}
+
+function finishCharacterImageAction(token: CharacterImageActionToken, queuedAction: Promise<void>) {
+  if (actionQueueByKey.get(token.key) === queuedAction) {
+    actionQueueByKey.delete(token.key)
+  }
+
+  if (isLatestCharacterImageAction(token)) {
+    latestActionByKey.delete(token.key)
+  }
+}
+
+function loadStoredSheetForImageRef(characterId: string): SheetData | null {
+  const raw = localStorage.getItem(`${CHARACTER_DATA_PREFIX}${characterId}`)
+  if (!raw) return null
+
+  try {
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function persistSheetWithImageRef(characterId: string, field: CharacterSheetImageField, runtimeSheet: SheetData): void {
+  const storedBase = loadStoredSheetForImageRef(characterId) ?? runtimeSheet
+  const imageAssets = { ...(storedBase.imageAssets ?? {}) }
+  const ref = runtimeSheet.imageAssets?.[field]
+
+  if (ref) {
+    imageAssets[field] = ref
+  } else {
+    delete imageAssets[field]
+  }
+
+  saveCharacterById(characterId, {
+    ...storedBase,
+    [field]: '',
+    imageAssets,
+  })
 }
 
 export async function setCharacterImageAsset(
@@ -27,7 +97,7 @@ export async function setCharacterImageAsset(
   })
   const field = ROLE_TO_FIELD[role]
 
-  return {
+  const nextSheet = {
     ...sheetData,
     [field]: imageDataUrl,
     imageAssets: {
@@ -38,6 +108,9 @@ export async function setCharacterImageAsset(
       },
     },
   }
+
+  persistSheetWithImageRef(characterId, field, nextSheet)
+  return nextSheet
 }
 
 export async function deleteCharacterImageAsset(
@@ -46,14 +119,67 @@ export async function deleteCharacterImageAsset(
   sheetData: SheetData,
 ): Promise<SheetData> {
   const field = ROLE_TO_FIELD[role]
-  await deleteCharacterImage(characterImageKey(characterId, role))
-
   const imageAssets = { ...(sheetData.imageAssets ?? {}) }
   delete imageAssets[field]
 
-  return {
+  const nextSheet = {
     ...sheetData,
     [field]: '',
     imageAssets,
   }
+
+  persistSheetWithImageRef(characterId, field, nextSheet)
+  try {
+    await deleteCharacterImage(characterImageKey(characterId, role))
+  } catch (error) {
+    console.error('Failed to delete character image blob after removing stored sheet reference', {
+      characterId,
+      role,
+      error,
+    })
+  }
+  return nextSheet
+}
+
+export async function applyCharacterImageAssetAction({
+  characterId,
+  role,
+  imageDataUrl,
+  sheetData,
+  getCurrentCharacterId,
+  replaceSheetData,
+}: ApplyCharacterImageAssetActionInput): Promise<boolean> {
+  const token = beginCharacterImageAction(characterId, role)
+  const previousAction = actionQueueByKey.get(token.key) ?? Promise.resolve()
+  let applied = false
+
+  const operation = previousAction
+    .catch(() => {})
+    .then(async () => {
+      if (!isLatestCharacterImageAction(token)) return
+
+      const nextSheet = imageDataUrl
+        ? await setCharacterImageAsset(characterId, role, imageDataUrl, sheetData)
+        : await deleteCharacterImageAsset(characterId, role, sheetData)
+
+      if (!isLatestCharacterImageAction(token)) return
+      if (getCurrentCharacterId() !== characterId) return
+
+      replaceSheetData(nextSheet)
+      applied = true
+    })
+
+  const queuedAction = operation.then(
+    () => {},
+    () => {},
+  )
+  actionQueueByKey.set(token.key, queuedAction)
+
+  try {
+    await operation
+  } finally {
+    finishCharacterImageAction(token, queuedAction)
+  }
+
+  return applied
 }

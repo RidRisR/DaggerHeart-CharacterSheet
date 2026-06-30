@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CharacterMetadata, SheetData } from "@/lib/sheet-data"
-import { loadCharacterById, MAX_CHARACTERS } from "@/lib/multi-character-storage"
+import { MAX_CHARACTERS } from "@/lib/multi-character-storage"
 import { importCharacterFromHTMLFile } from "@/lib/html-importer"
 import { validateJSONCharacterData } from "@/lib/character-data-validator"
 
@@ -113,7 +113,7 @@ export function CharacterManagementModal({
                     <div className="flex items-center justify-between mb-3 flex-shrink-0">
                         <h3 className="font-medium">所有存档 ({characterList.length}/{MAX_CHARACTERS})</h3>
                         <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            💡 快捷键：Ctrl + 数字键快速切换存档
+                            💡 Ctrl+1-9/0 切换前 10 个存档
                         </div>
                     </div>
 
@@ -139,7 +139,6 @@ export function CharacterManagementModal({
                     {/* 现有存档列表 - 可滚动区域 */}
                     <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
                         {characterList.map((character, index) => {
-                            const characterData = loadCharacterById(character.id);
                             return (
                                 <div
                                     key={character.id}
@@ -155,7 +154,7 @@ export function CharacterManagementModal({
                                         <div className="flex-1">
                                             <div className="font-medium">{character.saveName}</div>
                                             <div className="text-sm text-gray-500">
-                                                角色: {characterData?.name || "未填写"} |
+                                                存档：{character.saveName} |
                                                 创建：{new Date(character.createdAt).toLocaleDateString()}
                                                 {character.lastModified && (
                                                     <span className="ml-2">

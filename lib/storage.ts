@@ -2,6 +2,7 @@ import {
   getStandardCardsByTypeAsync,
   CardType, // Import CardType
 } from "@/card";
+import { prepareSheetForExport } from "@/character/storage/sheet-image-projection";
 import type { SheetData } from "./sheet-data";
 
 // Moved getCardClass to module scope - now async
@@ -38,7 +39,8 @@ export async function exportCharacterData(formData: SheetData): Promise<void> {
 
     const exportFileDefaultName = `${name}-${professionClass}-${ancestry1Class}-${ancestry2Class}-${communityClass}-LV${level}.json`;
 
-    const dataStr = JSON.stringify(formData, null, 2);
+    const portableData = await prepareSheetForExport(formData);
+    const dataStr = JSON.stringify(portableData, null, 2);
     const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
 
     const linkElement = document.createElement("a");

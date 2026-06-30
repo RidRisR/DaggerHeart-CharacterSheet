@@ -10,6 +10,7 @@
 import { SheetData } from './sheet-data'
 import { CardType, getStandardCardsByTypeAsync } from '@/card'
 import { StandardCard } from '@/card/card-types'
+import { prepareSheetForExport } from '@/character/storage/sheet-image-projection'
 import { UnifiedProgressModalManager } from '@/components/ui/unified-progress-modal'
 import { embeddedStyles, hasEmbeddedStyles, getStylesInfo } from './embedded-styles'
 
@@ -850,12 +851,13 @@ export async function exportToHTML(formData: SheetData, options: HTMLExportOptio
     // 等待一下让进度条显示
     await new Promise(resolve => setTimeout(resolve, 100))
     
-    const html = await generateFullHTML(formData, options, (current, total, message) => {
+    const portableFormData = await prepareSheetForExport(formData)
+    const html = await generateFullHTML(portableFormData, options, (current, total, message) => {
       if (progressModal) {
         progressModal.updateProgress(current, total, message)
       }
     })
-    const filename = await generateFileName(formData, options)
+    const filename = await generateFileName(portableFormData, options)
     
     if (progressModal) {
       progressModal.updateProgress(imageCount, imageCount, '正在生成文件...')
@@ -931,7 +933,8 @@ export async function previewHTML(formData: SheetData, options: HTMLExportOption
       throw new Error('请先进入打印预览模式再预览HTML。点击"打印预览"按钮后重试。')
     }
 
-    const html = await generateFullHTML(formData, options)
+    const portableFormData = await prepareSheetForExport(formData)
+    const html = await generateFullHTML(portableFormData, options)
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
     const url = URL.createObjectURL(blob)
 
@@ -956,7 +959,8 @@ export async function previewHTML(formData: SheetData, options: HTMLExportOption
  * 获取HTML内容（不触发下载）
  */
 export async function getHTMLContent(formData: SheetData, options: HTMLExportOptions = {}): Promise<string> {
-  return await generateFullHTML(formData, options)
+  const portableFormData = await prepareSheetForExport(formData)
+  return await generateFullHTML(portableFormData, options)
 }
 
 // 默认导出选项

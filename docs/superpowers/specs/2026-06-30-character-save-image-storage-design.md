@@ -2,7 +2,7 @@
 
 ## Goal
 
-Increase the character save limit from 10 to 20 without moving whole character saves to IndexedDB.
+Increase the character save limit from 10 to 15 without moving whole character saves to IndexedDB.
 
 The storage pressure investigation showed that large saves are dominated by embedded image data. Two measured saves were 140 KB and 111 KB, with image data accounting for about 79-81% of each save. The non-image `SheetData` payload is around 20-30 KB per save, so moving entire inactive saves to IndexedDB would add unnecessary switching complexity for the current problem.
 
@@ -15,7 +15,7 @@ The implementation should:
 - Move character image payloads such as `characterImage` and `companionImage` out of persisted `SheetData`.
 - Persist image blobs in a character image IndexedDB table.
 - Keep localStorage character records as normal `SheetData` JSON, but replace embedded image payloads with a local-only `imageAssets` map.
-- Increase the save limit from 10 to 20.
+- Increase the save limit from 10 to 15.
 - Keep `Ctrl+1` through `Ctrl+9` and `Ctrl+0` mapped to the first 10 saves only.
 - Update shortcut helper text so it explicitly says the shortcut covers the first 10 saves.
 
@@ -23,7 +23,7 @@ The implementation should:
 
 - Do not move whole character saves to IndexedDB.
 - Do not implement active/inactive save promotion between localStorage and IndexedDB.
-- Do not add shortcuts for saves 11-20 in this change.
+- Do not add shortcuts for saves 11-15 in this change.
 - Do not introduce cloud sync, export bundle redesign, or cross-device storage.
 - Do not silently fall back to storing large image data in localStorage after the new image path is active.
 - Do not ship a partial state where only some character save entrypoints understand `imageAssets`.
@@ -85,8 +85,8 @@ The implementation is risky mainly because character image payloads can enter or
 
 ### Limits, Shortcuts, Cleanup, And Diagnostics
 
-- `lib/multi-character-storage.ts`: change `MAX_CHARACTERS` to 20 and keep it the single source of truth.
-- `components/layout/mobile-action-bar.tsx` and `components/layout/desktop-bottom-dock.tsx`: remove hard-coded `MAX_CHARACTERS = 10` so quick-create/import gates follow the shared limit.
+- `lib/multi-character-storage.ts`: change `MAX_CHARACTERS` to 15 and keep it the single source of truth.
+- `components/layout/bottom-dock.tsx`: remove hard-coded `MAX_CHARACTERS = 10` so quick-create/import gates follow the shared limit.
 - `components/home-client-app.tsx` and `components/ui/archive-manager-dropdown.tsx`: keep shortcuts for the first 10 saves only, but update copy from broad `Ctrl+数字` wording to explicit first-10 wording.
 - `app/card-manager/page.tsx`: full local data reset must clear the character image IndexedDB table in addition to `localStorage.clear()`.
 - `lib/memory-monitor.ts`: diagnostics should expose localStorage totals, per-save sizes, image-field sizes, and whether any character record violates the no-`data:image/` invariant.
@@ -97,7 +97,7 @@ The implementation is risky mainly because character image payloads can enter or
 - `tests/unit/storage-migration.test.ts`: schema migration, legacy embedded image movement, load hydration, duplicate copy behavior, and storage invariant.
 - `tests/unit/character-data-validator.test.ts` and `tests/unit/import-regression-baseline.test.ts`: portable image fields survive import validation; external `imageAssets` is ignored or stripped.
 - `tests/unit/quick-html-import.test.tsx` and `tests/unit/character-management-modal-import.test.tsx`: route coverage for quick and modal imports.
-- `tests/unit/home-compact-shortcuts.test.tsx` or a new home shortcut test: `Ctrl+1..0` targets only saves 1-10 when 20 saves exist.
+- `tests/unit/home-compact-shortcuts.test.tsx` or a new home shortcut test: `Ctrl+1..0` targets only saves 1-10 when 15 saves exist.
 - `tests/unit/memory-monitor.test.ts` and card manager reset tests: diagnostics and full reset cover character image storage.
 
 ## Migration Risk Assessment
@@ -113,7 +113,7 @@ This migration is moderate to high risk because the project is introducing separ
 - **Shared image ownership after duplicate**: duplicates must receive copied image records under the target character id. They must not share image references with the source save.
 - **Unbounded cleanup failure**: delete and reset must attempt image cleanup, but character deletion should not be blocked after metadata/data deletion. Failed cleanup must leave records attributable by `characterId` for orphan cleanup.
 - **Render-triggered migration**: loading a sheet can become write-capable through Image Asset Migration. Components must not call storage-loading functions from JSX render.
-- **Save limit and shortcut drift**: storage and UI gates must agree on the 20-save limit, while keyboard shortcuts intentionally remain limited to the first 10 saves. Hard-coded 10-save gates or broad shortcut copy would create inconsistent user behavior.
+- **Save limit and shortcut drift**: storage and UI gates must agree on the 15-save limit, while keyboard shortcuts intentionally remain limited to the first 10 saves. Hard-coded 10-save gates or broad shortcut copy would create inconsistent user behavior.
 
 ### Required Scope
 
@@ -126,7 +126,7 @@ The following changes are necessary and should be treated as one release unit:
 - hydrate image references during load/switch,
 - restore portable base64 during JSON and HTML export,
 - delete or orphan-clean character image records during delete/reset,
-- raise `MAX_CHARACTERS` to 20 and remove UI hard-coded 10-save gates,
+- raise `MAX_CHARACTERS` to 15 and remove UI hard-coded 10-save gates,
 - update shortcut copy while keeping shortcuts limited to the first 10 saves.
 
 ### Required Tests
@@ -140,7 +140,7 @@ Before release, tests must prove:
 - duplicating a save copies image assets to the new character id,
 - deleting a save and full local reset attempt character image cleanup,
 - old embedded image payloads are migrated through the controlled image migration command,
-- save limit is 20 while `Ctrl+1..0` still covers only saves 1-10.
+- save limit is 15 while `Ctrl+1..0` still covers only saves 1-10.
 
 ### Out Of Scope
 
@@ -335,15 +335,15 @@ If an image reference cannot be resolved, export should fail visibly or report a
 
 ## Shortcut Behavior
 
-The save limit becomes 20, but save shortcuts remain limited to the first 10 saves:
+The save limit becomes 15, but save shortcuts remain limited to the first 10 saves:
 
 - `Ctrl+1` through `Ctrl+9`: saves 1-9.
 - `Ctrl+0`: save 10.
-- Saves 11-20 are reachable through the save switcher, archive manager, and character management modal.
+- Saves 11-15 are reachable through the save switcher, archive manager, and character management modal.
 
 Shortcut text should be updated from broad phrasing like `Ctrl+数字键快速切换存档` to explicit phrasing such as `Ctrl+1-9/0 切换前 10 个存档`.
 
-Adding shortcuts for saves 11-20 is deferred. A future design can choose between shortcut slots, `Ctrl+Shift+number`, or a command palette.
+Adding shortcuts for saves 11-15 is deferred. A future design can choose between shortcut slots, `Ctrl+Shift+number`, or a command palette.
 
 ## Storage Diagnostics
 
@@ -391,7 +391,7 @@ Unit tests should cover:
 - duplicate image copy to new character keys,
 - imported save creation with embedded images,
 - export still includes usable image data,
-- save limit is 20,
+- save limit is 15,
 - `Ctrl+1..0` still targets only saves 1-10,
 - shortcut helper text says the shortcut covers the first 10 saves.
 

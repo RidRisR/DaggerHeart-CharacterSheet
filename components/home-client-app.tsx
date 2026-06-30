@@ -248,6 +248,7 @@ export default function HomeClientApp() {
     currentCharacterId,
     characterList,
     isLoading,
+    migrationError,
     switchToCharacter,
     createNewCharacterHandler,
     createImportedCharacterHandler,
@@ -603,6 +604,29 @@ export default function HomeClientApp() {
     )
   }
 
+  if (migrationError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
+        <div className="max-w-lg rounded-lg border border-red-200 bg-red-50 p-6 text-red-900">
+          <h1 className="text-xl font-semibold">存档图片迁移失败</h1>
+          <p className="mt-3 text-sm leading-6">
+            为了避免旧图片继续占用 localStorage，应用需要先完成一次存档图片迁移。当前迁移失败，已停止加载角色存档。
+          </p>
+          <p className="mt-3 break-words rounded bg-white/70 p-3 text-left text-xs">
+            {migrationError.message}
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 rounded bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800"
+          >
+            重新加载并重试
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // 客户端已挂载，但数据还在加载
   if (isLoading) {
     return (
@@ -821,7 +845,7 @@ export default function HomeClientApp() {
             <div className="space-y-1 text-xs">
               <div>← → 切换页面</div>
               <div>1 2 3 直接跳转</div>
-              <div>Ctrl+数字 切换存档</div>
+              <div>Ctrl+1-9/0 切换前 10 个存档</div>
             </div>
           </div>
         </div>

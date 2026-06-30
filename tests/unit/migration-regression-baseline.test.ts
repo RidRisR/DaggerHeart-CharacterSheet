@@ -79,4 +79,18 @@ describe('migration regression baseline through v3', () => {
     expect('inventoryWeapon2Secondary' in (migrated as any)).toBe(false)
     expect(migrated.equipment.weaponSlots.inventory).toHaveLength(2)
   })
+
+  it('sanitizes local image asset refs during synchronous shape migration', () => {
+    const migrated = migrateSheetData(legacySheet({
+      imageAssets: {
+        characterImage: { key: 'character:one:portrait', mimeType: 'image/png' },
+        companionImage: { key: 123, mimeType: 'image/jpeg' },
+        extraImage: { key: 'character:one:extra', mimeType: 'image/png' },
+      },
+    }))
+
+    expect(migrated.imageAssets).toEqual({
+      characterImage: { key: 'character:one:portrait', mimeType: 'image/png' },
+    })
+  })
 })

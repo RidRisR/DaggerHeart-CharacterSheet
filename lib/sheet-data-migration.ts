@@ -13,6 +13,7 @@
 import type { SheetData, AttributeValue } from './sheet-data'
 import { defaultSheetData } from './default-sheet-data'
 import { createEmptyCard, isEmptyCard, type StandardCard } from '@/card/card-types'
+import type { CharacterImageAssetMap, CharacterSheetImageField } from '@/character/storage/character-image-types'
 import { armorItems } from "@/data/list/armor"
 import { allWeapons, type AllWeapon } from "@/data/list/all-weapons"
 import { primaryWeapons, type Weapon } from "@/data/list/primary-weapon"
@@ -65,6 +66,7 @@ import type {
 
 const V1_SCHEMA_VERSION = 1
 const V2_SCHEMA_VERSION = 2
+const SHEET_IMAGE_ASSET_FIELDS: CharacterSheetImageField[] = ['characterImage', 'companionImage']
 
 type LegacyEquipmentInput = Partial<SheetData> & {
   primaryWeaponName?: string
@@ -1235,10 +1237,35 @@ function isValidStandardCard(card: any): card is StandardCard {
     card.type !== undefined
 }
 
+function sanitizeImageAssets(rawImageAssets: unknown): CharacterImageAssetMap {
+  if (!rawImageAssets || typeof rawImageAssets !== 'object' || Array.isArray(rawImageAssets)) {
+    return {}
+  }
+
+  const input = rawImageAssets as Record<string, unknown>
+  const sanitized: CharacterImageAssetMap = {}
+
+  SHEET_IMAGE_ASSET_FIELDS.forEach(field => {
+    const ref = input[field]
+    if (!ref || typeof ref !== 'object' || Array.isArray(ref)) return
+
+    const candidate = ref as Record<string, unknown>
+    if (typeof candidate.key !== 'string' || typeof candidate.mimeType !== 'string') return
+
+    sanitized[field] = {
+      key: candidate.key,
+      mimeType: candidate.mimeType,
+    }
+  })
+
+  return sanitized
+}
+
 export function normalizeCurrentSheetData(data: Partial<SheetData> | any): SheetData {
   let normalized: SheetData = {
     ...defaultSheetData,
     ...data,
+    imageAssets: sanitizeImageAssets(data?.imageAssets),
     schemaVersion: CURRENT_SCHEMA_VERSION,
   }
 

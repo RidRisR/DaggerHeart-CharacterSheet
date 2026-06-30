@@ -31,14 +31,23 @@ import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
 import { ModifierFieldAnchor } from "@/components/modifiers/modifier-field-anchor"
 import { EquipmentProviderAnchor } from "@/components/modifiers/equipment-provider-popover"
 import { parseNumberExpressionOr } from "@/lib/number-utils"
+import {
+  deleteCharacterImageAsset,
+  setCharacterImageAsset,
+} from "@/character/storage/character-image-actions"
 
 type WeaponSlotSelection =
   | { slotType: "primary" | "secondary" }
   | { slotType: "inventory"; index: 0 | 1 }
 
-export default function CharacterSheet() {
+interface CharacterSheetProps {
+  currentCharacterId?: string | null
+}
+
+export default function CharacterSheet({ currentCharacterId }: CharacterSheetProps) {
   const {
     setSheetData: setFormData,
+    replaceSheetData,
     selectCharacterChoiceCard,
     clearCharacterChoiceCard,
     handleProfessionChange: changeProfessionCard,
@@ -226,6 +235,24 @@ export default function CharacterSheet() {
     setArmorModalOpen(false)
   }
 
+  const handlePortraitImageChange = async (imageBase64: string) => {
+    if (!currentCharacterId) {
+      setFormData((prev) => ({ ...prev, characterImage: imageBase64 }))
+      return
+    }
+
+    try {
+      const currentSheet = useSheetStore.getState().sheetData
+      const nextSheet = imageBase64
+        ? await setCharacterImageAsset(currentCharacterId, 'portrait', imageBase64, currentSheet)
+        : await deleteCharacterImageAsset(currentCharacterId, 'portrait', currentSheet)
+      replaceSheetData(nextSheet)
+    } catch (error) {
+      console.error(`[CharacterImage] Failed to update portrait for ${currentCharacterId}:`, error)
+      alert('角色图像保存失败')
+    }
+  }
+
   // 模态框控制函数
   const openWeaponModal = (selection: WeaponSlotSelection) => {
     setCurrentWeaponSlot(selection)
@@ -308,9 +335,8 @@ export default function CharacterSheet() {
                   <div className="flex flex-col items-center">
                     <ImageUploadCrop
                       currentImage={safeFormData.characterImage}
-                      onImageChange={(imageBase64) =>
-                        setFormData((prev) => ({ ...prev, characterImage: imageBase64 }))
-                      }
+                      onImageChange={(imageBase64) => void handlePortraitImageChange(imageBase64)}
+                      onImageDelete={() => void handlePortraitImageChange("")}
                       width="6rem"
                       height="6rem"
                       placeholder={{ title: "角色图像", subtitle: "点击上传" }}

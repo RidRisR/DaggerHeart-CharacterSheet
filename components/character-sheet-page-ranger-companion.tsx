@@ -5,13 +5,39 @@ import { ImageUploadCrop } from '@/components/ui/image-upload-crop';
 import { useSheetStore, useSafeSheetData } from '@/lib/sheet-store';
 import { defaultSheetData } from '@/lib/default-sheet-data';
 import { PageHeader } from '@/components/page-header';
+import {
+    deleteCharacterImageAsset,
+    setCharacterImageAsset,
+} from '@/character/storage/character-image-actions';
 
 const MAX_STRESS = (formData: any) => Number(formData.companionStressMax) || 3;
 const TOTAL_STRESS = 6;
 
-const CharacterSheetPageThree: React.FC = () => {
-    const { sheetData: formData, setSheetData: onFormDataChange } = useSheetStore();
+interface CharacterSheetPageThreeProps {
+    currentCharacterId?: string | null;
+}
+
+const CharacterSheetPageThree: React.FC<CharacterSheetPageThreeProps> = ({ currentCharacterId }) => {
+    const { sheetData: formData, setSheetData: onFormDataChange, replaceSheetData } = useSheetStore();
     const safeFormData = useSafeSheetData();
+
+    const handleCompanionImageChange = async (imageBase64: string) => {
+        if (!currentCharacterId) {
+            onFormDataChange({ ...useSheetStore.getState().sheetData, companionImage: imageBase64 });
+            return;
+        }
+
+        try {
+            const currentSheet = useSheetStore.getState().sheetData;
+            const nextSheet = imageBase64
+                ? await setCharacterImageAsset(currentCharacterId, 'companion', imageBase64, currentSheet)
+                : await deleteCharacterImageAsset(currentCharacterId, 'companion', currentSheet);
+            replaceSheetData(nextSheet);
+        } catch (error) {
+            console.error(`[CharacterImage] Failed to update companion image for ${currentCharacterId}:`, error);
+            alert('伙伴图像保存失败');
+        }
+    };
 
     // 伙伴经验区块（右侧为图片+描述，无经验示例）
     const renderCompanionExperienceSection = () => (
@@ -22,9 +48,8 @@ const CharacterSheetPageThree: React.FC = () => {
                 <div className="flex flex-col items-center">
                     <ImageUploadCrop
                         currentImage={safeFormData.companionImage}
-                        onImageChange={(imageBase64) =>
-                            onFormDataChange({ ...formData, companionImage: imageBase64 })
-                        }
+                        onImageChange={(imageBase64) => void handleCompanionImageChange(imageBase64)}
+                        onImageDelete={() => void handleCompanionImageChange("")}
                         width="9rem"
                         height="9rem"
                         placeholder={{ title: "伙伴图像", subtitle: "点击上传" }}

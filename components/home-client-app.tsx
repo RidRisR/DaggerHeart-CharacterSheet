@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { createContext, useContext, useState, useEffect, useRef } from "react"
 import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-ranger-companion"
@@ -37,6 +37,7 @@ import { PrintPageRenderer } from "@/components/print/print-page-renderer"
 import { SaveSwitcher } from "@/components/ui/save-switcher"
 import { MemoryAlert } from "@/components/memory-alert"
 import { memoryMonitor } from "@/lib/memory-monitor"
+import { saveCharacterSheet } from "@/character/storage/character-save-storage"
 import {
   announcements,
   isLatestAnnouncementRead,
@@ -88,12 +89,26 @@ import PrintHelper from "@/app/print-helper"
 
 const sessionPromptedCardAuditCharacterIds = new Set<string>()
 
+const CurrentCharacterIdContext = createContext<string | null>(null)
+
+function CharacterSheetPageOne() {
+  return <CharacterSheet currentCharacterId={useContext(CurrentCharacterIdContext)} />
+}
+
+function RangerCompanionPage() {
+  return <CharacterSheetPageThree currentCharacterId={useContext(CurrentCharacterIdContext)} />
+}
+
+function AdventureNotesPage() {
+  return <CharacterSheetPageAdventureNotes currentCharacterId={useContext(CurrentCharacterIdContext)} />
+}
+
 // 注册所有页面
 registerPages([
   {
     id: 'page1',
     label: '第一页',
-    component: CharacterSheet,
+    component: CharacterSheetPageOne,
     printClass: 'page-one',
     visibility: { type: 'always' },
     printOrder: 1,
@@ -111,7 +126,7 @@ registerPages([
   {
     id: 'page3',
     label: '游侠伙伴',
-    component: CharacterSheetPageThree,
+    component: RangerCompanionPage,
     printClass: 'page-three',
     visibility: { type: 'config', configKey: 'rangerCompanion' },
     printOrder: 3,
@@ -129,7 +144,7 @@ registerPages([
   {
     id: 'adventure-notes',
     label: '冒险笔记',
-    component: CharacterSheetPageAdventureNotes,
+    component: AdventureNotesPage,
     printClass: 'page-adventure-notes',
     visibility: { type: 'config', configKey: 'adventureNotes' },
     printOrder: 5,
@@ -366,13 +381,14 @@ export default function HomeClientApp() {
   useEffect(() => {
     if (!isLoading && currentCharacterId && formData) {
       const saveTimeout = setTimeout(() => {
-        try {
-          // 保存到localStorage
-          localStorage.setItem(`dh_character_${currentCharacterId}`, JSON.stringify(formData))
-          console.log(`[App] Auto-saved character: ${currentCharacterId}`)
-        } catch (error) {
-          console.error(`[App] Error auto-saving character ${currentCharacterId}:`, error)
-        }
+        void saveCharacterSheet(currentCharacterId, formData)
+          .then(() => {
+            console.log(`[App] Auto-saved character: ${currentCharacterId}`)
+          })
+          .catch((error) => {
+            console.error(`[App] Error auto-saving character ${currentCharacterId}:`, error)
+            alert('自动保存失败')
+          })
       }, 300)
 
       return () => clearTimeout(saveTimeout)
@@ -471,7 +487,7 @@ export default function HomeClientApp() {
             // 提示用户输入存档名称
             const saveName = prompt('请输入新存档的名称:', defaultSaveName)
             if (saveName && saveName.trim()) {
-              const success = createImportedCharacterHandler(saveName.trim(), result.data)
+              const success = await createImportedCharacterHandler(saveName.trim(), result.data)
               if (success) {
                 if (result.warnings && result.warnings.length > 0) {
                   alert(`HTML导入成功并创建新存档"${saveName}"，但有以下警告：\n${result.warnings.join('\n')}`)
@@ -561,7 +577,7 @@ export default function HomeClientApp() {
           event.preventDefault()
           const targetCharacter = characterList[targetIndex]
           if (targetCharacter.id !== currentCharacterId) {
-            switchToCharacter(targetCharacter.id)
+            void switchToCharacter(targetCharacter.id)
             console.log(`[App] 快捷键切换到存档 ${targetIndex + 1}: ${targetCharacter.saveName}`)
           }
         }
@@ -608,46 +624,48 @@ export default function HomeClientApp() {
     }
 
     return (
-      <PrintProvider containerRef={printContainerRef}>
-        <PrintReadyChecker onSkipWaiting={handleSkipWaiting}>
-          <div className="print-all-pages">
-            <PrintHelper />
+      <CurrentCharacterIdContext.Provider value={currentCharacterId}>
+        <PrintProvider containerRef={printContainerRef}>
+          <PrintReadyChecker onSkipWaiting={handleSkipWaiting}>
+            <div className="print-all-pages">
+              <PrintHelper />
 
-            {/* 顶部提示横条 - 只在屏幕上显示，打印时隐藏 */}
-            <div className="fixed top-0 left-0 right-0 z-[70] print:hidden">
-              <div
-                className="bg-black bg-opacity-50 text-white px-6 py-3 text-center cursor-pointer hover:bg-opacity-70 transition-all duration-200"
-                onClick={() => setIsPrintingAll(false)}
-              >
-                <div className="flex items-center justify-center gap-3">
+              {/* 顶部提示横条 - 只在屏幕上显示，打印时隐藏 */}
+              <div className="fixed top-0 left-0 right-0 z-[70] print:hidden">
+                <div
+                  className="bg-black bg-opacity-50 text-white px-6 py-3 text-center cursor-pointer hover:bg-opacity-70 transition-all duration-200"
+                  onClick={() => setIsPrintingAll(false)}
+                >
+                  <div className="flex items-center justify-center gap-3">
                   <span className="text-sm">
                     按 <kbd className="px-2 py-1 bg-gray-700 rounded text-xs mx-1">ESC</kbd> 键或点击此处退出预览
                   </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* 打印预览控制按钮 */}
-            <BottomDock
-              mode="preview"
-              isMobile={isMobile}
-              onExportPDF={() => window.print()}
-              onExportHTML={handleExportHTML}
-              onExportJSON={handleExportJSON}
-              onOpenSealDiceExport={() => {
-                setSealDiceExportModalOpen(true)
-                setIsPrintingAll(false)
-              }}
-              onClose={() => setIsPrintingAll(false)}
-            />
+              {/* 打印预览控制按钮 */}
+              <BottomDock
+                mode="preview"
+                isMobile={isMobile}
+                onExportPDF={() => window.print()}
+                onExportHTML={handleExportHTML}
+                onExportJSON={handleExportJSON}
+                onOpenSealDiceExport={() => {
+                  setSealDiceExportModalOpen(true)
+                  setIsPrintingAll(false)
+                }}
+                onClose={() => setIsPrintingAll(false)}
+              />
 
-            {/* 打印内容容器 - 用于图片加载检测 */}
-            <div ref={printContainerRef}>
-              <PrintPageRenderer sheetData={formData} />
+              {/* 打印内容容器 - 用于图片加载检测 */}
+              <div ref={printContainerRef}>
+                <PrintPageRenderer sheetData={formData} />
+              </div>
             </div>
-          </div>
-        </PrintReadyChecker>
-      </PrintProvider>
+          </PrintReadyChecker>
+        </PrintProvider>
+      </CurrentCharacterIdContext.Provider>
     )
   }
 
@@ -687,8 +705,9 @@ export default function HomeClientApp() {
   }
 
   return (
-    <main className={`min-w-0 w-full max-w-full mx-auto px-0 container ${isMobile ? 'pb-32' : 'pb-20'
-      }`}>
+    <CurrentCharacterIdContext.Provider value={currentCharacterId}>
+      <main className={`min-w-0 w-full max-w-full mx-auto px-0 container ${isMobile ? 'pb-32' : 'pb-20'
+        }`}>
 
       {/* 底部抽屉式卡牌展示 - 打印时隐藏 */}
       <div className="print:hidden">
@@ -894,7 +913,8 @@ export default function HomeClientApp() {
 
       {/* 内存诊断监控 */}
       <MemoryAlert />
-      {setupPrompt.dialog}
-    </main>
+        {setupPrompt.dialog}
+      </main>
+    </CurrentCharacterIdContext.Provider>
   )
 }

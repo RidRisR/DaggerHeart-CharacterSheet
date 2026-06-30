@@ -3,7 +3,6 @@ import { useSheetStore } from '@/lib/sheet-store'
 import {
   migrateToMultiCharacterStorage,
   loadCharacterList,
-  loadCharacterById,
   saveCharacterById,
   setActiveCharacterId,
   getActiveCharacterId,
@@ -17,6 +16,17 @@ import {
 import type { CharacterMetadata, SheetData } from '@/lib/sheet-data'
 import { defaultSheetData } from '@/lib/default-sheet-data'
 import { CURRENT_SCHEMA_VERSION } from '@/lib/sheet-schema-version'
+import {
+  cleanupOrphanedCharacterImages,
+  deleteCharacterSave,
+  loadCharacterSheet,
+  saveCharacterSheet,
+} from '@/character/storage/character-save-storage'
+import {
+  prepareDuplicatedSheetForStorage,
+  prepareImportedSheetForStorage,
+  rollbackWrittenCharacterImages,
+} from '@/character/storage/sheet-image-projection'
 
 interface UseCharacterManagementProps {
   isClient: boolean
@@ -132,7 +142,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
   useEffect(() => {
     if (!isClient || !isMigrationCompleted) return
 
-    const loadCharacters = () => {
+    const loadCharacters = async () => {
       try {
         console.log('[CharacterManagement] Loading character list...')
         const listData = loadCharacterList()
@@ -146,17 +156,32 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
           console.log(`[CharacterManagement] Cleaned up ${orphanedCount} zombie character files`)
         }
 
+        const orphanedImageCount = await cleanupOrphanedCharacterImages()
+        if (orphanedImageCount > 0) {
+          console.log(`[CharacterManagement] Cleaned up ${orphanedImageCount} orphaned character images`)
+        }
+
         if (list.length === 0) {
           console.log('[CharacterManagement] No characters found, creating first character')
-          createFirstCharacter()
+          await createFirstCharacter()
         } else {
           const activeId = getActiveCharacterId() || list[0].id
           console.log(`[CharacterManagement] Loading active character: ${activeId}`)
-          switchToCharacter(activeId)
+          const activeCharacter = list.find(character => character.id === activeId)
+          const fallbackCharacters = list.filter(character => character.id !== activeId)
+          const candidates = activeCharacter
+            ? [activeCharacter, ...fallbackCharacters]
+            : list
+          const activated = await activateFirstAvailableCharacter(candidates)
+
+          if (!activated) {
+            console.error('[CharacterManagement] No loadable character found during startup')
+            clearActiveCharacterToDefault()
+          }
         }
       } catch (error) {
         console.error('[CharacterManagement] Failed to load characters:', error)
-        createFirstCharacter()
+        await createFirstCharacter()
       } finally {
         setIsLoading(false)
       }
@@ -166,18 +191,18 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
   }, [isClient, isMigrationCompleted])
 
   // 创建第一个角色
-  const createFirstCharacter = useCallback(() => {
+  const createFirstCharacter = useCallback(async () => {
     try {
       console.log('[CharacterManagement] Creating first character...')
       const metadata = addCharacterToMetadataList("存档 1")
       
       if (metadata) {
         const newCharacterData = { ...defaultSheetData }
-        saveCharacterById(metadata.id, newCharacterData)
+        const runtimeSheet = await saveCharacterSheet(metadata.id, newCharacterData)
         setCharacterList([metadata])
         setCurrentCharacterId(metadata.id)
         setActiveCharacterId(metadata.id)
-        replaceSheetData(newCharacterData)
+        replaceSheetData(runtimeSheet)
         console.log(`[CharacterManagement] First character created: ${metadata.id}`)
       } else {
         console.error('[CharacterManagement] Failed to create first character metadata')
@@ -188,26 +213,46 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
   }, [replaceSheetData])
 
   // 切换角色
-  const switchToCharacter = useCallback((characterId: string) => {
+  const switchToCharacter = useCallback(async (characterId: string): Promise<boolean> => {
     try {
       console.log(`[CharacterManagement] Switching to character: ${characterId}`)
-      const characterData = loadCharacterById(characterId)
+      const characterData = await loadCharacterSheet(characterId)
 
       if (characterData) {
         activateCharacterData(characterId, characterData)
         console.log(`[CharacterManagement] Successfully switched to character: ${characterId}`)
+        return true
       } else {
         console.error(`[CharacterManagement] Character data not found: ${characterId}`)
         alert('角色数据加载失败')
+        return false
       }
     } catch (error) {
       console.error(`[CharacterManagement] Error switching to character ${characterId}:`, error)
       alert('切换角色失败')
+      return false
     }
   }, [activateCharacterData])
 
+  const clearActiveCharacterToDefault = useCallback(() => {
+    setCurrentCharacterId(null)
+    setActiveCharacterId(null)
+    replaceSheetData({ ...defaultSheetData })
+  }, [replaceSheetData])
+
+  const activateFirstAvailableCharacter = useCallback(async (
+    candidates: CharacterMetadata[],
+  ): Promise<boolean> => {
+    for (const candidate of candidates) {
+      const activated = await switchToCharacter(candidate.id)
+      if (activated) return true
+    }
+
+    return false
+  }, [switchToCharacter])
+
   // 创建新角色
-  const createNewCharacterHandler = useCallback((saveName: string) => {
+  const createNewCharacterHandler = useCallback(async (saveName: string): Promise<boolean> => {
     try {
       if (characterList.length >= MAX_CHARACTERS) {
         alert(`最多只能创建${MAX_CHARACTERS}个角色`)
@@ -219,9 +264,9 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       const metadata = addCharacterToMetadataList(saveName) // 使用存档名
 
       if (metadata) {
-        saveCharacterById(metadata.id, newCharacterData)
+        const runtimeSheet = await saveCharacterSheet(metadata.id, newCharacterData)
         setCharacterList(prev => [...prev, metadata])
-        switchToCharacter(metadata.id)
+        activateCharacterData(metadata.id, runtimeSheet)
         console.log(`[CharacterManagement] Successfully created new save: ${metadata.id}`)
         return true
       } else {
@@ -234,9 +279,12 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       alert('创建存档失败')
       return false
     }
-  }, [characterList.length, switchToCharacter])
+  }, [activateCharacterData, characterList.length])
 
-  const createImportedCharacterHandler = useCallback((saveName: string, importedData: SheetData) => {
+  const createImportedCharacterHandler = useCallback(async (
+    saveName: string,
+    importedData: SheetData,
+  ): Promise<boolean> => {
     assertCurrentSchemaImportedSheet(importedData)
 
     if (characterList.length >= MAX_CHARACTERS) {
@@ -247,6 +295,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
     const previousCharacterId = currentCharacterId
     const previousSheetData = useSheetStore.getState().sheetData
     let metadata: CharacterMetadata | null = null
+    let writtenImageKeys: string[] = []
 
     try {
       console.log(`[CharacterManagement] Creating imported save: ${saveName}`)
@@ -258,14 +307,22 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
         return false
       }
 
-      saveCharacterById(metadata.id, importedData)
-      activateCharacterData(metadata.id, importedData)
+      const prepared = await prepareImportedSheetForStorage(metadata.id, importedData)
+      writtenImageKeys = prepared.writtenImageKeys
+      saveCharacterById(metadata.id, prepared.storedSheet)
+      activateCharacterData(metadata.id, prepared.runtimeSheet)
       setCharacterList(prev => [...prev, metadata as CharacterMetadata])
       console.log(`[CharacterManagement] Successfully created imported save: ${metadata.id}`)
       return true
     } catch (error) {
       console.error(`[CharacterManagement] Error creating imported save:`, error)
       alert('创建存档失败')
+
+      try {
+        await rollbackWrittenCharacterImages(writtenImageKeys)
+      } catch (cleanupError) {
+        console.error('[CharacterManagement] Failed to roll back imported save images:', cleanupError)
+      }
 
       if (metadata) {
         try {
@@ -294,7 +351,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
   }, [activateCharacterData, characterList.length, currentCharacterId, replaceSheetData])
 
   // 删除角色
-  const deleteCharacterHandler = useCallback((characterId: string) => {
+  const deleteCharacterHandler = useCallback(async (characterId: string): Promise<boolean> => {
     try {
       if (characterList.length <= 1) {
         alert('至少需要保留一个角色')
@@ -314,11 +371,22 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       console.log(`[CharacterManagement] Deleting character: ${characterId}`)
       removeCharacterFromMetadataList(characterId)
 
+      const deleted = await deleteCharacterSave(characterId)
+      if (!deleted) {
+        console.warn(`[CharacterManagement] Character data was already missing during delete: ${characterId}`)
+      }
+
       const remainingCharacters = characterList.filter(c => c.id !== characterId)
       setCharacterList(remainingCharacters)
 
       if (currentCharacterId === characterId && remainingCharacters.length > 0) {
-        switchToCharacter(remainingCharacters[0].id)
+        const activated = await activateFirstAvailableCharacter(remainingCharacters)
+        if (!activated) {
+          console.error('[CharacterManagement] No remaining character could be activated after delete')
+          clearActiveCharacterToDefault()
+        }
+      } else if (currentCharacterId === characterId) {
+        clearActiveCharacterToDefault()
       }
 
       console.log(`[CharacterManagement] Successfully deleted character: ${characterId}`)
@@ -328,10 +396,18 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       alert('删除角色失败')
       return false
     }
-  }, [characterList, currentCharacterId, switchToCharacter])
+  }, [activateFirstAvailableCharacter, characterList, clearActiveCharacterToDefault, currentCharacterId])
 
   // 复制角色
-  const duplicateCharacterHandler = useCallback((characterId: string, newSaveName: string) => {
+  const duplicateCharacterHandler = useCallback(async (
+    characterId: string,
+    newSaveName: string,
+  ): Promise<boolean> => {
+    let metadata: CharacterMetadata | null = null
+    let writtenImageKeys: string[] = []
+    const previousCharacterId = currentCharacterId
+    const previousSheetData = useSheetStore.getState().sheetData
+
     try {
       if (characterList.length >= MAX_CHARACTERS) {
         alert(`最多只能创建${MAX_CHARACTERS}个角色`)
@@ -339,7 +415,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
       }
 
       console.log(`[CharacterManagement] Duplicating character: ${characterId}`)
-      const sourceData = loadCharacterById(characterId)
+      const sourceData = await loadCharacterSheet(characterId)
       
       if (!sourceData) {
         console.error(`[CharacterManagement] Source character not found: ${characterId}`)
@@ -347,12 +423,18 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
         return false
       }
 
-      const metadata = addCharacterToMetadataList(newSaveName)
+      metadata = addCharacterToMetadataList(newSaveName)
       
       if (metadata) {
-        saveCharacterById(metadata.id, sourceData)
-        setCharacterList(prev => [...prev, metadata])
-        switchToCharacter(metadata.id)
+        const prepared = await prepareDuplicatedSheetForStorage(characterId, metadata.id, sourceData)
+        writtenImageKeys = prepared.writtenImageKeys
+        saveCharacterById(metadata.id, prepared.storedSheet)
+        const activated = await switchToCharacter(metadata.id)
+        if (!activated) {
+          throw new Error(`Duplicate activation failed for ${metadata.id}`)
+        }
+
+        setCharacterList(prev => [...prev, metadata as CharacterMetadata])
         console.log(`[CharacterManagement] Successfully duplicated character: ${metadata.id}`)
         return true
       } else {
@@ -363,9 +445,39 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
     } catch (error) {
       console.error(`[CharacterManagement] Error duplicating character:`, error)
       alert('复制角色失败')
+
+      try {
+        await rollbackWrittenCharacterImages(writtenImageKeys)
+      } catch (cleanupError) {
+        console.error('[CharacterManagement] Failed to roll back duplicate save images:', cleanupError)
+      }
+
+      if (metadata) {
+        try {
+          removeCharacterFromMetadataList(metadata.id)
+          setCharacterList(prev => prev.filter(character => character.id !== metadata?.id))
+        } catch (cleanupError) {
+          console.error(`[CharacterManagement] Failed to clean up duplicate save ${metadata.id}:`, cleanupError)
+        }
+      }
+
+      setCurrentCharacterId(previousCharacterId)
+
+      try {
+        setActiveCharacterId(previousCharacterId)
+      } catch (cleanupError) {
+        console.error('[CharacterManagement] Failed to restore previous active character after duplicate failure:', cleanupError)
+      }
+
+      try {
+        replaceSheetData(previousSheetData)
+      } catch (cleanupError) {
+        console.error('[CharacterManagement] Failed to restore previous sheet data after duplicate failure:', cleanupError)
+      }
+
       return false
     }
-  }, [characterList.length, switchToCharacter])
+  }, [characterList.length, currentCharacterId, replaceSheetData, switchToCharacter])
 
   // 重命名角色
   const renameCharacterHandler = useCallback((characterId: string, newSaveName: string) => {
@@ -390,14 +502,14 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
   }, [])
 
   // 快速创建存档
-  const handleQuickCreateArchive = useCallback(() => {
+  const handleQuickCreateArchive = useCallback(async () => {
     const nextNumber = characterList.length + 1
     const defaultName = `存档 ${nextNumber}`
     
     const saveName = prompt('请输入存档名称:', defaultName)
     
     if (saveName && saveName.trim()) {
-      const success = createNewCharacterHandler(saveName.trim())
+      const success = await createNewCharacterHandler(saveName.trim())
       if (success) {
         setCurrentTabValue("page1")
         alert(`已创建新存档: ${saveName.trim()}`)

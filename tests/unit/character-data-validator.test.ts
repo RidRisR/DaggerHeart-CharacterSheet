@@ -84,6 +84,21 @@ describe('character data import validation', () => {
     expect((result.data as any).unknownFutureField).toEqual({ keep: true })
   })
 
+  it('strips local image asset references from JSON imports', () => {
+    const result = validateJSONCharacterData(JSON.stringify(rawImport({
+      characterImage: 'data:image/png;base64,aGVsbG8=',
+      companionImage: 'data:image/jpeg;base64,aGVsbG8=',
+      imageAssets: {
+        characterImage: { key: 'foreign-key', mimeType: 'image/png' },
+      },
+    })))
+
+    expect(result.valid).toBe(true)
+    expect(result.data?.characterImage).toBe('data:image/png;base64,aGVsbG8=')
+    expect(result.data?.companionImage).toBe('data:image/jpeg;base64,aGVsbG8=')
+    expect((result.data as any).imageAssets).toBeUndefined()
+  })
+
   it('keeps HTML and JSON on the same import processing path', () => {
     const raw = rawImport({ focused_card_ids: ['card-domain-1'] })
     const json = validateJSONCharacterData(JSON.stringify(raw))

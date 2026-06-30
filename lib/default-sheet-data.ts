@@ -7,6 +7,7 @@ export const defaultSheetData: SheetData = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     name: "",
     characterImage: "",
+    imageAssets: {},
     level: "1",
     proficiency: [true, false, false, false, false, false], // Default as boolean array, first one lit
     ancestry1: "",

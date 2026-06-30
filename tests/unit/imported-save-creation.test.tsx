@@ -74,8 +74,8 @@ describe('imported save creation', () => {
     })
 
     let success = false
-    act(() => {
-      success = result.current.createImportedCharacterHandler('Imported Save', imported)
+    await act(async () => {
+      success = await result.current.createImportedCharacterHandler('Imported Save', imported)
     })
 
     expect(success).toBe(true)
@@ -129,11 +129,9 @@ describe('imported save creation', () => {
     const invalidData = currentSheet() as any
     mutate(invalidData)
 
-    expect(() => {
-      act(() => {
-        result.current.createImportedCharacterHandler('Bad Import', invalidData)
-      })
-    }).toThrow(/current-schema/i)
+    await expect(result.current.createImportedCharacterHandler('Bad Import', invalidData))
+      .rejects
+      .toThrow(/current-schema/i)
 
     const afterList = JSON.parse(localStorage.getItem(CHARACTER_LIST_KEY) || '{}')
     expect(afterList.characters).toHaveLength(beforeList.characters.length)
@@ -144,8 +142,8 @@ describe('imported save creation', () => {
     const { result } = await renderManagementHook()
 
     for (let index = 1; index < MAX_CHARACTERS; index += 1) {
-      act(() => {
-        result.current.createNewCharacterHandler(`Existing ${index}`)
+      await act(async () => {
+        await result.current.createNewCharacterHandler(`Existing ${index}`)
       })
     }
 
@@ -153,8 +151,8 @@ describe('imported save creation', () => {
     expect(beforeList.characters).toHaveLength(MAX_CHARACTERS)
 
     let success = true
-    act(() => {
-      success = result.current.createImportedCharacterHandler('Overflow Import', currentSheet())
+    await act(async () => {
+      success = await result.current.createImportedCharacterHandler('Overflow Import', currentSheet())
     })
 
     expect(success).toBe(false)
@@ -179,8 +177,8 @@ describe('imported save creation', () => {
 
     try {
       let success = true
-      act(() => {
-        success = result.current.createImportedCharacterHandler(
+      await act(async () => {
+        success = await result.current.createImportedCharacterHandler(
           'Broken Import',
           currentSheet({ name: 'Save Failure Hero' }),
         )
@@ -220,8 +218,8 @@ describe('imported save creation', () => {
 
     try {
       let success = true
-      act(() => {
-        success = result.current.createImportedCharacterHandler(
+      await act(async () => {
+        success = await result.current.createImportedCharacterHandler(
           'Activation Failure Import',
           currentSheet({ name: 'Activation Failure Hero' }),
         )

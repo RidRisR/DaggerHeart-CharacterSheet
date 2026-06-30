@@ -4,6 +4,10 @@ import type React from "react"
 import { useSheetStore, useSafeSheetData } from "@/lib/sheet-store"
 import { PageHeader } from "@/components/page-header"
 import { ImageUploadCrop } from "@/components/ui/image-upload-crop"
+import {
+  deleteCharacterImageAsset,
+  setCharacterImageAsset,
+} from "@/character/storage/character-image-actions"
 
 const LabeledInput = ({
   label,
@@ -63,9 +67,31 @@ const LabeledTextarea = ({
   </div>
 )
 
-export default function CharacterSheetPageAdventureNotes() {
-  const { setSheetData: setFormData } = useSheetStore()
+interface CharacterSheetPageAdventureNotesProps {
+  currentCharacterId?: string | null
+}
+
+export default function CharacterSheetPageAdventureNotes({ currentCharacterId }: CharacterSheetPageAdventureNotesProps) {
+  const { setSheetData: setFormData, replaceSheetData } = useSheetStore()
   const safeFormData = useSafeSheetData()
+
+  const handlePortraitImageChange = async (imageBase64: string) => {
+    if (!currentCharacterId) {
+      setFormData((prev) => ({ ...prev, characterImage: imageBase64 }))
+      return
+    }
+
+    try {
+      const currentSheet = useSheetStore.getState().sheetData
+      const nextSheet = imageBase64
+        ? await setCharacterImageAsset(currentCharacterId, 'portrait', imageBase64, currentSheet)
+        : await deleteCharacterImageAsset(currentCharacterId, 'portrait', currentSheet)
+      replaceSheetData(nextSheet)
+    } catch (error) {
+      console.error(`[CharacterImage] Failed to update portrait for ${currentCharacterId}:`, error)
+      alert('角色图像保存失败')
+    }
+  }
 
   const sectionBannerClass = "bg-gray-700 text-white font-bold py-1 px-3 text-center text-sm tracking-wider uppercase rounded-t-md -mx-px -mt-px"
   const sectionContainerClass = "border-2 border-gray-800 rounded-md"
@@ -105,9 +131,8 @@ export default function CharacterSheetPageAdventureNotes() {
               {/* 角色形象 - 无外框 */}
               <ImageUploadCrop
                 currentImage={safeFormData.characterImage}
-                onImageChange={(imageBase64) =>
-                  setFormData((prev) => ({ ...prev, characterImage: imageBase64 }))
-                }
+                onImageChange={(imageBase64) => void handlePortraitImageChange(imageBase64)}
+                onImageDelete={() => void handlePortraitImageChange("")}
                 width="12rem"
                 height="12rem"
                 placeholder={{ title: "角色立绘", subtitle: "与首页同步" }}

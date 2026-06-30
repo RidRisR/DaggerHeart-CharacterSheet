@@ -8,6 +8,7 @@ import type {
   UpgradeStates,
   UserModifierContribution,
 } from "@/automation/core/types"
+import type { CharacterImageAssetMap } from "@/character/storage/character-image-types"
 
 // ===== 多角色系统数据结构 =====
 export interface CharacterMetadata {
@@ -19,7 +20,7 @@ export interface CharacterMetadata {
 }
 
 export interface CharacterList {
-  characters: CharacterMetadata[]  // 最多10个
+  characters: CharacterMetadata[]  // 最多20个
   activeCharacterId: string | null // 当前活动角色ID
   lastUpdated: string             // ISO 日期字符串
 }
@@ -171,6 +172,7 @@ export interface SheetData {
   // 通用属性
   name: string
   characterImage?: string
+  imageAssets?: CharacterImageAssetMap
   level: string
   proficiency: number | boolean[]
   ancestry1?: string

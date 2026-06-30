@@ -7,16 +7,18 @@ import { loadCharacterById, MAX_CHARACTERS } from "@/lib/multi-character-storage
 import { importCharacterFromHTMLFile } from "@/lib/html-importer"
 import { validateJSONCharacterData } from "@/lib/character-data-validator"
 
+type MaybePromiseBoolean = boolean | Promise<boolean>
+
 interface CharacterManagementModalProps {
     isOpen: boolean
     onClose: () => void
     characterList: CharacterMetadata[]
     currentCharacterId: string | null
-    onSwitchCharacter: (characterId: string) => void
-    onCreateCharacter: (saveName: string) => boolean
-    onCreateImportedCharacter: (saveName: string, importedData: SheetData) => boolean
-    onDeleteCharacter: (characterId: string) => boolean
-    onDuplicateCharacter: (characterId: string, newSaveName: string) => boolean
+    onSwitchCharacter: (characterId: string) => void | Promise<boolean>
+    onCreateCharacter: (saveName: string) => MaybePromiseBoolean
+    onCreateImportedCharacter: (saveName: string, importedData: SheetData) => MaybePromiseBoolean
+    onDeleteCharacter: (characterId: string) => MaybePromiseBoolean
+    onDuplicateCharacter: (characterId: string, newSaveName: string) => MaybePromiseBoolean
     onRenameCharacter: (characterId: string, newSaveName: string) => boolean
 }
 
@@ -69,7 +71,7 @@ export function CharacterManagementModal({
                         // 提示用户输入存档名称
                         const saveName = prompt('请输入新存档的名称:', defaultSaveName)
                         if (saveName) {
-                            const success = onCreateImportedCharacter(saveName, result.data)
+                            const success = await onCreateImportedCharacter(saveName, result.data)
                             if (success) {
                                 if (result.warnings && result.warnings.length > 0) {
                                     alert(`HTML导入成功并创建新存档"${saveName}"，但有以下警告：\n${result.warnings.join('\n')}`)
@@ -121,7 +123,7 @@ export function CharacterManagementModal({
                         onClick={() => {
                             const saveName = prompt('请输入新存档的名称:', '我的存档')
                             if (saveName) {
-                                onCreateCharacter(saveName)
+                                void onCreateCharacter(saveName)
                             }
                         }}
                         style={{ opacity: characterList.length >= MAX_CHARACTERS ? 0.5 : 1, cursor: characterList.length >= MAX_CHARACTERS ? 'not-allowed' : 'pointer' }}
@@ -168,7 +170,7 @@ export function CharacterManagementModal({
                                             <Button
                                                 size="sm"
                                                 variant="outline"
-                                                onClick={() => onSwitchCharacter(character.id)}
+                                                onClick={() => void onSwitchCharacter(character.id)}
                                             >
                                                 切换
                                             </Button>
@@ -191,7 +193,7 @@ export function CharacterManagementModal({
                                             onClick={() => {
                                                 const newSaveName = prompt('请输入复制存档的名称:', `${character.saveName} (副本)`)
                                                 if (newSaveName) {
-                                                    onDuplicateCharacter(character.id, newSaveName)
+                                                    void onDuplicateCharacter(character.id, newSaveName)
                                                 }
                                             }}
                                             disabled={characterList.length >= MAX_CHARACTERS}
@@ -202,7 +204,7 @@ export function CharacterManagementModal({
                                             size="sm"
                                             variant="outline"
                                             className="text-red-600 hover:text-red-700"
-                                            onClick={() => onDeleteCharacter(character.id)}
+                                            onClick={() => void onDeleteCharacter(character.id)}
                                             disabled={characterList.length <= 1}
                                         >
                                             删除
@@ -227,7 +229,7 @@ export function CharacterManagementModal({
                                     if (file) {
                                         try {
                                             const reader = new FileReader()
-                                            reader.onload = (e: ProgressEvent<FileReader>) => {
+                                            reader.onload = async (e: ProgressEvent<FileReader>) => {
                                                 try {
                                                     const jsonString = e.target?.result as string
                                                     const validation = validateJSONCharacterData(jsonString)
@@ -240,7 +242,7 @@ export function CharacterManagementModal({
                                                         // 提示用户输入存档名称
                                                         const saveName = prompt('请输入新存档的名称:', defaultSaveName)
                                                         if (saveName) {
-                                                            const success = onCreateImportedCharacter(saveName, validation.data)
+                                                            const success = await onCreateImportedCharacter(saveName, validation.data)
                                                             if (success) {
                                                                 if (validation.warnings && validation.warnings.length > 0) {
                                                                     alert(`JSON导入成功并创建新存档"${saveName}"，但有以下警告：\n${validation.warnings.join('\n')}`)

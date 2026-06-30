@@ -89,6 +89,7 @@ function sanitizeValidatedSheetData(data: SheetData): SheetData {
 
   delete (sanitized as any).checkedUpgrades
   delete (sanitized as any).automationSelections
+  delete sanitized.imageAssets
 
   return sanitized
 }

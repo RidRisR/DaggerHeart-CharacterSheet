@@ -174,6 +174,8 @@ export default function RootLayout({
             <FadeNotificationContainer />
             {/* 水印 */}
             <div className="fixed bottom-2 left-2 text-gray-500 text-xs opacity-75 pointer-events-none">
+              反馈或支持请加群：817413819
+              <br />
               本作品完全开源且免费
               <br />
               作者：RidRisR

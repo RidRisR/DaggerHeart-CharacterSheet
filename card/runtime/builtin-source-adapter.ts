@@ -28,6 +28,7 @@ export async function loadBuiltinCardRuntimeSource(input: {
     hasLocalImage: false,
   }))
   const cardTypes = Array.from(new Set(cards.map((card) => card.type ?? CardType.Domain)))
+  const { definitions } = prepared.model
 
   const batch: BatchInfo = {
     id: CARD_BUILTIN_SOURCE_ID,
@@ -40,6 +41,14 @@ export async function loadBuiltinCardRuntimeSource(input: {
     isSystemBatch: true,
     disabled: input.disabledSourceIds.includes(CARD_BUILTIN_SOURCE_ID),
     cardIds: cards.map((card) => card.id),
+    customFieldDefinitions: {
+      professions: definitions.classes,
+      ancestries: definitions.ancestries,
+      communities: definitions.communities,
+      domains: definitions.domains,
+      variants: definitions.variants,
+    },
+    variantTypes: definitions.variantTypes,
   }
 
   return { sourceId: CARD_BUILTIN_SOURCE_ID, kind: "builtin", batch, cards }

@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import { CardSource } from "../../card-types"
+import { getVariantTypeNames } from "../../card-predefined-field"
+import { getVariantLevelOptions } from "../../card-ui-config"
+import { setBuiltinCardRuntimeSourceDisabled } from "../../runtime/source-disabled-state"
 import { STORAGE_KEYS } from "../store-types"
 import { useUnifiedCardStore } from "../unified-card-store"
 
@@ -43,6 +46,24 @@ describe("card batch read model", () => {
       author: "真实作者",
       version: "2.1.0",
     })
+  })
+
+  it("exposes built-in beastforms and selection options across reload disable and enable", async () => {
+    const store = useUnifiedCardStore.getState()
+    for (const disabled of [false, true, false]) {
+      expect(setBuiltinCardRuntimeSourceDisabled(disabled).ok).toBe(true)
+      await store.reloadCustomRuntimeFromStorage()
+
+      const beastforms = store.loadAllCards().filter((card) => card.variantSpecial?.realType === "野兽形态")
+      expect(beastforms).toHaveLength(disabled ? 0 : 24)
+      expect(getVariantTypeNames()).toEqual(disabled ? [] : ["野兽形态"])
+      expect(getVariantLevelOptions("野兽形态").map((option) => option.value)).toEqual(
+        disabled ? [] : ["1", "2", "3", "4"],
+      )
+      expect(store.getAggregatedCustomFields().professions ?? []).toEqual(
+        disabled ? [] : expect.arrayContaining(["德鲁伊"]),
+      )
+    }
   })
 
   it("counts only custom cards in custom card stats", () => {

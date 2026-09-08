@@ -37,7 +37,7 @@ describe('sheet image projection', () => {
 
       return {
         blob: async () => new NodeBlob([Buffer.from(base64, 'base64')], { type: mimeType }),
-      } as Response
+      }
     })
     await clearAllCharacterImages()
   })

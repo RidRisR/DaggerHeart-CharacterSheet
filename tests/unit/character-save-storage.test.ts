@@ -39,7 +39,7 @@ describe('character save storage boundary', () => {
 
       return {
         blob: async () => new NodeBlob([Buffer.from(base64, 'base64')], { type: mimeType }),
-      } as Response
+      }
     })
     localStorage.clear()
     await clearAllCharacterImages()
@@ -197,7 +197,7 @@ describe('character save storage boundary', () => {
 
       return {
         blob: async () => new NodeBlob([Buffer.from(base64, 'base64')], { type: mimeType }),
-      } as Response
+      }
     })
     vi.stubGlobal('fetch', fetch)
 

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import builtinBase from "@/data/cards/builtin-base.json"
 import { CardType } from "@/card/card-types"
 import { createCardObjectSource } from "@/card/import/source"
 import { createStoreActions } from "@/card/stores/store-actions"
@@ -190,7 +191,7 @@ describe("card pack service runtime lifecycle integration", () => {
     expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false })
     expect(runtime.batch(BUILTIN_BATCH_ID)?.cardCount).toBeGreaterThan(0)
     expect(runtime.batch("pack_runtime")).toMatchObject({ disabled: false, cardCount: 1 })
-    expect(runtime.classOptions()).toEqual(["Warrior"])
+    expect(runtime.classOptions()).toEqual([...builtinBase.customFieldDefinitions.professions, "Warrior"])
 
     const disabled = await service.setPackDisabled("pack_runtime", true)
     expect(disabled.success).toBe(true)
@@ -199,7 +200,7 @@ describe("card pack service runtime lifecycle integration", () => {
     expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false })
     expect(runtime.batch(BUILTIN_BATCH_ID)?.cardCount).toBeGreaterThan(0)
     expect(runtime.batch("pack_runtime")).toMatchObject({ disabled: true })
-    expect(runtime.classOptions()).toEqual([])
+    expect(runtime.classOptions()).toEqual(builtinBase.customFieldDefinitions.professions)
 
     const enabled = await service.setPackDisabled("pack_runtime", false)
     expect(enabled.success).toBe(true)
@@ -208,7 +209,7 @@ describe("card pack service runtime lifecycle integration", () => {
     expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false })
     expect(runtime.batch(BUILTIN_BATCH_ID)?.cardCount).toBeGreaterThan(0)
     expect(runtime.batch("pack_runtime")).toMatchObject({ disabled: false })
-    expect(runtime.classOptions()).toEqual(["Warrior"])
+    expect(runtime.classOptions()).toEqual([...builtinBase.customFieldDefinitions.professions, "Warrior"])
 
     const removed = await service.removePack("pack_runtime")
     expect(removed.success).toBe(true)
@@ -217,6 +218,6 @@ describe("card pack service runtime lifecycle integration", () => {
     expect(runtime.batch(BUILTIN_BATCH_ID)).toMatchObject({ disabled: false })
     expect(runtime.batch(BUILTIN_BATCH_ID)?.cardCount).toBeGreaterThan(0)
     expect(runtime.batch("pack_runtime")).toBeUndefined()
-    expect(runtime.classOptions()).toEqual([])
+    expect(runtime.classOptions()).toEqual(builtinBase.customFieldDefinitions.professions)
   })
 })

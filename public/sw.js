@@ -1,35 +1,12 @@
-// Service Worker for handling chunk loading failures
+// Retire the previously published worker without navigating any open page.
+// Keep this URL available: removing it would leave old installations active.
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
-});
-
-// Intercept fetch requests
-self.addEventListener('fetch', (event) => {
-  // Only handle /_next/static/ requests
-  if (!event.request.url.includes('/_next/static/')) {
-    return;
-  }
-
-  event.respondWith(
-    fetch(event.request).catch((error) => {
-      // If chunk loading fails, force reload the page
-      console.warn('[SW] Failed to load chunk, triggering reload:', event.request.url);
-
-      // Notify all clients to reload
-      self.clients.matchAll().then((clients) => {
-        clients.forEach((client) => {
-          client.postMessage({
-            type: 'CHUNK_LOAD_ERROR',
-            url: event.request.url
-          });
-        });
-      });
-
-      throw error;
-    })
-  );
+  event.waitUntil((async () => {
+    await self.clients.claim();
+    await self.registration.unregister();
+  })());
 });

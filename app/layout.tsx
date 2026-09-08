@@ -7,7 +7,7 @@ import { CardSystemInitializer } from "@/components/card-system-initializer"
 import { Toaster } from "@/components/ui/toaster"
 import { FadeNotificationContainer } from "@/components/ui/fade-notification"
 import { ProgressModalProvider } from "@/components/ui/unified-progress-modal"
-import { ChunkLoadErrorHandler } from "@/components/chunk-load-error-handler"
+import { ServiceWorkerLifecycle } from "@/components/service-worker-lifecycle"
 import { MobileViewportScaler } from "@/components/mobile-viewport-scaler"
 import { getUmamiAnalyticsConfig } from "@/lib/analytics"
 import { APP_DESCRIPTION, APP_SHORT_DESCRIPTION, APP_TITLE, SITE_URL } from "@/lib/seo"
@@ -163,7 +163,7 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
-        <ChunkLoadErrorHandler />
+        <ServiceWorkerLifecycle />
         <MobileViewportScaler />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <ProgressModalProvider>

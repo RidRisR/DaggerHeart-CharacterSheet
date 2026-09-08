@@ -68,7 +68,7 @@ describe('character management image storage', () => {
 
       return {
         blob: async () => new NodeBlob([Buffer.from(base64, 'base64')], { type: mimeType }),
-      } as Response
+      }
     })
     localStorage.clear()
     await clearAllCharacterImages()

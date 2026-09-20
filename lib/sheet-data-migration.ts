@@ -11,6 +11,7 @@
  */
 
 import type { SheetData, AttributeValue } from './sheet-data'
+import { normalizePageVisibility } from '@/character/page-visibility'
 import { defaultSheetData } from './default-sheet-data'
 import { createEmptyCard, isEmptyCard, type StandardCard } from '@/card/card-types'
 import type { CharacterImageAssetMap, CharacterSheetImageField } from '@/character/storage/character-image-types'
@@ -22,6 +23,7 @@ import { upgradeOptionsData } from "@/data/list/upgrade"
 import {
   CURRENT_SCHEMA_VERSION,
   V3_SCHEMA_VERSION,
+  V4_SCHEMA_VERSION,
   assertSupportedSchemaVersion,
   detectSchemaVersion,
 } from './sheet-schema-version'
@@ -147,7 +149,8 @@ function migratePageVisibility(data: SheetData): SheetData {
     migrated.pageVisibility = {
       rangerCompanion: data.includePageThreeInExport,
       armorTemplate: false, // 默认隐藏护甲模板页
-      adventureNotes: false // 默认隐藏冒险笔记页
+      adventureNotes: false, // 默认隐藏冒险笔记页
+      beastForms: false
     }
     console.log('[Migration] Migrated includePageThreeInExport to pageVisibility')
   } else {
@@ -155,7 +158,8 @@ function migratePageVisibility(data: SheetData): SheetData {
     migrated.pageVisibility = {
       rangerCompanion: false,
       armorTemplate: false,
-      adventureNotes: false
+      adventureNotes: false,
+      beastForms: false
     }
     console.log('[Migration] Added default pageVisibility')
   }
@@ -247,9 +251,11 @@ function migratePageVisibilityFields(data: SheetData): SheetData {
   if (!('adventureNotes' in data.pageVisibility)) {
     const currentVisibility = data.pageVisibility as Record<string, boolean>
     migrated.pageVisibility = {
+      ...currentVisibility,
       rangerCompanion: currentVisibility.rangerCompanion ?? false,
       armorTemplate: currentVisibility.armorTemplate ?? false,
-      adventureNotes: false // 默认隐藏冒险笔记页
+      adventureNotes: false, // 默认隐藏冒险笔记页
+      beastForms: currentVisibility.beastForms ?? false
     }
     needsSave = true
     console.log('[Migration] Added missing adventureNotes field to pageVisibility')
@@ -1266,6 +1272,7 @@ export function normalizeCurrentSheetData(data: Partial<SheetData> | any): Sheet
     ...defaultSheetData,
     ...data,
     imageAssets: sanitizeImageAssets(data?.imageAssets),
+    pageVisibility: normalizePageVisibility(data?.pageVisibility),
     schemaVersion: CURRENT_SCHEMA_VERSION,
   }
 
@@ -1381,6 +1388,14 @@ export function migrateSheetData(
   if (migratedVersion === V2_SCHEMA_VERSION) {
     migrated = migrateCardInstanceIds(migrated)
     migratedVersion = V3_SCHEMA_VERSION
+  }
+
+  if (migratedVersion === V3_SCHEMA_VERSION) {
+    migrated = {
+      ...migrated,
+      pageVisibility: normalizePageVisibility(migrated.pageVisibility),
+      schemaVersion: V4_SCHEMA_VERSION,
+    }
   }
 
   return normalizeCurrentSheetData(migrated)

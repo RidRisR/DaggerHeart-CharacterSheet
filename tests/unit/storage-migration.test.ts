@@ -1,3 +1,4 @@
+import { CURRENT_SCHEMA_VERSION } from '@/lib/sheet-schema-version'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   ACTIVE_CHARACTER_ID_KEY,
@@ -32,15 +33,15 @@ describe('storage migration entrypoints', () => {
     localStorage.clear()
   })
 
-  it('loads and persists v3 data from stored v0 character data', () => {
+  it('loads and persists v4 data from stored v0 character data', () => {
     localStorage.setItem('dh_character_test-id', JSON.stringify(v0Sheet()))
 
     const loaded = loadCharacterById('test-id')
     const stored = JSON.parse(localStorage.getItem('dh_character_test-id') || '{}')
 
-    expect(loaded?.schemaVersion).toBe(3)
+    expect(loaded?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(loaded?.hope).toBe(3)
-    expect(stored.schemaVersion).toBe(3)
+    expect(stored.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(stored.hope).toBe(3)
   })
 
@@ -49,7 +50,7 @@ describe('storage migration entrypoints', () => {
 
     const duplicate = duplicateCharacter('source-id', 'Copy')
 
-    expect(duplicate?.schemaVersion).toBe(3)
+    expect(duplicate?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(duplicate?.name).toBe('Copy')
     expect(duplicate?.hope).toBe(3)
   })
@@ -66,13 +67,14 @@ describe('storage migration entrypoints', () => {
     expect(activeId).toBeTruthy()
 
     const stored = JSON.parse(localStorage.getItem(`${CHARACTER_DATA_PREFIX}${activeId}`) || '{}')
-    expect(stored.schemaVersion).toBe(3)
+    expect(stored.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(stored.hope).toBe(3)
     expect(stored.focused_card_ids).toEqual(['card-domain-1'])
     expect(stored.pageVisibility).toEqual({
       rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
+      beastForms: false,
     })
   })
 })

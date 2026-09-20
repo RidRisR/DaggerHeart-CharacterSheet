@@ -1,0 +1,46 @@
+/* Match the existing sheet's gray palette; CardMarkdown owns emphasis colors. */
+.beast-form-sheet { box-sizing: border-box; width: 210mm; height: 297mm; padding: 8px; background: white; color: theme('colors.gray.800'); border-radius: 6px; box-shadow: 0 10px 22px #00000016; display: flex; flex-direction: column; flex-shrink: 0; }
+.beast-form-sheet > * { flex-shrink: 0; }
+.beast-form-heading { display: flex; justify-content: space-between; align-items: flex-end; padding: 0 6px 10px; border-bottom: 2px solid theme('colors.gray.800'); }
+.beast-form-heading h1 { font-size: 24px; font-weight: 700; margin: 0 0 5px; line-height: 1.25; }
+.beast-form-heading p { font-size: 12px; margin: 0; color: theme('colors.gray.600'); }
+.beast-form-tier-heading { text-align: right; font-size: 18px; font-weight: 700; }
+.beast-form-tier-heading span { display: block; font-size: 12px; font-weight: 400; color: theme('colors.gray.600'); margin-top: 5px; }
+.beast-form-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; }
+.beast-form-tier-buttons, .beast-form-step-buttons { display: flex; gap: 6px; align-items: center; }
+.beast-form-pagination button { height: 44px; padding: 0 10px; border-color: theme('colors.gray.300'); background: white; color: theme('colors.gray.800'); border-radius: 4px; }
+.beast-form-pagination button:hover:not(:disabled) { background: theme('colors.gray.200'); }
+.beast-form-tier-buttons button { min-width: 84px; }
+.beast-form-pagination button[aria-current="page"], .beast-form-pagination button[aria-current="page"]:hover { background: theme('colors.gray.800'); color: white; border-color: theme('colors.gray.800'); }
+.beast-form-counter { min-width: 44px; text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+.beast-form-pagination-spacer { height: 64px; }
+.beast-form-rule { margin: 0 0 10px; padding: 8px 10px; background: theme('colors.gray.100'); border: 1px solid theme('colors.gray.300'); border-radius: 4px; font-size: 12px; line-height: 1.55; }
+.beast-form-table-heading { display: grid; grid-template-columns: 30% 70%; background: theme('colors.gray.800'); color: white; padding: 7px 10px; font-size: 12px; font-weight: 700; border-radius: 4px 4px 0 0; }
+.beast-form-entries { border: 2px solid theme('colors.gray.800'); border-top: 0; border-radius: 0 0 4px 4px; }
+.beast-form-entry { display: grid; grid-template-columns: 30% 70%; break-inside: avoid; border-top: 1px solid theme('colors.gray.400'); min-height: 128px; }
+.beast-form-entry:first-child { border-top: 0; }
+.beast-form-identity { padding: 9px 10px; border-right: 1px solid theme('colors.gray.400'); background: theme('colors.gray.50'); }
+.beast-form-identity h2 { font-size: 16px; font-weight: 700; margin: 0 0 3px; line-height: 1.3; }
+.beast-form-examples { font-size: 11px; color: theme('colors.gray.600'); line-height: 1.5; margin-bottom: 7px; }
+.beast-form-stats { font-size: 12px; line-height: 1.65; }
+.beast-form-stats > div { display: flex; align-items: baseline; }
+.beast-form-stats dt { color: theme('colors.gray.600'); margin-right: 6px; font-size: 11px; flex-shrink: 0; }
+.beast-form-stats dd { margin: 0; }
+.beast-form-stats p { margin: 0; }
+.beast-form-traits { padding: 9px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.beast-form-traits p { margin: 0 0 6px; }
+.beast-form-traits p:last-child { margin-bottom: 0; }
+.beast-form-traits ul { padding-left: 20px; margin: 4px 0 0; }
+.beast-form-traits li { margin: 0; }
+.beast-form-sheet-gap { min-height: 10px; flex: 1; }
+.beast-form-footer { margin-top: auto; padding: 10px 4px 3px; display: flex; justify-content: space-between; font-size: 11px; color: theme('colors.gray.600'); border-top: 1px solid theme('colors.gray.300'); }
+.beast-forms-print-sheets > .beast-form-sheet { margin: 0 auto 24px; }
+.print-all-pages .page-beast-forms { display: block; padding: 20px 0; }
+@media print {
+  .beast-forms-print-sheets > .beast-form-sheet { width: 200mm; height: 286mm; padding: 0; margin: 0; border-radius: 0; box-shadow: none; break-after: page; }
+  .beast-forms-print-sheets > .beast-form-sheet:last-child { break-after: auto; }
+  .beast-form-pagination-spacer { display: none; }
+  .beast-form-heading { margin-bottom: 10px; }
+  .print-all-pages .page-beast-forms { display: block; padding: 0; break-after: page; }
+  .print-all-pages .page-beast-forms.last-printed-page { break-after: auto; }
+}

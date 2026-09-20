@@ -5,6 +5,10 @@ import CharacterSheet from "@/components/character-sheet"
 import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-ranger-companion"
 import CharacterSheetPageAdventureNotes from "@/components/character-sheet-page-adventure-notes"
+import CharacterSheetPageBeastForms from '@/components/character-sheet-page-beast-forms'
+import { BeastFormsPrintPages } from '@/components/beast-forms/beast-forms-print-pages'
+import { BeastFormsNavigationProvider } from '@/components/beast-forms/beast-forms-navigation'
+import { useBeastFormPages } from '@/components/beast-forms/use-beast-form-pages'
 import { isEmptyCard, type StandardCard } from "@/card/card-types"
 import { CardDrawer } from "@/components/card-drawer"
 import { showFadeNotification } from "@/components/ui/fade-notification"
@@ -147,7 +151,7 @@ registerPages([
     component: AdventureNotesPage,
     printClass: 'page-adventure-notes',
     visibility: { type: 'config', configKey: 'adventureNotes' },
-    printOrder: 5,
+    printOrder: 6,
     showInTabs: true
   },
   {
@@ -163,7 +167,7 @@ registerPages([
           data.cards.slice(1).some(card => card && !isEmptyCard(card))
       }
     },
-    printOrder: 6,
+    printOrder: 7,
     showInTabs: false  // 不在Tab中显示
   },
   {
@@ -179,12 +183,23 @@ registerPages([
           data.inventory_cards.some(card => card && !isEmptyCard(card)))
       }
     },
-    printOrder: 7,
+    printOrder: 8,
     showInTabs: false  // 不在Tab中显示
+  },
+  {
+    id: 'beast-forms',
+    label: '野兽形态',
+    component: CharacterSheetPageBeastForms,
+    printComponent: BeastFormsPrintPages,
+    printClass: 'page-beast-forms',
+    visibility: { type: 'config', configKey: 'beastForms' },
+    printOrder: 5,
+    showInTabs: true,
   }
 ])
 
 export default function HomeClientApp() {
+  const beastFormPages = useBeastFormPages()
   // 多角色系统状态
   const {
     sheetData: formData,
@@ -661,6 +676,7 @@ export default function HomeClientApp() {
 
     return (
       <CurrentCharacterIdContext.Provider value={currentCharacterId}>
+        <BeastFormsNavigationProvider key={currentCharacterId}>
         <PrintProvider containerRef={printContainerRef}>
           <PrintReadyChecker onSkipWaiting={handleSkipWaiting}>
             <div className="print-all-pages">
@@ -696,11 +712,12 @@ export default function HomeClientApp() {
 
               {/* 打印内容容器 - 用于图片加载检测 */}
               <div ref={printContainerRef}>
-                <PrintPageRenderer sheetData={formData} />
+                <PrintPageRenderer sheetData={formData} excludePageIds={beastFormPages.status === 'empty' ? ['beast-forms'] : []} />
               </div>
             </div>
           </PrintReadyChecker>
         </PrintProvider>
+        </BeastFormsNavigationProvider>
       </CurrentCharacterIdContext.Provider>
     )
   }
@@ -742,7 +759,8 @@ export default function HomeClientApp() {
 
   return (
     <CurrentCharacterIdContext.Provider value={currentCharacterId}>
-      <main className={`min-w-0 w-full max-w-full mx-auto px-0 container ${isMobile ? 'pb-32' : 'pb-20'
+      <BeastFormsNavigationProvider key={currentCharacterId}>
+      <main className={`min-w-0 w-full max-w-full mx-auto px-0 container print:pb-0 ${isMobile ? 'pb-32' : 'pb-20'
         }`}>
 
       {/* 底部抽屉式卡牌展示 - 打印时隐藏 */}
@@ -951,6 +969,7 @@ export default function HomeClientApp() {
       <MemoryAlert />
         {setupPrompt.dialog}
       </main>
+      </BeastFormsNavigationProvider>
     </CurrentCharacterIdContext.Provider>
   )
 }

@@ -9,6 +9,7 @@ import type {
   UserModifierContribution,
 } from "@/automation/core/types"
 import type { CharacterImageAssetMap } from "@/character/storage/character-image-types"
+import type { CharacterPageVisibility } from '@/character/page-visibility'
 
 // ===== 多角色系统数据结构 =====
 export interface CharacterMetadata {
@@ -249,12 +250,7 @@ export interface SheetData {
   
   // ===== 页面可见性控制 =====
   includePageThreeInExport?: boolean // @deprecated 使用 pageVisibility 代替
-  pageVisibility?: {
-    rangerCompanion: boolean  // 游侠伙伴页
-    armorTemplate: boolean    // 护甲模板页
-    adventureNotes: boolean   // 冒险笔记页
-    // 未来可添加更多页面
-  }
+  pageVisibility?: CharacterPageVisibility
 
   // ===== 护甲模板数据 =====
   armorTemplate?: ArmorTemplateData

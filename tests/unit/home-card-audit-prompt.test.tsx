@@ -39,6 +39,9 @@ vi.mock("@/card/stores/unified-card-store", () => ({
   useCardStore: (selector: any) => {
     const state = {
       initialized: true,
+      cards: new Map(),
+      batches: new Map(),
+      error: null,
       loading: false,
       getCardById: mockFns.getCardById,
     }

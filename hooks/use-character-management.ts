@@ -90,6 +90,7 @@ export function useCharacterManagement({ isClient, setCurrentTabValue }: UseChar
     if (typeof pageVisibility.rangerCompanion !== 'boolean') fail('pageVisibility.rangerCompanion')
     if (typeof pageVisibility.armorTemplate !== 'boolean') fail('pageVisibility.armorTemplate')
     if (typeof pageVisibility.adventureNotes !== 'boolean') fail('pageVisibility.adventureNotes')
+    if (typeof pageVisibility.beastForms !== 'boolean') fail('pageVisibility.beastForms')
 
     const equipment = importedData.equipment
     if (!isRecord(equipment)) fail('equipment')

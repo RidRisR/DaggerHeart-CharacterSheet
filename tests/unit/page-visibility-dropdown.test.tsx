@@ -12,6 +12,7 @@ describe("PageVisibilityDropdown", () => {
         rangerCompanion: false,
         armorTemplate: false,
         adventureNotes: false,
+        beastForms: false,
       },
     })
   })
@@ -21,6 +22,9 @@ describe("PageVisibilityDropdown", () => {
 
     const trigger = screen.getByRole("button", { name: "页面管理" })
     fireEvent.pointerDown(trigger)
+
+    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /野兽形态/ }))
+    expect(sheet()?.pageVisibility?.beastForms).toBe(true)
 
     const rangerCompanion = screen.getByRole("menuitemcheckbox", { name: /游侠伙伴/ })
     fireEvent.click(rangerCompanion)
@@ -32,6 +36,11 @@ describe("PageVisibilityDropdown", () => {
 
     fireEvent.click(screen.getByRole("menuitemcheckbox", { name: /主板扩展/ }))
 
+    expect(sheet()?.pageVisibility?.armorTemplate).toBe(true)
+    expect(sheet()?.pageVisibility?.beastForms).toBe(true)
+    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /野兽形态/ }))
+    expect(sheet()?.pageVisibility?.beastForms).toBe(false)
+    expect(sheet()?.pageVisibility?.rangerCompanion).toBe(true)
     expect(sheet()?.pageVisibility?.armorTemplate).toBe(true)
     expect(screen.getByRole("menuitemcheckbox", { name: /游侠伙伴/ })).toBeInTheDocument()
     expect(trigger).toHaveAttribute("aria-expanded", "true")

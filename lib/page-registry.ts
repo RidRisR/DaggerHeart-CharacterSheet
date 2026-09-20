@@ -4,18 +4,20 @@
 
 import type { ComponentType } from 'react'
 import type { SheetData } from './sheet-data'
+import type { OptionalPageKey } from '@/character/page-visibility'
 
 export interface PageDefinition {
   id: string
   label: string
   component: ComponentType
+  printComponent?: ComponentType
   printClass: string
   tabValue?: string  // Tab值，如果与id不同
   
   // 显示条件
   visibility: 
     | { type: 'always' }
-    | { type: 'config'; configKey: 'rangerCompanion' | 'armorTemplate' | 'adventureNotes' }
+    | { type: 'config'; configKey: OptionalPageKey }
     | { type: 'data'; dataCheck: (data: SheetData) => boolean }
   
   // 打印顺序（数字越小越靠前）

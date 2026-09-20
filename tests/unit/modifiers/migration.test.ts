@@ -1,3 +1,4 @@
+import { CURRENT_SCHEMA_VERSION } from '@/lib/sheet-schema-version'
 import { describe, expect, it } from "vitest"
 import type { StandardCard } from "@/card/card-types"
 import { defaultSheetData } from "@/lib/default-sheet-data"
@@ -363,7 +364,7 @@ describe("modifier state migration", () => {
       } as StandardCard],
     }))
 
-    expect(migrated.schemaVersion).toBe(3)
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(migrated.evasion).toBe("15")
     expect(migrated.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: "profession:current:evasion",

@@ -33,6 +33,7 @@ next-env.d.ts
 # testing
 coverage/
 .nyc_output/
+/output/playwright/
 
 .claude
 .superpowers/

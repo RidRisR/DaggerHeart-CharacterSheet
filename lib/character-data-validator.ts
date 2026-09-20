@@ -9,6 +9,8 @@
  */
 
 import { SheetData } from './sheet-data'
+import { isCurrentPageVisibility } from '@/character/page-visibility'
+import { CURRENT_SCHEMA_VERSION } from './sheet-schema-version'
 import { StandardCard } from '@/card/card-types'
 import { defaultSheetData } from './default-sheet-data'
 import type { AttributeValue } from './sheet-data'
@@ -77,7 +79,8 @@ function validateRawImportCandidate(data: any): data is Record<string, unknown> 
 }
 
 function validateCurrentSheetData(data: any): data is SheetData {
-  return validateSheetData(data) && typeof data.schemaVersion === 'number'
+  return validateSheetData(data) && data.schemaVersion === CURRENT_SCHEMA_VERSION
+    && isCurrentPageVisibility(data.pageVisibility)
 }
 
 function sanitizeValidatedSheetData(data: SheetData): SheetData {

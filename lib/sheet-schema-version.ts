@@ -1,5 +1,6 @@
 export const V3_SCHEMA_VERSION = 3
-export const CURRENT_SCHEMA_VERSION = V3_SCHEMA_VERSION
+export const V4_SCHEMA_VERSION = 4
+export const CURRENT_SCHEMA_VERSION = V4_SCHEMA_VERSION
 
 export function detectSchemaVersion(data: unknown): number {
   if (!data || typeof data !== 'object') {

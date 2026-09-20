@@ -1,3 +1,4 @@
+import { CURRENT_SCHEMA_VERSION } from '@/lib/sheet-schema-version'
 import { describe, expect, it } from "vitest"
 import { migrateSheetData } from "../sheet-data-migration"
 
@@ -13,7 +14,7 @@ describe("card instance identity migration", () => {
       ],
     })
 
-    expect(migrated.schemaVersion).toBe(3)
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(migrated.cards[0].id).toBe("card-a")
     expect(migrated.cards[0].instanceId).toMatch(/^cardinst_/)
     expect(migrated.inventory_cards?.[0].instanceId).toMatch(/^cardinst_/)

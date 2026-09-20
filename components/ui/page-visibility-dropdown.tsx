@@ -1,6 +1,7 @@
 "use client"
 
 import { Plus } from "lucide-react"
+import { DEFAULT_PAGE_VISIBILITY, type OptionalPageKey } from '@/character/page-visibility'
 
 import { Button } from "@/components/ui/button"
 import {
@@ -39,15 +40,14 @@ export function PageVisibilityDropdown() {
     visible: sheetData.pageVisibility?.[config.visibilityKey!] || false
   }))
 
-  const togglePageVisibility = (pageId: 'rangerCompanion' | 'armorTemplate' | 'adventureNotes') => {
-    const currentValue = sheetData.pageVisibility?.[pageId]
-    setSheetData({
+  const togglePageVisibility = (pageId: OptionalPageKey) => {
+    setSheetData(current => ({
       pageVisibility: {
-        rangerCompanion: pageId === 'rangerCompanion' ? !currentValue : (sheetData.pageVisibility?.rangerCompanion ?? false),
-        armorTemplate: pageId === 'armorTemplate' ? !currentValue : (sheetData.pageVisibility?.armorTemplate ?? false),
-        adventureNotes: pageId === 'adventureNotes' ? !currentValue : (sheetData.pageVisibility?.adventureNotes ?? false)
+        ...DEFAULT_PAGE_VISIBILITY,
+        ...current.pageVisibility,
+        [pageId]: !current.pageVisibility?.[pageId]
       }
-    })
+    }))
   }
 
   return (

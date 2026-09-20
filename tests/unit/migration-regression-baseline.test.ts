@@ -1,3 +1,4 @@
+import { CURRENT_SCHEMA_VERSION } from '@/lib/sheet-schema-version'
 import { describe, expect, it } from 'vitest'
 import { migrateSheetData } from '@/lib/sheet-data-migration'
 
@@ -20,7 +21,7 @@ function legacySheet(overrides: Record<string, unknown> = {}) {
   } as any
 }
 
-describe('migration regression baseline through v3', () => {
+describe('migration regression baseline through v4', () => {
   it('migrates old page visibility, cards, attributes, hope, notebook, and cleanup behavior', () => {
     const migrated = migrateSheetData(legacySheet({
       includePageThreeInExport: true,
@@ -29,12 +30,13 @@ describe('migration regression baseline through v3', () => {
       strength: { checked: false, value: '0', spellcasting: true },
     }))
 
-    expect(migrated.schemaVersion).toBe(3)
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(migrated.cards[0].instanceId).toBe('cardinst_loadout_0_card-domain-1')
     expect(migrated.pageVisibility).toEqual({
       rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
+      beastForms: false,
     })
     expect('includePageThreeInExport' in migrated).toBe(false)
     expect(migrated.inventory_cards).toHaveLength(20)
@@ -63,6 +65,7 @@ describe('migration regression baseline through v3', () => {
       rangerCompanion: true,
       armorTemplate: true,
       adventureNotes: false,
+      beastForms: false,
     })
     expect('page3' in (migrated.pageVisibility as any)).toBe(false)
   })

@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { getTabPages, type PageDefinition } from "@/lib/page-registry"
 import type { SheetData } from "@/lib/sheet-data"
+import { SheetPageSlotContext } from './sheet-page-slot-context'
 
 interface PageDisplayProps {
   isDualPageMode: boolean
@@ -32,7 +33,7 @@ interface PageTabsBarProps {
 
 function PageTabsBar({ ariaLabel, isMobile, visibleTabs }: PageTabsBarProps) {
   return (
-    <div className="tabs-container w-full overflow-x-auto">
+    <div className="tabs-container w-full overflow-x-auto print:hidden">
       <TabsList
         aria-label={ariaLabel}
         className={cn(
@@ -138,7 +139,7 @@ export function PageDisplay({
     >
       {isDualPageMode && !isMobile ? (
         <div className="w-full overflow-x-auto">
-          <div className="mx-auto grid w-[425mm] min-w-[425mm] grid-cols-2 gap-1">
+          <div className="mx-auto grid w-[425mm] min-w-[425mm] grid-cols-2 gap-1 print:block print:w-[210mm] print:min-w-0">
             <div className="w-[210mm]">
               <Tabs value={leftTabValue} onValueChange={onSetLeftTab} className="w-[210mm]">
                 <PageTabsBar
@@ -146,18 +147,18 @@ export function PageDisplay({
                   isMobile={false}
                   visibleTabs={visibleTabs}
                 />
-                <PageTabContents visibleTabs={visibleTabs} />
+                <SheetPageSlotContext.Provider value="left"><PageTabContents visibleTabs={visibleTabs} /></SheetPageSlotContext.Provider>
               </Tabs>
             </div>
 
-            <div className="w-[210mm]">
+            <div className={cn('w-[210mm]', leftTabValue === rightTabValue && 'print:hidden')}>
               <Tabs value={rightTabValue} onValueChange={onSetRightTab} className="w-[210mm]">
                 <PageTabsBar
                   ariaLabel="右侧角色卡页面"
                   isMobile={false}
                   visibleTabs={visibleTabs}
                 />
-                <PageTabContents visibleTabs={visibleTabs} />
+                <SheetPageSlotContext.Provider value="right"><PageTabContents visibleTabs={visibleTabs} /></SheetPageSlotContext.Provider>
               </Tabs>
             </div>
           </div>

@@ -22,6 +22,7 @@ function currentSheet(overrides: Partial<SheetData> = {}): SheetData {
       rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
+      beastForms: false,
     },
     inventory_cards: overrides.inventory_cards ?? structuredClone(defaultSheetData.inventory_cards),
   }
@@ -95,6 +96,7 @@ describe('imported save creation', () => {
       rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
+      beastForms: false,
     })
     expect('includePageThreeInExport' in stored).toBe(false)
 
@@ -118,6 +120,7 @@ describe('imported save creation', () => {
     ['missing trainingOptions', (sheet: any) => { delete sheet.trainingOptions }],
     ['missing pageVisibility', (sheet: any) => { delete sheet.pageVisibility }],
     ['empty pageVisibility', (sheet: any) => { sheet.pageVisibility = {} }],
+    ['missing beastForms visibility', (sheet: any) => { delete sheet.pageVisibility.beastForms }],
     ['missing equipment', (sheet: any) => { delete sheet.equipment }],
     ['missing armorTemplate', (sheet: any) => { delete sheet.armorTemplate }],
     ['missing adventureNotes', (sheet: any) => { delete sheet.adventureNotes }],

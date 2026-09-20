@@ -6,20 +6,21 @@ import { getVisiblePages } from '@/lib/page-registry'
 
 interface PrintPageRendererProps {
   sheetData: SheetData
+  excludePageIds?: readonly string[]
 }
 
 /**
  * 动态渲染打印页面
  * 根据页面注册信息和当前数据状态自动渲染所有可见页面
  */
-export function PrintPageRenderer({ sheetData }: PrintPageRendererProps) {
-  const visiblePages = getVisiblePages(sheetData)
+export function PrintPageRenderer({ sheetData, excludePageIds = [] }: PrintPageRendererProps) {
+  const visiblePages = getVisiblePages(sheetData).filter(page => !excludePageIds.includes(page.id))
   const lastPageIndex = visiblePages.length - 1
   
   return (
     <div className="pb-40 print:pb-0">
       {visiblePages.map((page, index) => {
-        const Component = page.component
+        const Component = page.printComponent ?? page.component
         const isLastPage = index === lastPageIndex
         
         return (

@@ -1,3 +1,4 @@
+import { CURRENT_SCHEMA_VERSION } from '@/lib/sheet-schema-version'
 import { describe, expect, it } from 'vitest'
 import {
   validateAndProcessCharacterData,
@@ -49,18 +50,20 @@ describe('main import and normalize regression baseline', () => {
       rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
+      beastForms: false,
     })
     expect(htmlResult.data?.pageVisibility).toEqual({
       rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
+      beastForms: false,
     })
     expect(jsonResult.data?.inventory_cards).toHaveLength(20)
     expect(htmlResult.data?.inventory_cards).toHaveLength(20)
     expect('includePageThreeInExport' in (jsonResult.data as any)).toBe(false)
     expect('includePageThreeInExport' in (htmlResult.data as any)).toBe(false)
-    expect(jsonResult.data?.schemaVersion).toBe(3)
-    expect(htmlResult.data?.schemaVersion).toBe(3)
+    expect(jsonResult.data?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
+    expect(htmlResult.data?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
   })
 
   it('captures current import invalid card filtering behavior', () => {
@@ -76,6 +79,6 @@ describe('main import and normalize regression baseline', () => {
       ...validCard,
       instanceId: 'cardinst_loadout_0_card-domain-1',
     }])
-    expect(result.data?.schemaVersion).toBe(3)
+    expect(result.data?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
   })
 })

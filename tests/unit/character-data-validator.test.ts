@@ -1,3 +1,4 @@
+import { CURRENT_SCHEMA_VERSION } from '@/lib/sheet-schema-version'
 import { describe, expect, it } from 'vitest'
 import {
   validateAndProcessCharacterData,
@@ -79,7 +80,7 @@ describe('character data import validation', () => {
     const result = validateJSONCharacterData(JSON.stringify(rawImport()))
 
     expect(result.valid).toBe(true)
-    expect(result.data?.schemaVersion).toBe(3)
+    expect(result.data?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(result.data?.hope).toBe(3)
     expect((result.data as any).unknownFutureField).toEqual({ keep: true })
   })
@@ -106,8 +107,8 @@ describe('character data import validation', () => {
 
     expect(json.valid).toBe(true)
     expect(html.valid).toBe(true)
-    expect(json.data?.schemaVersion).toBe(3)
-    expect(html.data?.schemaVersion).toBe(3)
+    expect(json.data?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
+    expect(html.data?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(json.data?.hope).toBe(html.data?.hope)
     expect(json.data?.cards).toEqual(html.data?.cards)
     expect((json.data as any).focused_card_ids).toEqual(['card-domain-1'])

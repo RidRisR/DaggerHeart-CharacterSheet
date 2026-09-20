@@ -2,12 +2,14 @@
  * 页面配置数据 - 统一管理所有页面的标签和信息
  */
 
+import type { CharacterPageVisibility, OptionalPageKey } from '@/character/page-visibility'
+
 export interface PageConfig {
-  id: 'page1' | 'page2' | 'page3' | 'adventure-notes' | 'page4'
+  id: 'page1' | 'page2' | 'page3' | 'adventure-notes' | 'page4' | 'beast-forms'
   label: string
   description: string
   alwaysVisible: boolean
-  visibilityKey?: 'rangerCompanion' | 'armorTemplate' | 'adventureNotes' // 对应 pageVisibility 中的键
+  visibilityKey?: OptionalPageKey
 }
 
 export const pageConfigs: PageConfig[] = [
@@ -38,6 +40,13 @@ export const pageConfigs: PageConfig[] = [
     visibilityKey: 'armorTemplate'
   },
   {
+    id: 'beast-forms',
+    label: '野兽形态',
+    description: '德鲁伊野兽形态参考表',
+    alwaysVisible: false,
+    visibilityKey: 'beastForms'
+  },
+  {
     id: 'adventure-notes',
     label: '冒险笔记',
     description: '角色背景与冒险记录',
@@ -49,7 +58,7 @@ export const pageConfigs: PageConfig[] = [
 /**
  * 获取可见的页面配置
  */
-export function getVisiblePageConfigs(pageVisibility?: { rangerCompanion?: boolean; armorTemplate?: boolean; adventureNotes?: boolean }) {
+export function getVisiblePageConfigs(pageVisibility?: Partial<CharacterPageVisibility>) {
   return pageConfigs.filter(config => {
     if (config.alwaysVisible) return true
     if (!config.visibilityKey) return false

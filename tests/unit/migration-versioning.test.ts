@@ -57,9 +57,9 @@ function v1Sheet(overrides: Record<string, unknown> = {}) {
 }
 
 describe('sheet schema version', () => {
-  it('uses schema version 3 for card automation instance identity', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(3)
-    expect(defaultSheetData.schemaVersion).toBe(3)
+  it('uses schema version 4 for beast form page preferences', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBe(4)
+    expect(defaultSheetData.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
   })
 
   it('treats missing, invalid, or non-integer schema versions as v0', () => {
@@ -77,22 +77,22 @@ describe('sheet schema version', () => {
   })
 
   it('rejects saves from newer schema versions', () => {
-    expect(() => assertSupportedSchemaVersion(4)).toThrow(/newer schema version/i)
+    expect(() => assertSupportedSchemaVersion(CURRENT_SCHEMA_VERSION + 1)).toThrow(/newer schema version/i)
   })
 })
 
 describe('sheet data version migration', () => {
-  it('migrates v0 data to v3 through the full version chain', () => {
+  it('migrates v0 data to v4 through the full version chain', () => {
     const migrated = migrateSheetData(v0Sheet())
 
-    expect(migrated.schemaVersion).toBe(3)
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(migrated.hope).toBe(3)
     expect(migrated.hopeMax).toBe(4)
     expect(migrated.inventory_cards).toHaveLength(20)
     expect(migrated.notebook?.pages).toHaveLength(1)
   })
 
-  it('migrates v1 data to v3 and moves legacy equipment fields', () => {
+  it('migrates v1 data to v4 and moves legacy equipment fields', () => {
     const migrated = migrateSheetData(v1Sheet({
       primaryWeaponName: '阔剑',
       primaryWeaponTrait: '物理/单手/近战',
@@ -104,7 +104,7 @@ describe('sheet data version migration', () => {
       armorFeature: '重型',
     }))
 
-    expect(migrated.schemaVersion).toBe(3)
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(migrated.equipment.weaponSlots.primary).toMatchObject({
       name: '阔剑',
       trait: '物理/单手/近战',
@@ -140,7 +140,7 @@ describe('sheet data version migration', () => {
       },
     }))
 
-    expect(migrated.schemaVersion).toBe(3)
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(migrated.modifierState?.targetStates.evasion?.activeBaseId).toBe('user:evasion-base')
     expect(migrated.userModifierContributions).toEqual([{
       id: 'user:evasion-base',
@@ -159,7 +159,7 @@ describe('sheet data version migration', () => {
       }],
     }))
 
-    expect(migrated.schemaVersion).toBe(3)
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(migrated.evasion).toBe('15')
     expect(migrated.modifierState?.targetStates.evasion).toEqual({
       activeBaseId: getEstimatedBaseId('evasion'),
@@ -192,11 +192,11 @@ describe('sheet data version migration', () => {
     )
   })
 
-  it('keeps v3 data stable and idempotent', () => {
+  it('keeps current-schema data stable and idempotent', () => {
     const once = migrateSheetData(v0Sheet())
     const twice = migrateSheetData(once)
 
-    expect(once.schemaVersion).toBe(3)
+    expect(once.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(twice).toEqual(once)
   })
 
@@ -208,7 +208,7 @@ describe('sheet data version migration', () => {
       },
     }))
 
-    expect(migrated.schemaVersion).toBe(3)
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(migrated.upgradeStates).toEqual({
       'tier1-1-0': { checked: true, params: { target: 'hpMax' } },
     })
@@ -224,11 +224,12 @@ describe('sheet data version migration', () => {
       rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
+      beastForms: false,
     })
     expect('includePageThreeInExport' in migrated).toBe(false)
   })
 
   it('throws for newer schema versions', () => {
-    expect(() => migrateSheetData(v0Sheet({ schemaVersion: 4 }))).toThrow(/newer schema version/i)
+    expect(() => migrateSheetData(v0Sheet({ schemaVersion: CURRENT_SCHEMA_VERSION + 1 }))).toThrow(/newer schema version/i)
   })
 })

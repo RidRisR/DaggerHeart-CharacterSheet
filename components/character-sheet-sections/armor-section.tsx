@@ -163,7 +163,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
             onBlur={commitBaseArmorMax}
             onKeyDown={(e) => handleCommitKeyDown(e, commitBaseArmorMax)}
             {...getElementProps(baseArmorMaxValue, "armor-base-score")}
-            className="w-full border-b border-gray-400 focus:outline-none print-empty-hide"
+            className="block h-6 w-full border-b border-gray-400 focus:outline-none print-empty-hide"
           />
         </div>
         <div className="col-span-3">
@@ -177,7 +177,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
               onBlur={() => commitThresholdSide("minor")}
               onKeyDown={(e) => handleCommitKeyDown(e, () => commitThresholdSide("minor"))}
               {...getElementProps(thresholdValue("minor"), "armor-minor-threshold")}
-              className="w-0 min-w-0 flex-1 border-b border-gray-400 text-center focus:outline-none print-empty-hide"
+              className="h-full w-0 min-w-0 flex-1 border-b border-gray-400 text-center focus:outline-none print-empty-hide"
             />
             <span className="flex-none text-[10px] leading-none text-gray-500">/</span>
             <input
@@ -188,7 +188,7 @@ export function ArmorSection({ onOpenArmorModal }: ArmorSectionProps) {
               onBlur={() => commitThresholdSide("major")}
               onKeyDown={(e) => handleCommitKeyDown(e, () => commitThresholdSide("major"))}
               {...getElementProps(thresholdValue("major"), "armor-major-threshold")}
-              className="w-0 min-w-0 flex-1 border-b border-gray-400 text-center focus:outline-none print-empty-hide"
+              className="h-full w-0 min-w-0 flex-1 border-b border-gray-400 text-center focus:outline-none print-empty-hide"
             />
           </div>
         </div>

@@ -391,7 +391,7 @@ export default function CardManagerPage() {
             </Button>
             <Button variant="outline" onClick={() => navigateToPage("/card-pack-guide")} className="justify-center">
               <BookOpen className="mr-2 h-4 w-4" />
-              创作指南
+              AI 提示词与创作指南
             </Button>
             <Button variant="outline" onClick={() => navigateToPage("/card-editor")} className="justify-center">
               <Edit3 className="mr-2 h-4 w-4" />

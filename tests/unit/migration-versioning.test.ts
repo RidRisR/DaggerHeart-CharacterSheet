@@ -57,8 +57,8 @@ function v1Sheet(overrides: Record<string, unknown> = {}) {
 }
 
 describe('sheet schema version', () => {
-  it('uses schema version 4 for beast form page preferences', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(4)
+  it('uses schema version 5 for martial stance state and page preferences', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBe(5)
     expect(defaultSheetData.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
   })
 
@@ -225,6 +225,7 @@ describe('sheet data version migration', () => {
       armorTemplate: false,
       adventureNotes: false,
       beastForms: false,
+    martialStances: false,
     })
     expect('includePageThreeInExport' in migrated).toBe(false)
   })

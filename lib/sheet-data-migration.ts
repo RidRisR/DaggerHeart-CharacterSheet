@@ -11,6 +11,8 @@
  */
 
 import type { SheetData, AttributeValue } from './sheet-data'
+import { normalizeMartialStancesState } from "@/character/martial-stances/state"
+import { applyMartialStanceHealthInvariant } from "@/character/martial-stances/actions"
 import { normalizePageVisibility } from '@/character/page-visibility'
 import { defaultSheetData } from './default-sheet-data'
 import { createEmptyCard, isEmptyCard, type StandardCard } from '@/card/card-types'
@@ -24,6 +26,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   V3_SCHEMA_VERSION,
   V4_SCHEMA_VERSION,
+  V5_SCHEMA_VERSION,
   assertSupportedSchemaVersion,
   detectSchemaVersion,
 } from './sheet-schema-version'
@@ -150,7 +153,8 @@ function migratePageVisibility(data: SheetData): SheetData {
       rangerCompanion: data.includePageThreeInExport,
       armorTemplate: false, // 默认隐藏护甲模板页
       adventureNotes: false, // 默认隐藏冒险笔记页
-      beastForms: false
+      beastForms: false,
+      martialStances: false
     }
     console.log('[Migration] Migrated includePageThreeInExport to pageVisibility')
   } else {
@@ -159,7 +163,8 @@ function migratePageVisibility(data: SheetData): SheetData {
       rangerCompanion: false,
       armorTemplate: false,
       adventureNotes: false,
-      beastForms: false
+      beastForms: false,
+      martialStances: false
     }
     console.log('[Migration] Added default pageVisibility')
   }
@@ -255,7 +260,8 @@ function migratePageVisibilityFields(data: SheetData): SheetData {
       rangerCompanion: currentVisibility.rangerCompanion ?? false,
       armorTemplate: currentVisibility.armorTemplate ?? false,
       adventureNotes: false, // 默认隐藏冒险笔记页
-      beastForms: currentVisibility.beastForms ?? false
+      beastForms: currentVisibility.beastForms ?? false,
+      martialStances: currentVisibility.martialStances ?? false
     }
     needsSave = true
     console.log('[Migration] Added missing adventureNotes field to pageVisibility')
@@ -1273,6 +1279,7 @@ export function normalizeCurrentSheetData(data: Partial<SheetData> | any): Sheet
     ...data,
     imageAssets: sanitizeImageAssets(data?.imageAssets),
     pageVisibility: normalizePageVisibility(data?.pageVisibility),
+    martialStances: normalizeMartialStancesState(data?.martialStances),
     schemaVersion: CURRENT_SCHEMA_VERSION,
   }
 
@@ -1289,7 +1296,7 @@ export function normalizeCurrentSheetData(data: Partial<SheetData> | any): Sheet
   normalized = reconcileModifierState(normalized)
   normalized = cleanupLegacyUpgradeFields(normalized)
 
-  return cleanupDeprecatedFields(normalized)
+  return cleanupDeprecatedFields(applyMartialStanceHealthInvariant(normalized))
 }
 
 function migrateV0ToV1(raw: Partial<SheetData> | any): Partial<SheetData> {
@@ -1395,6 +1402,16 @@ export function migrateSheetData(
       ...migrated,
       pageVisibility: normalizePageVisibility(migrated.pageVisibility),
       schemaVersion: V4_SCHEMA_VERSION,
+    }
+    migratedVersion = V4_SCHEMA_VERSION
+  }
+
+  if (migratedVersion === V4_SCHEMA_VERSION) {
+    migrated = {
+      ...migrated,
+      pageVisibility: normalizePageVisibility(migrated.pageVisibility),
+      martialStances: normalizeMartialStancesState(migrated.martialStances),
+      schemaVersion: V5_SCHEMA_VERSION,
     }
   }
 

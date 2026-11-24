@@ -13,6 +13,7 @@ describe("PageVisibilityDropdown", () => {
         armorTemplate: false,
         adventureNotes: false,
         beastForms: false,
+      martialStances: false,
       },
     })
   })

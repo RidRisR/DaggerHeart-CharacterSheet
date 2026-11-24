@@ -10,6 +10,7 @@
 
 import { SheetData } from './sheet-data'
 import { isCurrentPageVisibility } from '@/character/page-visibility'
+import { isCurrentMartialStancesState } from '@/character/martial-stances/state'
 import { CURRENT_SCHEMA_VERSION } from './sheet-schema-version'
 import { StandardCard } from '@/card/card-types'
 import { defaultSheetData } from './default-sheet-data'
@@ -81,6 +82,7 @@ function validateRawImportCandidate(data: any): data is Record<string, unknown> 
 function validateCurrentSheetData(data: any): data is SheetData {
   return validateSheetData(data) && data.schemaVersion === CURRENT_SCHEMA_VERSION
     && isCurrentPageVisibility(data.pageVisibility)
+    && isCurrentMartialStancesState(data.martialStances)
 }
 
 function sanitizeValidatedSheetData(data: SheetData): SheetData {
@@ -232,6 +234,7 @@ export function cleanAndNormalizeData(data: any): SheetData {
 
     // 页面可见性
     pageVisibility: data.pageVisibility || undefined,
+    martialStances: data.martialStances,
 
     // 护甲模板数据 - 直接传递，让迁移函数处理
     armorTemplate: data.armorTemplate || undefined,

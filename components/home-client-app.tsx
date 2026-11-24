@@ -6,6 +6,7 @@ import CharacterSheetPageTwo from "@/components/character-sheet-page-two"
 import CharacterSheetPageThree from "@/components/character-sheet-page-ranger-companion"
 import CharacterSheetPageAdventureNotes from "@/components/character-sheet-page-adventure-notes"
 import CharacterSheetPageBeastForms from '@/components/character-sheet-page-beast-forms'
+import CharacterSheetPageMartialStances from '@/components/character-sheet-page-martial-stances'
 import { BeastFormsPrintPages } from '@/components/beast-forms/beast-forms-print-pages'
 import { BeastFormsNavigationProvider } from '@/components/beast-forms/beast-forms-navigation'
 import { useBeastFormPages } from '@/components/beast-forms/use-beast-form-pages'
@@ -194,6 +195,15 @@ registerPages([
     printClass: 'page-beast-forms',
     visibility: { type: 'config', configKey: 'beastForms' },
     printOrder: 5,
+    showInTabs: true,
+  },
+  {
+    id: 'martial-stances',
+    label: '武术架势',
+    component: CharacterSheetPageMartialStances,
+    printClass: 'page-martial-stances',
+    visibility: { type: 'config', configKey: 'martialStances' },
+    printOrder: 5.5,
     showInTabs: true,
   }
 ])

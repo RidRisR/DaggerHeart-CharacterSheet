@@ -5,7 +5,7 @@
 import type { CharacterPageVisibility, OptionalPageKey } from '@/character/page-visibility'
 
 export interface PageConfig {
-  id: 'page1' | 'page2' | 'page3' | 'adventure-notes' | 'page4' | 'beast-forms'
+  id: 'page1' | 'page2' | 'page3' | 'adventure-notes' | 'page4' | 'beast-forms' | 'martial-stances'
   label: string
   description: string
   alwaysVisible: boolean
@@ -52,6 +52,13 @@ export const pageConfigs: PageConfig[] = [
     description: '角色背景与冒险记录',
     alwaysVisible: false,
     visibilityKey: 'adventureNotes'
+  },
+  {
+    id: 'martial-stances',
+    label: '武术架势',
+    description: '武艺达人架势与专注记录表',
+    alwaysVisible: false,
+    visibilityKey: 'martialStances'
   }
 ]
 

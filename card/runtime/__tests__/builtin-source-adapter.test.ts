@@ -60,6 +60,16 @@ describe("loadBuiltinCardRuntimeSource", () => {
     expect(cards.find((card) => card.name === "失乡之民")?.cardSelectDisplay?.item1).toBe("亲如家人")
   })
 
+  it("lists each Hope and Fear subclass in progression order", () => {
+    const { cards } = loadBuiltinCardRuntimeSource({ sourceId: HOPE_FEAR_SOURCE_ID, disabledSourceIds: [] })
+    const subclasses = cards.filter((card) => card.type === CardType.Subclass)
+    const names = [...new Set(subclasses.map((card) => card.headerDisplay))]
+    expect(names).toHaveLength(8)
+    expect(subclasses.map((card) => [card.headerDisplay, card.level])).toEqual(
+      names.flatMap((name) => [1, 2, 3].map((level) => [name, level])),
+    )
+  })
+
   it("preserves beastform cards and their selection definitions", async () => {
     const source = await loadBuiltinCardRuntimeSource({ disabledSourceIds: [] })
     const beastforms = source.cards.filter((card) => card.type === CardType.Variant)

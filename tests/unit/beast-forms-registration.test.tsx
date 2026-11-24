@@ -18,7 +18,7 @@ describe('beast form page registration', () => {
       cards: new Map(source.cards.map(card => [card.id, card])), batches: new Map([[source.sourceId, source.batch]]) })
     const card = { standarized: true, id: 'print-check', name: 'Print check', type: 'domain', class: '', cardSelectDisplay: {} }
     const sheet = { ...structuredClone(defaultSheetData), pageVisibility: {
-      rangerCompanion: true, armorTemplate: true, adventureNotes: true, beastForms: true,
+      rangerCompanion: true, armorTemplate: true, adventureNotes: true, beastForms: true, martialStances: false,
     }, cards: [card, card], inventory_cards: [card] }
     useSheetStore.setState({ sheetData: sheet })
     useTextModeStore.setState({ isTextMode: true })
@@ -36,7 +36,7 @@ describe('beast form page registration', () => {
 
   it('is an optional single tab and prints before adventure notes and both card groups', () => {
     const sheet = { ...defaultSheetData, pageVisibility: {
-      rangerCompanion: true, armorTemplate: true, adventureNotes: true, beastForms: true,
+      rangerCompanion: true, armorTemplate: true, adventureNotes: true, beastForms: true, martialStances: false,
     } }
     const card = { standarized: true, id: 'card', name: 'Card', type: 'domain', class: '', cardSelectDisplay: {} }
     sheet.cards = [card, card]

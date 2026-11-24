@@ -1,4 +1,4 @@
-export const OPTIONAL_PAGE_KEYS = ['rangerCompanion', 'armorTemplate', 'adventureNotes', 'beastForms'] as const
+export const OPTIONAL_PAGE_KEYS = ['rangerCompanion', 'armorTemplate', 'adventureNotes', 'beastForms', 'martialStances'] as const
 export type OptionalPageKey = typeof OPTIONAL_PAGE_KEYS[number]
 export type CharacterPageVisibility = Record<OptionalPageKey, boolean>
 
@@ -7,6 +7,7 @@ export const DEFAULT_PAGE_VISIBILITY: CharacterPageVisibility = {
   armorTemplate: false,
   adventureNotes: false,
   beastForms: false,
+  martialStances: false,
 }
 
 /** Missing optional-page preferences in older sheets mean the page is off. */

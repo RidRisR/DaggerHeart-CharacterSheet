@@ -1,5 +1,6 @@
 import { tryParseNumberExpression } from "@/lib/number-utils"
 import type { SheetData } from "@/lib/sheet-data"
+import { applyMartialStanceHealthInvariant } from "@/character/martial-stances/actions"
 import { applyHpStressMaxInvariant } from "./hp-stress-invariants"
 import { sanitizeOtherAdjustments } from "./other-adjustments"
 import { calculateReferenceSummary } from "./reference-calculator"
@@ -171,5 +172,5 @@ export function applyAutoCalculationForTargets(sheetData: SheetData): SheetData 
     }
   })
 
-  return changed ? next : sheetData
+  return applyMartialStanceHealthInvariant(changed ? next : sheetData)
 }

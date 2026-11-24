@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { applyMartialStanceAction, applyMartialStanceHealthInvariant, type MartialStanceAction, type MartialStanceActionResult } from "@/character/martial-stances/actions";
 import { defaultSheetData } from "./default-sheet-data";
 import type { SheetData, AttributeValue, ArmorTemplateData, SheetCardReference } from "./sheet-data";
 import { createEmptyCard, isEmptyCard, type StandardCard } from "@/card/card-types";
@@ -225,6 +226,7 @@ interface SheetState {
     sheetLoadRevision: number;
     setSheetData: (data: Partial<SheetData> | ((prevState: SheetData) => Partial<SheetData>)) => void;
     replaceSheetData: (data: SheetData) => void;
+    updateMartialStances: (action: MartialStanceAction) => MartialStanceActionResult;
 
     // Granular actions for better performance and cleaner code
     toggleAttributeChecked: (attribute: keyof SheetData) => void;
@@ -545,7 +547,7 @@ export const useSheetStore = create<SheetState>((set, get) => ({
             // 应用子职业施法属性同步
             const finalData = syncSubclassSpellcasting(newData, oldData);
 
-            return { sheetData: finalData };
+            return { sheetData: applyMartialStanceHealthInvariant(finalData) };
         });
     },
     replaceSheetData: (newData) => set((state) => {
@@ -557,6 +559,13 @@ export const useSheetStore = create<SheetState>((set, get) => ({
             sheetLoadRevision: state.sheetLoadRevision + 1,
         };
     }),
+
+    updateMartialStances: (action) => {
+        const { sheetData } = get();
+        const result = applyMartialStanceAction(sheetData, action);
+        if (result.ok) set({ sheetData: { ...sheetData, martialStances: result.state, stress: result.stress ?? sheetData.stress } });
+        return result;
+    },
 
     // Granular actions
     toggleAttributeChecked: (attribute) => set((state) => {
@@ -734,10 +743,10 @@ export const useSheetStore = create<SheetState>((set, get) => ({
         const newHP = [...(state.sheetData.hp || [])];
         newHP[index] = checked;
         return {
-            sheetData: {
+            sheetData: applyMartialStanceHealthInvariant({
                 ...state.sheetData,
                 hp: newHP
-            }
+            })
         };
     }),
 

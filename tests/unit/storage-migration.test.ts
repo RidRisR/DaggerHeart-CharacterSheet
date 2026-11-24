@@ -75,6 +75,7 @@ describe('storage migration entrypoints', () => {
       armorTemplate: false,
       adventureNotes: false,
       beastForms: false,
+    martialStances: false,
     })
   })
 })

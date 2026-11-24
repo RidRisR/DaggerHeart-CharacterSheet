@@ -10,6 +10,7 @@ import type {
 } from "@/automation/core/types"
 import type { CharacterImageAssetMap } from "@/character/storage/character-image-types"
 import type { CharacterPageVisibility } from '@/character/page-visibility'
+import type { MartialStancesState } from '@/character/martial-stances/state'
 
 // ===== 多角色系统数据结构 =====
 export interface CharacterMetadata {
@@ -251,6 +252,7 @@ export interface SheetData {
   // ===== 页面可见性控制 =====
   includePageThreeInExport?: boolean // @deprecated 使用 pageVisibility 代替
   pageVisibility?: CharacterPageVisibility
+  martialStances: MartialStancesState
 
   // ===== 护甲模板数据 =====
   armorTemplate?: ArmorTemplateData

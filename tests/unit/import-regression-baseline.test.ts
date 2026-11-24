@@ -51,12 +51,14 @@ describe('main import and normalize regression baseline', () => {
       armorTemplate: false,
       adventureNotes: false,
       beastForms: false,
+    martialStances: false,
     })
     expect(htmlResult.data?.pageVisibility).toEqual({
       rangerCompanion: true,
       armorTemplate: false,
       adventureNotes: false,
       beastForms: false,
+    martialStances: false,
     })
     expect(jsonResult.data?.inventory_cards).toHaveLength(20)
     expect(htmlResult.data?.inventory_cards).toHaveLength(20)

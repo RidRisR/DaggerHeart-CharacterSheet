@@ -37,6 +37,7 @@ describe('migration regression baseline through v4', () => {
       armorTemplate: false,
       adventureNotes: false,
       beastForms: false,
+    martialStances: false,
     })
     expect('includePageThreeInExport' in migrated).toBe(false)
     expect(migrated.inventory_cards).toHaveLength(20)
@@ -66,6 +67,7 @@ describe('migration regression baseline through v4', () => {
       armorTemplate: true,
       adventureNotes: false,
       beastForms: false,
+    martialStances: false,
     })
     expect('page3' in (migrated.pageVisibility as any)).toBe(false)
   })

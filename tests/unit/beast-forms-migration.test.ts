@@ -11,7 +11,7 @@ describe('beast form page preference migration', () => {
     const raw = { schemaVersion, pageVisibility: visibility, cards: [] }
     const result = migrateSheetData(raw)
     expect(result.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
-    expect(result.pageVisibility).toEqual({ ...visibility, beastForms: false })
+    expect(result.pageVisibility).toEqual({ ...visibility, beastForms: false, martialStances: false })
     expect(raw.pageVisibility).not.toHaveProperty('beastForms')
     expect(migrateSheetData(result)).toEqual(result)
   })
@@ -23,13 +23,13 @@ describe('beast form page preference migration', () => {
     const html = validateAndProcessCharacterData(structuredClone(sheet), 'html')
     expect(json.valid).toBe(true)
     expect(html.valid).toBe(true)
-    expect(json.data?.pageVisibility).toEqual({ ...visibility, beastForms })
+    expect(json.data?.pageVisibility).toEqual({ ...visibility, beastForms, martialStances: false })
     expect(html.data?.pageVisibility).toEqual(json.data?.pageVisibility)
   })
 
   it('rejects malformed booleans and distinguishes complete current-schema preferences', () => {
     expect(() => normalizePageVisibility({ ...visibility, beastForms: 'yes' })).toThrow(/beastForms/)
     expect(isCurrentPageVisibility(visibility)).toBe(false)
-    expect(isCurrentPageVisibility({ ...visibility, beastForms: false })).toBe(true)
+    expect(isCurrentPageVisibility({ ...visibility, beastForms: false, martialStances: false })).toBe(true)
   })
 })

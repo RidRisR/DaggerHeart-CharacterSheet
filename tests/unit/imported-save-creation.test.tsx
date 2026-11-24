@@ -23,6 +23,7 @@ function currentSheet(overrides: Partial<SheetData> = {}): SheetData {
       armorTemplate: false,
       adventureNotes: false,
       beastForms: false,
+    martialStances: false,
     },
     inventory_cards: overrides.inventory_cards ?? structuredClone(defaultSheetData.inventory_cards),
   }
@@ -97,6 +98,7 @@ describe('imported save creation', () => {
       armorTemplate: false,
       adventureNotes: false,
       beastForms: false,
+    martialStances: false,
     })
     expect('includePageThreeInExport' in stored).toBe(false)
 

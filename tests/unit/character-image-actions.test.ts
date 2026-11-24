@@ -35,6 +35,7 @@ function sheet(overrides: Partial<SheetData> = {}): SheetData {
       armorTemplate: false,
       adventureNotes: false,
       beastForms: false,
+    martialStances: false,
     },
     inventory_cards: overrides.inventory_cards ?? structuredClone(defaultSheetData.inventory_cards),
   }

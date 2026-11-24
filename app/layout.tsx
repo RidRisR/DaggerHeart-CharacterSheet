@@ -178,7 +178,7 @@ export default function RootLayout({
               <br />
               作者：RidRisR
               <br />
-              翻译及校对：PolearmMaster, 末楔, 里予, 一得, RisRisR
+              致谢：AlchemiZhou、末楔、里予、一得、PolearmMaster
             </div>
           </ProgressModalProvider>
         </ThemeProvider>

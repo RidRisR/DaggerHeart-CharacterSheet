@@ -12,6 +12,25 @@ export interface Announcement {
 
 export const announcements: Announcement[] = [
   {
+    id: "2026-11-25-hope-fear-expansion",
+    date: "2026-11-25",
+    title: "V4.2.7 Preview · 希望与恐惧扩展",
+    content: `
+## 希望与恐惧扩展
+
+打开底部「扩展」，就能在卡牌包和装备包中分别找到「希望与恐惧扩展」。两个包可以独立启用或停用。
+
+- 卡牌包收录 73 张带插图的卡牌。可以选择刺客、格斗家、灵巫和邪术师四个职业，也可以选用新的种族特性卡、社群卡、领域卡和转变卡。
+- 装备包收录 124 件武器和 35 件护甲。搜索「两用」可找到能选择造成物理或魔法伤害的武器。
+
+## 武艺达人的武术架势表
+
+在角色表顶部点「+」打开「页面管理」，勾选「武术架势」，即可查看四个位阶共 16 种架势的效果。
+
+感谢 AlchemiZhou 提供本次采用的扩展资源和武术架势表。[查看原项目](https://github.com/AlchemiZhou/dhsheet)
+`.trim(),
+  },
+  {
     id: "2026-09-20-druid-beast-forms",
     date: "2026-09-20",
     title: "V4.2.6 Preview",

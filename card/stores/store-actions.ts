@@ -25,7 +25,7 @@ import { isVariantCard } from '../card-types';
 import { createImageServiceActions } from './image-service/actions';
 import { getCardDisabledSourceIds } from '@/lib/app-preferences';
 import { assembleCardRuntimeSources } from '@/card/runtime/source-assembly';
-import { loadBuiltinCardRuntimeSource } from '@/card/runtime/builtin-source-adapter';
+import { findHopeFearCardByAlternateId, loadBuiltinCardRuntimeSource } from '@/card/runtime/builtin-source-adapter';
 import { loadCustomCardRuntimeSourcesFromSnapshot } from '@/card/runtime/custom-source-adapter';
 import { BUILTIN_CARD_SOURCE_IDS, isBuiltinCardSourceId, type CardRuntimeSourceSnapshot } from '@/card/runtime/source-types';
 import { setBuiltinCardRuntimeSourceDisabled } from '@/card/runtime/source-disabled-state';
@@ -207,7 +207,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
   getCardById: (cardId: string) => {
     const state = get();
-    const card = state.cards.get(cardId);
+    const card = state.cards.get(cardId) ?? findHopeFearCardByAlternateId(state.cards, cardId);
 
     // Check if card exists and is not from a disabled batch
     if (!card) return null;

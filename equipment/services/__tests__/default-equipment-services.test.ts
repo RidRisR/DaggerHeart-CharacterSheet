@@ -48,7 +48,7 @@ describe("default equipment services", () => {
     const sourceIds = [HOPE_FEAR_EQUIPMENT_SOURCE_ID]
     const reader = runtimeCacheService.getRuntimeReader()
     expect(runtimeCacheService.getManagementReader().getPackDetail(sourceIds[0])?.pack).toMatchObject({
-      isSystemPack: true, disabled: false, weaponCount: 124, armorCount: 35,
+      name: "希望与恐惧扩展", author: "AlchemiZhou", isSystemPack: true, disabled: false, weaponCount: 124, armorCount: 35,
     })
     const secondary = reader.querySelectableTemplates({ sourceIds, weaponTypes: ["secondary"] })
     expect(secondary).toHaveLength(36)

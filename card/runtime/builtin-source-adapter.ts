@@ -1,6 +1,7 @@
 import builtinCardPackJson from "@/data/cards/builtin-base.json"
 import hopeFearCardPackJson from "@/data/cards/builtin-hope-fear.json"
-import { CardSource, CardType } from "@/card/card-types"
+import hopeFearIdAliases from "@/data/cards/hope-fear-id-aliases.json"
+import { CardSource, CardType, type ExtendedStandardCard } from "@/card/card-types"
 import type { BatchInfo } from "@/card/stores/store-types"
 import { prepareCardPackContentForRuntime } from "./prepare-card-pack-content"
 import { projectCardPackModelToRuntimeTemplates } from "./runtime-card-projection"
@@ -14,10 +15,24 @@ const builtinPacks = {
   },
   // Player resource pack v1.1.0 from AlchemiZhou/dhsheet, commit fe97b562.
   [HOPE_FEAR_SOURCE_ID]: {
-    name: "内置卡包·希望与恐惧扩展",
+    name: hopeFearCardPackJson.name,
     fileName: "builtin-hope-fear.json",
     payload: hopeFearCardPackJson,
   },
+}
+
+const hopeFearIdGroups = new Map<string, string[]>()
+for (const [currentId, previousIds] of Object.entries(hopeFearIdAliases)) {
+  const ids = [currentId, ...previousIds]
+  for (const id of ids) hopeFearIdGroups.set(id, ids)
+}
+
+// A saved reference may point to an earlier ID owned by an installed copy.
+export function findHopeFearCardByAlternateId(cards: ReadonlyMap<string, ExtendedStandardCard>, id: string) {
+  for (const candidate of hopeFearIdGroups.get(id) ?? []) {
+    const card = cards.get(candidate)
+    if (card) return card
+  }
 }
 
 export function loadBuiltinCardRuntimeSource(input: {
@@ -40,9 +55,10 @@ export function loadBuiltinCardRuntimeSource(input: {
   // Installed copies predate the bundled expansion and keep ownership of their IDs and artwork.
   const templates = projectCardPackModelToRuntimeTemplates(prepared.model)
   const { installedCardIds } = input
-  const ownedTemplates = sourceId === HOPE_FEAR_SOURCE_ID && installedCardIds
-    ? templates.filter((card) => !installedCardIds.has(card.id))
-    : templates
+  const installedExpansionIds = sourceId === HOPE_FEAR_SOURCE_ID && installedCardIds
+    ? new Set(Array.from(installedCardIds, (id) => hopeFearIdGroups.get(id)?.[0] ?? id))
+    : undefined
+  const ownedTemplates = installedExpansionIds ? templates.filter((card) => !installedExpansionIds.has(card.id)) : templates
   const cards = ownedTemplates.map((card) => ({
     ...card,
     source: CardSource.BUILTIN,
@@ -58,6 +74,7 @@ export function loadBuiltinCardRuntimeSource(input: {
     name,
     fileName,
     version: payload.version,
+    author: payload.author,
     importTime: "builtin",
     cardCount: cards.length,
     cardTypes,

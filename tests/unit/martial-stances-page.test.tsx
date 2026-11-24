@@ -16,6 +16,7 @@ describe('martial stance page', () => {
 
   it('shows all sixteen stances and connects learning, Focus, activation, switching and dropping to character data', () => {
     render(<CharacterSheetPageMartialStances />)
+    expect(screen.getByText(/^DAGGERHEART P\d{8}$/)).toBeVisible()
     expect(screen.getAllByRole('article')).toHaveLength(16)
     fireEvent.click(screen.getByRole('checkbox', { name: '掌握应手' }))
     fireEvent.keyDown(screen.getByRole('checkbox', { name: '掌握迅捷' }), { key: ' ' })

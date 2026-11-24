@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react"
 
 interface PageHeaderProps {
-  datePrefix?: string
   variant?: 'full' | 'text-only'
 }
 
-export function PageHeader({ datePrefix = 'DAGGERHEART P' }: PageHeaderProps) {
+export function PageHeader({ variant = 'full' }: PageHeaderProps) {
   const [openDate, setOpenDate] = useState("")
 
   useEffect(() => {
@@ -22,7 +21,7 @@ export function PageHeader({ datePrefix = 'DAGGERHEART P' }: PageHeaderProps) {
   return (
     <div className="bg-gray-800 text-white p-1.5 flex items-center rounded-t-md mb-2">
       <div className="flex flex-col">
-        <div className="text-[9px]">{datePrefix}{openDate}</div>
+        <div className="text-[9px]">DAGGERHEART P{openDate}</div>
       </div>
     </div>
   )

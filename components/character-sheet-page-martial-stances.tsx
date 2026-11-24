@@ -34,7 +34,7 @@ export default function CharacterSheetPageMartialStances() {
   return (
     <section className="a4-page martial-stance-sheet" aria-label="武术架势记录表">
       <style>{MARTIAL_STANCE_STYLES}</style>
-      <PageHeader datePrefix="匕首之心 " />
+      <PageHeader />
       <header className="martial-stance-heading">
         <div><h1>武术架势</h1><p>武艺达人 · 架势与专注记录表</p></div>
         <div className="martial-stance-character"><strong>{sheet.name || '我的角色'}</strong><span>等级 {sheet.level || '—'} · 位阶 {tier || '—'}</span></div>

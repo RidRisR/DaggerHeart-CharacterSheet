@@ -34,15 +34,15 @@ export default function CharacterSheetPageMartialStances() {
   return (
     <section className="a4-page martial-stance-sheet" aria-label="武术架势记录表">
       <style>{MARTIAL_STANCE_STYLES}</style>
-      <PageHeader />
+      <PageHeader datePrefix="匕首之心 " />
       <header className="martial-stance-heading">
-        <div><h1>武术架势 <span>MARTIAL STANCES</span></h1><p>武艺达人 · 架势与专注记录表</p></div>
+        <div><h1>武术架势</h1><p>武艺达人 · 架势与专注记录表</p></div>
         <div className="martial-stance-character"><strong>{sheet.name || '我的角色'}</strong><span>等级 {sheet.level || '—'} · 位阶 {tier || '—'}</span></div>
       </header>
 
       <div className="martial-stance-tracker">
         <div>
-          <div className="martial-stance-tracker-label"><h2>专注点 <span>FOCUS</span></h2><strong aria-live="polite">{state.focus} / {MAX_FOCUS}</strong></div>
+          <div className="martial-stance-tracker-label"><h2>专注点</h2><strong aria-live="polite">{state.focus} / {MAX_FOCUS}</strong></div>
           <div className="martial-stance-focus" role="group" aria-label="专注点">
             {Array.from({ length: MAX_FOCUS }, (_, index) => {
               const action = { type: 'focus' as const, value: state.focus === index + 1 ? 0 : index + 1 }
@@ -54,7 +54,7 @@ export default function CharacterSheetPageMartialStances() {
         </div>
         <div className="martial-stance-current">
           <div className="martial-stance-tracker-label"><h2>当前架势</h2><button type="button" className="print:hidden" disabled={!active} onClick={() => act({ type: 'drop' })}>退出架势</button></div>
-          <strong aria-live="polite">{active ? `${active.name} · ${active.english}` : '无激活架势'}</strong>
+          <strong aria-live="polite">{active?.name ?? '无激活架势'}</strong>
           <span className="martial-stance-write-in" aria-hidden="true" />
           <span>{battleFlow ? '转入花费 1 专注点，或用战斗心流标记 1 压力点' : '转入花费 1 专注点'} · 同时仅可激活一种</span>
         </div>
@@ -72,7 +72,7 @@ export default function CharacterSheetPageMartialStances() {
                 <div className="martial-stance-entry-heading">
                   <div role="checkbox" aria-label={`掌握${stance.name}`} aria-checked={known} data-state={known ? 'checked' : 'unchecked'} tabIndex={0} className="martial-stance-known"
                     onClick={() => act({ type: 'learn', id: stance.id })} onKeyDown={event => onMarkKey(event, { type: 'learn', id: stance.id })}>{known ? '●' : ''}</div>
-                  <h3>{stance.name}<span>{stance.english}</span></h3>
+                  <h3>{stance.name}</h3>
                   {selected && <span className="martial-stance-active-label">当前激活</span>}
                   {!selected && <button type="button" className="print:hidden" aria-label={`激活${stance.name}，花费1专注点`} disabled={!known || state.focus < 1 || stance.tier > tier}
                     onClick={() => act({ type: 'activate', id: stance.id })}>激活 · 1 专注</button>}

@@ -87,6 +87,7 @@ describe('martial stance page', () => {
     expect(writeIn).toBeVisible()
     expect(writeIn).toBeEmptyDOMElement()
     expect(printed.querySelector('.martial-stance-current > strong')).not.toBeVisible()
+    expect(within(printed as HTMLElement).getByText(/^已掌握 \d+ \/ /)).not.toBeVisible()
     if (active) expect(within(printed as HTMLElement).getByText('当前激活')).not.toBeVisible()
     expect(sheet().martialStances.active).toBe(active)
     expect(within(printed as HTMLElement).getByText('3 / 6')).toBeInTheDocument()

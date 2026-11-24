@@ -55,9 +55,9 @@
         "tier": { "$ref": "#/$defs/tier" },
         "weaponType": { "enum": ["primary", "secondary"] },
         "trait": {
-          "enum": ["agility", "strength", "finesse", "instinct", "presence", "knowledge"]
+          "enum": ["agility", "strength", "finesse", "instinct", "presence", "knowledge", "spellcast"]
         },
-        "damageType": { "enum": ["physical", "magic"] },
+        "damageType": { "enum": ["physical", "magic", "physicalOrMagic"] },
         "range": { "enum": ["melee", "veryClose", "close", "far", "veryFar"] },
         "burden": { "enum": ["oneHanded", "twoHanded", "offHand"] },
         "damage": { "type": "string", "minLength": 1, "maxLength": 40 },

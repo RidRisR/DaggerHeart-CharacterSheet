@@ -1,0 +1,2370 @@
+{
+  "format": "daggerheart.equipment-pack.v1",
+  "name": "内置装备包·希望与恐惧扩展",
+  "version": "1.1.0",
+  "author": "Unknown",
+  "equipment": {
+    "weapons": [
+      {
+        "id": "ec4fb64e-653f-502a-8688-8e26120ea860",
+        "name": "光明剑",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "magic",
+        "damage": "d10+3",
+        "range": "melee",
+        "burden": "twoHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "ee124c5f-9f38-5241-8b31-12931da13173",
+        "name": "奥术框架轮椅",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "spellcast",
+        "damageType": "magic",
+        "damage": "d6",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "可靠",
+        "description": "攻击掷骰获得 +1 加值。"
+      },
+      {
+        "id": "8e0f75a2-02e1-58c4-8be0-4d63b757f087",
+        "name": "奥术步枪",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "magic",
+        "damage": "d10+3",
+        "range": "veryFar",
+        "burden": "twoHanded",
+        "featureName": "瞄准",
+        "description": "若目标位于你的邻近范围内，或位于一名盟友的近战范围内，你的攻击具有劣势。你可以**标记 1 压力点**忽略此减值。"
+      },
+      {
+        "id": "4c6fa9fa-db3b-5fec-801a-a7bfbe36dd11",
+        "name": "弯刀",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d8+1",
+        "range": "melee",
+        "burden": "oneHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "ec2a3e51-92f8-5801-87bf-531991f31664",
+        "name": "影刃",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physicalOrMagic",
+        "damage": "d8",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "异界",
+        "description": "攻击成功时，你可以选择造成物理伤害或魔法伤害。"
+      },
+      {
+        "id": "1445b741-2315-5276-806a-8cbefc2f65d8",
+        "name": "扭曲匕首",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "physical",
+        "damage": "d8",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "穿刺",
+        "description": "用此武器造成伤害时，目标的重度伤害阈值视为降低 2。"
+      },
+      {
+        "id": "401a2992-491b-5d44-81c1-d1236ae538f4",
+        "name": "指虎",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8+1",
+        "range": "melee",
+        "burden": "oneHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "5b704d37-a34f-53b1-8763-94c46fb780ca",
+        "name": "施法匕首",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d6",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "多用",
+        "description": "此武器也可使用以下数据：本能、近战范围、**d8**。"
+      },
+      {
+        "id": "d7da88e6-d4a9-534d-8945-89288a12e6fb",
+        "name": "武士刀",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d10+3",
+        "range": "melee",
+        "burden": "twoHanded",
+        "featureName": "迅捷",
+        "description": "发动攻击时，你可以**标记 1 压力点**，额外指定攻击范围内的另一名生物为目标。"
+      },
+      {
+        "id": "42ef3eb7-eb53-5b2d-8bf5-9a5ae7144ee6",
+        "name": "符文锁手枪",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d6+3",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "装填",
+        "description": "发动攻击后，掷一颗 **d6**。若结果为 1，再次开火前必须**标记 1 压力点**装填此武器。"
+      },
+      {
+        "id": "62228266-3ad4-53c9-87d3-b8cc328afdb4",
+        "name": "绳镖",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "physical",
+        "damage": "d6+1",
+        "range": "close",
+        "burden": "twoHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "9586081b-705c-5ad9-8a4d-fdb375e78d72",
+        "name": "蛇腹剑",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d8",
+        "range": "veryClose",
+        "burden": "oneHanded",
+        "featureName": "多用",
+        "description": "此武器也可使用以下数据：灵巧、近战范围、**d10**。"
+      },
+      {
+        "id": "ae8e8a40-3047-59d2-8f04-43d60b93eea0",
+        "name": "附魔环刃",
+        "tier": "T1",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "magic",
+        "damage": "d6+1",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "跳弹",
+        "description": "投掷此武器后，它会回到你手中。发动攻击时，你可以**标记 1 压力点**，额外指定首个目标邻近范围内的另一名生物为目标。"
+      },
+      {
+        "id": "e75c28ff-ea66-5356-838c-6db8e1487eb7",
+        "name": "位移剃刃",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "magic",
+        "damage": "d8+3",
+        "range": "melee",
+        "burden": "twoHanded",
+        "featureName": "无处不在",
+        "description": "你可以针对极远范围内的目标发动攻击，但必须以劣势进行。"
+      },
+      {
+        "id": "27931c0f-d4d4-5596-870d-e90acc5521b2",
+        "name": "刃扇",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d8+3",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "招架",
+        "description": "受到攻击时，掷此武器的伤害骰。若攻击者的任一伤害骰与你的结果相同，在结算伤害前，弃掉攻击者所有该结果的伤害骰。"
+      },
+      {
+        "id": "63e4e7d4-c98d-51cb-832d-30df329ec005",
+        "name": "外科医师手术刀",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "physical",
+        "damage": "d8+3",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "骇人",
+        "description": "攻击成功时，目标必须**标记 1 压力点**。"
+      },
+      {
+        "id": "17b02fe3-398f-5d2e-88ef-214d282e5c95",
+        "name": "战镐",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8+3",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "致命",
+        "description": "造成严重伤害时，目标必须额外**标记 1 生命点**。"
+      },
+      {
+        "id": "1e04f124-4bfc-53a1-85e1-7da66be2fd4d",
+        "name": "手杖剑",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d8+4",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "可收缩",
+        "description": "可将剑刃藏入手杖，避免被发现。"
+      },
+      {
+        "id": "adb93543-b323-53a3-88b8-77687b575fd9",
+        "name": "改良光辉剑",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "magic",
+        "damage": "d10+6",
+        "range": "melee",
+        "burden": "twoHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "9481f65a-be3f-5913-870d-c297b7f21584",
+        "name": "改良奥术步枪",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "magic",
+        "damage": "d10+6",
+        "range": "veryFar",
+        "burden": "twoHanded",
+        "featureName": "瞄准",
+        "description": "若目标位于你的邻近范围内，或位于一名盟友的近战范围内，你的攻击具有劣势。你可以**标记 1 压力点**忽略此减值。"
+      },
+      {
+        "id": "b3fc4227-f7f9-5f8a-88ef-95b18db9487a",
+        "name": "改良弯刀",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d8+4",
+        "range": "melee",
+        "burden": "oneHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "b30631d4-d5a0-557c-8dfa-15e1970dc5c9",
+        "name": "改良扭曲匕首",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "physical",
+        "damage": "d8+3",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "穿刺",
+        "description": "用此武器造成伤害时，目标的重度伤害阈值视为降低 2。"
+      },
+      {
+        "id": "3d2e5376-f066-58ea-803b-d3fd815ef647",
+        "name": "改良指虎",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8+4",
+        "range": "melee",
+        "burden": "oneHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "7a1786a7-f911-5a5e-846c-bd9937383d2c",
+        "name": "改良施法匕首",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d6+3",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "多用",
+        "description": "此武器也可使用以下数据：本能、近战范围、**d8+3**。"
+      },
+      {
+        "id": "ffe99943-fd9a-51a2-8aa7-488a40a79071",
+        "name": "改良暗影刃",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physicalOrMagic",
+        "damage": "d8+3",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "异界",
+        "description": "攻击成功时，你可以选择造成物理伤害或魔法伤害。"
+      },
+      {
+        "id": "d5b1937f-95ca-518b-84ca-b67aba13c6b3",
+        "name": "改良武士刀",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d10+6",
+        "range": "melee",
+        "burden": "twoHanded",
+        "featureName": "迅捷",
+        "description": "发动攻击时，你可以**标记 1 压力点**，额外指定攻击范围内的另一名生物为目标。"
+      },
+      {
+        "id": "cf2000ed-bfc4-54c2-8791-0a0bd795dbe7",
+        "name": "改良符文锁手枪",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d6+6",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "装填",
+        "description": "发动攻击后，掷一颗 **d6**。若结果为 1，再次开火前必须**标记 1 压力点**装填此武器。"
+      },
+      {
+        "id": "de5b4582-4fed-5aba-8a35-91d0d61ca38a",
+        "name": "改良绳镖",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "physical",
+        "damage": "d6+4",
+        "range": "close",
+        "burden": "twoHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "d1269123-3e10-586f-8ef6-31a5e46e7108",
+        "name": "改良附魔飞轮",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "magic",
+        "damage": "d6+4",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "跳弹",
+        "description": "投掷此武器后，它会回到你手中。发动攻击时，你可以**标记 1 压力点**，额外指定首个目标邻近范围内的另一名生物为目标。"
+      },
+      {
+        "id": "9c1aade1-808e-5a7f-8af9-d7ef25282545",
+        "name": "改良鞭剑",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d8+3",
+        "range": "veryClose",
+        "burden": "oneHanded",
+        "featureName": "多用",
+        "description": "此武器也可使用以下数据：灵巧、近战范围、**d10+3**。"
+      },
+      {
+        "id": "f1b0ceaa-9211-5a42-85b6-63edb91e411f",
+        "name": "改进奥术框架轮椅",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "spellcast",
+        "damageType": "magic",
+        "damage": "d6+3",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "可靠",
+        "description": "攻击掷骰获得 +1 加值。"
+      },
+      {
+        "id": "ee758959-8c73-565d-8c59-309960d3731a",
+        "name": "标枪",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d6+6",
+        "range": "veryClose",
+        "burden": "oneHanded",
+        "featureName": "储备",
+        "description": "你可以使用敏捷进行攻击掷骰，将此武器投向远距离范围内的目标。无需回收，因为你手边总有另一把。"
+      },
+      {
+        "id": "063ac097-91cc-558c-81a1-05e5de492eea",
+        "name": "法缚手镯",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d10+6",
+        "range": "melee",
+        "burden": "twoHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "dbccab29-45d2-5f55-8f85-a757fece7c62",
+        "name": "狂怒宝石",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d8+3",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "点燃",
+        "description": "当你掷骰时，若伤害骰掷出最大结果，目标必须**标记 1 压力点**。"
+      },
+      {
+        "id": "56d02dfa-259b-5aab-890c-414dfc06ac67",
+        "name": "裂枝长弓",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "magic",
+        "damage": "d6+6",
+        "range": "far",
+        "burden": "twoHanded",
+        "featureName": "齐射",
+        "description": "**花费 1 希望点**指定范围内的一个群体。你成功对抗的目标承受一半伤害。"
+      },
+      {
+        "id": "25d60df1-e820-5606-8f8a-5e73d0e2d933",
+        "name": "附魔橡木棍",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "magic",
+        "damage": "d8+3",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "防护",
+        "description": "护甲值 +1。",
+        "modifierContributions": [
+          {
+            "id": "armorMax",
+            "definition": {
+              "target": "armorMax",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "防护",
+              "value": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "421c8c67-5855-59d9-89b4-ff801abaa0ea",
+        "name": "附魔鲁特琴",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "magic",
+        "damage": "d8+3",
+        "range": "close",
+        "burden": "twoHanded",
+        "featureName": "振奋",
+        "description": "攻击成功命中后，进行一次 **d4**掷骰。结果为 4 时，**清除 1 压力点**。"
+      },
+      {
+        "id": "f7843ca7-64b0-50f1-88a4-5dacd0bfe693",
+        "name": "骑枪",
+        "tier": "T2",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "physical",
+        "damage": "d10+5",
+        "range": "veryClose",
+        "burden": "twoHanded",
+        "featureName": "笨重",
+        "description": "灵巧 −1。",
+        "modifierContributions": [
+          {
+            "id": "finesse.value",
+            "definition": {
+              "target": "finesse.value",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "笨重",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "922c05a3-cdd9-51d6-8e6d-2c84b7c9ec44",
+        "name": "冰霜权杖",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d8+6",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "冻结",
+        "description": "若此武器的攻击令一个目标标记 2 点或更多 生命点，该目标暂时陷入束缚状态。"
+      },
+      {
+        "id": "a811900e-7eda-5154-8986-7810a8f65811",
+        "name": "刃星",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "physical",
+        "damage": "d8+7",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "回弹",
+        "description": "投掷此武器后，它会回到你手中。攻击失败时，你可以带劣势重掷攻击。"
+      },
+      {
+        "id": "9251a37b-cfcc-52c1-87db-32ac503dff95",
+        "name": "士兵长枪",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d10+5",
+        "range": "veryClose",
+        "burden": "twoHanded",
+        "featureName": "支撑",
+        "description": "当此武器范围内的一名敌人对你造成伤害骰时，你可以**标记 2 压力点**，迫使其**标记 1 生命点**。"
+      },
+      {
+        "id": "af147d6f-8492-5b0a-8645-b28a900fdf54",
+        "name": "奥格玛法杖",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d6+7",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "催化",
+        "description": "攻击成功时，你可以**标记 1 压力点**，令一名近距离范围内的盟友下次攻击掷骰获得+3 加值。"
+      },
+      {
+        "id": "6faba6c5-f050-5e5a-8215-841e79db303f",
+        "name": "弧光 魔杖",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "magic",
+        "damage": "d8+6",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "弹射",
+        "description": "发动攻击时，你可以标记 任意数量的 压力点，额外指定射程内等量的生物为目标。"
+      },
+      {
+        "id": "a66ea463-5066-5702-852b-1a02ef5cb027",
+        "name": "枪刃",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "magic",
+        "damage": "d6+6",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "多用",
+        "description": "此武器也可使用以下数据：敏捷、近战范围、**d8+6** 物理。"
+      },
+      {
+        "id": "4b58e31c-94a0-519c-8c6e-571f4aa98492",
+        "name": "歌唱之剑",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d8+5",
+        "range": "veryClose",
+        "burden": "oneHanded",
+        "featureName": "激励",
+        "description": "所有玩家角色若位于近距离范围内，则**获得 1 希望点**。"
+      },
+      {
+        "id": "b28dcbf1-e545-56ff-878e-ad508309bdd2",
+        "name": "水晶长矛",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "magic",
+        "damage": "d10+6",
+        "range": "veryClose",
+        "burden": "oneHanded",
+        "featureName": "穿刺",
+        "description": "用此武器造成伤害时，目标的重度伤害阈值视为降低 2。"
+      },
+      {
+        "id": "3352f53d-870d-59b8-8724-54aa5c9a360e",
+        "name": "火箭大槌",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "magic",
+        "damage": "d10+7",
+        "range": "melee",
+        "burden": "twoHanded",
+        "featureName": "震荡",
+        "description": "攻击成功时，你可以**花费 1 希望点**将目标击退至远距离范围处。"
+      },
+      {
+        "id": "7ee1e233-2fa9-507c-8261-c8a28ec303ea",
+        "name": "白金刺剑",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d8+7",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "穿刺",
+        "description": "用此武器造成伤害时，目标的重度伤害阈值视为降低 2。"
+      },
+      {
+        "id": "54ef035f-76cb-5532-8142-b93b5292c7eb",
+        "name": "链镰",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "physical",
+        "damage": "d10+5",
+        "range": "veryClose",
+        "burden": "twoHanded",
+        "featureName": "迅捷",
+        "description": "发动攻击时，你可以**标记 1 压力点**，额外指定攻击范围内的另一名生物为目标。"
+      },
+      {
+        "id": "d8e931dc-579a-52ca-8137-a43d83a33824",
+        "name": "闪击之锤",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d10+7",
+        "range": "melee",
+        "burden": "twoHanded",
+        "featureName": "加速器",
+        "description": "每场景一次、**标记 1 压力点**移动至远距离范围后发动攻击；此次攻击获得+1加值，加在你的熟练值上。"
+      },
+      {
+        "id": "aab386b4-211e-52c3-8b77-4173ebfe8a0c",
+        "name": "高级光耀剑",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "magic",
+        "damage": "d10+9",
+        "range": "melee",
+        "burden": "twoHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "cb5c9f33-7be9-5821-821b-d77eb4130cf9",
+        "name": "高级奥术框架轮椅",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "spellcast",
+        "damageType": "magic",
+        "damage": "d6+6",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "可靠",
+        "description": "攻击掷骰获得 +1 加值。"
+      },
+      {
+        "id": "f26e0225-2ca4-52da-8fd8-fb0370eb65e4",
+        "name": "高级奥术步枪",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "magic",
+        "damage": "d10+9",
+        "range": "veryFar",
+        "burden": "twoHanded",
+        "featureName": "瞄准",
+        "description": "若目标位于你的邻近范围内，或位于一名盟友的近战范围内，你的攻击具有劣势。你可以**标记 1 压力点**忽略此减值。"
+      },
+      {
+        "id": "52b39539-ba54-5c52-89d5-ed8efc30b3af",
+        "name": "高级弯刀",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d8+7",
+        "range": "melee",
+        "burden": "oneHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "2cbd86ed-d134-51b2-8f4d-f3cb8794643f",
+        "name": "高级影刃",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physicalOrMagic",
+        "damage": "d8+6",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "异界",
+        "description": "攻击成功时，你可以选择造成物理伤害或魔法伤害。"
+      },
+      {
+        "id": "2ea8ba66-55b0-5954-8c78-4cab9ac5c1cf",
+        "name": "高级扭曲匕首",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "physical",
+        "damage": "d8+6",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "穿刺",
+        "description": "用此武器造成伤害时，目标的重度伤害阈值视为降低 2。"
+      },
+      {
+        "id": "ea04905f-6c0a-51a1-82ce-2e8acb8c321c",
+        "name": "高级施法匕首",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d6+6",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "多用",
+        "description": "此武器也可使用以下数据：本能、近战范围、**d8+6**。"
+      },
+      {
+        "id": "c8412d75-d379-50e0-8b54-cccf3bf82fb7",
+        "name": "高级武士刀",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d10+9",
+        "range": "melee",
+        "burden": "twoHanded",
+        "featureName": "迅捷",
+        "description": "发动攻击时，你可以**标记 1 压力点**，额外指定攻击范围内的另一名生物为目标。"
+      },
+      {
+        "id": "d1f439c6-68b4-5bb6-8e49-3c11adcbb7ea",
+        "name": "高级符文锁手枪",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d6+9",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "装填",
+        "description": "发动攻击后，掷一颗 **d6**。若结果为 1，再次开火前必须**标记 1 压力点**装填此武器。"
+      },
+      {
+        "id": "350f33c1-bf4b-52a8-8fca-bd604818e164",
+        "name": "高级绳镖",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "physical",
+        "damage": "d6+7",
+        "range": "close",
+        "burden": "twoHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "4b58c2a3-1325-505b-86e7-09a4ae293014",
+        "name": "高级附魔飞轮",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "magic",
+        "damage": "d6+7",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "跳弹",
+        "description": "投掷此武器后，它会回到你手中。发动攻击时，你可以**标记 1 压力点**，额外指定首个目标邻近范围内的另一名生物为目标。"
+      },
+      {
+        "id": "87bd90a8-ee5c-5f53-8afe-dc44733553dc",
+        "name": "高级鞭刃",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d8+6",
+        "range": "veryClose",
+        "burden": "oneHanded",
+        "featureName": "多用",
+        "description": "此武器也可使用以下数据：灵巧、近战范围、**d10+6**。"
+      },
+      {
+        "id": "23fbdee9-831d-548e-8966-8fe83845bb0a",
+        "name": "高级黄铜指虎",
+        "tier": "T3",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8+7",
+        "range": "melee",
+        "burden": "oneHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "b903444d-eea1-5be1-8b9e-94d55602bf32",
+        "name": "以太双手剑",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d10+9",
+        "range": "veryClose",
+        "burden": "twoHanded",
+        "featureName": "以太",
+        "description": "必须**标记 1 压力点**来召唤这把武器。它会持续至本场景结束。"
+      },
+      {
+        "id": "0775ed07-4a1c-5c1d-81ae-22e6cabd47b4",
+        "name": "传奇光耀剑",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "magic",
+        "damage": "d10+12",
+        "range": "melee",
+        "burden": "twoHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "09fc2697-aa44-57c9-8d8e-43e2b63df159",
+        "name": "传奇奥术步枪",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "magic",
+        "damage": "d10+12",
+        "range": "veryFar",
+        "burden": "twoHanded",
+        "featureName": "瞄准",
+        "description": "若目标位于你的邻近范围内，或位于一名盟友的近战范围内，你的攻击具有劣势。你可以**标记 1 压力点**忽略此减值。"
+      },
+      {
+        "id": "7dde4765-4383-584d-8afa-ba81452cee83",
+        "name": "传奇弯刀",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d8+10",
+        "range": "melee",
+        "burden": "oneHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "4a43982e-0d54-58b9-8035-74b6bb4bb476",
+        "name": "传奇影刃",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physicalOrMagic",
+        "damage": "d8+9",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "异界",
+        "description": "攻击成功时，你可以选择造成物理伤害或魔法伤害。"
+      },
+      {
+        "id": "c4649763-1a90-57fb-8f82-2feaab386829",
+        "name": "传奇扭曲匕首",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "physical",
+        "damage": "d8+9",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "穿刺",
+        "description": "用此武器造成伤害时，目标的重度伤害阈值视为降低 2。"
+      },
+      {
+        "id": "55fbcb8e-2f2e-5b0e-83a3-e9fdc017c5e7",
+        "name": "传奇指虎",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8+10",
+        "range": "melee",
+        "burden": "oneHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "10504a7f-d9c1-5e6f-8615-6dcd964f216d",
+        "name": "传奇施法匕首",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d6+9",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "多用",
+        "description": "此武器也可使用以下数据：本能、近战范围、**d8+9**。"
+      },
+      {
+        "id": "8e7356e2-8969-5298-83aa-fdd9315a867d",
+        "name": "传奇武士刀",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d10+12",
+        "range": "melee",
+        "burden": "twoHanded",
+        "featureName": "迅捷",
+        "description": "发动攻击时，你可以**标记 1 压力点**，额外指定攻击范围内的另一名生物为目标。"
+      },
+      {
+        "id": "83222b41-3cbb-5e22-8307-ff9dcbe987de",
+        "name": "传奇符文锁手枪",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d6+12",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "装填",
+        "description": "发动攻击后，掷一颗 **d6**。若结果为 1，再次开火前必须**标记 1 压力点**装填此武器。"
+      },
+      {
+        "id": "2d2e0eb7-3ca9-52ff-80f1-7128b15ed27b",
+        "name": "传奇绳镖",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "physical",
+        "damage": "d6+10",
+        "range": "close",
+        "burden": "twoHanded",
+        "description": "无额外效果。"
+      },
+      {
+        "id": "b7f0c289-a6d9-5b6f-85ba-a58cda319521",
+        "name": "传奇附魔飞轮",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "magic",
+        "damage": "d6+10",
+        "range": "close",
+        "burden": "oneHanded",
+        "featureName": "跳弹",
+        "description": "投掷此武器后，它会回到你手中。发动攻击时，你可以**标记 1 压力点**，额外指定首个目标邻近范围内的另一名生物为目标。"
+      },
+      {
+        "id": "6faed3e2-8fff-5f0b-8425-15d9766d7906",
+        "name": "传奇鞭剑",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d8+9",
+        "range": "veryClose",
+        "burden": "oneHanded",
+        "featureName": "多用",
+        "description": "此武器也可使用以下数据：灵巧、近战范围、**d10+9**。"
+      },
+      {
+        "id": "053251e6-274c-5edf-89fc-323e99fbf283",
+        "name": "传说奥术框架轮椅",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "spellcast",
+        "damageType": "magic",
+        "damage": "d6+9",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "可靠",
+        "description": "攻击掷骰获得 +1 加值。"
+      },
+      {
+        "id": "c9e16365-0a64-54a3-8f5f-1bc29d0ab4e1",
+        "name": "发条弩",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d6+11",
+        "range": "far",
+        "burden": "oneHanded",
+        "featureName": "迅捷",
+        "description": "发动攻击时，你可以**标记 1 压力点**，额外指定攻击范围内的另一名生物为目标。"
+      },
+      {
+        "id": "84b45279-3acf-52bf-85dd-ccf97f056c2e",
+        "name": "恶魔锋刃",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "magic",
+        "damage": "d8+10",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "扰乱",
+        "description": "用这把武器击败一名生物时，所有近距离范围内的敌人都必须**标记 1 压力点**。"
+      },
+      {
+        "id": "b0fc71c9-dd0c-5a15-83a6-3df4692dbde3",
+        "name": "断龙爪",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "instinct",
+        "damageType": "physical",
+        "damage": "d10+11",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "破坏",
+        "description": "−1 敏捷；攻击成功时，邻近范围内所有敌人必须**标记 1 压力点**。",
+        "modifierContributions": [
+          {
+            "id": "agility.value",
+            "definition": {
+              "target": "agility.value",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "破坏",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "f4434b02-8089-5fcb-8634-fd0a326cde57",
+        "name": "无尽法杖",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d10+9",
+        "range": "melee",
+        "burden": "twoHanded",
+        "featureName": "延展",
+        "description": "你可以将此武器的范围提升至极远范围。每提升一级范围，攻击掷骰便承受 −1 减值（例如从近战范围提升至邻近范围、从邻近范围提升至近距离范围，或从近距离范围提升至远距离范围）。"
+      },
+      {
+        "id": "54887c1e-c31d-5989-8c12-1ea8e2f867df",
+        "name": "星金利刃",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "magic",
+        "damage": "d8+10",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "锯齿",
+        "description": "当一颗伤害骰掷出 1 时，该骰改为造成 8 点伤害。"
+      },
+      {
+        "id": "61802d2e-854a-53da-815d-b6d7e68650ca",
+        "name": "火绳枪",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "physical",
+        "damage": "d8+10",
+        "range": "far",
+        "burden": "twoHanded",
+        "featureName": "装填",
+        "description": "发动攻击后，掷一颗 **d6**。若结果为 1，再次开火前必须**标记 1 压力点**装填此武器。"
+      },
+      {
+        "id": "5b646bfc-4b6b-5a9c-8400-446ccfcdd02e",
+        "name": "蝰蛇尖牙",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "finesse",
+        "damageType": "magic",
+        "damage": "d8+9",
+        "range": "melee",
+        "burden": "oneHanded",
+        "featureName": "剧毒",
+        "description": "用这把武器造成重度或更高的伤害时，目标暂时陷入脆弱状态。"
+      },
+      {
+        "id": "0d71dd74-02f5-563e-81c8-bc817c7182ed",
+        "name": "重力弩炮",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d8+6",
+        "range": "far",
+        "burden": "twoHanded",
+        "featureName": "磁力",
+        "description": "用此武器发动攻击时，你可以**花费 1 希望点**，来迫使目标邻近范围内所有敌人进行一次反应掷骰（16）。失败的生物必须**标记 1 压力点**，并被拉至目标的近战范围内。"
+      },
+      {
+        "id": "ba9f4f4a-f93a-5802-8f81-196dfdbb4de3",
+        "name": "风暴之神巨斧",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "magic",
+        "damage": "d10+9",
+        "range": "veryClose",
+        "burden": "twoHanded",
+        "featureName": "弹射",
+        "description": "发动攻击时，你可以标记 任意数量的 压力点，额外指定射程内等量的生物为目标。"
+      },
+      {
+        "id": "1552286d-5f5f-50e5-847d-cfad13de7d8a",
+        "name": "鸦嘴战锤",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d10+9",
+        "range": "veryClose",
+        "burden": "twoHanded",
+        "featureName": "毁灭",
+        "description": "进行攻击掷骰前，你可以**标记 1 压力点**，用 **d20** 作为伤害骰。"
+      },
+      {
+        "id": "e9276bab-6b00-5da3-87ef-74b865b038bc",
+        "name": "黑火药蛇铳",
+        "tier": "T4",
+        "weaponType": "primary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8+12",
+        "range": "far",
+        "burden": "twoHanded",
+        "featureName": "燃烧",
+        "description": "−1 敏捷；攻击成功时，目标邻近范围内的所有生物必须**标记 1 生命点**。",
+        "modifierContributions": [
+          {
+            "id": "agility.value",
+            "definition": {
+              "target": "agility.value",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "燃烧",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "ce439996-73a3-556e-85fa-cea312273a11",
+        "name": "副手指虎",
+        "tier": "T1",
+        "weaponType": "secondary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "成对",
+        "description": "用主武器攻击近战范围内的目标时，伤害骰获得 +2 加值。"
+      },
+      {
+        "id": "c66a2c15-7859-53e4-8fb6-33dd99ce54b1",
+        "name": "战斗斗篷",
+        "tier": "T1",
+        "weaponType": "secondary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d4",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "衬垫",
+        "description": "伤害阈值 +2。",
+        "modifierContributions": [
+          {
+            "id": "minorThreshold",
+            "definition": {
+              "target": "minorThreshold",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "衬垫",
+              "value": 2
+            }
+          },
+          {
+            "id": "majorThreshold",
+            "definition": {
+              "target": "majorThreshold",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "衬垫",
+              "value": 2
+            }
+          }
+        ]
+      },
+      {
+        "id": "43a88354-51b2-5038-834c-b19255b393a3",
+        "name": "手斧",
+        "tier": "T1",
+        "weaponType": "secondary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d8",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "追击",
+        "description": "用主武器成功攻击近战范围内的目标后，你可以**标记 1 压力点**，使本次攻击的熟练值获得 +1 加值。"
+      },
+      {
+        "id": "310b93d4-5f46-52bc-813a-79127de4e418",
+        "name": "符文盾",
+        "tier": "T1",
+        "weaponType": "secondary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d4",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "防护",
+        "description": "护甲值 +1。",
+        "modifierContributions": [
+          {
+            "id": "armorMax",
+            "definition": {
+              "target": "armorMax",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "防护",
+              "value": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "6cda3044-eb55-58a1-8ac1-a33bc811b8d6",
+        "name": "聚焦符文",
+        "tier": "T1",
+        "weaponType": "secondary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d6",
+        "range": "veryClose",
+        "burden": "offHand",
+        "featureName": "专注",
+        "description": "用主武器攻击近距离范围内的目标时，伤害骰获得 +1 加值。"
+      },
+      {
+        "id": "ea6f081d-8f4f-56cd-8b0e-ac2a47b0febc",
+        "name": "飞刀",
+        "tier": "T1",
+        "weaponType": "secondary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d8",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "储备",
+        "description": "你可以使用灵巧进行攻击掷骰，将此武器投向近距离范围内的目标。无需回收，因为你手边总有另一把。"
+      },
+      {
+        "id": "a5600e46-50e9-5f0e-828c-8866f4900ab0",
+        "name": "伸缩棍",
+        "tier": "T2",
+        "weaponType": "secondary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "非致命",
+        "description": "若一个目标因这件武器的攻击本应标记 任意数量的 生命点，改为标记 等量的 压力点。"
+      },
+      {
+        "id": "a2cb289d-3ac2-58aa-88c7-5abde6acaf02",
+        "name": "剃刀铁丝",
+        "tier": "T2",
+        "weaponType": "secondary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d6+3",
+        "range": "veryClose",
+        "burden": "offHand",
+        "featureName": "缠绕",
+        "description": "用主武器攻击邻近范围内的一个目标并成功命中后，你可以**花费 1 希望点**，使目标暂时陷入脆弱。"
+      },
+      {
+        "id": "01229507-09cb-56df-83aa-2288beca720b",
+        "name": "改良副手黄铜指虎",
+        "tier": "T2",
+        "weaponType": "secondary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8+2",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "成对",
+        "description": "用主武器攻击近战范围内的目标时，伤害骰获得 +3 加值。"
+      },
+      {
+        "id": "0dcc18d0-4b63-584b-8ba4-d145cc24395d",
+        "name": "改良战斗斗篷",
+        "tier": "T2",
+        "weaponType": "secondary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d4+2",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "衬垫",
+        "description": "伤害阈值 +3。",
+        "modifierContributions": [
+          {
+            "id": "minorThreshold",
+            "definition": {
+              "target": "minorThreshold",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "衬垫",
+              "value": 3
+            }
+          },
+          {
+            "id": "majorThreshold",
+            "definition": {
+              "target": "majorThreshold",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "衬垫",
+              "value": 3
+            }
+          }
+        ]
+      },
+      {
+        "id": "7982e845-1bf8-5c94-8065-44ac486d3316",
+        "name": "改良手斧",
+        "tier": "T2",
+        "weaponType": "secondary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d8+2",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "追击",
+        "description": "用主武器成功攻击近战范围内的目标后，你可以**标记 1 压力点**，使本次攻击的熟练值获得 +1 加值。"
+      },
+      {
+        "id": "fabf7632-b8c7-51b6-8a85-47c696f949c9",
+        "name": "改良投掷飞刀",
+        "tier": "T2",
+        "weaponType": "secondary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d8+2",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "储备",
+        "description": "你可以使用灵巧进行攻击掷骰，将此武器投向近距离范围内的目标。无需回收，因为你手边总有另一把。"
+      },
+      {
+        "id": "4ae80758-6b07-5486-8a9f-2c22a56f3ffc",
+        "name": "改良符文盾",
+        "tier": "T2",
+        "weaponType": "secondary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d4+2",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "防护",
+        "description": "护甲值 +2。",
+        "modifierContributions": [
+          {
+            "id": "armorMax",
+            "definition": {
+              "target": "armorMax",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "防护",
+              "value": 2
+            }
+          }
+        ]
+      },
+      {
+        "id": "0d3969e0-4f64-5b0e-8d47-92bc6f4bb32c",
+        "name": "改良聚焦符文",
+        "tier": "T2",
+        "weaponType": "secondary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d6+2",
+        "range": "veryClose",
+        "burden": "offHand",
+        "featureName": "专注",
+        "description": "用主武器攻击近距离范围内的目标时，伤害骰获得 +1 加值。"
+      },
+      {
+        "id": "e3154239-20ac-5bcc-8485-85a67ae96bf5",
+        "name": "秘法臂铠",
+        "tier": "T2",
+        "weaponType": "secondary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d8",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "偏转",
+        "description": "当你受到攻击时，可以**标记 1 护甲槽**，使你的闪避值获得等同于可用护甲槽数量的加值，以对抗本次攻击。"
+      },
+      {
+        "id": "47a480f2-0697-58ff-826f-cd20b3d994e1",
+        "name": "节鞭",
+        "tier": "T2",
+        "weaponType": "secondary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d6+4",
+        "range": "veryClose",
+        "burden": "offHand",
+        "featureName": "职责",
+        "description": "护甲值+1；对近战范围内的目标，主武器双伤害+1。",
+        "modifierContributions": [
+          {
+            "id": "armorMax",
+            "definition": {
+              "target": "armorMax",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "职责",
+              "value": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "5f840eb8-10fc-5ca4-8e19-ec7bece8c666",
+        "name": "修补匠之锤",
+        "tier": "T3",
+        "weaponType": "secondary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8+4",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "趁手",
+        "description": "使用主武器进行攻击掷骰时，获得 +1 加值。"
+      },
+      {
+        "id": "1f97f27f-fe0c-561c-86ac-ecb7f871f871",
+        "name": "战镖",
+        "tier": "T3",
+        "weaponType": "secondary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d6+5",
+        "range": "far",
+        "burden": "offHand",
+        "featureName": "多用",
+        "description": "此武器也可使用以下数据：敏捷、近战范围、**d8+5**。"
+      },
+      {
+        "id": "10c758ae-327e-5e87-8676-e9f5172ea31c",
+        "name": "斩首碎片",
+        "tier": "T3",
+        "weaponType": "secondary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d4",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "定向",
+        "description": "武器攻击失败时，可以**花费 1 希望点**，让你的下一次武器攻击成功。"
+      },
+      {
+        "id": "4498e016-57c5-5836-874e-4210e7f0b448",
+        "name": "灵魂锁链",
+        "tier": "T3",
+        "weaponType": "secondary",
+        "trait": "presence",
+        "damageType": "magic",
+        "damage": "d6+5",
+        "range": "veryClose",
+        "burden": "offHand",
+        "featureName": "汲取",
+        "description": "成功攻击后，可以**花费 1 希望点**，并迫使目标**标记 1 压力点**。若目标照做，你**清除 1 压力点**。"
+      },
+      {
+        "id": "1b76d871-02f4-5ba9-8f19-51cf5a35c955",
+        "name": "高级副手铜指虎",
+        "tier": "T3",
+        "weaponType": "secondary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8+4",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "成对",
+        "description": "用主武器攻击近战范围内的目标时，伤害骰获得 +4 加值。"
+      },
+      {
+        "id": "68a3185c-aa07-5006-8a46-9af5e13e2fa2",
+        "name": "高级战斗斗篷",
+        "tier": "T3",
+        "weaponType": "secondary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d4+4",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "衬垫",
+        "description": "伤害阈值 +4。",
+        "modifierContributions": [
+          {
+            "id": "minorThreshold",
+            "definition": {
+              "target": "minorThreshold",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "衬垫",
+              "value": 4
+            }
+          },
+          {
+            "id": "majorThreshold",
+            "definition": {
+              "target": "majorThreshold",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "衬垫",
+              "value": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "0be52c9a-79b6-5697-83b6-78d06c2f973a",
+        "name": "高级手斧",
+        "tier": "T3",
+        "weaponType": "secondary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d8+4",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "追击",
+        "description": "用主武器成功攻击近战范围内的目标后，你可以**标记 1 压力点**，使本次攻击的熟练值获得 +1 加值。"
+      },
+      {
+        "id": "39d4efa4-c9a9-5155-8e94-59fdff982423",
+        "name": "高级符文盾",
+        "tier": "T3",
+        "weaponType": "secondary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d4+4",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "防护",
+        "description": "护甲值 +3。",
+        "modifierContributions": [
+          {
+            "id": "armorMax",
+            "definition": {
+              "target": "armorMax",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "防护",
+              "value": 3
+            }
+          }
+        ]
+      },
+      {
+        "id": "0f83502b-4500-5cb8-8f49-4598ff4f1f44",
+        "name": "高级聚焦符文",
+        "tier": "T3",
+        "weaponType": "secondary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d6+4",
+        "range": "veryClose",
+        "burden": "offHand",
+        "featureName": "专注",
+        "description": "用主武器攻击近距离范围内的目标时，伤害骰获得 +1 加值。"
+      },
+      {
+        "id": "737789f0-53b1-5576-8785-7b9b472819a6",
+        "name": "高级飞刀",
+        "tier": "T3",
+        "weaponType": "secondary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d8+4",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "储备",
+        "description": "你可以使用灵巧进行攻击掷骰，将此武器投向近距离范围内的目标。无需回收，因为你手边总有另一把。"
+      },
+      {
+        "id": "db9097ab-0701-52a2-894f-18f61d2f5bd9",
+        "name": "传奇副手指虎",
+        "tier": "T4",
+        "weaponType": "secondary",
+        "trait": "strength",
+        "damageType": "physical",
+        "damage": "d8+6",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "成对",
+        "description": "用主武器攻击近战范围内的目标时，伤害骰获得 +5 加值。"
+      },
+      {
+        "id": "4699c766-e26d-5900-8336-65c2969d4033",
+        "name": "传奇战斗斗篷",
+        "tier": "T4",
+        "weaponType": "secondary",
+        "trait": "presence",
+        "damageType": "physical",
+        "damage": "d4+6",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "衬垫",
+        "description": "伤害阈值 +5。",
+        "modifierContributions": [
+          {
+            "id": "minorThreshold",
+            "definition": {
+              "target": "minorThreshold",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "衬垫",
+              "value": 5
+            }
+          },
+          {
+            "id": "majorThreshold",
+            "definition": {
+              "target": "majorThreshold",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "衬垫",
+              "value": 5
+            }
+          }
+        ]
+      },
+      {
+        "id": "c435a94b-5b66-5e7d-8fa6-53f45db5c49b",
+        "name": "传奇手斧",
+        "tier": "T4",
+        "weaponType": "secondary",
+        "trait": "agility",
+        "damageType": "physical",
+        "damage": "d8+6",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "追击",
+        "description": "用主武器成功攻击近战范围内的目标后，你可以**标记 1 压力点**，使本次攻击的熟练值获得 +1 加值。"
+      },
+      {
+        "id": "0be97569-59c4-59bf-8688-3a4829404336",
+        "name": "传奇投掷飞刀",
+        "tier": "T4",
+        "weaponType": "secondary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d8+6",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "储备",
+        "description": "你可以使用灵巧进行攻击掷骰，将此武器投向近距离范围内的目标。无需回收，因为你手边总有另一把。"
+      },
+      {
+        "id": "74ff258f-aab5-5344-8676-7c700c4e1fa8",
+        "name": "传奇符文盾",
+        "tier": "T4",
+        "weaponType": "secondary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d4+6",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "防护",
+        "description": "护甲值 +4。",
+        "modifierContributions": [
+          {
+            "id": "armorMax",
+            "definition": {
+              "target": "armorMax",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "防护",
+              "value": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "c250caa0-fd8d-5f4c-85ef-061720c3487a",
+        "name": "传奇聚焦符文",
+        "tier": "T4",
+        "weaponType": "secondary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d6+6",
+        "range": "veryClose",
+        "burden": "offHand",
+        "featureName": "专注",
+        "description": "用主武器攻击近距离范围内的目标时，伤害骰获得 +1 加值。"
+      },
+      {
+        "id": "0585bc96-de93-5371-8d04-c4ab5d2da68f",
+        "name": "回响利刃",
+        "tier": "T4",
+        "weaponType": "secondary",
+        "trait": "presence",
+        "damageType": "magic",
+        "damage": "d4+6",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "加倍",
+        "description": "用主武器攻击成功时，可以对近战范围内的另一个目标造成双倍伤害。"
+      },
+      {
+        "id": "ddc22abd-1f55-57ac-817f-bb67e5809cd4",
+        "name": "莫比乌斯之球",
+        "tier": "T4",
+        "weaponType": "secondary",
+        "trait": "knowledge",
+        "damageType": "magic",
+        "damage": "d8+6",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "递归",
+        "description": "当你掷骰一枚伤害骰掷出最大值时，额外掷骰一枚伤害骰，并将骰值加入本次伤害骰。此特性可反复触发。"
+      },
+      {
+        "id": "8bccd7e2-2a49-5f71-84ca-8f5693376a10",
+        "name": "虚空针",
+        "tier": "T4",
+        "weaponType": "secondary",
+        "trait": "finesse",
+        "damageType": "physical",
+        "damage": "d4+6",
+        "range": "melee",
+        "burden": "offHand",
+        "featureName": "反转",
+        "description": "用恐惧点进行武器攻击掷骰时，**获得 1 希望点**。"
+      },
+      {
+        "id": "1bcfef3e-44ae-54df-86f2-8c1c36d11f4c",
+        "name": "黑血触须",
+        "tier": "T4",
+        "weaponType": "secondary",
+        "trait": "instinct",
+        "damageType": "magic",
+        "damage": "d6+8",
+        "range": "close",
+        "burden": "offHand",
+        "featureName": "剧毒",
+        "description": "若一个目标因你掷出恐惧结果的攻击而标记任意数量的生命点，其须标记等量的压力点。"
+      }
+    ],
+    "armor": [
+      {
+        "id": "850dce4b-2a1d-5a1e-8798-a3590e0dda01",
+        "name": "夹层甲",
+        "tier": "T1",
+        "baseArmorMax": 3,
+        "baseThresholds": {
+          "minor": 6,
+          "major": 12
+        },
+        "featureName": "衬垫",
+        "description": "**标记 1 压力点**，免受轻度伤害。"
+      },
+      {
+        "id": "513240d2-9d6d-56ff-807f-e242c097403e",
+        "name": "法师长袍",
+        "tier": "T1",
+        "baseArmorMax": 2,
+        "baseThresholds": {
+          "minor": 4,
+          "major": 10
+        },
+        "featureName": "附魔",
+        "description": "伤害阈值获得等同于施法属性的加值。"
+      },
+      {
+        "id": "a833bdbf-4060-52b1-8342-9817e7aa097b",
+        "name": "环片甲",
+        "tier": "T1",
+        "baseArmorMax": 4,
+        "baseThresholds": {
+          "minor": 8,
+          "major": 16
+        },
+        "featureName": "臃肿",
+        "description": "闪避值 −1；承受严重伤害时，必须**标记 1 压力点**。",
+        "modifierContributions": [
+          {
+            "id": "evasion",
+            "definition": {
+              "target": "evasion",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "臃肿",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "bd673c2f-0e11-5817-8842-935a8718676d",
+        "name": "鳞甲",
+        "tier": "T1",
+        "baseArmorMax": 3,
+        "baseThresholds": {
+          "minor": 7,
+          "major": 14
+        },
+        "featureName": "笨重",
+        "description": "灵巧 −1。",
+        "modifierContributions": [
+          {
+            "id": "finesse.value",
+            "definition": {
+              "target": "finesse.value",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "笨重",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "b0e1f7be-e656-57d0-8bca-4e6e40cada81",
+        "name": "奇木片甲",
+        "tier": "T2",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 10,
+          "major": 21
+        },
+        "featureName": "快步",
+        "description": "你不会陷入束缚状态；作为一次动作掷骰的一部分，可以移动到远距离范围内。"
+      },
+      {
+        "id": "980084c1-496d-5ced-8bed-8c6cb62fc7f5",
+        "name": "巨魔皮胸甲",
+        "tier": "T2",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 11,
+          "major": 23
+        },
+        "featureName": "自愈",
+        "description": "休息时，**清除 1 护甲槽**。"
+      },
+      {
+        "id": "49a49e8a-88dc-5523-83af-c24ec56bce24",
+        "name": "改进夹层甲",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": {
+          "minor": 9,
+          "major": 19
+        },
+        "featureName": "衬垫",
+        "description": "**标记 1 压力点**，免受轻度伤害。"
+      },
+      {
+        "id": "f71dc9f0-a893-50fe-8643-8d0d500956c6",
+        "name": "改进法师长袍",
+        "tier": "T2",
+        "baseArmorMax": 3,
+        "baseThresholds": {
+          "minor": 6,
+          "major": 15
+        },
+        "featureName": "附魔",
+        "description": "伤害阈值获得等同于施法属性的加值。"
+      },
+      {
+        "id": "298c818d-c647-5c09-8f13-3c6f05f095f2",
+        "name": "改进环片甲",
+        "tier": "T2",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 13,
+          "major": 27
+        },
+        "featureName": "臃肿",
+        "description": "闪避值 −1；承受严重伤害时，必须**标记 1 压力点**。",
+        "modifierContributions": [
+          {
+            "id": "evasion",
+            "definition": {
+              "target": "evasion",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "臃肿",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "3c840189-e451-5cc9-8dcd-a0ce3d3b22e1",
+        "name": "改进鳞甲",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": {
+          "minor": 11,
+          "major": 23
+        },
+        "featureName": "笨重",
+        "description": "灵巧 −1。",
+        "modifierContributions": [
+          {
+            "id": "finesse.value",
+            "definition": {
+              "target": "finesse.value",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "笨重",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "dcda68b0-f69c-54ba-8c61-cf87f8ec4b46",
+        "name": "蛛丝束腰外衣",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": {
+          "minor": 9,
+          "major": 20
+        },
+        "featureName": "攀墙",
+        "description": "+1 闪避值；你能像在地面上一样轻松行走于墙壁。",
+        "modifierContributions": [
+          {
+            "id": "evasion",
+            "definition": {
+              "target": "evasion",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "攀墙",
+              "value": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "abc18295-1474-5aa0-86e1-be5911ac1c45",
+        "name": "鎏金日铠",
+        "tier": "T2",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 12,
+          "major": 26
+        },
+        "featureName": "灿耀",
+        "description": "每场景一次，当你花费希望点时，可以**清除 1 护甲槽**。"
+      },
+      {
+        "id": "545b1387-60f9-5f86-8db5-693e4be64cb7",
+        "name": "附魔师长袍",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": {
+          "minor": 9,
+          "major": 20
+        },
+        "featureName": "记忆",
+        "description": "每场景一次，你可以从仓库中回想一张领域卡，无需支付其回想费用。"
+      },
+      {
+        "id": "e548931a-e727-5202-8ea4-45428d5805f5",
+        "name": "风暴丝修士服",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": {
+          "minor": 9,
+          "major": 20
+        },
+        "featureName": "吸收",
+        "description": "每场景一次，当你承受魔法伤害时，可以**清除 1 护甲槽**。"
+      },
+      {
+        "id": "6a6476a8-7608-51ae-87f6-942a63d7b317",
+        "name": "鹰卫披风",
+        "tier": "T2",
+        "baseArmorMax": 4,
+        "baseThresholds": {
+          "minor": 9,
+          "major": 20
+        },
+        "featureName": "滑翔",
+        "description": "你可以滑翔至多远距离范围，且不会受到坠落造成的伤害骰。"
+      },
+      {
+        "id": "c47726d1-ed06-5f80-8cc1-2b0d76e1c3ff",
+        "name": "三叶草编织斗篷",
+        "tier": "T3",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 11,
+          "major": 27
+        },
+        "featureName": "幸运眷顾",
+        "description": "每场景一次，可以将一次希望失败改为恐惧成功。"
+      },
+      {
+        "id": "482f3cc0-e6e0-5581-8d38-eea4e465449c",
+        "name": "天空守望者鳞甲",
+        "tier": "T3",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 11,
+          "major": 27
+        },
+        "featureName": "警觉",
+        "description": "闪避值+2。",
+        "modifierContributions": [
+          {
+            "id": "evasion",
+            "definition": {
+              "target": "evasion",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "警觉",
+              "value": 2
+            }
+          }
+        ]
+      },
+      {
+        "id": "f5f8dd9c-7e4f-5d4e-80c0-cb782281c802",
+        "name": "星界礼服",
+        "tier": "T3",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 11,
+          "major": 27
+        },
+        "featureName": "星辉",
+        "description": "**标记 1 压力点**，令一次**施法掷骰**获得优势。"
+      },
+      {
+        "id": "7130eb3c-4c55-560a-89bd-9b080b0ba027",
+        "name": "格兰明斯特华服",
+        "tier": "T3",
+        "baseArmorMax": 2,
+        "baseThresholds": {
+          "minor": 11,
+          "major": 27
+        },
+        "featureName": "华美",
+        "description": "获得 等同于风度的 护甲槽加值。"
+      },
+      {
+        "id": "a635fca4-783e-5c8a-88ac-0816cdebf710",
+        "name": "深锻珊瑚甲",
+        "tier": "T3",
+        "baseArmorMax": 6,
+        "baseThresholds": {
+          "minor": 13,
+          "major": 35
+        },
+        "featureName": "水栖",
+        "description": "你可以在水下呼吸，并在水中进行**敏捷掷骰**时获得优势。"
+      },
+      {
+        "id": "0b79e476-6039-5802-84c3-f779775f6494",
+        "name": "血石板甲",
+        "tier": "T3",
+        "baseArmorMax": 6,
+        "baseThresholds": {
+          "minor": 13,
+          "major": 35
+        },
+        "featureName": "嗜血",
+        "description": "在近战范围内以武器攻击造成关键成功时，**恢复 1 生命点**。"
+      },
+      {
+        "id": "902032b8-d449-5796-8318-f977c402c5d7",
+        "name": "高级板条甲",
+        "tier": "T3",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 11,
+          "major": 26
+        },
+        "featureName": "衬垫",
+        "description": "**标记 1 压力点**，免受轻度伤害。"
+      },
+      {
+        "id": "4b980914-b987-5aac-8771-3a6cfbc3af3d",
+        "name": "高级法师长袍",
+        "tier": "T3",
+        "baseArmorMax": 4,
+        "baseThresholds": {
+          "minor": 8,
+          "major": 22
+        },
+        "featureName": "附魔",
+        "description": "伤害阈值获得等同于施法属性的加值。"
+      },
+      {
+        "id": "76be9ce0-5423-5c3d-8a40-351e5c049b79",
+        "name": "高级环片甲",
+        "tier": "T3",
+        "baseArmorMax": 6,
+        "baseThresholds": {
+          "minor": 15,
+          "major": 34
+        },
+        "featureName": "臃肿",
+        "description": "闪避值 −1；承受严重伤害时，必须**标记 1 压力点**。",
+        "modifierContributions": [
+          {
+            "id": "evasion",
+            "definition": {
+              "target": "evasion",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "臃肿",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "bff80dcd-4eec-59a8-8404-67d351521bfa",
+        "name": "高级鳞甲",
+        "tier": "T3",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 13,
+          "major": 30
+        },
+        "featureName": "笨重",
+        "description": "灵巧 −1。",
+        "modifierContributions": [
+          {
+            "id": "finesse.value",
+            "definition": {
+              "target": "finesse.value",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "笨重",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "6aec6860-c229-52f7-87c1-47ff47e07c50",
+        "name": "传奇夹层甲",
+        "tier": "T4",
+        "baseArmorMax": 6,
+        "baseThresholds": {
+          "minor": 13,
+          "major": 35
+        },
+        "featureName": "衬垫",
+        "description": "**标记 1 压力点**，免受轻度伤害。"
+      },
+      {
+        "id": "5dbbed27-051a-5498-874d-390806cd1344",
+        "name": "传奇环片甲",
+        "tier": "T4",
+        "baseArmorMax": 7,
+        "baseThresholds": {
+          "minor": 17,
+          "major": 43
+        },
+        "featureName": "臃肿",
+        "description": "闪避值 −1；承受严重伤害时，必须**标记 1 压力点**。",
+        "modifierContributions": [
+          {
+            "id": "evasion",
+            "definition": {
+              "target": "evasion",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "臃肿",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "f2e86ca4-aebe-5f00-8d2c-591e3e614791",
+        "name": "传奇鳞甲",
+        "tier": "T4",
+        "baseArmorMax": 6,
+        "baseThresholds": {
+          "minor": 15,
+          "major": 39
+        },
+        "featureName": "笨重",
+        "description": "灵巧 −1。",
+        "modifierContributions": [
+          {
+            "id": "finesse.value",
+            "definition": {
+              "target": "finesse.value",
+              "kind": "modifier"
+            },
+            "editable": {
+              "label": "笨重",
+              "value": -1
+            }
+          }
+        ]
+      },
+      {
+        "id": "b6f9df1c-744d-5418-8ade-788b8cb7a8bb",
+        "name": "传说法师长袍",
+        "tier": "T4",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 10,
+          "major": 31
+        },
+        "featureName": "附魔",
+        "description": "伤害阈值获得等同于施法属性的加值。"
+      },
+      {
+        "id": "ef092a44-2d04-525e-8e08-0120e474754d",
+        "name": "共振挽具",
+        "tier": "T4",
+        "baseArmorMax": 7,
+        "baseThresholds": {
+          "minor": 15,
+          "major": 40
+        },
+        "featureName": "玻璃质",
+        "description": "将要承受严重或更高的伤害骰时，可以**标记 2 护甲槽**，免受该伤害骰。若如此做，直到你选择用休整行动修理护甲前，伤害阈值承受 −5 减值。"
+      },
+      {
+        "id": "247afbb2-3349-5fe7-8ebc-3cf36a03bcb5",
+        "name": "圣佑英雄板甲",
+        "tier": "T4",
+        "baseArmorMax": 7,
+        "baseThresholds": {
+          "minor": 13,
+          "major": 35
+        },
+        "featureName": "祝福",
+        "description": "每长休一次，进行“孤注一掷”死亡行动前，你可以花费 任意数量的 希望点；你本次希望骰结果获得一项加值，数值等同于所花费 的 希望点数量。"
+      },
+      {
+        "id": "d5fab3f4-22ae-5c2a-81cc-68c9dbca7c0e",
+        "name": "暗织裹尸布",
+        "tier": "T4",
+        "baseArmorMax": 5,
+        "baseThresholds": {
+          "minor": 13,
+          "major": 36
+        },
+        "featureName": "鬼行",
+        "description": "每次休息一次，可以**标记 1 压力点**，穿过实体并移动到近距离范围内。"
+      },
+      {
+        "id": "1b2a4ece-bbe2-5e31-8d89-2eb24a5de23a",
+        "name": "环铸恐惧板甲",
+        "tier": "T4",
+        "baseArmorMax": 6,
+        "baseThresholds": {
+          "minor": 14,
+          "major": 38
+        },
+        "featureName": "诅咒",
+        "description": "因一次攻击标记 任意数量的 生命点后，掷骰 1 次 **d4**。结果为 4 时，攻击者必须标记 等量的 压力点。"
+      },
+      {
+        "id": "d47b9c02-6de3-5653-8913-7a853911efdb",
+        "name": "神缚鳞甲",
+        "tier": "T4",
+        "baseArmorMax": 6,
+        "baseThresholds": {
+          "minor": 13,
+          "major": 36
+        },
+        "featureName": "神圣",
+        "description": "标记护甲槽时，**获得 1 希望点**。"
+      },
+      {
+        "id": "63da3b25-8242-57d4-82dc-8e05463ca90f",
+        "name": "符文锻造外骨骼",
+        "tier": "T4",
+        "baseArmorMax": 7,
+        "baseThresholds": {
+          "minor": 12,
+          "major": 39
+        },
+        "featureName": "调谐",
+        "description": "装备栏中可放置的领域卡上限 −1；但你的伤害阈值获得一项加值，数值等同于位阶。"
+      }
+    ]
+  }
+}

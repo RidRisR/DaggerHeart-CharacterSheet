@@ -27,7 +27,8 @@ import {
 import type { CardPackImageBackend } from "@/card/packs/image-backend"
 import { STORAGE_KEYS } from "@/card/stores/store-types"
 import { useUnifiedCardStore } from "@/card/stores/unified-card-store"
-import { setCardSourceDisabled, SYSTEM_BUILTIN_CARDS_SOURCE_ID } from "@/lib/app-preferences"
+import { BUILTIN_CARD_SOURCE_IDS } from "@/card/runtime/source-types"
+import { setCardSourceDisabled } from "@/lib/app-preferences"
 import type { CardImportStorageSnapshot } from "../helpers/card-import-storage-snapshot"
 
 type JsonRecord = Record<string, unknown>
@@ -608,8 +609,7 @@ export async function projectRuntimeBusinessSnapshotFromStorage(
 ): Promise<RuntimeBusinessSnapshot> {
   installStorageSnapshotIntoLocalStorage(snapshot)
   // Fixture equivalence checks isolate imported custom-pack runtime facts.
-  // The production runtime also assembles the built-in source.
-  setCardSourceDisabled(SYSTEM_BUILTIN_CARDS_SOURCE_ID, true)
+  for (const sourceId of BUILTIN_CARD_SOURCE_IDS) setCardSourceDisabled(sourceId, true)
   resetStoreForRuntimeProjection()
 
   const store = useUnifiedCardStore.getState()

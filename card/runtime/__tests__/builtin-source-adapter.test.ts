@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest"
+import { existsSync } from "node:fs"
+import { join } from "node:path"
+import hopeFear from "@/data/cards/builtin-hope-fear.json"
+import { prepareCardPackContentForRuntime } from "../prepare-card-pack-content"
 import builtinBase from "@/data/cards/builtin-base.json"
 import { CardSource, CardType } from "@/card/card-types"
-import { CARD_BUILTIN_SOURCE_ID } from "../source-types"
+import { CARD_BUILTIN_SOURCE_ID, HOPE_FEAR_SOURCE_ID } from "../source-types"
 import { loadBuiltinCardRuntimeSource } from "../builtin-source-adapter"
 
 describe("loadBuiltinCardRuntimeSource", () => {
@@ -21,6 +25,31 @@ describe("loadBuiltinCardRuntimeSource", () => {
     const source = await loadBuiltinCardRuntimeSource({ disabledSourceIds: [CARD_BUILTIN_SOURCE_ID] })
 
     expect(source.batch.disabled).toBe(true)
+  })
+
+  it("loads the separate Hope and Fear pack with bundled static art", () => {
+    const { batch, cards } = loadBuiltinCardRuntimeSource({ sourceId: HOPE_FEAR_SOURCE_ID, disabledSourceIds: [] })
+    expect(batch).toMatchObject({
+      id: HOPE_FEAR_SOURCE_ID, name: "内置卡包·希望与恐惧扩展", cardCount: 73, isSystemBatch: true, disabled: false,
+    })
+    expect(cards.every((card) => card.batchId === batch.id && card.source === CardSource.BUILTIN && !card.hasLocalImage)).toBe(true)
+    const artwork = new Set(cards.map((card) => card.imageUrl))
+    expect(artwork.size).toBe(73)
+    for (const path of artwork) {
+      expect(path).toMatch(/^hope-fear\/.+\.webp$/)
+      expect(existsSync(join("public/image", path!))).toBe(true)
+    }
+  })
+
+  it("validates the native expansion without dropped fields and projects its reference cards", () => {
+    expect(prepareCardPackContentForRuntime({ payload: hopeFear })).toMatchObject({ success: true, diagnostics: [] })
+    const { cards } = loadBuiltinCardRuntimeSource({ sourceId: HOPE_FEAR_SOURCE_ID, disabledSourceIds: [] })
+    const variants = cards.filter((card) => card.type === CardType.Variant)
+    expect(new Set(variants.map((card) => card.variantSpecial?.realType))).toEqual(new Set(["转变卡"]))
+    expect(variants).toHaveLength(6)
+    expect(hopeFear.definitions.variants).toEqual(["转变卡"])
+    expect(Object.keys(hopeFear.definitions.variantTypes)).toEqual(["转变卡"])
+    expect(cards.find((card) => card.name === "失乡之民")?.cardSelectDisplay?.item1).toBe("亲如家人")
   })
 
   it("preserves beastform cards and their selection definitions", async () => {

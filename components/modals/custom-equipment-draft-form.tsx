@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { BURDEN_LABELS, DAMAGE_TYPE_LABELS } from "@/equipment/weapon-labels"
 import type {
   EquipmentBurden,
   EquipmentDamageType,
@@ -55,14 +56,16 @@ export const TRAIT_OPTIONS: Array<{ value: EquipmentTrait; label: string }> = [
   { value: "agility", label: "敏捷" },
   { value: "finesse", label: "灵巧" },
   { value: "knowledge", label: "知识" },
+  { value: "spellcast", label: "施法属性" },
   { value: "strength", label: "力量" },
   { value: "instinct", label: "本能" },
   { value: "presence", label: "风度" },
 ]
 
 export const DAMAGE_TYPE_OPTIONS: Array<{ value: EquipmentDamageType; label: string }> = [
-  { value: "physical", label: "物理" },
-  { value: "magic", label: "魔法" },
+  { value: "physical", label: DAMAGE_TYPE_LABELS.physical },
+  { value: "magic", label: DAMAGE_TYPE_LABELS.magic },
+  { value: "physicalOrMagic", label: DAMAGE_TYPE_LABELS.physicalOrMagic },
 ]
 
 export const RANGE_OPTIONS: Array<{ value: EquipmentRange; label: string }> = [
@@ -74,9 +77,9 @@ export const RANGE_OPTIONS: Array<{ value: EquipmentRange; label: string }> = [
 ]
 
 export const BURDEN_OPTIONS: Array<{ value: EquipmentBurden; label: string }> = [
-  { value: "oneHanded", label: "单手" },
-  { value: "twoHanded", label: "双手" },
-  { value: "offHand", label: "副手" },
+  { value: "oneHanded", label: BURDEN_LABELS.oneHanded },
+  { value: "twoHanded", label: BURDEN_LABELS.twoHanded },
+  { value: "offHand", label: BURDEN_LABELS.offHand },
 ]
 
 const WEAPON_TYPE_OPTIONS: Array<{ value: "primary" | "secondary"; label: string }> = [

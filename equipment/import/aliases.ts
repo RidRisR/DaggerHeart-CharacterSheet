@@ -6,10 +6,13 @@ export const zhCnEnumAliases = {
     本能: "instinct",
     风度: "presence",
     知识: "knowledge",
+    施法属性: "spellcast",
   },
   damageType: {
     物理: "physical",
     魔法: "magic",
+    两用: "physicalOrMagic",
+    物理或魔法: "physicalOrMagic",
   },
   range: {
     近战: "melee",

@@ -14,6 +14,8 @@ import type { WeaponSelectionInput } from "@/lib/sheet-store"
 import { X } from "lucide-react"
 import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react"
 import {
+  BURDEN_OPTIONS,
+  DAMAGE_TYPE_OPTIONS,
   CustomWeaponDraftForm,
   emptyWeaponDraftState,
   validateWeaponDraftState,
@@ -34,14 +36,10 @@ const TRAIT_OPTIONS: Array<{ value: EquipmentTrait; label: string }> = [
   { value: "agility", label: "敏捷" },
   { value: "finesse", label: "灵巧" },
   { value: "knowledge", label: "知识" },
+  { value: "spellcast", label: "施法属性" },
   { value: "strength", label: "力量" },
   { value: "instinct", label: "本能" },
   { value: "presence", label: "风度" },
-]
-
-const DAMAGE_TYPE_OPTIONS: Array<{ value: EquipmentDamageType; label: string }> = [
-  { value: "physical", label: "物理" },
-  { value: "magic", label: "魔法" },
 ]
 
 const RANGE_OPTIONS: Array<{ value: EquipmentRange; label: string }> = [
@@ -50,12 +48,6 @@ const RANGE_OPTIONS: Array<{ value: EquipmentRange; label: string }> = [
   { value: "close", label: "近距离" },
   { value: "far", label: "远距离" },
   { value: "veryFar", label: "极远" },
-]
-
-const BURDEN_OPTIONS: Array<{ value: EquipmentBurden; label: string }> = [
-  { value: "oneHanded", label: "单手" },
-  { value: "twoHanded", label: "双手" },
-  { value: "offHand", label: "副手" },
 ]
 
 const WEAPON_TYPE_LABELS: Record<"primary" | "secondary", string> = {

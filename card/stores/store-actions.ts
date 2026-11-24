@@ -13,7 +13,6 @@ import {
   VariantTypesForBatch,
   CustomFieldsForBatch,
   STORAGE_KEYS,
-  BUILTIN_BATCH_ID,
   isServer,
   ExtendedStandardCard,
   CardType,
@@ -28,7 +27,7 @@ import { getCardDisabledSourceIds } from '@/lib/app-preferences';
 import { assembleCardRuntimeSources } from '@/card/runtime/source-assembly';
 import { loadBuiltinCardRuntimeSource } from '@/card/runtime/builtin-source-adapter';
 import { loadCustomCardRuntimeSourcesFromSnapshot } from '@/card/runtime/custom-source-adapter';
-import { CARD_BUILTIN_SOURCE_ID, type CardRuntimeSourceSnapshot } from '@/card/runtime/source-types';
+import { BUILTIN_CARD_SOURCE_IDS, isBuiltinCardSourceId, type CardRuntimeSourceSnapshot } from '@/card/runtime/source-types';
 import { setBuiltinCardRuntimeSourceDisabled } from '@/card/runtime/source-disabled-state';
 
 // Type for Zustand's set and get functions
@@ -228,29 +227,14 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
   },
 
   reloadCustomRuntimeFromStorage: async () => {
-    const builtinSource = await loadBuiltinCardRuntimeSource({
-      disabledSourceIds: getCardDisabledSourceIds(),
-    });
-    const customSources = get()._loadCustomRuntimeSourceSnapshots();
-    const assembled = assembleCardRuntimeSources([builtinSource, ...customSources]);
-
-    set({
-      cards: assembled.cards,
-      batches: assembled.batches,
-      index: buildCustomIndexFromSources(customSources),
-      cacheValid: false,
-    });
-    get()._recomputeAggregations();
-    get()._rebuildCardsByType();
-    get()._rebuildSubclassIndex();
-    set({ stats: get()._computeStats() });
+    get()._loadCustomCardsFromStorage();
   },
 
   // Custom card management
   removeBatch: (batchId: string) => {
     const state = get();
     const batch = state.batches.get(batchId);
-    if (!batch) return false;
+    if (!batch || isBuiltinCardSourceId(batchId)) return false;
 
     // Delete batch images from IndexedDB if they exist
     if (batch.imageCardIds && batch.imageCardIds.length > 0) {
@@ -269,19 +253,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       newCards.delete(cardId);
     });
 
-    // Update index
-    const newIndex = { ...state.index };
-    delete newIndex.batches[batchId];
-    newIndex.totalBatches = newBatches.size;
-    newIndex.totalCards = newCards.size;
-    newIndex.lastUpdate = new Date().toISOString();
-
-    set({
-      batches: newBatches,
-      cards: newCards,
-      index: newIndex,
-      cacheValid: false
-    });
+    set({ batches: newBatches, cards: newCards, cacheValid: false });
 
     // Remove the batch from localStorage explicitly
     if (typeof window !== 'undefined' && !isServer) {
@@ -296,19 +268,13 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     // Sync to localStorage (updates index and remaining batches)
     get()._syncToLocalStorage();
 
-    // Rebuild cardsByType map after removing cards
-    get()._rebuildCardsByType();
-
-    // Rebuild subclass count index
-    get()._rebuildSubclassIndex();
+    get()._loadCustomCardsFromStorage();
 
     return true;
   },
 
   clearAllCustomCards: async () => {
     const state = get();
-    const newBatches = new Map();
-    const newCards = new Map();
 
     // Clear all IndexedDB images (builtin batch doesn't store images in IndexedDB)
     try {
@@ -321,7 +287,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     if (typeof window !== 'undefined' && !isServer) {
       for (const [batchId] of state.batches) {
         // Skip builtin batch
-        if (batchId === BUILTIN_BATCH_ID) continue;
+        if (isBuiltinCardSourceId(batchId)) continue;
 
         try {
           localStorage.removeItem(`${STORAGE_KEYS.BATCH_PREFIX}${batchId}`);
@@ -330,36 +296,10 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
           console.error(`[UnifiedCardStore] Failed to remove batch ${batchId} from localStorage:`, error);
         }
       }
+      localStorage.setItem(STORAGE_KEYS.INDEX, JSON.stringify(buildCustomIndexFromSources([])));
     }
 
-    // Keep only builtin batch
-    const builtinBatch = state.batches.get(BUILTIN_BATCH_ID);
-    if (builtinBatch) {
-      newBatches.set(BUILTIN_BATCH_ID, builtinBatch);
-      // 通过 cardIds 保留内置卡牌
-      builtinBatch.cardIds.forEach(cardId => {
-        const card = state.cards.get(cardId);
-        if (card) {
-          newCards.set(cardId, card);
-        }
-      });
-    }
-
-    const newIndex: CustomCardIndex = {
-      batches: {},
-      totalCards: 0,
-      totalBatches: 0,
-      lastUpdate: new Date().toISOString()
-    };
-
-    set({
-      batches: newBatches,
-      cards: newCards,
-      index: newIndex,
-      cacheValid: false
-    });
-
-    get()._syncToLocalStorage();
+    await get().reloadCustomRuntimeFromStorage();
   },
 
   getAllBatches: () => {
@@ -505,10 +445,10 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     const missingBatches: string[] = [];
     const corruptedBatches: string[] = [];
     const customCardCount = Array.from(state.cards.values()).filter(
-      card => card.batchId !== CARD_BUILTIN_SOURCE_ID
+      card => !isBuiltinCardSourceId(card.batchId)
     ).length;
     const customBatchCount = Array.from(state.batches.keys()).filter(
-      batchId => batchId !== CARD_BUILTIN_SOURCE_ID
+      batchId => !isBuiltinCardSourceId(batchId)
     ).length;
 
     // Basic validation
@@ -539,7 +479,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
         // Check for missing batches (in index but not in localStorage)
         for (const batchId of indexBatchIds) {
-          if (batchId === BUILTIN_BATCH_ID) continue; // Skip builtin batch check
+          if (isBuiltinCardSourceId(batchId)) continue; // Skip builtin batch check
           
           const key = `${STORAGE_KEYS.BATCH_PREFIX}${batchId}`;
           if (!localStorage.getItem(key)) {
@@ -550,7 +490,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
         // Check for corrupted batches (exists but can't be parsed)
         for (const batchId of indexBatchIds) {
-          if (batchId === BUILTIN_BATCH_ID) continue; // Skip builtin batch check
+          if (isBuiltinCardSourceId(batchId)) continue; // Skip builtin batch check
           
           const key = `${STORAGE_KEYS.BATCH_PREFIX}${batchId}`;
           const dataStr = localStorage.getItem(key);
@@ -693,8 +633,8 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
     console.log(`[UnifiedCardStore] toggleBatchDisabled: batch ${batchId} disabled: ${oldDisabled} -> ${newDisabled}`);
 
-    if (batchId === CARD_BUILTIN_SOURCE_ID) {
-      const result = setBuiltinCardRuntimeSourceDisabled(newDisabled);
+    if (isBuiltinCardSourceId(batchId)) {
+      const result = setBuiltinCardRuntimeSourceDisabled(batchId, newDisabled);
       if (!result.ok) return false;
     } else {
       if (isServer) return false;
@@ -738,7 +678,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
   getAllBuiltinCardTemplateIds: () => {
     const state = get();
     return Array.from(state.cards.values())
-      .filter(card => card.batchId === CARD_BUILTIN_SOURCE_ID || card.source === CardSource.BUILTIN)
+      .filter(card => isBuiltinCardSourceId(card.batchId) || card.source === CardSource.BUILTIN)
       .map(card => card.id);
   },
 
@@ -1041,7 +981,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
       // Persists custom card storage only. Built-in source state belongs to app preferences.
       for (const [batchId, batch] of state.batches) {
-        if (batchId === CARD_BUILTIN_SOURCE_ID) continue;
+        if (isBuiltinCardSourceId(batchId)) continue;
 
         // 从全局状态中获取卡牌数据
         const batchCards = batch.cardIds.map(cardId => state.cards.get(cardId)).filter(card => card !== undefined);
@@ -1090,13 +1030,13 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     const batches = new Map<string, BatchInfo>();
 
     for (const [cardId, card] of state.cards) {
-      if (card.batchId === BUILTIN_BATCH_ID || (!card.batchId && card.source !== CardSource.CUSTOM)) {
+      if (isBuiltinCardSourceId(card.batchId) || (!card.batchId && card.source !== CardSource.CUSTOM)) {
         cards.set(cardId, card);
       }
     }
 
     for (const [batchId, batch] of state.batches) {
-      if (batchId === BUILTIN_BATCH_ID || batch.isSystemBatch) {
+      if (isBuiltinCardSourceId(batchId) || batch.isSystemBatch) {
         batches.set(batchId, batch);
       }
     }
@@ -1166,7 +1106,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     for (const key of Object.keys(localStorage)) {
       if (key.startsWith(STORAGE_KEYS.BATCH_PREFIX)) {
         const batchId = key.replace(STORAGE_KEYS.BATCH_PREFIX, '');
-        if (batchId === CARD_BUILTIN_SOURCE_ID) continue;
+        if (isBuiltinCardSourceId(batchId)) continue;
         if (!indexBatchIds.has(batchId)) {
           orphanedKeys.push(key);
           console.warn(`[UnifiedCardStore] Found orphaned batch key: ${key} (batch ID: ${batchId})`);
@@ -1179,7 +1119,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
     }
 
     for (const batchId of Object.keys(index.batches)) {
-      if (batchId === CARD_BUILTIN_SOURCE_ID) continue;
+      if (isBuiltinCardSourceId(batchId)) continue;
 
       const batchStr = localStorage.getItem(`${STORAGE_KEYS.BATCH_PREFIX}${batchId}`);
       if (batchStr) {
@@ -1195,23 +1135,13 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
   },
 
   _loadCustomCardsFromStorage: () => {
-    const state = get();
     const customSources = get()._loadCustomRuntimeSourceSnapshots();
-    const builtinBatch = state.batches.get(CARD_BUILTIN_SOURCE_ID);
-    const builtinSource: CardRuntimeSourceSnapshot | null = builtinBatch
-      ? {
-          sourceId: CARD_BUILTIN_SOURCE_ID,
-          kind: "builtin",
-          batch: builtinBatch,
-          cards: builtinBatch.cardIds
-            .map(cardId => state.cards.get(cardId))
-            .filter((card): card is ExtendedStandardCard => Boolean(card)),
-        }
-      : null;
-    const assembled = assembleCardRuntimeSources([
-      ...(builtinSource ? [builtinSource] : []),
-      ...customSources,
-    ]);
+    const installedCardIds = new Set(customSources.flatMap((source) => source.cards.map((card) => card.id)));
+    const disabledSourceIds = getCardDisabledSourceIds();
+    const builtinSources = BUILTIN_CARD_SOURCE_IDS.map((sourceId) =>
+      loadBuiltinCardRuntimeSource({ sourceId, disabledSourceIds, installedCardIds }),
+    );
+    const assembled = assembleCardRuntimeSources([...builtinSources, ...customSources]);
 
     set({
       cards: assembled.cards,
@@ -1219,6 +1149,10 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
       index: buildCustomIndexFromSources(customSources),
       cacheValid: false,
     });
+    get()._recomputeAggregations();
+    get()._rebuildCardsByType();
+    get()._rebuildSubclassIndex();
+    set({ stats: get()._computeStats() });
   },
 
   _migrateLegacyData: async () => {
@@ -1245,7 +1179,7 @@ export const createStoreActions = (set: SetFunction, get: GetFunction): UnifiedC
 
     return {
       totalCards: customCards.length,
-      totalBatches: Array.from(state.batches.keys()).filter(batchId => batchId !== CARD_BUILTIN_SOURCE_ID).length,
+      totalBatches: Array.from(state.batches.keys()).filter(batchId => !isBuiltinCardSourceId(batchId)).length,
       cardsByType,
       cardsByBatch,
       storageUsed: get().calculateStorageUsage().totalSize

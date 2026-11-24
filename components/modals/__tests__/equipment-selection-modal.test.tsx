@@ -325,7 +325,7 @@ describe("equipment selection modals", () => {
     await userEvent.click(screen.getByRole("menuitemcheckbox", { name: /力量/ }))
     await userEvent.keyboard("{Escape}")
     await userEvent.click(screen.getByRole("button", { name: "伤害类型筛选" }))
-    await userEvent.click(screen.getByRole("menuitemcheckbox", { name: /物理/ }))
+    await userEvent.click(screen.getByRole("menuitemcheckbox", { name: "物理" }))
     await userEvent.keyboard("{Escape}")
     await userEvent.click(screen.getByRole("button", { name: "负荷筛选" }))
     await userEvent.click(screen.getByRole("menuitemcheckbox", { name: /单手/ }))

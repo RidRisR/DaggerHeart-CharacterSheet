@@ -1,3 +1,4 @@
+import { BURDEN_LABELS, DAMAGE_TYPE_LABELS } from "@/equipment/weapon-labels"
 import type { ArmorItem } from "@/data/list/armor"
 import type { AllWeapon } from "@/data/list/all-weapons"
 import type { Weapon } from "@/data/list/primary-weapon"
@@ -28,11 +29,7 @@ const TRAIT_LABELS: Record<string, string> = {
   instinct: "本能",
   presence: "风度",
   knowledge: "知识",
-}
-
-const DAMAGE_TYPE_LABELS: Record<string, string> = {
-  physical: "物理",
-  magic: "魔法",
+  spellcast: "施法属性",
 }
 
 const RANGE_LABELS: Record<string, string> = {
@@ -41,12 +38,6 @@ const RANGE_LABELS: Record<string, string> = {
   close: "近距离",
   far: "远距离",
   veryFar: "极远",
-}
-
-const BURDEN_LABELS: Record<string, string> = {
-  oneHanded: "单手",
-  twoHanded: "双手",
-  offHand: "副手",
 }
 
 function joinText(parts: unknown[], separator: string): string {

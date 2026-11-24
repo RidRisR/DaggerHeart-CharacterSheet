@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { HOPE_FEAR_EQUIPMENT_SOURCE_ID } from "@/equipment/packs/builtin-source-ids"
 import { buildEquipmentRuntimeCacheView, tryBuildEquipmentRuntimeCacheView } from "../build-cache-view"
 import type { RuntimeEquipmentTemplate } from "../types"
 import type { EquipmentPackSnapshotEntry, EquipmentPackStorageSnapshot } from "@/equipment/packs/storage-types"
@@ -122,6 +123,24 @@ describe("equipment runtime cache view builder", () => {
       weaponCount: 1,
       armorCount: 1,
     })
+  })
+
+  it("restores the expansion template when a previously installed copy is removed", () => {
+    const weapon = makeRuntimeWeapon()
+    const entry = makeSnapshotEntry({ weaponIds: [weapon.id], disabled: true })
+    const additionalBuiltinPacks = [{
+      packId: HOPE_FEAR_EQUIPMENT_SOURCE_ID, name: "希望与恐惧", author: "Unknown", templates: [weapon],
+    }] as const
+    const build = (entries: EquipmentPackSnapshotEntry[]) => buildEquipmentRuntimeCacheView({
+      builtinTemplates: [], additionalBuiltinPacks, storageSnapshot: makeStorageSnapshot(entries),
+    })
+    const installed = build([entry])
+    expect(installed.relationIndexes.templateToPackId.get(weapon.id)).toBe(entry.packId)
+    expect(installed.queryIndexes.selectableTemplateIds).not.toContain(weapon.id)
+    expect(installed.packsById.get(HOPE_FEAR_EQUIPMENT_SOURCE_ID)?.weaponCount).toBe(0)
+    const removed = build([])
+    expect(removed.relationIndexes.templateToPackId.get(weapon.id)).toBe(HOPE_FEAR_EQUIPMENT_SOURCE_ID)
+    expect(removed.queryIndexes.selectableTemplateIds).toContain(weapon.id)
   })
 
   it("keeps disabled built-in templates in entity cache but excludes them from selectable ids", () => {

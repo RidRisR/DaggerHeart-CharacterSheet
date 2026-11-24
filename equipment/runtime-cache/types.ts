@@ -10,7 +10,8 @@ import type {
 } from "@/equipment/import/types"
 import type { EquipmentPackStorageSnapshot, EquipmentPackStoredSource } from "@/equipment/packs/storage-types"
 
-export type BuiltinEquipmentSourceId = "builtin"
+import type { BuiltinEquipmentSourceId } from "@/equipment/packs/builtin-source-ids"
+export type { BuiltinEquipmentSourceId } from "@/equipment/packs/builtin-source-ids"
 export type RuntimeEquipmentSourceId = BuiltinEquipmentSourceId | string
 
 export type RuntimeEquipmentTemplate =
@@ -25,7 +26,16 @@ export type CanonicalBuiltinArmorTemplate = Omit<NormalizedEquipmentArmorTemplat
   modifierContributions?: NormalizedEquipmentModifierContributionTemplate[]
 }
 
+export interface BuiltinEquipmentPack {
+  packId: BuiltinEquipmentSourceId
+  name: string
+  author: string
+  version?: string
+  templates: readonly RuntimeEquipmentTemplate[]
+}
+
 export interface EquipmentRuntimeCacheBuildInput {
+  additionalBuiltinPacks?: readonly BuiltinEquipmentPack[]
   builtinTemplates: RuntimeEquipmentTemplate[]
   storageSnapshot: EquipmentPackStorageSnapshot
   disabledSourceIds?: readonly RuntimeEquipmentSourceId[]

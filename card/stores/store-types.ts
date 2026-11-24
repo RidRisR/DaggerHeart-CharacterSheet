@@ -291,7 +291,7 @@ export const DEFAULT_CONFIG: StorageConfig = {
 };
 
 // Builtin batch ID
-export const BUILTIN_BATCH_ID = "SYSTEM_BUILTIN_CARDS";
+export { CARD_BUILTIN_SOURCE_ID as BUILTIN_BATCH_ID } from "../runtime/source-types";
 
 // Helper function to check if we're on the server
 export const isServer = typeof window === 'undefined';

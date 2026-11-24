@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { BURDEN_LABELS, DAMAGE_TYPE_LABELS } from "@/equipment/weapon-labels"
 import { BookOpen, Edit3, Home } from "lucide-react"
 import { AdvancedMaintenance } from "@/components/content-pack-manager/advanced-maintenance"
 import { CardPackTab } from "@/components/content-pack-manager/card-pack-tab"
@@ -87,9 +88,9 @@ function WeaponTemplateList({ templates }: { templates: RuntimeEquipmentTemplate
                 <DetailField label="tier" value={template.tier} />
                 <DetailField label="weaponType" value={formatWeaponType(template.weaponType)} />
                 <DetailField label="trait" value={template.trait} />
-                <DetailField label="damageType" value={template.damageType} />
+                <DetailField label="damageType" value={DAMAGE_TYPE_LABELS[template.damageType]} />
                 <DetailField label="range" value={template.range} />
-                <DetailField label="burden" value={template.burden} />
+                <DetailField label="burden" value={BURDEN_LABELS[template.burden]} />
                 <DetailField label="damage" value={template.damage} />
                 <DetailField label="featureName" value={template.featureName} />
                 <div className="sm:col-span-2 lg:col-span-3">

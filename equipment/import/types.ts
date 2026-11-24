@@ -80,8 +80,8 @@ export interface EquipmentPackImportOptions {
 }
 
 export type EquipmentTier = "T1" | "T2" | "T3" | "T4"
-export type EquipmentTrait = "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge"
-export type EquipmentDamageType = "physical" | "magic"
+export type EquipmentTrait = "agility" | "strength" | "finesse" | "instinct" | "presence" | "knowledge" | "spellcast"
+export type EquipmentDamageType = "physical" | "magic" | "physicalOrMagic"
 export type EquipmentRange = "melee" | "veryClose" | "close" | "far" | "veryFar"
 export type EquipmentBurden = "oneHanded" | "twoHanded" | "offHand"
 

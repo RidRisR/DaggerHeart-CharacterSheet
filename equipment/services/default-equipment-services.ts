@@ -1,3 +1,6 @@
+import hopeFearEquipment from "@/data/equipment/builtin-hope-fear.json"
+import { HOPE_FEAR_EQUIPMENT_SOURCE_ID } from "@/equipment/packs/builtin-source-ids"
+import { normalizeEquipmentPack } from "@/equipment/import/normalize"
 import { allWeapons } from "@/data/list/all-weapons"
 import { armorItems } from "@/data/list/armor"
 import type { NormalizedEquipmentModifierContributionTemplate } from "@/equipment/import/types"
@@ -54,10 +57,18 @@ export function createDefaultEquipmentServices(
     weapons: allWeapons,
     armor: normalizedBuiltinArmor(),
   })
+  const { pack } = normalizeEquipmentPack(hopeFearEquipment)
   const applicationService = createEquipmentPackApplicationService({
     repository,
     runtimeCacheService,
     builtinTemplates,
+    additionalBuiltinPacks: [{
+      packId: HOPE_FEAR_EQUIPMENT_SOURCE_ID,
+      name: pack.metadata.name,
+      author: pack.metadata.author,
+      version: pack.metadata.version,
+      templates: buildBuiltinRuntimeEquipmentTemplates(pack),
+    }],
     sourcePreferences: {
       getDisabledSourceIds: getEquipmentDisabledSourceIds,
       setSourceDisabled: setEquipmentSourceDisabled,

@@ -1,5 +1,5 @@
 import type { BatchData, BatchInfo, CustomCardIndex } from "@/card/stores/store-types"
-import { CARD_BUILTIN_SOURCE_ID, type CardRuntimeSourceSnapshot } from "./source-types"
+import { isBuiltinCardSourceId, type CardRuntimeSourceSnapshot } from "./source-types"
 
 export function loadCustomCardRuntimeSourcesFromSnapshot(input: {
   index: CustomCardIndex
@@ -8,7 +8,7 @@ export function loadCustomCardRuntimeSourcesFromSnapshot(input: {
   const sources: CardRuntimeSourceSnapshot[] = []
 
   for (const [batchId, entry] of Object.entries(input.index.batches)) {
-    if (batchId === CARD_BUILTIN_SOURCE_ID) continue
+    if (isBuiltinCardSourceId(batchId)) continue
 
     const stored = input.batches.get(batchId)
     if (!stored) continue

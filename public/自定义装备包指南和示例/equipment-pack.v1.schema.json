@@ -111,13 +111,15 @@
             "finesse",
             "instinct",
             "presence",
-            "knowledge"
+            "knowledge",
+            "spellcast"
           ]
         },
         "damageType": {
           "enum": [
             "physical",
-            "magic"
+            "magic",
+            "physicalOrMagic"
           ]
         },
         "range": {

@@ -6,7 +6,7 @@
 import { useUnifiedCardStore } from './stores/unified-card-store';
 import { createCardObjectSource } from './import/source';
 import { getDefaultCardPackApplicationService } from './packs/default-card-pack-services';
-import { CARD_BUILTIN_SOURCE_ID } from './runtime/source-types';
+import { isBuiltinCardSourceId } from './runtime/source-types';
 import { 
   ExtendedStandardCard, 
   CardType, 
@@ -251,6 +251,7 @@ export function getCustomCardBatches(): any[] {
  * Remove a custom card batch
  */
 export async function removeCustomCardBatch(batchId: string): Promise<boolean> {
+  if (isBuiltinCardSourceId(batchId)) return false;
   try {
     const service = await getDefaultCardPackApplicationService();
     const result = await service.removePack(batchId);
@@ -300,7 +301,7 @@ export const getBatchName = (batchId: string): string | null => {
  */
 export const toggleBatchDisabled = async (batchId: string): Promise<boolean> => {
   try {
-    if (batchId === CARD_BUILTIN_SOURCE_ID) {
+    if (isBuiltinCardSourceId(batchId)) {
       const store = useUnifiedCardStore.getState();
       if (!store.initialized) {
         const result = await store.initializeSystem();

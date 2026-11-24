@@ -1,3 +1,4 @@
+import { BURDEN_LABELS, DAMAGE_TYPE_LABELS } from "@/equipment/weapon-labels"
 import type {
   EquipmentRuntimeCacheReaders,
   EquipmentRuntimeQueryCriteria,
@@ -137,7 +138,7 @@ function matchesCriteria(
   return (
     matchesCriterionGroup(template.trait, criteria.traits) &&
     matchesCriterionGroup(template.weaponType, criteria.weaponTypes) &&
-    matchesCriterionGroup(template.damageType, criteria.damageTypes) &&
+    (template.damageType === "physicalOrMagic" || matchesCriterionGroup(template.damageType, criteria.damageTypes)) &&
     matchesCriterionGroup(template.range, criteria.ranges) &&
     matchesCriterionGroup(template.burden, criteria.burdens)
   )
@@ -167,7 +168,11 @@ function matchesSearchText(template: RuntimeEquipmentTemplate, searchText: strin
   return (
     fieldIncludes(template.name, normalizedSearchText) ||
     fieldIncludes(template.featureName, normalizedSearchText) ||
-    fieldIncludes(template.description, normalizedSearchText)
+    fieldIncludes(template.description, normalizedSearchText) ||
+    (template.kind === "weapon" && (
+      fieldIncludes(BURDEN_LABELS[template.burden], normalizedSearchText) ||
+      fieldIncludes(DAMAGE_TYPE_LABELS[template.damageType], normalizedSearchText)
+    ))
   )
 }
 

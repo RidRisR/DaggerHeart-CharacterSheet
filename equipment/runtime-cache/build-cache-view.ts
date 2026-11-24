@@ -1,5 +1,7 @@
+import { HOPE_FEAR_EQUIPMENT_SOURCE_ID, isBuiltinEquipmentSourceId } from "@/equipment/packs/builtin-source-ids"
 import type { EquipmentPackSnapshotEntry } from "@/equipment/packs/storage-types"
 import type {
+  BuiltinEquipmentPack,
   EquipmentRuntimeCacheBuildDiagnostic,
   EquipmentRuntimeCacheBuildInput,
   EquipmentRuntimeCacheBuildResult,
@@ -27,36 +29,54 @@ export function tryBuildEquipmentRuntimeCacheView(
 ): EquipmentRuntimeCacheBuildResult {
   const view = createEmptyEquipmentRuntimeCacheView()
   const disabledSourceIds = new Set(input.disabledSourceIds ?? [])
-  const builtinDisabled = disabledSourceIds.has("builtin")
+  const builtinPacks: BuiltinEquipmentPack[] = [
+    { packId: "builtin", name: "系统内置装备", author: "DaggerHeart", templates: input.builtinTemplates },
+    ...(input.additionalBuiltinPacks ?? []),
+  ]
 
-  for (const template of input.builtinTemplates) {
-    const added = addTemplate(view, {
-      template,
-      sourceId: "builtin",
-      selectable: !builtinDisabled,
-      path: "/builtinTemplates",
-    })
-
-    if (!added.ok) {
-      return added
+  // Previously installed equipment retains ownership, including its disabled state.
+  const installedIds = new Set([...input.storageSnapshot.packs.values()].flatMap(({ pack }) =>
+    [...pack.weapons, ...pack.armor].map((template) => template.id),
+  ))
+  for (const { templates, ...metadata } of builtinPacks) {
+    if (templates.length === 0) continue
+    const disabled = disabledSourceIds.has(metadata.packId)
+    let weaponCount = 0
+    let armorCount = 0
+    for (const template of templates) {
+      if (metadata.packId === HOPE_FEAR_EQUIPMENT_SOURCE_ID && installedIds.has(template.id)) continue
+      const added = addTemplate(view, {
+        template,
+        sourceId: metadata.packId,
+        selectable: !disabled,
+        path: "/builtinTemplates",
+      })
+      if (!added.ok) return added
+      if (template.kind === "weapon") weaponCount++
+      else armorCount++
     }
-  }
-
-  if ((view.relationIndexes.packToTemplateIds.get("builtin") ?? []).length > 0) {
-    view.packsById.set("builtin", toBuiltinRuntimePackRecord(view, builtinDisabled))
+    view.packsById.set(metadata.packId, {
+      ...metadata,
+      importedAt: "系统内置",
+      disabled,
+      source: { originKind: "builtin", label: "系统内置" },
+      weaponCount,
+      armorCount,
+      isSystemPack: true,
+    })
   }
 
   const sortedPacks = [...input.storageSnapshot.packs.values()].sort(compareSnapshotEntries)
 
   for (const entry of sortedPacks) {
-    if (entry.packId === "builtin") {
+    if (isBuiltinEquipmentSourceId(entry.packId)) {
       return {
         ok: false,
         diagnostic: {
           severity: "error",
           code: "RUNTIME_CACHE_RESERVED_PACK_ID",
-          path: "/packs/builtin",
-          message: "Runtime cache reserved equipment pack id: builtin.",
+          path: `/packs/${entry.packId}`,
+          message: `Runtime cache reserved equipment pack id: ${entry.packId}.`,
           value: entry.packId,
         },
       }
@@ -171,6 +191,10 @@ function addSelectableTemplate(
     appendIndexValue(indexes.templateIdsByTrait, template.trait, template.id)
     appendIndexValue(indexes.templateIdsByWeaponType, template.weaponType, template.id)
     appendIndexValue(indexes.templateIdsByDamageType, template.damageType, template.id)
+    if (template.damageType === "physicalOrMagic") {
+      appendIndexValue(indexes.templateIdsByDamageType, "physical", template.id)
+      appendIndexValue(indexes.templateIdsByDamageType, "magic", template.id)
+    }
     appendIndexValue(indexes.templateIdsByRange, template.range, template.id)
     appendIndexValue(indexes.templateIdsByBurden, template.burden, template.id)
     return
@@ -198,30 +222,6 @@ function compareSnapshotEntries(a: EquipmentPackSnapshotEntry, b: EquipmentPackS
   }
 
   return a.packId.localeCompare(b.packId)
-}
-
-function toBuiltinRuntimePackRecord(view: StableEquipmentRuntimeCacheView, disabled: boolean): RuntimePackRecord {
-  const templateIds = view.relationIndexes.packToTemplateIds.get("builtin") ?? []
-  let weaponCount = 0
-  let armorCount = 0
-
-  for (const templateId of templateIds) {
-    const template = view.templatesById.get(templateId)
-    if (template?.kind === "weapon") weaponCount += 1
-    if (template?.kind === "armor") armorCount += 1
-  }
-
-  return {
-    packId: "builtin",
-    name: "系统内置装备",
-    author: "DaggerHeart",
-    importedAt: "系统内置",
-    disabled,
-    source: { originKind: "builtin", label: "系统内置" },
-    weaponCount,
-    armorCount,
-    isSystemPack: true,
-  }
 }
 
 function toRuntimePackRecord(entry: EquipmentPackSnapshotEntry): RuntimePackRecord {

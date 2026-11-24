@@ -1,3 +1,4 @@
+import { isBuiltinEquipmentSourceId } from "./builtin-source-ids"
 import {
   getPackStorageKey,
   LOCAL_STORAGE_KEYS,
@@ -32,10 +33,10 @@ interface RecoveryState {
 
 const INDEX_FORMAT: EquipmentPackStorageIndex["format"] = "daggerheart.equipment-pack-index.v1"
 const PACK_DATA_FORMAT: EquipmentPackStoredData["format"] = "daggerheart.equipment-pack-data.v1"
-const RESERVED_PACK_IDS = new Set(["builtin"])
+
 const EQUIPMENT_TIERS = new Set(["T1", "T2", "T3", "T4"])
-const EQUIPMENT_TRAITS = new Set(["agility", "strength", "finesse", "instinct", "presence", "knowledge"])
-const EQUIPMENT_DAMAGE_TYPES = new Set(["physical", "magic"])
+const EQUIPMENT_TRAITS = new Set(["agility", "strength", "finesse", "instinct", "presence", "knowledge", "spellcast"])
+const EQUIPMENT_DAMAGE_TYPES = new Set(["physical", "magic", "physicalOrMagic"])
 const EQUIPMENT_RANGES = new Set(["melee", "veryClose", "close", "far", "veryFar"])
 const EQUIPMENT_BURDENS = new Set(["oneHanded", "twoHanded", "offHand"])
 const EQUIPMENT_MODIFIER_TARGETS = new Set([
@@ -482,7 +483,7 @@ export function createLocalStorageEquipmentPackRepository(
     let indexChanged = false
 
     for (const [packId, entry] of Object.entries(index.packs)) {
-      if (RESERVED_PACK_IDS.has(packId)) {
+      if (isBuiltinEquipmentSourceId(packId)) {
         state.issues.push(
           createIssue({
             code: "PACK_ID_RESERVED",
@@ -645,7 +646,7 @@ export function createLocalStorageEquipmentPackRepository(
       }
     }
 
-    if (RESERVED_PACK_IDS.has(plan.packId)) {
+    if (isBuiltinEquipmentSourceId(plan.packId)) {
       const issue = createIssue({
         code: "PACK_ID_RESERVED",
         packId: plan.packId,

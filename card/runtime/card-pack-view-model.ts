@@ -1,5 +1,5 @@
 import type { BatchInfo } from "@/card/stores/store-types"
-import { CARD_BUILTIN_SOURCE_ID } from "./source-types"
+import { isBuiltinCardSourceId } from "./source-types"
 
 export interface CardRuntimeSourceListItem {
   sourceId: string
@@ -18,7 +18,7 @@ export interface CardRuntimeSourceListItem {
 }
 
 export function toCardRuntimeSourceListItem(batch: BatchInfo): CardRuntimeSourceListItem {
-  const isBuiltin = batch.id === CARD_BUILTIN_SOURCE_ID
+  const isBuiltin = isBuiltinCardSourceId(batch.id)
   const disabled = batch.disabled === true
 
   return {

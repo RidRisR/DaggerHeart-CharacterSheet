@@ -1,3 +1,4 @@
+import { isBuiltinEquipmentSourceId } from "./builtin-source-ids"
 import { importEquipmentPackFromSource } from "@/equipment/import/import-pipeline"
 import type {
   EquipmentPackConflictContext,
@@ -8,6 +9,7 @@ import type {
   EquipmentPackImportSource,
 } from "@/equipment/import/types"
 import type {
+  BuiltinEquipmentPack,
   EquipmentRuntimeCacheBuildDiagnostic,
   EquipmentRuntimeCacheService,
   RuntimeEquipmentSourceId,
@@ -85,6 +87,7 @@ export interface EquipmentSourcePreferences {
 export interface CreateEquipmentPackApplicationServiceInput {
   repository: EquipmentPackRepository
   runtimeCacheService: EquipmentRuntimeCacheService
+  additionalBuiltinPacks?: readonly BuiltinEquipmentPack[]
   builtinTemplates: RuntimeEquipmentTemplate[]
   sourcePreferences?: EquipmentSourcePreferences
   maxCustomPackCount?: number
@@ -93,7 +96,6 @@ export interface CreateEquipmentPackApplicationServiceInput {
 }
 
 const DEFAULT_MAX_CUSTOM_PACK_COUNT = 50
-const BUILTIN_SOURCE_ID: RuntimeEquipmentSourceId = "builtin"
 const DEFAULT_SOURCE_PREFERENCES: EquipmentSourcePreferences = {
   getDisabledSourceIds: () => [],
   setSourceDisabled: () => false,
@@ -230,12 +232,14 @@ function withImportLifecycleSuccess(
 
 function rebuildRuntimeCache(input: {
   runtimeCacheService: EquipmentRuntimeCacheService
+  additionalBuiltinPacks?: readonly BuiltinEquipmentPack[]
   builtinTemplates: RuntimeEquipmentTemplate[]
   storageSnapshot: EquipmentPackStorageSnapshot
   sourcePreferences: EquipmentSourcePreferences
   diagnostics?: EquipmentPackLifecycleDiagnostic[]
 }): EquipmentPackLifecycleResult {
   const result = input.runtimeCacheService.rebuild({
+    additionalBuiltinPacks: input.additionalBuiltinPacks,
     builtinTemplates: input.builtinTemplates,
     storageSnapshot: input.storageSnapshot,
     disabledSourceIds: input.sourcePreferences.getDisabledSourceIds(),
@@ -268,6 +272,12 @@ export function createEquipmentPackApplicationService(
   const random = input.random ?? Math.random
   const maxCustomPackCount = input.maxCustomPackCount ?? DEFAULT_MAX_CUSTOM_PACK_COUNT
   const sourcePreferences = input.sourcePreferences ?? DEFAULT_SOURCE_PREFERENCES
+  const cacheDependencies = {
+    runtimeCacheService: input.runtimeCacheService,
+    builtinTemplates: input.builtinTemplates,
+    additionalBuiltinPacks: input.additionalBuiltinPacks,
+    sourcePreferences,
+  }
 
   function buildConflictContext(snapshot: EquipmentPackStorageSnapshot): EquipmentPackConflictContext {
     const importedTemplateIds = new Set<string>()
@@ -284,7 +294,10 @@ export function createEquipmentPackApplicationService(
     }
 
     return {
-      builtinTemplateIds: new Set(input.builtinTemplates.map((template) => template.id)),
+      builtinTemplateIds: new Set([
+        ...input.builtinTemplates.map((template) => template.id),
+        ...(input.additionalBuiltinPacks ?? []).flatMap((pack) => pack.templates.map((template) => template.id)),
+      ]),
       importedTemplateIds,
       importedTemplateSources,
       customPackCount: snapshot.packCount,
@@ -295,6 +308,7 @@ export function createEquipmentPackApplicationService(
   async function initialize(): Promise<EquipmentPackInitializeResult> {
     const storageSnapshot = await input.repository.loadSnapshot()
     const result = input.runtimeCacheService.rebuild({
+      additionalBuiltinPacks: input.additionalBuiltinPacks,
       builtinTemplates: input.builtinTemplates,
       storageSnapshot,
       disabledSourceIds: sourcePreferences.getDisabledSourceIds(),
@@ -388,10 +402,8 @@ export function createEquipmentPackApplicationService(
     }
 
     const rebuild = rebuildRuntimeCache({
-      runtimeCacheService: input.runtimeCacheService,
-      builtinTemplates: input.builtinTemplates,
+      ...cacheDependencies,
       storageSnapshot: transaction.snapshot,
-      sourcePreferences,
       diagnostics: transactionDiagnostics,
     })
 
@@ -433,19 +445,17 @@ export function createEquipmentPackApplicationService(
     }
 
     return rebuildRuntimeCache({
-      runtimeCacheService: input.runtimeCacheService,
-      builtinTemplates: input.builtinTemplates,
+      ...cacheDependencies,
       storageSnapshot: transaction.snapshot,
-      sourcePreferences,
       diagnostics: transactionDiagnostics,
     })
   }
 
   async function setPackDisabled(packId: string, disabled: boolean): Promise<EquipmentPackLifecycleResult> {
-    if (packId === BUILTIN_SOURCE_ID) {
+    if (isBuiltinEquipmentSourceId(packId)) {
       let writeResult: boolean | void
       try {
-        writeResult = await sourcePreferences.setSourceDisabled(BUILTIN_SOURCE_ID, disabled)
+        writeResult = await sourcePreferences.setSourceDisabled(packId, disabled)
       } catch (error) {
         return {
           success: false,
@@ -467,10 +477,8 @@ export function createEquipmentPackApplicationService(
       const storageSnapshot = await input.repository.loadSnapshot()
 
       return rebuildRuntimeCache({
-        runtimeCacheService: input.runtimeCacheService,
-        builtinTemplates: input.builtinTemplates,
+        ...cacheDependencies,
         storageSnapshot,
-        sourcePreferences,
       })
     }
 
@@ -499,10 +507,8 @@ export function createEquipmentPackApplicationService(
     }
 
     return rebuildRuntimeCache({
-      runtimeCacheService: input.runtimeCacheService,
-      builtinTemplates: input.builtinTemplates,
+      ...cacheDependencies,
       storageSnapshot: transaction.snapshot,
-      sourcePreferences,
       diagnostics: transactionDiagnostics,
     })
   }

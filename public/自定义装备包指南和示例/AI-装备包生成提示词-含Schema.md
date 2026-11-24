@@ -73,11 +73,13 @@
 - `instinct`：本能
 - `presence`：风度
 - `knowledge`：知识
+- `spellcast`：施法属性
 
 ### damageType
 
 - `physical`：物理
 - `magic`：魔法
+- `physicalOrMagic`：两用
 
 ### range
 
@@ -446,13 +448,15 @@ ID 中不要使用 `/`、反斜杠、控制字符。不要把版本号写进装�
             "finesse",
             "instinct",
             "presence",
-            "knowledge"
+            "knowledge",
+            "spellcast"
           ]
         },
         "damageType": {
           "enum": [
             "physical",
-            "magic"
+            "magic",
+            "physicalOrMagic"
           ]
         },
         "range": {

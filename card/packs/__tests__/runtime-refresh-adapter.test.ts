@@ -1,3 +1,4 @@
+import { HOPE_FEAR_SOURCE_ID } from "@/card/runtime/source-types"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { ExtendedStandardCard } from "@/card/card-types"
 import { createImageServiceActions } from "@/card/stores/image-service/actions"
@@ -158,21 +159,6 @@ function createStoreWithStaleCustomCard(staleCardId: string) {
   }
 
   Object.assign(state, createStoreActions(set, get))
-  state._loadCustomCardsFromStorage = vi.fn(() => {
-    set({
-      cards: new Map([...state.cards, [loadedCard.id, loadedCard]]),
-      batches: new Map([...state.batches, ["batch_1", makeBatch("batch_1", { cardIds: [loadedCard.id] })]]),
-      index: {
-        batches: {
-          "batch_1": makeBatch("batch_1", { cardIds: [loadedCard.id] }),
-        },
-        totalCards: 1,
-        totalBatches: 1,
-        lastUpdate: "2026-06-16T00:00:00.000Z",
-      },
-      cacheValid: false,
-    })
-  })
 
   return {
     reloadCustomRuntimeFromStorage: () => get().reloadCustomRuntimeFromStorage(),
@@ -402,9 +388,10 @@ describe("card runtime refresh adapter", () => {
 
     expect(store.batch?.disabled).toBe(true)
     expect(store.indexBatch).toBeUndefined()
-    expect(store.loadAllCards()).toEqual([])
+    expect(store.loadAllCards().length).toBeGreaterThan(0)
+    expect(store.loadAllCards().every((card) => card.batchId === HOPE_FEAR_SOURCE_ID)).toBe(true)
     expect(store.getCardById("Bard")).toBeNull()
-    expect(store.subclassCardIndex).toEqual({})
+    expect(store.subclassCardIndex?.profession).not.toHaveProperty("吟游诗人")
   })
 
   it("syncs builtin enabled state from app preferences during runtime refresh", async () => {

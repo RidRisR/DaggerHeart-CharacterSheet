@@ -1,12 +1,13 @@
+import { isBuiltinEquipmentSourceId } from "@/equipment/packs/builtin-source-ids"
+import { CARD_BUILTIN_SOURCE_ID, isBuiltinCardSourceId } from "@/card/runtime/source-types"
+
 export const APP_PREFERENCES_STORAGE_KEY = "dhsheet:app-preferences:v1"
 export const LEGACY_TEXT_MODE_STORAGE_KEY = "text-mode-storage"
 export const LEGACY_DUAL_PAGE_STORAGE_KEY = "dual-page-storage"
 export const LEGACY_ANNOUNCEMENT_READ_STORAGE_KEY = "dhsheet:last-read-announcement-id"
-export const SYSTEM_BUILTIN_CARDS_SOURCE_ID = "SYSTEM_BUILTIN_CARDS"
+export const SYSTEM_BUILTIN_CARDS_SOURCE_ID = CARD_BUILTIN_SOURCE_ID
 
 const APP_PREFERENCES_FORMAT = "dhsheet.app-preferences.v1"
-const KNOWN_EQUIPMENT_SOURCE_IDS = new Set(["builtin"])
-const KNOWN_CARD_SOURCE_IDS = new Set([SYSTEM_BUILTIN_CARDS_SOURCE_ID])
 
 export type CardDisplayMode = "image" | "text"
 
@@ -155,7 +156,7 @@ function normalizeEquipmentDisabledSourceIds(value: unknown): string[] {
 
   const normalized = new Set<string>()
   for (const sourceId of value) {
-    if (typeof sourceId === "string" && KNOWN_EQUIPMENT_SOURCE_IDS.has(sourceId)) {
+    if (typeof sourceId === "string" && isBuiltinEquipmentSourceId(sourceId)) {
       normalized.add(sourceId)
     }
   }
@@ -167,7 +168,7 @@ function normalizeCardDisabledSourceIds(value: unknown): string[] {
 
   const normalized = new Set<string>()
   for (const sourceId of value) {
-    if (typeof sourceId === "string" && KNOWN_CARD_SOURCE_IDS.has(sourceId)) {
+    if (typeof sourceId === "string" && isBuiltinCardSourceId(sourceId)) {
       normalized.add(sourceId)
     }
   }
@@ -368,7 +369,7 @@ export function setEquipmentSourceDisabled(
   disabled: boolean,
   storage?: AppPreferencesStorage,
 ): boolean {
-  if (!KNOWN_EQUIPMENT_SOURCE_IDS.has(sourceId)) return false
+  if (!isBuiltinEquipmentSourceId(sourceId)) return false
 
   return updatePreferences(
     (preferences) => {
@@ -396,7 +397,7 @@ export function setCardSourceDisabled(
   disabled: boolean,
   storage?: AppPreferencesStorage,
 ): boolean {
-  if (!KNOWN_CARD_SOURCE_IDS.has(sourceId)) return false
+  if (!isBuiltinCardSourceId(sourceId)) return false
 
   return updatePreferences(
     (preferences) => {

@@ -30,7 +30,7 @@ describe("card runtime source disabled state", () => {
   it("writes built-in card source disabled state to app preferences", () => {
     const storage = createMemoryStorage()
 
-    const result = setBuiltinCardRuntimeSourceDisabled(true, storage)
+    const result = setBuiltinCardRuntimeSourceDisabled(CARD_BUILTIN_SOURCE_ID, true, storage)
 
     expect(result).toEqual({
       ok: true,
@@ -38,13 +38,13 @@ describe("card runtime source disabled state", () => {
       disabled: true,
     })
     expect(getCardDisabledSourceIds(storage)).toEqual([SYSTEM_BUILTIN_CARDS_SOURCE_ID])
-    expect(getBuiltinCardRuntimeSourceDisabled(storage)).toBe(true)
+    expect(getBuiltinCardRuntimeSourceDisabled(CARD_BUILTIN_SOURCE_ID, storage)).toBe(true)
   })
 
   it("reports failed app preference writes for the built-in card source", () => {
     const storage = createMemoryStorage({ failWrites: true })
 
-    const result = setBuiltinCardRuntimeSourceDisabled(true, storage)
+    const result = setBuiltinCardRuntimeSourceDisabled(CARD_BUILTIN_SOURCE_ID, true, storage)
 
     expect(result).toEqual({
       ok: false,
@@ -53,6 +53,6 @@ describe("card runtime source disabled state", () => {
       message: "Failed to write card source preferences",
     })
     expect(getCardDisabledSourceIds(storage)).toEqual([])
-    expect(getBuiltinCardRuntimeSourceDisabled(storage)).toBe(false)
+    expect(getBuiltinCardRuntimeSourceDisabled(CARD_BUILTIN_SOURCE_ID, storage)).toBe(false)
   })
 })

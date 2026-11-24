@@ -1,4 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest"
+import { CARD_BUILTIN_SOURCE_ID, HOPE_FEAR_SOURCE_ID } from "../../runtime/source-types"
+import hopeFear from "@/data/cards/builtin-hope-fear.json"
+import { removeCustomCardBatch, toggleBatchDisabled } from "../../index-unified"
+import { toCardRuntimeSourceListItem } from "../../runtime/card-pack-view-model"
 import { CardSource } from "../../card-types"
 import { getVariantTypeNames } from "../../card-predefined-field"
 import { getVariantLevelOptions } from "../../card-ui-config"
@@ -50,8 +54,9 @@ describe("card batch read model", () => {
 
   it("exposes built-in beastforms and selection options across reload disable and enable", async () => {
     const store = useUnifiedCardStore.getState()
+    setBuiltinCardRuntimeSourceDisabled(HOPE_FEAR_SOURCE_ID, true)
     for (const disabled of [false, true, false]) {
-      expect(setBuiltinCardRuntimeSourceDisabled(disabled).ok).toBe(true)
+      expect(setBuiltinCardRuntimeSourceDisabled(CARD_BUILTIN_SOURCE_ID, disabled).ok).toBe(true)
       await store.reloadCustomRuntimeFromStorage()
 
       const beastforms = store.loadAllCards().filter((card) => card.variantSpecial?.realType === "野兽形态")
@@ -64,6 +69,54 @@ describe("card batch read model", () => {
         disabled ? [] : expect.arrayContaining(["德鲁伊"]),
       )
     }
+  })
+
+  it("manages both built-in packs independently across refresh and custom storage sync", async () => {
+    const store = useUnifiedCardStore.getState()
+    await store.reloadCustomRuntimeFromStorage()
+    const expansion = useUnifiedCardStore.getState().batches.get(HOPE_FEAR_SOURCE_ID)!
+    expect(toCardRuntimeSourceListItem(expansion)).toMatchObject({ canDisable: true, canRemove: false, canViewCards: true })
+    expect(await removeCustomCardBatch(expansion.id)).toBe(false)
+    expect(store.removeBatch(expansion.id)).toBe(false)
+    const expansionCard = hopeFear.classes[0].id
+
+    await toggleBatchDisabled(expansion.id)
+    await store.reloadCustomRuntimeFromStorage()
+    expect(store.getCardById("Bard")).toBeTruthy()
+    expect(store.getCardById(expansionCard)).toBeNull()
+    expect(store.getAggregatedCustomFields().professions).not.toContain("刺客")
+    await toggleBatchDisabled(CARD_BUILTIN_SOURCE_ID)
+    await toggleBatchDisabled(expansion.id)
+    expect(store.getCardById("Bard")).toBeNull()
+    expect(store.getCardById(expansionCard)?.batchId).toBe(expansion.id)
+    expect(store.getAggregatedCustomFields().professions).toContain("刺客")
+
+    store._syncToLocalStorage()
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.INDEX)!).batches).toEqual({})
+    expect(localStorage.getItem(STORAGE_KEYS.BATCH_PREFIX + expansion.id)).toBeNull()
+    expect(store.validateIntegrity().isValid).toBe(true)
+  })
+
+  it("keeps a previously imported expansion card until its custom pack is cleared", async () => {
+    const id = hopeFear.classes[0].id
+    const batchId = "old-import"
+    const metadata = { id: batchId, name: "Old import", fileName: "old.json", importTime: "2026-01-01" }
+    const entry = { ...metadata, size: 0, cardCount: 1, cardTypes: ["profession"], disabled: true }
+    const card = { id, name: "Edited Assassin", type: "profession", source: CardSource.CUSTOM, batchId, hasLocalImage: true }
+    localStorage.setItem(STORAGE_KEYS.INDEX, JSON.stringify({ batches: { [batchId]: entry }, totalCards: 1, totalBatches: 1 }))
+    localStorage.setItem(STORAGE_KEYS.BATCH_PREFIX + batchId, JSON.stringify({ metadata, cards: [card] }))
+
+    const store = useUnifiedCardStore.getState()
+    await store.reloadCustomRuntimeFromStorage()
+    expect(store.getCardById(id)).toBeNull()
+    expect(useUnifiedCardStore.getState().batches.get(HOPE_FEAR_SOURCE_ID)?.cardCount).toBe(72)
+    await store.toggleBatchDisabled(batchId)
+    expect(store.getCardById(id)).toMatchObject(card)
+
+    await store.clearAllCustomCards()
+    expect(store.getCardById(id)).toMatchObject({ batchId: HOPE_FEAR_SOURCE_ID, name: "刺客", hasLocalImage: false })
+    expect(useUnifiedCardStore.getState().batches.get(HOPE_FEAR_SOURCE_ID)?.cardCount).toBe(73)
+    expect(store.getCardById("Bard")).toBeTruthy()
   })
 
   it("counts only custom cards in custom card stats", () => {
@@ -144,6 +197,8 @@ describe("card batch read model", () => {
     )
 
     const store = useUnifiedCardStore.getState()
+    setBuiltinCardRuntimeSourceDisabled(HOPE_FEAR_SOURCE_ID, true)
+    setBuiltinCardRuntimeSourceDisabled(CARD_BUILTIN_SOURCE_ID, true)
     store._loadCustomCardsFromStorage()
 
     expect(store.getAggregatedCustomFields()).toMatchObject({

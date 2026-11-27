@@ -10,6 +10,7 @@ import { Eye, Power, PowerOff, Trash2 } from "lucide-react"
 interface EquipmentPackTabProps {
   packs: EquipmentPackListItem[]
   initializationError: EquipmentUiDiagnosticView | null
+  groupNameByPackId?: ReadonlyMap<string, string>
   onRetryInitialize(): void
   onView(packId: string): void
   onToggleDisabled(packId: string, disabled: boolean): void
@@ -130,10 +131,19 @@ function EquipmentContentSummary({ pack }: { pack: EquipmentPackListItem }) {
 }
 
 function EquipmentPackMobileCard({ pack, props }: { pack: EquipmentPackListItem; props: EquipmentPackTabProps }) {
+  const groupName = props.groupNameByPackId?.get(pack.packId)
+
   return (
     <article className="rounded-lg border bg-white p-4">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 break-words font-semibold">{pack.name}</h3>
+        <div className="min-w-0 space-y-1">
+          <h3 className="min-w-0 break-words font-semibold">{pack.name}</h3>
+          {groupName && (
+            <Badge variant="outline" className="text-xs font-normal">
+              整合包：{groupName}
+            </Badge>
+          )}
+        </div>
         <EquipmentPackStatus disabled={pack.disabled} />
       </div>
       <div className="mt-2 break-words text-xs text-muted-foreground">
@@ -158,11 +168,13 @@ export function EquipmentPackTab(props: EquipmentPackTabProps) {
 
     return props.packs.filter((pack) => {
       const sourceLabel = formatSourceLabel(pack).toLowerCase()
+      const groupName = props.groupNameByPackId?.get(pack.packId)?.toLowerCase() ?? ""
       const matchesSearch =
         normalizedSearch.length === 0 ||
         pack.name.toLowerCase().includes(normalizedSearch) ||
         pack.author.toLowerCase().includes(normalizedSearch) ||
-        sourceLabel.includes(normalizedSearch)
+        sourceLabel.includes(normalizedSearch) ||
+        groupName.includes(normalizedSearch)
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "enabled" && !pack.disabled) ||
@@ -170,7 +182,7 @@ export function EquipmentPackTab(props: EquipmentPackTabProps) {
 
       return matchesSearch && matchesStatus
     })
-  }, [props.packs, searchText, statusFilter])
+  }, [props.packs, props.groupNameByPackId, searchText, statusFilter])
 
   return (
     <section className="space-y-4">
@@ -239,22 +251,32 @@ export function EquipmentPackTab(props: EquipmentPackTabProps) {
                 </tr>
               </thead>
               <tbody>
-                {filteredPacks.map((pack) => (
-                  <tr key={pack.packId} className="border-t align-middle">
-                    <td className="break-words p-3 font-medium">{pack.name}</td>
-                    <td className="p-3">
-                      <EquipmentContentSummary pack={pack} />
-                    </td>
-                    <td className="p-3">
-                      <EquipmentPackStatus disabled={pack.disabled} />
-                    </td>
-                    <td className="break-words p-3 text-muted-foreground">{formatSourceLabel(pack)}</td>
-                    <td className="break-words p-3 text-muted-foreground">{formatImportedAt(pack.importedAt)}</td>
-                    <td className="p-3">
-                      <EquipmentPackActions pack={pack} props={props} />
-                    </td>
-                  </tr>
-                ))}
+                {filteredPacks.map((pack) => {
+                  const groupName = props.groupNameByPackId?.get(pack.packId)
+                  return (
+                    <tr key={pack.packId} className="border-t align-middle">
+                      <td className="break-words p-3 font-medium">
+                        <div>{pack.name}</div>
+                        {groupName && (
+                          <Badge variant="outline" className="mt-1 text-xs font-normal">
+                            整合包：{groupName}
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <EquipmentContentSummary pack={pack} />
+                      </td>
+                      <td className="p-3">
+                        <EquipmentPackStatus disabled={pack.disabled} />
+                      </td>
+                      <td className="break-words p-3 text-muted-foreground">{formatSourceLabel(pack)}</td>
+                      <td className="break-words p-3 text-muted-foreground">{formatImportedAt(pack.importedAt)}</td>
+                      <td className="p-3">
+                        <EquipmentPackActions pack={pack} props={props} />
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

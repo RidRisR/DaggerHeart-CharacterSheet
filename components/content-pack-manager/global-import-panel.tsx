@@ -14,10 +14,12 @@ export interface ContentPackImportDiagnosticView {
 
 export interface ContentPackImportResultView {
   fileName: string
-  kind: "card" | "equipment" | "unknown"
+  kind: "card" | "equipment" | "archive" | "unknown"
   success: boolean
   summary: string
   diagnostics: ContentPackImportDiagnosticView[]
+  archiveName?: string
+  entryPath?: string
 }
 
 interface GlobalImportPanelProps {
@@ -64,9 +66,11 @@ export function GlobalImportPanel({ importing, results, onImportFiles }: GlobalI
         <Upload className="mx-auto mb-3 h-8 w-8 text-gray-500" />
         <h2 className="text-lg font-semibold">导入内容包</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          支持 JSON 装备包、JSON 卡牌包、DHCB / ZIP 卡牌包。可以一次选择多个文件。
+          支持 JSON 装备包、JSON 卡牌包、DHCB / ZIP 卡牌包，以及包含多个内容包的 ZIP 整合包。可以一次选择多个文件。
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">文件会逐个导入；如果某个文件失败，其他文件仍会继续处理。</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          单个文件会逐个导入；ZIP 整合包会先执行全量预检，全部通过后再统一写入并自动归入「整合包」标签页管理。
+        </p>
         <Button
           className="mt-4"
           disabled={importing}
@@ -381,6 +385,15 @@ const fileIssueCodes = new Set([
   "CONTENT_PACK_IMPORT_FAILED",
   "INVALID_JSON",
   "INVALID_DHCB",
+  "INVALID_ARCHIVE",
+  "EMPTY_ARCHIVE",
+  "UNSAFE_ARCHIVE_PATH",
+  "ARCHIVE_LIMIT_EXCEEDED",
+  "NESTED_ARCHIVE_UNSUPPORTED",
+  "ARCHIVE_PREFLIGHT_BLOCKED",
+  "ARCHIVE_COMMIT_FAILED",
+  "ARCHIVE_ROLLBACK_INCOMPLETE",
+  "ARCHIVE_COMMIT_ABORTED",
   "MISSING_CARDS_JSON",
   "SOURCE_READ_FAILED",
   "UNSUPPORTED_FORMAT",
@@ -402,6 +415,15 @@ const overviewCodeLabels: Record<string, string> = {
   CONTENT_PACK_IMPORT_FAILED: "文件导入失败",
   INVALID_JSON: "JSON 格式错误",
   INVALID_DHCB: "DHCB / ZIP 格式错误",
+  INVALID_ARCHIVE: "ZIP 压缩包无法解析",
+  EMPTY_ARCHIVE: "压缩包中无内容包",
+  UNSAFE_ARCHIVE_PATH: "压缩包路径不安全",
+  ARCHIVE_LIMIT_EXCEEDED: "压缩包超过导入限制",
+  NESTED_ARCHIVE_UNSUPPORTED: "不支持嵌套整合包",
+  ARCHIVE_PREFLIGHT_BLOCKED: "整合包预检未通过",
+  ARCHIVE_COMMIT_FAILED: "整合包写入失败",
+  ARCHIVE_ROLLBACK_INCOMPLETE: "整合包回滚未完全完成",
+  ARCHIVE_COMMIT_ABORTED: "子包提交异常",
   MISSING_CARDS_JSON: "缺少 cards.json",
   SOURCE_READ_FAILED: "文件读取失败",
   UNSUPPORTED_FORMAT: "不支持的格式",
@@ -559,6 +581,16 @@ function labelsForImportKind(kind: ContentPackImportResultView["kind"]) {
       itemName: "装备",
       builtinItemName: "内置装备",
       unit: "件",
+    }
+  }
+
+  if (kind === "archive") {
+    return {
+      packName: "整合包",
+      detailPackName: "整合包",
+      itemName: "内容包",
+      builtinItemName: "内置内容",
+      unit: "个",
     }
   }
 

@@ -1,11 +1,12 @@
 import type { ImportData, ImportResult } from "@/card/card-types"
 import type { CardPackApplicationDiagnostic, CardPackApplicationImportResult } from "@/card/packs/application-service"
 import type { DhcbImportResult } from "@/card/utils/dhcb-importer"
+import type { ArchiveEntryImportResult, ArchiveImportOutcome } from "@/content-packs/archive/types"
 import { toDiagnosticView, type EquipmentUiStoreDiagnostic } from "@/equipment/ui/types"
 import type { ContentPackImportDiagnosticView, ContentPackImportResultView } from "./global-import-panel"
 
 export type ContentPackAggregateStatus = "success" | "partialFailure" | "failed"
-export type ContentPackTab = "cards" | "equipment"
+export type ContentPackTab = "cards" | "equipment" | "groups"
 
 interface EquipmentImportResultLike {
   success: boolean
@@ -23,6 +24,7 @@ export interface ImportContentPackDependencies {
   importEquipmentFile(file: File): Promise<EquipmentImportResultLike>
   importCardJson(importData: ImportData, fileName: string): Promise<CardImportResultLike>
   importDhcb(file: File): Promise<DhcbImportResultLike>
+  importZipArchive?(file: File): Promise<ArchiveImportOutcome>
   toEquipmentDiagnosticView?: typeof toDiagnosticView
 }
 
@@ -47,10 +49,16 @@ export async function importContentPackFiles(
   let nextTab: ContentPackTab | undefined
 
   for (const file of files) {
-    const result = await importOneContentPackFile(file, dependencies)
-    results.push(result)
-    if (result.success && result.kind !== "unknown") {
-      nextTab = result.kind === "equipment" ? "equipment" : "cards"
+    const fileResults = await importOneContentPackFile(file, dependencies)
+    results.push(...fileResults)
+    for (const result of fileResults) {
+      if (result.success && result.kind !== "unknown") {
+        if (result.kind === "archive") {
+          nextTab = "groups"
+        } else if (nextTab !== "groups") {
+          nextTab = result.kind === "equipment" ? "equipment" : "cards"
+        }
+      }
     }
   }
 
@@ -64,23 +72,32 @@ export async function importContentPackFiles(
 async function importOneContentPackFile(
   file: File,
   dependencies: ImportContentPackDependencies,
-): Promise<ContentPackImportResultView> {
+): Promise<ContentPackImportResultView[]> {
   try {
     const lowerName = file.name.toLowerCase()
+
+    if (lowerName.endsWith(".zip") && dependencies.importZipArchive) {
+      const archiveOutcome = await dependencies.importZipArchive(file)
+      if (archiveOutcome.kind === "archive") {
+        return archiveOutcomeToResultViews(archiveOutcome, dependencies)
+      }
+    }
 
     if (lowerName.endsWith(".dhcb") || lowerName.endsWith(".zip")) {
       const result = await dependencies.importDhcb(file)
       if (isStructuredCardImportResult(result)) {
-        return cardApplicationResultToView(file.name, undefined, result)
+        return [cardApplicationResultToView(file.name, undefined, result)]
       }
 
-      return {
-        fileName: file.name,
-        kind: "card",
-        success: true,
-        summary: `导入 ${result.totalCards} 张卡牌`,
-        diagnostics: cardMessagesToDiagnostics(result.validationErrors),
-      }
+      return [
+        {
+          fileName: file.name,
+          kind: "card",
+          success: true,
+          summary: `导入 ${result.totalCards} 张卡牌`,
+          diagnostics: cardMessagesToDiagnostics(result.validationErrors),
+        },
+      ]
     }
 
     if (lowerName.endsWith(".json")) {
@@ -91,52 +108,218 @@ async function importOneContentPackFile(
         const result = await dependencies.importEquipmentFile(file)
         const mapDiagnostic = dependencies.toEquipmentDiagnosticView ?? toDiagnosticView
         const importedCount = result.summary.weaponCount + result.summary.armorCount
-        return {
-          fileName: file.name,
-          kind: "equipment",
-          success: result.success,
-          summary: result.success ? `导入 ${importedCount} 个装备模板` : equipmentFailureSummary(result.diagnostics),
-          diagnostics: result.diagnostics.map(mapDiagnostic),
-        }
+        return [
+          {
+            fileName: file.name,
+            kind: "equipment",
+            success: result.success,
+            summary: result.success ? `导入 ${importedCount} 个装备模板` : equipmentFailureSummary(result.diagnostics),
+            diagnostics: result.diagnostics.map(mapDiagnostic),
+          },
+        ]
       }
 
       if (!isCardPackJson(parsed)) {
-        return unknownContentPackResult(file.name)
+        return [unknownContentPackResult(file.name)]
       }
 
       const result = await dependencies.importCardJson(parsed, file.name)
       if (isStructuredCardImportResult(result)) {
-        return cardApplicationResultToView(file.name, parsed, result)
+        return [cardApplicationResultToView(file.name, parsed, result)]
       }
 
       const diagnostics = cardMessagesToDiagnostics(result.errors)
-      return {
+      return [
+        {
+          fileName: file.name,
+          kind: "card",
+          success: result.success,
+          summary: result.success ? `导入 ${result.imported} 张卡牌` : cardFailureSummary(diagnostics),
+          diagnostics,
+        },
+      ]
+    }
+
+    return [unknownContentPackResult(file.name)]
+  } catch (error) {
+    return [
+      {
         fileName: file.name,
-        kind: "card",
-        success: result.success,
-        summary: result.success ? `导入 ${result.imported} 张卡牌` : cardFailureSummary(diagnostics),
-        diagnostics,
+        kind: "unknown",
+        success: false,
+        summary: "导入失败",
+        diagnostics: [
+          {
+            severity: "error",
+            code: "CONTENT_PACK_IMPORT_FAILED",
+            path: "",
+            message:
+              error instanceof SyntaxError ? "文件不是有效的 JSON。请检查 JSON 语法" : "文件导入失败，请检查文件内容",
+          },
+        ],
+      },
+    ]
+  }
+}
+
+function archiveEntryToResultView(
+  archiveName: string,
+  entry: ArchiveEntryImportResult,
+  dependencies: ImportContentPackDependencies,
+): ContentPackImportResultView {
+  const displayName = `${archiveName} / ${entry.archivePath}`
+
+  if (entry.kind === "card") {
+    const diagnostics = cardDiagnosticsToViews(entry.diagnostics, entry.parsedInput as ImportData | undefined)
+    return {
+      fileName: displayName,
+      archiveName,
+      entryPath: entry.archivePath,
+      kind: "card",
+      success: entry.success,
+      summary: entry.success ? `导入 ${entry.cardCount} 张卡牌` : cardFailureSummary(diagnostics),
+      diagnostics,
+    }
+  }
+
+  if (entry.kind === "equipment") {
+    const mapDiagnostic = dependencies.toEquipmentDiagnosticView ?? toDiagnosticView
+    const importedCount = entry.weaponCount + entry.armorCount
+    return {
+      fileName: displayName,
+      archiveName,
+      entryPath: entry.archivePath,
+      kind: "equipment",
+      success: entry.success,
+      summary: entry.success ? `导入 ${importedCount} 个装备模板` : equipmentFailureSummary(entry.diagnostics),
+      diagnostics: entry.diagnostics.map(mapDiagnostic),
+    }
+  }
+
+  return {
+    fileName: displayName,
+    archiveName,
+    entryPath: entry.archivePath,
+    kind: "unknown",
+    success: false,
+    summary: entry.diagnostics[0]?.message ?? "无法识别内容包类型",
+    diagnostics: entry.diagnostics,
+  }
+}
+
+function archiveOutcomeToResultViews(
+  outcome: Extract<ArchiveImportOutcome, { kind: "archive" }>,
+  dependencies: ImportContentPackDependencies,
+): ContentPackImportResultView[] {
+  if (outcome.success) {
+    const cardPackCount = outcome.entryResults.filter((entry) => entry.kind === "card" && entry.success).length
+    const equipmentPackCount = outcome.entryResults.filter(
+      (entry) => entry.kind === "equipment" && entry.success,
+    ).length
+    const groupLabel = outcome.group ? `「${outcome.group.name}」` : ""
+    const ignoredSuffix =
+      outcome.ignoredFiles.length > 0 ? `（已忽略 ${outcome.ignoredFiles.length} 个非内容包文件）` : ""
+    const countsParts: string[] = []
+    if (cardPackCount > 0) countsParts.push(`${cardPackCount} 个卡牌包`)
+    if (equipmentPackCount > 0) countsParts.push(`${equipmentPackCount} 个装备包`)
+
+    const summaryCard: ContentPackImportResultView = {
+      fileName: outcome.archiveName,
+      archiveName: outcome.archiveName,
+      kind: "archive",
+      success: true,
+      summary: `已导入整合包${groupLabel}：共包含 ${countsParts.join("、")}${ignoredSuffix}`,
+      diagnostics: [],
+    }
+
+    const entryViews = outcome.entryResults.map((entry) =>
+      archiveEntryToResultView(outcome.archiveName, entry, dependencies),
+    )
+
+    return [summaryCard, ...entryViews]
+  }
+
+  if (outcome.archiveError && outcome.entryResults.length === 0) {
+    const diagnostics: ContentPackImportDiagnosticView[] = [
+      {
+        severity: "error",
+        code: outcome.archiveError.code,
+        path: "",
+        message: outcome.archiveError.message,
+        value: outcome.archiveError.value,
+      },
+    ]
+
+    if (outcome.rollbackErrors && outcome.rollbackErrors.length > 0) {
+      for (const rollbackMessage of outcome.rollbackErrors) {
+        diagnostics.push({
+          severity: "error",
+          code: "ARCHIVE_ROLLBACK_INCOMPLETE",
+          path: "",
+          message: rollbackMessage,
+        })
       }
     }
 
-    return unknownContentPackResult(file.name)
-  } catch (error) {
-    return {
-      fileName: file.name,
-      kind: "unknown",
-      success: false,
-      summary: "导入失败",
-      diagnostics: [
+    return [
+      {
+        fileName: outcome.archiveName,
+        archiveName: outcome.archiveName,
+        kind: "archive",
+        success: false,
+        summary: outcome.archiveError.message,
+        diagnostics,
+      },
+    ]
+  }
+
+  const failedEntries = outcome.entryResults.filter((entry) => !entry.success)
+  const failedEntryViews = failedEntries.map((entry) =>
+    archiveEntryToResultView(outcome.archiveName, entry, dependencies),
+  )
+
+  const archiveDiagnostics: ContentPackImportDiagnosticView[] = outcome.archiveError
+    ? [
         {
           severity: "error",
-          code: "CONTENT_PACK_IMPORT_FAILED",
+          code: outcome.archiveError.code,
           path: "",
-          message:
-            error instanceof SyntaxError ? "文件不是有效的 JSON。请检查 JSON 语法" : "文件导入失败，请检查文件内容",
+          message: outcome.archiveError.message,
+          value: outcome.archiveError.value,
         },
-      ],
+      ]
+    : [
+        {
+          severity: "error",
+          code: "ARCHIVE_PREFLIGHT_BLOCKED",
+          path: "",
+          message: `预检发现 ${failedEntries.length} 个子包存在问题，已取消整个整合包导入，请修复后重试`,
+        },
+      ]
+
+  if (outcome.rollbackErrors && outcome.rollbackErrors.length > 0) {
+    for (const rollbackMessage of outcome.rollbackErrors) {
+      archiveDiagnostics.push({
+        severity: "error",
+        code: "ARCHIVE_ROLLBACK_INCOMPLETE",
+        path: "",
+        message: rollbackMessage,
+      })
     }
   }
+
+  const archiveSummaryCard: ContentPackImportResultView = {
+    fileName: outcome.archiveName,
+    archiveName: outcome.archiveName,
+    kind: "archive",
+    success: false,
+    summary: outcome.archiveError
+      ? outcome.archiveError.message
+      : `整合包未导入：预检发现 ${failedEntries.length} 个子包存在问题`,
+    diagnostics: archiveDiagnostics,
+  }
+
+  return [archiveSummaryCard, ...failedEntryViews]
 }
 
 function isEquipmentPackJson(value: unknown): value is { format: "daggerheart.equipment-pack.v1" } {

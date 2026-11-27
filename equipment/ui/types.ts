@@ -1,4 +1,8 @@
 import type {
+  EquipmentPackConflictContext,
+  EquipmentPackImportSource,
+} from "@/equipment/import/types"
+import type {
   EquipmentRuntimeQueryCriteria,
   RuntimeEquipmentTemplate,
 } from "@/equipment/runtime-cache/types"
@@ -65,6 +69,8 @@ export interface EquipmentUiStoreState {
   getSelectableTemplateById(templateId: string): RuntimeEquipmentTemplateWithSource | undefined
   getPackSummaries(): EquipmentPackListItem[]
   getPackDetail(packId: string): EquipmentPackDetailView | undefined
+  getImportConflictContext(): Promise<EquipmentPackConflictContext>
+  importPackFromSource(source: EquipmentPackImportSource): Promise<EquipmentPackApplicationImportResult>
   importPackFromFile(file: File): Promise<EquipmentPackApplicationImportResult>
   removePack(packId: string): Promise<EquipmentPackLifecycleResult>
   setPackDisabled(packId: string, disabled: boolean): Promise<EquipmentPackLifecycleResult>

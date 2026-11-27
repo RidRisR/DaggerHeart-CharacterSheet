@@ -9,9 +9,15 @@ import { summarizeCardPacks } from "@/components/content-pack-manager/content-pa
 import { ContentPackStats } from "@/components/content-pack-manager/content-pack-stats"
 import { EquipmentPackTab } from "@/components/content-pack-manager/equipment-pack-tab"
 import { GlobalImportPanel, type ContentPackImportResultView } from "@/components/content-pack-manager/global-import-panel"
+import { buildImportGroupViews, ImportGroupTab } from "@/components/content-pack-manager/import-group-tab"
 import { clearAllCharacterImages } from "@/character/storage/character-image-repository"
 import { importContentPackFiles } from "@/components/content-pack-manager/import-content-pack"
+import { importContentPackArchive } from "@/content-packs/archive/archive-import-service"
+import { MAX_ARCHIVE_TOTAL_BYTES } from "@/content-packs/archive/inspect-zip-archive"
+import { getDefaultContentPackGroupApplicationService } from "@/content-packs/groups/default-group-services"
+import type { ContentPackGroupRecord } from "@/content-packs/groups/types"
 import { ViewCardsModal } from "@/components/modals/view-cards-modal"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -32,7 +38,7 @@ import { getEquipmentUiStore } from "@/equipment/ui/equipment-ui-store"
 import { toDiagnosticView, type EquipmentPackDetailView, type RuntimeEquipmentTemplateWithSource } from "@/equipment/ui/types"
 import { navigateToPage } from "@/lib/utils"
 
-type ContentPackTabValue = "cards" | "equipment"
+type ContentPackTabValue = "cards" | "equipment" | "groups"
 
 interface ImportStatus {
   isImporting: boolean
@@ -68,6 +74,67 @@ async function importCardDhcbForManager(file: File) {
   return service.importFromSource(createCardDhcbSource(bytes, file.name), {
     mode: "commit",
   })
+}
+
+async function importZipArchiveForManager(file: File) {
+  if (file.size > MAX_ARCHIVE_TOTAL_BYTES) {
+    return {
+      kind: "archive" as const,
+      archiveName: file.name,
+      success: false,
+      blockedByPreflight: true,
+      entryResults: [],
+      ignoredFiles: [],
+      archiveError: {
+        code: "ARCHIVE_LIMIT_EXCEEDED" as const,
+        message: "压缩包文件体积超过限制，请拆分后再导入",
+        value: { sizeBytes: file.size, maxTotalBytes: MAX_ARCHIVE_TOTAL_BYTES },
+      },
+    }
+  }
+
+  const bytes = await file.arrayBuffer()
+  const equipmentStore = getEquipmentUiStore()
+  const groupService = getDefaultContentPackGroupApplicationService()
+
+  return importContentPackArchive(
+    { fileName: file.name, bytes },
+    {
+      async getCardConflictContext() {
+        const cardService = await getDefaultCardPackApplicationService()
+        const snapshot = await cardService.loadSnapshot()
+        return cardService.buildConflictContext(snapshot)
+      },
+      async getEquipmentConflictContext() {
+        return equipmentStore.getState().getImportConflictContext()
+      },
+      async commitCardPack(source) {
+        const cardService = await getDefaultCardPackApplicationService()
+        return cardService.importFromSource(source, { mode: "commit" })
+      },
+      async commitEquipmentPack(source) {
+        return equipmentStore.getState().importPackFromSource(source)
+      },
+      async removeCardPack(packId) {
+        const cardService = await getDefaultCardPackApplicationService()
+        const result = await cardService.removePack(packId)
+        const removedFromStorage =
+          result.storageCommitted === true ||
+          result.diagnostics.some((diagnostic) => diagnostic.code === "PACK_NOT_FOUND")
+        return { ok: result.success || removedFromStorage, message: result.diagnostics[0]?.message }
+      },
+      async removeEquipmentPack(packId) {
+        const result = await equipmentStore.getState().removePack(packId)
+        const removedFromStorage =
+          result.storageCommitted === true ||
+          result.diagnostics.some((diagnostic) => diagnostic.code === "PACK_NOT_FOUND")
+        return { ok: result.success || removedFromStorage, message: result.diagnostics[0]?.message }
+      },
+      createGroup(input) {
+        return groupService.createGroup(input)
+      },
+    },
+  )
 }
 
 function WeaponTemplateList({ templates }: { templates: RuntimeEquipmentTemplateWithSource[] }) {
@@ -198,6 +265,9 @@ export default function CardManagerPage() {
   const [activeTab, setActiveTab] = useState<ContentPackTabValue>("cards")
   const [importStatus, setImportStatus] = useState<ImportStatus>({ isImporting: false, error: null })
   const [globalImportResults, setGlobalImportResults] = useState<ContentPackImportResultView[]>([])
+  const [importGroups, setImportGroups] = useState<ContentPackGroupRecord[]>([])
+  const [groupStorageError, setGroupStorageError] = useState<string | null>(null)
+  const [busyGroupIds, setBusyGroupIds] = useState<Set<string>>(() => new Set())
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [viewingCardSourceId, setViewingCardSourceId] = useState<string | undefined>(undefined)
   const [viewingEquipmentPackId, setViewingEquipmentPackId] = useState<string | null>(null)
@@ -206,6 +276,33 @@ export default function CardManagerPage() {
     () => Array.from(runtimeBatches.values()).map(toCardRuntimeSourceListItem),
     [runtimeBatches],
   )
+  const importGroupViews = useMemo(
+    () =>
+      buildImportGroupViews({
+        groups: importGroups,
+        cardPacks: batches,
+        equipmentPacks,
+      }),
+    [importGroups, batches, equipmentPacks],
+  )
+  const cardGroupNameByPackId = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const group of importGroupViews) {
+      for (const member of group.members) {
+        if (member.kind === "card") map.set(member.packId, group.name)
+      }
+    }
+    return map
+  }, [importGroupViews])
+  const equipmentGroupNameByPackId = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const group of importGroupViews) {
+      for (const member of group.members) {
+        if (member.kind === "equipment") map.set(member.packId, group.name)
+      }
+    }
+    return map
+  }, [importGroupViews])
   const cardPackSummary = useMemo(() => summarizeCardPacks(batches), [batches])
   const viewingCards = useMemo(() => {
     if (!viewModalOpen) return []
@@ -252,6 +349,21 @@ export default function CardManagerPage() {
     void initializeData()
   }, [cardRuntimeInitialized, initializeCardSystem])
 
+  function syncImportGroupsFromStorage() {
+    const groupService = getDefaultContentPackGroupApplicationService()
+    const result = groupService.listGroups()
+    if (result.ok) {
+      setImportGroups(result.groups)
+      setGroupStorageError(null)
+    } else {
+      setGroupStorageError(result.errors[0]?.message ?? "无法读取本地整合包索引。")
+    }
+  }
+
+  useEffect(() => {
+    syncImportGroupsFromStorage()
+  }, [])
+
   async function handleMultiFileImport(files: File[]) {
     if (files.length === 0) return
 
@@ -264,6 +376,7 @@ export default function CardManagerPage() {
         importEquipmentFile: (file) => store.getState().importPackFromFile(file),
         importCardJson: importCardJsonForManager,
         importDhcb: importCardDhcbForManager,
+        importZipArchive: importZipArchiveForManager,
         toEquipmentDiagnosticView: toDiagnosticView,
       })
 
@@ -284,6 +397,7 @@ export default function CardManagerPage() {
           const message = refreshError instanceof Error ? refreshError.message : "刷新数据失败"
           error = error ? `${error}；${message}` : `导入完成，但刷新数据失败：${message}`
         }
+        syncImportGroupsFromStorage()
       }
 
       setImportStatus({ isImporting: false, error })
@@ -317,6 +431,13 @@ export default function CardManagerPage() {
 
     const success = await removeCustomCardBatch(sourceId)
     if (success) {
+      const updated = getDefaultContentPackGroupApplicationService().removeMember({ kind: "card", packId: sourceId })
+      if (updated.ok) {
+        setImportGroups(updated.groups)
+        setGroupStorageError(null)
+      } else {
+        setGroupStorageError(updated.errors[0]?.message ?? "更新整合包索引失败。")
+      }
       if (viewingCardSourceId === sourceId) {
         setViewModalOpen(false)
         setViewingCardSourceId(undefined)
@@ -338,6 +459,14 @@ export default function CardManagerPage() {
     const result = await getEquipmentUiStore().getState().removePack(packId)
     if (!result.success) {
       alert(result.diagnostics[0]?.message ?? "装备包删除失败")
+    } else {
+      const updated = getDefaultContentPackGroupApplicationService().removeMember({ kind: "equipment", packId })
+      if (updated.ok) {
+        setImportGroups(updated.groups)
+        setGroupStorageError(null)
+      } else {
+        setGroupStorageError(updated.errors[0]?.message ?? "更新整合包索引失败。")
+      }
     }
     if (viewingEquipmentPackId === packId) setViewingEquipmentPackId(null)
   }
@@ -346,6 +475,108 @@ export default function CardManagerPage() {
     const result = await getEquipmentUiStore().getState().setPackDisabled(packId, disabled)
     if (!result.success) {
       alert(result.diagnostics[0]?.message ?? "装备包状态更新失败")
+    }
+  }
+
+  function setGroupBusy(groupId: string, busy: boolean) {
+    setBusyGroupIds((current) => {
+      const next = new Set(current)
+      if (busy) {
+        next.add(groupId)
+      } else {
+        next.delete(groupId)
+      }
+      return next
+    })
+  }
+
+  function handleRenameGroup(groupId: string, nextName: string) {
+    const result = getDefaultContentPackGroupApplicationService().renameGroup(groupId, nextName)
+    if (result.ok) {
+      setImportGroups(result.groups)
+      setGroupStorageError(null)
+    } else {
+      const message = result.errors[0]?.message ?? "重命名整合包失败"
+      setGroupStorageError(message)
+      alert(message)
+    }
+  }
+
+  async function handleSetGroupDisabled(groupId: string, disabled: boolean) {
+    if (busyGroupIds.has(groupId)) return
+
+    setGroupBusy(groupId, true)
+    try {
+      const result = await getDefaultContentPackGroupApplicationService().setGroupDisabled(groupId, disabled)
+      if (!result.ok) {
+        if (result.failedMembers.length > 0) {
+          alert(
+            `${disabled ? "批量禁用" : "批量启用"}部分失败（${result.failedMembers.length} 个内容包未更新）：${result.failedMembers[0]?.message ?? ""}`,
+          )
+        } else {
+          const message = result.errors[0]?.message ?? `${disabled ? "批量禁用" : "批量启用"}失败`
+          setGroupStorageError(message)
+          alert(message)
+        }
+      }
+    } finally {
+      setGroupBusy(groupId, false)
+    }
+  }
+
+  async function handleRemoveGroup(groupId: string) {
+    if (busyGroupIds.has(groupId)) return
+
+    const groupView = importGroupViews.find((item) => item.groupId === groupId)
+    if (!groupView) return
+
+    const parts: string[] = []
+    if (groupView.cardPackCount > 0) parts.push(`${groupView.cardPackCount} 个卡牌包`)
+    if (groupView.equipmentPackCount > 0) parts.push(`${groupView.equipmentPackCount} 个装备包`)
+
+    if (!confirm(`确定要删除整合包「${groupView.name}」吗？这将一并删除包内的 ${parts.join("和")}。`)) {
+      return
+    }
+
+    setGroupBusy(groupId, true)
+    try {
+      const result = await getDefaultContentPackGroupApplicationService().removeGroup(groupId)
+      if (result.ok) {
+        setImportGroups(result.groups)
+        setGroupStorageError(null)
+      } else if (result.groups.length > 0 || result.failedMembers.length > 0) {
+        setImportGroups(result.groups)
+      }
+
+      if (
+        viewingCardSourceId &&
+        result.succeededMembers.some((member) => member.kind === "card" && member.packId === viewingCardSourceId)
+      ) {
+        setViewModalOpen(false)
+        setViewingCardSourceId(undefined)
+      }
+      if (
+        viewingEquipmentPackId &&
+        result.succeededMembers.some(
+          (member) => member.kind === "equipment" && member.packId === viewingEquipmentPackId,
+        )
+      ) {
+        setViewingEquipmentPackId(null)
+      }
+
+      if (!result.ok) {
+        if (result.failedMembers.length > 0) {
+          alert(
+            `删除整合包部分失败（${result.failedMembers.length} 个内容包未删除）：${result.failedMembers[0]?.message ?? ""}`,
+          )
+        } else {
+          const message = result.errors[0]?.message ?? "包内内容已删除，但更新整合包索引失败"
+          setGroupStorageError(message)
+          alert(`更新整合包索引失败：${message}`)
+        }
+      }
+    } finally {
+      setGroupBusy(groupId, false)
     }
   }
 
@@ -369,6 +600,8 @@ export default function CardManagerPage() {
       localStorage.clear()
       await cardStore.initializeSystem()
       await getEquipmentUiStore().getState().refreshFromStorage()
+      setImportGroups([])
+      setGroupStorageError(null)
       alert("所有本地数据已清空。页面将自动刷新。")
       window.setTimeout(() => window.location.reload(), 1000)
     } catch (error) {
@@ -423,14 +656,23 @@ export default function CardManagerPage() {
       )}
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ContentPackTabValue)}>
-        <TabsList className="grid w-full grid-cols-2 sm:w-auto">
+        <TabsList className="grid w-full grid-cols-3 sm:w-auto">
           <TabsTrigger value="cards">卡牌包</TabsTrigger>
           <TabsTrigger value="equipment">装备包</TabsTrigger>
+          <TabsTrigger value="groups" className="gap-1.5">
+            <span>整合包</span>
+            {importGroupViews.length > 0 && (
+              <Badge variant="secondary" className="px-1.5 py-0 text-xs">
+                {importGroupViews.length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="cards" className="mt-4">
           <CardPackTab
             batches={batches}
             totalCards={cardPackSummary.enabledCardCount}
+            groupNameByPackId={cardGroupNameByPackId}
             onViewCards={handleViewCards}
             onToggleBatchDisabled={handleToggleBatchDisabled}
             onRemoveBatch={handleRemoveBatch}
@@ -440,10 +682,28 @@ export default function CardManagerPage() {
           <EquipmentPackTab
             packs={equipmentPacks}
             initializationError={equipmentInitializationError}
+            groupNameByPackId={equipmentGroupNameByPackId}
             onRetryInitialize={() => void handleRetryEquipmentInitialize()}
             onView={setViewingEquipmentPackId}
             onToggleDisabled={(packId, disabled) => void handleToggleEquipmentPack(packId, disabled)}
             onRemove={(packId) => void handleRemoveEquipmentPack(packId)}
+          />
+        </TabsContent>
+        <TabsContent value="groups" className="mt-4">
+          <ImportGroupTab
+            groups={importGroupViews}
+            busyGroupIds={busyGroupIds}
+            storageError={groupStorageError}
+            onRetryLoad={syncImportGroupsFromStorage}
+            onRenameGroup={handleRenameGroup}
+            onSetGroupDisabled={(groupId, disabled) => void handleSetGroupDisabled(groupId, disabled)}
+            onRemoveGroup={(groupId) => void handleRemoveGroup(groupId)}
+            onViewCardPack={handleViewCards}
+            onToggleCardPack={(packId) => void handleToggleBatchDisabled(packId)}
+            onRemoveCardPack={(packId) => void handleRemoveBatch(packId)}
+            onViewEquipmentPack={setViewingEquipmentPackId}
+            onToggleEquipmentPack={(packId, disabled) => void handleToggleEquipmentPack(packId, disabled)}
+            onRemoveEquipmentPack={(packId) => void handleRemoveEquipmentPack(packId)}
           />
         </TabsContent>
       </Tabs>

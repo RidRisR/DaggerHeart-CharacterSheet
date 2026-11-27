@@ -12,6 +12,7 @@ export type CardPackListItem = CardRuntimeSourceListItem
 interface CardPackTabProps {
   batches: CardPackListItem[]
   totalCards: number
+  groupNameByPackId?: ReadonlyMap<string, string>
   onViewCards(sourceId?: string): void
   onToggleBatchDisabled(sourceId: string, nextDisabled: boolean): void
   onRemoveBatch(sourceId: string): void
@@ -118,10 +119,19 @@ function CardPackContentSummary({ batch }: { batch: CardPackListItem }) {
 }
 
 function CardPackMobileCard({ batch, props }: { batch: CardPackListItem; props: CardPackTabProps }) {
+  const groupName = props.groupNameByPackId?.get(batch.sourceId)
+
   return (
     <article className="rounded-lg border bg-white p-4">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 break-words font-semibold">{batch.name}</h3>
+        <div className="min-w-0 space-y-1">
+          <h3 className="min-w-0 break-words font-semibold">{batch.name}</h3>
+          {groupName && (
+            <Badge variant="outline" className="text-xs font-normal">
+              整合包：{groupName}
+            </Badge>
+          )}
+        </div>
         <CardPackStatus disabled={batch.disabled} />
       </div>
       <div className="mt-2 break-words text-xs text-muted-foreground">
@@ -146,11 +156,13 @@ export function CardPackTab(props: CardPackTabProps) {
 
     return props.batches.filter((batch) => {
       const sourceLabel = batch.sourceLabel.toLowerCase()
+      const groupName = props.groupNameByPackId?.get(batch.sourceId)?.toLowerCase() ?? ""
       const matchesSearch =
         normalizedSearch.length === 0 ||
         batch.name.toLowerCase().includes(normalizedSearch) ||
         batch.fileName.toLowerCase().includes(normalizedSearch) ||
-        sourceLabel.includes(normalizedSearch)
+        sourceLabel.includes(normalizedSearch) ||
+        groupName.includes(normalizedSearch)
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "enabled" && !batch.disabled) ||
@@ -158,7 +170,7 @@ export function CardPackTab(props: CardPackTabProps) {
 
       return matchesSearch && matchesStatus
     })
-  }, [props.batches, searchText, statusFilter])
+  }, [props.batches, props.groupNameByPackId, searchText, statusFilter])
 
   return (
     <section className="space-y-4">
@@ -227,22 +239,32 @@ export function CardPackTab(props: CardPackTabProps) {
                 </tr>
               </thead>
               <tbody>
-                {filteredBatches.map((batch) => (
-                  <tr key={batch.sourceId} className="border-t align-middle">
-                    <td className="break-words p-3 font-medium">{batch.name}</td>
-                    <td className="p-3">
-                      <CardPackContentSummary batch={batch} />
-                    </td>
-                    <td className="p-3">
-                      <CardPackStatus disabled={batch.disabled} />
-                    </td>
-                    <td className="break-words p-3 text-muted-foreground">{batch.sourceLabel}</td>
-                    <td className="break-words p-3 text-muted-foreground">{formatImportedAt(batch.importTime)}</td>
-                    <td className="p-3">
-                      <CardPackActions batch={batch} props={props} />
-                    </td>
-                  </tr>
-                ))}
+                {filteredBatches.map((batch) => {
+                  const groupName = props.groupNameByPackId?.get(batch.sourceId)
+                  return (
+                    <tr key={batch.sourceId} className="border-t align-middle">
+                      <td className="break-words p-3 font-medium">
+                        <div>{batch.name}</div>
+                        {groupName && (
+                          <Badge variant="outline" className="mt-1 text-xs font-normal">
+                            整合包：{groupName}
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <CardPackContentSummary batch={batch} />
+                      </td>
+                      <td className="p-3">
+                        <CardPackStatus disabled={batch.disabled} />
+                      </td>
+                      <td className="break-words p-3 text-muted-foreground">{batch.sourceLabel}</td>
+                      <td className="break-words p-3 text-muted-foreground">{formatImportedAt(batch.importTime)}</td>
+                      <td className="p-3">
+                        <CardPackActions batch={batch} props={props} />
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

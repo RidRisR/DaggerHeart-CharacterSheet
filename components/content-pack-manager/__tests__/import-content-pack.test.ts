@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
+import type { ArchiveImportOutcome } from "@/content-packs/archive/types"
 import { importContentPackFiles } from "../import-content-pack"
 
 function jsonFile(name: string, value: unknown) {
@@ -382,5 +383,109 @@ describe("importContentPackFiles", () => {
     expect(result.results).toHaveLength(2)
     expect(result.aggregateStatus).toBe("partialFailure")
     expect(result.nextTab).toBe("equipment")
+  })
+
+  it("routes multi-pack zip archive imports to groups tab on success", async () => {
+    const result = await importContentPackFiles([new File(["zip"], "campaign.zip")], {
+      importEquipmentFile: vi.fn(),
+      importCardJson: vi.fn(),
+      importDhcb: vi.fn(),
+      importZipArchive: vi.fn(async () => ({
+        kind: "archive" as const,
+        archiveName: "campaign.zip",
+        success: true,
+        blockedByPreflight: false,
+        group: {
+          groupId: "group_1",
+          name: "campaign",
+          sourceFileName: "campaign.zip",
+          importedAt: "2026-11-28T00:00:00.000Z",
+          members: [
+            { kind: "card" as const, packId: "batch_1" },
+            { kind: "equipment" as const, packId: "equip_1" },
+          ],
+        },
+        entryResults: [
+          {
+            archivePath: "cards/a.json",
+            kind: "card" as const,
+            success: true,
+            packId: "batch_1",
+            cardCount: 3,
+            diagnostics: [],
+          },
+          {
+            archivePath: "equip/b.json",
+            kind: "equipment" as const,
+            success: true,
+            packId: "equip_1",
+            weaponCount: 2,
+            armorCount: 1,
+            diagnostics: [],
+          },
+        ],
+        ignoredFiles: ["README.txt"],
+      })),
+    })
+
+    expect(result.aggregateStatus).toBe("success")
+    expect(result.nextTab).toBe("groups")
+    expect(result.results[0]).toMatchObject({
+      kind: "archive",
+      success: true,
+      fileName: "campaign.zip",
+    })
+    expect(result.results[0].summary).toContain("已导入整合包「campaign」")
+    expect(result.results[1]).toMatchObject({
+      fileName: "campaign.zip / cards/a.json",
+      kind: "card",
+      success: true,
+    })
+  })
+
+  it("returns only failing entries and an archive summary when archive preflight blocks import", async () => {
+    const result = await importContentPackFiles([new File(["zip"], "bad-campaign.zip")], {
+      importEquipmentFile: vi.fn(),
+      importCardJson: vi.fn(),
+      importDhcb: vi.fn(),
+      importZipArchive: vi.fn(
+        async (): Promise<ArchiveImportOutcome> => ({
+          kind: "archive",
+          archiveName: "bad-campaign.zip",
+          success: false,
+          blockedByPreflight: true,
+          entryResults: [
+            {
+              archivePath: "good.json",
+              kind: "equipment",
+              success: true,
+              weaponCount: 1,
+              armorCount: 0,
+              diagnostics: [],
+            },
+            {
+              archivePath: "bad.json",
+              kind: "unknown",
+              success: false,
+              diagnostics: [
+                {
+                  severity: "error",
+                  code: "INVALID_JSON",
+                  path: "",
+                  message: "文件不是有效的 JSON。请检查 JSON 语法",
+                },
+              ],
+            },
+          ],
+          ignoredFiles: [],
+        }),
+      ),
+    })
+
+    expect(result.aggregateStatus).toBe("failed")
+    expect(result.results).toHaveLength(2)
+    expect(result.results.every((item) => !item.success)).toBe(true)
+    expect(result.results[0].kind).toBe("archive")
+    expect(result.results[1].fileName).toBe("bad-campaign.zip / bad.json")
   })
 })

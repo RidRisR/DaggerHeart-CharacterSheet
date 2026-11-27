@@ -24,6 +24,14 @@ _Avoid_: card pack; automation provider
 A storage and management identifier for an imported content pack.
 _Avoid_: template id; card batch id
 
+**Content Pack Archive**:
+A plain `.zip` archive uploaded by a user containing one or more packaged content pack files (`.json` card packs, `.json` equipment packs, `.dhcb` card packs, or single-card `.zip` packs) for bulk import, distinct from a **Legacy Card DHCB** and a future **Content Bundle Manifest**.
+_Avoid_: content bundle v1; unpacked internal folder bundle
+
+**Import Group**:
+A lightweight management grouping created for a bulk **Content Pack Archive** import. It records group metadata and member references (`{ kind, packId }`) for batch enable, disable, rename, and remove actions without creating a new runtime source or Template ID namespace.
+_Avoid_: runtime source; template id namespace; storage container authority
+
 **Pack User**:
 A person importing, enabling, disabling, selecting, or removing a content pack for play.
 _Avoid_: pack author when discussing import success feedback

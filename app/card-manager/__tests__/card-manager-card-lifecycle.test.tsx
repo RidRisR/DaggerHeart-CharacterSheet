@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest"
 import type { ExtendedStandardCard } from "@/card/card-types"
 import type { BatchInfo, UnifiedCardState } from "@/card/stores/store-types"
+import { CONTENT_PACK_GROUP_STORAGE_KEY } from "@/content-packs/groups/local-storage-adapter"
 import CardManagerPage from "../page"
 
 type RuntimeSlice = Pick<UnifiedCardState, "initialized" | "batches" | "cards"> & {
@@ -337,5 +338,79 @@ describe("CardManagerPage card lifecycle", () => {
     expect(mocks.equipmentState.refreshFromStorage).not.toHaveBeenCalled()
     expect(window.alert).toHaveBeenCalledWith("清空数据失败: idb cleanup failed")
     expect(console.error).toHaveBeenCalledWith("清空本地数据失败:", cleanupError)
+  })
+
+  it("displays import groups tab, shows group badge on card pack, and prunes group when single member is deleted", async () => {
+    localStorage.setItem(
+      CONTENT_PACK_GROUP_STORAGE_KEY,
+      JSON.stringify({
+        format: "daggerheart.content-pack-groups.v1",
+        updatedAt: "2026-11-28T00:00:00.000Z",
+        groups: {
+          group_1: {
+            groupId: "group_1",
+            name: "神州战役整合包",
+            sourceFileName: "神州战役整合包.zip",
+            importedAt: "2026-11-28T00:00:00.000Z",
+            members: [{ kind: "card", packId: "pack_a" }],
+          },
+        },
+      }),
+    )
+
+    mocks.removeCustomCardBatch.mockImplementation(async () => {
+      emitRuntime({
+        batches: new Map(),
+        cards: new Map(),
+      })
+      return true
+    })
+
+    render(<CardManagerPage />)
+
+    await screen.findAllByText("整合包：神州战役整合包")
+    await userEvent.click(screen.getByRole("tab", { name: /整合包/ }))
+    expect(await screen.findByText("神州战役整合包")).toBeTruthy()
+    expect(screen.getByText("Pack A")).toBeTruthy()
+
+    await userEvent.click(screen.getByRole("button", { name: "删除卡牌包 Pack A" }))
+    await waitFor(() => expect(screen.queryByText("神州战役整合包")).toBeNull())
+    expect(screen.getByText(/暂无整合包/)).toBeTruthy()
+  })
+
+  it("shows pure-card bundles even if equipment initialization failed", async () => {
+    mocks.equipmentState.initialized = false
+    localStorage.setItem(
+      CONTENT_PACK_GROUP_STORAGE_KEY,
+      JSON.stringify({
+        format: "daggerheart.content-pack-groups.v1",
+        updatedAt: "2026-11-28T00:00:00.000Z",
+        groups: {
+          group_1: {
+            groupId: "group_1",
+            name: "纯卡牌整合包",
+            sourceFileName: "cards-only.zip",
+            importedAt: "2026-11-28T00:00:00.000Z",
+            members: [{ kind: "card", packId: "pack_a" }],
+          },
+        },
+      }),
+    )
+
+    render(<CardManagerPage />)
+
+    await userEvent.click(screen.getByRole("tab", { name: /整合包/ }))
+    expect(await screen.findByText("纯卡牌整合包")).toBeTruthy()
+    mocks.equipmentState.initialized = true
+  })
+
+  it("shows explicit storage error banner when bundle group index is corrupted", async () => {
+    localStorage.setItem(CONTENT_PACK_GROUP_STORAGE_KEY, "{broken json")
+
+    render(<CardManagerPage />)
+
+    await userEvent.click(screen.getByRole("tab", { name: /整合包/ }))
+    expect(await screen.findByRole("alert")).toBeTruthy()
+    expect(screen.queryByText(/暂无整合包/)).toBeNull()
   })
 })

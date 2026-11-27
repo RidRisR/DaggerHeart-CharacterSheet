@@ -256,9 +256,16 @@ export function createEquipmentUiStore(
       }
     },
 
-    async importPackFromFile(file) {
+    async getImportConflictContext() {
       return enqueueLifecycle(async () => {
-        const result = await input.applicationService.importFromSource(fileToImportSource(file), { mode: "commit" })
+        const snapshot = await input.applicationService.loadSnapshot()
+        return input.applicationService.buildConflictContext(snapshot)
+      })
+    },
+
+    async importPackFromSource(source) {
+      return enqueueLifecycle(async () => {
+        const result = await input.applicationService.importFromSource(source, { mode: "commit" })
         set({
           initialized: result.success ? true : get().initialized,
           initializationError: result.success ? null : get().initializationError,
@@ -267,6 +274,10 @@ export function createEquipmentUiStore(
         })
         return result
       })
+    },
+
+    async importPackFromFile(file) {
+      return get().importPackFromSource(fileToImportSource(file))
     },
 
     async removePack(packId) {

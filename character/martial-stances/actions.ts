@@ -1,5 +1,4 @@
 import { getCharacterTier, parseCharacterLevel } from '@/character/progression/tiers'
-import hopeFearIdAliases from '@/data/cards/hope-fear-id-aliases.json'
 import type { SheetData } from '@/lib/sheet-data'
 import { MARTIAL_STANCES, MAX_FOCUS, type MartialStanceId } from './catalog'
 import type { MartialStancesState } from './state'
@@ -12,10 +11,9 @@ export type MartialStanceAction =
 export type MartialStanceActionResult = { ok: true; state: MartialStancesState; stress?: boolean[] } | { ok: false; error: string }
 
 const masteryId = '希望与恐惧扩展-AlchemiZ-subc-武艺达人大师'
-const masteryIds = new Set([masteryId, ...hopeFearIdAliases[masteryId]])
 
 export function hasBattleFlow(sheet: SheetData): boolean {
-  return sheet.cards.some(card => card?.type === 'subclass' && masteryIds.has(card.id))
+  return sheet.cards.some(card => card?.type === 'subclass' && card.id === masteryId)
 }
 
 export function nextAvailableStressSlot(sheet: SheetData): number {

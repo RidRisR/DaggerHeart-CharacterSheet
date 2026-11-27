@@ -125,22 +125,20 @@ describe("equipment runtime cache view builder", () => {
     })
   })
 
-  it("restores the expansion template when a previously installed copy is removed", () => {
-    const weapon = makeRuntimeWeapon()
-    const entry = makeSnapshotEntry({ weaponIds: [weapon.id], disabled: true })
+  it("keeps built-in expansion templates intact alongside legacy custom packs with distinct IDs", () => {
+    const weapon = makeRuntimeWeapon({ id: "希望与恐惧扩展-AlchemiZ-weap-光明剑" })
+    const entry = makeSnapshotEntry({ weaponIds: ["ec4fb64e-653f-502a-8688-8e26120ea860"], disabled: false })
     const additionalBuiltinPacks = [{
-      packId: HOPE_FEAR_EQUIPMENT_SOURCE_ID, name: "希望与恐惧", author: "Unknown", templates: [weapon],
+      packId: HOPE_FEAR_EQUIPMENT_SOURCE_ID, name: "希望与恐惧扩展", author: "AlchemiZhou", templates: [weapon],
     }] as const
-    const build = (entries: EquipmentPackSnapshotEntry[]) => buildEquipmentRuntimeCacheView({
-      builtinTemplates: [], additionalBuiltinPacks, storageSnapshot: makeStorageSnapshot(entries),
+    const view = buildEquipmentRuntimeCacheView({
+      builtinTemplates: [], additionalBuiltinPacks, storageSnapshot: makeStorageSnapshot([entry]),
     })
-    const installed = build([entry])
-    expect(installed.relationIndexes.templateToPackId.get(weapon.id)).toBe(entry.packId)
-    expect(installed.queryIndexes.selectableTemplateIds).not.toContain(weapon.id)
-    expect(installed.packsById.get(HOPE_FEAR_EQUIPMENT_SOURCE_ID)?.weaponCount).toBe(0)
-    const removed = build([])
-    expect(removed.relationIndexes.templateToPackId.get(weapon.id)).toBe(HOPE_FEAR_EQUIPMENT_SOURCE_ID)
-    expect(removed.queryIndexes.selectableTemplateIds).toContain(weapon.id)
+    expect(view.relationIndexes.templateToPackId.get(weapon.id)).toBe(HOPE_FEAR_EQUIPMENT_SOURCE_ID)
+    expect(view.relationIndexes.templateToPackId.get("ec4fb64e-653f-502a-8688-8e26120ea860")).toBe(entry.packId)
+    expect(view.queryIndexes.selectableTemplateIds).toEqual([weapon.id, "ec4fb64e-653f-502a-8688-8e26120ea860"])
+    expect(view.packsById.get(HOPE_FEAR_EQUIPMENT_SOURCE_ID)?.weaponCount).toBe(1)
+    expect(view.packsById.get(entry.packId)?.weaponCount).toBe(1)
   })
 
   it("keeps disabled built-in templates in entity cache but excludes them from selectable ids", () => {

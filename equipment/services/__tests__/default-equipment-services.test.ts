@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
 import hopeFear from "@/data/equipment/builtin-hope-fear.json"
+import { buildStandardEquipmentId } from "@/app/card-editor/equipment/equipment-id"
 import { importEquipmentPackFromSource } from "@/equipment/import/import-pipeline"
 import { HOPE_FEAR_EQUIPMENT_SOURCE_ID } from "@/equipment/packs/builtin-source-ids"
 import { createWeaponSlotFromRuntimeTemplate } from "@/automation/equipment/template-to-slot"
@@ -38,6 +39,12 @@ describe("default equipment services", () => {
       read: async () => ({ kind: "parsedObject", value: hopeFear }),
     }, { mode: "dryRun" }, {})
     expect(validated).toMatchObject({ success: true, diagnostics: [], summary: { weaponCount: 124, armorCount: 35 } })
+    for (const weapon of hopeFear.equipment.weapons) {
+      expect(weapon.id).toBe(buildStandardEquipmentId(hopeFear.name, hopeFear.author, "weapon", weapon.name))
+    }
+    for (const armor of hopeFear.equipment.armor) {
+      expect(armor.id).toBe(buildStandardEquipmentId(hopeFear.name, hopeFear.author, "armor", armor.name))
+    }
 
     const initialize = async () => {
       const services = createDefaultEquipmentServices({ storage: "memory" })

@@ -97,29 +97,26 @@ describe("card batch read model", () => {
     expect(store.validateIntegrity().isValid).toBe(true)
   })
 
-  it.each(["020d974b-6d59-54a2-8462-54ebb825501b", "希望与恐惧扩展-未知作者-prof-刺客", hopeFear.classes[0].id])("keeps imported expansion card %s until its custom pack is cleared", async (id) => {
+  it("keeps all built-in Hope and Fear cards when a legacy custom pack with old UUIDs is installed", async () => {
+    const legacyId = "020d974b-6d59-54a2-8462-54ebb825501b"
     const batchId = "old-import"
     const metadata = { id: batchId, name: "Old import", fileName: "old.json", importTime: "2026-01-01" }
-    const entry = { ...metadata, size: 0, cardCount: 1, cardTypes: ["profession"], disabled: true }
-    const card = { id, name: "Edited Assassin", type: "profession", source: CardSource.CUSTOM, batchId, hasLocalImage: true }
+    const entry = { ...metadata, size: 0, cardCount: 1, cardTypes: ["profession"], disabled: false }
+    const card = { id: legacyId, name: "刺客", type: "profession", source: CardSource.CUSTOM, batchId, hasLocalImage: false }
     localStorage.setItem(STORAGE_KEYS.INDEX, JSON.stringify({ batches: { [batchId]: entry }, totalCards: 1, totalBatches: 1 }))
     localStorage.setItem(STORAGE_KEYS.BATCH_PREFIX + batchId, JSON.stringify({ metadata, cards: [card] }))
 
     const store = useUnifiedCardStore.getState()
     await store.reloadCustomRuntimeFromStorage()
-    expect(store.getCardById(id)).toBeNull()
-    expect(store.getCardById(hopeFear.classes[0].id)).toBeNull()
-    expect(useUnifiedCardStore.getState().batches.get(HOPE_FEAR_SOURCE_ID)?.cardCount).toBe(72)
-    await store.toggleBatchDisabled(batchId)
-    expect(store.getCardById(id)).toMatchObject(card)
-    expect(store.getCardById(hopeFear.classes[0].id)).toMatchObject(card)
 
-    await store.clearAllCustomCards()
-    expect(store.getCardById(id)).toMatchObject({ id: hopeFear.classes[0].id, batchId: HOPE_FEAR_SOURCE_ID, name: "刺客", hasLocalImage: false })
     expect(useUnifiedCardStore.getState().batches.get(HOPE_FEAR_SOURCE_ID)?.cardCount).toBe(73)
-    expect(store.getCardById("Bard")).toBeTruthy()
-    await toggleBatchDisabled(HOPE_FEAR_SOURCE_ID)
-    expect(store.getCardById(id)).toBeNull()
+    expect(store.getCardById(hopeFear.classes[0].id)).toMatchObject({
+      id: hopeFear.classes[0].id,
+      batchId: HOPE_FEAR_SOURCE_ID,
+      name: "刺客",
+    })
+    expect(store.getCardById(legacyId)).toMatchObject({ id: legacyId, batchId })
+    expect(store.validateIntegrity().isValid).toBe(true)
   })
 
   it("counts only custom cards in custom card stats", () => {

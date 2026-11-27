@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 import { existsSync } from "node:fs"
 import { join } from "node:path"
 import hopeFear from "@/data/cards/builtin-hope-fear.json"
-import hopeFearIdAliases from "@/data/cards/hope-fear-id-aliases.json"
 import { buildCardId } from "@/app/card-editor/utils/id-generator"
 import { prepareCardPackContentForRuntime } from "../prepare-card-pack-content"
 import builtinBase from "@/data/cards/builtin-base.json"
@@ -37,7 +36,6 @@ describe("loadBuiltinCardRuntimeSource", () => {
     expect(cards.every((card) => card.batchId === batch.id && card.source === CardSource.BUILTIN && !card.hasLocalImage)).toBe(true)
     const ids = cards.map((card) => card.id)
     expect(new Set(ids).size).toBe(73)
-    expect(Object.keys(hopeFearIdAliases).sort()).toEqual([...ids].sort())
     for (const card of cards) {
       expect(card.id).toBe(buildCardId(hopeFear.name, hopeFear.author, card.type as CardType, card.name))
     }

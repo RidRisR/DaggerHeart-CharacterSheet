@@ -1,4 +1,4 @@
-import { HOPE_FEAR_EQUIPMENT_SOURCE_ID, isBuiltinEquipmentSourceId } from "@/equipment/packs/builtin-source-ids"
+import { isBuiltinEquipmentSourceId } from "@/equipment/packs/builtin-source-ids"
 import type { EquipmentPackSnapshotEntry } from "@/equipment/packs/storage-types"
 import type {
   BuiltinEquipmentPack,
@@ -34,17 +34,12 @@ export function tryBuildEquipmentRuntimeCacheView(
     ...(input.additionalBuiltinPacks ?? []),
   ]
 
-  // Previously installed equipment retains ownership, including its disabled state.
-  const installedIds = new Set([...input.storageSnapshot.packs.values()].flatMap(({ pack }) =>
-    [...pack.weapons, ...pack.armor].map((template) => template.id),
-  ))
   for (const { templates, ...metadata } of builtinPacks) {
     if (templates.length === 0) continue
     const disabled = disabledSourceIds.has(metadata.packId)
     let weaponCount = 0
     let armorCount = 0
     for (const template of templates) {
-      if (metadata.packId === HOPE_FEAR_EQUIPMENT_SOURCE_ID && installedIds.has(template.id)) continue
       const added = addTemplate(view, {
         template,
         sourceId: metadata.packId,
